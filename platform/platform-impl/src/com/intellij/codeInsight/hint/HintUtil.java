@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
@@ -204,7 +205,7 @@ public final class HintUtil {
     label.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
     label.setBackground(JBUI.CurrentTheme.Advertiser.background());
     label.setOpaque(true);
-    label.setFont(label.getFont().deriveFont((float)(label.getFont().getSize() - 2)));
+    label.setFont(RelativeFont.NORMAL.fromResource("Popup.Advertiser.fontSizeOffset", -2, JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont()));
     if (bottomText != null) {
       label.setBorder(border);
     }

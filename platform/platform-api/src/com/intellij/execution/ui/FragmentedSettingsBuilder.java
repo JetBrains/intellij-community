@@ -18,15 +18,19 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WrapLayout;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -202,18 +206,28 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
                                                                           callback, -1);
     popup.addListSelectionListener(e -> {
       AnActionHolder data = (AnActionHolder)PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)e.getSource());
-      popup.setAdText(getHint(data == null ? null : data.getAction()), SwingConstants.LEFT);
+      popup.setAdText(wrapToSize(getHint(data == null ? null : data.getAction()), popup.getContent()), SwingConstants.LEFT);
     });
-    popup.setAdText(getHint(ContainerUtil.find(group.getChildren(null), action -> !(action instanceof Separator))), SwingConstants.LEFT);
+    popup.setAdText(wrapToSize(getHint(ContainerUtil.find(group.getChildren(null), action -> !(action instanceof Separator))), popup.getContent()),
+                               SwingConstants.LEFT);
     return popup;
   }
 
   @NotNull
+  @Nls
+  private static String wrapToSize(@NotNull @Nls String hint, @NotNull JComponent component) {
+    if (StringUtil.isEmpty(hint)) return hint;
+
+    Dimension size = component.getPreferredSize();
+    JBInsets.removeFrom(size, component.getInsets());
+    int width = Math.max(JBUI.CurrentTheme.Popup.minimumHintWidth(), size.width);
+    return HtmlChunk.text(hint).wrapWith(HtmlChunk.div().attr("size", width)).wrapWith(HtmlChunk.html()).toString();
+  }
+
+  @NotNull
   private static @NlsContexts.PopupAdvertisement String getHint(AnAction action) {
-    if (action == null || action.getTemplatePresentation().getDescription() == null) {
-      return IdeBundle.message("popup.advertisement.hover.item.to.see.hint");
-    }
-    return action.getTemplatePresentation().getDescription();
+    return (action != null && StringUtil.isNotEmpty(action.getTemplatePresentation().getDescription())) ?
+           action.getTemplatePresentation().getDescription() : "";
   }
 
   @NotNull

@@ -820,6 +820,10 @@ public class JBUI {
       public static Color separatorTextColor() {
         return JBColor.namedColor("Popup.separatorForeground", Color.gray);
       }
+
+      public static int minimumHintWidth() {
+        return JBUIScale.scale(170);
+      }
     }
 
     public static final class Focus {
@@ -931,7 +935,7 @@ public class JBUI {
     }
 
     public static final class Advertiser {
-      private static final JBInsets DEFAULT_AD_INSETS = JBInsets.create(1, 5);
+      private static final JBInsets DEFAULT_AD_INSETS = JBInsets.create(8, 8);
 
       @NotNull
       public static Color foreground() {

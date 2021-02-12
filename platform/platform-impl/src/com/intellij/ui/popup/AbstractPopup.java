@@ -28,6 +28,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -382,7 +383,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   @Override
-  public void setAdText(final @NotNull String s, int alignment) {
+  public void setAdText(@NotNull String s, int alignment) {
     if (myAdComponent == null) {
       myAdComponent = HintUtil.createAdComponent(s, JBUI.CurrentTheme.Advertiser.border(), alignment);
       JPanel wrapper = new JPanel(new BorderLayout());
@@ -391,10 +392,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
     }
-    else {
-      myAdComponent.setText(s);
-      myAdComponent.setHorizontalAlignment(alignment);
-    }
+
+    myAdComponent.setVisible(StringUtil.isNotEmpty(s));
+    myAdComponent.setText(s);
+    myAdComponent.setHorizontalAlignment(alignment);
   }
 
   public static @NotNull Point getCenterOf(@NotNull Component aContainer, @NotNull JComponent content) {
