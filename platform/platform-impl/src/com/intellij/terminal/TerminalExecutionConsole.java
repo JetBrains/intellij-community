@@ -227,9 +227,9 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
+        myAttachedToProcess.set(false);
         ApplicationManager.getApplication().invokeLater(() -> {
           myTerminalWidget.getTerminalPanel().setCursorVisible(false);
-          myAttachedToProcess.set(false);
         }, ModalityState.any());
       }
     });
