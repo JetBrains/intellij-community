@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -97,6 +96,7 @@ public class PatternValidator extends LocalInspectionTool {
             // check whether @Subst complies with pattern
             check(expression, holder, true);
           }
+          check(expression, holder, false);
         }
       }
 
