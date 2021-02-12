@@ -215,11 +215,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       return;
     }
     if (editor instanceof EditorEx) {
-      ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(@NotNull Editor editor) {
+      ((EditorEx)editor).addFocusListener(editor1-> {
           if (!Registry.is("editor.maximize.on.focus.gained.if.collapsed.in.split")) return;
-          Component comp = editor.getComponent();
+          Component comp = editor1.getComponent();
           while (comp != getMainSplitters() && comp != null) {
             Component parent = comp.getParent();
             if (parent instanceof Splitter) {
@@ -227,7 +225,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
               if ((splitter.getFirstComponent() == comp
                    && (splitter.getProportion() == splitter.getMinProportion(true) || splitter.getProportion() == splitter.getMinimumProportion())) ||
                   (splitter.getProportion() == splitter.getMinProportion(false) || splitter.getProportion() == splitter.getMaximumProportion())) {
-                Set<kotlin.Pair<Splitter, Boolean>> pairs = HideAllToolWindowsAction.Companion.getSplittersToMaximize(project, editor);
+                Set<kotlin.Pair<Splitter, Boolean>> pairs = HideAllToolWindowsAction.Companion.getSplittersToMaximize(project, editor1);
                 for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
                   Splitter s = pair.getFirst();
                   s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
@@ -237,7 +235,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
             }
             comp = parent;
           }
-        }
       });
     }
   }
