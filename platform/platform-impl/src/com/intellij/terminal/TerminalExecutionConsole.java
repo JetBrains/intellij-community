@@ -56,6 +56,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
 
   private boolean myEnterKeyDefaultCodeEnabled = true;
+  private boolean myConvertLfToCrlfForNonPtyProcess = false;
 
   public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
     this(project, 200, 24, processHandler);
@@ -116,6 +117,11 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   @NotNull
   public TerminalExecutionConsole withEnterKeyDefaultCodeEnabled(boolean enterKeyDefaultCodeEnabled) {
     myEnterKeyDefaultCodeEnabled = enterKeyDefaultCodeEnabled;
+    return this;
+  }
+
+  public @NotNull TerminalExecutionConsole withConvertLfToCrlfForNonPtyProcess(boolean convertLfToCrlfForNonPtyProcess) {
+    myConvertLfToCrlfForNonPtyProcess = convertLfToCrlfForNonPtyProcess;
     return this;
   }
 
@@ -188,6 +194,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     if (!myAttachedToProcess.compareAndSet(false, true)) {
       return;
     }
+    boolean convertLfToCrlf = myConvertLfToCrlfForNonPtyProcess && isNonPtyProcess(processHandler);
     myTerminalWidget.createTerminalSession(new ProcessHandlerTtyConnector(
       processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset())
     );
@@ -207,6 +214,9 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
             if (outputType == ProcessOutputTypes.SYSTEM) {
               text = StringUtil.convertLineSeparators(text, LineSeparator.CRLF.getSeparatorString());
             }
+            else if (convertLfToCrlf) {
+              text = convertTextToCRLF(text);
+            }
             printText(text, contentType);
           }
           catch (IOException e) {
@@ -223,6 +233,14 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         }, ModalityState.any());
       }
     });
+  }
+
+  private static boolean isNonPtyProcess(@NotNull ProcessHandler processHandler) {
+    if (processHandler instanceof BaseProcessHandler) {
+      Process process = ((BaseProcessHandler<?>)processHandler).getProcess();
+      return !(process instanceof PtyProcess);
+    }
+    return false;
   }
 
   @Override
