@@ -4,8 +4,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,9 +83,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
    * @return true if the packages of the callsite and the preview feature element are the same, false otherwise
    */
   private static boolean isParticipating(PsiElement from, PsiElement to) {
-    final PsiPackage fromPackage = JavaResolveUtil.getContainingPackage(from);
-    final PsiPackage toPackage = JavaResolveUtil.getContainingPackage(to);
-    return fromPackage == toPackage;
+    return JavaPsiFacade.getInstance(from.getProject()).arePackagesTheSame(from, to);
   }
 
   /**
@@ -95,9 +91,9 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
    * either {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} or
    * {@link HighlightingFeature#JDK_INTERNAL_JAVAC_PREVIEW_FEATURE} is sufficient.
    *
-   * @param context
-   * @param reference
-   * @param owner
+   * @param context the element that should be highlighted
+   * @param reference the callsite of a preview feature element
+   * @param owner an element that should be checked if it's a preview feature
    */
   private void checkPreviewFeature(PsiElement context, PsiJavaCodeReferenceElement reference, PsiModifierListOwner owner) {
     final PsiAnnotation annotation = getPreviewFeatureAnnotation(owner);
@@ -112,7 +108,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
       final String methodName = member.getName();
       if (member instanceof PsiClass) {
         final PsiClass psiClass = (PsiClass)member;
-        name = Objects.requireNonNullElseGet(psiClass.getQualifiedName(), () -> reference.getQualifiedName());
+        name = Objects.requireNonNull(psiClass.getQualifiedName());
       }
       else if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
         name = className != null && className.getQualifiedName() != null ? className.getQualifiedName() : reference.getQualifiedName();
@@ -134,15 +130,6 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
                                           @InspectionMessage String description,
                                           HighlightingFeature feature,
                                           PsiAnnotation annotation);
-
-  private static @Nullable PsiModifierListOwner getTargetOfNewExpression(@NotNull final PsiNewExpression expression) {
-    final PsiMethod method = expression.resolveMethod();
-    if (method != null) return method;
-
-    final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
-    if (reference == null) return null;
-    return ObjectUtils.tryCast(reference.resolve(), PsiModifierListOwner.class);
-  }
 
   private static @Nullable PsiAnnotation getPreviewFeatureAnnotation(@Nullable PsiModifierListOwner owner) {
     return getPreviewFeatureAnnotationOptional(owner).orElse(null);
