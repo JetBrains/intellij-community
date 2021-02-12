@@ -43,6 +43,10 @@ class ElevationServiceImpl : ElevationService, Disposable {
     }
   }
 
+  override fun authorizeService() {
+    connectionManager.launchDaemonAndConnectIfNeeded()
+  }
+
   override fun createProcessHandler(commandLine: GeneralCommandLine): MediatedProcessHandler {
     val processBuilder = commandLine.toProcessBuilder()
     val process = createProcess(processBuilder)
