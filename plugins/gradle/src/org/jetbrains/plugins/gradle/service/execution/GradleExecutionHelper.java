@@ -28,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
 import org.gradle.initialization.BuildLayoutParameters;
-import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -249,7 +248,7 @@ public class GradleExecutionHelper {
                                       @NotNull ExternalSystemTaskNotificationListener listener) {
     TestLauncher result = connection.newTestLauncher();
     if (settings != null) {
-      prepare(result, id, settings, listener, connection);
+      prepareForTestLauncher(result, id, settings, listener, connection);
       configureTestTasks(result, tasks, settings.getArguments());
     }
     return result;
@@ -271,7 +270,15 @@ public class GradleExecutionHelper {
                              @NotNull GradleExecutionSettings settings,
                              @NotNull final ExternalSystemTaskNotificationListener listener,
                              @NotNull ProjectConnection connection) {
-    prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
+    prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false), false);
+  }
+
+  public static void prepareForTestLauncher(@NotNull LongRunningOperation operation,
+                             @NotNull final ExternalSystemTaskId id,
+                             @NotNull GradleExecutionSettings settings,
+                             @NotNull final ExternalSystemTaskNotificationListener listener,
+                             @NotNull ProjectConnection connection) {
+    prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false), true);
   }
 
   public static void prepare(@NotNull LongRunningOperation operation,
@@ -280,7 +287,8 @@ public class GradleExecutionHelper {
                              @NotNull final ExternalSystemTaskNotificationListener listener,
                              @NotNull ProjectConnection connection,
                              @NotNull final OutputStream standardOutput,
-                             @NotNull final OutputStream standardError) {
+                             @NotNull final OutputStream standardError,
+                             boolean forTestLauncher) {
     List<String> jvmArgs = settings.getJvmArguments();
     BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, (CancellationToken)null, settings);
 
@@ -328,8 +336,10 @@ public class GradleExecutionHelper {
       // filter nulls and empty strings
       filteredArgs.addAll(ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s));
 
-      // TODO remove this replacement when --tests option will become available for tooling API
-      replaceTestCommandOptionWithInitScript(filteredArgs);
+      if (!forTestLauncher) {
+        // TODO remove this replacement when --tests option will become available for tooling API
+        replaceTestCommandOptionWithInitScript(filteredArgs);
+      }
     }
     filteredArgs.add("-Didea.active=true");
     filteredArgs.add("-Didea.version=" + getIdeaVersion());
@@ -353,10 +363,15 @@ public class GradleExecutionHelper {
     }
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
-    operation.addProgressListener(gradleProgressListener,
-                                  OperationType.TASK,
-                                  OperationType.TEST,
-                                  OperationType.TEST_OUTPUT);
+    if (forTestLauncher) {
+      operation.addProgressListener(gradleProgressListener,
+                                    OperationType.TASK,
+                                    OperationType.TEST,
+                                    OperationType.TEST_OUTPUT);
+    } else {
+      operation.addProgressListener(gradleProgressListener,
+                                    OperationType.TASK);
+    }
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
     InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
