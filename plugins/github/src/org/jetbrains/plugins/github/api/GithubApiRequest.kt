@@ -138,6 +138,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
         if (errors.any { it.type.equals("INSUFFICIENT_SCOPES", true) })
           throw GithubAuthenticationException("Access token has not been granted the required scopes.")
 
+        if(errors.size == 1) throw GithubConfusingException(errors.single().toString())
         throw GithubConfusingException(errors.toString())
       }
 
