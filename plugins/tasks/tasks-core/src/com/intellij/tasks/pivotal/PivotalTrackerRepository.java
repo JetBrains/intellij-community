@@ -200,28 +200,6 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     myProjectId = projectId;
   }
 
-  /**
-   * Don't use this getter, it's left only to preserve compatibility with existing settings.
-   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
-   *
-   * @deprecated Use {@link #getPassword()}
-   */
-  @Deprecated
-  public String getAPIKey() {
-    return null;
-  }
-
-  /**
-   * Don't use this setter, it's left only to preserve compatibility with existing settings.
-   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
-   *
-   * @deprecated Use {@link #setPassword(String)}
-   */
-  @Deprecated
-  public void setAPIKey(final String APIKey) {
-    setPassword(APIKey);
-  }
-
   @Override
   public String getPresentableName() {
     final String name = super.getPresentableName();

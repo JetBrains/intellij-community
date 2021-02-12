@@ -16,7 +16,7 @@ public class LighthouseIntegrationTest extends TaskManagerTestCase {
     // otherwise XmlSerializer.serialize(...) returns null.
     repository.setUrl("https://test.lighthouseapp.com");
     final String apiToken = "secret";
-    repository.setAPIKey(apiToken);
+    repository.setPassword(apiToken);
     final Element serialized = XmlSerializer.serialize(repository);
     final String settingsContent = JDOMUtil.write(serialized);
     assertFalse(settingsContent.contains(apiToken));
