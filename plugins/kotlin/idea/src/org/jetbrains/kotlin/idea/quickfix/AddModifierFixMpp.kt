@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -16,16 +15,12 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
-import org.jetbrains.kotlin.idea.inspections.KotlinUniversalQuickFix
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.collectAllExpectAndActualDeclaration
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -33,33 +28,11 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.TypeUtils
 
+/** Similar to [AddModifierFix] but with multi-platform support. */
 open class AddModifierFixMpp(
     element: KtModifierListOwner,
-    @SafeFieldForPreview
-    protected val modifier: KtModifierKeywordToken
-) : KotlinCrossLanguageQuickFixAction<KtModifierListOwner>(element), KotlinUniversalQuickFix {
-    override fun getText(): String {
-        val element = element ?: return ""
-        if (modifier in modalityModifiers || modifier in VISIBILITY_MODIFIERS || modifier == CONST_KEYWORD) {
-            return KotlinBundle.message("fix.add.modifier.text", RemoveModifierFix.getElementName(element), modifier.value)
-        }
-        return KotlinBundle.message("fix.add.modifier.text.generic", modifier.value)
-    }
-
-    override fun getFamilyName() = KotlinBundle.message("fix.add.modifier.family")
-
-    private fun invokeOnElement(element: KtModifierListOwner?) {
-        element?.addModifier(modifier)
-
-        if (modifier == ABSTRACT_KEYWORD && (element is KtProperty || element is KtNamedFunction)) {
-            element.containingClass()?.run {
-                if (!hasModifier(ABSTRACT_KEYWORD) && !hasModifier(SEALED_KEYWORD)) {
-                    addModifier(ABSTRACT_KEYWORD)
-                }
-            }
-        }
-    }
-
+    modifier: KtModifierKeywordToken
+) : AddModifierFix(element, modifier) {
     override fun startInWriteAction(): Boolean = !modifier.isMultiplatformPersistent() ||
             (element?.hasActualModifier() != true && element?.hasExpectModifier() != true)
 
@@ -91,61 +64,12 @@ open class AddModifierFixMpp(
         return element.canRefactor()
     }
 
-    companion object {
-
+    companion object : Factory<AddModifierFixMpp> {
         private fun KtModifierKeywordToken.isMultiplatformPersistent(): Boolean =
             this in MODALITY_MODIFIERS || this == INLINE_KEYWORD
 
-        private val modifiersWithWarning = setOf(ABSTRACT_KEYWORD, FINAL_KEYWORD)
-
-        private val modalityModifiers = modifiersWithWarning + OPEN_KEYWORD
-
-        fun createFactory(modifier: KtModifierKeywordToken): KotlinSingleIntentionActionFactory {
-            return createFactory(modifier, KtModifierListOwner::class.java)
-        }
-
-        fun <T : KtModifierListOwner> createFactory(
-            modifier: KtModifierKeywordToken,
-            modifierOwnerClass: Class<T>
-        ): KotlinSingleIntentionActionFactory {
-            return object : KotlinSingleIntentionActionFactory() {
-                public override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-                    val modifierListOwner = QuickFixUtil.getParentElementOfType(diagnostic, modifierOwnerClass) ?: return null
-                    return createIfApplicable(modifierListOwner, modifier)
-                }
-            }
-        }
-
-        fun createIfApplicable(modifierListOwner: KtModifierListOwner, modifier: KtModifierKeywordToken): AddModifierFixMpp? {
-            when (modifier) {
-                ABSTRACT_KEYWORD, OPEN_KEYWORD -> {
-                    if (modifierListOwner is KtObjectDeclaration) return null
-                    if (modifierListOwner is KtEnumEntry) return null
-                    if (modifierListOwner is KtDeclaration && modifierListOwner !is KtClass) {
-                        val parentClassOrObject = modifierListOwner.containingClassOrObject ?: return null
-                        if (parentClassOrObject is KtObjectDeclaration) return null
-                        if (parentClassOrObject is KtEnumEntry) return null
-                    }
-                    if (modifier == ABSTRACT_KEYWORD
-                        && modifierListOwner is KtClass
-                        && modifierListOwner.hasModifier(INLINE_KEYWORD)
-                    ) return null
-                }
-                INNER_KEYWORD -> {
-                    if (modifierListOwner is KtObjectDeclaration) return null
-                    if (modifierListOwner is KtClass) {
-                        if (modifierListOwner.isInterface() ||
-                            modifierListOwner.isSealed() ||
-                            modifierListOwner.isEnum() ||
-                            modifierListOwner.isData() ||
-                            modifierListOwner.isAnnotation()
-                        ) return null
-                    }
-                }
-            }
-            return AddModifierFixMpp(modifierListOwner, modifier)
-        }
-
+        override fun createModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken): AddModifierFixMpp =
+            AddModifierFixMpp(element, modifier)
     }
 
     object MakeClassOpenFactory : KotlinSingleIntentionActionFactory() {
