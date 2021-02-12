@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
@@ -1143,6 +1144,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
       if (shouldRebuildUI) {
         revalidate();
+        JBPopup popup = this instanceof PopupToolbar ? PopupUtil.getPopupContainerFor(this) : null;
+        if (popup != null) {
+          popup.setSize(newSize);
+        }
       }
       else {
         Container parent = getParent();
@@ -1369,6 +1374,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     public Container getParent() {
       Container parent = super.getParent();
       return parent != null ? parent : myParent;
+    }
+
+    @Override
+    public @NotNull Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.width = Math.max(size.width, DEFAULT_MINIMUM_BUTTON_SIZE.width);
+      size.height = Math.max(size.height, DEFAULT_MINIMUM_BUTTON_SIZE.height);
+      return size;
     }
 
     @Override
