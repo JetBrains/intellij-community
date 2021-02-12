@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
@@ -166,6 +167,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   }
 
   @Override
+  List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
+    return [Path.of(context.paths.kotlinHome).toAbsolutePath().normalize()]
+  }
+
+  @Override
   @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
@@ -181,7 +187,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     }
 
     Path targetDir = Paths.get(targetDirectory).toAbsolutePath().normalize()
-    BuildHelper.copyDir(Paths.get(context.paths.kotlinHome).toAbsolutePath().normalize(), targetDir.resolve("plugins/Kotlin"), context)
 
     Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
     BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))
