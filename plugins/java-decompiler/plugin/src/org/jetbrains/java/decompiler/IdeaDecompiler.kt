@@ -125,8 +125,8 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   override fun accepts(file: VirtualFile): Boolean = true
 
   override fun getText(file: VirtualFile): CharSequence =
-      if (canWork()) TASK_KEY.pop(file)?.get() ?: decompile(file)
-      else ClsFileImpl.decompile(file)
+    if (canWork()) TASK_KEY.pop(file)?.get() ?: decompile(file)
+    else ClsFileImpl.decompile(file)
 
   private fun decompile(file: VirtualFile): CharSequence {
     val indicator = ProgressManager.getInstance().progressIndicator
@@ -163,21 +163,19 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       throw e
     }
     catch (e: Exception) {
-      if (e is IdeaLogger.InternalException && e.cause is IOException) {
-        Logger.getInstance(IdeaDecompiler::class.java).warn(file.url, e)
-        return Strings.EMPTY_CHAR_SEQUENCE
-      }
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        throw AssertionError(file.url, e)
-      }
-      else {
-        throw CannotDecompileException(file.url, e)
+      when {
+        e is IdeaLogger.InternalException && e.cause is IOException -> {
+          Logger.getInstance(IdeaDecompiler::class.java).warn(file.url, e)
+          return Strings.EMPTY_CHAR_SEQUENCE
+        }
+        ApplicationManager.getApplication().isUnitTestMode -> throw AssertionError(file.url, e)
+        else -> throw CannotDecompileException(file.url, e)
       }
     }
   }
 
   private class MyBytecodeProvider(files: List<VirtualFile>) : IBytecodeProvider {
-    private val pathMap = files.map { File(it.path).absolutePath to it }.toMap()
+    private val pathMap = files.associateBy { File(it.path).absolutePath }
 
     override fun getBytecode(externalPath: String, internalPath: String?): ByteArray =
       pathMap[externalPath]?.contentsToByteArray(false) ?: throw AssertionError(externalPath + " not in " + pathMap.keys)
