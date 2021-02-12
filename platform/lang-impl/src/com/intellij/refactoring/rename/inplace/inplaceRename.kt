@@ -72,6 +72,11 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
   val usages: Collection<RenameUsage> = usageQuery.findAll()
   val psiUsages: List<PsiRenameUsage> = usages.filterIsInstance<PsiRenameUsage>()
 
+  val segmentsLimit = Registry.intValue("inplace.rename.segments.limit", -1)
+  if (segmentsLimit != -1 && psiUsages.size > segmentsLimit) {
+    return false
+  }
+
   val offset: Int = editor.caretModel.offset
   val originUsage: PsiRenameUsage? = psiUsages.find { usage: PsiRenameUsage ->
     usage.file == file &&
@@ -161,11 +166,6 @@ private fun buildTemplate(
                                       ?: continue // the usage is inside injection, and it's split into several chunks in host
     builder.replaceElement(hostFile, usageRangeInHost, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false)
     stateBefore[hostDocument.createRangeMarker(usageRangeInHost)] = usageRangeInHost.substring(hostDocumentContent)
-  }
-
-  val segmentsLimit = Registry.intValue("inplace.rename.segments.limit", -1)
-  if (segmentsLimit != -1 && builder.elementsCount > segmentsLimit) {
-    return null
   }
 
   for ((marker: RangeMarker, _) in stateBefore) {
