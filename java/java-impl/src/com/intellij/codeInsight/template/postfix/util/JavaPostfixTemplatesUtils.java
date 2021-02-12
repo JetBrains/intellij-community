@@ -7,7 +7,6 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInf
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -59,14 +58,6 @@ public final class JavaPostfixTemplatesUtils {
         return selector.getRenderer();
       }
     };
-  }
-
-  /**
-   * @deprecated use {@link #selectorTopmost(Condition)}
-   */
-  @Deprecated
-  public static PostfixTemplateExpressionSelector selectorTopmost() {
-    return selectorTopmost(Conditions.alwaysTrue());
   }
 
   public static PostfixTemplateExpressionSelector selectorTopmost(Condition<? super PsiElement> additionalFilter) {
