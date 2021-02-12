@@ -154,7 +154,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
             catch (ProcessCanceledException e) {
               throw e;
             }
-            catch (Exception e) {
+            catch (Throwable e) {
               LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
             }
             return false;

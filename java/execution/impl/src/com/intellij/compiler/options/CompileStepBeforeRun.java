@@ -166,7 +166,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
       });
       done.waitFor();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       return false;
     }
 
