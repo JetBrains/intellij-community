@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -40,7 +39,7 @@ class ProjectNotificationAware(private val project: Project) : Disposable {
 
   private fun setHideStatus(isHidden: Boolean) {
     this.isHidden.set(isHidden)
-    ProjectRefreshFloatingProvider.updateToolbarComponents(project)
+    ProjectRefreshFloatingProvider.updateToolbarComponents(project, this)
   }
 
   private fun revealNotification() = setHideStatus(false)

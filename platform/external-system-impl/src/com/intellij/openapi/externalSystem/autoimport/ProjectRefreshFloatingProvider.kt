@@ -16,16 +16,11 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
 
   private val toolbarComponents = DisposableWrapperList<Pair<Project, FloatingToolbarComponent>>()
 
-  fun updateToolbarComponents(project: Project) {
-    val notificationAware = ProjectNotificationAware.getInstance(project)
-    when (notificationAware.isNotificationVisible()) {
-      true -> forEachToolbarComponent(project, FloatingToolbarComponent::scheduleShow)
-      else -> forEachToolbarComponent(project, FloatingToolbarComponent::scheduleHide)
-    }
+  fun updateToolbarComponents(project: Project, notificationAware: ProjectNotificationAware) {
+    forEachToolbarComponent(project) { updateToolbarComponent(it, notificationAware) }
   }
 
-  fun updateToolbarComponent(component: FloatingToolbarComponent, project: Project) {
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+  fun updateToolbarComponent(component: FloatingToolbarComponent, notificationAware: ProjectNotificationAware) {
     when (notificationAware.isNotificationVisible()) {
       true -> component.scheduleShow()
       else -> component.scheduleHide()
@@ -35,7 +30,8 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
     val project = dataContext.getData(PROJECT) ?: return
     toolbarComponents.add(project to component, parentDisposable)
-    updateToolbarComponent(component, project)
+    val notificationAware = ProjectNotificationAware.getInstance(project)
+    updateToolbarComponent(component, notificationAware)
   }
 
   private fun forEachToolbarComponent(project: Project, consumer: (FloatingToolbarComponent) -> Unit) {
@@ -53,8 +49,8 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
       return FloatingToolbarProvider.getProvider()
     }
 
-    fun updateToolbarComponents(project: Project) {
-      getProvider().updateToolbarComponents(project)
+    fun updateToolbarComponents(project: Project, notificationAware: ProjectNotificationAware) {
+      getProvider().updateToolbarComponents(project, notificationAware)
     }
   }
 }
