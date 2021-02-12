@@ -16,7 +16,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
 
 fun confirmOpeningUntrustedProject(name: @Nls String): OpenUntrustedProjectChoice {
-  val choice = MessageDialogBuilder.yesNoCancel(title = IdeBundle.message("untrusted.project.open.warning.title", name),
+  val choice = MessageDialogBuilder.yesNoCancel(title = IdeBundle.message("untrusted.project.warning.title", name),
                                                 message = IdeBundle.message("untrusted.project.open.warning.text", name))
     .yesText(IdeBundle.message("untrusted.project.open.warning.button.import"))
     .noText(IdeBundle.message("untrusted.project.open.warning.button.open.without.import"))
@@ -36,8 +36,8 @@ fun confirmOpeningUntrustedProject(name: @Nls String): OpenUntrustedProjectChoic
 }
 
 fun confirmImportingUntrustedProject(project: Project, @Nls buildSystemName: String, @Nls importButtonText: String): Boolean {
-  val answer = MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.open.warning.title", buildSystemName),
-                                          message = IdeBundle.message("untrusted.project.open.warning.text", buildSystemName))
+  val answer = MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.warning.title", buildSystemName),
+                                          message = IdeBundle.message("untrusted.project.import.warning.text", buildSystemName))
     .yesText(importButtonText)
     .noText(CommonBundle.getCancelButtonText())
     .asWarning()
