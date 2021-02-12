@@ -64,10 +64,10 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     }
 
 
-    fun `test removed first if only first is sent`() {
+    fun `test removed first if only first is sent and second failed with 404`() {
         val requestService = mock(RequestService::class.java).apply {
             `when`(postZipped(testUrl, firstFile)).thenReturn(okResponse())
-            `when`(postZipped(testUrl, secondFile)).thenReturn(failResponse())
+            `when`(postZipped(testUrl, secondFile)).thenReturn(failResponse(404))
         }
 
         val app = ApplicationManager.getApplication()
@@ -83,7 +83,7 @@ class StatisticsSenderTest: LightPlatformTestCase() {
 
     fun `test second is sent and removed even if first failed`() {
         val requestService = mock(RequestService::class.java).apply {
-            `when`(postZipped(testUrl, firstFile)).thenReturn(failResponse())
+            `when`(postZipped(testUrl, firstFile)).thenReturn(failResponse(404))
             `when`(postZipped(testUrl, secondFile)).thenReturn(okResponse())
         }
 
@@ -98,8 +98,23 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         assertThat(secondFile.exists()).isEqualTo(false)
     }
 
+  fun `test file is removed if failed with not 404`() {
+    val requestService = mock(RequestService::class.java).apply {
+      `when`(postZipped(testUrl, firstFile)).thenReturn(failResponse(400))
+    }
+
+    val app = ApplicationManager.getApplication()
+    app.replaceService(FilePathProvider::class.java, filePathProvider, testRootDisposable)
+    app.replaceService(RequestService::class.java, requestService, testRootDisposable)
+
+    val sender = StatisticSenderImpl()
+    sender.sendStatsData(testUrl)
+
+    assertThat(firstFile.exists()).isEqualTo(false)
+  }
+
 }
 
 
-fun okResponse(message: String = "") = ResponseData(200, message)
-fun failResponse(message: String = "") = ResponseData(404, message)
+fun okResponse() = ResponseData(200, "")
+fun failResponse(code: Int) = ResponseData(code, "")
