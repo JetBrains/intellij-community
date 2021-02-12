@@ -81,6 +81,7 @@ fun guessProjectForContentFile(file: VirtualFile,
 
 fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean = ProjectCoreUtil.isProjectOrWorkspaceFile(file)
 
+@Deprecated(message = "This method is an unreliable hack, find another way to locate a project instance.")
 fun guessCurrentProject(component: JComponent?): Project {
   var project: Project? = null
   if (component != null) {
