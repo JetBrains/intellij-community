@@ -216,7 +216,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
         .map { it.descriptor.run { "$className$$methodName" to displayName } }
 
       assertThat(testOperationDescriptors)
-        .contains("my.otherpack.ADisplayNamedTest\$successful_test" to "successful test")
+        .contains("my.otherpack.ADisplayNamedTest\$successful_test()" to "successful test")
     }
     else {
       assertThat(testListener.eventLog)
