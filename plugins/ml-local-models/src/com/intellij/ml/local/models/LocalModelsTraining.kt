@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 object LocalModelsTraining {
   private val LOG = logger<LocalModelsTraining>()
+  private const val FILES_CHUNK_SIZE = 100
 
   @Volatile private var isTraining = false
 
@@ -75,19 +76,22 @@ object LocalModelsTraining {
     indicator.fraction = 0.0
     val processed = AtomicInteger(0)
 
-    for (file in files) {
+    for (filesChunk in files.chunked(FILES_CHUNK_SIZE)) {
       executorService.submit {
         dumbService.runReadActionInSmartMode {
-          psiManager.findFile(file)?.let { psiFile ->
-            for (id2builder in modelBuilders) {
-              try {
-                psiFile.accept(id2builder.value.fileVisitor())
-              } catch (e: Throwable) {
-                LOG.error("Local model training error. Model: ${id2builder.key}. File: ${file.path}.", e)
+          for (file in filesChunk) {
+            psiManager.findFile(file)?.let { psiFile ->
+              for (id2builder in modelBuilders) {
+                try {
+                  psiFile.accept(id2builder.value.fileVisitor())
+                }
+                catch (e: Throwable) {
+                  LOG.error("Local model training error. Model: ${id2builder.key}. File: ${file.path}.", e)
+                }
               }
             }
+            indicator.fraction = processed.incrementAndGet().toDouble() / files.size
           }
-          indicator.fraction = processed.incrementAndGet().toDouble() / files.size
         }
       }
     }
