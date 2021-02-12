@@ -286,44 +286,63 @@ public class ClassWriter {
   }
 
   private static void writeModuleInfoBody(TextBuffer buffer, StructModuleAttribute moduleAttribute) {
-    for (StructModuleAttribute.RequiresEntry requires : moduleAttribute.requires) {
-      buffer.appendIndent(1).append("requires ").append(requires.moduleName.replace('/', '.')).append(';').appendLineSeparator();
-    }
+    boolean newLineNeeded = false;
 
-    for (StructModuleAttribute.ExportsEntry exports : moduleAttribute.exports) {
-      buffer.appendIndent(1).append("exports ").append(exports.packageName.replace('/', '.'));
-
-      List<String> exportToModules = exports.exportToModules;
-      if (exportToModules.size() > 0) {
-        buffer.append(" to").appendLineSeparator();
-        appendFQClassNames(buffer, exportToModules);
+    List<StructModuleAttribute.RequiresEntry> requiresEntries = moduleAttribute.requires;
+    if (!requiresEntries.isEmpty()) {
+      for (StructModuleAttribute.RequiresEntry requires : requiresEntries) {
+        buffer.appendIndent(1).append("requires ").append(requires.moduleName.replace('/', '.')).append(';').appendLineSeparator();
       }
-
-      buffer.append(';').appendLineSeparator();
+      newLineNeeded = true;
     }
 
-    for (StructModuleAttribute.OpensEntry opens : moduleAttribute.opens) {
-      buffer.appendIndent(1).append("opens ").append(opens.packageName.replace('/', '.'));
-
-      List<String> opensToModules = opens.opensToModules;
-      if (opensToModules.size() > 0) {
-        buffer.append(" to").appendLineSeparator();
-        appendFQClassNames(buffer, opensToModules);
+    List<StructModuleAttribute.ExportsEntry> exportsEntries = moduleAttribute.exports;
+    if (!exportsEntries.isEmpty()) {
+      if (newLineNeeded) buffer.appendLineSeparator();
+      for (StructModuleAttribute.ExportsEntry exports : exportsEntries) {
+        buffer.appendIndent(1).append("exports ").append(exports.packageName.replace('/', '.'));
+        List<String> exportToModules = exports.exportToModules;
+        if (exportToModules.size() > 0) {
+          buffer.append(" to").appendLineSeparator();
+          appendFQClassNames(buffer, exportToModules);
+        }
+        buffer.append(';').appendLineSeparator();
       }
-
-      buffer.append(';').appendLineSeparator();
+      newLineNeeded = true;
     }
 
-    for (String uses : moduleAttribute.uses) {
-      buffer.appendIndent(1).append("uses ").append(ExprProcessor.buildJavaClassName(uses)).append(';').appendLineSeparator();
+    List<StructModuleAttribute.OpensEntry> opensEntries = moduleAttribute.opens;
+    if (!opensEntries.isEmpty()) {
+      if (newLineNeeded) buffer.appendLineSeparator();
+      for (StructModuleAttribute.OpensEntry opens : opensEntries) {
+        buffer.appendIndent(1).append("opens ").append(opens.packageName.replace('/', '.'));
+        List<String> opensToModules = opens.opensToModules;
+        if (opensToModules.size() > 0) {
+          buffer.append(" to").appendLineSeparator();
+          appendFQClassNames(buffer, opensToModules);
+        }
+        buffer.append(';').appendLineSeparator();
+      }
+      newLineNeeded = true;
     }
 
-    for (StructModuleAttribute.ProvidesEntry provides : moduleAttribute.provides) {
-      buffer.appendIndent(1).append("provides ").append(ExprProcessor.buildJavaClassName(provides.interfaceName)).append(" with").appendLineSeparator();
-      @SuppressWarnings({"SSBasedInspection", "RedundantSuppression"}) List<String> javaNames =
-        provides.implementationNames.stream().map(ExprProcessor::buildJavaClassName).collect(Collectors.toList());
-      appendFQClassNames(buffer, javaNames);
-      buffer.append(';').appendLineSeparator();
+    List<String> usesEntries = moduleAttribute.uses;
+    if (!usesEntries.isEmpty()) {
+      if (newLineNeeded) buffer.appendLineSeparator();
+      for (String uses : usesEntries) {
+        buffer.appendIndent(1).append("uses ").append(ExprProcessor.buildJavaClassName(uses)).append(';').appendLineSeparator();
+      }
+      newLineNeeded = true;
+    }
+
+    List<StructModuleAttribute.ProvidesEntry> providesEntries = moduleAttribute.provides;
+    if (!providesEntries.isEmpty()) {
+      if (newLineNeeded) buffer.appendLineSeparator();
+      for (StructModuleAttribute.ProvidesEntry provides : providesEntries) {
+        buffer.appendIndent(1).append("provides ").append(ExprProcessor.buildJavaClassName(provides.interfaceName)).append(" with").appendLineSeparator();
+        appendFQClassNames(buffer, provides.implementationNames.stream().map(ExprProcessor::buildJavaClassName).collect(Collectors.toList()));
+        buffer.append(';').appendLineSeparator();
+      }
     }
   }
 
