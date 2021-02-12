@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -94,7 +95,7 @@ public final class JavaSdkImpl extends JavaSdk {
     });
   }
 
-  private void updateCache(VFileEvent event, String fileName) {
+  private void updateCache(@NotNull VFileEvent event, @NotNull String fileName) {
     if (ArchiveFileType.INSTANCE.equals(FileTypeManager.getInstance().getFileTypeByFileName(fileName))) {
       String filePath = event.getPath();
       if (myCachedSdkHomeToInfo.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
@@ -182,7 +183,8 @@ public final class JavaSdkImpl extends JavaSdk {
     return binPath + File.separator + VM_EXE_NAME;
   }
 
-  private static String getConvertedHomePath(Sdk sdk) {
+  @NotNull
+  private static String getConvertedHomePath(@NotNull Sdk sdk) {
     String homePath = sdk.getHomePath();
     assert homePath != null : sdk;
     String path = FileUtil.toSystemDependentName(homePath);
@@ -223,12 +225,12 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public boolean isValidSdkHome(String path) {
+  public boolean isValidSdkHome(@NotNull String path) {
     return JdkUtil.checkForJdk(path);
   }
 
   @Override
-  public String getInvalidHomeMessage(String path) {
+  public String getInvalidHomeMessage(@NotNull String path) {
     if (JdkUtil.checkForJre(path)) {
       return "The selected directory points to a JRE, not a JDK.\nYou can download a JDK from " + getDownloadSdkUrl();
     }
@@ -236,7 +238,7 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public @NotNull String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
+  public @NotNull String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
     var info = getInfo(sdkHome);
     if (info == null) return currentSdkName != null ? currentSdkName : "";
 
@@ -304,8 +306,9 @@ public final class JavaSdkImpl extends JavaSdk {
     if (root == null) {
       StringBuilder msg = new StringBuilder("Paths checked:\n");
       for (String path : pathsChecked) {
-        File file = new File(path), parentFile = file.getParentFile();
+        File file = new File(path);
         msg.append(path).append("; exists: ").append(file.exists());
+        File parentFile = file.getParentFile();
         if (parentFile != null) {
           msg.append("; siblings: ").append(Arrays.toString(parentFile.list())).append('\n');
         }
@@ -327,7 +330,7 @@ public final class JavaSdkImpl extends JavaSdk {
     String relPath = "java/awt/event/annotations.xml";
     VirtualFile xml = root.findFileByRelativePath(relPath);
     if (xml == null) {
-      LOG.warn("Internal JDK annotation root " + root + " seems corrupted: there's no file " + root.getPath() + '/' + relPath);
+      reportCorruptedJdkAnnotations(root, "there's no file " + root.getPath() + "/" + relPath);
       return false;
     }
     MostlySingularMultiMap<String, BaseExternalAnnotationsManager.AnnotationData> loaded =
@@ -336,8 +339,12 @@ public final class JavaSdkImpl extends JavaSdk {
     BaseExternalAnnotationsManager.AnnotationData magicAnno =
       ContainerUtil.find(data, ann -> ann.toString().equals(MagicConstant.class.getName() + "(flagsFromClass=java.awt.event.InputEvent.class)"));
     if (magicAnno != null) return true;
-    LOG.warn("Internal JDK annotation root " + root + " seems corrupted: java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: " + data);
+    reportCorruptedJdkAnnotations(root, "java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: "+data);
     return false;
+  }
+
+  private static void reportCorruptedJdkAnnotations(@NotNull VirtualFile root, @NotNull @NlsSafe String reason) {
+    LOG.warn("Internal jdk annotation root " + root + " seems corrupted: " + reason);
   }
 
   static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {

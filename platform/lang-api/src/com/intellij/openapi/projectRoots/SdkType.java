@@ -87,12 +87,12 @@ public abstract class SdkType implements SdkTypeId {
     return homePath;
   }
 
-  public abstract boolean isValidSdkHome(String path);
+  public abstract boolean isValidSdkHome(@NotNull String path);
 
   /**
    * Returns the message to be shown to the user when {@link #isValidSdkHome(String)} returned false for the path.
    */
-  public String getInvalidHomeMessage(String path) {
+  public String getInvalidHomeMessage(@NotNull String path) {
     return new File(path).isDirectory()
       ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())
       : ProjectBundle.message("sdk.configure.home.file.invalid.error", getPresentableName());
@@ -101,7 +101,8 @@ public abstract class SdkType implements SdkTypeId {
   @Override
   @Nullable
   public String getVersionString(@NotNull Sdk sdk) {
-    return getVersionString(sdk.getHomePath());
+    String homePath = sdk.getHomePath();
+    return homePath == null ? null : getVersionString(homePath);
   }
 
   @Nullable
@@ -110,7 +111,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  public abstract String suggestSdkName(@Nullable String currentSdkName, String sdkHome);
+  public abstract String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome);
 
   /**
    * Returns a comparator used to order SDKs in project or module settings combo boxes.

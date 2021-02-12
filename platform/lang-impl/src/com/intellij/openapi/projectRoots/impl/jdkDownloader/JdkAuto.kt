@@ -28,12 +28,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.File
 
 private class JdkAutoHint: BaseState() {
   val name by string()
-  val path by string()
+  val path: String? by string()
   val version by string()
 
   @get:XCollection
@@ -164,7 +165,10 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         return object : UnknownSdkLocalSdkFix, UnknownSdkFixConfigurator by JarSdkConfigurator(hint.includeJars) {
           override fun getExistingSdkHome(): String = path
           override fun getVersionString(): String = version
-          override fun getSuggestedSdkName() = sdkType.suggestSdkName(null, hint.path)
+          override fun getSuggestedSdkName(): @NotNull String {
+            val hintPath = hint.path ?: return ""
+            return sdkType.suggestSdkName(null, hintPath)
+          }
           override fun toString() = "UnknownSdkLocalSdkFix{hint $version, $path}"
         }
       }
@@ -251,7 +255,9 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           val version = runCatching { JavaVersion.tryParse(versionString) }.getOrNull() ?: continue
           val suggestedName = runCatching { JdkUtil.suggestJdkName(versionString) }.getOrNull() ?: continue
 
-          if (it !is MockSdk && runCatching { sdkType.isValidSdkHome(it.homePath) }.getOrNull() != true) continue
+          if (it !is MockSdk && runCatching {
+              val homePath = it.homePath
+              homePath != null && sdkType.isValidSdkHome(homePath) }.getOrNull() != true) continue
           if (runCatching { req.matches(it) }.getOrNull() != true) continue
 
           result += JavaLocalSdkFix(homeDir, version, suggestedName, prototype = it)

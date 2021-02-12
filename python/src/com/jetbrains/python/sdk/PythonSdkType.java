@@ -12,7 +12,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -137,7 +136,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  public boolean isValidSdkHome(@Nullable final String path) {
+  public boolean isValidSdkHome(final @NotNull String path) {
     return PythonSdkFlavor.getFlavor(path) != null;
   }
 
@@ -261,7 +260,7 @@ public final class PythonSdkType extends SdkType {
 
   @NotNull
   @Override
-  public String suggestSdkName(@Nullable final String currentSdkName, final String sdkHome) {
+  public String suggestSdkName(@Nullable final String currentSdkName, final @NotNull String sdkHome) {
     final String name = StringUtil.notNullize(suggestBaseSdkName(sdkHome), "Unknown");
     final File virtualEnvRoot = PythonSdkUtil.getVirtualEnvRoot(sdkHome);
     if (virtualEnvRoot != null) {
@@ -486,7 +485,8 @@ public final class PythonSdkType extends SdkType {
       return versionString;
     }
     else {
-      return getVersionString(sdk.getHomePath());
+      String homePath = sdk.getHomePath();
+      return homePath == null ? null : getVersionString(homePath);
     }
   }
 

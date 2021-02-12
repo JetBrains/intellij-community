@@ -203,7 +203,7 @@ public final class ExternalSystemJdkUtil {
   }
 
   @NotNull
-  public static Sdk addJdk(String homePath) {
+  public static Sdk addJdk(@NotNull String homePath) {
     ExternalSystemJdkProvider jdkProvider = ExternalSystemJdkProvider.getInstance();
     List<Sdk> sdks = Arrays.asList(ProjectJdkTable.getInstance().getAllJdks());
     String name = SdkConfigurationUtil.createUniqueSdkName(jdkProvider.getJavaSdkType(), homePath, sdks);

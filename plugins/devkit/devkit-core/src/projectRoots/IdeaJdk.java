@@ -96,7 +96,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Override
-  public boolean isValidSdkHome(String path) {
+  public boolean isValidSdkHome(@NotNull String path) {
     if (PsiUtil.isPathToIntelliJIdeaSources(path)) {
       return true;
     }
@@ -133,7 +133,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @NotNull
   @Override
-  public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
+  public String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
     if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]"; //NON-NLS
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
