@@ -22,7 +22,6 @@
     <module old-name="android-gradle-jps" new-name="intellij.android.gradle.jps" />
     <module old-name="android-jps-plugin" new-name="intellij.android.jps" />
     <module old-name="android-plugin" new-name="intellij.android.plugin" />
-    <module old-name="android-rt" new-name="intellij.android.rt" />
     <module old-name="android-test-framework" new-name="intellij.android.testFramework" />
     <module old-name="android-tests" new-name="intellij.android.tests" />
     <module old-name="android-uitests" new-name="intellij.android.guiTests" />
@@ -460,7 +459,6 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/android/resources-base/intellij.android.resources-base.tests.iml" filepath="$PROJECT_DIR$/intellij/android/resources-base/intellij.android.resources-base.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/room/intellij.android.room.iml" filepath="$PROJECT_DIR$/intellij/android/room/intellij.android.room.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/room/intellij.android.room.tests.iml" filepath="$PROJECT_DIR$/intellij/android/room/intellij.android.room.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/android/rt/intellij.android.rt.iml" filepath="$PROJECT_DIR$/intellij/android/rt/intellij.android.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/sdk-updates/intellij.android.sdkUpdates.iml" filepath="$PROJECT_DIR$/intellij/android/sdk-updates/intellij.android.sdkUpdates.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/sdk-updates/intellij.android.sdkUpdates.tests.iml" filepath="$PROJECT_DIR$/intellij/android/sdk-updates/intellij.android.sdkUpdates.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/smali/intellij.android.smali.iml" filepath="$PROJECT_DIR$/intellij/android/smali/intellij.android.smali.iml" />
