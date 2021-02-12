@@ -40,7 +40,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
 
-  private val queue = QueueProcessor<List<VirtualFile>> { files -> processFiles(files) }
+  private val queue = QueueProcessor<Collection<VirtualFile>> { files -> processFiles(files) }
 
   private val unprocessedFiles = mutableSetOf<VirtualFile>()
 
@@ -60,7 +60,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun changeListUpdateDone() {
     if (!needProcessExternalFiles()) return
 
-    val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }
+    val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toHashSet() }
 
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.removeAll(files)
