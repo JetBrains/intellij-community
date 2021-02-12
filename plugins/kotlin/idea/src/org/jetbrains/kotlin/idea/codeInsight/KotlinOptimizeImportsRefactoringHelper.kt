@@ -6,12 +6,13 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -30,25 +31,26 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
     internal open class CollectUnusedImportsTask(
         project: Project,
-        private val dumbService: DumbService,
         private val unusedImports: MutableSet<SmartPsiElementPointer<KtImportDirective>>,
         private val operationData: Set<KtFile>
-    ) : Task.Backgroundable(project, COLLECT_UNUSED_IMPORTS_TITLE, false) {
+    ) : Task.Backgroundable(project, COLLECT_UNUSED_IMPORTS_TITLE, true) {
 
         override fun run(indicator: ProgressIndicator) {
             indicator.isIndeterminate = false
 
             val myTotalCount = operationData.size
             for ((counter, file) in operationData.withIndex()) {
-                indicator.fraction = counter.toDouble() / myTotalCount
+                ReadAction.nonBlocking {
+                    val virtualFile = file.virtualFile?.takeIf { file.isValid } ?: return@nonBlocking
 
-                dumbService.runReadActionInSmartMode {
-                    if (!file.isValid) return@runReadActionInSmartMode
-                    val virtualFile = file.virtualFile ?: return@runReadActionInSmartMode
-
+                    indicator.fraction = counter.toDouble() / myTotalCount
                     indicator.text2 = virtualFile.presentableUrl
                     KotlinUnusedImportInspection.analyzeImports(file)?.unusedImports?.mapTo(unusedImports) { it.createSmartPointer() }
                 }
+                    .inSmartMode(project)
+                    .wrapProgress(indicator)
+                    .expireWhen { !file.isValid || Disposer.isDisposed(project) }
+                    .executeSynchronously()
             }
         }
     }
@@ -106,9 +108,7 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
 
         val progressManager = ProgressManager.getInstance()
 
-        val dumbService = DumbService.getInstance(project)
-
-        val collectTask = object : CollectUnusedImportsTask(project, dumbService, unusedImports, operationData) {
+        val collectTask = object : CollectUnusedImportsTask(project, unusedImports, operationData) {
             override fun onSuccess() {
                 val progressTask = OptimizeImportsTask(project, unusedImports)
                 progressManager.run(progressTask)
