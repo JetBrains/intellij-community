@@ -91,7 +91,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     if (foregroundColor != null) {
       myDataStream.append((char)CharUtils.ESC + "[39m"); //restore default foreground color
     }
-    myContentHelper.onContentTypePrinted(ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT));
+    myContentHelper.onContentTypePrinted(text, ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT));
   }
 
   @Override
