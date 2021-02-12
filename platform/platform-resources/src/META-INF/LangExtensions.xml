@@ -1376,12 +1376,6 @@
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.PatternDescriptor$Factory"/>
 
-    <fileBasedIndexLayout id="mv-store"
-                          presentableNameKey="mv.store.storage.presentable.name"
-                          bundleName="messages.LangBundle"
-                          providerClass="com.intellij.util.indexing.impl.storage.mvstore.MVStoreForwardIndexStorageLayoutProvider"
-                          version="0"/>
-
     <fileBasedIndexLayout id="in-memory"
                           presentableNameKey="in.memory.storage.presentable.name"
                           bundleName="messages.LangBundle"
