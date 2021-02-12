@@ -209,18 +209,9 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
     }
   }
 
-  /**
-   * @deprecated use {@link #getRunProfile(ExecutionEnvironment)}
-   */
-  @Deprecated
-  public MyRunProfile getRunProfile() {
-    return null;
-  }
-
   @Nullable
   protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
-    //noinspection deprecation
-    return getRunProfile();
+    return null;
   }
 
   @Nullable

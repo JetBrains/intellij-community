@@ -141,14 +141,6 @@ public class IndentHelperImpl extends IndentHelper {
     return buffer.toString();
   }
 
-  /**
-   * @deprecated Do not use the implementation, see {@link IndentHelper}
-   */
-  @Deprecated
-  public static int getIndent(Project project, FileType fileType, String text, boolean includeNonSpace) {
-    return getIndent(CodeStyle.getSettings(project).getIndentOptions(fileType), text, includeNonSpace);
-  }
-
   public static int getIndent(@NotNull PsiFile file, String text, boolean includeNonSpace) {
     return getIndent(CodeStyle.getIndentOptions(file), text, includeNonSpace);
   }

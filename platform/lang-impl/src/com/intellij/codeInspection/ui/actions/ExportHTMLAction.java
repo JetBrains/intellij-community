@@ -119,14 +119,6 @@ public final class ExportHTMLAction extends AnAction implements DumbAware {
     }, myView.getProject().getDisposed());
   }
 
-  /**
-   * @deprecated Use {@link #dumpToXml}
-   */
-  @Deprecated
-  public static void dump2xml(@NotNull Path outputDirectory, @NotNull InspectionResultsView view) throws IOException {
-    dumpToXml(outputDirectory, view);
-  }
-
   public static void dumpToXml(@NotNull Path outputDirectory, @NotNull InspectionResultsView view) throws IOException {
     InspectionProfileImpl profile = view.getCurrentProfile();
     String singleTool = profile.getSingleTool();

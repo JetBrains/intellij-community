@@ -49,11 +49,6 @@ import java.util.function.Function;
  * @author Denis Zhdanov
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
-  /**
-   * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getEnabledCustomization()} instead
-   */
-  @Deprecated public static final SpellCheckingEditorCustomization ENABLED =
-    (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
 
   /**
    * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getDisabledCustomization()} instead

@@ -43,14 +43,6 @@ public class JBUI {
   }
 
   /**
-   * @deprecated use {@link JBUIScale#sysScale(Graphics2D)}
-   */
-  @Deprecated
-  public static float sysScale(@Nullable Graphics2D g) {
-    return JBUIScale.sysScale(g);
-  }
-
-  /**
    * Returns the pixel scale factor, corresponding to the default monitor device.
    */
   public static float pixScale() {
@@ -718,15 +710,6 @@ public class JBUI {
       @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       public static int tabVerticalPadding() {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
-      }
-
-      /**
-       * @deprecated obsolete UI
-       */
-      @NotNull
-      @Deprecated
-      public static Border tabBorder() {
-        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(1));
       }
 
       public static int underlineHeight() {

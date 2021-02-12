@@ -45,14 +45,6 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setInnerInsets(Insets innerInsets);
 
-  /**
-   * @deprecated This logic is no longer supported, please remove calls of this method
-   */
-  @Deprecated
-  default JBTabsPresentation setGhostsAlwaysVisible(boolean visible) {
-    return this;
-  }
-
   JBTabsPresentation setFocusCycle(final boolean root);
 
   @NotNull

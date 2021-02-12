@@ -3082,11 +3082,6 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  @Deprecated
-  public int getInterTabSpaceLength() {
-    return getTabHGap();
-  }
-
   public int getTabHGap() {
     return -myBorder.getThickness();
   }

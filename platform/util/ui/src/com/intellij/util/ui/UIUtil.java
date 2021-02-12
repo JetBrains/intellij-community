@@ -1601,14 +1601,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Use {@link ImageUtil#createImage(Graphics, int, int, int)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImage(Graphics g, int width, int height, int type) {
-    return ImageUtil.createImage(g, width, height, type);
-  }
-
-  /**
    * Creates a HiDPI-aware BufferedImage in the component scale.
    *
    * @param component the component associated with the target graphics device
