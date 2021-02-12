@@ -14,6 +14,7 @@ import org.jdom.JDOMException
 import org.jdom.Parent
 import org.jdom.input.SAXBuilder
 import org.jdom.input.sax.SAXHandler
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
@@ -42,14 +43,17 @@ fun Parent.write(output: OutputStream, lineSeparator: String = "\n") {
 
 @Throws(IOException::class, JDOMException::class)
 @Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(reader)", "com.intellij.openapi.util.JDOMUtil"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 fun loadElement(reader: Reader): Element = JDOMUtil.load(reader)
 
 @Throws(IOException::class, JDOMException::class)
 @Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(stream)", "com.intellij.openapi.util.JDOMUtil"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 fun loadElement(stream: InputStream): Element = JDOMUtil.load(stream)
 
 @Throws(IOException::class, JDOMException::class)
 @Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(path)", "com.intellij.openapi.util.JDOMUtil"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 fun loadElement(path: Path): Element = JDOMUtil.load(path)
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)

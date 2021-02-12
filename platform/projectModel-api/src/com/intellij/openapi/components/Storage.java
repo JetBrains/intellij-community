@@ -18,6 +18,7 @@ public @interface Storage {
    * @deprecated Use {@link #value()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String file() default "";
 
   /**

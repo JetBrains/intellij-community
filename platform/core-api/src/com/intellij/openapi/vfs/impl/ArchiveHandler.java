@@ -11,6 +11,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.ByteArrayCharSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -287,6 +288,7 @@ public abstract class ArchiveHandler {
 
   /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected @NotNull Pair<String, String> splitPath(@NotNull String entryName) {
     return split(entryName);
   }

@@ -606,6 +606,7 @@ public abstract class DialogWrapper {
    * @deprecated Do not use. Always returns false
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isTypeAheadEnabled() {
       return false;
   }
@@ -1499,6 +1500,7 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
 
   /** @deprecated button margins aren't used anymore. Button style is standardized. */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void setButtonsMargin(@SuppressWarnings("unused") Insets insets) { }
 
   public final void setCrossClosesWindow(boolean crossClosesWindow) {
@@ -1507,6 +1509,7 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
 
   /** @deprecated button icons aren't used anymore (except "OK" action). Button style is standardized. */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected final void setCancelButtonIcon(@SuppressWarnings("unused") Icon icon) { }
 
   protected final void setCancelButtonText(@NlsContexts.Button @NotNull String text) {

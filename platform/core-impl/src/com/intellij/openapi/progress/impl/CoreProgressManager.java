@@ -981,6 +981,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   protected static class TaskRunnable extends TaskContainer {
     private final ProgressIndicator myIndicator;
     private final Runnable myContinuation;

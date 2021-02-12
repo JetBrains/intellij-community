@@ -2,6 +2,7 @@
 package com.intellij.openapi.options
 
 import com.intellij.openapi.extensions.PluginDescriptor
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.function.Predicate
 
@@ -27,6 +28,7 @@ abstract class SchemeManager<T> {
   abstract fun reload()
 
   @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
     @Suppress("UNCHECKED_CAST")
     addScheme(scheme as T, replaceExisting)

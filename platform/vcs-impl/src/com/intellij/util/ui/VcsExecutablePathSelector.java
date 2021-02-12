@@ -14,6 +14,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ public class VcsExecutablePathSelector {
   @NotNull private String myAutoDetectedPath = "";
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public VcsExecutablePathSelector(@NotNull @Nls String vcsName, @NotNull Consumer<String> executableTester) {
     this(vcsName, null, (path) -> executableTester.accept(path));
   }

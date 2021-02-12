@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowEP;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated {@link ToolWindowEP#conditionClass} has been deprecated, use {@link AbstractExternalSystemToolWindowFactory#isApplicable(Project)} instead.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class AbstractExternalSystemToolWindowCondition implements Condition<Project> {
 
   @NotNull private final ProjectSystemId myExternalSystemId;

@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -21,6 +22,7 @@ public final class TreeNodeTester {
    * @deprecated use {@link com.intellij.ui.tree.TreeTestUtil#TreeTestUtil(JTree)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static TreeNodeTester forTree(JTree tree) {
     return forNode((TreeNode)tree.getModel().getRoot());
   }

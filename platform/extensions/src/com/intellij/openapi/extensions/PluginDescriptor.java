@@ -49,6 +49,7 @@ public interface PluginDescriptor {
    * @deprecated Do not use.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default PluginId @NotNull [] getDependentPluginIds() {
     return PluginId.EMPTY_ARRAY;
   }

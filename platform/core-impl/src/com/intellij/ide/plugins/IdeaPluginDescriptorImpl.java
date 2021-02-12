@@ -770,6 +770,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
    * @deprecated Do not use. If you want to get class loader for own plugin, just use your current class's class loader.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public @NotNull List<File> getClassPath() {
     File path = this.path.toFile();
     if (!path.isDirectory()) {

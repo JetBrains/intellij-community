@@ -25,10 +25,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -827,6 +824,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
      * @deprecated use {@linkplain #ShowContainersAction(Supplier, Icon)} instead
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     public ShowContainersAction(@NlsActions.ActionText String text, final Icon icon) {
       this(() -> text, icon);
     }

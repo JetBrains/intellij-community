@@ -39,6 +39,7 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Rectangle
@@ -195,6 +196,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   @Deprecated(message = "Do not use.", level = DeprecationLevel.ERROR)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   fun getContentUI() = contentUi
 
   override fun getDisposable() = parentDisposable
@@ -506,6 +508,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use. Tool window content will be initialized automatically.", level = DeprecationLevel.ERROR)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun ensureContentInitialized() {
     createContentIfNeeded()
   }

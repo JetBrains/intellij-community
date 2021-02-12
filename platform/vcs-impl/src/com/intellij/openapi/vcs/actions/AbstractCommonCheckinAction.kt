@@ -19,6 +19,7 @@ import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.removeEllipsisSuffix
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -85,6 +86,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
   }
 
   @Deprecated("getActionName() will be used instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected open fun getMnemonicsFreeActionName(context: VcsContext): String? = null
 
   protected abstract fun getRoots(dataContext: VcsContext): Array<FilePath>

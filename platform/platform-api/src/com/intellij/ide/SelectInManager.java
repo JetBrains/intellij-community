@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ public final class SelectInManager  {
   /**
    * @deprecated Use {@link #getProject()} instead
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NonNls public static final String PROJECT = getProject();
 
   public SelectInManager(@NotNull Project project) {
@@ -31,6 +32,7 @@ public final class SelectInManager  {
    * @deprecated targets should be registered as extension points ({@link SelectInTarget#EP_NAME}).
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addTarget(SelectInTarget target) {
     myTargets.addExplicitExtension(target);
   }

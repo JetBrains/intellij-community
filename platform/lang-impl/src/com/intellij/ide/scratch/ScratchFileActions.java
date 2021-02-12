@@ -28,10 +28,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.LinkedHashSet;
@@ -252,6 +249,7 @@ public final class ScratchFileActions {
      * @deprecated use internationalized string instead.
      */
     @NotNull @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     protected String getLanguageTerm() {
       return "Language"; //NON-NLS
     }

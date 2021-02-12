@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,6 +101,7 @@ public interface FoldingModel {
    * after the operation. Use {@link #runBatchFoldingOperation(Runnable)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion);
 
   default void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {

@@ -43,6 +43,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.*;
 import kotlin.sequences.SequencesKt;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -540,9 +541,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @SuppressWarnings("unused")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setCommitMessage(@Nullable String commitMessage) {}
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public String getCommitMessage() {
     return myCommitMessageArea.getText();

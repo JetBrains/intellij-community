@@ -99,6 +99,7 @@ public final class StartupUtil {
   // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
   @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static synchronized @Nullable BuiltInServer getServer() {
     return ourSocketLock == null ? null : ourSocketLock.getServer();
   }

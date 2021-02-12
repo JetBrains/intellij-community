@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -18,6 +19,7 @@ public final class CodeInsightWorkspaceSettings extends SimpleModificationTracke
    */
   @OptionTag
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public boolean optimizeImportsOnTheFly;
 
   public static CodeInsightWorkspaceSettings getInstance(@NotNull Project project) {

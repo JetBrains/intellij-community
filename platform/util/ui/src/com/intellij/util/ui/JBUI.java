@@ -37,6 +37,7 @@ public class JBUI {
    * @deprecated use {@link JBUIScale#sysScale()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static float sysScale() {
     return JBUIScale.sysScale();
   }
@@ -208,6 +209,7 @@ public class JBUI {
    * @deprecated use {@link JBUIScale#isUsrHiDPI()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean isHiDPI() {
     return JBUIScale.isUsrHiDPI();
   }
@@ -660,6 +662,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       @NotNull
       public static Color tabSelectedBackground() {
         return Registry.is("toolwindow.active.tab.use.contrast.background")
@@ -672,6 +675,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       @NotNull
       public static Color tabHoveredBackground() {
         return hoverInactiveBackground();
@@ -681,6 +685,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       @NotNull
       public static Color tabHoveredBackground(boolean active) {
         return active ? hoverBackground() : hoverInactiveBackground();
@@ -710,6 +715,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       public static int tabVerticalPadding() {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
       }

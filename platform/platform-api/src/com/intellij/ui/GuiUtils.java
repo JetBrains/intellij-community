@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AWTAccessor;
@@ -63,6 +64,7 @@ public final class GuiUtils {
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static JPanel constructDirectoryBrowserField(final JTextField field, final String objectName) {
     return constructFieldWithBrowseButton(field, new ActionListener() {
       @SuppressWarnings("HardCodedStringLiteral")
@@ -79,6 +81,7 @@ public final class GuiUtils {
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static JPanel makeTitledPanel(JComponent aComponent, @NlsContexts.BorderTitle String aTitle) {
     JPanel result = makePaddedPanel(aComponent, false, true, false, true);
     return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle));
@@ -92,11 +95,13 @@ public final class GuiUtils {
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static BorderLayout createBorderLayout() {
     return new BorderLayout(paddingInsideDialog.left, paddingInsideDialog.top);
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static GridLayout createGridLayout(int aRows, int aColumns) {
     return new GridLayout(aRows, aColumns, paddingInsideDialog.left, paddingInsideDialog.top);
   }
@@ -273,6 +278,7 @@ public final class GuiUtils {
    */
   @SuppressWarnings("RedundantThrows")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void runOrInvokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
     ApplicationManager.getApplication().invokeAndWait(runnable);
   }

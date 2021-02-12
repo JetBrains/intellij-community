@@ -2,6 +2,7 @@
 package com.intellij.util.io
 
 import com.intellij.util.lazyPub
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.math.BigInteger
@@ -50,6 +51,7 @@ object DigestUtil {
                         "Implement the hashing yourself. " +
                         "Also make sure that you create new or reset the MessageDigest")
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   fun calculateContentHash(digest: MessageDigest, bytes: ByteArray): ByteArray {
     // Preserve contract compatibility: make sure the digest is reset.
     val resetDigest = digest.cloneDigest()

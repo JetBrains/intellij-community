@@ -3,6 +3,7 @@ package com.intellij.lang;
 
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Defines the standard languages supported by IDEA.
@@ -15,14 +16,16 @@ public final class StdLanguages {
    *
    * @deprecated use {@linkplain com.intellij.lang.java.JavaLanguage#INSTANCE} instead.
    */
-  @Deprecated public static final Language JAVA = StdFileTypes.JAVA.getLanguage();
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final Language JAVA = StdFileTypes.JAVA.getLanguage();
 
   /**
    * The definition for the DTD language.
    *
    * @deprecated use {@linkplain com.intellij.lang.dtd.DTDLanguage#INSTANCE} instead.
    */
-  @Deprecated public static final Language DTD = StdFileTypes.DTD.getLanguage();
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  public static final Language DTD = StdFileTypes.DTD.getLanguage();
 
   /**
    * The definition for the XML language.
@@ -36,14 +39,16 @@ public final class StdLanguages {
    *
    * @deprecated use {@linkplain com.intellij.lang.html.HTMLLanguage#INSTANCE} instead.
    */
-  @Deprecated public static final Language HTML = StdFileTypes.HTML.getLanguage();
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final Language HTML = StdFileTypes.HTML.getLanguage();
 
   /**
    * The definition for the Text language
    *
    * @deprecated use {@linkplain com.intellij.openapi.fileTypes.PlainTextLanguage#INSTANCE} instead.
    */
-  @Deprecated public static final Language TEXT = FileTypes.PLAIN_TEXT.getLanguage();
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final Language TEXT = FileTypes.PLAIN_TEXT.getLanguage();
 
   private StdLanguages() { }
 }

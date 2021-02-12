@@ -203,6 +203,7 @@ public final class ExternalSystemUtil {
    * @deprecated use {@link  ExternalSystemUtil#refreshProjects(ImportSpecBuilder)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force) {
     refreshProjects(project, externalSystemId, force, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
   }
@@ -218,6 +219,7 @@ public final class ExternalSystemUtil {
    * @deprecated use {@link  ExternalSystemUtil#refreshProjects(ImportSpecBuilder)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void refreshProjects(@NotNull final Project project,
                                      @NotNull final ProjectSystemId externalSystemId,
                                      boolean force,

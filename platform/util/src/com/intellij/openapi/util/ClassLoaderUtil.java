@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public final class ClassLoaderUtil {
 
   /** @deprecated Use {@link ClassLoaderUtil#computeWithClassLoader(ClassLoader, ThrowableComputable)} instead. */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <T> T runWithClassLoader(ClassLoader classLoader, Computable<T> computable) {
     return computeWithClassLoader(classLoader, () -> computable.compute());
   }

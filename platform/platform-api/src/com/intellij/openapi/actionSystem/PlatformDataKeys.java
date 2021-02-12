@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.util.Comparator;
@@ -117,5 +118,6 @@ public class PlatformDataKeys extends CommonDataKeys {
    * @deprecated use {@link ActionPromoter}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
 }

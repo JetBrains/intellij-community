@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
@@ -9,6 +10,7 @@ import java.nio.charset.StandardCharsets;
  * @deprecated Please use {@link java.util.Base64} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public final class Base64Converter {
   private static final char[] alphabet = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',   //  0 to  7

@@ -161,12 +161,14 @@ public abstract class ActionManager {
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addAnActionListener(AnActionListener listener);
 
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addAnActionListener(AnActionListener listener, Disposable parentDisposable) {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, listener);
   }
@@ -175,6 +177,7 @@ public abstract class ActionManager {
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeAnActionListener(AnActionListener listener);
 
   @Nullable

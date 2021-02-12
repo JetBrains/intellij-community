@@ -23,7 +23,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   };
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
 
   protected static final Icon ourNotCurrentAction = IconLoader.createLazy(() -> {

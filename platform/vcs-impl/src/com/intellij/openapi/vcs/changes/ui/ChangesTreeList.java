@@ -55,7 +55,7 @@ public abstract class ChangesTreeList<T> extends ChangesTree {
    */
   @SuppressWarnings("unused")
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void setScrollPaneBorder(Border border) {
   }
 

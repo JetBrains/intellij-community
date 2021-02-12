@@ -328,6 +328,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
    * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder, boolean)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void installSpeedSearch(PopupChooserBuilder<?> builder, boolean includeContainerText) {
     installSpeedSearch((IPopupChooserBuilder)builder, includeContainerText);
   }

@@ -4,6 +4,7 @@ package com.intellij.util.text;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,7 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
    * @deprecated use {@link #convertToBytesIfPossible(CharSequence)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
     return convertToBytesIfPossible(name);

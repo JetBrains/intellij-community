@@ -175,6 +175,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
    * @deprecated unused
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected final void fireTreeChangeListener() {
   }
 
@@ -471,6 +472,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   /** @deprecated use {@link AbstractProjectViewPane#getValueFromNode(Object)} **/
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected Object exhumeElementFromNode(DefaultMutableTreeNode node) {
     return getValueFromNode(node);
   }

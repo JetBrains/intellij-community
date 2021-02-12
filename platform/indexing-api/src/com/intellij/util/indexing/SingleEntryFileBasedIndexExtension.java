@@ -63,6 +63,7 @@ public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedInd
    * Use {@link FileBasedIndex#getFileData(ID, VirtualFile, Project)} instead for index queries.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static int getFileKey(@NotNull VirtualFile file) {
     return Math.abs(FileBasedIndex.getFileId(file));
   }

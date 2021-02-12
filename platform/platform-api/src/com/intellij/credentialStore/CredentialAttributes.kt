@@ -4,6 +4,7 @@ package com.intellij.credentialStore
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
@@ -64,6 +65,7 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
 
 /** @deprecated Use [CredentialAttributes] instead. */
 @Deprecated("Never use it in a new code.")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 

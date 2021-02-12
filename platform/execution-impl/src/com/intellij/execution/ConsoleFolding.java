@@ -4,6 +4,7 @@ package com.intellij.execution;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,7 @@ public abstract class ConsoleFolding {
    * @deprecated since 2018.1. Use {@link #shouldFoldLine(Project, String)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean shouldFoldLine(@SuppressWarnings("unused") @NotNull String line) { return false; }
 
   /**
@@ -65,6 +67,7 @@ public abstract class ConsoleFolding {
    * @deprecated since 2018.1. Use {@link #getPlaceholderText(Project, List)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public String getPlaceholderText(@SuppressWarnings("unused") @NotNull List<String> lines) { return null; }
 }

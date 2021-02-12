@@ -75,6 +75,7 @@ public abstract class ProjectJdkTable {
    * @deprecated Use {@link Listener} directly.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static class Adapter implements Listener {
   }
 

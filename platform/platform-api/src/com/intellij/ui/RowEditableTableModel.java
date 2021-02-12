@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import javax.swing.table.TableModel;
 
 /**
@@ -23,6 +25,7 @@ import javax.swing.table.TableModel;
  * @deprecated use {@link com.intellij.util.ui.EditableModel}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public interface RowEditableTableModel extends TableModel {
   void addRow();
 

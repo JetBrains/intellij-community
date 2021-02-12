@@ -46,6 +46,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Useless.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementationIfAbsent) {
     T component = getComponent(interfaceClass);
     return component == null ? defaultImplementationIfAbsent : component;

@@ -27,6 +27,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -254,6 +255,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public synchronized LinkedHashSet<VirtualFile> getFileSet() {
     return new LinkedHashSet<>(getFileList());
   }

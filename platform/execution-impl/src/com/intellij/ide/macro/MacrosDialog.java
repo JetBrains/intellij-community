@@ -22,6 +22,7 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -328,6 +329,7 @@ public final class MacrosDialog extends DialogWrapper {
    * @deprecated Doesn't support user-defined path macros, use {@link #getSelectedMacroName()} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public Macro getSelectedMacro() {
     final Item item = myMacrosList.getSelectedValue();
     if (item instanceof MacroWrapper) {

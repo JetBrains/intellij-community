@@ -84,6 +84,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @deprecated See {@link #CodeStyleSettings()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public CodeStyleSettings(boolean loadExtensions) {
     this(loadExtensions, true);
   }
@@ -211,9 +212,11 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public String FIELD_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#STATIC_FIELD_NAME_PREFIX} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String STATIC_FIELD_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PARAMETER_NAME_PREFIX} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String PARAMETER_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_PREFIX} */
   @Deprecated
@@ -221,12 +224,15 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#FIELD_NAME_SUFFIX} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String FIELD_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#STATIC_FIELD_NAME_SUFFIX} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String STATIC_FIELD_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PARAMETER_NAME_SUFFIX} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String PARAMETER_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_SUFFIX} */
   @Deprecated
@@ -239,6 +245,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 //----------------- 'final' modifier settings -------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_LOCALS} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean GENERATE_FINAL_LOCALS;
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_PARAMETERS} */
   @Deprecated
@@ -260,11 +267,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public boolean USE_EXTERNAL_ANNOTATIONS;
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#INSERT_OVERRIDE_ANNOTATION} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
 //----------------- override -------------------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#REPEAT_SYNCHRONIZED} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean REPEAT_SYNCHRONIZED = true;
 
   private final List<String> myRepeatAnnotations = new ArrayList<>();
@@ -287,6 +296,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LAYOUT_STATIC_IMPORTS_SEPARATELY} */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_FQ_CLASS_NAMES} */
@@ -307,20 +317,24 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PACKAGES_TO_USE_IMPORT_ON_DEMAND */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#IMPORT_LAYOUT_TABLE */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#isLayoutStaticImportsSeparately()} */
@@ -425,13 +439,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
 // region ORDER OF MEMBERS
 
-  @Deprecated public int STATIC_FIELDS_ORDER_WEIGHT = 1;
-  @Deprecated public int FIELDS_ORDER_WEIGHT = 2;
-  @Deprecated public int CONSTRUCTORS_ORDER_WEIGHT = 3;
-  @Deprecated public int STATIC_METHODS_ORDER_WEIGHT = 4;
-  @Deprecated public int METHODS_ORDER_WEIGHT = 5;
-  @Deprecated public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
-  @Deprecated public int INNER_CLASSES_ORDER_WEIGHT = 7;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int STATIC_FIELDS_ORDER_WEIGHT = 1;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int FIELDS_ORDER_WEIGHT = 2;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int CONSTRUCTORS_ORDER_WEIGHT = 3;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int STATIC_METHODS_ORDER_WEIGHT = 4;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int METHODS_ORDER_WEIGHT = 5;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
 // endregion
 

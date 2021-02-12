@@ -22,6 +22,7 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
    * @deprecated Use {{@link #registerToolWindow(RegisterToolWindowTask)}}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void initToolWindow(@NotNull ToolWindowEP bean);
 
   @ApiStatus.Internal
@@ -35,6 +36,7 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
    * @deprecated Use {@link ToolWindowManagerListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
   }
 
@@ -42,6 +44,7 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
    * @deprecated Use {@link ToolWindowManagerListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener, @NotNull Disposable parentDisposable) {
   }
 
@@ -49,6 +52,7 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
    * @deprecated Use {@link ToolWindowManagerListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
   }
 

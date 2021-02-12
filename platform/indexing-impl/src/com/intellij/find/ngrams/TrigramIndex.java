@@ -12,6 +12,7 @@ import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -29,6 +30,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
    * @deprecated not used anymore, always enabled
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final boolean ENABLED = true;
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");

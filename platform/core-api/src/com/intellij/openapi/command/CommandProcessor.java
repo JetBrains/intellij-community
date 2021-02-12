@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,6 +103,7 @@ public abstract class CommandProcessor {
    * @deprecated use {@link CommandListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addCommandListener(@NotNull CommandListener listener, @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(CommandListener.TOPIC, listener);
   }
@@ -110,5 +112,6 @@ public abstract class CommandProcessor {
    * @deprecated use {@link CommandListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeCommandListener(@NotNull CommandListener listener);
 }

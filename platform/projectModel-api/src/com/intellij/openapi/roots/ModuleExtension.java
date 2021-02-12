@@ -34,6 +34,7 @@ public abstract class ModuleExtension implements Disposable {
    * @deprecated don't enumerate extensions in the plugin, use {@link ModuleRootModel#getModuleExtension(Class)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final ExtensionPointName<ModuleExtension> EP_NAME = ExtensionPointName.create("com.intellij.moduleExtension");
 
   /**
@@ -68,6 +69,7 @@ public abstract class ModuleExtension implements Disposable {
    * @deprecated Please implement PersistentStateComponent instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void readExternal(@NotNull Element element) {
     throw new UnsupportedOperationException("Implement PersistentStateComponent");
   }
@@ -76,6 +78,7 @@ public abstract class ModuleExtension implements Disposable {
    * @deprecated Please implement PersistentStateComponent instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void writeExternal(@NotNull Element element) {
     throw new UnsupportedOperationException("Implement PersistentStateComponent");
   }

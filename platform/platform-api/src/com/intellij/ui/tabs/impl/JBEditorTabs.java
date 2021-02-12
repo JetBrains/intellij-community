@@ -12,6 +12,7 @@ import com.intellij.ui.tabs.JBTabsPresentation;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
    * @deprecated use {@link #myTabPainter}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
 
   private boolean myAlphabeticalModeChanged = false;
@@ -97,6 +99,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
    * @deprecated You should move the painting logic to an implementation of {@link JBTabPainter} interface
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected Color getEmptySpaceColor() {
     return myTabPainter.getBackgroundColor();
   }

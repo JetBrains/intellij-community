@@ -77,6 +77,7 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
    * it's impossible to tell if a highlighter should be rendered in a scroll bar since an editor can have a custom color scheme
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   default boolean isRenderedInScrollBar() {
     return getErrorStripeMarkColor(null) != null;
   }

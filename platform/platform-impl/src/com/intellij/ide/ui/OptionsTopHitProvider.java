@@ -38,6 +38,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
    * ConfigurableOptionsTopHitProvider will be refactored later.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract @NotNull Collection<OptionDescription> getOptions(@Nullable Project project);
 
   private static @NotNull Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,

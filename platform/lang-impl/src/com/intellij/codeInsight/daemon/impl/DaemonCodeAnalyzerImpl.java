@@ -999,6 +999,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    */
   @Deprecated
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(boolean flag) {
     serializeCodeInsightPasses(flag);
   }

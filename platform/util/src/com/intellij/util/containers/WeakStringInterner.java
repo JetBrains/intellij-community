@@ -2,6 +2,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Allow to reuse equal strings to avoid memory being wasted on them. Strings are cached on weak references
@@ -12,6 +13,7 @@ import com.intellij.util.DeprecatedMethodException;
  * @deprecated Use {@link Interner#createWeakInterner()}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public class WeakStringInterner extends WeakInterner<String> {
   public WeakStringInterner() {
     DeprecatedMethodException.report("Use Interner#createWeakInterner() instead");

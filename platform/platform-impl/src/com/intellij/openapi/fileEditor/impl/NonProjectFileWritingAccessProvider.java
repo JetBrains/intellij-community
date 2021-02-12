@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -159,6 +160,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
    * @deprecated use {@link #allowWriting(Iterable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void allowWriting(VirtualFile... allowedFiles) {
     allowWriting(Arrays.asList(allowedFiles));
   }

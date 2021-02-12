@@ -42,6 +42,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -228,6 +229,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated Do not pass ActionManager.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public JBTabsImpl(@Nullable Project project, @SuppressWarnings("unused") @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     this(project, focusManager, parent);
   }
@@ -1890,6 +1892,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated You should implement {@link JBTabsBorder} interface
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
   }
 
@@ -3552,6 +3555,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated unused. You should move the painting logic to an implementation of {@link JBTabPainter} interface }
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public int getActiveTabUnderlineHeight() {
     return 0;
   }
@@ -3560,6 +3564,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated Not used.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void dispose() {
   }
 
@@ -3567,6 +3572,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated unused in current realization.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected static class ShapeInfo {
     public ShapeInfo() {
     }

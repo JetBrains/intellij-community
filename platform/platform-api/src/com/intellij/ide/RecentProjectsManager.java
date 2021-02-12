@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -44,6 +45,7 @@ public abstract class RecentProjectsManager {
    * @deprecated Use {@link RecentProjectListActionProvider#getActions}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public AnAction @NotNull [] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
     return getRecentProjectsActions(addClearListItem);
   }

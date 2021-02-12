@@ -1532,6 +1532,7 @@ public final class PluginManagerCore {
 
   /** @deprecated Use {@link #enablePlugin(PluginId)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean enablePlugin(@NotNull String id) {
     return enablePlugin(PluginId.getId(id));
   }

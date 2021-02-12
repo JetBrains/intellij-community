@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ public interface IgnoredFileDescriptor {
    * @deprecated use {@link #matchesFile(FilePath)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   boolean matchesFile(@NotNull VirtualFile file);
 
   boolean matchesFile(@NotNull FilePath filePath);

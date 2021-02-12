@@ -34,6 +34,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
    * @deprecated Pass {@code projectName} using {@link OpenProjectTask#projectName}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final @Nullable Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options) {
     return newProject(file, projectName == null ? options : options.withProjectName(projectName));
   }
@@ -47,6 +48,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
    * @deprecated Use {@link #openProject(Path, OpenProjectTask)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final @NotNull Project loadProject(@NotNull String filePath) {
     return loadProject(Paths.get(filePath).toAbsolutePath());
   }

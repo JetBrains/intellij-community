@@ -19,6 +19,7 @@ import com.intellij.util.Url;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +87,7 @@ public final class HttpRequests {
 
     /** @deprecated Called automatically on open connection. Use {@link RequestBuilder#tryConnect()} to get response code */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     boolean isSuccessful() throws IOException;
 
     @NotNull File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;

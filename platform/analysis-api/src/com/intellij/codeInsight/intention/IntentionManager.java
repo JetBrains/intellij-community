@@ -66,6 +66,7 @@ public abstract class IntentionManager  {
    * @deprecated Use {@link #getAvailableIntentions()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final IntentionAction @NotNull [] getAvailableIntentionActions() {
     return getAvailableIntentions().toArray(IntentionAction.EMPTY_ARRAY);
   }

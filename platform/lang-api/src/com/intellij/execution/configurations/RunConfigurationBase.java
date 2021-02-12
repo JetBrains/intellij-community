@@ -351,6 +351,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
    * @deprecated Not used anymore.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected boolean isNewSerializationUsed() {
     return false;
   }

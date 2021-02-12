@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * ensure you comply with the contract from its documentation.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public final class DummyFileIdGenerator {
   private static final Logger LOG = Logger.getInstance(DummyFileIdGenerator.class);
   private static final AtomicInteger ourId = new AtomicInteger(Integer.MAX_VALUE / 2);

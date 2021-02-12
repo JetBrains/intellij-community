@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ public interface UsageView extends Disposable {
    * @deprecated please specify mnemonic by prefixing the mnemonic character with an ampersand (&& for Mac-specific ampersands)
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text, char mnemonic);
   void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text);
   void addButtonToLowerPane(@NotNull Action action);
@@ -53,6 +55,7 @@ public interface UsageView extends Disposable {
    * @deprecated see {@link UsageView#setRerunAction(Action)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void setReRunActivity(@NotNull Runnable runnable) {}
 
   /**

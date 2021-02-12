@@ -4,6 +4,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ public abstract class RunManagerEx extends RunManager {
    * @deprecated Use {@link #setSelectedConfiguration(RunnerAndConfigurationSettings)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
     setSelectedConfiguration(configuration);
   }
@@ -30,6 +32,7 @@ public abstract class RunManagerEx extends RunManager {
    * @deprecated Use {@link #addConfiguration(RunnerAndConfigurationSettings)}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void addConfiguration(RunnerAndConfigurationSettings settings,
                                      boolean storeInDotIdeaFolder,
                                      List<BeforeRunTask> tasks,
@@ -75,6 +78,7 @@ public abstract class RunManagerEx extends RunManager {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
     return getAllSettings();
   }
@@ -83,6 +87,7 @@ public abstract class RunManagerEx extends RunManager {
    * @deprecated Use {@link RunManagerListener#TOPIC} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addRunManagerListener(@NotNull RunManagerListener listener) {
   }
 

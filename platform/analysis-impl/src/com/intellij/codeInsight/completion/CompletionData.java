@@ -54,6 +54,7 @@ public class CompletionData {
    * @deprecated see {@link CompletionContributor}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
   }
@@ -164,6 +165,7 @@ public class CompletionData {
    * @deprecated Use {@link CompletionUtil} methods instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {
     String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset());
     if (substr.length() == 0 || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";

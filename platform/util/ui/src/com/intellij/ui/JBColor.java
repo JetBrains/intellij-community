@@ -110,6 +110,7 @@ public class JBColor extends Color {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Color link() {
     //noinspection UnnecessaryFullyQualifiedName
     return com.intellij.util.ui.JBUI.CurrentTheme.Link.Foreground.ENABLED;

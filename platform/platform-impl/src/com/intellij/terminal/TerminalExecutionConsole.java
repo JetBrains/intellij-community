@@ -109,6 +109,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    * @deprecated use {@link #withEnterKeyDefaultCodeEnabled(boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setAutoNewLineMode(@SuppressWarnings("unused") boolean enabled) {
   }
 

@@ -40,6 +40,7 @@ public interface ContextFeatureProvider {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default Map<String, MLFeatureValue> calculateFeatures(@NotNull Lookup lookup) {
     return Collections.emptyMap();
   }

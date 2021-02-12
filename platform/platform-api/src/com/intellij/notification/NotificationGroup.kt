@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
@@ -24,6 +25,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
                                             pluginId: PluginId? = null,
                                             registerGroup: Boolean = false) {
   @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   constructor(@NonNls displayId: String,
               displayType: NotificationDisplayType,
               isLogByDefault: Boolean = true,
@@ -37,6 +39,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
   // Don't use @JvmOverloads for primary constructor to maintain binary API compatibility with plugins written in Kotlin
   @JvmOverloads
   @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   constructor(@NonNls displayId: String,
               displayType: NotificationDisplayType,
               isLogByDefault: Boolean = true,
@@ -93,6 +96,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
 
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     fun balloonGroup(@NonNls displayId: String, @NotificationTitle title: String?): NotificationGroup {
       val notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup != null) {

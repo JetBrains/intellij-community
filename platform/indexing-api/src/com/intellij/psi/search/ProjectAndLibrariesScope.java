@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.IndexingBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +33,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
    * @deprecated use {@link #ProjectAndLibrariesScope(Project)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ProjectAndLibrariesScope(Project project, boolean searchOutsideRootModel) {
     this(project);
   }

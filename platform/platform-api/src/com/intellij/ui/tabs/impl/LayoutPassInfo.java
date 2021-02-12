@@ -32,6 +32,7 @@ public abstract class LayoutPassInfo {
    * then your code probably should be realized inside the {@link TabsLayout} implementation.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public abstract int getRowCount();
 
 
@@ -39,12 +40,14 @@ public abstract class LayoutPassInfo {
    * @deprecated see {@link #getRowCount()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public abstract int getColumnCount(int row);
 
   /**
    * @deprecated see {@link #getRowCount()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public abstract TabInfo getTabAt(int row, int column);
 
   public abstract Rectangle getHeaderRectangle();

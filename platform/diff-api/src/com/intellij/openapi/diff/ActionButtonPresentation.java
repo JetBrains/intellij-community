@@ -18,6 +18,7 @@ package com.intellij.openapi.diff;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @see com.intellij.diff.DiffRequestFactory
@@ -27,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
  * @deprecated kept for API compatibility
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class ActionButtonPresentation {
   private final String myName;
 

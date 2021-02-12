@@ -61,6 +61,7 @@ public interface ModifiableModuleModel {
    * @deprecated use {@link #newModule(String, String)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   Module newModule(@NotNull String filePath, @NotNull String moduleTypeId, @Nullable Map<String, String> options);
 

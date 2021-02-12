@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,12 +61,14 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
    * Use {@link #getYourVersion()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final String YOUR_VERSION = DiffBundle.message("merge.version.title.our");
 
   /**
    * Use {@link #getBaseVersion()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final String BASE_VERSION = DiffBundle.message("merge.version.title.base");
 
   private final @Nullable Project myProject;

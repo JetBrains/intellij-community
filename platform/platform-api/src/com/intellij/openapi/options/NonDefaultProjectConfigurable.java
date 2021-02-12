@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated Please use {@link ConfigurableEP#nonDefaultProject} instead.
  *
@@ -24,5 +26,6 @@ package com.intellij.openapi.options;
  * @author yole
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public interface NonDefaultProjectConfigurable {
 }

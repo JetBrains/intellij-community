@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +13,7 @@ public final class ReadOnlyModificationException extends RuntimeException {
    * @deprecated use {@link ReadOnlyModificationException#ReadOnlyModificationException(Document, String)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ReadOnlyModificationException(@NotNull Document document) {
     this(document, CoreBundle.message("attempt.to.modify.read.only.document.error.message"));
   }

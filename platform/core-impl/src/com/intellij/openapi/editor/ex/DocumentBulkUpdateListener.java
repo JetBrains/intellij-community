@@ -22,12 +22,14 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Use {@link DocumentListener} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public interface DocumentBulkUpdateListener {
   Topic<DocumentBulkUpdateListener> TOPIC = Topic.create("Bulk document change notification like reformat, etc.", DocumentBulkUpdateListener.class);
 
@@ -38,6 +40,7 @@ public interface DocumentBulkUpdateListener {
    * @deprecated Use {@link DocumentListener} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   abstract class Adapter implements DocumentBulkUpdateListener {
     @Override
     public void updateFinished(@NotNull final Document doc) {}

@@ -3,6 +3,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -16,6 +17,7 @@ public final class Conditions {
    * @deprecated use {@link #alwaysTrue()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Condition<Object> TRUE = alwaysTrue();
 
   @NotNull

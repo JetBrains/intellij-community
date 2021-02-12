@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBRadioButton
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionListener
 import javax.swing.AbstractButton
@@ -34,7 +35,8 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
 
   @Suppress("PropertyName")
   @PublishedApi
-  @Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
+  @get:Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   internal val `$`: LayoutBuilderImpl
     get() = builder
 }

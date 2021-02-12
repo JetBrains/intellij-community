@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,6 +129,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
    * @deprecated Use {@link #getValue(String, String)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getOrInit(@NonNls @NotNull String name, String defaultValue) {
     if (!isValueSet(name)) {
       setValue(name, defaultValue);

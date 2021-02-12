@@ -26,6 +26,7 @@ public abstract class StartupManager {
    * @deprecated Use {@link #registerStartupActivity(Runnable)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void registerPreStartupActivity(@NotNull Runnable runnable) {
     registerStartupActivity(runnable);
   }

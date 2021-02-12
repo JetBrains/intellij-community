@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,8 @@ public interface EditorColors {
   /**
    * @deprecated use {@link #GUTTER_BACKGROUND}
    */
-  @Deprecated ColorKey LEFT_GUTTER_BACKGROUND = GUTTER_BACKGROUND;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  ColorKey LEFT_GUTTER_BACKGROUND = GUTTER_BACKGROUND;
   ColorKey NOTIFICATION_BACKGROUND = ColorKey.createColorKey("NOTIFICATION_BACKGROUND");
 
   ColorKey TEARLINE_COLOR = ColorKey.createColorKey("TEARLINE_COLOR");

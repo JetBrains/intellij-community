@@ -15,6 +15,7 @@ public class CompletionContributorEP extends LanguageExtensionPoint<CompletionCo
    */
   @SuppressWarnings("unused")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public CompletionContributorEP() {
   }
 

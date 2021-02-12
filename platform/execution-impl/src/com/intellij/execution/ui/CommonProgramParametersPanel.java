@@ -23,6 +23,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +117,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
    * @deprecated use {@link MacroComboBoxWithBrowseButton}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {
     final FixedSizeButton button = new FixedSizeButton(textAccessor);
     button.setIcon(AllIcons.Actions.ListFiles);

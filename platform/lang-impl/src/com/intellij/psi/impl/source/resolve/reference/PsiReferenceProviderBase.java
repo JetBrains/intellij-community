@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.psi.PsiReferenceProvider;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  *
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiReferenceProvider;
  * @deprecated use PsiReferenceProvider instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class PsiReferenceProviderBase extends PsiReferenceProvider {
 
 }

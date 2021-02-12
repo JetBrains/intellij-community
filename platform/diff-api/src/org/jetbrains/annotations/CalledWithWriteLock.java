@@ -28,6 +28,7 @@ import java.lang.annotation.Target;
  * @deprecated Use {@link RequiresWriteLock}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface CalledWithWriteLock {

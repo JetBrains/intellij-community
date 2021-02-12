@@ -341,6 +341,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
    * @deprecated internal API
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static void doHighlightElements(@NotNull Editor editor,
                                          PsiElement @NotNull [] elements,
                                          @NotNull TextAttributes attributes,
@@ -360,6 +361,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
    * @deprecated Use the overload with TextAttributesKey
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void highlightRanges(@NotNull HighlightManager highlightManager,
                                      @NotNull Editor editor,
                                      @NotNull TextAttributes attributes,

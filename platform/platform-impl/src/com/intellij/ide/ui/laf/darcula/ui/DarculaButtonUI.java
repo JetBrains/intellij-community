@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -94,6 +95,7 @@ public class DarculaButtonUI extends BasicButtonUI {
    * @deprecated Use isComboAction instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static ComboBoxAction getComboAction(Component c) {
     return c instanceof AbstractButton ? (ComboBoxAction)((JComponent)c).getClientProperty("styleCombo") : null;
   }

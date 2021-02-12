@@ -158,6 +158,7 @@ interface CellBuilder<out T : JComponent> {
   fun withLeftGap(): CellBuilder<T>
 
   @Deprecated("Prefer not to use hardcoded values")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun withLeftGap(gapLeft: Int): CellBuilder<T>
 }
 

@@ -163,6 +163,7 @@ public final class VcsLogContentUtil {
    * @deprecated replaced by {@link VcsLogContentUtil#runInMainLog(Project, Consumer)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<? super VcsLogUiImpl> consumer) {
     runInMainLog(project, ui -> consumer.consume((VcsLogUiImpl)ui));
   }

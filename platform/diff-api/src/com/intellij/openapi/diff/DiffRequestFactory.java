@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated use {@link com.intellij.diff.DiffRequestFactory} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class DiffRequestFactory {
   public static DiffRequestFactory getInstance() {
     return ApplicationManager.getApplication().getService(DiffRequestFactory.class);

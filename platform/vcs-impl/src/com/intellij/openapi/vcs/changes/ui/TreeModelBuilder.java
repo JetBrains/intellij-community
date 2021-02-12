@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,6 +82,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
    * @deprecated Use {@link #TreeModelBuilder(Project, ChangesGroupingPolicyFactory)}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public TreeModelBuilder(@NotNull Project project, boolean showFlatten) {
     this(project, ChangesGroupingSupport.getFactory(showFlatten ? NONE_GROUPING : DIRECTORY_GROUPING));
   }
@@ -570,6 +572,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public DefaultTreeModel buildModel(@NotNull List<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
     return setChanges(changes, changeNodeDecorator).build();
   }

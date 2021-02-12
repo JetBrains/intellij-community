@@ -18,6 +18,7 @@ package com.intellij.psi.filters;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class OrFilter implements ElementFilter {
 
   /** @deprecated use {@link #OrFilter(ElementFilter...)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public OrFilter() {
     myFilters = new SmartList<>();
   }
@@ -36,6 +38,7 @@ public class OrFilter implements ElementFilter {
 
   /** @deprecated use {@link #OrFilter(ElementFilter...)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addFilter(ElementFilter filter) {
     myFilters.add(filter);
   }

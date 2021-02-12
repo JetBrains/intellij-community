@@ -220,6 +220,7 @@ public abstract class PsiDocumentManager {
    * @deprecated Use message bus {@link PsiDocumentListener#TOPIC}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addListener(@NotNull Listener listener);
 
   /**

@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
    * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected LineAnnotationAspectAdapter() {
     this(null, null, false);
   }
@@ -28,6 +30,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
    * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected LineAnnotationAspectAdapter(@Nullable String id) {
     this(id, null, false);
   }

@@ -40,6 +40,7 @@ public abstract class DownloadableFileService {
    * @deprecated use {@link #createDownloader(List, String)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public abstract FileDownloader createDownloader(List<? extends DownloadableFileDescription> fileDescriptions, @Nullable Project project,
                                                   JComponent parent, @NotNull String presentableDownloadName);

@@ -63,6 +63,7 @@ abstract class RunManager {
    * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   @Deprecated("", ReplaceWith("getConfigurationSettingsList(type)"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun getConfigurationSettings(type: ConfigurationType): Array<RunnerAndConfigurationSettings> = getConfigurationSettingsList(type).toTypedArray()
 
   /**
@@ -82,6 +83,7 @@ abstract class RunManager {
    * Returns the list of all run configurations.
    */
   @Deprecated("", ReplaceWith("allConfigurationsList"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun getAllConfigurations(): Array<RunConfiguration> = allConfigurationsList.toTypedArray()
 
   /**
@@ -194,6 +196,7 @@ abstract class RunManager {
   }
 
   @Deprecated("The method name is grammatically incorrect", replaceWith = ReplaceWith("this.setUniqueNameIfNeeded(settings)"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun setUniqueNameIfNeed(settings: RunnerAndConfigurationSettings): Boolean = setUniqueNameIfNeeded(settings)
 
   /**

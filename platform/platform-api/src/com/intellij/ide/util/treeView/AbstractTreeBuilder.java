@@ -281,6 +281,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @deprecated use {@link AbstractTreeUi#buildNodeForElement(Object)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void buildNodeForElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.buildNodeForElement(element);
@@ -290,6 +291,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @deprecated use {@link AbstractTreeUi#getNodeForElement(Object, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public DefaultMutableTreeNode getNodeForElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();

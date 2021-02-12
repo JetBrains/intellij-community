@@ -126,6 +126,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * {@link ProjectExtensionPointName#findExtensionOrFail(Class, AreaInstance)} to access project-level and module-level extensions
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public @NotNull <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance) {
     //noinspection ConstantConditions
     return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE);
@@ -163,6 +164,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * @deprecated Use {@link #addChangeListener(Runnable, Disposable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, @Nullable Disposable parentDisposable) {
     getPointImpl(null).addChangeListener(listener::extensionListChanged, parentDisposable);
   }

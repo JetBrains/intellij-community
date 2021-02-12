@@ -3,6 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -30,6 +31,7 @@ public interface ApplicationActivationListener {
    * @deprecated Use {@link #delayedApplicationDeactivated(Window)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
     delayedApplicationDeactivated((Window)ideFrame);
   }
@@ -49,6 +51,7 @@ public interface ApplicationActivationListener {
    * @deprecated Use {@link ApplicationActivationListener} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   abstract class Adapter implements ApplicationActivationListener {
   }
 }

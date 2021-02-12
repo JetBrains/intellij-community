@@ -12,6 +12,7 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.io.zipFile
+import org.jetbrains.annotations.ApiStatus
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -144,9 +145,11 @@ class TempDirectory : ExternalResource() {
   }
 
   @Deprecated("use newDirectory(relativePath) instead", ReplaceWith("newDirectory(relativePath)"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   fun newFolder(relativePath: String): File = newDirectory(relativePath)
 
   @Deprecated("use newDirectory() instead", ReplaceWith("newDirectory()"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   fun newFolder(): File = newDirectory()
 
   private fun makeDirectories(path: Path) {

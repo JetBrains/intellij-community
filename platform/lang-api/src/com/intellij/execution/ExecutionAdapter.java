@@ -15,9 +15,12 @@
  */
 package com.intellij.execution;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated use {@link ExecutionListener} directly
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class ExecutionAdapter implements ExecutionListener {
 }

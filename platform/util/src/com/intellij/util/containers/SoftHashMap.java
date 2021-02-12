@@ -3,6 +3,7 @@ package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,7 @@ import java.lang.ref.ReferenceQueue;
  * @deprecated use {@link ContainerUtil#createSoftMap()} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   /**
    * Soft keys hash map.
@@ -25,6 +27,7 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
    * @deprecated use {@link ContainerUtil#createSoftMap()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public SoftHashMap() {
     DeprecatedMethodException.report("Use ContainerUtil.createSoftMap() instead");
   }

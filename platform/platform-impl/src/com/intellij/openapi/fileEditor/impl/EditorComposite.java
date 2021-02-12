@@ -36,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -415,6 +416,7 @@ public class EditorComposite implements Disposable {
    * @deprecated use {@link #getSelectedWithProvider()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
     FileEditorWithProvider info = getSelectedWithProvider();

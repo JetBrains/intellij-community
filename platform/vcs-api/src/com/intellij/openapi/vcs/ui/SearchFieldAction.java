@@ -10,6 +10,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +23,7 @@ import java.awt.event.KeyEvent;
  * @deprecated Use {@link SearchTextField}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class SearchFieldAction extends AnAction implements CustomComponentAction {
   private final JPanel myComponent;
   private final SearchTextField myField;

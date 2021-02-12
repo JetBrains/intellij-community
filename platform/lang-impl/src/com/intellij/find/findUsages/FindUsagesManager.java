@@ -91,6 +91,7 @@ public final class FindUsagesManager {
    * @deprecated Use {@link #FindUsagesManager(Project)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public FindUsagesManager(@NotNull Project project, @SuppressWarnings("unused") UsageViewManager anotherManager) {
     DeprecatedMethodException.report("Please use FindUsagesManager(Project) instead");
     myProject = project;

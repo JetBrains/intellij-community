@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,7 @@ public class UsageViewPresentation {
    * @deprecated use {@link #getSearchString}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public String getUsagesString() {
     return myUsagesString;
   }
@@ -176,6 +178,7 @@ public class UsageViewPresentation {
    * @deprecated no-op
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings("unused")
   public void setUsagesWord(@NotNull @Nls String usagesWord) {}
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,6 +167,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @deprecated use {@link #run(Task)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
@@ -186,6 +188,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @deprecated use {@link #run(Task)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,

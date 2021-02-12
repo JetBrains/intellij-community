@@ -28,6 +28,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
    * @deprecated Not used anymore. Will be opened in fullscreen in any case if needed.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";
@@ -181,6 +182,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
    * @deprecated Use {@link ProjectFrameHelper#updateView()} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void updateView() {
     if (myFrameHelper != null) {
       myFrameHelper.updateView();

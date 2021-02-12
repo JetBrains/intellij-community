@@ -2,6 +2,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +22,7 @@ import java.lang.ref.WeakReference;
  * @deprecated use {@link CollectionFactory#createWeakMap()} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
   public WeakHashMap(int initialCapacity) {
     super(initialCapacity);

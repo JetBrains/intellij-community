@@ -2,12 +2,14 @@
 
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @deprecated see {@link LogicalRootsManager} for details
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public final class LogicalRootType<T extends LogicalRoot> {
   public static final LogicalRootType<VirtualFileLogicalRoot> SOURCE_ROOT = create("Source root");
   private final String myName;

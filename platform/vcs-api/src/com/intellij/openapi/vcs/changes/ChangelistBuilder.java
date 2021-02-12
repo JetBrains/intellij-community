@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -85,6 +86,7 @@ public interface ChangelistBuilder {
    * @deprecated use {@link #processIgnoredFile(FilePath)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void processIgnoredFile(VirtualFile file) {
     if (file != null) {
       processIgnoredFile(VcsUtil.getFilePath(file));
