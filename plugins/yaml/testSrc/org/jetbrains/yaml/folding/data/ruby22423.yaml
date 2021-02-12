@@ -1,9 +1,8 @@
 <fold text='info: <3 keys>'>info:
   title: <fold text='my API description'>my API description</fold>
   version: <fold text='1.0'>'1.0'</fold>
-  description: <fold text='This is t… API.
----
-'>|
+  description: <fold text='This is t…y API.
+---'>|
     This is the description of my API.
     ---</fold></fold>
 <fold text='schemes: <1 item>'>schemes:
