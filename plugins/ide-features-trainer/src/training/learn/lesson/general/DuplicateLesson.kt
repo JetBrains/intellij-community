@@ -6,8 +6,8 @@ import training.dsl.LessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class DuplicateLesson(lang: String, private val sample: LessonSample) :
-  KLesson("Duplicate", LessonsBundle.message("duplicate.and.delete.lines.lesson.name"), lang) {
+class DuplicateLesson(private val sample: LessonSample) :
+  KLesson("Duplicate", LessonsBundle.message("duplicate.and.delete.lines.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)

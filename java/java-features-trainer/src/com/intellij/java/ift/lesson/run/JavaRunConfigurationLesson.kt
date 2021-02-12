@@ -14,7 +14,7 @@ import training.dsl.dropMnemonic
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 import java.awt.Rectangle
 
-class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.configuration", "JAVA") {
+class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.configuration") {
   override val sample: LessonSample = JavaRunLessonsUtils.demoSample
   override val demoConfigurationName: String = JavaRunLessonsUtils.demoClassName
 

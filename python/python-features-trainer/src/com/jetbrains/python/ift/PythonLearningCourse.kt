@@ -54,12 +54,12 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
       listOf(
         PythonContextActionsLesson(),
-        GotoActionLesson(lang, ls("Actions.py.sample")),
+        GotoActionLesson(ls("Actions.py.sample")),
         PythonSelectLesson(),
-        SingleLineCommentLesson(lang, ls("Comment.py.sample")),
-        DuplicateLesson(lang, ls("Duplicate.py.sample")),
-        MoveLesson(lang, "accelerate", ls("Move.py.sample")),
-        CollapseLesson(lang, ls("Collapse.py.sample")),
+        SingleLineCommentLesson(ls("Comment.py.sample")),
+        DuplicateLesson(ls("Duplicate.py.sample")),
+        MoveLesson("accelerate", ls("Move.py.sample")),
+        CollapseLesson(ls("Collapse.py.sample")),
         PythonSurroundAndUnwrapLesson(),
         MultipleSelectionHtmlLesson(),
       )
@@ -84,8 +84,8 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
       listOf(
         PythonRefactorMenuLesson(),
         PythonRenameLesson(),
-        ExtractVariableFromBubbleLesson(lang, ls("ExtractVariable.py.sample")),
-        ExtractMethodCocktailSortLesson(lang, ls("ExtractMethod.py.sample")),
+        ExtractVariableFromBubbleLesson(ls("ExtractVariable.py.sample")),
+        ExtractMethodCocktailSortLesson(ls("ExtractMethod.py.sample")),
         PythonQuickFixesRefactoringLesson(),
         PythonInPlaceRefactoringLesson(),
       )
@@ -96,10 +96,10 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    moduleType = LessonType.SINGLE_EDITOR) {
       fun ls(sampleName: String) = loadSample("CodeAssistance/$sampleName")
       listOf(
-        CodeFormatLesson(lang, ls("CodeFormat.py.sample"), true),
-        ParameterInfoLesson(lang, ls("ParameterInfo.py.sample")),
-        QuickPopupsLesson(lang, ls("QuickPopups.py.sample")),
-        PythonEditorCodingAssistanceLesson(lang, ls("EditorCodingAssistance.py.sample")),
+        CodeFormatLesson(ls("CodeFormat.py.sample"), true),
+        ParameterInfoLesson(ls("ParameterInfo.py.sample")),
+        QuickPopupsLesson(ls("QuickPopups.py.sample")),
+        PythonEditorCodingAssistanceLesson(ls("EditorCodingAssistance.py.sample")),
       )
     },
     LearningModule(name = LessonsBundle.message("navigation.module.name"),
@@ -108,7 +108,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    moduleType = LessonType.PROJECT) {
       listOf(
         PythonSearchEverywhereLesson(),
-        FindInFilesLesson(lang, "src/warehouse/find_in_files_sample.py"),
+        FindInFilesLesson("src/warehouse/find_in_files_sample.py"),
         PythonDeclarationAndUsagesLesson(),
         PythonFileStructureLesson(),
         PythonRecentFilesLesson(),

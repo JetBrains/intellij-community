@@ -7,7 +7,7 @@ import training.dsl.LessonSample
 import training.dsl.checkToolWindowState
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 
-class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.configuration", "Python") {
+class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.configuration") {
   override val sample: LessonSample = PythonRunLessonsUtils.demoSample
   override val demoConfigurationName = PythonRunLessonsUtils.demoConfigurationName
 

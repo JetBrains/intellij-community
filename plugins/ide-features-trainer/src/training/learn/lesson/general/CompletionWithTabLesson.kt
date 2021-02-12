@@ -7,8 +7,8 @@ import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-abstract class CompletionWithTabLesson(lang: String, private val proposal: String) :
-  KLesson("Completion with tab", LessonsBundle.message("completion.with.tab.lesson.name"), lang) {
+abstract class CompletionWithTabLesson(private val proposal: String) :
+  KLesson("Completion with tab", LessonsBundle.message("completion.with.tab.lesson.name")) {
 
   abstract val sample: LessonSample
 

@@ -16,8 +16,7 @@ import training.ui.LearningUiHighlightingManager
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 
-abstract class CommonRunConfigurationLesson(id: String, languageId: String)
-  : KLesson(id, LessonsBundle.message("run.configuration.lesson.name"), languageId) {
+abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBundle.message("run.configuration.lesson.name")) {
   protected abstract val sample: LessonSample
   protected abstract val demoConfigurationName: String
 

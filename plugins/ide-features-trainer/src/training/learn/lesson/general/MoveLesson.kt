@@ -7,8 +7,8 @@ import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class MoveLesson(lang: String, private val caretText: String, private val sample: LessonSample)
-  : KLesson("Move", LessonsBundle.message("move.lesson.name"), lang) {
+class MoveLesson(private val caretText: String, private val sample: LessonSample)
+  : KLesson("Move", LessonsBundle.message("move.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)

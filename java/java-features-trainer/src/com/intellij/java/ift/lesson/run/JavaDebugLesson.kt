@@ -10,7 +10,7 @@ import training.dsl.TaskTestContext
 import training.dsl.highlightButtonById
 import training.learn.lesson.general.run.CommonDebugLesson
 
-class JavaDebugLesson : CommonDebugLesson("java.debug.workflow", "JAVA") {
+class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
   private val demoClassName = JavaRunLessonsUtils.demoClassName
   override val configurationName: String = demoClassName
   override val sample = JavaRunLessonsUtils.demoSample

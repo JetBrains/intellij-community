@@ -12,8 +12,7 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import javax.swing.JList
 
-abstract class RefactoringMenuLessonBase(lessonId: String, languageId: String)
-  : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name"), languageId) {
+abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name")) {
   fun LessonContext.extractParameterTasks() {
     lateinit var showPopupTaskId: TaskContext.TaskId
     actionTask("Refactorings.QuickListPopupAction") {

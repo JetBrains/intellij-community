@@ -10,7 +10,7 @@ import training.learn.course.KLesson
 import javax.swing.JList
 
 class PythonTabCompletionLesson
-  : KLesson("Tab completion", PythonLessonsBundle.message("python.tab.completion.lesson.name"), "Python") {
+  : KLesson("Tab completion", PythonLessonsBundle.message("python.tab.completion.lesson.name")) {
   private val template = parseLessonSample("""
     class Calculator:
         def __init__(self):

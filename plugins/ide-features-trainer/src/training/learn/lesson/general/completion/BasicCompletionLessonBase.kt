@@ -12,8 +12,7 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import javax.swing.JList
 
-abstract class BasicCompletionLessonBase(lang: String)
-  : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name"), lang) {
+abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name")) {
   protected abstract val sample1: LessonSample
   protected abstract val sample2: LessonSample
 

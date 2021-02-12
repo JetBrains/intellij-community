@@ -9,8 +9,7 @@ import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-abstract class NewSelectLesson(lang: String) :
-  KLesson("Select", LessonsBundle.message("selection.lesson.name"), lang) {
+abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("selection.lesson.name")) {
 
   protected val firstString = "first string"
   protected val thirdString = "third string"

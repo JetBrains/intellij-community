@@ -12,8 +12,8 @@ import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class CodeFormatLesson(override val lang: String, private val sample: LessonSample, private val optimizeImports: Boolean) :
-  KLesson("CodeAssistance.CodeFormatting", LessonsBundle.message("code.format.lesson.name"), lang) {
+class CodeFormatLesson(private val sample: LessonSample, private val optimizeImports: Boolean) :
+  KLesson("CodeAssistance.CodeFormatting", LessonsBundle.message("code.format.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)

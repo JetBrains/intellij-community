@@ -15,8 +15,8 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonType
 
-abstract class FileStructureLesson(lang: String)
-  : KLesson("File structure", LessonsBundle.message("file.structure.lesson.name"), lang) {
+abstract class FileStructureLesson
+  : KLesson("File structure", LessonsBundle.message("file.structure.lesson.name")) {
   abstract override val existedFile: String
   abstract val methodToFindPosition: LogicalPosition
 

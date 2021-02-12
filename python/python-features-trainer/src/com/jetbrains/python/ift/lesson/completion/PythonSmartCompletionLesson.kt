@@ -10,7 +10,7 @@ import training.dsl.parseLessonSample
 import training.learn.course.KLesson
 
 class PythonSmartCompletionLesson
-  : KLesson("Smart completion", PythonLessonsBundle.message("python.smart.completion.lesson.name"), "Python") {
+  : KLesson("Smart completion", PythonLessonsBundle.message("python.smart.completion.lesson.name")) {
   private val sample = parseLessonSample("""
     def f(x, file):
       x.append(file)

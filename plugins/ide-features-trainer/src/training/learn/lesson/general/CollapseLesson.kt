@@ -6,8 +6,7 @@ import training.dsl.LessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class CollapseLesson(lang: String, private val sample: LessonSample)
-  : KLesson("Collapse", LessonsBundle.message("collapse.lesson.name"), lang) {
+class CollapseLesson(private val sample: LessonSample) : KLesson("Collapse", LessonsBundle.message("collapse.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)

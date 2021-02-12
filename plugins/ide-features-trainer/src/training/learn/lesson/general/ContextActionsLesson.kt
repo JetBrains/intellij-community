@@ -8,9 +8,7 @@ import training.dsl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-abstract class ContextActionsLesson(lang: String) :
-  KLesson("context.actions", LessonsBundle.message("context.actions.lesson.name"), lang) {
-
+abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.message("context.actions.lesson.name")) {
   abstract val sample: LessonSample
   abstract val warningQuickFix: String
   abstract val warningPossibleArea: String

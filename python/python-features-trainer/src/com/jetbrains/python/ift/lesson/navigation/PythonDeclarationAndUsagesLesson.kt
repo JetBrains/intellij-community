@@ -4,7 +4,7 @@ package com.jetbrains.python.ift.lesson.navigation
 import training.dsl.LessonContext
 import training.learn.lesson.general.navigation.DeclarationAndUsagesLesson
 
-class PythonDeclarationAndUsagesLesson : DeclarationAndUsagesLesson("Python") {
+class PythonDeclarationAndUsagesLesson : DeclarationAndUsagesLesson() {
   override fun LessonContext.setInitialPosition() = caret(9, 21)
   override val existedFile: String = "src/declaration_and_usages_demo.py"
 }

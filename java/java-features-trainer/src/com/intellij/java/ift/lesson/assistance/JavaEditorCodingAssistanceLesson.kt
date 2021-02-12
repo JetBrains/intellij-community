@@ -6,8 +6,8 @@ import com.siyeh.InspectionGadgetsBundle
 import training.dsl.LessonSample
 import training.learn.lesson.general.assistance.EditorCodingAssistanceLesson
 
-class JavaEditorCodingAssistanceLesson(lang: String, sample: LessonSample) :
-  EditorCodingAssistanceLesson(lang, sample) {
+class JavaEditorCodingAssistanceLesson(sample: LessonSample) :
+  EditorCodingAssistanceLesson(sample) {
   override val errorIntentionText: String
     get() = QuickFixBundle.message("add.exception.to.throws.text", 1)
   override val warningIntentionText: String

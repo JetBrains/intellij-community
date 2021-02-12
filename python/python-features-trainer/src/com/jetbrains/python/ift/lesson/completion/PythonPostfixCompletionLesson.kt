@@ -13,7 +13,7 @@ import training.learn.course.KLesson
 private const val completionSuffix = ".ifnn"
 
 class PythonPostfixCompletionLesson
-  : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name"), "Python") {
+  : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name")) {
   private val sample = parseLessonSample("""
     movies_dict = {
         'title': 'Aviator',

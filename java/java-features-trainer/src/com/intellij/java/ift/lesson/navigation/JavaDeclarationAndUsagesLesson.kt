@@ -4,7 +4,7 @@ package com.intellij.java.ift.lesson.navigation
 import training.dsl.LessonContext
 import training.learn.lesson.general.navigation.DeclarationAndUsagesLesson
 
-class JavaDeclarationAndUsagesLesson : DeclarationAndUsagesLesson("JAVA") {
+class JavaDeclarationAndUsagesLesson : DeclarationAndUsagesLesson() {
   override fun LessonContext.setInitialPosition() = caret("foo()")
   override val existedFile: String get() = "src/DerivedClass2.java"
 }

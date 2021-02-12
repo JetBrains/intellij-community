@@ -26,9 +26,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.random.Random
 
-abstract class RecentFilesLesson(lang: String)
-  : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name"), lang) {
-
+abstract class RecentFilesLesson : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name")) {
   abstract override val existedFile: String
   abstract val transitionMethodName: String
   abstract val transitionFileName: String

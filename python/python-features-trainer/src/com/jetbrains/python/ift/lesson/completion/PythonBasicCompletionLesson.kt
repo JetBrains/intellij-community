@@ -7,7 +7,7 @@ import training.learn.lesson.general.completion.BasicCompletionLessonBase
 private const val keyToComplete1 = "director"
 private const val keyToComplete2 = "distributor"
 
-class PythonBasicCompletionLesson : BasicCompletionLessonBase("Python") {
+class PythonBasicCompletionLesson : BasicCompletionLessonBase() {
   override val sample1 = parseLessonSample("""
     movies_dict = {
         'title': 'Aviator',

@@ -15,7 +15,7 @@ import training.learn.course.KLesson
 import javax.swing.JDialog
 
 class JavaRenameLesson
-  : KLesson("Refactorings.Rename", LessonsBundle.message("rename.lesson.name"), "JAVA") {
+  : KLesson("Refactorings.Rename", LessonsBundle.message("rename.lesson.name")) {
   private val initialName = "stylus"
 
   private val template = """

@@ -7,8 +7,8 @@ import training.dsl.LessonSample
 import training.dsl.TaskContext
 import training.learn.lesson.general.assistance.EditorCodingAssistanceLesson
 
-class PythonEditorCodingAssistanceLesson(lang: String, sample: LessonSample) :
-  EditorCodingAssistanceLesson(lang, sample) {
+class PythonEditorCodingAssistanceLesson(sample: LessonSample) :
+  EditorCodingAssistanceLesson(sample) {
   override val errorIntentionText: String
     get() = PyPsiBundle.message("QFIX.auto.import.import.name", "math")
   private val errorAlternateIntentionText: String

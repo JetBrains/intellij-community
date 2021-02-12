@@ -21,8 +21,8 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-abstract class DeclarationAndUsagesLesson(lang: String)
-  : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name"), lang) {
+abstract class DeclarationAndUsagesLesson
+  : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name")) {
   abstract fun LessonContext.setInitialPosition()
   abstract override val existedFile: String
 

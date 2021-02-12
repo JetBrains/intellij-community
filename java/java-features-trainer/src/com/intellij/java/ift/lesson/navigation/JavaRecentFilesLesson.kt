@@ -4,7 +4,7 @@ package com.intellij.java.ift.lesson.navigation
 import training.dsl.LessonContext
 import training.learn.lesson.general.navigation.RecentFilesLesson
 
-class JavaRecentFilesLesson : RecentFilesLesson("JAVA") {
+class JavaRecentFilesLesson : RecentFilesLesson() {
   override val existedFile: String = "src/RecentFilesDemo.java"
 
   override val transitionMethodName: String = "println"

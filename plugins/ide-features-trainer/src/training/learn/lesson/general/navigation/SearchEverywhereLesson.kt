@@ -21,8 +21,7 @@ import training.learn.course.LessonType
 import java.awt.event.KeyEvent
 import javax.swing.JList
 
-abstract class SearchEverywhereLesson(lang: String)
-  : KLesson("Search everywhere", LessonsBundle.message("search.everywhere.lesson.name"), lang) {
+abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBundle.message("search.everywhere.lesson.name")) {
   abstract override val existedFile: String?
 
   abstract val resultFileName: String

@@ -10,7 +10,7 @@ import training.dsl.parseLessonSample
 import training.learn.course.KLesson
 
 class FStringCompletionLesson
-  : KLesson("completion.f.string", PythonLessonsBundle.message("python.f.string.completion.lesson.name"), "Python") {
+  : KLesson("completion.f.string", PythonLessonsBundle.message("python.f.string.completion.lesson.name")) {
   private val template = """
     import sys
     

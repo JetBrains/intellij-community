@@ -13,8 +13,8 @@ import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class QuickPopupsLesson(lang: String, private val sample: LessonSample) :
-  KLesson("CodeAssistance.QuickPopups", LessonsBundle.message("quick.popups.lesson.name"), lang) {
+class QuickPopupsLesson(private val sample: LessonSample) :
+  KLesson("CodeAssistance.QuickPopups", LessonsBundle.message("quick.popups.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)

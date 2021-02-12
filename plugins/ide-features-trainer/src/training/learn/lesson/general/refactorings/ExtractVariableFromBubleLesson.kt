@@ -11,8 +11,8 @@ import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class ExtractVariableFromBubbleLesson(lang: String, private val sample: LessonSample)
-  : KLesson("Extract variable", LessonsBundle.message("extract.variable.lesson.name"), lang) {
+class ExtractVariableFromBubbleLesson(private val sample: LessonSample)
+  : KLesson("Extract variable", LessonsBundle.message("extract.variable.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)

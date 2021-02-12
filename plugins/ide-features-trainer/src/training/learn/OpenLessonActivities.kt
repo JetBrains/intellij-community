@@ -314,7 +314,7 @@ internal object OpenLessonActivities {
   @Throws(IOException::class)
   private fun getScratchFile(project: Project, lesson: Lesson, filename: String): VirtualFile {
     var vf: VirtualFile? = null
-    val languageByID = findLanguageByID(lesson.lang)
+    val languageByID = findLanguageByID(lesson.languageId)
     if (CourseManager.instance.mapModuleVirtualFile.containsKey(lesson.module)) {
       vf = CourseManager.instance.mapModuleVirtualFile[lesson.module]
       ScratchFileService.getInstance().scratchesMapping.setMapping(vf, languageByID)

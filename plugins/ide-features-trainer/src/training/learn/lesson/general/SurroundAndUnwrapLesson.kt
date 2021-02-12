@@ -7,8 +7,8 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-abstract class SurroundAndUnwrapLesson(lang: String)
-  : KLesson("Surround and unwrap", LessonsBundle.message("surround.and.unwrap.lesson.name"), lang) {
+abstract class SurroundAndUnwrapLesson
+  : KLesson("Surround and unwrap", LessonsBundle.message("surround.and.unwrap.lesson.name")) {
 
   protected abstract val sample: LessonSample
 

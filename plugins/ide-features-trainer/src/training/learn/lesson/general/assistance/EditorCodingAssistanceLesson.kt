@@ -14,8 +14,8 @@ import training.learn.course.KLesson
 import training.util.PerformActionUtil
 import javax.swing.JEditorPane
 
-abstract class EditorCodingAssistanceLesson(lang: String, private val sample: LessonSample) :
-  KLesson("CodeAssistance.EditorCodingAssistance", LessonsBundle.message("editor.coding.assistance.lesson.name"), lang) {
+abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
+  KLesson("CodeAssistance.EditorCodingAssistance", LessonsBundle.message("editor.coding.assistance.lesson.name")) {
 
   protected abstract val errorIntentionText: String
   protected abstract val warningIntentionText: String

@@ -4,7 +4,7 @@ package com.intellij.java.ift.lesson.navigation
 import com.intellij.openapi.editor.LogicalPosition
 import training.learn.lesson.general.navigation.FileStructureLesson
 
-class JavaFileStructureLesson : FileStructureLesson("JAVA") {
+class JavaFileStructureLesson : FileStructureLesson() {
   override val existedFile: String = "src/FileStructureDemo.java"
   override val methodToFindPosition: LogicalPosition = LogicalPosition(74, 16)
 }

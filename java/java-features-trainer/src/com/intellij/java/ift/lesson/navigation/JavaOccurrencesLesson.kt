@@ -15,7 +15,7 @@ import training.learn.course.KLesson
 import training.learn.course.LessonType
 
 class JavaOccurrencesLesson
-  : KLesson("java.occurrences.lesson", JavaLessonsBundle.message("java.find.occurrences.lesson.name"), "JAVA") {
+  : KLesson("java.occurrences.lesson", JavaLessonsBundle.message("java.find.occurrences.lesson.name")) {
 
   override val lessonType = LessonType.SINGLE_EDITOR
 

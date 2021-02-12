@@ -12,7 +12,10 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
 class MultipleSelectionHtmlLesson
-  : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name"), "HTML") {
+  : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name")) {
+
+  override val languageId: String = "HTML"
+
   private val sample = parseLessonSample("""<!doctype html>
 <html lang="en">
     <head>

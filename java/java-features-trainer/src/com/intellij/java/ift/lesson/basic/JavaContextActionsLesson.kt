@@ -7,7 +7,7 @@ import training.dsl.LessonSample
 import training.dsl.parseLessonSample
 import training.learn.lesson.general.ContextActionsLesson
 
-class JavaContextActionsLesson : ContextActionsLesson("JAVA") {
+class JavaContextActionsLesson : ContextActionsLesson() {
   override val sample: LessonSample = parseLessonSample("""
     class Scratch {
         public static void main(String[] args) {

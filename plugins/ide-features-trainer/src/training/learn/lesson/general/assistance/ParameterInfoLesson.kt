@@ -9,8 +9,8 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import kotlin.math.min
 
-class ParameterInfoLesson(lang: String, private val sample: LessonSample) :
-  KLesson("CodeAssistance.ParameterInfo", LessonsBundle.message("parameter.info.lesson.name"), lang) {
+class ParameterInfoLesson(private val sample: LessonSample) :
+  KLesson("CodeAssistance.ParameterInfo", LessonsBundle.message("parameter.info.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)

@@ -5,7 +5,7 @@ import training.dsl.LessonContext
 import training.learn.LessonsBundle
 import training.learn.lesson.general.navigation.SearchEverywhereLesson
 
-class JavaSearchEverywhereLesson : SearchEverywhereLesson("JAVA") {
+class JavaSearchEverywhereLesson : SearchEverywhereLesson() {
   override val existedFile = "src/RecentFilesDemo.java"
   override val resultFileName: String = "QuadraticEquationsSolver.java"
 

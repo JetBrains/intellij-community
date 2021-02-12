@@ -9,7 +9,7 @@ import training.dsl.TaskTestContext
 import training.dsl.highlightButtonById
 import training.learn.lesson.general.run.CommonDebugLesson
 
-class PythonDebugLesson : CommonDebugLesson("python.debug.workflow", "Python") {
+class PythonDebugLesson : CommonDebugLesson("python.debug.workflow") {
   override val configurationName = PythonRunLessonsUtils.demoConfigurationName
   override val sample = PythonRunLessonsUtils.demoSample
   override var logicalPosition: LogicalPosition = LogicalPosition(4, 8)

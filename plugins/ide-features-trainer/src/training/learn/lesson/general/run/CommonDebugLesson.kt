@@ -47,8 +47,7 @@ import java.awt.Rectangle
 import javax.swing.JDialog
 import javax.swing.text.JTextComponent
 
-abstract class CommonDebugLesson(id: String, languageId: String)
-  : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name"), languageId) {
+abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name")) {
   protected abstract val sample: LessonSample
   protected abstract var logicalPosition: LogicalPosition
   protected abstract val configurationName: String

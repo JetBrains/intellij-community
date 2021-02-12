@@ -31,7 +31,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.ift.PythonLessonsBundle
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
@@ -53,7 +52,7 @@ import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 class PythonOnboardingTour :
-  KLesson("python.onboarding", PythonLessonsBundle.message("python.onboarding.lesson.name"), PythonLanguage.INSTANCE.id) {
+  KLesson("python.onboarding", PythonLessonsBundle.message("python.onboarding.lesson.name")) {
 
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"

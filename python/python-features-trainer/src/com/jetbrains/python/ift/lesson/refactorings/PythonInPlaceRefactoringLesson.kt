@@ -12,7 +12,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class PythonInPlaceRefactoringLesson
-  : KLesson("refactoring.in.place", PythonLessonsBundle.message("python.in.place.refactoring.lesson.name"), "Python") {
+  : KLesson("refactoring.in.place", PythonLessonsBundle.message("python.in.place.refactoring.lesson.name")) {
   private val template = """
     def fibonacci(stop):
         first = 0

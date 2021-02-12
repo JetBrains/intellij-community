@@ -19,7 +19,7 @@ import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.course.KLesson
 
 class JavaInheritanceHierarchyLesson
-  : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name"), "JAVA") {
+  : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name")) {
   override val existedFile: String = "src/InheritanceHierarchySample.java"
 
   override val lessonContent: LessonContext.() -> Unit = {

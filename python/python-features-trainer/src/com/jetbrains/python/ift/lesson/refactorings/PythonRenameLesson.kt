@@ -24,7 +24,7 @@ import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 class PythonRenameLesson
-  : KLesson("Rename", LessonsBundle.message("rename.lesson.name"), "Python") {
+  : KLesson("Rename", LessonsBundle.message("rename.lesson.name")) {
   private val template = """
       class Championship:
           def __init__(self):

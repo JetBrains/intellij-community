@@ -15,7 +15,7 @@ import training.dsl.parseLessonSample
 import training.learn.lesson.general.refactorings.RefactoringMenuLessonBase
 import javax.swing.JDialog
 
-class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.menu", "JAVA") {
+class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.menu") {
   private val sample = parseLessonSample("""
     import java.io.BufferedReader;
     import java.io.FileReader;

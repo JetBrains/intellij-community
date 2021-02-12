@@ -27,8 +27,8 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 
-class FindInFilesLesson(lang: String, override val existedFile: String)
-  : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name"), lang) {
+class FindInFilesLesson(override val existedFile: String)
+  : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     resetFindSettings()

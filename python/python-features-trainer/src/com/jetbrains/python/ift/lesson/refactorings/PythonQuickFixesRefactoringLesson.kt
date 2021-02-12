@@ -22,7 +22,7 @@ import javax.swing.JDialog
 import javax.swing.JTable
 
 class PythonQuickFixesRefactoringLesson
-  : KLesson("refactoring.quick.fix", PythonLessonsBundle.message("python.quick.fix.refactoring.lesson.name"), "Python") {
+  : KLesson("refactoring.quick.fix", PythonLessonsBundle.message("python.quick.fix.refactoring.lesson.name")) {
   private val sample = parseLessonSample("""
     def foo(x):
         print("Hello ", x)

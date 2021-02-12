@@ -7,7 +7,7 @@ import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.lesson.general.SurroundAndUnwrapLesson
 
-class JavaSurroundAndUnwrapLesson : SurroundAndUnwrapLesson("JAVA") {
+class JavaSurroundAndUnwrapLesson : SurroundAndUnwrapLesson() {
   override val sample: LessonSample = parseLessonSample("""
     class SurroundAndUnwrapDemo {
         public static void main(String[] args) {

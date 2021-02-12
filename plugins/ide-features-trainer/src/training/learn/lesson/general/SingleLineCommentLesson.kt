@@ -10,8 +10,8 @@ import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class SingleLineCommentLesson(lang: String, private val sample: LessonSample)
-  : KLesson("Comment line", LessonsBundle.message("comment.line.lesson.name"), lang) {
+class SingleLineCommentLesson(private val sample: LessonSample)
+  : KLesson("Comment line", LessonsBundle.message("comment.line.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {

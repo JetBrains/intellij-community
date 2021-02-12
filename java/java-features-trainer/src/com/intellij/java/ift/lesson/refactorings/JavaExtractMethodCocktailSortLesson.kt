@@ -16,7 +16,7 @@ import training.learn.course.KLesson
 import javax.swing.JDialog
 
 class JavaExtractMethodCocktailSortLesson
-  : KLesson("Refactorings.ExtractMethod", LessonsBundle.message("extract.method.lesson.name"), "JAVA") {
+  : KLesson("Refactorings.ExtractMethod", LessonsBundle.message("extract.method.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(javaSortSample)

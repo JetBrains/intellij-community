@@ -6,7 +6,7 @@ import training.dsl.LessonSample
 import training.dsl.parseLessonSample
 import training.learn.lesson.general.NewSelectLesson
 
-class PythonSelectLesson : NewSelectLesson("Python") {
+class PythonSelectLesson : NewSelectLesson() {
   override val selectArgument = "\"$selectString\""
   override val selectCall = """some_method("$firstString", $selectArgument, "$thirdString")"""
 

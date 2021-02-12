@@ -5,7 +5,7 @@ import training.dsl.LessonSample
 import training.dsl.parseLessonSample
 import training.learn.lesson.general.ContextActionsLesson
 
-class PythonContextActionsLesson : ContextActionsLesson("Python") {
+class PythonContextActionsLesson : ContextActionsLesson() {
   override val sample: LessonSample = parseLessonSample("""
     def method_with_unused_parameter(used, <caret>redundant):
         print("It is used parameter: " + str(used))

@@ -6,8 +6,7 @@ import training.dsl.LessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class SelectLesson(lang: String, private val sample: LessonSample) :
-  KLesson("Select", LessonsBundle.message("selection.lesson.name"), lang) {
+class SelectLesson(private val sample: LessonSample) : KLesson("Select", LessonsBundle.message("selection.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)

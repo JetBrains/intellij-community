@@ -5,7 +5,7 @@ import training.dsl.LessonContext
 import training.dsl.parseLessonSample
 import training.learn.lesson.general.refactorings.RefactoringMenuLessonBase
 
-class PythonRefactorMenuLesson : RefactoringMenuLessonBase("Refactoring menu", "Python") {
+class PythonRefactorMenuLesson : RefactoringMenuLessonBase("Refactoring menu") {
   private val sample = parseLessonSample("""
     # Need to think about better sample!
     import random

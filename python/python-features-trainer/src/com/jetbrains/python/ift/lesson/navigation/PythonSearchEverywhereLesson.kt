@@ -3,7 +3,7 @@ package com.jetbrains.python.ift.lesson.navigation
 
 import training.learn.lesson.general.navigation.SearchEverywhereLesson
 
-class PythonSearchEverywhereLesson : SearchEverywhereLesson("Python") {
+class PythonSearchEverywhereLesson : SearchEverywhereLesson() {
   override val existedFile = "src/declaration_and_usages_demo.py"
   override val resultFileName: String = "quadratic_equations_solver.py"
 }
