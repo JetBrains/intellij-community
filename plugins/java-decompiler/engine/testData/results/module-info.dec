@@ -1,4 +1,6 @@
-@Deprecated
+import pkg.test1.TestModuleAnno;
+
+@TestModuleAnno("...")
 module sample.module {
    requires java.base;
 
@@ -15,4 +17,3 @@ module sample.module {
    provides sample.pkg1.TestService with
       sample.pkg1.TestServiceImpl;
 }
-

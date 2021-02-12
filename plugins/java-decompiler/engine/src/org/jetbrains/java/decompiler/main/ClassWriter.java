@@ -249,13 +249,6 @@ public class ClassWriter {
         }
       }
 
-      if (cl.hasModifier(CodeConstants.ACC_MODULE)) {
-        StructModuleAttribute moduleAttribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
-        if (moduleAttribute != null) {
-          writeModuleInfoBody(buffer, moduleAttribute);
-        }
-      }
-
       buffer.appendIndent(indent).append('}');
 
       if (node.type != ClassNode.CLASS_ANONYMOUS) {
@@ -269,10 +262,10 @@ public class ClassWriter {
     DecompilerContext.getLogger().endWriteClass();
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static boolean isSyntheticRecordMethod(StructClass cl, StructMethod mt, TextBuffer code) {
     if (cl.getRecordComponents() != null) {
       String name = mt.getName(), descriptor = mt.getDescriptor();
-      //noinspection SpellCheckingInspection
       if (name.equals("equals") && descriptor.equals("(Ljava/lang/Object;)Z") ||
           name.equals("hashCode") && descriptor.equals("()I") ||
           name.equals("toString") && descriptor.equals("()Ljava/lang/String;")) {
@@ -283,6 +276,30 @@ public class ClassWriter {
       }
     }
     return false;
+  }
+
+  public static void packageInfoToJava(StructClass cl, TextBuffer buffer) {
+    appendAnnotations(buffer, 0, cl, -1);
+
+    int index = cl.qualifiedName.lastIndexOf('/');
+    String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
+    buffer.append("package ").append(packageName).append(';').appendLineSeparator().appendLineSeparator();
+  }
+
+  public static void moduleInfoToJava(StructClass cl, TextBuffer buffer) {
+    appendAnnotations(buffer, 0, cl, -1);
+
+    StructModuleAttribute moduleAttribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
+
+    if ((moduleAttribute.moduleFlags & CodeConstants.ACC_OPEN) != 0) {
+      buffer.append("open ");
+    }
+
+    buffer.append("module ").append(moduleAttribute.moduleName).append(" {").appendLineSeparator();
+
+    writeModuleInfoBody(buffer, moduleAttribute);
+
+    buffer.append('}').appendLineSeparator();
   }
 
   private static void writeModuleInfoBody(TextBuffer buffer, StructModuleAttribute moduleAttribute) {
@@ -368,7 +385,6 @@ public class ClassWriter {
     boolean isEnum = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && (flags & CodeConstants.ACC_ENUM) != 0;
     boolean isInterface = (flags & CodeConstants.ACC_INTERFACE) != 0;
     boolean isAnnotation = (flags & CodeConstants.ACC_ANNOTATION) != 0;
-    boolean isModuleInfo = (flags & CodeConstants.ACC_MODULE) != 0 && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
 
     if (isDeprecated) {
       appendDeprecation(buffer, indent);
@@ -414,24 +430,10 @@ public class ClassWriter {
     else if (components != null) {
       buffer.append("record ");
     }
-    else if (isModuleInfo) {
-      StructModuleAttribute moduleAttribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
-
-      if ((moduleAttribute.moduleFlags & CodeConstants.ACC_OPEN) != 0) {
-        buffer.append("open ");
-      }
-
-      buffer.append("module ");
-      buffer.append(moduleAttribute.moduleName);
-    }
     else {
       buffer.append("class ");
     }
-
-    // Handled above
-    if (!isModuleInfo) {
-      buffer.append(node.simpleName);
-    }
+    buffer.append(node.simpleName);
 
     GenericClassDescriptor descriptor = getGenericClassDescriptor(cl);
     if (descriptor != null && !descriptor.fparameters.isEmpty()) {

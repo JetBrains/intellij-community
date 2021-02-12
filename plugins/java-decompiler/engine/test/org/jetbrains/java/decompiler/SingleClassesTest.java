@@ -115,9 +115,9 @@ public class SingleClassesTest {
   @Test public void testSynchronizedUnprotected() { doTest("pkg/TestSynchronizedUnprotected"); }
   @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
   @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
+  @Test public void testPackageInfo() { doTest("pkg/package-info"); }
 
   // TODO: fix all below
-  //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
   //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }

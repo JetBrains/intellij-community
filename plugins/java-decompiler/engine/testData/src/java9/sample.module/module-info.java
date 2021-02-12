@@ -1,4 +1,6 @@
-@Deprecated
+import pkg.test1.TestModuleAnno;
+
+@TestModuleAnno("...")
 module sample.module {
   requires java.base;
 
