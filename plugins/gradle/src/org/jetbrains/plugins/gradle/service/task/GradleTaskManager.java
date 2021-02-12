@@ -140,7 +140,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
   private static boolean testLauncherIsApplicable(@NotNull List<String> taskNames,
                                                   @NotNull GradleExecutionSettings effectiveSettings) {
-    boolean allowedByRegistry = Registry.is("gradle.testLauncherAPI.enabled", true);
+    boolean allowedByRegistry = Registry.is("gradle.testLauncherAPI.enabled", false);
     boolean allowedByGradleVersion = isSupportedByGradleVersion(effectiveSettings);
     boolean allowedByTasksList = taskNames.size() < 2;
     return Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST)
