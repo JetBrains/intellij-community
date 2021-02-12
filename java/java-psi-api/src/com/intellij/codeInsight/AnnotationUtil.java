@@ -799,18 +799,24 @@ public class AnnotationUtil {
         typeElement = ((PsiMethod)parent).getReturnTypeElement();
       }
       if (type != null) {
-        if (typeElement != null) {
-          PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
-          // See com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl.getOwner
-          while (ref != null && ref.isQualified()) {
-            ref = ObjectUtils.tryCast(ref.getQualifier(), PsiJavaCodeReferenceElement.class);
+        PsiClass annoClass = annotation.resolveAnnotationType();
+        if (annoClass != null) {
+          Set<PsiAnnotation.TargetType> targets = AnnotationTargetUtil.getAnnotationTargets(annoClass);
+          if (targets != null && targets.contains(PsiAnnotation.TargetType.TYPE_USE)) {
+            if (typeElement != null && targets.size() == 1) {
+              // For ambiguous annotations, we assume that annotation on the outer type relates to the inner type
+              // E.g. @Nullable Outer.Inner is equivalent to Outer.@Nullable Inner (if @Nullable is not type-use only)
+              PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
+              // See com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl.getOwner
+              while (ref != null && ref.isQualified()) {
+                ref = ObjectUtils.tryCast(ref.getQualifier(), PsiJavaCodeReferenceElement.class);
+              }
+              if (ref != null) {
+                return JavaPsiFacade.getElementFactory(annotation.getProject()).createType(ref);
+              }
+            }
+            return type.getDeepComponentType();
           }
-          if (ref != null) {
-            return JavaPsiFacade.getElementFactory(annotation.getProject()).createType(ref);
-          }
-        }
-        if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
-          return type.getDeepComponentType();
         }
         return type;
       }
