@@ -19,12 +19,11 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.intellij.lang.annotations.Flow;
@@ -91,6 +90,32 @@ final class SliceUtil {
         builder = builder.withFilter(JavaValueFilter::dropFrameFilter);
       }
       expression = resolved;
+    }
+    if (expression instanceof PsiRecordComponent) {
+      PsiClass recordClass = ((PsiRecordComponent)expression).getContainingClass();
+      if (recordClass != null) {
+        int idx = ArrayUtil.indexOf(recordClass.getRecordComponents(), expression);
+        PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(recordClass);
+        if (constructor != null) {
+          PsiParameterList parameterList = constructor.getParameterList();
+          PsiParameter parameter = parameterList.getParameter(idx);
+          if (parameter != null) {
+            if (!constructor.isPhysical()) {
+              JavaSliceBuilder finalBuilder = builder;
+              ReferencesSearch.search(recordClass, builder.getSearchScope()).forEach(ref -> {
+                PsiElement refElement = ref.getElement();
+                PsiNewExpression newExpression = ObjectUtils.tryCast(refElement.getParent(), PsiNewExpression.class);
+                if (newExpression != null) {
+                  processMethodCall(finalBuilder, processor, parameter.getType(), parameterList.getParameters(), idx, refElement);
+                }
+                return true;
+              });
+            } else {
+              expression = parameter;
+            }
+          }
+        }
+      }
     }
     if (expression instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)expression;
