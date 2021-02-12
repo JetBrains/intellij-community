@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.smartPointers.Identikit;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -130,7 +130,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   public abstract void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer);
 
   protected int getIndentSize() {
-    return JavaCodeStyleSettingsFacade.getInstance(getProject()).getIndentSize();
+    return JavaFileCodeStyleFacade.forContext(getContainingFile()).getIndentSize();
   }
 
   public abstract void setMirror(@NotNull TreeElement element) throws InvalidMirrorException;
