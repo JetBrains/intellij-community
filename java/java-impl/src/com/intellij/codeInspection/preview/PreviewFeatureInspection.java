@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.preview;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureVisitorBase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiAnnotation;
@@ -29,7 +29,7 @@ public class PreviewFeatureInspection extends LocalInspectionTool {
     return new PreviewFeatureInspectionVisitor(holder);
   }
 
-  private static final class PreviewFeatureInspectionVisitor extends HighlightVisitorImpl.PreviewFeatureVisitorBase {
+  private static final class PreviewFeatureInspectionVisitor extends PreviewFeatureVisitorBase {
 
     private final ProblemsHolder myHolder;
 

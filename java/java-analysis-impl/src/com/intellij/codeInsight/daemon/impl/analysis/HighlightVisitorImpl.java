@@ -9,8 +9,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
@@ -52,9 +50,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
-
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE;
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
@@ -1992,164 +1987,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private HighlightInfo checkFeature(@NotNull PsiElement element, @NotNull HighlightingFeature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
-  }
-
-  /**
-   * This is the base visitor that checks if an element belongs to the preview feature API.
-   */
-  public static abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
-
-    @Override
-    public void visitNewExpression(PsiNewExpression expression) {
-      final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
-      if (reference == null) return;
-
-      final PsiModifierListOwner owner = getTargetOfNewExpression(expression);
-
-      checkPreviewFeature(expression, reference, owner);
-    }
-
-    @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      final PsiElement resolved = reference.resolve();
-
-      if (PsiTreeUtil.getParentOfType(reference, PsiNewExpression.class) != null) return;
-      if (!(resolved instanceof PsiModifierListOwner)) return;
-
-      final PsiModifierListOwner owner = (PsiModifierListOwner)resolved;
-
-      checkPreviewFeature(reference, reference, owner);
-    }
-
-    @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      final PsiElement resolved = expression.resolve();
-
-      if (PsiTreeUtil.getParentOfType(expression, PsiNewExpression.class) != null) return;
-      if (!(resolved instanceof PsiModifierListOwner)) return;
-      final PsiModifierListOwner owner = (PsiModifierListOwner)resolved;
-
-      checkPreviewFeature(expression, expression, owner);
-    }
-
-    @Override
-    public void visitModuleStatement(PsiStatement statement) {
-      if (statement instanceof PsiRequiresStatement) {
-        final PsiRequiresStatement requiresStatement = (PsiRequiresStatement)statement;
-        final PsiJavaModule module = requiresStatement.resolve();
-        if (module == null) return;
-
-        final PsiAnnotation annotation = getPreviewFeatureAnnotation(module);
-        final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
-        if (feature == null) return;
-
-        final String description = JavaBundle.message("inspection.preview.feature.0.is.preview.api.message", module.getName());
-        registerProblem(requiresStatement.getReferenceElement(), description, feature, annotation);
-      }
-      else if (statement instanceof PsiProvidesStatement) {
-        final PsiProvidesStatement providesStatement = (PsiProvidesStatement)statement;
-        final PsiReferenceList list = providesStatement.getImplementationList();
-        if (list == null) return;
-
-        for (PsiJavaCodeReferenceElement element : list.getReferenceElements()) {
-          final PsiElement resolved = element.resolve();
-          if (resolved instanceof PsiClass) {
-            final PsiClass psiClass = (PsiClass)resolved;
-            final PsiAnnotation annotation = getPreviewFeatureAnnotation(psiClass);
-            final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
-            if (feature == null) continue;
-            final String description =
-              JavaBundle.message("inspection.preview.feature.0.is.preview.api.message", psiClass.getQualifiedName());
-            registerProblem(element, description, feature, annotation);
-          }
-        }
-      }
-    }
-
-    /**
-     * Participating source code means that such code can access preview feature api in the same package without warnings.
-     * @param from the callsite a preview feature API is accessed
-     * @param to the preview feature API that is being accessed
-     * @return true if the packages of the callsite and the preview feature element are the same, false otherwise
-     */
-    private static boolean isParticipating(PsiElement from, PsiElement to) {
-      final PsiPackage fromPackage = JavaResolveUtil.getContainingPackage(from);
-      final PsiPackage toPackage = JavaResolveUtil.getContainingPackage(to);
-      return fromPackage == toPackage;
-    }
-
-    /**
-     * The method validates that the language level in the project where an element the context refers to is annotated with
-     * either {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} or
-     * {@link HighlightingFeature#JDK_INTERNAL_JAVAC_PREVIEW_FEATURE} is sufficient.
-     *
-     * @param context
-     * @param reference
-     * @param owner
-     */
-    private void checkPreviewFeature(PsiElement context, PsiJavaCodeReferenceElement reference, PsiModifierListOwner owner) {
-      final PsiAnnotation annotation = getPreviewFeatureAnnotation(owner);
-      final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
-      if (feature == null) return;
-      if (isParticipating(reference, owner)) return;
-
-      @NotNull final String name;
-      if (owner instanceof PsiMember) {
-        final PsiMember member = (PsiMember)owner;
-        final PsiClass className = member.getContainingClass();
-        final String methodName = member.getName();
-        if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
-          name = className != null && className.getQualifiedName() != null ? className.getQualifiedName() : reference.getQualifiedName();
-        }
-        else {
-          name = className != null && methodName != null ? className.getQualifiedName() + "#" + methodName : reference.getQualifiedName();
-        }
-
-      }
-      else {
-        name = reference.getQualifiedName();
-      }
-
-      final String description = JavaBundle.message("inspection.preview.feature.0.is.preview.api.message", name);
-
-      registerProblem(context, description, feature, annotation);
-    }
-
-    protected abstract void registerProblem(PsiElement element,
-                                            @InspectionMessage String description,
-                                            HighlightingFeature feature,
-                                            PsiAnnotation annotation);
-
-    private static @Nullable PsiModifierListOwner getTargetOfNewExpression(@NotNull final PsiNewExpression expression) {
-      final PsiMethod method = expression.resolveMethod();
-      if (method != null) return method;
-
-      final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
-      if (reference == null) return null;
-      return ObjectUtils.tryCast(reference.resolve(), PsiModifierListOwner.class);
-    }
-
-    private static @Nullable PsiAnnotation getPreviewFeatureAnnotation(@Nullable PsiModifierListOwner owner) {
-      return getPreviewFeatureAnnotationOptional(owner).orElse(null);
-    }
-
-    /**
-     * This method check if the element, its enclosing class(-es) or its jigsaw module is annotated with PreviewFeature.
-     * It doesn't take into account the element's package as per
-     * <a href="https://mail.openjdk.java.net/pipermail/compiler-dev/2021-February/016306.html">the mailing list discussion</a>.
-     * @param element a PSI element to check if it belongs to the preview feature API.
-     * @return the PreviewFeature annotation inside of {@link Optional} that describes the preview feature api the element belongs to, {@link Optional#empty()} otherwise
-     */
-    private static @NotNull Optional<PsiAnnotation> getPreviewFeatureAnnotationOptional(@Nullable PsiModifierListOwner element) {
-      if (element == null) return Optional.empty();
-      if (element instanceof PsiPackage) return Optional.empty();
-
-      return Optional.ofNullable(element.getAnnotation(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE))
-        .or(() -> Optional.ofNullable(element.getAnnotation(JDK_INTERNAL_PREVIEW_FEATURE)))
-        .or(() -> getPreviewFeatureAnnotationOptional(PsiTreeUtil.getParentOfType(element, PsiClass.class)))
-        .or(() -> getPreviewFeatureAnnotationOptional(element instanceof PsiJavaModule ? null : JavaModuleGraphUtil.findDescriptorByElement(element)))
-      ;
-    }
   }
 
   private static class PreviewFeatureVisitor extends PreviewFeatureVisitorBase {

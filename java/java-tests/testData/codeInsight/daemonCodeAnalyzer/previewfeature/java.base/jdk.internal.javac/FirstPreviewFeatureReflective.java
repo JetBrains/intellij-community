@@ -9,4 +9,5 @@ public interface FirstPreviewFeatureReflective {
   }
   void f();
   static void g() {}
+  public static final String KEY = "value";
 }
