@@ -31,6 +31,7 @@ public class XmlErrorBundle {
    * @deprecated use {@link XmlPsiBundle#messagePointer} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static Supplier<@Nls String> messagePointer(@NotNull String key, Object @NotNull ... params) {
     return XmlPsiBundle.messagePointer(keyMappings.getOrDefault(key, key), params);
