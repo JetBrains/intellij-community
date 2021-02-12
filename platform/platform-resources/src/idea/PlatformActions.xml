@@ -415,7 +415,10 @@
         <group id="FilePropertiesGroup" popup="true">
           <action id="ChangeFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction"/>
           <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileTypeAction"/>
-          <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
+          <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction">
+            <synonym key="action.ToggleReadOnlyAttribute.synonym"/>
+            <synonym key="action.ToggleReadOnlyAttribute.synonym2"/>
+          </action>
 
           <group id="ChangeLineSeparators" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
             <action id="ConvertToWindowsLineSeparators" class="com.intellij.codeStyle.ConvertToWindowsLineSeparatorsAction"/>
