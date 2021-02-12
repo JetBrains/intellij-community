@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.CoverageRunner;
+import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.ui.NestedGroupFragment;
@@ -114,7 +115,7 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
                                    (t, c) -> comboBox.setItem(configuration.getCoverageRunner()),
                                    (t, c) -> configuration
                                      .setCoverageRunner(isSelected() && component.isVisible() ? comboBox.getItem() : model.getElementAt(0)),
-                                   t -> false);
+                                   t -> configuration.getCoverageRunner() != CoverageRunner.getInstance(IDEACoverageRunner.class));
     fragment.setEditorGetter(c -> comboBox);
     fragment.setActionHint(JavaCoverageBundle.message("select.to.use.a.code.coverage.runner.other.than.the.built.in.one"));
     return fragment;
