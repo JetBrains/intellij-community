@@ -192,7 +192,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           if (c != null) {
             isAccessibleEnable = !isAccessibleEnable;
             myHierarchyTree.setModel(buildModel(c, isAccessibleEnable));
-            myHierarchyTree.expandPath();
+            myHierarchyTree.expandPath(isAccessibleEnable);
           }
         }
       });
@@ -472,7 +472,12 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           } else {
             ac = componentNode.getAccessible().getAccessibleContext();
           }
-          append(ac.getClass().getSimpleName());
+          String simpleName = ac.getClass().getSimpleName();
+          if (StringUtil.isEmpty(simpleName)) {
+            append(ac.getClass().getName());
+          } else {
+            append(simpleName);
+          }
           String axName = ac.getAccessibleName();
           if (axName != null) {
             append(" " + axName);
@@ -602,7 +607,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     @Override
     public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof ComponentNode) {
-        Pair<Class, String> pair = getClassAndFieldName(((HierarchyTree.ComponentNode)value).myComponent);
+        Pair<Class, String> pair = null;
+if (((HierarchyTree.ComponentNode)value).myComponent != null) {
+  pair = getClassAndFieldName(((HierarchyTree.ComponentNode)value).myComponent);
+}
         if (pair != null) {
           return pair.first.getSimpleName() + '.' + pair.second;
         } else {
@@ -719,7 +727,17 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
       @Override
       public String toString() {
-        return myText != null ? myText : myComponent.getClass().getName();
+        if (myComponent != null) {
+          return myText != null ? myText : myComponent.getClass().getName();
+        }
+        else {
+          if (myText != null) {
+            return myText;
+          }
+          else {
+            return myAccessible.getClass().getName();
+          }
+        }
       }
 
       public void setText(String value) {
