@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
@@ -79,10 +78,4 @@ public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
     }
   }
 
-  @Override
-  protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
-    if (rootSettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
-      rootSettings.getCommonSettings(PropertiesLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    }
-  }
 }

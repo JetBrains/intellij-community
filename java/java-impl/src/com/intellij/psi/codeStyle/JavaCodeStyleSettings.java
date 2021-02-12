@@ -336,10 +336,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     ENABLE_JAVADOC_FORMATTING = rootSettings.ENABLE_JAVADOC_FORMATTING;
 
     JD_LEADING_ASTERISKS_ARE_ENABLED = rootSettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
-
-    if (rootSettings.WRAP_COMMENTS) {
-      rootSettings.getCommonSettings(JavaLanguage.INSTANCE).WRAP_COMMENTS = rootSettings.WRAP_COMMENTS;
-    }
   }
 
   @Override

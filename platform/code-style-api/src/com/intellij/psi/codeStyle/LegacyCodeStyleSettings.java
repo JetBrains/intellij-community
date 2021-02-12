@@ -54,11 +54,6 @@ public class LegacyCodeStyleSettings extends CommonCodeStyleSettings {
   /**
    * @deprecated See {@link LegacyCodeStyleSettings}
    */
-  @Deprecated
-  public int BLANK_LINES_AROUND_METHOD = 1;
-  /**
-   * @deprecated See {@link LegacyCodeStyleSettings}
-   */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean INDENT_CASE_FROM_SWITCH = true;
   /**
@@ -66,11 +61,6 @@ public class LegacyCodeStyleSettings extends CommonCodeStyleSettings {
    */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean ALIGN_MULTILINE_BINARY_OPERATION = false;
-  /**
-   * @deprecated See {@link LegacyCodeStyleSettings}
-   */
-  @Deprecated
-  public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
   /**
    * @deprecated See {@link LegacyCodeStyleSettings}
    */
@@ -231,11 +221,6 @@ public class LegacyCodeStyleSettings extends CommonCodeStyleSettings {
    */
   @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
-  /**
-   * @deprecated See {@link LegacyCodeStyleSettings}
-   */
-  @Deprecated
-  public boolean WRAP_COMMENTS = false;
 
   public LegacyCodeStyleSettings() {
     super(null);
