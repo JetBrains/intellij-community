@@ -16,20 +16,20 @@
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.util.containers.MultiMap;
-import org.apache.commons.cli.Option;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableList;
-import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.filesEqual;
 import static com.intellij.openapi.util.io.FileUtil.loadFile;
 import static com.intellij.testFramework.UsefulTestCase.*;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static java.util.Arrays.asList;
 import static org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -105,56 +105,42 @@ public class GradleExecutionHelperTest {
 
   @Test
   public void testCommandLineTestArgsMerge() {
-    MultiMap<String, String> r = groupTestTaskArguments(Collections.emptyList());
+    MultiMap<String, String> r = extractTestCommandOptions(Collections.emptyList());
 
     assertTrue("Expecting empty result for empty arg", r.isEmpty());
 
-    r = groupTestTaskArguments(asList("task1"));
+    r = extractTestCommandOptions(asList("task1"));
     assertContainsElements(r.get("task1"), "*");
 
-    r = groupTestTaskArguments(asList("task1", "task2"));
+    r = extractTestCommandOptions(asList("task1", "task2"));
     assertContainsElements(r.get("task1"), "*");
     assertContainsElements(r.get("task2"), "*");
 
-    r = groupTestTaskArguments(asList("t1", "t2", "t3", "--tests", "my.test.name"));
+    r = extractTestCommandOptions(asList("t1", "t2", "t3", "--tests", "my.test.name"));
     assertContainsElements(r.get("t1"), "*");
     assertContainsElements(r.get("t2"), "*");
     assertContainsElements(r.get("t3"), "my.test.name");
 
-    r = groupTestTaskArguments(asList("t1", "--tests", "my.test1", "--tests", "my.test2", "--tests", "my.test3",
-                                    "t2", "--tests", "my2.test1", "--tests", "my2.test2",
-                                    "t3",
-                                    "t4", "--tests", "my4.test1"));
+    List<String> args = asList("t1", "--tests", "my.test1", "--tests", "my.test2", "--tests", "my.test3",
+                               "t2", "--tests", "my2.test1", "--tests", "my2.test2", "--init-script", "a.init.gradle",
+                               "--init-script", "b.init.gradle",
+                               "t3",
+                               "--info",
+                               "t4", "--tests", "my4.test1",
+                               "-s");
+    r = extractTestCommandOptions(args);
 
     assertContainsElements(r.get("t1"), "my.test1", "my.test2", "my.test3");
     assertContainsElements(r.get("t2"), "my2.test1", "my2.test2");
     assertContainsElements(r.get("t3"), "*");
     assertContainsElements(r.get("t4"), "my4.test1");
+
+    assertContainsElements(args, "--init-script", "a.init.gradle", "--init-script", "b.init.gradle", "--info", "-s");
   }
 
-  @Test
-  public void testCommandLineKnownArgsFilter() {
-    List<String> buffer = new ArrayList<>();
-
-    String expected = "delimiter";
-
-    Collection<Option> options = GradleCommandLineOptionsProvider.getSupportedOptions().getOptions();
-    int length = options.size();
-
-    for (Option option : options) {
-      buffer.add(expected);
-      buffer.add("-" + (option.getOpt() == null ? option.getLongOpt() : option.getOpt()));
-      if (option.hasArg()) {
-        buffer.add(" optionArg ");
-      }
-    }
-
-    List<String> result = filterOutKnownArgs(buffer);
-
-    assertSize(length, result);
-    for (String actual : result) {
-      assertEquals("expecting " + result + " to contain only '" + expected + "' strings",
-                   expected, actual);
-    }
+  private static List<String> asList(String... strings) {
+    ArrayList<String> list = new ArrayList<>();
+    Collections.addAll(list, strings);
+    return list;
   }
 }
