@@ -16,7 +16,7 @@ import com.intellij.ui.scale.JBUIScale
 import icons.FeaturesTrainerIcons.Img.PluginIcon
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.course.Module
+import training.learn.course.IftModule
 import training.statistic.StatisticBase
 import training.util.rigid
 import java.awt.event.ActionEvent
@@ -72,11 +72,11 @@ class IFTInteractiveCourseData : InteractiveCourseData {
     return panel
   }
 
-  private fun moduleDescription(module: Module): HeightLimitedPane {
+  private fun moduleDescription(module: IftModule): HeightLimitedPane {
     return HeightLimitedPane(module.description ?: "", -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
   }
 
-  private fun moduleHeader(module: Module): LinkLabel<Any> {
+  private fun moduleHeader(module: IftModule): LinkLabel<Any> {
     val linkLabel = object : LinkLabel<Any>(module.name, null) {
       override fun setUI(ui: LabelUI?) {
         super.setUI(ui)
@@ -94,7 +94,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
     return linkLabel
   }
 
-  private fun openLearningFromWelcomeScreen(module: Module?) {
+  private fun openLearningFromWelcomeScreen(module: IftModule?) {
     val action = ActionManager.getInstance().getAction("ShowLearnPanel")
 
     //val context = if (module != null) SimpleDataContext.getSimpleContext(OpenLearnPanel.LEARNING_MODULE_KEY.name, module)

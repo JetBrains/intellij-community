@@ -15,11 +15,12 @@ import icons.FeaturesTrainerIcons
 import org.jetbrains.annotations.NotNull
 import training.learn.CourseManager
 import training.learn.LearnBundle
+import training.learn.course.IftModule
 import training.learn.course.Lesson
-import training.learn.course.Module
 import training.learn.lesson.LessonManager
 import training.ui.UISettings
 import training.util.createBalloon
+import training.util.learningProgressString
 import training.util.rigid
 import training.util.scaledRigid
 import java.awt.*
@@ -31,8 +32,8 @@ import javax.swing.border.EmptyBorder
 private val HOVER_COLOR: Color get() = JBColor.namedColor("Plugins.hoverBackground", JBColor(0xEDF6FE, 0x464A4D))
 
 class LearningItems : JPanel() {
-  var modules: List<Module> = emptyList()
-  private val expanded: MutableSet<Module> = mutableSetOf()
+  var modules: List<IftModule> = emptyList()
+  private val expanded: MutableSet<IftModule> = mutableSetOf()
 
   init {
     name = "learningItems"
@@ -41,7 +42,7 @@ class LearningItems : JPanel() {
     isFocusable = false
   }
 
-  fun updateItems(showModule: Module? = null) {
+  fun updateItems(showModule: IftModule? = null) {
     if (showModule != null) expanded.add(showModule)
 
     removeAll()
@@ -86,7 +87,7 @@ class LearningItems : JPanel() {
     return result
   }
 
-  private fun createModuleItem(module: Module): JPanel {
+  private fun createModuleItem(module: IftModule): JPanel {
     val modulePanel = JPanel()
     modulePanel.isOpaque = false
     modulePanel.layout = BoxLayout(modulePanel, BoxLayout.Y_AXIS)
@@ -162,9 +163,7 @@ class LearningItems : JPanel() {
       })
     }
     else {
-      createModuleProgressLabel(module)?.let {
-        modulePanel.add(it)
-      }
+      modulePanel.add(createModuleProgressLabel(module))
     }
 
     result.add(scaledRigid(UISettings.instance.expandAndModuleGap, 0))
@@ -176,11 +175,12 @@ class LearningItems : JPanel() {
 
   private fun createLabelIcon(rawIcon: @NotNull Icon): JLabel = JLabel(IconUtil.toSize(rawIcon, JBUI.scale(16), JBUI.scale(16)))
 
-  private fun createModuleProgressLabel(module: Module): JBLabel? {
-    val progressStr = module.calcProgress() ?: return null
+  private fun createModuleProgressLabel(module: IftModule): JBLabel {
+    val progressStr = learningProgressString(module.lessons)
     val progressLabel = JBLabel(progressStr)
     progressLabel.name = "progressLabel"
-    progressLabel.foreground = if (module.hasNotPassedLesson()) UISettings.instance.moduleProgressColor else UISettings.instance.completedColor
+    val hasNotPassedLesson = module.lessons.any { !it.passed }
+    progressLabel.foreground = if (hasNotPassedLesson) UISettings.instance.moduleProgressColor else UISettings.instance.completedColor
     progressLabel.font = UISettings.instance.getFont(-1)
     progressLabel.alignmentX = LEFT_ALIGNMENT
     return progressLabel

@@ -12,8 +12,8 @@ import com.intellij.openapi.keymap.impl.DefaultKeymapImpl
 import com.intellij.util.TimeoutUtil
 import training.lang.LangManager
 import training.learn.CourseManager
+import training.learn.course.IftModule
 import training.learn.course.Lesson
-import training.learn.course.Module
 import training.learn.lesson.LessonManager
 import training.statistic.FeatureUsageStatisticConsts.ACTION_ID
 import training.statistic.FeatureUsageStatisticConsts.COMPLETED_COUNT
@@ -91,7 +91,7 @@ internal class StatisticBase : CounterUsagesCollector() {
                                languageField with courseLanguage())
     }
 
-    fun logModuleStarted(module: Module) {
+    fun logModuleStarted(module: IftModule) {
       moduleStartedEvent.log(module.name, courseLanguage())
     }
 

@@ -19,7 +19,7 @@ interface Lesson {
   /** This name will be used for generated file with lesson sample */
   val fileName: String
 
-  val module: Module
+  val module: IftModule
 
   val lessonType: LessonType
 

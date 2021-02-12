@@ -10,7 +10,7 @@ import training.util.findLanguageByID
 abstract class KLesson(@NonNls override val id: String,
                        @Nls override val name: String,
                        override val lang: String) : Lesson {
-  override lateinit var module: Module
+  override lateinit var module: IftModule
 
   abstract val lessonContent: LessonContext.() -> Unit
 

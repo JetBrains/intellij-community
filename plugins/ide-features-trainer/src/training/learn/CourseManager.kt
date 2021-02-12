@@ -10,9 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import training.lang.LangManager
 import training.lang.LangSupport
+import training.learn.course.IftModule
 import training.learn.course.LearningCourse
 import training.learn.course.Lesson
-import training.learn.course.Module
 import training.learn.lesson.LessonManager
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
@@ -20,15 +20,15 @@ import training.util.courseCanBeUsed
 import training.util.switchOnExperimentalLessons
 
 class CourseManager internal constructor() : Disposable {
-  val mapModuleVirtualFile: MutableMap<Module, VirtualFile> = ContainerUtil.createWeakMap()
+  val mapModuleVirtualFile: MutableMap<IftModule, VirtualFile> = ContainerUtil.createWeakMap()
 
-  var unfoldModuleOnInit by WeakReferenceDelegator<Module>()
+  var unfoldModuleOnInit by WeakReferenceDelegator<IftModule>()
 
-  private var allModules: List<Module>? = null
+  private var allModules: List<IftModule>? = null
 
   private var currentConfiguration = switchOnExperimentalLessons
 
-  val modules: List<Module>
+  val modules: List<IftModule>
     get() = LangManager.getInstance().getLangSupport()?.let { filterByLanguage(it) } ?: emptyList()
 
   val lessonsForModules: List<Lesson>
@@ -51,7 +51,7 @@ class CourseManager internal constructor() : Disposable {
   }
 
   //TODO: remove this method or convert XmlModule to a Module
-  fun registerVirtualFile(module: Module, virtualFile: VirtualFile) {
+  fun registerVirtualFile(module: IftModule, virtualFile: VirtualFile) {
     mapModuleVirtualFile[module] = virtualFile
   }
 
@@ -81,11 +81,11 @@ class CourseManager internal constructor() : Disposable {
       .size
   }
 
-  private fun initAllModules(): List<Module> = COURSE_MODULES_EP.extensions
+  private fun initAllModules(): List<IftModule> = COURSE_MODULES_EP.extensions
     .filter { courseCanBeUsed(it.language) }
     .map { it.instance.modules() }.flatten()
 
-  private fun getAllModules(): List<Module> {
+  private fun getAllModules(): List<IftModule> {
     if (currentConfiguration != switchOnExperimentalLessons) {
       allModules = null
       currentConfiguration = switchOnExperimentalLessons
@@ -93,7 +93,7 @@ class CourseManager internal constructor() : Disposable {
     return allModules ?: initAllModules().also { allModules = it }
   }
 
-  private fun filterByLanguage(primaryLangSupport: LangSupport): List<Module> {
+  private fun filterByLanguage(primaryLangSupport: LangSupport): List<IftModule> {
     return getAllModules().filter { it.primaryLanguage == primaryLangSupport }
   }
 
