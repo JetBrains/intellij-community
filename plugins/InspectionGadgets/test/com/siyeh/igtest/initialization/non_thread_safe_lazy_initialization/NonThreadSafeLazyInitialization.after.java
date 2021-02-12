@@ -2,7 +2,6 @@ package com.siyeh.igtest.threading;
 
 public class NonThreadSafeLazyInitialization {
     private static Object foo1;
-    private static Object foo2;
     private static Object foo3;
     private static Object foo5;
     private static Object foo6;
@@ -23,10 +22,11 @@ public class NonThreadSafeLazyInitialization {
 
     }
 
+    private static final class Foo2Holder {
+        static final Object foo2 = new Object();
+    }
+
     {
-        if (foo2 == null) {
-            foo2 = new Object();
-        }
 
     }
 
@@ -37,7 +37,7 @@ public class NonThreadSafeLazyInitialization {
     }
 
     private static final class Foo4Holder {
-        private static final Object foo4 = new Object();
+        static final Object foo4 = new Object();
     }
 
     public static void staticMethod() {
@@ -63,7 +63,7 @@ public class NonThreadSafeLazyInitialization {
     }
 
     private static final class Foo7Holder {
-        private static final Object foo7 = "";
+        static final Object foo7 = "";
     }
 
     public Object getInstance3() {

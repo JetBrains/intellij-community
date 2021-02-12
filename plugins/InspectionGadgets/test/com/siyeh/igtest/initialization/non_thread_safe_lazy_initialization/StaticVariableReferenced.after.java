@@ -3,7 +3,7 @@ public class StaticVariableReferenced {
     private static String s = "yes";
 
     private static final class ExampleHolder {
-        private static final Object example = getString(s);
+        static final Object example = getString(s);
     }
 
     public static Object getInstance() {

@@ -31,6 +31,11 @@ public class NonThreadSafeLazyInitializationInspectionTest extends LightJavaInsp
     assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  public void testQualifiedInstanceMethod() {
+    doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+  }
+
   public void testStaticVariableReferenced() {
     doTest();
     checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
