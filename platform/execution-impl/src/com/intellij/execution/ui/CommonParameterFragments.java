@@ -53,7 +53,8 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                         .setText(settings.getWorkingDirectory()),
                                                       (settings, component) -> settings
                                                         .setWorkingDirectory(component.getComponent().getText()),
-                                                      settings -> isNotEmpty(settings.getWorkingDirectory()));
+                                                      settings -> true);
+    myWorkingDirectory.setRemovable(false);
     myFragments.add(myWorkingDirectory);
     myFragments.add(createEnvParameters());
   }
