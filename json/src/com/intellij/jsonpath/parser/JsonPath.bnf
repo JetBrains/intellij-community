@@ -177,7 +177,7 @@ conditionalExpression ::= expression binaryConditionalOperator expression {
   extends=expression
 }
 
-binaryConditionalOperator ::= EQ_OP | NE_OP | GT_OP | LT_OP | GE_OP | LE_OP | NAMED_OP {
+binaryConditionalOperator ::= EEQ_OP | ENE_OP | EQ_OP | NE_OP | GT_OP | LT_OP | GE_OP | LE_OP | NAMED_OP {
   name="operator"
 }
 

@@ -172,11 +172,11 @@ public class _JsonPathLexer implements FlexLexer {
     "\1\35\1\36\1\37\3\1\1\40\1\41\1\42\1\43"+
     "\3\42\1\0\2\44\2\10\2\11\1\45\1\46\1\47"+
     "\1\50\1\51\1\52\1\53\1\54\2\33\1\7\1\55"+
-    "\3\0\3\42\1\44\3\0\3\42\1\56\1\57\1\0"+
-    "\1\56\1\57\1\42\2\60";
+    "\3\0\3\42\1\44\1\56\1\57\3\0\3\42\1\60"+
+    "\1\61\1\0\1\60\1\61\1\42\2\62";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[91];
+    int [] result = new int[93];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -208,14 +208,14 @@ public class _JsonPathLexer implements FlexLexer {
     "\0\327\0\327\0\u0331\0\u035c\0\u0387\0\u03b2\0\327\0\327"+
     "\0\327\0\u03dd\0\u0408\0\u0433\0\327\0\327\0\u045e\0\327"+
     "\0\u0489\0\u04b4\0\u04df\0\u0158\0\u050a\0\u0535\0\u0560\0\327"+
-    "\0\u058b\0\327\0\327\0\327\0\327\0\327\0\327\0\327"+
-    "\0\327\0\327\0\u05b6\0\u05e1\0\u060c\0\327\0\u0637\0\u0662"+
-    "\0\u068d\0\u06b8\0\u06e3\0\u070e\0\u0739\0\u0764\0\u078f\0\u07ba"+
-    "\0\u07e5\0\u0810\0\u083b\0\327\0\327\0\u0866\0\u045e\0\u045e"+
-    "\0\u0891\0\327\0\u045e";
+    "\0\u058b\0\327\0\327\0\u05b6\0\u05e1\0\327\0\327\0\327"+
+    "\0\327\0\327\0\u060c\0\u0637\0\u0662\0\327\0\u068d\0\u06b8"+
+    "\0\u06e3\0\u070e\0\u0739\0\u0764\0\u078f\0\327\0\327\0\u07ba"+
+    "\0\u07e5\0\u0810\0\u083b\0\u0866\0\u0891\0\327\0\327\0\u08bc"+
+    "\0\u045e\0\u045e\0\u08e7\0\327\0\u045e";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[91];
+    int [] result = new int[93];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -269,22 +269,23 @@ public class _JsonPathLexer implements FlexLexer {
     "\1\113\4\57\21\0\4\57\5\0\1\57\1\0\1\57"+
     "\5\0\7\57\1\114\1\57\23\0\2\65\7\0\1\66"+
     "\12\0\1\66\25\0\3\115\10\0\1\115\32\0\11\16"+
-    "\1\0\41\16\11\17\1\0\41\17\10\44\1\103\42\44"+
-    "\15\0\1\104\1\0\1\104\5\0\11\104\23\0\2\105"+
-    "\72\0\1\116\51\0\1\117\53\0\1\120\27\0\4\57"+
-    "\5\0\1\57\1\0\1\57\5\0\2\57\1\121\6\57"+
-    "\21\0\4\57\5\0\1\57\1\0\1\57\5\0\1\57"+
-    "\1\122\7\57\21\0\4\57\5\0\1\57\1\0\1\57"+
-    "\5\0\2\57\1\123\6\57\23\0\2\115\72\0\1\124"+
-    "\55\0\1\125\55\0\1\126\21\0\4\57\5\0\1\57"+
-    "\1\0\1\57\5\0\2\57\1\127\6\57\21\0\4\57"+
-    "\5\0\1\57\1\0\1\57\5\0\5\57\1\130\3\57"+
-    "\21\0\4\57\5\0\1\57\1\0\1\57\5\0\10\57"+
-    "\1\131\47\0\1\132\24\0\4\57\5\0\1\57\1\0"+
-    "\1\57\5\0\5\57\1\133\3\57\15\0";
+    "\1\0\41\16\11\17\1\0\41\17\42\0\1\116\52\0"+
+    "\1\117\10\0\10\44\1\103\42\44\15\0\1\104\1\0"+
+    "\1\104\5\0\11\104\23\0\2\105\72\0\1\120\51\0"+
+    "\1\121\53\0\1\122\27\0\4\57\5\0\1\57\1\0"+
+    "\1\57\5\0\2\57\1\123\6\57\21\0\4\57\5\0"+
+    "\1\57\1\0\1\57\5\0\1\57\1\124\7\57\21\0"+
+    "\4\57\5\0\1\57\1\0\1\57\5\0\2\57\1\125"+
+    "\6\57\23\0\2\115\72\0\1\126\55\0\1\127\55\0"+
+    "\1\130\21\0\4\57\5\0\1\57\1\0\1\57\5\0"+
+    "\2\57\1\131\6\57\21\0\4\57\5\0\1\57\1\0"+
+    "\1\57\5\0\5\57\1\132\3\57\21\0\4\57\5\0"+
+    "\1\57\1\0\1\57\5\0\10\57\1\133\47\0\1\134"+
+    "\24\0\4\57\5\0\1\57\1\0\1\57\5\0\5\57"+
+    "\1\135\3\57\15\0";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[2236];
+    int [] result = new int[2322];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -324,12 +325,12 @@ public class _JsonPathLexer implements FlexLexer {
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
     "\5\0\3\11\2\1\1\11\4\1\1\11\1\1\7\11"+
     "\6\1\4\11\4\1\3\11\3\1\2\11\1\1\1\11"+
-    "\3\1\1\0\3\1\1\11\1\1\11\11\3\1\1\11"+
-    "\3\0\4\1\3\0\3\1\2\11\1\0\3\1\1\11"+
-    "\1\1";
+    "\3\1\1\0\3\1\1\11\1\1\2\11\2\1\5\11"+
+    "\3\1\1\11\3\0\4\1\2\11\3\0\3\1\2\11"+
+    "\1\0\3\1\1\11\1\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[91];
+    int [] result = new int[93];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -675,17 +676,17 @@ public class _JsonPathLexer implements FlexLexer {
     popState();
             } 
             // fall through
-          case 49: break;
+          case 51: break;
           case 2: 
             { return JsonPathTypes.ROOT_CONTEXT;
             } 
             // fall through
-          case 50: break;
+          case 52: break;
           case 3: 
             { return JsonPathTypes.EVAL_CONTEXT;
             } 
             // fall through
-          case 51: break;
+          case 53: break;
           case 4: 
             { if (myStateStack.isEmpty()) {
       return TokenType.BAD_CHARACTER;
@@ -694,227 +695,241 @@ public class _JsonPathLexer implements FlexLexer {
     return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 52: break;
+          case 54: break;
           case 5: 
             { return JsonPathTypes.IDENTIFIER;
             } 
             // fall through
-          case 53: break;
+          case 55: break;
           case 6: 
             { return JsonPathTypes.MINUS_OP;
             } 
             // fall through
-          case 54: break;
+          case 56: break;
           case 7: 
             { return JsonPathTypes.INTEGER_NUMBER;
             } 
             // fall through
-          case 55: break;
+          case 57: break;
           case 8: 
             { return JsonPathTypes.SINGLE_QUOTED_STRING;
             } 
             // fall through
-          case 56: break;
+          case 58: break;
           case 9: 
             { return JsonPathTypes.DOUBLE_QUOTED_STRING;
             } 
             // fall through
-          case 57: break;
+          case 59: break;
           case 10: 
             { return JsonPathTypes.DIVIDE_OP;
             } 
             // fall through
-          case 58: break;
+          case 60: break;
           case 11: 
             { pushState(WILDCARD_EXPECTED); return JsonPathTypes.DOT;
             } 
             // fall through
-          case 59: break;
+          case 61: break;
           case 12: 
             { return JsonPathTypes.PLUS_OP;
             } 
             // fall through
-          case 60: break;
+          case 62: break;
           case 13: 
             { pushState(SEGMENT_EXPRESSION); return JsonPathTypes.LBRACKET;
             } 
             // fall through
-          case 61: break;
+          case 63: break;
           case 14: 
-            { yypushback(1); popState();
+            { if (myStateStack.isEmpty()) {
+      return TokenType.BAD_CHARACTER;
+    }
+    yypushback(1);
+    popState();
             } 
             // fall through
-          case 62: break;
+          case 64: break;
           case 15: 
             { return JsonPathTypes.MULTIPLY_OP;
             } 
             // fall through
-          case 63: break;
+          case 65: break;
           case 16: 
             { return JsonPathTypes.LBRACE;
             } 
             // fall through
-          case 64: break;
+          case 66: break;
           case 17: 
             { return JsonPathTypes.RBRACE;
             } 
             // fall through
-          case 65: break;
+          case 67: break;
           case 18: 
             { pushState(SCRIPT_EXPRESSION); return JsonPathTypes.LPARENTH;
             } 
             // fall through
-          case 66: break;
+          case 68: break;
           case 19: 
             { return JsonPathTypes.NOT_OP;
             } 
             // fall through
-          case 67: break;
+          case 69: break;
           case 20: 
             { return JsonPathTypes.GT_OP;
             } 
             // fall through
-          case 68: break;
+          case 70: break;
           case 21: 
             { return JsonPathTypes.LT_OP;
             } 
             // fall through
-          case 69: break;
+          case 71: break;
           case 22: 
             { return JsonPathTypes.COLON;
             } 
             // fall through
-          case 70: break;
+          case 72: break;
           case 23: 
             { return JsonPathTypes.COMMA;
             } 
             // fall through
-          case 71: break;
+          case 73: break;
           case 24: 
             { return JsonPathTypes.FILTER_OPERATOR;
             } 
             // fall through
-          case 72: break;
+          case 74: break;
           case 25: 
             { return JsonPathTypes.WILDCARD;
             } 
             // fall through
-          case 73: break;
+          case 75: break;
           case 26: 
             { return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 74: break;
+          case 76: break;
           case 27: 
             { return JsonPathTypes.REGEX_STRING;
             } 
             // fall through
-          case 75: break;
+          case 77: break;
           case 28: 
             { return JsonPathTypes.DOT;
             } 
             // fall through
-          case 76: break;
+          case 78: break;
           case 29: 
             { return JsonPathTypes.LBRACKET;
             } 
             // fall through
-          case 77: break;
+          case 79: break;
           case 30: 
             { popState(); return JsonPathTypes.RPARENTH;
             } 
             // fall through
-          case 78: break;
+          case 80: break;
           case 31: 
             { popState(); return JsonPathTypes.RBRACKET;
             } 
             // fall through
-          case 79: break;
+          case 81: break;
           case 32: 
             { pushState(YYINITIAL); return JsonPathTypes.ROOT_CONTEXT;
             } 
             // fall through
-          case 80: break;
+          case 82: break;
           case 33: 
             { pushState(YYINITIAL); return JsonPathTypes.EVAL_CONTEXT;
             } 
             // fall through
-          case 81: break;
+          case 83: break;
           case 34: 
             { return JsonPathTypes.NAMED_OP;
             } 
             // fall through
-          case 82: break;
+          case 84: break;
           case 35: 
             { return JsonPathTypes.RBRACKET;
             } 
             // fall through
-          case 83: break;
+          case 85: break;
           case 36: 
             { return JsonPathTypes.DOUBLE_NUMBER;
             } 
             // fall through
-          case 84: break;
+          case 86: break;
           case 37: 
             { pushState(WILDCARD_EXPECTED); return JsonPathTypes.RECURSIVE_DESCENT;
             } 
             // fall through
-          case 85: break;
+          case 87: break;
           case 38: 
             { return JsonPathTypes.NE_OP;
             } 
             // fall through
-          case 86: break;
+          case 88: break;
           case 39: 
             { return JsonPathTypes.EQ_OP;
             } 
             // fall through
-          case 87: break;
+          case 89: break;
           case 40: 
             { pushState(REGEX_EXPECTED); return JsonPathTypes.RE_OP;
             } 
             // fall through
-          case 88: break;
+          case 90: break;
           case 41: 
             { return JsonPathTypes.GE_OP;
             } 
             // fall through
-          case 89: break;
+          case 91: break;
           case 42: 
             { return JsonPathTypes.LE_OP;
             } 
             // fall through
-          case 90: break;
+          case 92: break;
           case 43: 
             { return JsonPathTypes.OR_OP;
             } 
             // fall through
-          case 91: break;
+          case 93: break;
           case 44: 
             { return JsonPathTypes.AND_OP;
             } 
             // fall through
-          case 92: break;
+          case 94: break;
           case 45: 
             { return JsonPathTypes.RECURSIVE_DESCENT;
             } 
             // fall through
-          case 93: break;
-          case 46: 
-            { return JsonPathTypes.NULL;
-            } 
-            // fall through
-          case 94: break;
-          case 47: 
-            { return JsonPathTypes.TRUE;
-            } 
-            // fall through
           case 95: break;
-          case 48: 
-            { return JsonPathTypes.FALSE;
+          case 46: 
+            { return JsonPathTypes.ENE_OP;
             } 
             // fall through
           case 96: break;
+          case 47: 
+            { return JsonPathTypes.EEQ_OP;
+            } 
+            // fall through
+          case 97: break;
+          case 48: 
+            { return JsonPathTypes.NULL;
+            } 
+            // fall through
+          case 98: break;
+          case 49: 
+            { return JsonPathTypes.TRUE;
+            } 
+            // fall through
+          case 99: break;
+          case 50: 
+            { return JsonPathTypes.FALSE;
+            } 
+            // fall through
+          case 100: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

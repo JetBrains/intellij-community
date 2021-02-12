@@ -54,6 +54,8 @@ public interface JsonPathTypes {
   IElementType DOT = new JsonPathTokenType(".");
   IElementType DOUBLE_NUMBER = new JsonPathTokenType("DOUBLE_NUMBER");
   IElementType DOUBLE_QUOTED_STRING = new JsonPathTokenType("DOUBLE_QUOTED_STRING");
+  IElementType EEQ_OP = new JsonPathTokenType("EEQ_OP");
+  IElementType ENE_OP = new JsonPathTokenType("ENE_OP");
   IElementType EQ_OP = new JsonPathTokenType("EQ_OP");
   IElementType EVAL_CONTEXT = new JsonPathTokenType("@");
   IElementType FALSE = new JsonPathTokenType("false");

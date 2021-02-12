@@ -62,14 +62,6 @@ FLOATING_POINT_LITERAL2="."({DIGIT})+({EXPONENT_PART})?
 FLOATING_POINT_LITERAL3=({DIGIT})+({EXPONENT_PART})
 EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
 
-IN_OP=[iI][nN]
-NIN_OP=[nN][iI][nN]
-SUBSETOF_OP=[sS][uU][bB][sS][eE][tT][oO][fF]
-ANYOF_OP=[aA][nN][yY][oO][fF]
-NONEOF_OP=[nN][oO][nN][eE][oO][fF]
-SIZE_OP=[sS][iI][zZ][eE]
-EMPTY_OP=[eE][mM][pP][tT][yY]
-
 %eof{
   resetInternal();
 %eof}
@@ -85,7 +77,13 @@ EMPTY_OP=[eE][mM][pP][tT][yY]
   "."                                  { pushState(WILDCARD_EXPECTED); return JsonPathTypes.DOT; }
   ".."                                 { pushState(WILDCARD_EXPECTED); return JsonPathTypes.RECURSIVE_DESCENT; }
   "["                                  { pushState(SEGMENT_EXPRESSION); return JsonPathTypes.LBRACKET; }
-  ")"                                  { yypushback(1); popState(); }
+  ")"                                  {
+    if (myStateStack.isEmpty()) {
+      return TokenType.BAD_CHARACTER;
+    }
+    yypushback(1);
+    popState();
+  }
   {ROOT_CONTEXT}                       { return JsonPathTypes.ROOT_CONTEXT; }
   {EVAL_CONTEXT}                       { return JsonPathTypes.EVAL_CONTEXT; }
   {IDENTIFIER}                         { return JsonPathTypes.IDENTIFIER; }
@@ -130,6 +128,8 @@ EMPTY_OP=[eE][mM][pP][tT][yY]
 
   "!"                                  { return JsonPathTypes.NOT_OP; }
 
+  "==="                                { return JsonPathTypes.EEQ_OP; }
+  "!=="                                { return JsonPathTypes.ENE_OP; }
   "=="                                 { return JsonPathTypes.EQ_OP; }
   "!="                                 { return JsonPathTypes.NE_OP; }
   "=~"                                 { pushState(REGEX_EXPECTED); return JsonPathTypes.RE_OP; }

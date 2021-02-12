@@ -111,12 +111,14 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // EQ_OP | NE_OP | GT_OP | LT_OP | GE_OP | LE_OP | NAMED_OP
+  // EEQ_OP | ENE_OP | EQ_OP | NE_OP | GT_OP | LT_OP | GE_OP | LE_OP | NAMED_OP
   public static boolean binaryConditionalOperator(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "binaryConditionalOperator")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, BINARY_CONDITIONAL_OPERATOR, "<operator>");
-    r = consumeToken(b, EQ_OP);
+    r = consumeToken(b, EEQ_OP);
+    if (!r) r = consumeToken(b, ENE_OP);
+    if (!r) r = consumeToken(b, EQ_OP);
     if (!r) r = consumeToken(b, NE_OP);
     if (!r) r = consumeToken(b, GT_OP);
     if (!r) r = consumeToken(b, LT_OP);

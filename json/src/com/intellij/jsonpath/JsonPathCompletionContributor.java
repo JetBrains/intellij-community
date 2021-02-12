@@ -8,12 +8,11 @@ import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
-import com.intellij.jsonpath.psi.JsonPathArrayValue;
+import com.intellij.jsonpath.psi.JsonPathBinaryConditionalOperator;
 import com.intellij.jsonpath.psi.JsonPathObjectValue;
 import com.intellij.jsonpath.psi.JsonPathStringLiteral;
 import com.intellij.jsonpath.psi.JsonPathTypes;
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
-import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +44,7 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
            new FunctionNamesCompletionProvider());
 
     extend(CompletionType.BASIC,
-           psiElement().afterLeafSkipping(StandardPatterns.alwaysFalse(), psiElement().whitespace())
-            .andNot(StandardPatterns.or(
-              psiElement().inside(JsonPathObjectValue.class),
-              psiElement().inside(JsonPathArrayValue.class)
-            )),
+           psiElement().withParent(JsonPathBinaryConditionalOperator.class),
            new OperatorCompletionProvider());
 
     KeywordsCompletionProvider keywordsCompletionProvider = new KeywordsCompletionProvider();

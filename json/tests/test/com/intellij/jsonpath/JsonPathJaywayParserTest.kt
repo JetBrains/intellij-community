@@ -126,4 +126,12 @@ class JsonPathJaywayParserTest : JsonPathParsingTestCase("jayway") {
   fun testComplexObjectLiterals() {
     doCodeTest("\$.store.bicycle[?(@.extra == { 'x': [{}, {'key' : 'value'}] })]")
   }
+
+  fun testEqOperators() {
+    doCodeTest("@.demo[?(@.a == 1 && @.b === 'x')]")
+  }
+
+  fun testNeOperators() {
+    doCodeTest("@.demo[?(@.a != 2 && @.b !== 'x')]")
+  }
 }
