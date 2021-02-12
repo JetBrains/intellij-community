@@ -103,13 +103,23 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
     // Returning `false` would've allowed to perform rename with a dialog, which is undesirable.
     return true
   }
+  val finishMarkAction = Runnable {
+    FinishMarkAction.finish(project, hostEditor, startMarkAction)
+  }
 
   WriteCommandAction
     .writeCommandAction(project)
     .withName(commandName)
     .run<Throwable> {
-      val disposable = runLiveTemplate(project, hostEditor, startMarkAction, builder, stateBefore, ::performRename)
-      Disposer.register(disposable, storeInplaceContinuation(hostEditor, InplaceRenameContinuation(targetPointer)))
+      try {
+        val disposable = runLiveTemplate(project, hostEditor, builder, stateBefore, ::performRename)
+        Disposer.register(disposable, storeInplaceContinuation(hostEditor, InplaceRenameContinuation(targetPointer)))
+        Disposer.register(disposable, finishMarkAction::run)
+      }
+      catch (e: Throwable) {
+        finishMarkAction.run()
+        throw e
+      }
     }
   return true
 }
@@ -192,61 +202,46 @@ private fun injectedToHost(project: Project, injectedFile: PsiFile, injectedRang
 private fun runLiveTemplate(
   project: Project,
   hostEditor: Editor,
-  startMarkAction: StartMarkAction,
   builder: TemplateBuilderImpl,
   stateBefore: Map<RangeMarker, String>,
   newNameConsumer: (String) -> Unit
 ): Disposable {
 
-  fun revertTemplateAndFinish() {
+  fun restoreDocument() {
     val hostDocument: Document = hostEditor.document
-    try {
-      WriteCommandAction.writeCommandAction(project).run<Throwable> {
-        DocumentUtil.executeInBulk(hostDocument, true) {
-          for ((marker: RangeMarker, content: String) in stateBefore) {
-            hostDocument.replaceString(marker.startOffset, marker.endOffset, content)
-          }
+    WriteCommandAction.writeCommandAction(project).run<Throwable> {
+      DocumentUtil.executeInBulk(hostDocument, true) {
+        for ((marker: RangeMarker, content: String) in stateBefore) {
+          hostDocument.replaceString(marker.startOffset, marker.endOffset, content)
         }
-        PsiDocumentManager.getInstance(project).commitDocument(hostDocument)
       }
-    }
-    finally {
-      FinishMarkAction.finish(project, hostEditor, startMarkAction)
+      PsiDocumentManager.getInstance(project).commitDocument(hostDocument)
     }
   }
 
   val restoreCaretAndSelection: Runnable = moveCaretForTemplate(hostEditor) // required by `TemplateManager#runTemplate`
-  try {
-    val template: Template = builder.buildInlineTemplate().also {
-      it.isToShortenLongNames = false
-      it.isToReformat = false
-    }
-    val state: TemplateState = TemplateManager.getInstance(project).runTemplate(hostEditor, template)
-    DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(state)
-    Disposer.register(state, highlightTemplateVariables(project, hostEditor, template, state))
-    state.addTemplateResultListener { result: TemplateResult ->
-      when (result) {
-        TemplateResult.Canceled -> {
-          // don't restore document inside undo
-          FinishMarkAction.finish(project, hostEditor, startMarkAction)
-        }
-        TemplateResult.BrokenOff -> {
-          revertTemplateAndFinish()
-        }
-        TemplateResult.Finished -> {
-          val newName: String = state.getNewName()
-          revertTemplateAndFinish()
-          newNameConsumer(newName)
-        }
+  val template: Template = builder.buildInlineTemplate().also {
+    it.isToShortenLongNames = false
+    it.isToReformat = false
+  }
+  val state: TemplateState = TemplateManager.getInstance(project).runTemplate(hostEditor, template)
+  DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(state)
+  Disposer.register(state, highlightTemplateVariables(project, hostEditor, template, state))
+  state.addTemplateResultListener { result: TemplateResult ->
+    when (result) {
+      TemplateResult.Canceled -> Unit // don't restore document inside undo
+      TemplateResult.BrokenOff -> {
+        restoreDocument()
+      }
+      TemplateResult.Finished -> {
+        val newName: String = state.getNewName()
+        restoreDocument()
+        newNameConsumer(newName)
       }
     }
-    restoreCaretAndSelection.run()
-    return state
   }
-  catch (e: Throwable) {
-    FinishMarkAction.finish(project, hostEditor, startMarkAction)
-    throw e
-  }
+  restoreCaretAndSelection.run()
+  return state
 }
 
 /**
