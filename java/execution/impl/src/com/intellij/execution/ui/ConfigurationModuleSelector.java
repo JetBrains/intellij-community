@@ -32,6 +32,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SortedComboBoxModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ public class ConfigurationModuleSelector {
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ConfigurationModuleSelector(@NotNull Project project, final JComboBox<? extends Module> modulesList) {
     this(project, modulesList, JavaPsiBundle.message("list.item.no.module"));
   }
@@ -88,6 +90,7 @@ public class ConfigurationModuleSelector {
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox, String)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ConfigurationModuleSelector(@NotNull Project project, final JComboBox<? extends Module> modulesList, final @NlsContexts.ListItem String noModule) {
     myProject = project;
     myModulesList = modulesList;

@@ -19,6 +19,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathsList;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,6 +119,7 @@ public class JavaParameters extends SimpleJavaParameters {
 
   /** @deprecated use {@link #getValidJdkToRunModule(Module, boolean)} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Sdk getModuleJdk(final Module module) throws CantRunException {
     return getValidJdkToRunModule(module, false);
   }

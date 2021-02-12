@@ -28,6 +28,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,6 +40,7 @@ public class ReplaceConstructorWithFactoryHandler
    * @deprecated Use {@link #getRefactoringName()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final String REFACTORING_NAME = "Replace Constructor With Factory Method";
   private Project myProject;
 

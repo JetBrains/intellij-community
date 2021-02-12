@@ -33,6 +33,7 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.StatusText;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ import java.util.*;
  * @deprecated use {@link SdkPopupFactory} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public class JdkChooserPanel extends JPanel {
   private final @Nullable Project myProject;
   private final DefaultListModel<Sdk> myListModel;

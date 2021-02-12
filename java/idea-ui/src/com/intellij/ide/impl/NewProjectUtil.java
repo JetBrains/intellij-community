@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,7 @@ public final class NewProjectUtil {
    * @deprecated Use {@link #createNewProject(AbstractProjectWizard)}, projectToClose param is not used.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void createNewProject(@SuppressWarnings("unused") @Nullable Project projectToClose, @NotNull AbstractProjectWizard wizard) {
     createNewProject(wizard);
   }

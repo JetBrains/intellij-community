@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +38,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> ALLOW_WILDCARDS = new CustomizationKey<>("ALLOW_WILDCARDS");
 
   /** @deprecated use {@link #SUPER_CLASSES} instead */
-  @Deprecated public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
   /** @deprecated use {@link #IMPORTS} instead */
-  @Deprecated public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
 
   @Nullable
   private Map<CustomizationKey, Object> myOptions;

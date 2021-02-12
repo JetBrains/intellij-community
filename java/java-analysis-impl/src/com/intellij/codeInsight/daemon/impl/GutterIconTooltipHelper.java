@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,7 @@ import java.util.Set;
  * @deprecated use {@link GutterTooltipHelper}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public final class GutterIconTooltipHelper {
   private GutterIconTooltipHelper() {
   }
@@ -27,6 +29,7 @@ public final class GutterIconTooltipHelper {
    * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String composeText(PsiElement @NotNull [] elements, @NotNull String start, @NotNull String pattern) {
     return composeText(Arrays.asList(elements), start, pattern);
   }
@@ -35,6 +38,7 @@ public final class GutterIconTooltipHelper {
    * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String composeText(@NotNull Iterable<? extends PsiElement> elements, @NotNull String start, @NotNull String pattern) {
     return composeText(elements, start, pattern, "");
   }
@@ -43,6 +47,7 @@ public final class GutterIconTooltipHelper {
    * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   static String composeText(@NotNull Iterable<? extends PsiElement> elements,
                             @NotNull String start,
                             @NotNull String pattern,

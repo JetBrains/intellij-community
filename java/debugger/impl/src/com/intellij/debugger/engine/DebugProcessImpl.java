@@ -79,10 +79,7 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -210,6 +207,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
    * @deprecated use {@link #getAutoRendererAsync(Type)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
     Type type = descriptor.getType();
     DebuggerManagerThreadImpl.assertIsManagerThread();

@@ -29,6 +29,7 @@ import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
    * @deprecated Use {@link #getActionString()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   protected static  final String ACTION_STRING = "to find usages of";
 
   private final PsiElement[] myElementsToSearch;

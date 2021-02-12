@@ -6,6 +6,7 @@ import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
    * @deprecated please don't use {@link PsiPrimitiveType} to represent fake types
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public PsiPrimitiveType(@NotNull String name, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myKind = null;
@@ -265,6 +267,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
    * @deprecated please use {@link JvmPrimitiveTypeKind#getBoxedFqns}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Collection<String> getAllBoxedTypeNames() {
     return JvmPrimitiveTypeKind.getBoxedFqns();
   }

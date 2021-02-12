@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,7 @@ public abstract class CompilerManager {
    * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public abstract void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
 
   /**
@@ -69,6 +71,7 @@ public abstract class CompilerManager {
    * @deprecated use {@link CompileTask} extension instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeCompiler(@NotNull Compiler compiler);
 
   /**
@@ -95,6 +98,7 @@ public abstract class CompilerManager {
    * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeCompilableFileType(@NotNull FileType type);
 
   /**
@@ -120,6 +124,7 @@ public abstract class CompilerManager {
    * @deprecated Use {@code compiler.task} extension point instead (see {@link CompileTask} for details).
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addAfterTask(@NotNull CompileTask task);
 
   /**

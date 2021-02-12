@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -126,6 +127,7 @@ public final class SuperMethodWarningUtil {
    * Custom action word doesn't work well with translations thus is replaced with "refactor"
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static PsiMethod checkSuperMethod(@NotNull PsiMethod method, 
                                            @SuppressWarnings("unused") @NotNull String actionString) {
     ApplicationManager.getApplication().assertIsDispatchThread();

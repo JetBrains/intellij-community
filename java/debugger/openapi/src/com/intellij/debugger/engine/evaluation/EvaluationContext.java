@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ public interface EvaluationContext extends StackFrameContext{
    * @deprecated Use {@link #computeThisObject()} instead, EvaluationContext now may lazily compute this object
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   Value getThisObject();
 

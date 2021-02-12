@@ -18,6 +18,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,7 +145,8 @@ public final class JavaPostfixTemplatesUtils {
   /**
    * @deprecated use {@link #isThrowable(PsiType)}
    */
-  @Deprecated public static final Condition<PsiElement> IS_THROWABLE =
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final Condition<PsiElement> IS_THROWABLE =
     element -> element instanceof PsiExpression && isThrowable(((PsiExpression)element).getType());
 
   public static final Condition<PsiElement> IS_NON_VOID =
@@ -156,7 +158,8 @@ public final class JavaPostfixTemplatesUtils {
   /**
    * @deprecated use {@link #isIterable(PsiType)} / {@link #isArray(PsiType)}
    */
-  @Deprecated public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;
 
     PsiType type = ((PsiExpression)element).getType();

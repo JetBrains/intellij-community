@@ -9,10 +9,7 @@ import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.ArtifactProblemsHolder;
 import com.intellij.packaging.ui.PackagingSourceItem;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -29,6 +26,7 @@ public abstract class ArtifactType {
    * Please use the constructor that accepts a messagePointer for {@link ArtifactType#myTitle}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected ArtifactType(@NonNls String id, @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
     this(id, () -> title);
   }

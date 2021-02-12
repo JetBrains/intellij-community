@@ -36,6 +36,7 @@ import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   /**
    * @deprecated Use {@link #getRefactoringName()} instead
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final String REFACTORING_NAME = "Push Members Down";
 
   @Override

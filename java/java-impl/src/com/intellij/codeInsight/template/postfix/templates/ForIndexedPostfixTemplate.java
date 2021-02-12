@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,8 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
   /**
    * @deprecated use {@link JavaPostfixTemplatesUtils}
    */
-  @Deprecated public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
     element -> IS_ITERABLE_OR_ARRAY.value(element) || IS_NUMBER.value(element);
     
   protected ForIndexedPostfixTemplate(@NotNull String templateName, @NotNull String templateText, @NotNull String example,

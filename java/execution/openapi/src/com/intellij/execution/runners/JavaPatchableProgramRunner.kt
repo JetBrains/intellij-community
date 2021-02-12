@@ -8,9 +8,11 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.ui.RunContentDescriptor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.resolvedPromise
 
 @Deprecated(message = "Not required and not used anymore")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 abstract class JavaPatchableProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
   @Throws(ExecutionException::class)
   final override fun execute(environment: ExecutionEnvironment) {

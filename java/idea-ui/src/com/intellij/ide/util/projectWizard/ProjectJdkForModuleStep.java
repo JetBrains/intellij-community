@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,6 +145,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
    * @deprecated this method does return an empty array
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public Object @NotNull [] getAllJdks() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
