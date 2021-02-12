@@ -36,6 +36,7 @@ open class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
   }
 
   private fun load(future: CompletableFuture<T>) {
+    error = null
     loading = true
     eventDispatcher.multicaster.onLoadingStarted()
     updateFuture = future.handleOnEdt(this) { result, error ->
