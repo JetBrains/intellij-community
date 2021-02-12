@@ -55,9 +55,9 @@ class KotlinSdkType : SdkType("KotlinSDK") {
 
     override fun getIcon() = KotlinIcons.SMALL_LOGO
 
-    override fun isValidSdkHome(path: String?) = true
+    override fun isValidSdkHome(path: String) = true
 
-    override fun suggestSdkName(currentSdkName: String?, sdkHome: String?) = "Kotlin SDK"
+    override fun suggestSdkName(currentSdkName: String?, sdkHome: String) = "Kotlin SDK"
 
     override fun suggestHomePath() = null
 
