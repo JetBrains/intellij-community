@@ -27,6 +27,20 @@ import java.util.concurrent.CompletableFuture
 private val LOG = logger<ProcessHandshakeLauncher<*, *, *>>()
 
 abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> {
+  /**
+   * The launcher process might exit without waiting for the target process to finish,
+   * in which case it can also exit before the target process writes the handshake response.
+   * This timeout gives the the handshake a chance to be read even after the launcher process has finished.
+   */
+  protected open val handshakeTimeoutAfterLauncherFinishedMillis: Long = 5000
+
+  /**
+   * Upon a handshake failure the launcher might have generated (or relayed from the target process)
+   * some output useful for error handling or general debug logging.
+   * This timeout gives the launcher process some time to exit cleanly after the handshake has failed.
+   */
+  protected open val launcherOutputTimeoutAfterHandshakeFailedMillis: Long = 1000
+
   fun launchWithProgress(progressTitle: @NlsContexts.ProgressTitle String): R {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
       launchAsync().awaitWithCheckCanceled()
@@ -49,10 +63,17 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
         val handshakeAsync = async(Dispatchers.IO) { transport.readHandshake() }
         val finishedAsync = launcherOutput.onFinished().asDeferred()
 
-        val handshake = try {
-          select<H?> {
+        val handshake: H = try {
+          select {
             handshakeAsync.onAwait { it }
             finishedAsync.onAwait { null }
+          }
+          // the launcher exited without waiting for the target process to finish, the handshake may still arrive
+          ?: select {
+            handshakeAsync.onAwait { it }
+            handshakeTimeoutAfterLauncherFinishedMillis.takeUnless { it < 0 }?.let { timeoutMs ->
+              onTimeout(timeoutMs) { null }
+            }
           }
           ?: throw EOFException()
         }
@@ -60,7 +81,9 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
           // give the launcher a chance to exit cleanly (in case it hasn't yet) to collect the whole output
           select<Unit> {
             finishedAsync.onAwait { }
-            onTimeout(1000) { launcherOutput.setTimeout() }
+            launcherOutputTimeoutAfterHandshakeFailedMillis.takeUnless { it < 0 }?.let { timeoutMs ->
+              onTimeout(timeoutMs) { launcherOutput.setTimeout() }
+            }
           }
           handshakeFailed(transport, this@processHandler, launcherOutput, e.takeUnless { it is EOFException })
         }
