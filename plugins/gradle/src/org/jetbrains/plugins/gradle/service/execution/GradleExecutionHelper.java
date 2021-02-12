@@ -248,8 +248,7 @@ public class GradleExecutionHelper {
                                       @NotNull ExternalSystemTaskNotificationListener listener) {
     TestLauncher result = connection.newTestLauncher();
     if (settings != null) {
-      prepareForTestLauncher(result, id, settings, listener, connection);
-      configureTestTasks(result, tasks, settings.getArguments());
+      prepareForTestLauncher(result, id, settings, listener, connection, tasks);
     }
     return result;
   }
@@ -270,15 +269,20 @@ public class GradleExecutionHelper {
                              @NotNull GradleExecutionSettings settings,
                              @NotNull final ExternalSystemTaskNotificationListener listener,
                              @NotNull ProjectConnection connection) {
-    prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false), false);
+    prepare(operation, id, settings, listener, connection,
+            new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false),
+            false, Collections.emptyList());
   }
 
   public static void prepareForTestLauncher(@NotNull LongRunningOperation operation,
-                             @NotNull final ExternalSystemTaskId id,
-                             @NotNull GradleExecutionSettings settings,
-                             @NotNull final ExternalSystemTaskNotificationListener listener,
-                             @NotNull ProjectConnection connection) {
-    prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false), true);
+                                            @NotNull final ExternalSystemTaskId id,
+                                            @NotNull GradleExecutionSettings settings,
+                                            @NotNull final ExternalSystemTaskNotificationListener listener,
+                                            @NotNull ProjectConnection connection,
+                                            @NotNull List<String> tasks) {
+    prepare(operation, id, settings, listener, connection,
+            new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false),
+            true, tasks);
   }
 
   public static void prepare(@NotNull LongRunningOperation operation,
@@ -288,7 +292,8 @@ public class GradleExecutionHelper {
                              @NotNull ProjectConnection connection,
                              @NotNull final OutputStream standardOutput,
                              @NotNull final OutputStream standardError,
-                             boolean forTestLauncher) {
+                             boolean forTestLauncher,
+                             @NotNull List<String> tasks) {
     List<String> jvmArgs = settings.getJvmArguments();
     BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, (CancellationToken)null, settings);
 
@@ -336,7 +341,20 @@ public class GradleExecutionHelper {
       // filter nulls and empty strings
       filteredArgs.addAll(ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s));
 
-      if (!forTestLauncher) {
+      if (forTestLauncher) {
+        List<String> tasksWithArgs = new ArrayList<>(tasks);
+        tasksWithArgs.addAll(filteredArgs);
+        filteredArgs = tasksWithArgs;
+        MultiMap<String, String> testTasksConfiguration = extractTestCommandOptions(tasksWithArgs);
+        if (operation instanceof TestLauncher) {
+          TestLauncher testLauncher = (TestLauncher)operation;
+          for (Map.Entry<String, Collection<String>> entry : testTasksConfiguration.entrySet()) {
+            // TODO we need better point of call to pass this info
+            testLauncher.withTaskAndTestClasses(entry.getKey(), entry.getValue());
+          }
+        }
+      }
+      else {
         // TODO remove this replacement when --tests option will become available for tooling API
         replaceTestCommandOptionWithInitScript(filteredArgs);
       }
@@ -662,6 +680,56 @@ public class GradleExecutionHelper {
     }
   }
 
+  /**
+   * For Test Launcher, all tasks are considered test task names and should be set through separate API
+   * Args list will contain all other known arguments.
+   *
+   * @param args full command line
+   * @return test tasks geouped with its patterns
+   */
+  static  MultiMap<String, String> extractTestCommandOptions(@NotNull List<String> args) {
+    MultiMap<String, String> taskToTestsPatterns = new MultiMap<>();
+
+    Map<String, Option> optionsIndex = new HashMap<>();
+    for (Option option : GradleCommandLineOptionsProvider.getSupportedOptions().getOptions()) {
+      optionsIndex.put(option.getOpt(), option);
+      optionsIndex.put(option.getLongOpt(), option);
+    }
+
+    int j = 0;
+    while (j < args.size()) {
+      String token = args.get(j);
+      Option option = optionsIndex.get(StringUtil.trimLeading(token, '-'));
+      if (option!= null) {
+        j++;
+        if (option.hasArg()) {
+          j++;
+        }
+        continue;
+      }
+
+      while (j < args.size() - 2) {
+        String peek = args.get(j + 1);
+        if (GradleConstants.TESTS_ARG_NAME.equals(peek)) {
+          taskToTestsPatterns.putValue(token, args.get(j + 2));
+          // remove --tests <pattern> argument
+          args.remove(j + 1);
+          args.remove(j + 1);
+        } else {
+          break;
+        }
+      }
+
+      if (!taskToTestsPatterns.containsKey(token)) {
+        taskToTestsPatterns.putValue(token, "*");
+      }
+      // remove current task name
+      args.remove(j);
+    }
+
+    return taskToTestsPatterns;
+  }
+
   @NotNull
   public static String toGroovyString(@NotNull String string) {
     StringBuilder stringBuilder = new StringBuilder();
@@ -752,73 +820,4 @@ public class GradleExecutionHelper {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
   }
-
-  public static void configureTestTasks(@NotNull TestLauncher launcher,
-                                        @NotNull List<String> tasks,
-                                        @NotNull List<String> arguments) {
-    List<String> allArgs = new ArrayList<>(tasks);
-    allArgs.addAll(arguments);
-
-    List<String> filteredArgs = filterOutKnownArgs(allArgs);
-    MultiMap<String, String> taskToTests = groupTestTaskArguments(filteredArgs);
-
-    for (Map.Entry<String, Collection<String>> entry : taskToTests.entrySet()) {
-      launcher.withTaskAndTestClasses(entry.getKey(), entry.getValue());
-    }
-  }
-
-  @NotNull
-  static MultiMap<String, String> groupTestTaskArguments(@NotNull List<String> filteredArgs) {
-    MultiMap<String, String> taskToTests = new MultiMap<>();
-    Iterator<String> argsIter = filteredArgs.iterator();
-    String currentTask = null;
-
-    while (argsIter.hasNext()) {
-      String nextToken = argsIter.next();
-      if (currentTask == null) {
-        currentTask = nextToken;
-      } else {
-        if ("--tests".equals(nextToken) && argsIter.hasNext()) {
-          taskToTests.putValue(currentTask, argsIter.next());
-        } else if (nextToken.startsWith("-")) {
-          break;
-        } else {
-          if (!taskToTests.containsKey(currentTask)) {
-            taskToTests.putValue(currentTask, "*");
-          }
-          currentTask = nextToken;
-        }
-      }
-    }
-
-    if (currentTask != null && !taskToTests.containsKey(currentTask)) {
-      taskToTests.putValue(currentTask, "*");
-    }
-    return taskToTests;
-  }
-
-  static List<String> filterOutKnownArgs(List<String> args) {
-    Map<String, Option> optionsIndex = new HashMap<>();
-    for (Option option : (Collection<Option>)GradleCommandLineOptionsProvider.getSupportedOptions().getOptions()) {
-      optionsIndex.put(option.getOpt(), option);
-      optionsIndex.put(option.getLongOpt(), option);
-    }
-
-    List<String> result = new ArrayList<>(args.size());
-
-    Iterator<String> iter = args.iterator();
-    while(iter.hasNext()) {
-      String token = iter.next();
-      Option option = optionsIndex.get(StringUtil.trimLeading(token, '-'));
-      if (option == null) {
-        result.add(token);
-      } else if (option.hasArg() && iter.hasNext()) {
-        iter.next();
-      }
-    }
-
-    return result;
-  }
-
-
 }
