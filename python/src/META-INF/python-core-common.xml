@@ -399,6 +399,9 @@
     <notificationGroup id="Package requirements" displayType="BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Pipfile Watcher" displayType="STICKY_BALLOON" isLogByDefault="false"/>
     <notificationGroup id="ConfiguredPythonInterpreter" displayType="BALLOON" isLogByDefault="true" bundle="messages.PyBundle" key="sdk.has.been.configured.notification.name"/>
+
+    <toolWindow id="Python Packages" anchor="bottom"
+                factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.PyAddNewEnvCollector"/>
   </extensions>
 

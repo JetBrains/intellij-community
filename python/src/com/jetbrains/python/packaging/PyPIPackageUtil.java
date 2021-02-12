@@ -383,7 +383,12 @@ public class PyPIPackageUtil {
       private String homePage = "";
       @SerializedName("summary")
       private String summary = "";
-
+      @SerializedName("description")
+      private String description = "";
+      @SerializedName("description_content_type")
+      private String descriptionContentType = "";
+      @SerializedName("project_urls")
+      private Map<String, String>  projectUrls = Collections.emptyMap();;
 
       @NotNull
       public String getVersion() {
@@ -408,6 +413,21 @@ public class PyPIPackageUtil {
       @NotNull
       public String getSummary() {
         return StringUtil.notNullize(summary);
+      }
+
+      @NotNull
+      public String getDescription() {
+        return StringUtil.notNullize(description);
+      }
+
+      @NotNull
+      public String getDescriptionContentType() {
+        return StringUtil.notNullize(descriptionContentType);
+      }
+
+      @NotNull
+      public Map<String, String> getProjectUrls() {
+        return ContainerUtil.notNullize(projectUrls);
       }
     }
 

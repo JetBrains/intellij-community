@@ -20,5 +20,7 @@ if __name__ == "__main__":
     publish_cmdline(reader=reader, writer=writer, argv=args)
   elif command == "rstpep2html":
     publish_cmdline(reader_name='pep', writer_name='pep_html', argv=args)
+  elif command == "rst2html_no_code":
+   publish_cmdline(writer_name="html", settings_overrides={'syntax_highlight': 'none'}, argv=args)
   else:
     publish_cmdline(writer_name=COMMANDS[command], argv=args)
