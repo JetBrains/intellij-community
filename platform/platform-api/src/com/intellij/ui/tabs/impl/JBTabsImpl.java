@@ -91,7 +91,6 @@ public class JBTabsImpl extends JComponent
   public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<>();
   public final ActionToolbar myMoreToolbar;
   public final NonOpaquePanel myTitleWrapper = new NonOpaquePanel();
-  @Deprecated
   public Dimension myHeaderFitSize;
 
   private Insets myInnerInsets = JBUI.emptyInsets();
