@@ -244,8 +244,7 @@ public final class PyConsoleUtil {
   }
 
   private static AnActionEvent createActionEvent(@NotNull AnActionEvent e, PythonConsoleView consoleView) {
-    final ConsoleDataContext dataContext = new ConsoleDataContext(e.getDataContext(), consoleView);
-    return new AnActionEvent(e.getInputEvent(), dataContext, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+    return e.withDataContext(new ConsoleDataContext(e.getDataContext(), consoleView));
   }
 
   public static AnAction createPrintAction(PythonConsoleView consoleView) {

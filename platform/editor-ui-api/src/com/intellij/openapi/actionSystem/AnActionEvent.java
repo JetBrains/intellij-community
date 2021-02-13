@@ -20,16 +20,19 @@ import java.awt.event.InputEvent;
  * @see AnAction#update(AnActionEvent)
  */
 public class AnActionEvent implements PlaceProvider {
+  private static final String ourInjectedPrefix = "$injected$.";
+
   private final InputEvent myInputEvent;
-  @NotNull private final ActionManager myActionManager;
-  @NotNull private final DataContext myDataContext;
-  @NotNull private final String myPlace;
-  @NotNull private final Presentation myPresentation;
-  @JdkConstants.InputEventMask private final int myModifiers;
-  private boolean myWorksInInjected;
-  @NonNls private static final String ourInjectedPrefix = "$injected$.";
+  private final ActionManager myActionManager;
+  private final DataContext myDataContext;
+  private final String myPlace;
+  private final Presentation myPresentation;
+  @JdkConstants.InputEventMask
+  private final int myModifiers;
   private final boolean myIsContextMenuAction;
   private final boolean myIsActionToolbar;
+
+  private boolean myWorksInInjected;
 
   /**
    * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
@@ -37,7 +40,7 @@ public class AnActionEvent implements PlaceProvider {
    *
    * @see ActionManager#getInstance()
    */
-  public AnActionEvent(InputEvent inputEvent,
+  public AnActionEvent(@Nullable InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
                        @NotNull Presentation presentation,
@@ -52,7 +55,7 @@ public class AnActionEvent implements PlaceProvider {
    *
    * @see ActionManager#getInstance()
    */
-  public AnActionEvent(InputEvent inputEvent,
+  public AnActionEvent(@Nullable InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
                        @NotNull Presentation presentation,
@@ -60,7 +63,6 @@ public class AnActionEvent implements PlaceProvider {
                        @JdkConstants.InputEventMask int modifiers,
                        boolean isContextMenuAction,
                        boolean isActionToolbar) {
-    // TODO[vova,anton] make this constructor package-private. No one is allowed to create AnActionEvents
     myInputEvent = inputEvent;
     myActionManager = actionManager;
     myDataContext = dataContext;
@@ -71,6 +73,13 @@ public class AnActionEvent implements PlaceProvider {
     myIsActionToolbar = isActionToolbar;
   }
 
+  @NotNull
+  public AnActionEvent withDataContext(@NotNull DataContext dataContext) {
+    AnActionEvent event = new AnActionEvent(myInputEvent, dataContext, myPlace, myPresentation,
+                                            myActionManager, myModifiers, myIsContextMenuAction, myIsActionToolbar);
+    event.setInjectedContext(myWorksInInjected);
+    return event;
+  }
 
   /**
    * @deprecated use {@link #createFromInputEvent(InputEvent, String, Presentation, DataContext, boolean, boolean)}

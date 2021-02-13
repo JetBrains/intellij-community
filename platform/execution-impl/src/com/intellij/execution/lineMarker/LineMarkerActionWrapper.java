@@ -98,8 +98,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
 
   @NotNull
   private AnActionEvent wrapEvent(@NotNull AnActionEvent e) {
-    DataContext dataContext = wrapContext(e.getDataContext());
-    return new AnActionEvent(e.getInputEvent(), dataContext, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+    return e.withDataContext(wrapContext(e.getDataContext()));
   }
 
   @NotNull
