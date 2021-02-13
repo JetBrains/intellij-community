@@ -130,6 +130,11 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     @Override
     public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
       outChars.append(myHost.getTextValue(rangeInsideHost));
+      List<TextRange> ranges = myHost.getContentRanges();
+      if (ranges.size() > 0) {
+        return ranges.get(0).getStartOffset() <= rangeInsideHost.getStartOffset()
+               && ranges.get(ranges.size() - 1).getEndOffset() >= rangeInsideHost.getEndOffset();
+      }
       return true;
     }
 

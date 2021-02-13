@@ -13,8 +13,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import java.util.*
+import kotlin.collections.HashSet
 import kotlin.test.fail
 
 class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
@@ -47,6 +49,12 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
       })
     }
     return injected
+  }
+
+  fun assertInjectedContent(vararg expectedInjectFileTexts: String) {
+    UsefulTestCase.assertSameElements("injected content expected",
+                                      getAllInjections().mapTo(HashSet()) { it.second }.map { it.text },
+                                      expectedInjectFileTexts.toList())
   }
 
   fun assertInjected(vararg expectedInjections: InjectionAssertionData) {
