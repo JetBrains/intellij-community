@@ -60,16 +60,8 @@ public final class Utils {
                                                  @NotNull ActionGroup group,
                                                  @NotNull PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
-                                                 String place){
-    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, null);
-  }
-
-  public static List<AnAction> expandActionGroup(boolean isInModalContext,
-                                                 @NotNull ActionGroup group,
-                                                 PresentationFactory presentationFactory,
-                                                 @NotNull DataContext context,
-                                                 String place, ActionGroupVisitor visitor) {
-    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, visitor, false);
+                                                 @NotNull String place){
+    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, null, false);
   }
 
   public static List<AnAction> expandActionGroup(boolean isInModalContext,

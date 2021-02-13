@@ -118,7 +118,7 @@ final class BuildUtils {
     GroupVisitor visitor = new GroupVisitor(out, filterGroupPrefix, customizer, out.getStats(), false);
 
     final DataContext dctx = DataManager.getInstance().getDataContext(getCurrentFocusComponent());
-    Utils.expandActionGroup(false, actionGroup, out.getFactory(), dctx, ActionPlaces.TOUCHBAR_GENERAL, visitor);
+    Utils.expandActionGroup(false, actionGroup, out.getFactory(), dctx, ActionPlaces.TOUCHBAR_GENERAL, visitor, false);
     if (customizer != null) {
       customizer.finish();
     }
