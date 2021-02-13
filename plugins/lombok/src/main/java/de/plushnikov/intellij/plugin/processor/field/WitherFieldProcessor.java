@@ -99,6 +99,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     final String psiFieldName = psiField.getName();
     if (fieldContainingClass != null) {
       final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(fieldContainingClass);
+      filterToleratedElements(classMethods);
 
       final AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);
       final Collection<String> possibleWitherNames = LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiField.getType()));
