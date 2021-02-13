@@ -3,13 +3,15 @@ package com.intellij.space.chat.ui.thread
 
 import circlet.m2.threads.M2ThreadPreviewVm
 import circlet.platform.api.toKDateTime
+import circlet.platform.client.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
+import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAutoUpdatableComponentService
+import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.utils.formatPrettyDateTime
-import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -33,7 +35,7 @@ internal fun createCollapsedThreadComponent(
 ): JComponent {
   val contentPanel = BorderLayoutPanel().apply {
     isOpaque = false
-    border = JBUI.Borders.empty(8, 10, 0, 0)
+    border = JBUI.Borders.emptyTop(8)
   }
   val threadPreview = message.threadPreview
   val loadingThreadsSqLifetime = SequentialLifetimes(lifetime)
@@ -91,6 +93,7 @@ private fun createActionsComponent(
   threadPreview: M2ThreadPreviewVm,
   threadActionsFactory: SpaceChatThreadActionsFactory?
 ): JComponent {
+  val authorsPanel = createThreadAuthorAvatarsComponent(lifetime, threadPreview)
   val dateComponent = createDateComponent(lifetime, threadPreview.lastReplyTime)
   val repliesComponent = createRepliesLink(lifetime, threadPreview.messageCount) {
     launch(lifetime, Ui) {
@@ -99,10 +102,38 @@ private fun createActionsComponent(
   }
   return JPanel(HorizontalLayout(JBUI.scale(5))).apply {
     isOpaque = false
+    add(authorsPanel)
     add(repliesComponent)
     add(dateComponent)
     threadActionsFactory?.createActionsComponent()?.let { add(it) }
   }
+}
+
+private fun createThreadAuthorAvatarsComponent(lifetime: Lifetime, threadPreview: M2ThreadPreviewVm): JComponent {
+  val contentPanel = BorderLayoutPanel().apply {
+    isOpaque = false
+  }
+  val avatarsProvider = SpaceAvatarProvider(lifetime, contentPanel, SpaceChatAvatarType.THREAD.size)
+  threadPreview.authors.forEach(lifetime) { authors ->
+    contentPanel.removeAll()
+    if (authors.isNullOrEmpty()) {
+      contentPanel.border = JBUI.Borders.emptyLeft(10)
+    }
+    else {
+      contentPanel.border = JBUI.Borders.empty()
+      val icons = authors.take(3).map { avatarsProvider.getIcon(it.resolve()) }
+      val iconsPanel = JPanel(HorizontalLayout(1)).apply {
+        isOpaque = false
+        for (icon in icons) {
+          add(JBLabel(icon))
+        }
+      }
+      contentPanel.addToCenter(iconsPanel)
+      contentPanel.revalidate()
+      contentPanel.repaint()
+    }
+  }
+  return contentPanel
 }
 
 private fun createDateComponent(lifetime: Lifetime, lastReplyTime: Property<Long?>): JComponent {
@@ -117,10 +148,10 @@ private fun createDateComponent(lifetime: Lifetime, lastReplyTime: Property<Long
     else {
       contentPanel.isVisible = true
       val dateComponent = SpaceAutoUpdatableComponentService.createAutoUpdatableComponent {
-        HtmlEditorPane().apply {
+        JBLabel(HtmlChunk.text(time.toKDateTime().formatPrettyDateTime()).toString()).apply { // NON-NLS
           putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
           foreground = UIUtil.getContextHelpForeground()
-          setBody(HtmlChunk.text(time.toKDateTime().formatPrettyDateTime()).toString()) // NON-NLS
+          setCopyable(true)
         }
       }
       contentPanel.addToCenter(dateComponent)
