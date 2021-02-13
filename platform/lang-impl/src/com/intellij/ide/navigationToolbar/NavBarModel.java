@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.module.Module;
@@ -18,28 +19,38 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
+import static com.intellij.util.concurrency.SequentialTaskExecutor.createSequentialApplicationPoolExecutor;
 
 /**
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
  */
 public class NavBarModel {
-  private List<Object> myModel;
-  private int mySelectedIndex;
-  private final Project myProject;
+
+  private static final ExecutorService ourExecutor = createSequentialApplicationPoolExecutor("Navbar model builder");
+
   private final NavBarModelListener myNotificator;
   private final NavBarModelBuilder myBuilder;
-  private boolean myChanged = true;
-  private boolean updated = false;
-  private boolean isFixedComponent = false;
+  private final Project myProject;
+  
+  private volatile int mySelectedIndex;
+  private volatile List<Object> myModel;
+  
+  private volatile boolean myChanged = true;
+  private volatile boolean updated = false;
+  private volatile boolean isFixedComponent = false;
 
   public NavBarModel(@NotNull Project project) {
     this(project, project.getMessageBus().syncPublisher(NavBarModelListener.NAV_BAR), NavBarModelBuilder.getInstance());
@@ -83,15 +94,25 @@ public class NavBarModel {
     return index;
   }
 
-  public void updateModel(DataContext dataContext) {
-    if (LaterInvocator.isInModalContext() || (updated && !isFixedComponent)) return;
-
-    if (PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
-
-    SlowOperations.allowSlowOperations(() -> doUpdateModel(dataContext));
+  public void updateModelAsync(DataContext dataContext) {
+    updateModelAsync(dataContext, null);
   }
+  
+  public void updateModelAsync(DataContext dataContext, @Nullable Runnable callback) {
+    if (LaterInvocator.isInModalContext()) return;
 
-  private void doUpdateModel(DataContext dataContext) {
+    ReadAction.nonBlocking(() -> updateModel(dataContext))
+      .expireWith(myProject)
+      .finishOnUiThread(ModalityState.current(), __ -> {
+        if (callback != null) callback.run();
+      })
+      .submit(ourExecutor);
+  }
+  
+  //public for tests
+  public void updateModel(DataContext dataContext) {
+    if (updated && !isFixedComponent || PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
+    
     NavBarModelExtension ownerExtension = null;
     PsiElement psiElement = null;
     for (NavBarModelExtension extension : NavBarModelExtension.EP_NAME.getExtensionList()) {
