@@ -9,11 +9,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
+import com.intellij.util.ui.JBUI;
 import com.intellij.ui.components.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class AppEditorFontPanel implements Disposable {
@@ -30,13 +33,21 @@ public class AppEditorFontPanel implements Disposable {
     myRestoreLabel = createRestoreLabel();
     restorePanel.add(myRestoreLabel);
     myTopPanel.add(restorePanel, BorderLayout.NORTH);
+
+    JPanel innerPanel = new JPanel(new BorderLayout());
+    innerPanel.setBorder(JBUI.Borders.customLine(JBColor.lightGray, 1, 0,0,0));
     JBSplitter splitter = new JBSplitter(false, 0.3f);
     myPreviewScheme = createPreviewScheme();
     myOptionsPanel = new AppEditorFontOptionsPanel(this, myPreviewScheme);
-    myPreview = new FontEditorPreview(()-> myPreviewScheme, true);
+    myPreview = new FontEditorPreview(()-> myPreviewScheme, true) {
+      @Override
+      protected Border getBorder() {
+        return JBUI.Borders.customLine(JBColor.border(), 0, 1, 1,1);
+      }
+    };
     splitter.setFirstComponent(myOptionsPanel);
     splitter.setSecondComponent(myPreview.getPanel());
-    myTopPanel.add(splitter, BorderLayout.CENTER);
+    innerPanel.add(splitter, BorderLayout.CENTER);
     myOptionsPanel.addListener(
       new ColorAndFontSettingsListener.Abstract() {
         @Override
@@ -45,6 +56,7 @@ public class AppEditorFontPanel implements Disposable {
         }
       }
     );
+    myTopPanel.add(innerPanel, BorderLayout.CENTER);
   }
 
   void setRestoreLabelEnabled(boolean isEnabled) {
