@@ -23,7 +23,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
+import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentFactory
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -177,7 +177,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     }
 
     val panel = GHLoadingPanelFactory(loadingModel, null, GithubBundle.message("cannot.load.data.from.github"),
-                                      GHLoadingErrorHandlerImpl(project, account) {
+                                      GHApiLoadingErrorHandler(project, account) {
                                         val contextRepository = dataContextRepository
                                         contextRepository.clearContext(repository)
                                         loadingModel.future = contextRepository.acquireContext(repository, remote, account, requestExecutor)

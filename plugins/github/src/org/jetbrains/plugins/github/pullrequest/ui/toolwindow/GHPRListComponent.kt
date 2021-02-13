@@ -29,7 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchCompletionProvider
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
+import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.BoundedRangeModelThresholdListener
@@ -132,7 +132,7 @@ internal object GHPRListComponent {
     }
     OutdatedPanelController(listLoader, dataContext.listUpdatesChecker, outdatedStatePanel, disposable)
 
-    val errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
+    val errorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
       listLoader.reset()
     }
     val errorModel = GHHandledErrorPanelModel(GithubBundle.message("pull.request.list.cannot.load"), errorHandler).apply {
