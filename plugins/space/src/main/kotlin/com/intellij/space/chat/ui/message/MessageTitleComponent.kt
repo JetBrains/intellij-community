@@ -38,9 +38,9 @@ internal class MessageTitleComponent(
   val actionsPanel = JPanel(HorizontalLayout(JBUI.scale(5))).apply {
     isOpaque = false
     isVisible = false
+    add(createStartThreadButton(message))
     createEditButton(message)?.let { add(it) }
     createDeleteButton(message)?.let { add(it) }
-    add(createStartThreadButton(message))
   }
 
   init {
