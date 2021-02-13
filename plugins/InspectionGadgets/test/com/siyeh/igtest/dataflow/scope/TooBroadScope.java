@@ -65,6 +65,11 @@ public class TooBroadScope
         System.out.println(before);
     }
 
+  String brokenCode() {
+    var n<error descr="';' expected"><error descr="Unexpected token">.</error></error> <error descr="Unexpected token">=</error> <error descr="Not a statement">"awesome[]";</error>
+    return n;
+  }
+
     // Option "Only report variables that can be moved to inner blocks" is OFF
     public void test() {
         // Example #1
