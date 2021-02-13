@@ -58,7 +58,7 @@ public final class Utils {
    */
   public static List<AnAction> expandActionGroup(boolean isInModalContext,
                                                  @NotNull ActionGroup group,
-                                                 PresentationFactory presentationFactory,
+                                                 @NotNull PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
                                                  String place){
     return expandActionGroup(isInModalContext, group, presentationFactory, context, place, null);
@@ -74,9 +74,10 @@ public final class Utils {
 
   public static List<AnAction> expandActionGroup(boolean isInModalContext,
                                                  @NotNull ActionGroup group,
-                                                 PresentationFactory presentationFactory,
+                                                 @NotNull PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
-                                                 String place, ActionGroupVisitor visitor,
+                                                 @NotNull String place,
+                                                 @Nullable ActionGroupVisitor visitor,
                                                  boolean isContextMenuAction) {
     return new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, false, visitor)
       .expandActionGroup(group, group instanceof CompactActionGroup);
@@ -84,9 +85,10 @@ public final class Utils {
 
   public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
                                                                           @NotNull ActionGroup group,
-                                                                          PresentationFactory presentationFactory,
+                                                                          @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
-                                                                          String place, @Nullable Utils.ActionGroupVisitor visitor) {
+                                                                          @NotNull String place,
+                                                                          @Nullable Utils.ActionGroupVisitor visitor) {
     if (!(context instanceof PreCachedDataContext)) {
       context = new PreCachedDataContext(context);
     }

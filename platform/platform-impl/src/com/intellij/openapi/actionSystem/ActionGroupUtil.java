@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,19 +14,25 @@ import java.util.Map;
 
 public final class ActionGroupUtil {
 
-  public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean isInModalContext) {
-    return activeActionTraverser(actionGroup, e, isInModalContext).traverse().isEmpty();
+  /** @deprecated use {@link #isGroupEmpty(ActionGroup, AnActionEvent)} instead */
+  @Deprecated
+  public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean unused) {
+    return getActiveActions(actionGroup, e).isEmpty();
+  }
+
+  public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
+    return getActiveActions(actionGroup, e).isEmpty();
   }
 
   @Nullable
-  public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean isInModalContext) {
-    return activeActionTraverser(actionGroup, e, isInModalContext).traverse().single();
+  public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
+    return getActiveActions(actionGroup, e).single();
   }
 
   @NotNull
-  public static JBTreeTraverser<AnAction> activeActionTraverser(@NotNull ActionGroup actionGroup,
-                                                                @NotNull AnActionEvent e,
-                                                                boolean isInModalContext) {
+  public static JBIterable<AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
+                                                      @NotNull AnActionEvent e) {
+    boolean isInModalContext = LaterInvocator.isInModalContext();
     Map<AnAction, Presentation> action2presentation = new HashMap<>();
     return JBTreeTraverser.<AnAction>of(
       o -> o instanceof ActionGroup &&
@@ -33,7 +41,8 @@ public final class ActionGroupUtil {
            !((ActionGroup)o).canBePerformed(e.getDataContext()) ? ((ActionGroup)o).getChildren(e) : null)
       .withRoots(actionGroup.getChildren(e))
       .filter(o -> !(o instanceof Separator) &&
-                   isActionEnabledAndVisible(o, e, isInModalContext, action2presentation));
+                   isActionEnabledAndVisible(o, e, isInModalContext, action2presentation))
+      .traverse();
   }
 
   private static boolean isActionEnabledAndVisible(@NotNull AnAction action,
@@ -45,10 +54,9 @@ public final class ActionGroupUtil {
   }
 
   public static boolean isActionEnabledAndVisible(@NotNull AnAction action,
-                                                  @NotNull AnActionEvent e,
-                                                  boolean isInModalContext) {
+                                                  @NotNull AnActionEvent e) {
     Presentation presentation = action.getTemplatePresentation().clone();
-    return isActionEnabledAndVisible(action, e, isInModalContext, presentation);
+    return isActionEnabledAndVisible(action, e, LaterInvocator.isInModalContext(), presentation);
   }
 
   private static boolean isActionEnabledAndVisible(@NotNull AnAction action,

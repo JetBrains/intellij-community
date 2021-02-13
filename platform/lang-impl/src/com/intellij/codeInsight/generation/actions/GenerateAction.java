@@ -4,7 +4,6 @@ package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -56,7 +55,7 @@ public class GenerateAction extends DumbAwareAction {
       return false;
     }
 
-    boolean groupEmpty = ActionGroupUtil.isGroupEmpty(getGroup(), event, LaterInvocator.isInModalContext());
+    boolean groupEmpty = ActionGroupUtil.isGroupEmpty(getGroup(), event);
     return !groupEmpty;
   }
 
