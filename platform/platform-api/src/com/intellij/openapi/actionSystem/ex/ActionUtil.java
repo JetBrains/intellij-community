@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -163,11 +164,15 @@ public final class ActionUtil {
     action.applyTextOverride(e);
 
     try {
-      if (beforeActionPerformed) {
-        SlowOperations.allowSlowOperations(() -> action.beforeActionPerformedUpdate(e));
+      ThrowableRunnable<RuntimeException> runnable =
+        beforeActionPerformed
+        ? () -> action.beforeActionPerformedUpdate(e)
+        : () -> action.update(e);
+      if (Registry.is("actionSystem.update.actions.async.always")) {
+        runnable.run();
       }
       else {
-        SlowOperations.allowSlowOperations(() -> action.update(e));
+        SlowOperations.allowSlowOperations(runnable);
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible());

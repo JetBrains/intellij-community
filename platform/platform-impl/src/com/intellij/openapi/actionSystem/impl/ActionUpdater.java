@@ -54,6 +54,7 @@ final class ActionUpdater {
   private final String myPlace;
   private final boolean myContextMenuAction;
   private final boolean myToolbarAction;
+  private final Project myProject;
 
   private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
   private final Map<ActionGroup, List<AnAction>> myGroupChildren = new ConcurrentHashMap<>();
@@ -76,8 +77,10 @@ final class ActionUpdater {
                 PresentationFactory presentationFactory,
                 DataContext dataContext,
                 String place,
-                boolean isContextMenuAction, boolean isToolbarAction,
+                boolean isContextMenuAction,
+                boolean isToolbarAction,
                 Utils.ActionGroupVisitor visitor) {
+    myProject = CommonDataKeys.PROJECT.getData(dataContext);
     myModalContext = isInModalContext;
     myFactory = presentationFactory;
     myDataContext = dataContext;
@@ -85,17 +88,18 @@ final class ActionUpdater {
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
+    boolean forceAsync = Utils.isAsyncDataContext(dataContext) && Registry.is("actionSystem.update.actions.async.always");
     myRealUpdateStrategy = new UpdateStrategy(
       action -> {
         // clone the presentation to avoid partially changing the cached one if update is interrupted
         Presentation presentation = ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action).clone());
         presentation.setEnabledAndVisible(true);
         Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), myVisitor);
-        boolean success = callAction(action, "update", doUpdate);
+        boolean success = callAction(forceAsync, action, "update", doUpdate);
         return success ? presentation : null;
       },
-      group -> callAction(group, "getChildren", () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
-      group -> callAction(group, "canBePerformed", () -> group.canBePerformed(getDataContext(group))));
+      group -> callAction(forceAsync, group, "getChildren", () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
+      group -> callAction(forceAsync, group, "canBePerformed", () -> group.canBePerformed(getDataContext(group))));
     myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null), group -> true);
   }
 
@@ -131,8 +135,8 @@ final class ActionUpdater {
     });
   }
 
-  private static <T> T callAction(AnAction action, String operation, Supplier<? extends T> call) {
-    if (action instanceof UpdateInBackground || ApplicationManager.getApplication().isDispatchThread()) {
+  private static <T> T callAction(boolean forceAsync, AnAction action, String operation, Supplier<? extends T> call) {
+    if (forceAsync || action instanceof UpdateInBackground || ApplicationManager.getApplication().isDispatchThread()) {
       return call.get();
     }
 
@@ -280,7 +284,8 @@ final class ActionUpdater {
       return ContainerUtil.concat(children, child -> TimeoutUtil.compute(
         () -> expandGroupChild(child, hideDisabled, strategy),
         1000, ms -> LOG.warn(ms + "ms to expand group child " + ActionManager.getInstance().getId(child))));
-    } finally {
+    }
+    finally {
       if (myVisitor != null) {
         myVisitor.leaveNode();
       }
@@ -396,8 +401,7 @@ final class ActionUpdater {
       if (anAction instanceof Separator) {
         continue;
       }
-      final Project project = CommonDataKeys.PROJECT.getData(getDataContext(anAction));
-      if (project != null && DumbService.getInstance(project).isDumb() && !anAction.isDumbAware()) {
+      if (myProject != null && DumbService.getInstance(myProject).isDumb() && !anAction.isDumbAware()) {
         continue;
       }
 
@@ -474,7 +478,8 @@ final class ActionUpdater {
     catch (Throwable exc) {
       handleUpdateException(action, e.getPresentation(), exc);
       return false;
-    } finally {
+    }
+    finally {
       if (visitor != null) {
         visitor.endUpdate(action);
       }

@@ -43,7 +43,7 @@ public final class Utils {
   @NotNull
   public static DataContext wrapDataContext(@NotNull DataContext dataContext) {
     if (dataContext instanceof DataManagerImpl.MyDataContext &&
-        Registry.is("actionSystem.update.actions.asynchronously")) {
+        Registry.is("actionSystem.update.actions.async")) {
       return new PreCachedDataContext(dataContext);
     }
     return dataContext;

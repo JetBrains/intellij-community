@@ -447,7 +447,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
     if (myActionGroup != null) {
       DataContext dctx = DataManager.getInstance().getDataContext(BuildUtils.getCurrentFocusComponent());
       BuildUtils.GroupVisitor visitor = new BuildUtils.GroupVisitor(this, mySkipSubgroupsPrefix, null, myStats, myAllowSkipSlowUpdates);
-      if (Registry.is("actionSystem.update.actions.asynchronously")) {
+      if (Registry.is("actionSystem.update.actions.async")) {
         if (myLastUpdate != null) myLastUpdate.cancel();
         myLastUpdate = Utils
           .expandActionGroupAsync(LaterInvocator.isInModalContext(), myActionGroup, myFactory, dctx, ActionPlaces.TOUCHBAR_GENERAL,
