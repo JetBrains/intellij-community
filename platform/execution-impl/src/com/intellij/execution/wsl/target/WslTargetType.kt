@@ -4,7 +4,11 @@ package com.intellij.execution.wsl.target
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentFactory
 import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.execution.wsl.target.wizard.WslTargetIntrospectionStep
+import com.intellij.execution.wsl.target.wizard.WslTargetLanguageStep
+import com.intellij.execution.wsl.target.wizard.WslTargetWizardModel
 import com.intellij.icons.AllIcons
+import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -16,7 +20,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
   override fun isSystemCompatible(): Boolean = SystemInfo.isWin10OrNewer
 
   override val displayName: String
-    @NlsSafe get() = "WSL"
+    @NlsSafe get() = DISPLAY_NAME
 
   override val icon: Icon = AllIcons.RunConfigurations.Wsl
 
@@ -26,6 +30,15 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
     return WslTargetEnvironmentConfiguration()
   }
 
+  override fun providesNewWizard(project: Project, runtimeType: LanguageRuntimeType<*>?) = true
+
+  override fun createStepsForNewWizard(project: Project,
+                                       configToConfigure: WslTargetEnvironmentConfiguration,
+                                       runtimeType: LanguageRuntimeType<*>?): List<AbstractWizardStepEx> {
+    val model = WslTargetWizardModel(project, configToConfigure, runtimeType, null)
+    return listOf(WslTargetIntrospectionStep(model), WslTargetLanguageStep(model))
+  }
+
   override fun createEnvironmentFactory(project: Project, config: WslTargetEnvironmentConfiguration): TargetEnvironmentFactory {
     return WslTargetEnvironmentFactory(config)
   }
@@ -33,12 +46,14 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
   override fun createConfigurable(project: Project,
                                   config: WslTargetEnvironmentConfiguration,
                                   defaultLanguage: LanguageRuntimeType<*>?,
-                                  parentConfigurable: Configurable?) = WslTargetConfigurable(config)
+                                  parentConfigurable: Configurable?) = WslTargetConfigurable(config, project)
 
   override fun duplicateConfig(config: WslTargetEnvironmentConfiguration): WslTargetEnvironmentConfiguration =
     duplicateTargetConfiguration(this, config)
 
   companion object {
     const val TYPE_ID = "wsl"
+    @NlsSafe
+    const val DISPLAY_NAME = "WSL"
   }
 }
