@@ -10,9 +10,9 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 
-class GHLoadingErrorHandlerImpl(private val project: Project,
-                                private val account: GithubAccount,
-                                private val resetRunnable: () -> Unit)
+class GHApiLoadingErrorHandler(private val project: Project,
+                               private val account: GithubAccount,
+                               private val resetRunnable: () -> Unit)
   : GHLoadingErrorHandler {
 
   override fun getActionForError(error: Throwable): Action? {

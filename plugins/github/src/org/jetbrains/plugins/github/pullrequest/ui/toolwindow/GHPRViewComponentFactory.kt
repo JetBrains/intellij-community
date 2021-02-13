@@ -39,7 +39,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
+import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
@@ -97,10 +97,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private val reloadDetailsAction = actionManager.getAction("Github.PullRequest.Details.Reload")
   private val reloadChangesAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
 
-  private val detailsLoadingErrorHandler = GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
+  private val detailsLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
     dataProvider.detailsData.reloadDetails()
   }
-  private val changesLoadingErrorHandler = GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
+  private val changesLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
     dataProvider.changesData.reloadChanges()
   }
 

@@ -32,7 +32,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
+import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
@@ -55,9 +55,9 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   private val detailsModel = SingleValueModel(currentDetails)
 
   private val errorModel = GHHandledErrorPanelModel(GithubBundle.message("pull.request.timeline.cannot.load"),
-                                                    GHLoadingErrorHandlerImpl(project,
-                                                                              editor.securityService.account,
-                                                                              editor.timelineLoader::reset))
+                                                    GHApiLoadingErrorHandler(project,
+                                                                             editor.securityService.account,
+                                                                             editor.timelineLoader::reset))
   private val timelineModel = GHPRTimelineMergingModel()
   private val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(editor.reviewData, uiDisposable)
 
