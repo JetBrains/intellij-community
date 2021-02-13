@@ -373,6 +373,11 @@ public final class EditorEmbeddedComponentManager {
             }
           }
         }
+
+        @Override
+        public void onRemoved(@NotNull Inlay inlay) {
+          Disposer.dispose(inlay);
+        }
       }, this);
       ComponentAdapter viewportListener = new ComponentAdapter() {
         @Override
