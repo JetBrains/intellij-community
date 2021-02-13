@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.model.api.SpaceChatItemAdditionalFeature
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
-import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.discussion.SpaceChatDiscussionActionsFactory
 import com.intellij.space.chat.ui.getLink
 import com.intellij.space.chat.ui.thread.SpaceChatStandaloneThreadComponent
@@ -56,11 +55,8 @@ internal class SpaceReviewCommentPanelFactory(
       parent,
       workspace.chatVm.channels,
       discussionRecord.value.channel,
-      SpaceChatDiscussionActionsFactory(
-        discussionRecord,
-        avatarType = SpaceChatAvatarType.THREAD,
-        pendingStateProvider = pendingStateProvider
-      ),
+      pendingStateProvider,
+      SpaceChatDiscussionActionsFactory(lifetime, workspace.client, discussionRecord),
       messageConverter = { index, message ->
         message.convertToChatItem(
           message.getLink(),

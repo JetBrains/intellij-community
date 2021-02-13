@@ -28,7 +28,7 @@ internal fun createCollapsedThreadComponent(
   project: Project,
   lifetime: Lifetime,
   message: SpaceChatItem,
-  threadActionsFactory: SpaceChatThreadActionsFactory,
+  threadActionsFactory: SpaceChatThreadActionsFactory?,
   withFirst: Boolean = true
 ): JComponent {
   val contentPanel = BorderLayoutPanel().apply {
@@ -52,7 +52,9 @@ internal fun createCollapsedThreadComponent(
       launch(lifetime, Ui) {
         val threadValue = loadingThread.await()
         val threadComponent = createThreadComponent(
-          project, lifetime, threadValue, threadActionsFactory,
+          project, lifetime, threadValue,
+          pendingStateProvider = { false },
+          threadActionsFactory = threadActionsFactory,
           folded = false,
           withFirst = withFirst
         )
@@ -67,7 +69,7 @@ internal fun createCollapsedThreadComponent(
     }
     else {
       if (threadPreview != null) {
-        val actionsComponent = createActionsComponent(lifetime, message, threadPreview)
+        val actionsComponent = createActionsComponent(lifetime, message, threadPreview, threadActionsFactory)
         contentPanel.addToCenter(actionsComponent)
         threadPreview.messageCount.forEach(loadingThreadLifetime) { count ->
           contentPanel.isVisible = count > 0
@@ -83,7 +85,12 @@ internal fun createCollapsedThreadComponent(
   return contentPanel
 }
 
-private fun createActionsComponent(lifetime: Lifetime, message: SpaceChatItem, threadPreview: M2ThreadPreviewVm): JComponent {
+private fun createActionsComponent(
+  lifetime: Lifetime,
+  message: SpaceChatItem,
+  threadPreview: M2ThreadPreviewVm,
+  threadActionsFactory: SpaceChatThreadActionsFactory?
+): JComponent {
   val dateComponent = createDateComponent(lifetime, threadPreview.lastReplyTime)
   val repliesComponent = createRepliesLink(lifetime, threadPreview.messageCount) {
     launch(lifetime, Ui) {
@@ -94,6 +101,7 @@ private fun createActionsComponent(lifetime: Lifetime, message: SpaceChatItem, t
     isOpaque = false
     add(repliesComponent)
     add(dateComponent)
+    threadActionsFactory?.createActionsComponent()?.let { add(it) }
   }
 }
 

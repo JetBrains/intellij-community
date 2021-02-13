@@ -125,7 +125,7 @@ internal class SpaceChatCodeDiscussionComponentFactory(
     val replyAction = ActionLink(SpaceBundle.message("chat.reply.action")) {
       newMessageStateModel.value = true
     }
-    val resolveComponent = createResolveComponent(discussion, message.chat)
+    val resolveComponent = createResolveComponent(lifetime, message.chat.client, discussion)
     val actionsComponent = JPanel(HorizontalLayout(JBUI.scale(5))).apply {
       isOpaque = false
       border = JBUI.Borders.emptyTop(8)
@@ -164,8 +164,9 @@ internal class SpaceChatCodeDiscussionComponentFactory(
 
   private fun createThreadComponent(discussionProperty: Property<CodeDiscussionRecord>, message: SpaceChatItem): JComponent {
     val threadActionsFactory = SpaceChatDiscussionActionsFactory(
-      discussionProperty,
-      avatarType = SpaceChatAvatarType.THREAD
+      lifetime,
+      message.chat.client,
+      discussionProperty
     )
     return BorderLayoutPanel().apply {
       isOpaque = false

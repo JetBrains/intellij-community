@@ -20,12 +20,15 @@ internal class SpaceChatStandaloneThreadComponent(
   parent: Disposable,
   channelsVm: ChannelsVm,
   chatRecord: Ref<M2ChannelRecord>,
+  private val pendingStateProvider: () -> Boolean,
   private val threadActionsFactory: SpaceChatThreadActionsFactory,
   private val messageConverter: (index: Int, message: M2MessageVm) -> SpaceChatItem = { _, message ->
     message.convertToChatItem(message.getLink())
   }
 ) : SpaceChatContentPanelBase(lifetime, parent, channelsVm, chatRecord) {
   override fun onChatLoad(chatVm: M2ChannelVm) {
-    stopLoadingContent(createThreadComponent(project, lifetime, chatVm, threadActionsFactory, messageConverter = messageConverter))
+    stopLoadingContent(
+      createThreadComponent(project, lifetime, chatVm, pendingStateProvider, threadActionsFactory, messageConverter = messageConverter)
+    )
   }
 }

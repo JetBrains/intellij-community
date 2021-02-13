@@ -3,13 +3,14 @@ package com.intellij.space.chat.ui.discussion
 
 import circlet.code.api.CodeDiscussionRecord
 import circlet.code.codeReview
-import circlet.m2.channel.M2ChannelVm
+import circlet.platform.client.KCircletClient
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.SingleValueModel
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.components.BorderLayoutPanel
+import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
 import runtime.Ui
@@ -17,7 +18,11 @@ import runtime.reactive.Property
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal fun createResolveComponent(discussion: Property<CodeDiscussionRecord>, chatVm: M2ChannelVm): JComponent {
+internal fun createResolveComponent(
+  lifetime: Lifetime,
+  client: KCircletClient,
+  discussion: Property<CodeDiscussionRecord>,
+): JComponent {
   val resolvingLabel = JLabel(SpaceBundle.message("chat.resolving.action.state")).apply {
     foreground = UIUtil.getContextHelpForeground()
   }
@@ -25,7 +30,7 @@ internal fun createResolveComponent(discussion: Property<CodeDiscussionRecord>, 
     foreground = UIUtil.getContextHelpForeground()
   }
   val resolvingModel = SingleValueModelImpl(ResolvingState.READY)
-  val resolveReopenLabel = createResolveReopenLabel(discussion, chatVm, resolvingModel)
+  val resolveReopenLabel = createResolveReopenLabel(lifetime, client, discussion, resolvingModel)
   val contentPanel = BorderLayoutPanel().apply {
     isOpaque = false
     addToCenter(resolveReopenLabel)
@@ -45,14 +50,15 @@ internal fun createResolveComponent(discussion: Property<CodeDiscussionRecord>, 
 }
 
 private fun createResolveReopenLabel(
+  lifetime: Lifetime,
+  client: KCircletClient,
   discussion: Property<CodeDiscussionRecord>,
-  chatVm: M2ChannelVm,
   resolvingModel: SingleValueModel<ResolvingState>
 ): JComponent {
-  val reviewService = chatVm.client.codeReview
+  val reviewService = client.codeReview
   fun resolve() {
     val currentDiscussion = discussion.value
-    launch(chatVm.lifetime, Ui) {
+    launch(lifetime, Ui) {
       if (!currentDiscussion.resolved) {
         resolvingModel.value = ResolvingState.RESOLVING
       }
@@ -68,7 +74,7 @@ private fun createResolveReopenLabel(
   val label = ActionLink(SpaceBundle.message("chat.resolve.action")) {
     resolve()
   }
-  discussion.forEach(chatVm.lifetime) {
+  discussion.forEach(lifetime) {
     label.text = if (it.resolved) {
       SpaceBundle.message("chat.reopen.action")
     }

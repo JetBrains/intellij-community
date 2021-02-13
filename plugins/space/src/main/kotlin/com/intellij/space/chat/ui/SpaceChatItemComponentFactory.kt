@@ -16,7 +16,6 @@ import com.intellij.space.chat.ui.message.MessageTitleComponent
 import com.intellij.space.chat.ui.message.SpaceChatMessagePendingHeader
 import com.intellij.space.chat.ui.message.SpaceMCMessageComponent
 import com.intellij.space.chat.ui.message.SpaceStyledMessageComponent
-import com.intellij.space.chat.ui.thread.SpaceChatReplyActionFactory
 import com.intellij.space.chat.ui.thread.createCollapsedThreadComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
@@ -44,8 +43,6 @@ internal class SpaceChatItemComponentFactory(
 ) : TimelineItemComponentFactory<SpaceChatItem> {
 
   private val codeDiscussionComponentFactory = SpaceChatCodeDiscussionComponentFactory(project, lifetime, server)
-
-  private val replyActionFactory = SpaceChatReplyActionFactory()
 
   /**
    * Method should return [HoverableJPanel] because it is used to implement hovering properly
@@ -146,7 +143,7 @@ internal class SpaceChatItemComponentFactory(
       this
     }
     else {
-      val threadComponent = createCollapsedThreadComponent(project, lifetime, message, replyActionFactory)
+      val threadComponent = createCollapsedThreadComponent(project, lifetime, message, null)
       JPanel(VerticalLayout(0)).apply {
         isOpaque = false
         add(this@addThreadComponentIfNeeded, VerticalLayout.FILL_HORIZONTAL)
