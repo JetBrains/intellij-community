@@ -23,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.Functions;
+import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +59,7 @@ public class WSLDistribution {
   private final @Nullable Path myExecutablePath;
   private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
   private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(() -> readWslIp());
+  private final NullableLazyValue<String> myShellPath = NullableLazyValue.createValue(() -> readShellPath());
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -272,14 +275,19 @@ public class WSLDistribution {
       commandLine.setExePath(wslExe.toString());
       commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
-        commandLine.addParameters("--exec", "/bin/sh");
-        if (options.isExecuteCommandInInteractiveShell()) {
-          commandLine.addParameters("-i");
+        if (options.isExecuteCommandInDefaultShell()) {
+          commandLine.addParameters("$SHELL", "-c", linuxCommandStr);
         }
-        if (options.isExecuteCommandInLoginShell()) {
-          commandLine.addParameters("-l");
+        else {
+          commandLine.addParameters("--exec", options.getShellPath());
+          if (options.isExecuteCommandInInteractiveShell()) {
+            commandLine.addParameters("-i");
+          }
+          if (options.isExecuteCommandInLoginShell()) {
+            commandLine.addParameters("-l");
+          }
+          commandLine.addParameters("-c", linuxCommandStr);
         }
-        commandLine.addParameters("-c", linuxCommandStr);
       }
       else {
         commandLine.addParameter("--exec");
@@ -599,5 +607,36 @@ public class WSLDistribution {
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
     return myDescriptor.getEnvironmentVariable(name);
+  }
+
+  public @NlsSafe @NotNull String getShellPath() {
+    return ObjectUtils.notNull(myShellPath.getValue(), WSLCommandLineOptions.DEFAULT_SHELL);
+  }
+
+  private @NlsSafe @Nullable String readShellPath() {
+    WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true);
+    String prefixText = "intellij: fetching SHELL";
+    options.addInitCommand("echo " + CommandLineUtil.posixQuote(prefixText));
+    try {
+      ProcessOutput output = executeOnWsl(List.of("printenv", "SHELL"), options, 10_000, null);
+      if (!output.isTimeout() && output.getExitCode() == 0) {
+        String markerText = prefixText + LineSeparator.LF.getSeparatorString();
+        int index = output.getStdout().indexOf(markerText);
+        if (index >= 0) {
+          String stdout = output.getStdout().substring(index + markerText.length()).trim();
+          if (!stdout.isEmpty()) {
+            return stdout;
+          }
+        }
+      }
+      LOG.info("Failed to read SHELL environment variable for " + getMsId() + ": " +
+               "stdout=" + output.getStdout() + ", stderr=" + output.getStderr() +
+               ", exitCode=" + output.getExitCode() + ", timeout=" + output.isTimeout());
+      return null;
+    }
+    catch (ExecutionException e) {
+      LOG.info("Failed to read SHELL environment variable for " + getMsId(), e);
+      return null;
+    }
   }
 }
