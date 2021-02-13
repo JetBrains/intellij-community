@@ -45,6 +45,8 @@ public abstract class SingleRowLayoutStrategy {
 
   protected abstract int getFixedPosition(final SingleRowPassInfo data);
 
+  protected abstract Rectangle getTitleRect(SingleRowPassInfo data);
+
   public abstract Rectangle getMoreRect(final SingleRowPassInfo data);
 
   public abstract boolean isToCenterTextWhenStretched();
@@ -180,6 +182,10 @@ public abstract class SingleRowLayoutStrategy {
       return new Rectangle(x, 1, data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height);
     }
 
+    @Override
+    protected Rectangle getTitleRect(SingleRowPassInfo data) {
+      return new Rectangle(0, 0, myTabs.myTitleWrapper.getPreferredSize().width, myTabs.myHeaderFitSize.height);
+    }
 
     @Override
     public void layoutComp(SingleRowPassInfo data) {
@@ -253,6 +259,11 @@ public abstract class SingleRowLayoutStrategy {
       }
       return new Rectangle(x, getFixedPosition(data),
                            data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height);
+    }
+
+    @Override
+    protected Rectangle getTitleRect(SingleRowPassInfo data) {
+      return new Rectangle(0, getFixedPosition(data), myTabs.myTitleWrapper.getPreferredSize().width, myTabs.myHeaderFitSize.height);
     }
 
     @Override
@@ -348,6 +359,10 @@ public abstract class SingleRowLayoutStrategy {
     public Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength) {
       return new Rectangle(fixedPos, position, fixedFitLength, length);
     }
+    @Override
+    protected Rectangle getTitleRect(SingleRowPassInfo data) {
+      return new Rectangle(0, 0, myTabs.myHeaderFitSize.width, myTabs.myTitleWrapper.getPreferredSize().height);
+    }
 
     @Override
     public int getFixedPosition(final SingleRowPassInfo data) {
@@ -399,6 +414,13 @@ public abstract class SingleRowLayoutStrategy {
                            myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize - 1,
                            myTabs.myHeaderFitSize.width,
                            data.moreRectAxisSize - 1);
+    }
+    @Override
+    protected Rectangle getTitleRect(SingleRowPassInfo data) {
+      return new Rectangle(data.layoutSize.width - myTabs.myHeaderFitSize.width,
+                           0,
+                           myTabs.myHeaderFitSize.width,
+                           myTabs.myTitleWrapper.getPreferredSize().height);
     }
   }
 

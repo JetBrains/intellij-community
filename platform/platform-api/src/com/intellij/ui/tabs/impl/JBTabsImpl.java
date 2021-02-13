@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +38,7 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.MathUtil;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -88,6 +90,7 @@ public class JBTabsImpl extends JComponent
   public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<>();
   public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<>();
   public final ActionToolbar myMoreToolbar;
+  public final NonOpaquePanel myTitleWrapper = new NonOpaquePanel();
   @Deprecated
   public Dimension myHeaderFitSize;
 
@@ -433,6 +436,10 @@ public class JBTabsImpl extends JComponent
     myMoreToolbar.getComponent().setOpaque(false);
     myMoreToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     add(myMoreToolbar.getComponent());
+    add(myTitleWrapper);
+    Disposer.register(myParentDisposable, () -> {
+      setTitleProducer(null);
+    });
     final double[] directionAccumulator = new double[]{0};
     addMouseWheelListener(event -> {
 
@@ -952,6 +959,22 @@ public class JBTabsImpl extends JComponent
   private Rectangle getMoreRect() {
     SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
     return lastLayout != null ? lastLayout.moreRect : null;
+  }
+
+  private Rectangle getTitleRect() {
+    SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
+    return lastLayout != null ? lastLayout.titleRect : null;
+  }
+
+  @Override
+  public void setTitleProducer(@Nullable Producer<Pair<Icon, String>> titleProducer) {
+    myTitleWrapper.removeAll();
+    if (titleProducer != null) {
+      ActionToolbar toolbar = ActionManager.getInstance()
+        .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, new DefaultActionGroup(new TitleAction(titleProducer)), true);
+      toolbar.setMiniMode(true);
+      myTitleWrapper.setContent(toolbar.getComponent());
+    }
   }
 
   @Override
@@ -1756,6 +1779,21 @@ public class JBTabsImpl extends JComponent
             myMoreToolbar.getComponent().setBounds(bounds);
           } else {
             myMoreToolbar.getComponent().setBounds(new Rectangle());
+          }
+          Rectangle titleRect = getTitleRect();
+          if (titleRect != null) {
+            Dimension preferredSize = myTitleWrapper.getPreferredSize();
+            Rectangle bounds = new Rectangle(titleRect);
+            JBInsets.removeFrom(bounds, getLayoutInsets());
+            int xDiff = (bounds.width - preferredSize.width) / 2;
+            int yDiff = (bounds.height - preferredSize.height) / 2;
+            bounds.x += xDiff;
+            bounds.width -= 2 * xDiff;
+            bounds.y += yDiff;
+            bounds.height -= 2 * yDiff;
+            myTitleWrapper.setBounds(bounds);
+          } else {
+            myTitleWrapper.setBounds(new Rectangle());
           }
           myTableLayout.myLastTableLayout = null;
           OnePixelDivider divider = mySplitter.getDivider();
@@ -3582,5 +3620,51 @@ public class JBTabsImpl extends JComponent
     public Insets insets;
     public Color from;
     public Color to;
+  }
+
+  private class TitleAction extends AnAction implements CustomComponentAction {
+    private final Producer<Pair<Icon, String>> myTitleProvider;
+    private final JLabel myLabel = new JLabel() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        size.height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT);
+        return size;
+      }
+
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setFont(new TabLabel(JBTabsImpl.this, new TabInfo(null)).getLabelComponent().getFont());
+        setBorder(JBUI.Borders.empty(0, 5, 0, 6));
+      }
+    };
+
+    private TitleAction(@NotNull Producer<Pair<Icon, String>> titleProvider) {
+      myTitleProvider = titleProvider;
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      update();
+      return myLabel;
+    }
+
+    private void update() {
+      Pair<Icon, String> pair = myTitleProvider.produce();
+      myLabel.setIcon(pair.first);
+      //noinspection HardCodedStringLiteral
+      myLabel.setText(pair.second);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      //do nothing
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      update();
+    }
   }
 }

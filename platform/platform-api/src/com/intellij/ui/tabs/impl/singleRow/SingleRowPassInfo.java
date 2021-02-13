@@ -21,6 +21,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public final List<TabInfo> toDrop;
   final int moreRectAxisSize;
   public Rectangle moreRect;
+  public Rectangle titleRect;
 
   public WeakReference<JComponent> hToolbar;
   public WeakReference<JComponent> vToolbar;
