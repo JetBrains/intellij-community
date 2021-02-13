@@ -97,7 +97,7 @@ public class WSLDistribution {
       for (String line : output.getStdoutLines(true)) {
         if (line.startsWith(key) && line.length() >= (key.length() + 1)) {
           final String prettyName = line.substring(key.length() + 1);
-          return  StringUtil.nullize(StringUtil.unquoteString(prettyName));
+          return StringUtil.nullize(StringUtil.unquoteString(prettyName));
         }
       }
     }
@@ -124,9 +124,9 @@ public class WSLDistribution {
    * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    */
   public @NotNull ProcessOutput executeOnWsl(@NotNull List<String> command,
-                                    @NotNull WSLCommandLineOptions options,
-                                    int timeout,
-                                    @Nullable Consumer<? super ProcessHandler> processHandlerConsumer) throws ExecutionException {
+                                             @NotNull WSLCommandLineOptions options,
+                                             int timeout,
+                                             @Nullable Consumer<? super ProcessHandler> processHandlerConsumer) throws ExecutionException {
     GeneralCommandLine commandLine = patchCommandLine(new GeneralCommandLine(command), null, options);
     CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
     if (processHandlerConsumer != null) {
@@ -179,9 +179,9 @@ public class WSLDistribution {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
-                                                           @Nullable Project project,
-                                                           @Nullable String remoteWorkingDir,
-                                                           boolean askForSudo) {
+                                                                    @Nullable Project project,
+                                                                    @Nullable String remoteWorkingDir,
+                                                                    boolean askForSudo) {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setRemoteWorkingDirectory(remoteWorkingDir)
       .setSudo(askForSudo);
@@ -201,15 +201,15 @@ public class WSLDistribution {
    * <p>
    * Method should properly handle quotation and escaping of the environment variables.<p/>
    *
-   * @param commandLine      command line to patch
-   * @param project          current project
-   * @param options          {@link WSLCommandLineOptions} instance
-   * @param <T>              GeneralCommandLine or descendant
+   * @param commandLine command line to patch
+   * @param project     current project
+   * @param options     {@link WSLCommandLineOptions} instance
+   * @param <T>         GeneralCommandLine or descendant
    * @return original {@code commandLine}, prepared to run in WSL context
    */
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
-                                                           @Nullable Project project,
-                                                           @NotNull WSLCommandLineOptions options) throws ExecutionException {
+                                                                    @Nullable Project project,
+                                                                    @NotNull WSLCommandLineOptions options) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
     Path executable = getExecutablePath();
     boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
@@ -322,13 +322,13 @@ public class WSLDistribution {
     }
   }
 
-   public static @Nullable Path findWslExe() {
+  public static @Nullable Path findWslExe() {
     File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
     return file != null ? file.toPath() : null;
   }
 
   private static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine, boolean executeCommandInShell) {
-    List<String> command = ContainerUtil.concat(Collections.singletonList(commandLine.getExePath()), commandLine.getParametersList().getList());
+    List<String> command = ContainerUtil.concat(List.of(commandLine.getExePath()), commandLine.getParametersList().getList());
     return new ArrayList<>(ContainerUtil.map(command, executeCommandInShell ? CommandLineUtil::posixQuote : Functions.identity()));
   }
 
@@ -393,7 +393,7 @@ public class WSLDistribution {
    * @param processHandler process handler, created from patched commandline
    * @return passed processHandler, patched with sudo listener if any
    */
-  public @NotNull <T extends ProcessHandler>T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
+  public @NotNull <T extends ProcessHandler> T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
     ProcessListener listener = SUDO_LISTENER_KEY.get(commandLine);
     if (listener != null) {
       processHandler.addProcessListener(listener);
@@ -534,10 +534,10 @@ public class WSLDistribution {
 
   /**
    * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
-   * @see VfsUtil#findFileByIoFile(File, boolean)
    * @implNote there is a hack in {@link LocalFileSystemBase#getAttributes(VirtualFile)} which causes all network
    * virtual files to exists all the time. So we need to check explicitly that root exists. After implementing proper non-blocking check
    * for the network resource availability, this method may be simplified to findFileByIoFile
+   * @see VfsUtil#findFileByIoFile(File, boolean)
    */
   @ApiStatus.Experimental
   public @Nullable VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
@@ -560,6 +560,7 @@ public class WSLDistribution {
   public InetAddress getHostIpAddress() {
     return InetAddresses.forString(getHostIp());
   }
+
   public InetAddress getWslIpAddress() {
     return InetAddresses.forString(getWslIp());
   }
