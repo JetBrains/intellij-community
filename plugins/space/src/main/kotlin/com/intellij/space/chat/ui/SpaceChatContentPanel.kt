@@ -14,22 +14,16 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
+import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.ColorUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.timeline.TimelineComponent
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.awaitAll
 import libraries.coroutines.extra.Lifetime
-import libraries.coroutines.extra.async
 import libraries.coroutines.extra.delay
-import libraries.coroutines.extra.launch
 import org.jetbrains.annotations.Nls
-import runtime.Ui
 import runtime.reactive.awaitTrue
 import javax.swing.JPanel
 
@@ -37,7 +31,7 @@ internal class SpaceChatContentPanel(
   private val project: Project,
   private val lifetime: Lifetime,
   parent: Disposable,
-  private val channelsVm: ChannelsVm,
+  channelsVm: ChannelsVm,
   chatRecord: Ref<M2ChannelRecord>,
 ) : SpaceChatContentPanelBase(lifetime, parent, channelsVm, chatRecord) {
   private val server = channelsVm.client.server
@@ -46,15 +40,11 @@ internal class SpaceChatContentPanel(
     val itemsListModel = SpaceChatItemListModel()
     val contentPanel = createContentPanel(itemsListModel, chatVm)
     chatVm.mvms.forEach(lifetime) { messagesViewModel ->
-      launch(lifetime, Ui) {
-        val chatItems = messagesViewModel.messages.map { messageViewModel ->
-          async(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
-            messageViewModel.convertToChatItemWithThread(lifetime, channelsVm, messageViewModel.getLink())
-          }
-        }.awaitAll()
-        itemsListModel.messageListUpdated(chatItems)
-        stopLoadingContent(contentPanel)
+      val chatItems = messagesViewModel.messages.map { messageViewModel ->
+        messageViewModel.convertToChatItem(messageViewModel.getLink())
       }
+      itemsListModel.messageListUpdated(chatItems)
+      stopLoadingContent(contentPanel)
     }
   }
 

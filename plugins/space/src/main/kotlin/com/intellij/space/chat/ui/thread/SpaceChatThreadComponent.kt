@@ -13,6 +13,7 @@ import com.intellij.space.chat.ui.SpaceChatItemListModel
 import com.intellij.space.chat.ui.getLink
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import com.intellij.util.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import libraries.coroutines.extra.Lifetime
 import javax.swing.JComponent
@@ -24,6 +25,7 @@ internal fun createThreadComponent(
   thread: M2ChannelVm,
   threadActionsFactory: SpaceChatThreadActionsFactory,
   withFirst: Boolean = true,
+  folded: Boolean = true,
   messageConverter: (index: Int, message: M2MessageVm) -> SpaceChatItem = { _, message -> message.convertToChatItem(message.getLink()) }
 ): JComponent {
   val threadComponent = JPanel(VerticalLayout(0)).apply {
@@ -46,12 +48,19 @@ internal fun createThreadComponent(
   }
 
   val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
-  val threadTimeline = TimelineThreadCommentsPanel(
-    itemsListModel,
-    commentComponentFactory = itemComponentFactory::createComponent,
-    offset = 0
-  ).apply {
-    border = JBUI.Borders.emptyBottom(5)
+  val threadTimeline = if (folded) {
+    TimelineThreadCommentsPanel(
+      itemsListModel,
+      commentComponentFactory = itemComponentFactory::createComponent,
+      offset = 0
+    ).apply {
+      border = JBUI.Borders.emptyBottom(5)
+    }
+  }
+  else {
+    TimelineComponent(itemsListModel, itemComponentFactory, offset = 0).apply {
+      border = JBUI.Borders.emptyBottom(5)
+    }
   }
 
   val replyComponent = threadActionsFactory.createActionsComponent(thread)

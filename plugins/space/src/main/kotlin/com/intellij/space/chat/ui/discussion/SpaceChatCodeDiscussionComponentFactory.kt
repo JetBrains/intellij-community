@@ -7,18 +7,23 @@ import circlet.platform.api.Ref
 import circlet.platform.client.property
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.SpaceChatEditableComponent
 import com.intellij.space.chat.ui.SpaceChatMarkdownTextComponent
+import com.intellij.space.chat.ui.SpaceChatNewMessageWithAvatarComponent
 import com.intellij.space.chat.ui.message.createResolvedComponent
-import com.intellij.space.chat.ui.thread.createThreadComponent
+import com.intellij.space.chat.ui.thread.createCollapsedThreadComponent
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.SideBorder
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
@@ -28,11 +33,15 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.codereview.SingleValueModel
 import com.intellij.util.ui.codereview.SingleValueModelImpl
+import com.intellij.util.ui.codereview.ToggleableContainer
+import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import runtime.Ui
 import runtime.reactive.Property
 import runtime.reactive.property.map
 import java.awt.event.ActionListener
@@ -46,7 +55,7 @@ internal class SpaceChatCodeDiscussionComponentFactory(
   private val server: String,
 ) {
   fun createComponent(message: SpaceChatItem, codeDiscussion: Ref<CodeDiscussionRecord>): JComponent? {
-    val thread = message.thread!!
+    val discussionMessage = message.projectedItem ?: return null
     val discussion = codeDiscussion.resolve()
     val discussionProperty = codeDiscussion.property()
     val resolved = lifetime.map(discussionProperty) { it.resolved }
@@ -86,61 +95,82 @@ internal class SpaceChatCodeDiscussionComponentFactory(
       add(createEditableReviewCommentComponent(reviewCommentComponent, message, collapseModel), VerticalLayout.FILL_HORIZONTAL)
     }
 
-    val threadActionsFactory = SpaceChatDiscussionActionsFactory(
-      discussionProperty,
-      withOffset = true,
-      avatarType = SpaceChatAvatarType.THREAD
-    )
-    val threadComponent = createThreadComponent(project, lifetime, thread, threadActionsFactory, withFirst = false)
-    val outerActionsPanel = BorderLayoutPanel().apply {
-      isOpaque = false
-      border = JBUI.Borders.emptyTop(10)
-      val outerActionsFactory = SpaceChatDiscussionActionsFactory(
-        discussionProperty,
-        withOffset = false,
-        avatarType = SpaceChatAvatarType.THREAD,
-        closeOnSend = true
-      )
-      addToCenter(outerActionsFactory.createActionsComponent(thread))
-    }
-
-    val threadWithActionsComponent = JPanel(VerticalLayout(0)).apply {
-      isOpaque = false
-      add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
-      add(outerActionsPanel, VerticalLayout.FILL_HORIZONTAL)
-    }
+    val outerReplyComponent = createOuterReplyComponent(discussionProperty, message)
+    val threadComponent = createThreadComponent(discussionProperty, message)
     val component = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       add(panel, VerticalLayout.FILL_HORIZONTAL)
-      add(threadWithActionsComponent, VerticalLayout.FILL_HORIZONTAL)
+      add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
+      add(outerReplyComponent, VerticalLayout.FILL_HORIZONTAL)
       addDiscussionExpandCollapseHandling(
         this,
         collapseModel,
-        listOf(threadWithActionsComponent, reviewCommentComponent, diffEditorComponent),
+        listOf(outerReplyComponent, threadComponent, reviewCommentComponent, diffEditorComponent),
         collapseButton,
         expandButton,
         resolved
       )
     }
 
-    collapseModel.addValueUpdatedListener { collapsed ->
-      if (!collapsed) {
-        val messagesCount = thread.mvms.value.messages.size
-        updateActionsComponentVisibility(outerActionsPanel, null, messagesCount)
-      }
-    }
-
-    thread.mvms.forEachWithPrevious(lifetime) { prev, new ->
-      val messages = new.messages
-      val comment = messages.firstOrNull() ?: return@forEachWithPrevious
-      reviewCommentComponent.setMarkdownText(comment.message.text, comment.message.edited != null)
+    discussionMessage.forEach(lifetime) {
+      reviewCommentComponent.setMarkdownText(it.text, it.edited != null)
       reviewCommentComponent.repaint()
-      if (!collapseModel.value) {
-        updateActionsComponentVisibility(outerActionsPanel, prev?.messages?.size, messages.size)
-      }
     }
 
     return component
+  }
+
+  private fun createOuterReplyComponent(discussion: Property<CodeDiscussionRecord>, message: SpaceChatItem): JComponent {
+    val newMessageStateModel = SingleValueModelImpl(false)
+    val replyAction = ActionLink(SpaceBundle.message("chat.reply.action")) {
+      newMessageStateModel.value = true
+    }
+    val resolveComponent = createResolveComponent(discussion, message.chat)
+    val actionsComponent = JPanel(HorizontalLayout(JBUI.scale(5))).apply {
+      isOpaque = false
+      border = JBUI.Borders.emptyTop(8)
+      add(replyAction)
+      add(resolveComponent)
+    }
+    val outerReplyComponent = ToggleableContainer.create(
+      newMessageStateModel,
+      mainComponentSupplier = { actionsComponent },
+      toggleableComponentSupplier = {
+        val submittableModel = object : SubmittableTextFieldModelBase("") {
+          override fun submit() {
+            launch(lifetime, Ui) {
+              val thread = message.loadThread(lifetime)
+              thread?.sendMessage(document.text, pending = false)
+              runWriteAction {
+                document.setText("")
+              }
+              newMessageStateModel.value = false
+            }
+          }
+        }
+        SpaceChatNewMessageWithAvatarComponent(lifetime, SpaceChatAvatarType.THREAD, submittableModel, onCancel = {
+          newMessageStateModel.value = false
+        })
+      }
+    )
+    message.threadPreview!!.messageCount.forEach(lifetime) { count ->
+      actionsComponent.isVisible = count == 0
+    }
+    return BorderLayoutPanel().apply {
+      isOpaque = false
+      addToCenter(outerReplyComponent)
+    }
+  }
+
+  private fun createThreadComponent(discussionProperty: Property<CodeDiscussionRecord>, message: SpaceChatItem): JComponent {
+    val threadActionsFactory = SpaceChatDiscussionActionsFactory(
+      discussionProperty,
+      avatarType = SpaceChatAvatarType.THREAD
+    )
+    return BorderLayoutPanel().apply {
+      isOpaque = false
+      addToCenter(createCollapsedThreadComponent(project, lifetime, message, threadActionsFactory, withFirst = false))
+    }
   }
 
   private fun createEditableReviewCommentComponent(
@@ -155,20 +185,6 @@ internal class SpaceChatCodeDiscussionComponentFactory(
       }
     }
     return editableReviewCommentComponent
-  }
-
-  private fun updateActionsComponentVisibility(
-    outerActionsPanel: JComponent,
-    prevMessagesCount: Int?,
-    newMessagesCount: Int
-  ) {
-    if (newMessagesCount == 1) {
-      outerActionsPanel.isVisible = true
-    }
-    else if (prevMessagesCount == null || prevMessagesCount == 1) {
-      // update only for 1 -> 1+ messages count change
-      outerActionsPanel.isVisible = false
-    }
   }
 
   private fun createFileNameComponent(

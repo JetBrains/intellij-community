@@ -17,7 +17,7 @@ import com.intellij.space.chat.ui.message.SpaceChatMessagePendingHeader
 import com.intellij.space.chat.ui.message.SpaceMCMessageComponent
 import com.intellij.space.chat.ui.message.SpaceStyledMessageComponent
 import com.intellij.space.chat.ui.thread.SpaceChatReplyActionFactory
-import com.intellij.space.chat.ui.thread.createThreadComponent
+import com.intellij.space.chat.ui.thread.createCollapsedThreadComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
@@ -142,12 +142,11 @@ internal class SpaceChatItemComponentFactory(
   }
 
   private fun JComponent.addThreadComponentIfNeeded(message: SpaceChatItem): JComponent {
-    val thread = message.thread
-    return if (thread == null || message.type is CodeDiscussion) {
+    return if (message.type is CodeDiscussion) {
       this
     }
     else {
-      val threadComponent = createThreadComponent(project, lifetime, thread, replyActionFactory)
+      val threadComponent = createCollapsedThreadComponent(project, lifetime, message, replyActionFactory)
       JPanel(VerticalLayout(0)).apply {
         isOpaque = false
         add(this@addThreadComponentIfNeeded, VerticalLayout.FILL_HORIZONTAL)
@@ -173,8 +172,7 @@ internal class SpaceChatItemComponentFactory(
           isBusy = true
           launch(lifetime, Ui) {
             startThreadVm.startThread(document.text)
-            // keep model busy because message will be fully redrawn with new thread
-            // or hidden if thread already is existed
+            isBusy = false
           }
         }
       }
