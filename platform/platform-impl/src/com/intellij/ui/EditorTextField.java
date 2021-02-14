@@ -64,8 +64,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
-
 /**
  * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
  */
@@ -371,7 +369,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public void addNotify() {
-    Disposable uiDisposable = UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
+    Disposable uiDisposable = PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
     if (uiDisposable != null) {
       // If this component is added to a dialog (for example, the settings dialog),
       // then we have to release the editor simultaneously on close.
@@ -399,6 +397,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
         }
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(myDocument);
       }
+      // try some cleaning of potentially leaking references
+      myDocumentListeners.clear();
+      myFocusListeners.clear();
+      myMouseListeners.clear();
     });
     if (myEditor != null) {
       releaseEditorLater();
@@ -527,6 +529,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
   }
 
+  @NotNull
   protected EditorEx createEditor() {
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
