@@ -12,9 +12,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import com.intellij.ui.*
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -28,6 +29,7 @@ import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -36,6 +38,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
@@ -45,8 +48,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
@@ -325,19 +326,11 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     return model
   }
 
-  private fun createChangesTree(parentPanel: JPanel, model: SingleValueModel<List<Change>>, emptyTextText: String): JComponent {
+  private fun createChangesTree(parentPanel: JPanel,
+                                model: SingleValueModel<List<Change>>,
+                                emptyTextText: String): JComponent {
 
-    val tree = object : ChangesTree(project, false, false) {
-      override fun rebuildTree() {
-        updateTreeModel(TreeModelBuilder(project, grouping).setChanges(model.value, null).build())
-        if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
-      }
-
-      override fun getData(dataId: String) = super.getData(dataId) ?: VcsTreeModelData.getData(project, this, dataId)
-
-    }.apply {
-      emptyText.text = emptyTextText
-    }.also {
+    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText).also {
       it.doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(it, e)) return@Processor false
         viewController.openPullRequestDiff(dataProvider.id, true)
@@ -347,17 +340,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         viewController.openPullRequestDiff(dataProvider.id, true)
         true
       }
-
-      UIUtil.putClientProperty(it, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
-      SelectionSaver.installOn(it)
-      it.addFocusListener(object : FocusAdapter() {
-        override fun focusGained(e: FocusEvent?) {
-          if (it.isSelectionEmpty && !it.isEmpty) TreeUtil.selectFirstNode(it)
-        }
-      })
     }
-
-    model.addAndInvokeValueChangedListener(tree::rebuildTree)
 
     reloadChangesAction.registerCustomShortcutSet(tree, null)
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
