@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
@@ -33,13 +32,12 @@ import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
+import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
@@ -48,20 +46,16 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitsBrowserComponent.COMMITS_LIST_KEY
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
-import java.beans.PropertyChangeEvent
-import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.JPanel
-import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
-import kotlin.properties.Delegates.observable
 
 internal class GHPRViewComponentFactory(private val actionManager: ActionManager,
                                         private val project: Project,
@@ -103,6 +97,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private val changesLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
     dataProvider.changesData.reloadChanges()
   }
+
+  private val diffBridge = GHPRDiffBridge(dataProvider.diffController)
 
   private val uiDisposable = Disposer.newDisposable().also {
     Disposer.register(disposable, it)
@@ -149,22 +145,15 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private inner class Controller(private val tabs: JBTabs,
                                  private val filesTab: TabInfo,
                                  private val commitsTab: TabInfo) : GHPRViewComponentController {
-    private val selectedChangesUpdater = SelectedChangesUpdater(dataProvider.diffController)
 
     init {
       val listener = object : TabsListener {
-        private val propertyListener = PropertyChangeListener { evt ->
-          if (evt.propertyName == CHANGES_TREE_KEY.toString()) {
-            selectedChangesUpdater.tree = evt.newValue as ChangesTree?
-          }
-        }
-
         override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-          oldSelection?.component?.removePropertyChangeListener(propertyListener)
-          newSelection?.component?.addPropertyChangeListener(propertyListener)
-
-          val tree = newSelection?.component?.let { ComponentUtil.getClientProperty(it, CHANGES_TREE_KEY) }
-          propertyListener.propertyChange(PropertyChangeEvent(this, CHANGES_TREE_KEY.toString(), null, tree))
+          diffBridge.activeTree = when(newSelection) {
+            filesTab -> GHPRDiffBridge.ActiveTree.FILES
+            commitsTab -> GHPRDiffBridge.ActiveTree.COMMITS
+            else -> null
+          }
         }
       }
       tabs.addListener(listener)
@@ -173,7 +162,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
     override fun selectCommit(oid: String) {
       tabs.select(commitsTab, false)
-      val list = ComponentUtil.getClientProperty(commitsTab.component, COMMITS_LIST_KEY) ?: return
+      val list = findCommitsList(commitsTab.component) ?: return
       for (i in 0 until list.model.size) {
         val commit = list.model.getElementAt(i)
         if (commit.oid == oid || commit.abbreviatedOid == oid) {
@@ -184,9 +173,24 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       GHUIUtil.focusPanel(list)
     }
 
+    private fun findCommitsList(parent: JComponent): JList<GHCommit>? {
+      UIUtil.getClientProperty(parent, GHPRCommitsBrowserComponent.COMMITS_LIST_KEY)?.run {
+        return this
+      }
+
+      for (component in parent.components) {
+        if (component is JComponent) {
+          findCommitsList(component)?.run {
+            return this
+          }
+        }
+      }
+      return null
+    }
+
     override fun selectChange(oid: String?, filePath: String) {
       tabs.select(filesTab, false)
-      val tree = ComponentUtil.getClientProperty(filesTab.component, CHANGES_TREE_KEY) ?: return
+      val tree = UIUtil.findComponentOfType(filesTab.component, ChangesTree::class.java) ?: return
       GHUIUtil.focusPanel(tree)
 
       if (oid == null || !changesLoadingModel.resultAvailable) {
@@ -254,10 +258,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     null, GithubBundle.message("cannot.load.commits"),
                                                     changesLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
-        val browser = GHPRCommitsBrowserComponent.create(model, commitSelectionListener)
-        val list = UIUtil.getClientProperty(browser, COMMITS_LIST_KEY)
-        UIUtil.putClientProperty(splitter, COMMITS_LIST_KEY, list)
-        browser
+        GHPRCommitsBrowserComponent.create(model, commitSelectionListener)
       }
 
     val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,
@@ -265,8 +266,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     GithubBundle.message("cannot.load.changes"),
                                                     changesLoadingErrorHandler)
       .withContentListener {
-        val changesTree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
-        ComponentUtil.putClientProperty(splitter, CHANGES_TREE_KEY, changesTree)
+        diffBridge.commitsTree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
       }
       .createWithUpdatesStripe(uiDisposable) { parent, model ->
         val reviewUnsupportedWarning = createReviewUnsupportedPlaque(model)
@@ -307,8 +307,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     GithubBundle.message("cannot.load.changes"),
                                                     changesLoadingErrorHandler)
       .withContentListener {
-        val changesTree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
-        ComponentUtil.putClientProperty(panel, CHANGES_TREE_KEY, changesTree)
+        diffBridge.filesTree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
       }
       .createWithUpdatesStripe(uiDisposable) { parent, model ->
         createChangesTree(parent, model.map { it.changes }, GithubBundle.message("pull.request.does.not.contain.changes"))
@@ -416,22 +415,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     return TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, target)
   }
 
-  private class SelectedChangesUpdater(diffController: GHPRDiffController) {
-    private val selectionListener = TreeSelectionListener { _ ->
-      val selection = tree?.let { VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change } }
-      // do not reset selection to zero
-      if (selection != null && !selection.isEmpty) diffController.selection = selection
-    }
-
-    var tree: ChangesTree? by observable<ChangesTree?>(null) { _, oldValue, newValue ->
-      oldValue?.removeTreeSelectionListener(selectionListener)
-      newValue?.addTreeSelectionListener(selectionListener)
-      selectionListener.valueChanged(null)
-    }
-  }
-
   companion object {
-    private val CHANGES_TREE_KEY = Key.create<ChangesTree>("CHANGES_TREE")
 
     private fun ChangesTree.selectChange(toSelect: Change) {
       val rowInTree = findRowContainingChange(root, toSelect)
