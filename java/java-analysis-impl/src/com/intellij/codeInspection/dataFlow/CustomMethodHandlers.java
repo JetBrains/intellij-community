@@ -135,7 +135,8 @@ public final class CustomMethodHandlers {
       instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int", "int")), CustomMethodHandlers::randomNextInt)
     .register(staticCall(JAVA_UTIL_ARRAYS, "copyOf"), CustomMethodHandlers::copyOfArray)
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterTypes("T[]"), CustomMethodHandlers::collectionToArray)
-    .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterCount(0), CustomMethodHandlers::collectionToArray);
+    .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterCount(0), CustomMethodHandlers::collectionToArray)
+    .register(instanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0), CustomMethodHandlers::stringToCharArray);
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -466,5 +467,13 @@ public final class CustomMethodHandlers {
       finalRange = collectionSizeRange; 
     }
     return result.meet(ARRAY_LENGTH.asDfType(intRange(finalRange)));
+  }
+
+  private static @NotNull DfType stringToCharArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, 
+                                                   PsiMethod method) {
+    DfaValue string = arguments.myQualifier;
+    DfType stringSizeRange = state.getDfType(STRING_LENGTH.createValue(factory, string));
+    return typedObject(PsiType.CHAR.createArrayType(), Nullability.NOT_NULL)
+      .meet(LOCAL_OBJECT).meet(ARRAY_LENGTH.asDfType(stringSizeRange));
   }
 }
