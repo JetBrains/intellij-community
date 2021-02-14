@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -358,8 +359,7 @@ public final class DfaUtil {
   public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
     if (TypeConversionUtil.isPrimitiveWrapper(type)) {
       if (TypeConversionUtil.isPrimitiveAndNotNull(value.getType())) {
-        DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value, type);
-        return boxed == null ? value.getFactory().getUnknown() : boxed;
+        return value.getFactory().getBoxedFactory().createBoxed(value, DfTypes.typedObject(type, Nullability.NOT_NULL));
       }
     }
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {

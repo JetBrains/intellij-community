@@ -1455,7 +1455,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (unboxedType != null && !unboxedType.equals(actualType)) {
         addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
       }
-      addInstruction(new BoxingInstruction(boxedType));
+      addInstruction(new BoxingInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL)));
     }
     else if (actualType != expectedType &&
              TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
@@ -1919,7 +1919,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
     }
     if (!(operand.getType() instanceof PsiPrimitiveType)) {
-      addInstruction(new BoxingInstruction(operand.getType()));
+      addInstruction(new BoxingInstruction(DfTypes.typedObject(operand.getType(), Nullability.NOT_NULL)));
     }
     addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
     return true;

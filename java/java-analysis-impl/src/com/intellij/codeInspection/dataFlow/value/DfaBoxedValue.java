@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -13,9 +11,9 @@ import org.jetbrains.annotations.Nullable;
 
 public final class DfaBoxedValue extends DfaValue {
   private final @NotNull DfaVariableValue myWrappedValue;
-  private final @Nullable PsiType myType;
+  private final @NotNull DfType myType;
 
-  private DfaBoxedValue(@NotNull DfaVariableValue valueToWrap, @NotNull DfaValueFactory factory, @Nullable PsiType type) {
+  private DfaBoxedValue(@NotNull DfaVariableValue valueToWrap, @NotNull DfaValueFactory factory, @NotNull DfType type) {
     super(factory);
     myWrappedValue = valueToWrap;
     myType = type;
@@ -34,13 +32,13 @@ public final class DfaBoxedValue extends DfaValue {
   @Nullable
   @Override
   public PsiType getType() {
-    return myType;
+    return DfaTypeValue.toPsiType(myFactory.getProject(), myType);
   }
 
   @NotNull
   @Override
   public DfType getDfType() {
-    return DfTypes.typedObject(myType, Nullability.NOT_NULL);
+    return myType;
   }
 
   public static class Factory {
@@ -52,16 +50,16 @@ public final class DfaBoxedValue extends DfaValue {
       myFactory = factory;
     }
 
-    @Nullable
-    public DfaValue createBoxed(DfaValue valueToWrap, @Nullable PsiType type) {
+    @NotNull
+    public DfaValue createBoxed(@NotNull DfaValue valueToWrap, @NotNull DfType type) {
       if (valueToWrap instanceof DfaVariableValue && ((DfaVariableValue)valueToWrap).getDescriptor() == SpecialField.UNBOX) {
         DfaVariableValue qualifier = ((DfaVariableValue)valueToWrap).getQualifier();
-        if (qualifier != null && (type == null || type.equals(qualifier.getType()))) {
+        if (qualifier != null && type.equals(qualifier.getDfType())) {
           return qualifier;
         }
       }
       if (valueToWrap instanceof DfaTypeValue) {
-        DfType dfType = SpecialField.UNBOX.asDfType(valueToWrap.getDfType(), type);
+        DfType dfType = SpecialField.UNBOX.asDfType(valueToWrap.getDfType()).meet(type);
         return myFactory.fromDfType(dfType);
       }
       if (valueToWrap instanceof DfaVariableValue) {
@@ -72,7 +70,7 @@ public final class DfaBoxedValue extends DfaValue {
         }
         return boxedValue;
       }
-      return null;
+      return myFactory.fromDfType(type);
     }
   }
 }

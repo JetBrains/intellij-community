@@ -5,13 +5,13 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import org.jetbrains.annotations.NotNull;
 
 public class BoxingInstruction extends Instruction {
-  @Nullable private final PsiType myTargetType;
+  @NotNull private final DfType myTargetType;
 
-  public BoxingInstruction(@Nullable PsiType targetType) {
+  public BoxingInstruction(@NotNull DfType targetType) {
     myTargetType = targetType;
   }
 
@@ -20,8 +20,8 @@ public class BoxingInstruction extends Instruction {
     return visitor.visitBox(this, runner, stateBefore);
   }
 
-  @Nullable
-  public PsiType getTargetType() {
+  @NotNull
+  public DfType getTargetType() {
     return myTargetType;
   }
 

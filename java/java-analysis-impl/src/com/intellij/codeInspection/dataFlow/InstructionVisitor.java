@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.TextRange;
@@ -160,8 +159,7 @@ public abstract class InstructionVisitor {
     if (value instanceof DfaBinOpValue) {
       value = factory.fromDfType(state.getDfType(value));
     }
-    DfaValue boxed = factory.getBoxedFactory().createBoxed(value, instruction.getTargetType());
-    state.push(boxed == null ? factory.getObjectType(instruction.getTargetType(), Nullability.NOT_NULL) : boxed);
+    state.push(factory.getBoxedFactory().createBoxed(value, instruction.getTargetType()));
     return nextInstruction(instruction, runner, state);
   }
 
