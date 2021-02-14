@@ -33,6 +33,7 @@ public class AnActionEvent implements PlaceProvider {
   private final boolean myIsActionToolbar;
 
   private boolean myWorksInInjected;
+  private UpdateSession myUpdateSession;
 
   /**
    * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
@@ -78,6 +79,7 @@ public class AnActionEvent implements PlaceProvider {
     AnActionEvent event = new AnActionEvent(myInputEvent, dataContext, myPlace, myPresentation,
                                             myActionManager, myModifiers, myIsContextMenuAction, myIsActionToolbar);
     event.setInjectedContext(myWorksInInjected);
+    event.setUpdateSession(myUpdateSession);
     return event;
   }
 
@@ -282,5 +284,14 @@ public class AnActionEvent implements PlaceProvider {
 
   public void accept(@NotNull AnActionEventVisitor visitor) {
     visitor.visitEvent(this);
+  }
+
+  @Nullable
+  public UpdateSession getUpdateSession() {
+    return myUpdateSession;
+  }
+
+  public void setUpdateSession(@Nullable UpdateSession updateSession) {
+    myUpdateSession = updateSession;
   }
 }

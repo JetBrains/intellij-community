@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,7 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -163,6 +165,16 @@ public abstract class ActionGroup extends AnAction {
 
       mySecondaryActions.add(action);
     }
+  }
+
+  /**
+   * Allows the group to intercept and transform its expanded content.
+   */
+  @NotNull
+  @ApiStatus.Experimental
+  public List<AnAction> afterExpandGroup(@NotNull List<AnAction> result,
+                                         @NotNull UpdateSession updater) {
+    return result;
   }
 
   public final boolean isPrimary(@NotNull AnAction action) {

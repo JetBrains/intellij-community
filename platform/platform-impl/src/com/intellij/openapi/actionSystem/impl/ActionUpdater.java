@@ -27,6 +27,9 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -281,9 +284,10 @@ final class ActionUpdater {
       }
 
       List<AnAction> children = getGroupChildren(group, strategy);
-      return ContainerUtil.concat(children, child -> TimeoutUtil.compute(
+      List<AnAction> result = ContainerUtil.concat(children, child -> TimeoutUtil.compute(
         () -> expandGroupChild(child, hideDisabled, strategy),
         1000, ms -> LOG.warn(ms + "ms to expand group child " + ActionManager.getInstance().getId(child))));
+      return group.afterExpandGroup(result, asUpdateSession(strategy));
     }
     finally {
       if (myVisitor != null) {
@@ -316,12 +320,32 @@ final class ActionUpdater {
     }
     if (child instanceof ActionGroup) {
       ActionGroup actionGroup = (ActionGroup)child;
-      if (hideDisabled && !hasEnabledChildren(actionGroup, strategy)) {
+      JBIterable<AnAction> childrenIterable = iterateGroupChildren(actionGroup, strategy);
+      if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) {
         return Collections.emptyList();
       }
-      if (actionGroup.isPopup(myPlace)) { // popup menu has its own presentation
-        if (actionGroup.disableIfNoVisibleChildren()) {
-          boolean visibleChildren = hasVisibleChildren(actionGroup, strategy);
+
+      boolean isPopup = actionGroup.isPopup(myPlace);
+      boolean hideIfNoVisible = isPopup && actionGroup.disableIfNoVisibleChildren();
+      boolean hasEnabled = false, hasVisible = false;
+      if (hideDisabled || hideIfNoVisible) {
+        for (AnAction action : childrenIterable) {
+          Presentation p = update(action, strategy);
+          if (p == null) continue;
+          hasVisible |= p.isVisible();
+          hasEnabled |= p.isEnabled();
+          if (hasEnabled && hasVisible) break;
+          if (hideDisabled && hasEnabled && !hideIfNoVisible) break;
+          if (hideIfNoVisible && hasVisible && !hideDisabled) break;
+        }
+      }
+
+      if (hideDisabled && !hasEnabled) {
+        return Collections.emptyList();
+      }
+      if (isPopup) { // popup menu has its own presentation
+        if (hideIfNoVisible) {
+          boolean visibleChildren = hasVisible;
           if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
             return Collections.emptyList();
           }
@@ -372,68 +396,59 @@ final class ActionUpdater {
   }
 
   private AnActionEvent createActionEvent(AnAction action, Presentation presentation) {
-    AnActionEvent event = new AnActionEvent(null, getDataContext(action), myPlace, presentation,
-                                            ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
+    AnActionEvent event = new AnActionEvent(
+      null, getDataContext(action), myPlace, presentation,
+      ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
     event.setInjectedContext(action.isInInjectedContext());
+    event.setUpdateSession(asUpdateSession());
     return event;
   }
 
-  private boolean hasEnabledChildren(ActionGroup group, UpdateStrategy strategy) {
-    return hasChildrenWithState(group, false, true, strategy, new LinkedHashSet<>());
+  @NotNull
+  UpdateSession asUpdateSession() {
+    return asUpdateSession(myRealUpdateStrategy);
   }
 
-  private boolean hasVisibleChildren(ActionGroup group, UpdateStrategy strategy) {
-    return hasChildrenWithState(group, true, false, strategy, new LinkedHashSet<>());
+  @NotNull
+  private UpdateSession asUpdateSession(UpdateStrategy strategy) {
+    return new UpdateSession() {
+      @NotNull
+      @Override
+      public Iterable<? extends AnAction> children(@NotNull ActionGroup actionGroup) {
+        return iterateGroupChildren(actionGroup, strategy);
+      }
+
+      @NotNull
+      @Override
+      public Presentation presentation(@NotNull AnAction action) {
+        return orDefault(action, update(action, strategy));
+      }
+    };
   }
 
-  private boolean hasChildrenWithState(ActionGroup group, boolean checkVisible, boolean checkEnabled, UpdateStrategy strategy, Set<? super ActionGroup> visited) {
-    if (group instanceof AlwaysVisibleActionGroup) {
-      return true;
-    }
-
-    if (visited.size() > 1000) {
-      LOG.error("Too deep action group nesting: " + visited);
-      return true;
-    }
-
-    for (AnAction anAction : getGroupChildren(group, strategy)) {
-      ProgressManager.checkCanceled();
-      if (anAction instanceof Separator) {
-        continue;
+  @NotNull
+  private JBIterable<AnAction> iterateGroupChildren(@NotNull ActionGroup group, @NotNull UpdateStrategy strategy) {
+    boolean isDumb = myProject != null && DumbService.getInstance(myProject).isDumb();
+    return JBTreeTraverser.<AnAction>from(o -> {
+      if (o == group) return null;
+      if (o instanceof AlwaysVisibleActionGroup) return null;
+      if (isDumb && !o.isDumbAware()) return null;
+      if (!(o instanceof ActionGroup)) return null;
+      ActionGroup oo = (ActionGroup)o;
+      Presentation presentation = update(oo, strategy);
+      if (presentation == null || !presentation.isVisible()) {
+        return null;
       }
-      if (myProject != null && DumbService.getInstance(myProject).isDumb() && !anAction.isDumbAware()) {
-        continue;
+      if ((oo.isPopup(myPlace) || strategy.canBePerformed.test(oo))) {
+        return null;
       }
-
-      Presentation presentation = orDefault(anAction, update(anAction, strategy));
-      if (anAction instanceof ActionGroup) {
-        ActionGroup childGroup = (ActionGroup)anAction;
-        if (!visited.add(childGroup)) {
-          LOG.error("Action group cycle detected: " + childGroup + " in " + visited);
-          return true;
-        }
-
-        // popup menu must be visible itself
-        if (childGroup.isPopup()) {
-          if ((checkVisible && !presentation.isVisible()) || (checkEnabled && !presentation.isEnabled())) {
-            continue;
-          }
-        }
-
-        if (hasChildrenWithState(childGroup, checkVisible, checkEnabled, strategy, visited)) {
-          return true;
-        }
-        if (strategy.canBePerformed.test(childGroup) &&
-            ((checkVisible && presentation.isVisible()) || (checkEnabled && presentation.isEnabled()))) {
-          return true;
-        }
-      }
-      else if ((checkVisible && presentation.isVisible()) || (checkEnabled && presentation.isEnabled())) {
-        return true;
-      }
-    }
-
-    return false;
+      return getGroupChildren(oo, strategy);
+    })
+      .withRoots(getGroupChildren(group, strategy))
+      .unique()
+      .traverse(TreeTraversal.LEAVES_DFS)
+      .filter(o -> !(o instanceof Separator) && !(isDumb && !o.isDumbAware()))
+      .take(1000);
   }
 
   private static void handleUpdateException(AnAction action, Presentation presentation, Throwable exc) {

@@ -2,15 +2,10 @@
 
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public final class ActionGroupUtil {
 
@@ -30,45 +25,16 @@ public final class ActionGroupUtil {
   }
 
   @NotNull
-  public static JBIterable<AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
-                                                      @NotNull AnActionEvent e) {
-    boolean isInModalContext = LaterInvocator.isInModalContext();
-    Map<AnAction, Presentation> action2presentation = new HashMap<>();
-    return JBTreeTraverser.<AnAction>of(
-      o -> o instanceof ActionGroup &&
-           isActionEnabledAndVisible(o, e, isInModalContext, action2presentation) &&
-           !((ActionGroup)o).isPopup() &&
-           !((ActionGroup)o).canBePerformed(e.getDataContext()) ? ((ActionGroup)o).getChildren(e) : null)
-      .withRoots(actionGroup.getChildren(e))
-      .filter(o -> !(o instanceof Separator) &&
-                   isActionEnabledAndVisible(o, e, isInModalContext, action2presentation))
-      .traverse();
+  public static JBIterable<? extends AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
+                                                                @NotNull AnActionEvent e) {
+    UpdateSession updater = Utils.getOrCreateUpdateSession(e);
+    return JBIterable.from(updater.children(actionGroup))
+      .filter(o -> !(o instanceof Separator) && updater.presentation(o).isEnabledAndVisible());
   }
 
-  private static boolean isActionEnabledAndVisible(@NotNull AnAction action,
-                                                   @NotNull AnActionEvent e,
-                                                   boolean isInModalContext,
-                                                   @NotNull Map<AnAction, Presentation> presentationMap) {
-    Presentation presentation = presentationMap.computeIfAbsent(action, k -> action.getTemplatePresentation().clone());
-    return isActionEnabledAndVisible(action, e, isInModalContext, presentation);
-  }
-
+  @Deprecated
   public static boolean isActionEnabledAndVisible(@NotNull AnAction action,
                                                   @NotNull AnActionEvent e) {
-    Presentation presentation = action.getTemplatePresentation().clone();
-    return isActionEnabledAndVisible(action, e, LaterInvocator.isInModalContext(), presentation);
-  }
-
-  private static boolean isActionEnabledAndVisible(@NotNull AnAction action,
-                                                   @NotNull AnActionEvent e,
-                                                   boolean isInModalContext,
-                                                   @NotNull Presentation presentation) {
-    AnActionEvent event = new AnActionEvent(
-      e.getInputEvent(), e.getDataContext(), e.getPlace(),
-      presentation, ActionManager.getInstance(), e.getModifiers());
-    event.setInjectedContext(action.isInInjectedContext());
-    ActionUtil.performDumbAwareUpdate(isInModalContext, action, event, false);
-
-    return presentation.isEnabled() && presentation.isVisible();
+    return Utils.getOrCreateUpdateSession(e).presentation(action).isVisible();
   }
 }

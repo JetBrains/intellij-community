@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
@@ -268,6 +269,18 @@ public final class Utils {
     }
 
     return icon != null && icon != ActionMenuItem.EMPTY_ICON;
+  }
+
+  @NotNull
+  public static UpdateSession getOrCreateUpdateSession(@NotNull AnActionEvent e) {
+    UpdateSession updater = e.getUpdateSession();
+    if (updater == null) {
+      ActionUpdater actionUpdater = new ActionUpdater(
+        LaterInvocator.isInModalContext(), new PresentationFactory(), e.getDataContext(),
+        e.getPlace(), e.isFromContextMenu(), e.isFromActionToolbar());
+      updater = actionUpdater.asUpdateSession();
+    }
+    return updater;
   }
 
   public interface ActionGroupVisitor {
