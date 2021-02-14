@@ -1,8 +1,8 @@
-intellij.codeWithMe.plugin
 intellij.completionMlRanking
 intellij.completionMlRankingModels
 intellij.configurationScript
 intellij.copyright
+intellij.cwm.plugin
 intellij.editorconfig
 intellij.emojipicker
 intellij.featuresTrainer
