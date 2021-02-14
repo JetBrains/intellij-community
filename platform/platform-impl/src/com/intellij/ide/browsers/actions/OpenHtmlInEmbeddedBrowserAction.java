@@ -25,7 +25,6 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     PsiFile psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE);
-    //todo[dima.batrak] No way to protect of focus stealing. The focus will be in the newly opened file
     OpenInRightSplitAction.Companion.openInRightSplit(project, new WebPreviewVirtualFile(psiFile.getVirtualFile()), null, false);
   }
 
