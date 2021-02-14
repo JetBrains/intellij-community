@@ -32,10 +32,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.*;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
 
 public final class GuiUtils {
@@ -343,13 +341,22 @@ public final class GuiUtils {
   }
 
   /**
-   * removes all children and parent references to avoid possible memory leaks
+   * removes all children and parent references, listeners from {@code container} to avoid possible memory leaks
    */
   public static void removePotentiallyLeakingReferences(@NotNull Container container) {
     assert SwingUtilities.isEventDispatchThread();
     AWTAccessor.getComponentAccessor().setParent(container, null);
-    for (int i = container.getComponentCount() - 1; i >= 0; i--) {
-      container.remove(i);
-    }
+    container.removeAll();
+    for (ComponentListener c : container.getComponentListeners()) container.removeComponentListener(c);
+    for (FocusListener c : container.getFocusListeners()) container.removeFocusListener(c);
+    for (HierarchyListener c : container.getHierarchyListeners()) container.removeHierarchyListener(c);
+    for (HierarchyBoundsListener c : container.getHierarchyBoundsListeners()) container.removeHierarchyBoundsListener(c);
+    for (KeyListener c : container.getKeyListeners()) container.removeKeyListener(c);
+    for (MouseListener c : container.getMouseListeners()) container.removeMouseListener(c);
+    for (MouseMotionListener c : container.getMouseMotionListeners()) container.removeMouseMotionListener(c);
+    for (MouseWheelListener c : container.getMouseWheelListeners()) container.removeMouseWheelListener(c);
+    for (InputMethodListener c : container.getInputMethodListeners()) container.removeInputMethodListener(c);
+    for (PropertyChangeListener c : container.getPropertyChangeListeners()) container.removePropertyChangeListener(c);
+    for (ContainerListener c : container.getContainerListeners()) container.removeContainerListener(c);
   }
 }

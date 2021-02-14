@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -193,6 +194,8 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
       myDisposed = true;
     }
+    GuiUtils.removePotentiallyLeakingReferences(myRefreshIcon);
+    myInfos.clear();
   }
 
   @Override

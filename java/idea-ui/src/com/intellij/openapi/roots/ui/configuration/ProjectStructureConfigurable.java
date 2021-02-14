@@ -385,6 +385,12 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     myHistory.clear();
 
     myUiInitialized = false;
+    myComponent = null;
+    mySplitter.removeAll();
+    mySplitter = null;
+    myToolbarComponent = null;
+    myDetails.removeAll();
+    mySidePanel = null;
   }
 
   public boolean isUiInitialized() {
