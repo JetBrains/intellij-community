@@ -44,7 +44,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
     myEditorTextField =
       new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType(), false, !multiline) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         editor.setHorizontalScrollbarVisible(multiline);
         editor.setVerticalScrollbarVisible(multiline);

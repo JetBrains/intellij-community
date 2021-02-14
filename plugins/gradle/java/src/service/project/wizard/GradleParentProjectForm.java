@@ -205,7 +205,7 @@ public class GradleParentProjectForm implements Disposable {
     }
 
     @Override
-    protected EditorEx createEditor() {
+    protected @NotNull EditorEx createEditor() {
       final EditorEx editor = super.createEditor();
       editor.setHorizontalScrollbarVisible(true);
       editor.setCaretEnabled(isEnabled());

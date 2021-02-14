@@ -130,7 +130,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     Ref<JBPopup> popupRef = new Ref<>();
     EditorTextField textField = new EditorTextField(unescaped.first, editor.getProject(), FileTypes.PLAIN_TEXT) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         EditorEx e = super.createEditor();
         e.getCaretModel().moveToOffset(Math.max(0, Math.min(e.getDocument().getTextLength(), unescaped.second)));
         e.setHorizontalScrollbarVisible(true);

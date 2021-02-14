@@ -1359,7 +1359,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
 
     @Override
-    protected EditorEx createEditor() {
+    protected @NotNull EditorEx createEditor() {
       final EditorEx editor = super.createEditor();
       editor.setHorizontalScrollbarVisible(true);
       editor.setVerticalScrollbarVisible(true);

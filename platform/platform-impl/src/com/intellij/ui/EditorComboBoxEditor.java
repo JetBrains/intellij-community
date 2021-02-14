@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
   public EditorComboBoxEditor(Project project, FileType fileType) {
     myTextField = new ComboboxEditorTextField((Document)null, project, fileType) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         EditorEx editor = super.createEditor();
         onEditorCreate(editor);
         return editor;
