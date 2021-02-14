@@ -18,6 +18,7 @@ import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.ui.jcef.JCEFHtmlPanel;
 import com.intellij.util.Alarm;
+import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
     myPanel = new JCEFHtmlPanel(myFile.getUrl());
+    myPanel.setRequestFocusOnStart(false);
     myPanel.getCefBrowser().createImmediately();
     Alarm alarm = new Alarm(this);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(myFile);
