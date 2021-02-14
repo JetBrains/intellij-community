@@ -252,7 +252,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   public @NotNull List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
     Place shreds = InjectedLanguageUtilBase.getShreds(injectedPsi);
     if (shreds == null) return Collections.emptyList();
-    Object result = null; // optimization: TextRange or ArrayList
+    Object result = null; // optimization: TextRange or ArrayList<TextRange>
     int count = 0;
     int offset = 0;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
@@ -283,7 +283,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
           count--;
         }
         else {
-          //noinspection unchecked,ConstantConditions
+          //noinspection unchecked
           ((List<TextRange>)result).add(intersection);
         }
       }
