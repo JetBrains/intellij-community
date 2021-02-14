@@ -33,12 +33,20 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
     buildViewTestFixture.assertSyncViewTreeSame(executionTreeText)
   }
 
+  protected fun assertSyncViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
+    buildViewTestFixture.assertSyncViewTreeEquals(treeTestPresentationChecker)
+  }
+
   protected fun assertBuildViewTreeEquals(executionTree: String) {
     buildViewTestFixture.assertBuildViewTreeEquals(executionTree)
   }
 
   protected fun assertBuildViewTreeSame(executionTree: String) {
     buildViewTestFixture.assertBuildViewTreeSame(executionTree)
+  }
+
+  protected fun assertBuildViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
+    buildViewTestFixture.assertBuildViewTreeEquals(treeTestPresentationChecker)
   }
 
   protected fun assertSyncViewSelectedNode(nodeText: String, consoleText: String) {

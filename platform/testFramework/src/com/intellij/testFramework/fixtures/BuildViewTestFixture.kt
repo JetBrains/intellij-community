@@ -15,12 +15,13 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.tree.TreeUtil
 import junit.framework.TestCase
 import junit.framework.TestCase.assertEquals
+import org.jetbrains.annotations.NotNull
 import javax.swing.tree.DefaultMutableTreeNode
 
 class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
   @Suppress("ObjectLiteralToLambda")
   private val fixtureDisposable: Disposable = object : Disposable {
-    override fun dispose() { }
+    override fun dispose() {}
   }
 
   private lateinit var syncViewManager: TestSyncViewManager
@@ -52,12 +53,20 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     assertExecutionTree(syncViewManager, executionTreeText, true)
   }
 
+  fun assertSyncViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
+    assertExecutionTree(syncViewManager, treeTestPresentationChecker)
+  }
+
   fun assertBuildViewTreeEquals(executionTree: String) {
     assertExecutionTree(buildViewManager, executionTree, false)
   }
 
   fun assertBuildViewTreeSame(executionTree: String) {
     assertExecutionTree(buildViewManager, executionTree, true)
+  }
+
+  fun assertBuildViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
+    assertExecutionTree(buildViewManager, treeTestPresentationChecker)
   }
 
   fun assertSyncViewSelectedNode(nodeText: String, consoleText: String) {
@@ -97,6 +106,13 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     assertExecutionTree(buildView!!, expected, ignoreTasksOrder)
   }
 
+  private fun assertExecutionTree(viewManager: TestViewManager, treeTestPresentationChecker: (String?) -> Unit) {
+    viewManager.waitForPendingBuilds()
+    val recentBuild = viewManager.getRecentBuild()
+    val buildView = viewManager.getBuildsMap()[recentBuild]
+    assertExecutionTree(buildView!!, treeTestPresentationChecker)
+  }
+
   private fun assertExecutionTreeNode(
     viewManager: TestViewManager,
     nodeText: String,
@@ -112,15 +128,7 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
 
   companion object {
     fun assertExecutionTree(buildView: BuildView, expected: String, ignoreTasksOrder: Boolean) {
-      val eventView = buildView.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
-      eventView!!.addFilter { true }
-      val treeStringPresentation = runInEdtAndGet {
-        val tree = eventView.tree
-        TreeUtil.expandAll(tree)
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-        PlatformTestUtil.waitWhileBusy(tree)
-        return@runInEdtAndGet PlatformTestUtil.print(tree, false)
-      }
+      val treeStringPresentation = getTreeStringPresentation(buildView)
       if (ignoreTasksOrder) {
         assertSameElements(
           buildTasksNodesAsList(
@@ -131,6 +139,11 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
       else {
         assertEquals(expected.trim(), treeStringPresentation.trim())
       }
+    }
+
+    fun assertExecutionTree(buildView: BuildView, treeTestPresentationChecker: (String?) -> Unit) {
+      val treeStringPresentation = getTreeStringPresentation(buildView)
+      treeTestPresentationChecker.invoke(treeStringPresentation)
     }
 
     fun assertExecutionTreeNode(
@@ -170,6 +183,18 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
       val selectedNodeConsole = runInEdtAndGet { eventView.selectedNodeConsole }
       consoleTextChecker?.invoke((selectedNodeConsole as? ConsoleViewImpl)?.text)
       consoleChecker?.invoke(selectedNodeConsole)
+    }
+
+    private fun getTreeStringPresentation(buildView: BuildView): @NotNull String {
+      val eventView = buildView.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
+      eventView!!.addFilter { true }
+      return runInEdtAndGet {
+        val tree = eventView.tree
+        TreeUtil.expandAll(tree)
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        PlatformTestUtil.waitWhileBusy(tree)
+        return@runInEdtAndGet PlatformTestUtil.print(tree, false)
+      }
     }
 
     private fun buildTasksNodesAsList(treeStringPresentation: String): List<String> {
