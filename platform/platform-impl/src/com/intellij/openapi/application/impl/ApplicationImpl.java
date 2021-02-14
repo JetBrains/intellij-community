@@ -362,8 +362,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
-    AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-    service.shutdownAppScheduledExecutorService();
+    AppExecutorUtil.shutdownApplicationScheduledExecutorService();
 
     Disposer.dispose(myLastDisposable);
   }

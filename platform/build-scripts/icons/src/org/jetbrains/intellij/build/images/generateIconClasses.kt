@@ -80,8 +80,7 @@ internal fun generateIconsClasses(dbFile: Path?, config: IconsClasses = Intellij
  */
 internal fun shutdownAppScheduledExecutorService() {
   try {
-    (AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService)
-      .shutdownAppScheduledExecutorService()
+    AppExecutorUtil.shutdownApplicationScheduledExecutorService()
   }
   catch (e: Exception) {
     System.err.println("Failed during executor service shutdown:")
