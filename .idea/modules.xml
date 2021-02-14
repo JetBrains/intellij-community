@@ -20,7 +20,7 @@
     <module old-name="android-annotations" new-name="android.sdktools.android-annotations" />
     <module old-name="android-common" new-name="intellij.android.common" />
     <module old-name="android-gradle-jps" new-name="intellij.android.gradle.jps" />
-    <module old-name="android-jps-plugin" new-name="intellij.android.jps" />
+    <module old-name="android-jps-plugin" new-name="intellij.android.jpsBuildPlugin.jps" />
     <module old-name="android-plugin" new-name="intellij.android.plugin" />
     <module old-name="android-test-framework" new-name="intellij.android.testFramework" />
     <module old-name="android-tests" new-name="intellij.android.tests" />
@@ -415,10 +415,10 @@
       <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl-impl/intellij.android.gradle.dsl.impl.iml" filepath="$PROJECT_DIR$/android/gradle-dsl-impl/intellij.android.gradle.dsl.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl-impl/intellij.android.gradle.dsl.impl.iml" filepath="$PROJECT_DIR$/android/gradle-dsl-kotlin-impl/intellij.android.gradle.dsl.kotlin.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl-impl/intellij.android.gradle.dsl.tests.iml" filepath="$PROJECT_DIR$/android/gradle-dsl-impl/intellij.android.gradle.dsl.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/jps-plugin/intellij.android.jps.iml" filepath="$PROJECT_DIR$/android/jps-plugin/intellij.android.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/jps-model/intellij.android.jps.model.iml" filepath="$PROJECT_DIR$/android/jps-model/intellij.android.jps.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/jps-build-plugin/intellij.android.jpsBuildPlugin.iml" filepath="$PROJECT_DIR$/android/jps-build-plugin/intellij.android.jpsBuildPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/jps-build-plugin/common/intellij.android.jpsBuildPlugin.common.iml" filepath="$PROJECT_DIR$/android/jps-build-plugin/common/intellij.android.jpsBuildPlugin.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/jps-build-plugin/jps/intellij.android.jpsBuildPlugin.jps.iml" filepath="$PROJECT_DIR$/android/jps-build-plugin/jps/intellij.android.jpsBuildPlugin.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/intellij.android.kotlin-dependencies.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/intellij.android.kotlin-dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" filepath="$PROJECT_DIR$/android/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/android-extensions-idea-common/intellij.android.kotlin.extensions.common.iml" filepath="$PROJECT_DIR$/android/android-kotlin/android-extensions-idea-common/intellij.android.kotlin.extensions.common.iml" />

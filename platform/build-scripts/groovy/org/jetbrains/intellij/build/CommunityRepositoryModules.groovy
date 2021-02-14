@@ -276,7 +276,7 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.android.jpsBuildPlugin") {
       withModule("intellij.android.jpsBuildPlugin.common")
-      withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
+      withModule("intellij.android.jpsBuildPlugin.jps", "jps/android-jps-plugin.jar", null)
     }
   ]
 

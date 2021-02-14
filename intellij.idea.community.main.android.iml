@@ -7,7 +7,7 @@
     <orderEntry type="library" scope="RUNTIME" name="studio-proto" level="project" />
     <orderEntry type="module" module-name="intellij.android.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.main" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.android.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.jpsBuildPlugin.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.jpsBuildPlugin" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="KotlinPlugin" level="project" />
