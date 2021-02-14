@@ -17,15 +17,11 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
-import com.intellij.ui.tabs.TabInfo
-import com.intellij.ui.tabs.TabsListener
-import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.ReturnToListComponent
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -105,64 +101,45 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   }
 
   fun create(): JComponent {
-    val infoTabInfo = TabInfo(createInfoComponent()).apply {
-      text = GithubBundle.message("pull.request.info")
-      sideComponent = createReturnToListSideComponent()
-    }
-    val filesTabInfo = TabInfo(createFilesComponent()).apply {
-      text = GithubBundle.message("pull.request.files")
-      sideComponent = createReturnToListSideComponent()
-    }.also {
-      installFilesTabTitleUpdater(it)
-    }
-    val commitsTabInfo = TabInfo(createCommitsComponent()).apply {
-      text = GithubBundle.message("pull.request.commits")
-      sideComponent = createReturnToListSideComponent()
-    }.also {
-      installCommitsTabTitleUpdater(it)
-    }
+    val infoComponent = createInfoComponent()
 
-    return object : SingleHeightTabs(project, uiDisposable) {
-      override fun adjust(each: TabInfo?) {}
-    }.apply {
-      setDataProvider { dataId ->
-        when {
-          GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> dataContext.repositoryDataService.remoteCoordinates.repository
-          GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> this@GHPRViewComponentFactory.dataProvider
-          GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
-          else -> null
+    val filesComponent = createFilesComponent()
+    val filesCountModel = createFilesCountModel()
+
+    val commitsComponent = createCommitsComponent()
+    val commitsCountModel = createCommitsCountModel()
+
+    val tabs = GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
+      .create(infoComponent,
+              diffBridge,
+              filesComponent, filesCountModel,
+              commitsComponent, commitsCountModel)
+      .apply {
+        setDataProvider { dataId ->
+          when {
+            GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> dataContext.repositoryDataService.remoteCoordinates.repository
+            GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> this@GHPRViewComponentFactory.dataProvider
+            GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
+            else -> null
+          }
         }
       }
-      addTab(infoTabInfo)
-      addTab(filesTabInfo)
-      addTab(commitsTabInfo)
-    }.also {
-      val controller = Controller(it, filesTabInfo, commitsTabInfo)
+    val controller = Controller(tabs, filesComponent, commitsComponent)
+    return tabs.component.also {
       UIUtil.putClientProperty(it, GHPRViewComponentController.KEY, controller)
     }
   }
 
   private inner class Controller(private val tabs: JBTabs,
-                                 private val filesTab: TabInfo,
-                                 private val commitsTab: TabInfo) : GHPRViewComponentController {
-
-    init {
-      val listener = object : TabsListener {
-        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-          diffBridge.activeTree = when(newSelection) {
-            filesTab -> GHPRDiffBridge.ActiveTree.FILES
-            commitsTab -> GHPRDiffBridge.ActiveTree.COMMITS
-            else -> null
-          }
-        }
-      }
-      tabs.addListener(listener)
-      listener.selectionChanged(null, tabs.selectedInfo)
-    }
+                                 private val filesComponent: JComponent,
+                                 private val commitsComponent: JComponent) : GHPRViewComponentController {
 
     override fun selectCommit(oid: String) {
-      tabs.select(commitsTab, false)
-      val list = findCommitsList(commitsTab.component) ?: return
+      tabs.findInfo(commitsComponent)?.let {
+        tabs.select(it, false)
+      }
+
+      val list = findCommitsList(commitsComponent) ?: return
       for (i in 0 until list.model.size) {
         val commit = list.model.getElementAt(i)
         if (commit.oid == oid || commit.abbreviatedOid == oid) {
@@ -189,8 +166,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
 
     override fun selectChange(oid: String?, filePath: String) {
-      tabs.select(filesTab, false)
-      val tree = UIUtil.findComponentOfType(filesTab.component, ChangesTree::class.java) ?: return
+      tabs.findInfo(filesComponent)?.let {
+        tabs.select(it, false)
+      }
+      val tree = UIUtil.findComponentOfType(filesComponent, ChangesTree::class.java) ?: return
       GHUIUtil.focusPanel(tree)
 
       if (oid == null || !changesLoadingModel.resultAvailable) {
@@ -205,12 +184,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
           tree.selectChange(change)
         }
       }
-    }
-  }
-
-  private fun createReturnToListSideComponent(): JComponent {
-    return ReturnToListComponent.createReturnToListSideComponent(GithubBundle.message("pull.request.back.to.list")) {
-      viewController.viewList()
     }
   }
 
@@ -288,17 +261,17 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
   }
 
-  private fun installCommitsTabTitleUpdater(tabInfo: TabInfo) {
+  private fun createCommitsCountModel(): SingleValueModel<Int?> {
+    val model = SingleValueModel<Int?>(null)
     val loadingListener = object : GHLoadingModel.StateChangeListener {
       override fun onLoadingCompleted() {
         val commits = if (commitsLoadingModel.resultAvailable) commitsLoadingModel.result!! else null
-        val commitsCount = commits?.size
-        tabInfo.text = if (commitsCount == null) GithubBundle.message("pull.request.commits")
-        else GithubBundle.message("pull.request.commits.count", commitsCount)
+        model.value = commits?.size
       }
     }
     commitsLoadingModel.addStateChangeListener(loadingListener)
     loadingListener.onLoadingCompleted()
+    return model
   }
 
   private fun createFilesComponent(): JComponent {
@@ -318,17 +291,17 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     return panel.addToTop(toolbar).addToCenter(changesLoadingPanel)
   }
 
-  private fun installFilesTabTitleUpdater(tabInfo: TabInfo) {
+  private fun createFilesCountModel(): SingleValueModel<Int?> {
+    val model = SingleValueModel<Int?>(null)
     val loadingListener = object : GHLoadingModel.StateChangeListener {
       override fun onLoadingCompleted() {
         val changesProvider = if (changesLoadingModel.resultAvailable) changesLoadingModel.result!! else null
-        val changesCount = changesProvider?.changes?.size
-        tabInfo.text = if (changesCount == null) GithubBundle.message("pull.request.files")
-        else GithubBundle.message("pull.request.files.count", changesCount)
+        model.value = changesProvider?.changes?.size
       }
     }
     changesLoadingModel.addStateChangeListener(loadingListener)
     loadingListener.onLoadingCompleted()
+    return model
   }
 
   private fun createReviewUnsupportedPlaque(model: SingleValueModel<GHPRChangesProvider>) = HtmlInfoPanel().apply {
