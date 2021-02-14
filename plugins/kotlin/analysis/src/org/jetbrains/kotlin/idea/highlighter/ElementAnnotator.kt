@@ -210,11 +210,11 @@ internal class ElementAnnotator(
         //    else -> error(factory)
         //}
 
-        if (diagnostic.factory != Errors.IR_COMPILED_CLASS) return false
+        if (diagnostic.factory != Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS) return false
         val module = element.module ?: return false
         val moduleFacetSettings = KotlinFacetSettingsProvider.getInstance(element.project)?.getSettings(module) ?: return false
         return moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useIR)
-                || moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::allowJvmIrDependencies)
+                || moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::allowUnstableDependencies)
     }
 
     companion object {
