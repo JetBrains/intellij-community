@@ -33,9 +33,9 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.popup.NumericMnemonicItem;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -244,8 +244,9 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     return new MyAbstractAction(listPopup, number, executor);
   }
 
-  private abstract static class Wrapper {
+  private abstract static class Wrapper implements NumericMnemonicItem {
     private int myMnemonic = -1;
+    private boolean myMnemonicsEnabled;
     private final boolean myAddSeparatorAbove;
     private boolean myChecked;
 
@@ -255,6 +256,16 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     public int getMnemonic() {
       return myMnemonic;
+    }
+
+    @Override
+    public @Nullable Character getMnemonicChar() {
+      return myMnemonic > -1 ? Character.forDigit(myMnemonic, 10) : null;
+    }
+
+    @Override
+    public boolean digitMnemonicsEnabled() {
+      return myMnemonicsEnabled;
     }
 
     public boolean isChecked() {
@@ -267,6 +278,10 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     public void setMnemonic(int mnemonic) {
       myMnemonic = mnemonic;
+    }
+
+    protected void setMnemonicsEnabled(boolean mnemonicsEnabled) {
+      myMnemonicsEnabled = mnemonicsEnabled;
     }
 
     public boolean addSeparatorAbove() {
@@ -420,6 +435,9 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       if (-1 == getDefaultOptionIndex()) {
         myDefaultConfiguration = getDynamicIndex();
       }
+
+      boolean hasMnemonics = getValues().stream().anyMatch(wrapper -> wrapper.getMnemonic() != -1);
+      if (hasMnemonics) getValues().forEach(wrapper -> wrapper.setMnemonicsEnabled(true));
     }
 
     private int getDynamicIndex() {
@@ -688,72 +706,6 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static final class RunListElementRenderer extends PopupListElementRenderer {
-    private JLabel myLabel;
-    private final ListPopupImpl myPopup1;
-    private final boolean myHasSideBar;
-
-    private RunListElementRenderer(ListPopupImpl popup, boolean hasSideBar) {
-      super(popup);
-
-      myPopup1 = popup;
-      myHasSideBar = hasSideBar;
-    }
-
-    @Override
-    protected JComponent layoutComponent(JComponent middleItemComponent) {
-      if (myLabel == null) {
-        myLabel = new JLabel();
-        myLabel.setPreferredSize(new JLabel("8.").getPreferredSize());
-      }
-
-      JComponent result = super.layoutComponent(middleItemComponent);
-      myLeftPart.add(myLabel, BorderLayout.WEST);
-      return result;
-    }
-
-    @Override
-    protected void customizeComponent(JList list, Object value, boolean isSelected) {
-      super.customizeComponent(list, value, isSelected);
-
-      myLabel.setVisible(myHasSideBar);
-
-      ListPopupStep<Object> step = myPopup1.getListStep();
-      boolean isSelectable = step.isSelectable(value);
-      myLabel.setEnabled(isSelectable);
-      myLabel.setIcon(null);
-
-      isSelected = isSelected && step.hasSubstep(value) && step.isFinal(value) && !isNextStepButtonSelected(list);
-      if (isSelected) {
-        setSelected(myLabel);
-      }
-      else {
-        setDeselected(myLabel);
-      }
-
-      if (value instanceof Wrapper) {
-        Wrapper wrapper = (Wrapper)value;
-        final int mnemonic = wrapper.getMnemonic();
-        if (mnemonic != -1 && !myPopup1.getSpeedSearch().isHoldingFilter()) {
-          myLabel.setText(mnemonic + ".");
-          myLabel.setDisplayedMnemonicIndex(0);
-        }
-        else {
-          if (wrapper.isChecked()) {
-            myTextLabel.setIcon(isSelected ? RunConfigurationsComboBoxAction.CHECKED_SELECTED_ICON
-                                           : RunConfigurationsComboBoxAction.CHECKED_ICON);
-          }
-          else {
-            if (myTextLabel.getIcon() == null) {
-              myTextLabel.setIcon(RunConfigurationsComboBoxAction.EMPTY_ICON);
-            }
-          }
-          myLabel.setText("");
-        }
-      }
-    }
-  }
-
   private static class MyAbstractAction extends AbstractAction implements DumbAware {
     private final ListPopupImpl myListPopup;
     private final int myNumber;
@@ -823,20 +775,6 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     protected void handleShiftClick(boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup) {
       myCurrentExecutor = myAlternativeExecutor;
       popup._handleSelect(handleFinalChoices, inputEvent);
-    }
-
-    @Override
-    protected ListCellRenderer getListElementRenderer() {
-      boolean hasSideBar = false;
-      for (Object each : getListStep().getValues()) {
-        if (each instanceof Wrapper) {
-          if (((Wrapper)each).getMnemonic() != -1) {
-            hasSideBar = true;
-            break;
-          }
-        }
-      }
-      return new RunListElementRenderer(this, hasSideBar);
     }
 
     public void removeSelected() {

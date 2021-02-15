@@ -135,6 +135,16 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
+  public @Nullable String getMnemonicString(PopupFactoryImpl.ActionItem value) {
+    if (value.digitMnemonicsEnabled()) {
+      Character res = value.getMnemonicChar();
+      return res != null ? res.toString() : null;
+    }
+
+    return MnemonicNavigationFilter.super.getMnemonicString(value);
+  }
+
+  @Override
   public Icon getIconFor(final PopupFactoryImpl.ActionItem aValue) {
     return aValue.getIcon(false);
   }

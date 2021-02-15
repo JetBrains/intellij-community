@@ -6,10 +6,14 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.ListPopupStepEx;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
+import com.intellij.ui.popup.NumericMnemonicItem;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
@@ -31,6 +35,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected JComponent myRightPart;
   protected JComponent myLeftPart;
   protected JComponent myNextStepButtonSeparator;
+
+  protected final JLabel myMnemonicLabel = new JLabel();
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<>() {
@@ -68,6 +74,14 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
     });
     myPopup = aPopup;
+
+    Dimension preferredSize = new JLabel("W").getPreferredSize();
+    Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
+    preferredSize.width += insets.left + insets.right;
+    myMnemonicLabel.setPreferredSize(preferredSize);
+    myMnemonicLabel.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
+    myMnemonicLabel.setForeground(JBUI.CurrentTheme.ActionsList.numberMnemonicColor());
+    myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
   }
 
   @Override
@@ -214,6 +228,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
           myRendererComponent.setBackground(bg);
         }
       }
+    }
+
+    if (value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled()) {
+      myLeftPart.add(myMnemonicLabel, BorderLayout.WEST);
+      Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
+      myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
     }
 
     if (step.isMnemonicsNavigationEnabled()) {

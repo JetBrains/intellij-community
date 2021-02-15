@@ -25,7 +25,10 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.font.TextAttribute;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -393,6 +396,29 @@ public class JBUI {
       @NotNull
       public static Color hoverSeparatorColor() {
         return JBColor.namedColor("ActionButton.hoverSeparatorColor", new JBColor(Gray.xB3, Gray.x6B));
+      }
+    }
+
+    public static final class ActionsList {
+      @NotNull
+      public static Color numberMnemonicColor() {
+        return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+      }
+
+      @NotNull
+      public static Insets numberMnemonicInsets() {
+        return insets("ActionsList.mnemonics.insets", insets(0, 6, 0, 8));
+      }
+
+      @NotNull
+      public static Font applyStylesForNumberMnemonic(Font font) {
+        if (SystemInfo.isWindows) {
+          Map<TextAttribute, Object> attributes = new HashMap<>(font.getAttributes());
+          attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+          return font.deriveFont(attributes);
+        }
+
+        return font;
       }
     }
 
