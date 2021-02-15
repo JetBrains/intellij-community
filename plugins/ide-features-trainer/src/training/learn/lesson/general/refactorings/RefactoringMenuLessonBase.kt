@@ -36,7 +36,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
                                  action("EditorChooseLookupItem"), LessonUtil.actionName(it)))
       trigger(it)
       stateCheck { hasInplaceRename() }
-      restoreState(restoreId = showPopupTaskId) { focusOwner !is JBList<*> }
+      restoreState(delayMillis = defaultRestoreDelay, restoreId = showPopupTaskId) { focusOwner !is JBList<*> }
       test {
         GuiTestUtil.shortcut(Key.ENTER)
       }
