@@ -17,7 +17,9 @@
 package org.jetbrains.kotlin.idea.j2k
 
 import com.intellij.codeInspection.dataFlow.DfaUtil
+import com.intellij.codeInspection.dataFlow.NullabilityUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiVariable
 import org.jetbrains.kotlin.j2k.*
@@ -46,8 +48,9 @@ object IdeaSuperMethodSearcher : SuperMethodsSearcher {
 }
 
 private object IdeaJavaDataFlowAnalyzerFacade : JavaDataFlowAnalyzerFacade {
-    override fun variableNullability(variable: PsiVariable, context: PsiElement): Nullability =
-        DfaUtil.checkNullability(variable, context).toJ2KNullability()
+    override fun variableNullability(variable: PsiVariable, context: PsiElement): Nullability {
+        return NullabilityUtil.getExpressionNullability(context as? PsiExpression ?: return Nullability.Default, true).toJ2KNullability()
+    }
 
     override fun methodNullability(method: PsiMethod): Nullability =
         DfaUtil.inferMethodNullability(method).toJ2KNullability()
