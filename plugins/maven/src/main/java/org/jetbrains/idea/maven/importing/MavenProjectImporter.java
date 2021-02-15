@@ -435,7 +435,7 @@ public class MavenProjectImporter {
 
     setMavenizedModules(obsoleteModules, false);
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
       final int[] result = new int[1];
       MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
                               () -> result[0] = Messages.showYesNoDialog(myProject,
