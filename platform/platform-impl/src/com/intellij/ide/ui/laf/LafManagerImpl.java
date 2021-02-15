@@ -290,6 +290,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       updateUI();
       detectAndSyncLaf();
+
+      ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).initScheme(myCurrentLaf);
+
       addThemeAndDynamicPluginListeners();
     }, ModalityState.any());
   }
@@ -785,8 +788,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     boolean dark = StartupUiUtil.isUnderDarcula();
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    EditorColorsScheme current = colorsManager.getGlobalScheme();
+    EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
+    EditorColorsScheme current = editorColorManager.getGlobalScheme();
     boolean wasUITheme = oldLaf instanceof UIThemeBasedLookAndFeelInfo;
     if (dark != ColorUtil.isDark(current.getDefaultBackground()) || wasUITheme) {
       String targetScheme = dark ? DarculaLaf.NAME : EditorColorsScheme.DEFAULT_SCHEME_NAME;
@@ -794,16 +797,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       String savedEditorThemeKey = dark ? DARCULA_EDITOR_THEME_KEY : DEFAULT_EDITOR_THEME_KEY;
       String toSavedEditorThemeKey = dark ? DEFAULT_EDITOR_THEME_KEY : DARCULA_EDITOR_THEME_KEY;
       String themeName =  properties.getValue(savedEditorThemeKey);
-      if (themeName != null && colorsManager.getScheme(themeName) != null) {
+      if (themeName != null && editorColorManager.getScheme(themeName) != null) {
         targetScheme = themeName;
       }
       if (!wasUITheme) {
         properties.setValue(toSavedEditorThemeKey, current.getName(), dark ? EditorColorsScheme.DEFAULT_SCHEME_NAME : DarculaLaf.NAME);
       }
 
-      EditorColorsScheme scheme = colorsManager.getScheme(targetScheme);
+      EditorColorsScheme scheme = editorColorManager.getScheme(targetScheme);
       if (scheme != null) {
-        ((EditorColorsManagerImpl) colorsManager).setGlobalScheme(scheme, processChangeSynchronously);
+        ((EditorColorsManagerImpl)editorColorManager).setGlobalScheme(scheme, processChangeSynchronously);
       }
     }
     UISettings.getShadowInstance().fireUISettingsChanged();

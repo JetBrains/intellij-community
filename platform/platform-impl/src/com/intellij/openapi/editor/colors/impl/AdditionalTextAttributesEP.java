@@ -11,6 +11,13 @@ import org.jetbrains.annotations.NotNull;
  * https://youtrack.jetbrains.com/issue/IDEA-98261
  */
 public final class AdditionalTextAttributesEP implements PluginAware {
+  private AdditionalTextAttributesEP() {
+  }
+
+  public AdditionalTextAttributesEP(PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
+  }
+
   /**
    * Scheme name, e.g. "Default", "Darcula".
    */
