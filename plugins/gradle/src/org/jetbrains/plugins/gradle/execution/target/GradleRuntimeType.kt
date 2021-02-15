@@ -50,7 +50,7 @@ class GradleRuntimeType : LanguageRuntimeType<GradleRuntimeTargetConfiguration>(
     val PROJECT_FOLDER_VOLUME = VolumeDescriptor(GradleRuntimeType::class.qualifiedName + ":projectFolder",
                                                  GradleBundle.message("gradle.target.execution.project.folder.label"),
                                                  GradleBundle.message("gradle.target.execution.project.folder.description"),
-                                                 GradleBundle.message("gradle.target.execution.project.folder.label"),
-                                                 "/project")
+                                                 GradleBundle.message("gradle.target.execution.project.folder.title"),
+                                                 "")
   }
 }

@@ -150,7 +150,7 @@ public final class ExternalSystemApiUtil {
 
   /**
    * @param path target path
-   * @return absolute path that points to the same location as the given one and that uses only slashes
+   * @return path that points to the same location as the given one and that uses only slashes
    */
   @NotNull
   public static String toCanonicalPath(@NotNull String path) {
@@ -694,9 +694,10 @@ public final class ExternalSystemApiUtil {
     ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
     if (linkedProjectSettings == null) return Collections.emptyList();
 
-    ExternalProjectInfo projectInfo = ProjectDataManager.getInstance().getExternalProjectsData(project, systemId).stream()
-      .filter(info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath()))
-      .findFirst().orElse(null);
+    ExternalProjectInfo projectInfo = ContainerUtil.find(
+      ProjectDataManager.getInstance().getExternalProjectsData(project, systemId),
+      info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath())
+    );
 
     if (projectInfo == null) return Collections.emptyList();
     DataNode<ProjectData> projectStructure = projectInfo.getExternalProjectStructure();
@@ -704,9 +705,10 @@ public final class ExternalSystemApiUtil {
 
     List<TaskData> tasks = new SmartList<>();
 
-    DataNode<ModuleData> moduleDataNode = findAll(projectStructure, ProjectKeys.MODULE).stream()
-      .filter(moduleNode -> FileUtil.pathsEqual(projectPath, moduleNode.getData().getLinkedExternalProjectPath()))
-      .findFirst().orElse(null);
+    DataNode<ModuleData> moduleDataNode = ContainerUtil.find(
+      findAll(projectStructure, ProjectKeys.MODULE),
+      moduleNode -> FileUtil.pathsEqual(projectPath, moduleNode.getData().getLinkedExternalProjectPath())
+    );
     if (moduleDataNode == null) return Collections.emptyList();
 
     findAll(moduleDataNode, ProjectKeys.TASK).stream().map(DataNode::getData).forEach(tasks::add);

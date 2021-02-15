@@ -1,12 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.target
 
+import com.intellij.execution.Platform
 import com.intellij.execution.process.*
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
 import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -54,15 +58,31 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       }
     }
     val targetBuildParameters = serverEnvironmentSetup.targetBuildParameters
+    val projectUploadRoot = serverEnvironmentSetup.projectUploadRoot
+    val targetProjectBasePath = projectUploadRoot.getTargetUploadPath().apply(remoteEnvironment)
+    val localProjectBasePath = projectUploadRoot.localRootPath.toString()
+    val targetPlatform = remoteEnvironment.targetPlatform
     val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters) {
-      if (it is String) {
-        consumerOperationParameters.progressListener.run {
-          onOperationStart(it)
-          onOperationEnd()
+      when (it) {
+        is String -> {
+          consumerOperationParameters.progressListener.run {
+            onOperationStart(it)
+            onOperationEnd()
+          }
         }
-      }
-      else {
-        consumerOperationParameters.buildProgressListener.onEvent(it)
+        is org.jetbrains.plugins.gradle.tooling.proxy.StandardError -> {
+          targetProgressIndicator.addText(
+            resolveFistPath(it.text.useLocalLineSeparators(targetPlatform), targetProjectBasePath, localProjectBasePath, targetPlatform),
+            ProcessOutputType.STDERR)
+        }
+        is org.jetbrains.plugins.gradle.tooling.proxy.StandardOutput -> {
+          targetProgressIndicator.addText(
+            resolveFistPath(it.text.useLocalLineSeparators(targetPlatform), targetProjectBasePath, localProjectBasePath, targetPlatform),
+            ProcessOutputType.STDOUT)
+        }
+        else -> {
+          consumerOperationParameters.buildProgressListener.onEvent(it)
+        }
       }
     }
 
@@ -77,6 +97,42 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       GradleServerProcessListener(appStartedMessage, targetProgressIndicator, resultHandler, gradleServerEventsListener)
     )
     processHandler.runProcessWithProgressIndicator(EmptyProgressIndicator(), -1, true)
+  }
+
+  private fun String.useLocalLineSeparators(targetPlatform: TargetPlatform) =
+    if (targetPlatform.platform == Platform.current()) this
+    else replace(targetPlatform.platform.lineSeparator, Platform.current().lineSeparator)
+
+  private fun String.useLocalFileSeparators(targetPlatform: TargetPlatform) =
+    if (targetPlatform.platform == Platform.current()) this
+    else replace(targetPlatform.platform.fileSeparator, Platform.current().fileSeparator)
+
+  private fun resolveFistPath(text: String,
+                              targetProjectBasePath: String,
+                              localProjectBasePath: String,
+                              targetPlatform: TargetPlatform): String {
+    val pathIndexStart = text.indexOf(targetProjectBasePath)
+    if (pathIndexStart == -1) return text
+
+    val delimiter = if (pathIndexStart == 0) ' '
+    else {
+      val char = text[pathIndexStart - 1]
+      if (char != '\'' && char != '\"') ' ' else char
+    }
+    var pathIndexEnd = text.indexOf(delimiter, pathIndexStart)
+    if (pathIndexEnd == -1) {
+      pathIndexEnd = text.indexOf('\n', pathIndexStart)
+    }
+
+    if (pathIndexEnd == -1) pathIndexEnd = text.length
+    val path = text.substring(pathIndexStart + targetProjectBasePath.length, pathIndexEnd).useLocalFileSeparators(targetPlatform)
+
+    val buf = StringBuilder()
+    buf.append(text.subSequence(0, pathIndexStart))
+    buf.append(localProjectBasePath)
+    buf.append(path)
+    buf.append(text.substring(pathIndexEnd))
+    return buf.toString()
   }
 
   private class GradleServerEventsListener(private val targetBuildParameters: TargetBuildParameters,
@@ -117,6 +173,9 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
             is Failure -> {
               resultHandler.onFailure(message.value as? GradleConnectionException ?: GradleConnectionException(message.value.message))
               break@loop
+            }
+            is org.jetbrains.plugins.gradle.tooling.proxy.Output -> {
+              buildEventConsumer.dispatch(message)
             }
             !is BuildEvent -> {
               break@loop
@@ -196,19 +255,13 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
 
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-      if (connectionAddressReceived) {
-        targetProgressIndicator.addText(event.text, outputType)
-        return
-      }
-
+      log.trace { event.text }
+      if (connectionAddressReceived) return
       if (event.text.startsWith(connectionConfLinePrefix)) {
         connectionAddressReceived = true
         val hostName = event.text.substringAfter(connectionConfLinePrefix).substringBefore(" port: ")
         val port = event.text.substringAfter(" port: ").trim().toInt()
         gradleServerEventsListener.start(hostName, port, resultHandlerWrapper)
-      }
-      if (log.isDebugEnabled) {
-        targetProgressIndicator.addText(event.text, outputType)
       }
     }
 
@@ -222,7 +275,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     @Volatile
     var stopped = false
     override fun addText(text: String, outputType: Key<*>) {
-      taskListener?.onTaskOutput(taskId, text, outputType === ProcessOutputTypes.STDOUT)
+      taskListener?.onTaskOutput(taskId, text, outputType != ProcessOutputTypes.STDERR)
     }
 
     override fun isCanceled(): Boolean = false

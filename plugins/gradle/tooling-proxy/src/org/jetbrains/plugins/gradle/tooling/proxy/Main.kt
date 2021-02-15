@@ -74,7 +74,25 @@ object Main {
     LOG.debug("Working directory: ${workingDirectory.absolutePath}")
     connector.forProjectDirectory(workingDirectory.absoluteFile)
     val resultHandler = BlockingResultHandler(Any::class.java)
-    val connection = connector.connect()
+
+    try {
+      val result = connector.connect().use { runBuildAndGetResult(targetBuildParameters, it, resultHandler) }
+      LOG.debug("operation result: $result")
+      val adapted = maybeConvert(result)
+      incomingConnectionHandler.dispatch(Success(adapted))
+    }
+    catch (t: Throwable) {
+      LOG.debug("GradleConnectionException: $t")
+      incomingConnectionHandler.dispatch(Failure(t))
+    }
+    finally {
+      incomingConnectionHandler.receiveResultAck()
+    }
+  }
+
+  private fun runBuildAndGetResult(targetBuildParameters: TargetBuildParameters,
+                                   connection: ProjectConnection,
+                                   resultHandler: BlockingResultHandler<Any>): Any? {
     val operation = when (targetBuildParameters) {
       is BuildLauncherParameters -> connection.newBuild().apply {
         targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
@@ -99,13 +117,13 @@ object Main {
     }
     val progressEventConverter = ProgressEventConverter()
     operation.apply {
-      setStandardError(System.err)
-      setStandardOutput(System.out)
+      setStandardError(OutputWrapper { incomingConnectionHandler.dispatch(StandardError(it)) })
+      setStandardOutput(OutputWrapper { incomingConnectionHandler.dispatch(StandardOutput(it)) })
       addProgressListener(
         { incomingConnectionHandler.dispatch(BuildEvent(progressEventConverter.convert(it))) },
         targetBuildParameters.progressListenerOperationTypes
       )
-      addProgressListener(org.gradle.tooling.ProgressListener {
+      addProgressListener(ProgressListener {
         val description = it.description
         if (description.isNotEmpty()) {
           incomingConnectionHandler.dispatch(BuildEvent(description))
@@ -121,20 +139,7 @@ object Main {
         is BuildActionExecuter<*> -> run(resultHandler)
       }
     }
-    try {
-      val result = resultHandler.result
-      LOG.debug("operation result: $result")
-      val adapted = maybeConvert(result)
-      incomingConnectionHandler.dispatch(Success(adapted))
-    }
-    catch (t: Throwable) {
-      LOG.debug("GradleConnectionException: $t")
-      incomingConnectionHandler.dispatch(Failure(t))
-    }
-    finally {
-      incomingConnectionHandler.receiveResultAck()
-      connection.close()
-    }
+    return resultHandler.result
   }
 
   private fun maybeConvert(result: Any?): Any? {
