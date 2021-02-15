@@ -144,7 +144,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static DfaValue dropLocality(DfaValue value, DfaMemoryState state) {
     if (!(value instanceof DfaVariableValue)) {
       if (DfReferenceType.isLocal(value.getDfType())) {
-        return value.getFactory().fromDfType(((DfReferenceType)value.getDfType()).dropLocality());
+        DfReferenceType dfType = ((DfReferenceType)value.getDfType()).dropLocality();
+        if (value instanceof DfaBoxedValue) {
+          return value.getFactory().getBoxedFactory()
+            .createBoxed(dfType, ((DfaBoxedValue)value).getSpecialField(), ((DfaBoxedValue)value).getWrappedValue());
+        }
+        return value.getFactory().fromDfType(dfType);
       }
       return value;
     }

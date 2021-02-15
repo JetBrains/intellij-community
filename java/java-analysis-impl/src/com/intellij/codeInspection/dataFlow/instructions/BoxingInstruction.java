@@ -1,18 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import org.jetbrains.annotations.NotNull;
 
 public class BoxingInstruction extends Instruction {
   @NotNull private final DfType myTargetType;
+  @NotNull private final SpecialField mySpecialField;
 
-  public BoxingInstruction(@NotNull DfType targetType) {
+  public BoxingInstruction(@NotNull DfType targetType, @NotNull SpecialField field) {
     myTargetType = targetType;
+    mySpecialField = field;
   }
 
   @Override
@@ -20,8 +19,11 @@ public class BoxingInstruction extends Instruction {
     return visitor.visitBox(this, runner, stateBefore);
   }
 
-  @NotNull
-  public DfType getTargetType() {
+  public @NotNull SpecialField getSpecialField() {
+    return mySpecialField;
+  }
+
+  public @NotNull DfType getTargetType() {
     return myTargetType;
   }
 

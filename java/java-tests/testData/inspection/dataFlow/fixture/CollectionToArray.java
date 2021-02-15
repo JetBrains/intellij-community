@@ -61,6 +61,11 @@ public class CollectionToArray {
     }
   }
 
+  void testPresizedArray2(List<?> list) {
+    Object[] data = list.toArray(new Object[list.size()]);
+    if (<warning descr="Condition 'list.size() == data.length' is always 'true'">list.size() == data.length</warning>) {}
+  }
+
   void testRaw(java.util.List l) {  
     final String[][] ss = (<warning descr="Casting 'l.toArray(...)' to 'String[][]' will produce 'ClassCastException' for any non-null value">String[][]</warning>) l.toArray(new Number[l.size()]);
   }

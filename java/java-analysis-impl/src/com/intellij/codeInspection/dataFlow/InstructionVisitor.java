@@ -159,7 +159,7 @@ public abstract class InstructionVisitor {
     if (value instanceof DfaBinOpValue) {
       value = factory.fromDfType(state.getDfType(value));
     }
-    state.push(factory.getBoxedFactory().createBoxed(instruction.getTargetType(), SpecialField.UNBOX, value));
+    state.push(factory.getBoxedFactory().createBoxed(instruction.getTargetType(), instruction.getSpecialField(), value));
     return nextInstruction(instruction, runner, state);
   }
 

@@ -481,11 +481,14 @@ public final class CustomMethodHandlers {
         result = constraint.asDfType().meet(NOT_NULL_OBJECT);
       }
       // Array size is max of collection size and argument array size
-      LongRangeSet arraySizeRange = DfIntType.extractRange(state.getDfType(ARRAY_LENGTH.createValue(factory, array)));
-      LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GT).intersect(arraySizeRange);
-      LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).intersect(collectionSizeRange);
-      if (!biggerArrays.isEmpty()) {
-        finalSize = factory.fromDfType(intRange(biggerArrays.unite(biggerCollections)));
+      DfaValue arrayLength = ARRAY_LENGTH.createValue(factory, array);
+      if (!state.areEqual(arrayLength, collectionSize)) {
+        LongRangeSet arraySizeRange = DfIntType.extractRange(state.getDfType(arrayLength));
+        LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GT).intersect(arraySizeRange);
+        LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).intersect(collectionSizeRange);
+        if (!biggerArrays.isEmpty()) {
+          finalSize = factory.fromDfType(intRange(biggerArrays.unite(biggerCollections)));
+        }
       }
     }
     return factory.getBoxedFactory().createBoxed(result, ARRAY_LENGTH, finalSize);
