@@ -34,6 +34,6 @@ public interface MavenRemoteProcessSupportFactory {
     public MavenRemoteProcessSupport(@NotNull Class<MavenServer> valueClass) {
       super(valueClass);
     }
-     public abstract String type();
+    public abstract String type();
   }
 }

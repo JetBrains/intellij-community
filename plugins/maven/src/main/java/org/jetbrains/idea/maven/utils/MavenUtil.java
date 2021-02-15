@@ -22,6 +22,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -98,6 +99,8 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
+import static com.intellij.ide.impl.TrustedProjects.confirmImportingUntrustedProject;
+import static com.intellij.ide.impl.TrustedProjects.getTrustedState;
 import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -107,7 +110,7 @@ import static icons.ExternalSystemIcons.Task;
 public class MavenUtil {
   public static final String INTELLIJ_PLUGIN_ID = "org.jetbrains.idea.maven";
   @ApiStatus.Experimental
-  @NonNls public static final String MAVEN_NAME = "Maven";
+  public static final @NlsSafe String MAVEN_NAME = "Maven";
   @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
   public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId(MAVEN_NAME_UPCASE);
   public static final String MAVEN_NOTIFICATION_GROUP = MAVEN_NAME;
@@ -249,6 +252,13 @@ public class MavenUtil {
   public static void showError(Project project, @NlsContexts.NotificationTitle String title, Throwable e) {
     MavenLog.LOG.warn(title, e);
     Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR), project);
+  }
+
+  public static void showError(Project project,
+                               @NlsContexts.NotificationTitle String title,
+                               @NlsContexts.NotificationContent String message) {
+    MavenLog.LOG.warn(title);
+    Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, message, NotificationType.ERROR), project);
   }
 
   @NotNull
@@ -1037,6 +1047,32 @@ public class MavenUtil {
     return LegacyBridgeProjectLifecycleListener.Companion.enabled(project) &&
            (Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
             || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY));
+  }
+
+  public static boolean isProjectTrustedEnoughToImport(Project project,
+                                                       boolean askConfirmationForUnsure,
+                                                       boolean askConfirmationForUntrusted) {
+    if (project.isDefault()) {
+      return true;
+    }
+    ThreeState state = getTrustedState(project);
+    askConfirmationForUnsure |= askConfirmationForUntrusted;
+    if ((state == ThreeState.UNSURE && askConfirmationForUnsure) || (state == ThreeState.NO && askConfirmationForUntrusted)) {
+      boolean trust = confirmImportingUntrustedProject(project, MAVEN_NAME,
+                                                       ExternalSystemBundle
+                                                         .message(
+                                                           "unlinked.project.notification.load.action",
+                                                           MAVEN_NAME));
+      if (trust) {
+        MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
+          if (it.getProject().equals(project)) {
+            it.shutdown(true);
+          }
+        });
+        MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
+      }
+    }
+    return state == ThreeState.YES;
   }
 
   public interface MavenTaskHandler {
