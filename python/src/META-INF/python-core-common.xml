@@ -472,6 +472,9 @@
     <extensionPoint qualifiedName="Pythonid.dataViewPanelFactory"
                     interface="com.jetbrains.python.debugger.containerview.PyDataViewPanelFactory"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.executeCustomizer"
+                    interface="com.jetbrains.python.console.PyExecuteConsoleCustomizer"
+                    dynamic="true"/>
 
     <!-- Experimental sdk EP, avoid using it -->
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
@@ -666,6 +669,10 @@
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.python.console">
+    <executeCustomizer implementation="com.jetbrains.python.console.PyExecuteConsoleCustomizerDefault"/>
   </extensions>
 
   <applicationListeners>
