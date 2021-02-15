@@ -1016,6 +1016,9 @@ public class JBTabsImpl extends JComponent
   @Nullable
   private JComponent getToFocus() {
     final TabInfo info = getSelectedInfo();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("selected info: " + info);
+    }
 
     if (info == null) return null;
 
@@ -1023,14 +1026,25 @@ public class JBTabsImpl extends JComponent
 
     if (isRequestFocusOnLastFocusedComponent() && info.getLastFocusOwner() != null && !isMyChildIsFocusedNow()) {
       toFocus = info.getLastFocusOwner();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("last focus owner: " + toFocus);
+      }
     }
 
     if (toFocus == null) {
       toFocus = info.getPreferredFocusableComponent();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("preferred focusable component: " + toFocus);
+      }
+
       if (toFocus == null) {
         return null;
       }
       final JComponent policyToFocus = myFocusManager.getFocusTargetFor(toFocus);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("focus target: " + policyToFocus);
+      }
+
       if (policyToFocus != null) {
         toFocus = policyToFocus;
       }
