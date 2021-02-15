@@ -30,8 +30,8 @@ internal class DotnetIconsClasses(override val homePath: String) : IconsClasses(
   }
 
   private fun splitRiderAndReSharper(info: IconClassInfo): List<IconClassInfo> {
-    val rider = extract("rider/", "RiderIcons", info)
-    val reSharper = extract("resharper/", "ReSharperIcons", info)
+    val rider = extract("/rider/", "RiderIcons", info)
+    val reSharper = extract("/resharper/", "ReSharperIcons", info)
     return listOf(rider, reSharper)
   }
 
