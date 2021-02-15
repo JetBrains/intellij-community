@@ -9,8 +9,16 @@ import com.intellij.debugger.impl.OutputChecker
 import com.intellij.idea.IdeaLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.testFramework.assertEqualsToFile
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vfs.CharsetToolkit
+import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.test.TargetBackend
+import org.junit.Assert
 import java.io.File
+import kotlin.math.min
 
 internal class KotlinOutputChecker(
     private val testDir: String,
@@ -45,24 +53,65 @@ internal class KotlinOutputChecker(
         this.myTestName = Character.toLowerCase(testName[0]) + testName.substring(1)
     }
 
-    private fun getExpectedFile(): File {
-        if (useIrBackend) {
-            val irFile = File(testDir, "$myTestName.ir.out")
-            if (irFile.exists()) {
-                return irFile
-            }
-        }
-
-        return File(testDir, "$myTestName.out")
-    }
-
+    // Copied from the base OutputChecker.checkValid(). Need to intercept call to base preprocessBuffer() method
     override fun checkValid(jdk: Sdk, sortClassPath: Boolean) {
         if (IdeaLogger.ourErrorsOccurred != null) {
             throw IdeaLogger.ourErrorsOccurred
         }
 
-        val actualText = preprocessBuffer(buildOutputString())
-        assertEqualsToFile("Debugger output", getExpectedFile(), actualText)
+        val actual = preprocessBuffer(buildOutputString())
+
+        val outDir = File(testDir)
+        var outFile = expectedOutputFile
+        val isIgnored = InTextDirectivesUtils.isIgnoredTarget(if (useIrBackend) TargetBackend.JVM_IR else TargetBackend.JVM, outFile)
+
+        if (!outFile.exists()) {
+            if (SystemInfo.isWindows) {
+                val winOut = File(outDir, "$myTestName.win.out")
+                if (winOut.exists()) {
+                    outFile = winOut
+                }
+            } else if (SystemInfo.isUnix) {
+                val unixOut = File(outDir, "$myTestName.unx.out")
+                if (unixOut.exists()) {
+                    outFile = unixOut
+                }
+            }
+        }
+
+        if (!outFile.exists()) {
+            FileUtil.writeToFile(outFile, actual)
+            LOG.error("Test file created ${outFile.path}\n**************** Don't forget to put it into VCS! *******************")
+        } else {
+            val originalText = FileUtilRt.loadFile(outFile, CharsetToolkit.UTF8)
+            val expected = StringUtilRt.convertLineSeparators(originalText).split("\n").filter {
+                !it.trim().startsWith(InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX)
+            }.joinToString("\n")
+            if (expected != actual) {
+                println("expected:")
+                println(originalText)
+                println("actual:")
+                println(actual)
+
+                val len = min(expected.length, actual.length)
+                if (expected.length != actual.length) {
+                    println("Text sizes differ: expected " + expected.length + " but actual: " + actual.length)
+                }
+                if (expected.length > len) {
+                    println("Rest from expected text is: \"" + expected.substring(len) + "\"")
+                } else if (actual.length > len) {
+                    println("Rest from actual text is: \"" + actual.substring(len) + "\"")
+                }
+
+                // Ignore test failure if marked as ignored.
+                if (isIgnored) return
+
+                Assert.assertEquals(expected, actual)
+            } else if (isIgnored && !threwException) {
+                // Fail if tests are marked as failing, but actually pass.
+                throw AssertionError("Test passes and could be unmuted, remove IGNORE_BACKEND directive from ${outFile.path}")
+            }
+        }
     }
 
     private fun preprocessBuffer(buffer: String): String {

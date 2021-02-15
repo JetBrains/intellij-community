@@ -678,11 +678,6 @@ class QuickFixRegistrar : QuickFixContributor {
 
         INLINE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.registerFactory(InlineClassConstructorNotValParameterFactory)
 
-        JAVA_CLASS_ON_COMPANION.registerFactory(JavaClassOnCompanionFixes)
-
         SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC.registerFactory(AddJvmStaticAnnotationFix)
-
-        SEALED_INHERITOR_IN_DIFFERENT_PACKAGE.registerFactory(MoveToSealedMatchingPackageFix)
-        SEALED_INHERITOR_IN_DIFFERENT_MODULE.registerFactory(MoveToSealedMatchingPackageFix)
     }
 }
