@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
@@ -25,6 +26,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -38,6 +42,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingMod
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsBrowserComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
@@ -142,7 +147,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       val list = findCommitsList(commitsComponent) ?: return
       for (i in 0 until list.model.size) {
         val commit = list.model.getElementAt(i)
-        if (commit.oid == oid || commit.abbreviatedOid == oid) {
+        if (commit.id.asString().startsWith(oid)) {
           list.selectedIndex = i
           break
         }
@@ -150,7 +155,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       GHUIUtil.focusPanel(list)
     }
 
-    private fun findCommitsList(parent: JComponent): JList<GHCommit>? {
+    private fun findCommitsList(parent: JComponent): JList<VcsCommitMetadata>? {
       UIUtil.getClientProperty(parent, GHPRCommitsBrowserComponentFactory.COMMITS_LIST_KEY)?.run {
         return this
       }
@@ -231,7 +236,24 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     null, GithubBundle.message("cannot.load.commits"),
                                                     changesLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
-        GHPRCommitsBrowserComponentFactory().create(model, commitSelectionListener)
+        GHPRCommitsBrowserComponentFactory(project).create(model.map { list ->
+          val logObjectsFactory = project.service<VcsLogObjectsFactory>()
+          list.map { commit ->
+            logObjectsFactory.createCommitMetadata(
+              HashImpl.build(commit.oid),
+              commit.parents.map { HashImpl.build(it.oid) },
+              commit.committer?.date?.time ?: 0L,
+              dataContext.repositoryDataService.remoteCoordinates.repository.root,
+              commit.messageHeadlineHTML,
+              commit.author?.name ?: "unknown user",
+              commit.author?.email ?: "",
+              commit.messageHeadlineHTML + if (commit.messageBodyHTML.isEmpty()) "" else "\n\n${commit.messageBodyHTML}",
+              commit.committer?.name ?: "unknown user",
+              commit.committer?.email ?: "",
+              commit.author?.date?.time ?: 0L
+            )
+          }
+        }, commitSelectionListener)
       }
 
     val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,
@@ -315,10 +337,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private fun createCommitChangesModel(changesModel: SingleValueModel<GHPRChangesProvider>,
                                        commitSelectionListener: CommitSelectionListener): SingleValueModel<List<Change>> {
-    val model = SingleValueModel(changesModel.value.changesByCommits[commitSelectionListener.currentCommit].orEmpty())
+    val model = SingleValueModel(changesModel.value.changesByCommits[commitSelectionListener.currentCommit?.id?.asString()].orEmpty())
     fun update() {
       val commit = commitSelectionListener.currentCommit
-      model.value = changesModel.value.changesByCommits[commit].orEmpty()
+      model.value = changesModel.value.changesByCommits[commit?.id?.asString()].orEmpty()
     }
     commitSelectionListener.delegate = ::update
     changesModel.addAndInvokeValueChangedListener(::update)
@@ -350,11 +372,11 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     return ScrollPaneFactory.createScrollPane(tree, true)
   }
 
-  private class CommitSelectionListener : (GHCommit?) -> Unit {
-    var currentCommit: GHCommit? = null
+  private class CommitSelectionListener : (VcsCommitMetadata?) -> Unit {
+    var currentCommit: VcsCommitMetadata? = null
     var delegate: (() -> Unit)? = null
 
-    override fun invoke(commit: GHCommit?) {
+    override fun invoke(commit: VcsCommitMetadata?) {
       currentCommit = commit
       delegate?.invoke()
     }
