@@ -1,11 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.common
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
-import com.intellij.completion.ml.util.prefix
 import com.intellij.completion.ml.ngram.NGram
+import com.intellij.completion.ml.util.prefix
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
@@ -41,6 +42,11 @@ class CommonLocationFeatures : ContextFeatureProvider {
       result["dumb_mode"] = MLFeatureValue.binary(true)
     }
 
+    val caseSensitive = CaseSensitivity.fromSettings(CodeInsightSettings.getInstance())
+    if (caseSensitive != CaseSensitivity.NONE) {
+      result["case_sensitivity"] = MLFeatureValue.categorical(caseSensitive)
+    }
+
     result["is_after_dot"] = MLFeatureValue.binary(isAfterDot(position))
 
     result.addPsiParents(position, 10)
@@ -73,5 +79,19 @@ class CommonLocationFeatures : ContextFeatureProvider {
   private fun isAfterDot(position: PsiElement) : Boolean {
     val prev = PsiTreeUtil.prevVisibleLeaf(position)
     return prev != null && prev.text == "."
+  }
+
+  private enum class CaseSensitivity {
+    NONE, ALL, FIRST_LETTER;
+
+    companion object {
+      fun fromSettings(settings: CodeInsightSettings): CaseSensitivity {
+        return when (settings.completionCaseSensitive) {
+          CodeInsightSettings.ALL -> ALL
+          CodeInsightSettings.FIRST_LETTER -> FIRST_LETTER
+          else -> NONE
+        }
+      }
+    }
   }
 }
