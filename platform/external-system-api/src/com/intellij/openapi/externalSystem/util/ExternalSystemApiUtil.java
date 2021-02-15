@@ -423,7 +423,7 @@ public final class ExternalSystemApiUtil {
 
   @Nullable
   public static String normalizePath(@Nullable String s) {
-    return StringUtil.isEmpty(s) ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
+    return s == null ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
   }
 
   /**
