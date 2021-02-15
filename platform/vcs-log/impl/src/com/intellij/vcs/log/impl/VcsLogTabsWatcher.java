@@ -240,7 +240,9 @@ public final class VcsLogTabsWatcher implements Disposable {
 
       project.getMessageBus().connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, this);
       Disposer.register(disposable, () -> {
-        for (Content content : myToolWindow.getContentManager().getContents()) {
+        ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
+        if (contentManager == null) return;
+        for (Content content : contentManager.getContents()) {
           if (content instanceof TabbedContent) {
             content.removePropertyChangeListener(this);
           }

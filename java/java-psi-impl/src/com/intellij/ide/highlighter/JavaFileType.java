@@ -4,13 +4,16 @@ package com.intellij.ide.highlighter;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public final class JavaFileType extends LanguageFileType {
+import static com.intellij.openapi.fileTypes.FileType.CharsetHint.CONTENT_DEPENDENT_CHARSET;
+
+public final class JavaFileType extends LanguageFileType implements FileType {
   @NonNls public static final String DEFAULT_EXTENSION = "java";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".java";
   public static final JavaFileType INSTANCE = new JavaFileType();
@@ -45,5 +48,10 @@ public final class JavaFileType extends LanguageFileType {
   @Override
   public boolean isJVMDebuggingSupported() {
     return true;
+  }
+
+  @Override
+  public @NotNull CharsetHint getCharsetHint() {
+    return CONTENT_DEPENDENT_CHARSET;
   }
 }

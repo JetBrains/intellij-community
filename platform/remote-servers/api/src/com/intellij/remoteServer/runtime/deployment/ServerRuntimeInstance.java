@@ -31,6 +31,10 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
   public abstract void disconnect();
 
   public interface DeploymentOperationCallback extends RemoteOperationCallback {
+    default void started(@NotNull DeploymentRuntime deploymentRuntime) {
+      //
+    }
+
     Deployment succeeded(@NotNull DeploymentRuntime deploymentRuntime);
   }
 

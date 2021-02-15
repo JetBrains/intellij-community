@@ -11,9 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -247,5 +245,64 @@ public final class AnnotationTargetUtil {
       if (type != null && !type.getType().equals(PsiType.VOID)) return type;
     }
     return list;
+  }
+  
+  public static void collectStrictlyTypeUseAnnotations(PsiModifierList modifierList, List<? super PsiAnnotation> annotations) {
+    if (modifierList == null) return;
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      if (isStrictlyTypeUseAnnotation(modifierList, annotation)) {
+        annotations.add(annotation);
+      }
+    }
+  }
+
+  /**
+   * Remove type_use annotations when at the usage place "normal" target works as well
+   * @param modifierList the place where type appears
+   */
+  public static PsiType keepStrictlyTypeUseAnnotations(@Nullable PsiModifierList modifierList, @NotNull PsiType type) {
+    if (modifierList == null) return type;
+    List<PsiAnnotation> annotations = new ArrayList<>();
+    PsiAnnotation[] originalAnnotations = type.getAnnotations();
+    for (PsiAnnotation annotation : originalAnnotations) {
+      if (isStrictlyTypeUseAnnotation(modifierList, annotation)) {
+        annotations.add(annotation);
+      }
+    }
+    
+    if (originalAnnotations.length == annotations.size()) {
+      return type;
+    }
+
+    return annotations.isEmpty()
+           ? type.annotate(TypeAnnotationProvider.EMPTY)
+           : type.annotate(TypeAnnotationProvider.Static.create(annotations.toArray(PsiAnnotation.EMPTY_ARRAY)));
+  }
+
+  /**
+   * Prefers "normal" target when type use annotation appears at the place where it's also applicable
+   * 
+   * @param modifierList the place where annotation appears
+   * 
+   * @return true iff annotation is type_use and 
+   *                  appears at the "type_use place" (e.g. {@code List<@Nullable String>}) or 
+   *                        none of it normal target types are acceptable (e.g. {@code void f(@Nullable String p)} if {@code @Nullable annotation is not applicable to parameters})
+   */
+  public static boolean isStrictlyTypeUseAnnotation(PsiModifierList modifierList, PsiAnnotation annotation) {
+    PsiElement parent = annotation.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement) {
+      return true;
+    }
+    PsiClass annotationClass = annotation.resolveAnnotationType();
+    if (annotationClass != null) {
+      Set<PsiAnnotation.TargetType> targets = getAnnotationTargets(annotationClass);
+      if (targets != null && targets.contains(PsiAnnotation.TargetType.TYPE_USE) &&
+          (targets.size() == 1 ||
+           !ContainerUtil.exists(getTargetsForLocation(modifierList),
+                                 target -> target != PsiAnnotation.TargetType.TYPE_USE && targets.contains(target)))) {
+        return true;
+      }
+    }
+    return false;
   }
 }

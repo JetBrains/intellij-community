@@ -46,7 +46,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test shorter actions first despite ellipsis"() {
     def pattern = 'Rebas'
-    def fork = 'Rebase my GitHub fork'
+    def fork = 'Sync Fork'
     def rebase = 'Rebase...'
     def items = [matchedAction(fork, pattern),
                  matchedAction(rebase, pattern)].toSorted(MATCH_COMPARATOR)
@@ -412,7 +412,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public static MatchedValue createMatchedAction(Project project, AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
     def model = new GotoActionModel(project, null, null)
-    def wrapper = new ActionWrapper(action, null, mode, DataContext.EMPTY_CONTEXT, model) {
+    def wrapper = new ActionWrapper(action, null, mode, model) {
       @Override
       boolean isAvailable() {
         return isAvailable

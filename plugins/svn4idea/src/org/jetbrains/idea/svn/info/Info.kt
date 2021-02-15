@@ -37,18 +37,8 @@ class Info(val file: File?,
   val conflictNewFile = resolveConflictFile(file, conflictNewFilePath)
   val conflictWrkFile = resolveConflictFile(file, conflictWorkingFilePath)
 
-  @Deprecated("Use nodeKind property", ReplaceWith("nodeKind"))
-  val kind
-    get() = nodeKind
-
   @Deprecated("Use url property", ReplaceWith("url"))
   fun getURL() = url
-
-  @Deprecated("Use repositoryRootUrl property", ReplaceWith("repositoryRootUrl"))
-  fun getRepositoryRootURL(): Url? = repositoryRootUrl
-
-  @Deprecated("Use repositoryId property", ReplaceWith("repositoryId"))
-  fun getRepositoryUUID(): String? = repositoryId
 
   companion object {
     const val SCHEDULE_ADD = "add"

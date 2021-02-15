@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.serialization.ObjectSerializer;
@@ -57,7 +58,8 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
  * @author Vladislav.Soroka
  */
 @State(name = "ExternalProjectsData", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class ExternalProjectsDataStorage implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
+public final class ExternalProjectsDataStorage extends SimpleModificationTracker
+  implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
   // exposed for tests
@@ -67,7 +69,7 @@ public final class ExternalProjectsDataStorage implements SettingsSavingComponen
   private final Project myProject;
   @NotNull
   private final Map<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
-    ConcurrentCollectionFactory.createMap(ExternalSystemUtil.HASHING_STRATEGY);
+    ConcurrentCollectionFactory.createConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY);
 
   private final AtomicBoolean changed = new AtomicBoolean();
   private State myState = new State();
@@ -113,9 +115,8 @@ public final class ExternalProjectsDataStorage implements SettingsSavingComponen
       List<InternalExternalProjectInfo> projectInfos = load(myProject);
       readEnd = System.currentTimeMillis();
 
-      if (projectInfos == null || (projectInfos.isEmpty() &&
-                                   myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE &&
-                                   hasLinkedExternalProjects())) {
+      boolean isOpenedProject = hasLinkedExternalProjects() && !ExternalSystemUtil.isNewProject(myProject);
+      if (projectInfos == null || (projectInfos.isEmpty() && isOpenedProject)) {
         markDirtyAllExternalProjects();
       }
 
@@ -233,7 +234,7 @@ public final class ExternalProjectsDataStorage implements SettingsSavingComponen
     merged.setLastImportTimestamp(lastImportTimestamp);
     merged.setLastSuccessfulImportTimestamp(lastSuccessfulImportTimestamp);
     myExternalRootProjects.put(key, merged);
-
+    incModificationCount();
     markAsChangedAndScheduleSave();
   }
 

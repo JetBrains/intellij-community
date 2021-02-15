@@ -20,6 +20,7 @@ class MixedListFactory extends SEResultsListFactory {
   private final List<String> prioritizedContributors = new ArrayList<>();
 
   MixedListFactory() {
+    prioritizedContributors.add(CalculatorSEContributor.class.getName());
     prioritizedContributors.add("CommandsContributor");
     prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
     if (Registry.is("search.everywhere.recent.at.top")) {

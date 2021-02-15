@@ -2,14 +2,14 @@
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.lang.JavaVersion;
 
 public final class Patches {
   /**
    * See https://bugs.openjdk.java.net/browse/JDK-6322854.
    * java.lang.NullPointerException: Failed to retrieve atom name.
    */
-  public static final boolean SUN_BUG_ID_6322854 = SystemInfoRt.isXWindow;
+  public static final boolean SUN_BUG_ID_6322854 = SystemInfo.isXWindow;
 
   /**
    * IBM JVM 1.4.2 crashes if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection().
@@ -21,24 +21,13 @@ public final class Patches {
    * The bug is marked as fixed but it actually isn't - {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may hang
    * for up to 10 seconds if clipboard owner is not responding.
    */
-  public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfoRt.isUnix;
+  public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfo.isUnix;
 
   /**
    * Desktop API support on X Window is limited to GNOME (and even there it may work incorrectly).
    * See https://bugs.openjdk.java.net/browse/JDK-6486393.
    */
-  public static final boolean SUN_BUG_ID_6486393 = SystemInfoRt.isXWindow;
-
-  /**
-   * Enable a workaround for JDK bug with leaking TargetVM.EventController, see IDEA-163334
-   */
-  public static final boolean JDK_BUG_EVENT_CONTROLLER_LEAK = !SystemInfo.isJetBrainsJvm;
-
-  /**
-   * NPE from com.sun.jdi.ReferenceType#constantPool()
-   * See <a href="https://bugs.openjdk.java.net/browse/JDK-6822627">JDK-6822627</a>
-   */
-  public static final boolean JDK_BUG_ID_6822627 = !SystemInfo.isJetBrainsJvm;
+  public static final boolean SUN_BUG_ID_6486393 = SystemInfo.isXWindow;
 
   /**
    * Debugger hangs in trace mode with TRACE_SEND when method argument is a {@link com.sun.jdi.StringReference}
@@ -55,7 +44,7 @@ public final class Patches {
    * This doesn't work for some fonts, which don't use recognizable style suffixes in their names.
    * Corresponding JDK request for enhancement - <a href="https://bugs.openjdk.java.net/browse/JDK-8139151">JDK-8139151</a>.
    */
-  public static final boolean JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND = SystemInfoRt.isMac;
+  public static final boolean JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND = SystemInfo.isMac;
 
   /**
    * Some HTTP connections lock class loaders: https://bugs.openjdk.java.net/browse/JDK-8032832
@@ -66,7 +55,6 @@ public final class Patches {
   /**
    * https://bugs.openjdk.java.net/browse/JDK-8220231
    */
-  public static final boolean TEXT_LAYOUT_IS_SLOW = !SystemInfo.isJetBrainsJvm &&
-                                                    !SystemInfo.isJavaVersionAtLeast(13) &&
-                                                    SystemInfo.isJavaVersionAtLeast(12);
+  @ReviseWhenPortedToJDK("13")
+  public static final boolean TEXT_LAYOUT_IS_SLOW = !SystemInfo.isJetBrainsJvm && JavaVersion.current().feature == 12;
 }

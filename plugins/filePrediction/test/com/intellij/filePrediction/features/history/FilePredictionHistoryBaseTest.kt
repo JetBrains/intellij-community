@@ -4,6 +4,7 @@ package com.intellij.filePrediction.features.history
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
+import it.unimi.dsi.fastutil.ints.IntSet
 import kotlin.math.abs
 
 abstract class FilePredictionHistoryBaseTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
@@ -16,7 +17,7 @@ abstract class FilePredictionHistoryBaseTest : CodeInsightFixtureTestCase<Module
       }
 
       assertEquals(size, manager.size())
-      assertFilesCodes(manager.getState().root.usages.keys(), manager.getState().root)
+      assertFilesCodes(manager.getState().root.usages.keys, manager.getState().root)
       assertion.invoke(manager)
     }
     finally {
@@ -24,13 +25,12 @@ abstract class FilePredictionHistoryBaseTest : CodeInsightFixtureTestCase<Module
     }
   }
 
-  private fun assertFilesCodes(codes: IntArray, root: NGramMapNode) {
-    root.usages.forEachEntry { code, value ->
-      val keys = value.usages.keys()
-      for (key in keys) {
-        assertTrue(codes.contains(key))
+  private fun assertFilesCodes(codes: IntSet, root: NGramMapNode) {
+    for (value in root.usages.values) {
+      val iterator = value.usages.keys.iterator()
+      while (iterator.hasNext()) {
+        assertTrue(codes.contains(iterator.nextInt()))
       }
-      true
     }
   }
 

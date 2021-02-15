@@ -20,11 +20,11 @@ import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectIdentifier;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -45,9 +45,12 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
     myRootModel = rootModel;
   }
 
-  public void initToolingSerializer(@NotNull GradleVersion gradleVersion) {
+  @ApiStatus.Internal
+  public void initToolingSerializer(SerializationService<?>... additionalSerializerServices) {
     mySerializer = new ToolingSerializer();
-    mySerializer.register(new IdeaProjectSerializationService(gradleVersion));
+    for (SerializationService<?> service : additionalSerializerServices) {
+      mySerializer.register(service);
+    }
   }
 
   @NotNull

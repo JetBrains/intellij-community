@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,12 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
-
+public final class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
   public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = ThreadLocal.withInitial(() -> false);
 
   private static final double MAX_PROGRESS_VALUE = 1;
@@ -103,7 +102,7 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
   private Collection<Runnable> getCallbacks(@NotNull EventType eventType) {
     Collection<Runnable> result = myCallbacks.get(eventType);
     if (result == null) {
-      Collection<Runnable> candidate = myCallbacks.putIfAbsent(eventType, result = Collections.newSetFromMap(new ConcurrentHashMap<>()));
+      Collection<Runnable> candidate = myCallbacks.putIfAbsent(eventType, result = ContainerUtil.newConcurrentSet());
       if (candidate != null) {
         result = candidate;
       }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.*;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.util.DiffNotificationProvider;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.vcs.DiffVcsFacade;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
@@ -109,7 +109,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull String text, @NotNull FilePath filePath) {
+  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FilePath filePath) {
     return readOnlyDocumentContent(project)
       .contextByFilePath(filePath)
       .buildFromText(text, true);
@@ -511,8 +511,9 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @Nullable
   private static Charset guessCharsetFromContent(byte @NotNull [] content) {
+    if (content.length == 0) return null;
     // can't use CharsetToolkit.guessEncoding here because of false-positive INVALID_UTF8
-    CharsetToolkit toolkit = new CharsetToolkit(content);
+    CharsetToolkit toolkit = new CharsetToolkit(content, Charset.defaultCharset(), false);
 
     Charset fromBOM = toolkit.guessFromBOM();
     if (fromBOM != null) return fromBOM;
@@ -774,7 +775,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     public @Nullable LineSeparator separators;
     public @Nullable Charset charset;
     public @Nullable Boolean isBom;
-    public @Nullable JComponent notification;
+    public @Nullable DiffNotificationProvider notification;
 
     TextContent(@NotNull String text) {
       this.text = text;
@@ -808,7 +809,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       textContent.isBom = isBom;
       if (malformedContent) {
         String notificationText = DiffBundle.message("error.content.decoded.with.wrong.charset", charset.name());
-        textContent.notification = DiffNotifications.createNotification(notificationText, LightColors.RED);
+        textContent.notification = DiffNotifications.createNotificationProvider(notificationText, LightColors.RED);
       }
       return textContent;
     }

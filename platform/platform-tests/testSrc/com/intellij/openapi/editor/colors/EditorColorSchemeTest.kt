@@ -111,7 +111,7 @@ class EditorColorSchemeTest {
     val ep = AdditionalTextAttributesEP()
     ep.scheme = "Darcula"
     ep.file = "com/intellij/openapi/editor/colors/foregroundForGoBuiltinTypeReference.xml"
-    AdditionalTextAttributesEP.EP_NAME.getPoint().registerExtension(ep, disposableRule.disposable)
+    EditorColorsManagerImpl.ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.getPoint().registerExtension(ep, disposableRule.disposable)
 
     val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
     val schemeData = """

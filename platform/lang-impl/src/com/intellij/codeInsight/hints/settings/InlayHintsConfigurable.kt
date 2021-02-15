@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -17,8 +17,7 @@ import com.intellij.util.messages.MessageBusConnection
 import java.util.function.Predicate
 import javax.swing.JComponent
 
-class InlayHintsConfigurable(val project: Project) : Configurable, Configurable.Composite, Configurable.WithEpDependencies {
-  private val settings = InlayHintsSettings.instance()
+class InlayHintsConfigurable(private val project: Project) : Configurable, Configurable.Composite, Configurable.WithEpDependencies {
   private val configurables: List<SingleLanguageInlayHintsConfigurable>
   private val panel: InlayHintsPanel
   private var connection: MessageBusConnection? = null
@@ -28,16 +27,12 @@ class InlayHintsConfigurable(val project: Project) : Configurable, Configurable.
       .flatMap { it.getSupportedLanguages(project) }
       .toSortedSet(compareBy { it.displayName })
     configurables = allInlayLanguages.map { SingleLanguageInlayHintsConfigurable(project, it) }
-    panel = InlayHintsPanel(allInlayLanguages, settings)
+    panel = InlayHintsPanel(allInlayLanguages)
   }
 
-  override fun getConfigurables(): Array<Configurable> {
-    return configurables.toTypedArray()
-  }
+  override fun getConfigurables(): Array<Configurable> = configurables.toTypedArray()
 
-  override fun isModified(): Boolean {
-    return panel.isModified()
-  }
+  override fun isModified() = panel.isModified()
 
   override fun getDisplayName(): String {
     return CodeInsightBundle.message("settings.inlay.hints.panel.name")
@@ -114,21 +109,20 @@ class InlayHintsConfigurable(val project: Project) : Configurable, Configurable.
       )
     }
   }
+}
 
-  private class ConfigurationChangeListener(val configurables: List<Configurable>) : InlayHintsSettings.SettingsListener {
-    override fun languageStatusChanged() {
-      reset()
-    }
+private class ConfigurationChangeListener(private val configurables: List<Configurable>) : InlayHintsSettings.SettingsListener {
+  override fun languageStatusChanged() {
+    reset()
+  }
 
-    override fun globalEnabledStatusChanged(newEnabled: Boolean) {
-      reset()
-    }
+  override fun globalEnabledStatusChanged(newEnabled: Boolean) {
+    reset()
+  }
 
-    private fun reset() {
-      for (configurable in configurables) {
-        configurable.reset()
-      }
+  private fun reset() {
+    for (configurable in configurables) {
+      configurable.reset()
     }
   }
 }
-

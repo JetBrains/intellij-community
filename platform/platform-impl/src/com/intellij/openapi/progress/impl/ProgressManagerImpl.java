@@ -21,15 +21,13 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
-  private final Set<CheckCanceledHook> myHooks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
   private final CheckCanceledHook mySleepHook = __ -> sleepIfNeededToGivePriorityToAnotherThread();
 
   public ProgressManagerImpl() {
@@ -115,7 +113,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     }
     finally {
       if (indicator instanceof ProgressWindow) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
           .onTaskRunnableCreated(task, indicator, continuation);
       }
     }
@@ -154,7 +152,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       super.finishTask(task, canceled, error);
     }
     finally {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
         .onTaskFinished(task, canceled, error);
     }
   }

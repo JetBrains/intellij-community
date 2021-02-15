@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.ArrayUtil;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +76,7 @@ public class SubstitutorComputer {
     myTypeArguments = typeArguments;
     myPlace = place;
     myPlaceToInferContext = placeToInferContext;
-    myExitPoints = VolatileNotNullLazyValue.createValue(() -> {
+    myExitPoints = NotNullLazyValue.volatileLazy(() -> {
       if (canBeExitPoint(place)) {
         GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(place);
         return new HashSet<>(ControlFlowUtils.collectReturns(flowOwner));
@@ -139,10 +139,7 @@ public class SubstitutorComputer {
       PsiType[] argTypes = myArgumentTypes;
       if (method instanceof GrGdkMethod) {
         //type inference should be performed from static method
-        PsiType[] newArgTypes = PsiType.createArray(argTypes.length + 1);
-        newArgTypes[0] = myThisType.getValue();
-        System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
-        argTypes = newArgTypes;
+        argTypes = ArrayUtil.prepend(myThisType.getValue(), argTypes);
 
         method = ((GrGdkMethod)method).getStaticMethod();
         LOG.assertTrue(method.isValid());

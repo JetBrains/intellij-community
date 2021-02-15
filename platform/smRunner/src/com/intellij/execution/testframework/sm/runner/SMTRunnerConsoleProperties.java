@@ -18,19 +18,12 @@ import com.intellij.execution.testframework.sm.runner.history.actions.ImportTest
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.config.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +70,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   }
 
   @Override
-  public RunProfile getConfiguration() {
+  public @NotNull RunProfile getConfiguration() {
     return myConfiguration;
   }
 
@@ -163,30 +156,6 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
   public void addStackTraceFilter(final Filter filter) {
     myCustomFilter.addFilter(filter);
-  }
-
-  @Nullable
-  @Deprecated
-  protected Navigatable findSuitableNavigatableForLine(@NotNull Project project, @NotNull VirtualFile file, int line) {
-    // lets find first non-ws psi element
-
-    final Document doc = FileDocumentManager.getInstance().getDocument(file);
-    final PsiFile psi = doc == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(doc);
-    if (psi == null) {
-      return null;
-    }
-
-    int offset = doc.getLineStartOffset(line);
-    int endOffset = doc.getLineEndOffset(line);
-    for (int i = offset + 1; i < endOffset; i++) {
-      PsiElement el = psi.findElementAt(i);
-      if (el != null && !(el instanceof PsiWhiteSpace)) {
-        offset = el.getTextOffset();
-        break;
-      }
-    }
-
-    return PsiNavigationSupport.getInstance().createNavigatable(project, file, offset);
   }
 
   /**

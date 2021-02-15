@@ -87,7 +87,7 @@ abstract public class PlistReaderTestCase {
   @Test
   public void parseArray() throws Exception {
     Plist plist = read("<dict><key>list</key><array><string>alex</string><string>zolotov</string><integer>42</integer></array></dict>");
-    HashMap<String, PListValue> map = new HashMap<String, PListValue>() {{
+    HashMap<String, PListValue> map = new HashMap<>() {{
       put("list", array(string("alex"), string("zolotov"), integer(Long.valueOf(42))));
     }};
     assertEquals(Plist.fromMap(map), plist);
@@ -100,12 +100,12 @@ abstract public class PlistReaderTestCase {
                        "<key>lastname</key><string>zolotov</string>" +
                        "<key>age</key><integer>22</integer>" +
                        "</dict></dict>");
-    HashMap<String, PListValue> inner = new HashMap<String, PListValue>() {{
+    HashMap<String, PListValue> inner = new HashMap<>() {{
       put("name", string("alex"));
       put("lastname", string("zolotov"));
       put("age", integer(Long.valueOf(22)));
     }};
-    HashMap<String, PListValue> map = new HashMap<String, PListValue>() {{
+    HashMap<String, PListValue> map = new HashMap<>() {{
       put("dict", dict(Plist.fromMap(inner)));
     }};
     assertEquals(Plist.fromMap(map), plist);
@@ -124,7 +124,7 @@ abstract public class PlistReaderTestCase {
                        "<key>someKey2</key>" +
                        "<string>someValue2</string>" +
                        "</dict>");
-    HashMap<String, PListValue> map = new HashMap<String, PListValue>() {{
+    HashMap<String, PListValue> map = new HashMap<>() {{
       put("someKey", string("someValue"));
       put("someKey2", string("someValue2"));
     }};

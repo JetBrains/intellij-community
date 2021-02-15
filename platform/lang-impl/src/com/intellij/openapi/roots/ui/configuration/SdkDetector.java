@@ -15,7 +15,8 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -153,7 +154,7 @@ public class SdkDetector {
 
         try {
           //a sanity check first
-          if (!new File(path).exists()) continue;
+          if (!Files.exists(Paths.get(path))) continue;
           if (!type.isValidSdkHome(path)) continue;
         }
         catch (Exception e) {

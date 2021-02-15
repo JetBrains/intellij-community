@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBPoint
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
@@ -31,6 +30,7 @@ import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
 import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.visible.VisiblePack
 import git4idea.GitBranch
+import git4idea.GitNotificationIdsHolder.Companion.COULD_NOT_COMPARE_WITH_BRANCH
 import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -40,6 +40,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
 import org.jetbrains.annotations.NonNls
+import java.awt.Point
 
 class DeepComparator(private val project: Project,
                      private val repositoryManager: GitRepositoryManager,
@@ -161,7 +162,7 @@ class DeepComparator(private val project: Project,
         .setFadeoutTime(5000)
         .createBalloon()
       val component = ui.table
-      balloon.show(RelativePoint(component, JBPoint(component.width / 2, component.visibleRect.y)), Balloon.Position.below)
+      balloon.show(RelativePoint(component, Point(component.width / 2, component.visibleRect.y)), Balloon.Position.below)
       Disposer.register(this, balloon)
     }
   }
@@ -209,7 +210,7 @@ class DeepComparator(private val project: Project,
     override fun onSuccess() {
       if (exception != null) {
         nonPickedCommits = null
-        VcsNotifier.getInstance(project).notifyError("git.could.not.compare.with.branch",
+        VcsNotifier.getInstance(project).notifyError(COULD_NOT_COMPARE_WITH_BRANCH,
                                                      GitBundle.message("git.log.cherry.picked.highlighter.error.message", comparedBranch),
                                                      exception!!.message)
         return

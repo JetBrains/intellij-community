@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -108,7 +109,7 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
     @NotNull
     @Override
     public String getUpdateMessage() {
-      return "Highlighting try blocks...";
+      return JavaAnalysisBundle.message("highlighting.try.blocks");
     }
   }
 }

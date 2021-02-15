@@ -11,7 +11,10 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IconManager;
@@ -61,8 +64,8 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
             defer = null;
           }
           else {
-            NotNullLazyValue<CharSequence> myText = VolatileNotNullLazyValue.createValue(()->LoadTextUtil.loadText(virtualFile));
-            NotNullLazyValue<byte[]> myBytes = VolatileNotNullLazyValue.createValue(() -> {
+            NotNullLazyValue<CharSequence> myText = NotNullLazyValue.volatileLazy(()->LoadTextUtil.loadText(virtualFile));
+            NotNullLazyValue<byte[]> myBytes = NotNullLazyValue.volatileLazy(() -> {
               try {
                 return virtualFile.contentsToByteArray();
               }

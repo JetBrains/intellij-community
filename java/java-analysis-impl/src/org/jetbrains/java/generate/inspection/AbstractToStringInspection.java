@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * Base class for inspection support.
  */
 public abstract class AbstractToStringInspection extends LocalInspectionTool {
-    protected static final Logger log = Logger.getInstance("#AbstractToStringInspection");
+    protected static final Logger LOG = Logger.getInstance(AbstractToStringInspection.class);
 
     @Override
     @NotNull

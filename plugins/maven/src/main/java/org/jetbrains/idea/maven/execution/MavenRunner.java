@@ -28,6 +28,11 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
     return ServiceManager.getService(project, MavenRunner.class);
   }
 
+  @Nullable
+  public static MavenRunner getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(MavenRunner.class);
+  }
+
   public MavenRunner(final Project project) {
     myProject = project;
   }

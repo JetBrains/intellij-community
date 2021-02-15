@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.test;
 
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
@@ -174,14 +174,8 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     ).run();
   }
 
-  protected void tearDownFixtures() {
-    if (myTestFixture != null) {
-      try {
-        myTestFixture.tearDown();
-      }
-      catch (Exception ignored) {
-      }
-    }
+  protected void tearDownFixtures() throws Exception {
+    myTestFixture.tearDown();
     myTestFixture = null;
   }
 
@@ -354,7 +348,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
     JarOutputStream target = new JarOutputStream(new FileOutputStream(f), manifest);
     for (Pair<ByteArraySequence, String> contentEntry : contentEntries) {
-      addJarEntry(contentEntry.first.getBytes(), contentEntry.second, target);
+      addJarEntry(contentEntry.first.toBytes(), contentEntry.second, target);
     }
     target.close();
 

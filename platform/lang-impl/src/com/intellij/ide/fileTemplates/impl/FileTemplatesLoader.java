@@ -20,9 +20,9 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.UriUtil;
-import com.intellij.util.UrlUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.URLUtil;
 import org.apache.velocity.runtime.ParserPool;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
@@ -60,55 +60,53 @@ class FileTemplatesLoader implements Disposable {
   private final ClearableLazyValue<LoadedConfiguration> myManagers;
 
   FileTemplatesLoader(@Nullable Project project) {
-    myManagers = ClearableLazyValue.createAtomic(() -> {
-      return loadConfiguration(project);
-    });
-    ApplicationManager.getApplication().getMessageBus().connect(this).
-      subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-        @Override
-        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          // this shouldn't be necessary once we update to a new Velocity Engine with this leak fixed (IDEA-240449, IDEABKL-7932)
-          clearClassLeakViaStaticExceptionTrace();
-          resetParserPool();
-        }
+    myManagers = ClearableLazyValue.createAtomic(() -> loadConfiguration(project));
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        // this shouldn't be necessary once we update to a new Velocity Engine with this leak fixed (IDEA-240449, IDEABKL-7932)
+        clearClassLeakViaStaticExceptionTrace();
+        resetParserPool();
+      }
 
-        private void clearClassLeakViaStaticExceptionTrace() {
-          Field field = ReflectionUtil.getDeclaredField(Stop.class, "STOP_ALL");
-          if (field != null) {
-            try {
-              ThrowableInterner.clearBacktrace((Throwable)field.get(null));
-            }
-            catch (Throwable e) {
-              LOG.info(e);
-            }
-          }
-        }
-
-        private void resetParserPool() {
+      private void clearClassLeakViaStaticExceptionTrace() {
+        Field field = ReflectionUtil.getDeclaredField(Stop.class, "STOP_ALL");
+        if (field != null) {
           try {
-            RuntimeServices ri = RuntimeSingleton.getRuntimeServices();
-            Field ppField = ReflectionUtil.getDeclaredField(ri.getClass(), "parserPool");
-            if (ppField != null) {
-              Object pp = ppField.get(ri);
-              if (pp instanceof ParserPool) {
-                ((ParserPool)pp).initialize(ri);
-              }
-            }
+            ThrowableInterner.clearBacktrace((Throwable)field.get(null));
           }
           catch (Throwable e) {
             LOG.info(e);
           }
         }
+      }
 
-        @Override
-        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-          myManagers.drop();
+      private void resetParserPool() {
+        try {
+          RuntimeServices ri = RuntimeSingleton.getRuntimeServices();
+          Field ppField = ReflectionUtil.getDeclaredField(ri.getClass(), "parserPool");
+          if (ppField != null) {
+            Object pp = ppField.get(ri);
+            if (pp instanceof ParserPool) {
+              ((ParserPool)pp).initialize(ri);
+            }
+          }
         }
-        @Override
-        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          myManagers.drop();
+        catch (Throwable e) {
+          LOG.info(e);
         }
-      });
+      }
+
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        myManagers.drop();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        myManagers.drop();
+      }
+    });
   }
 
   @Override
@@ -180,21 +178,20 @@ class FileTemplatesLoader implements Disposable {
     Set<URL> processedUrls = new HashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
     for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getLoadedPlugins(null)) {
-      final ClassLoader loader = plugin.getPluginClassLoader();
-      if (loader instanceof PluginAwareClassLoader && ((PluginAwareClassLoader)loader).getUrls().isEmpty() ||
+      ClassLoader loader = plugin.getPluginClassLoader();
+      if (loader instanceof PluginAwareClassLoader && ((PluginAwareClassLoader)loader).getFiles().isEmpty() ||
           !processedLoaders.add(loader)) {
-        continue; // test or development mode, when IDEA_CORE's loader contains all the classpath
+        // test or development mode, when IDEA_CORE's loader contains all the classpath
+        continue;
       }
       try {
-        final Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
-        if (systemResources.hasMoreElements()) {
-          while (systemResources.hasMoreElements()) {
-            final URL url = systemResources.nextElement();
-            if (!processedUrls.add(url)) {
-              continue;
-            }
-            loadDefaultsFromRoot(url, prefixes, result);
+        Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
+        while (systemResources.hasMoreElements()) {
+          URL url = systemResources.nextElement();
+          if (!processedUrls.add(url)) {
+            continue;
           }
+          loadDefaultsFromRoot(url, prefixes, result);
         }
       }
       catch (IOException e) {
@@ -215,10 +212,10 @@ class FileTemplatesLoader implements Disposable {
     for (String path : children) {
       if (path.equals("default.html")) {
         result.setDefaultTemplateDescription(
-          UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
+          URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
       }
       else if (path.equals("includes/default.html")) {
-        result.setDefaultIncludeDescription(UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
+        result.setDefaultIncludeDescription(URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
       }
       else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
         descriptionPaths.add(path);
@@ -238,10 +235,10 @@ class FileTemplatesLoader implements Disposable {
         String filename = path.substring(prefix.isEmpty() ? 0 : prefix.length() + 1, path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
         String extension = FileUtilRt.getExtension(filename);
         String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-        URL templateUrl = UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
+        URL templateUrl = URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
         String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
         URL descriptionUrl = descriptionPath == null ? null :
-                             UrlUtilRt.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
+                             URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
         assert templateUrl != null;
         result.getResult().putValue(prefix, new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
         // FTManagers loop

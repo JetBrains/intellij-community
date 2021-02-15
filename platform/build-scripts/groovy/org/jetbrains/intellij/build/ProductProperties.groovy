@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+
+import java.nio.file.Path
 
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
@@ -54,6 +57,8 @@ abstract class ProductProperties {
    * {@code true} if tools.jar from JDK must be added to IDE classpath
    */
   boolean toolsJarRequired = false
+
+  boolean isAntRequired = false
 
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
@@ -187,7 +192,7 @@ abstract class ProductProperties {
    */
   List<String> additionalModulesRequiredForScrambling = []
 
-  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.JCEF
+  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.DCEVM
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
@@ -212,7 +217,9 @@ abstract class ProductProperties {
    * Paths to externally built plugins to be included into the IDE. They will be copied into the build, as well as included into
    * the IDE classpath when launching it to build search index, jar order, etc
    */
-  List<String> getAdditionalPluginPaths(BuildContext context) { null }
+  @NotNull List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
+    return Collections.emptyList()
+  }
 
   /**
    * @return custom properties for {@link org.jetbrains.intellij.build.impl.productInfo.ProductInfoData}

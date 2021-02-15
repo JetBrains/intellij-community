@@ -15,7 +15,6 @@ class DiffFileType private constructor() : FileType {
 
   override fun isBinary(): Boolean = true
   override fun isReadOnly(): Boolean = true
-  override fun getCharset(file: VirtualFile, content: ByteArray): String? = null
 
   companion object {
     val INSTANCE: FileType = DiffFileType()

@@ -89,7 +89,7 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
         }
         text.append("]");
         if (caretOffset < 0) {
-          caretOffset -= arrayDimension.length() + 2;
+          caretOffset -= 2;
         }
       }
 

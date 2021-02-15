@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -11,10 +11,9 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -98,7 +97,7 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
 
   private static MultiMap<String, IProperty> getChildrenIdShowOnlyIncomplete(ResourceBundle resourceBundle) {
     final MultiMap<String, IProperty> propertyNames = MultiMap.createLinked();
-    TObjectIntHashMap<String> occurrences = new TObjectIntHashMap<>();
+    Object2IntOpenHashMap<String> occurrences = new Object2IntOpenHashMap<>();
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       MultiMap<String, IProperty> currentFilePropertyNames = MultiMap.createLinked();
       for (IProperty property : file.getProperties()) {
@@ -107,34 +106,25 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
       }
       propertyNames.putAllValues(currentFilePropertyNames);
       for (String propertyName : currentFilePropertyNames.keySet()) {
-        if (occurrences.contains(propertyName)) {
-          occurrences.adjustValue(propertyName, 1);
-        }
-        else {
-          occurrences.put(propertyName, 1);
-        }
+        occurrences.addTo(propertyName, 1);
       }
     }
     final int targetOccurrences = resourceBundle.getPropertiesFiles().size();
-    occurrences.forEachEntry(new TObjectIntProcedure<String>() {
-      @Override
-      public boolean execute(String propertyName, int occurrences) {
-        if (occurrences == targetOccurrences) {
-          propertyNames.remove(propertyName);
-        }
-        return true;
+    for (Object2IntMap.Entry<String> entry : occurrences.object2IntEntrySet()) {
+      if (entry.getIntValue() == targetOccurrences) {
+        propertyNames.remove(entry.getKey());
       }
-    });
+    }
     return propertyNames;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public IProperty[] getProperties() {
     return IProperty.EMPTY_ARRAY;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public PsiFile[] getFiles() {
     ResourceBundle rb = getValue();
@@ -150,11 +140,6 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
       @Override
       public String getPresentableText() {
         return myResourceBundle.isValid() ? myResourceBundle.getBaseName() : null;
-      }
-
-      @Override
-      public String getLocationString() {
-        return null;
       }
 
       @Override

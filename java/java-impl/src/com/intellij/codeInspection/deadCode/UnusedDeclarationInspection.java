@@ -259,50 +259,54 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       PsiCodeBlock bodySourcePsi = ObjectUtils.tryCast(body.getSourcePsi(), PsiCodeBlock.class);
       if (bodySourcePsi == null) return;
       Tools tools = myTools.get(getShortName());
-      if (tools.isEnabled(bodySourcePsi)) {
-        InspectionToolWrapper toolWrapper = tools.getInspectionTool(bodySourcePsi);
-        InspectionToolPresentation presentation = myContext.getPresentation(toolWrapper);
-        if (((UnusedDeclarationInspection)toolWrapper.getTool()).getSharedLocalInspectionTool().LOCAL_VARIABLE) {
-          List<CommonProblemDescriptor> descriptors = new ArrayList<>();
+      if (!tools.isEnabled(bodySourcePsi)) return;
+      InspectionToolWrapper toolWrapper = tools.getInspectionTool(bodySourcePsi);
+      InspectionToolPresentation presentation = myContext.getPresentation(toolWrapper);
+      if (((UnusedDeclarationInspection)toolWrapper.getTool()).getSharedLocalInspectionTool().LOCAL_VARIABLE) {
+        List<CommonProblemDescriptor> descriptors = new ArrayList<>();
+        findUnusedLocalVariablesInCodeBlock(bodySourcePsi, descriptors);
+        if (!descriptors.isEmpty()) {
+          presentation.addProblemElement(refElement, descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY));
+        }
+      }
+    }
 
-          final Set<PsiVariable> usedVariables = new THashSet<>();
-          List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(bodySourcePsi, usedVariables);
-
-          if (unusedDefs != null && !unusedDefs.isEmpty()) {
-
-            for (DefUseUtil.Info info : unusedDefs) {
-              PsiElement parent = info.getContext();
-              PsiVariable psiVariable = info.getVariable();
-
-              if (parent instanceof PsiDeclarationStatement || parent instanceof PsiResourceVariable) {
-                if (!info.isRead() && !SuppressionUtil.inspectionResultSuppressed(psiVariable, UnusedDeclarationInspection.this)) {
-                  descriptors.add(createProblemDescriptor(psiVariable));
-                }
-              }
+    private void findUnusedLocalVariablesInCodeBlock(@NotNull PsiCodeBlock codeBlock, @NotNull List<CommonProblemDescriptor> descriptors) {
+      Set<PsiVariable> usedVariables = new THashSet<>();
+      List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(codeBlock, usedVariables);
+      if (unusedDefs != null && !unusedDefs.isEmpty()) {
+        for (DefUseUtil.Info varDefInfo : unusedDefs) {
+          PsiElement parent = varDefInfo.getContext();
+          PsiVariable psiVariable = varDefInfo.getVariable();
+          if (parent instanceof PsiDeclarationStatement || parent instanceof PsiResourceVariable) {
+            if (!varDefInfo.isRead() && !SuppressionUtil.inspectionResultSuppressed(psiVariable, UnusedDeclarationInspection.this)) {
+              descriptors.add(createProblemDescriptor(psiVariable));
             }
-
-          }
-
-          bodySourcePsi.accept(new JavaRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitClass(PsiClass aClass) { }
-
-            @Override
-            public void visitLambdaExpression(PsiLambdaExpression expression) {} //todo
-
-            @Override
-            public void visitLocalVariable(PsiLocalVariable variable) {
-              if (!usedVariables.contains(variable) && variable.getInitializer() == null &&
-                  !SuppressionUtil.inspectionResultSuppressed(variable, UnusedDeclarationInspection.this)) {
-                descriptors.add(createProblemDescriptor(variable));
-              }
-            }
-          });
-          if (!descriptors.isEmpty()) {
-            presentation.addProblemElement(refElement, descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY));
           }
         }
       }
+      codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitClass(PsiClass aClass) {
+          // prevent going to local classes
+        }
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression lambdaExpr) {
+          PsiCodeBlock lambdaBody = ObjectUtils.tryCast(lambdaExpr.getBody(), PsiCodeBlock.class);
+          if (lambdaBody != null) {
+            findUnusedLocalVariablesInCodeBlock(lambdaBody, descriptors);
+          }
+        }
+
+        @Override
+        public void visitLocalVariable(PsiLocalVariable variable) {
+          if (!usedVariables.contains(variable) && variable.getInitializer() == null &&
+              !SuppressionUtil.inspectionResultSuppressed(variable, UnusedDeclarationInspection.this)) {
+            descriptors.add(createProblemDescriptor(variable));
+          }
+        }
+      });
     }
 
     private ProblemDescriptor createProblemDescriptor(PsiVariable psiVariable) {

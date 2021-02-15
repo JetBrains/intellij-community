@@ -284,12 +284,27 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psi.getLanguage());
 
     if (foldingBuilder == this || foldingBuilder instanceof CompositeFoldingBuilder) {
-      final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
-      return psi instanceof XmlTag && foldingSettings.isCollapseXmlTags() ||
-             psi instanceof XmlAttribute && (foldStyle((XmlAttribute)psi, foldingSettings) || foldSrc((XmlAttribute)psi, foldingSettings)) ||
-             isEntity(psi) && foldingSettings.isCollapseEntities() && hasEntityPlaceholder(psi);
+      return isPsiElementCollapsedByDefault(psi);
     }
     return foldingBuilder.isCollapsedByDefault(node);
+  }
+
+  private boolean isPsiElementCollapsedByDefault(PsiElement psi) {
+    final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
+    return psi instanceof XmlTag && foldingSettings.isCollapseXmlTags() ||
+           psi instanceof XmlAttribute && (foldStyle((XmlAttribute)psi, foldingSettings) || foldSrc((XmlAttribute)psi, foldingSettings)) ||
+           isEntity(psi) && foldingSettings.isCollapseEntities() && hasEntityPlaceholder(psi);
+  }
+
+  @Override
+  public boolean isRegionCollapsedByDefault(@NotNull FoldingDescriptor foldingDescriptor) {
+    final PsiElement psi = foldingDescriptor.getElement().getPsi();
+    FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psi.getLanguage());
+
+    if (foldingBuilder == this || foldingBuilder instanceof CompositeFoldingBuilder) {
+      return isPsiElementCollapsedByDefault(psi);
+    }
+    return foldingBuilder.isCollapsedByDefault(foldingDescriptor);
   }
 
   private static boolean hasEntityPlaceholder(PsiElement psi) {

@@ -91,6 +91,10 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     doTest("siStaticMethod");
   }
 
+  public void testRenameMethodInnerStaticToOuterStaticMoreParameters() {
+    doTest("staticMethod");
+  }
+
   public void testRenameMethodStaticToAlien() {
     doTest("valueOf");
   }

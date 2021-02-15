@@ -24,9 +24,4 @@ public enum CommittedChangesBrowserUseCase {
   IN_AIR;
 
   public static final DataKey<CommittedChangesBrowserUseCase> DATA_KEY = DataKey.create("COMMITTED_CHANGES_BROWSER_USE_CASE");
-
-  /**
-   * @deprecated use {@link #DATA_KEY}
-   */
-  @Deprecated public final static String CONTEXT_NAME = DATA_KEY.getName();
 }

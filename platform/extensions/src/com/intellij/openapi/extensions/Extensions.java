@@ -71,26 +71,10 @@ public final class Extensions {
   }
 
   /**
-   * @deprecated Use {@link ExtensionPointName#getExtensions()}
-   */
-  @Deprecated
-  public static <T> T @NotNull [] getExtensions(@NotNull String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
-    return getArea(areaInstance).<T>getExtensionPoint(extensionPointName).getExtensions();
-  }
-
-  /**
    * @deprecated Use {@link ExtensionPointName#findExtensionOrFail(Class)}
    */
   @Deprecated
   public static @NotNull <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
     return extensionPointName.findExtensionOrFail(extClass);
-  }
-
-  /**
-   * @deprecated Not needed.
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static void registerAreaClass(@NonNls @NotNull String areaClass, @Nullable @NonNls String parentAreaClass) {
   }
 }

@@ -278,7 +278,7 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
   }
 
   companion object {
-    private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.framework.GuiTestRunner")
+    private val LOG = Logger.getInstance(GuiTestRunner::class.java)
 
     private fun testShouldBeIgnored(test: FrameworkMethod): Boolean =
       test.getAnnotation(DisabledOnOs::class.java)?.os?.contains(SystemInfo.getSystemType()) ?: false ||

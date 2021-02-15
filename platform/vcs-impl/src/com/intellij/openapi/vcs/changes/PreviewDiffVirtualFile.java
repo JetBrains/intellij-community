@@ -45,6 +45,12 @@ public class PreviewDiffVirtualFile extends DiffVirtualFile {
   }
 
   @NotNull
+  @Override
+  public String toString() {
+    return super.toString() + ":" + myProvider;
+  }
+
+  @NotNull
   public DiffPreviewProvider getProvider() {
     return myProvider;
   }

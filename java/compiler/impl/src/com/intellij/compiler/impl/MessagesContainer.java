@@ -62,9 +62,10 @@ public class MessagesContainer {
   }
 
   @Nullable
-  public CompilerMessage addMessage(CompilerMessageCategory category, @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                                    String url, int lineNum, int columnNum, Navigatable navigatable) {
-    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable);
+  public CompilerMessage addMessage(CompilerMessageCategory category,
+                                    @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                    String url, int lineNum, int columnNum, Navigatable navigatable, final Collection<String> moduleNames) {
+    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable, moduleNames);
     if (addMessage(msg)) {
       msg.setColumnAdjuster((m, line, col) -> adjustColumn(m, line, col));
       return msg;

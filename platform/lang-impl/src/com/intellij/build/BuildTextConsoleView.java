@@ -28,19 +28,8 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
   public BuildTextConsoleView(@NotNull Project project, boolean viewer, @NotNull List<Filter> executionFilters) {
-    super(project, GlobalSearchScope.allScope(project), viewer, false);
+    super(project, GlobalSearchScope.allScope(project), viewer, true);
     executionFilters.forEach(this::addMessageFilter);
-  }
-
-  @Override
-  protected @NotNull CompositeFilter createCompositeFilter() {
-    CompositeFilter compositeFilter = super.createCompositeFilter();
-    // add build execution filters with higher priority than all other predefined message filters
-    Project project = getProject();
-    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    List<Filter> predefinedMessageFilters = ConsoleViewUtil.computeConsoleFilters(project, this, scope);
-    predefinedMessageFilters.forEach(compositeFilter::addFilter);
-    return compositeFilter;
   }
 
   @Override

@@ -89,6 +89,7 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo) -> String?
   }
 }
 
+@Suppress("IntentionDescriptionNotFoundInspection")
 class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
   override fun getText(): String = CodeInsightBundle.message("inlay.hints.blacklist.method")
   override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
@@ -158,6 +159,7 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
 }
 
 
+@Suppress("IntentionDescriptionNotFoundInspection")
 class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   @IntentionName
   private var lastOptionName = ""
@@ -200,6 +202,7 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   override fun startInWriteAction(): Boolean = false
 }
 
+@Suppress("IntentionDescriptionNotFoundInspection")
 class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
   @IntentionName
   private var lastOptionName = ""

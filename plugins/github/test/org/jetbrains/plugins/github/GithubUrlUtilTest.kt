@@ -140,33 +140,6 @@ class GithubUrlUtilTest : TestCase() {
     runTestCase(tests) { `in` -> getHostFromUrl(`in`) }
   }
 
-  fun testGetApiUrl() {
-    val tests = TestCase<String>()
-
-    tests.add("github.com", "https://api.github.com")
-    tests.add("https://github.com/", "https://api.github.com")
-
-    tests.add("https://my.site.com/", "https://my.site.com/api/v3")
-    tests.add("https://api.site.com/", "https://api.site.com/api/v3")
-    tests.add("https://url.github.com/", "https://url.github.com/api/v3")
-
-    tests.add("my.site.com/", "https://my.site.com/api/v3")
-    tests.add("api.site.com/", "https://api.site.com/api/v3")
-    tests.add("url.github.com/", "https://url.github.com/api/v3")
-
-    tests.add("http://my.site.com/", "http://my.site.com/api/v3")
-    tests.add("http://api.site.com/", "http://api.site.com/api/v3")
-    tests.add("http://url.github.com/", "http://url.github.com/api/v3")
-
-    tests.add("HTTP://GITHUB.com", "http://api.github.com")
-    tests.add("HttP://GitHub.com/", "http://api.github.com")
-
-    tests.add("https://ghe.com/suffix", "https://ghe.com/suffix/api/v3")
-    tests.add("https://ghe.com/suFFix", "https://ghe.com/suFFix/api/v3")
-
-    runTestCase(tests) { `in` -> getApiUrl(`in`) }
-  }
-
   fun testUri() {
     val tests = TestCase<URI?>()
 

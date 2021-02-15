@@ -15,12 +15,17 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,9 +34,22 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class UnnecessaryToStringCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
+
+  public boolean notNullQualifierOnly = true;
+
+  @Override
+  public @Nullable JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.redundant.tostring.option.notnull.qualifier"), this,
+                                          "notNullQualifierOnly");
+  }
 
   @Override
   @NotNull
@@ -89,7 +107,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
     return new UnnecessaryToStringCallVisitor();
   }
 
-  private static class UnnecessaryToStringCallVisitor extends BaseInspectionVisitor {
+  private class UnnecessaryToStringCallVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
@@ -99,6 +117,10 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
       if (referenceNameElement == null) return;
       PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
       if (qualifier == null) return;
+      if (notNullQualifierOnly && PsiTreeUtil.isAncestor(methodExpression, qualifier, true) &&
+          NullabilityUtil.getExpressionNullability(qualifier, true) != Nullability.NOT_NULL) {
+        return;
+      }
       registerError(referenceNameElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, qualifier.isPhysical() ? null : qualifier.getText());
     }
   }
@@ -115,7 +137,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
       return false;
     }
     if (qualifier instanceof PsiSuperExpression) return false;
-    final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(qualifier, "java.lang.Throwable");
+    final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_THROWABLE);
     return !ExpressionUtils.isConversionToStringNecessary(call, throwable);
   }
 }

@@ -27,7 +27,6 @@ class VcsLogFileType private constructor() : FileType {
   override fun getIcon(): Icon? = AllIcons.Vcs.Branch
   override fun isBinary(): Boolean = true
   override fun isReadOnly(): Boolean = true
-  override fun getCharset(file: VirtualFile, content: ByteArray): String? = null
 
   companion object {
     val INSTANCE = VcsLogFileType()

@@ -170,21 +170,6 @@ public class LineMarkerInfo<T extends PsiElement> {
                         Icon icon,
                         int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
-                        @Nullable GutterIconNavigationHandler<T> navHandler,
-                        @NotNull GutterIconRenderer.Alignment alignment) {
-    this(element, new TextRange(startOffset, startOffset), icon, null, tooltipProvider, navHandler, alignment);
-    DeprecatedMethodException.report("Please use LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier) instead");
-  }
-
-  /**
-   * @deprecated use {@link #LineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)} or {@link #LineMarkerInfo(PsiElement, TextRange)} instead
-   */
-  @Deprecated
-  public LineMarkerInfo(@NotNull T element,
-                        int startOffset,
-                        Icon icon,
-                        int updatePass,
-                        @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler) {
     this(element, new TextRange(startOffset, startOffset), icon, null, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
     DeprecatedMethodException.report("Please use LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier) instead");

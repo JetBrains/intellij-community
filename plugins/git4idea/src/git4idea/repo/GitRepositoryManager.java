@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
-import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 
+@Service(Service.Level.PROJECT)
 public final class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
   private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
 
@@ -40,14 +41,6 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
   @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
 
   public GitRepositoryManager(@NotNull Project project) {
-    super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
-  }
-
-  /**
-   * @deprecated Use {@link #GitRepositoryManager(Project)}
-   */
-  @Deprecated
-  public GitRepositoryManager(@NotNull Project project, @SuppressWarnings("unused") @NotNull VcsRepositoryManager vcsRepositoryManager) {
     super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
   }
 

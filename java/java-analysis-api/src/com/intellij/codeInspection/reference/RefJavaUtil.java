@@ -92,9 +92,4 @@ public abstract class RefJavaUtil {
   public void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager) {
     throw new UnsupportedOperationException();
   }
-
-  @Deprecated
-  public void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager, @Nullable RefJavaElement refElement) {
-    throw new UnsupportedOperationException();
-  }
 }

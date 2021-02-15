@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.PathUtilRt
-import gnu.trove.THashSet
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -93,7 +92,7 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
   private fun checkRootModification(module: Module, newAncestorPath: String) {
     val moduleRootManager = module.rootManager as? ModuleRootManagerImpl ?: return
 
-    val roots = THashSet<String>()
+    val roots = HashSet<String>()
     moduleRootManager.contentRootUrls.forEach { roots.add(VfsUtilCore.urlToPath(it)) }
     moduleRootManager.sourceRootUrls.forEach { roots.add(VfsUtilCore.urlToPath(it)) }
     if (roots.contains(newAncestorPath)) {

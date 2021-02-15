@@ -2,6 +2,7 @@
 package com.intellij.compiler.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
@@ -53,4 +54,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   protected abstract void handleCompileMessage(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message);
 
   protected abstract void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event);
+
+  @NotNull
+  public abstract ProgressIndicator getProgressIndicator();
 }

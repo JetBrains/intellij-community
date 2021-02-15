@@ -135,13 +135,13 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, final @NlsContexts.PopupTitle String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     for (final IntentionAction optionIntention : action.getOptionIntentions()) {
-      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, getIcon(optionIntention)));
+      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));
     }
     for (final IntentionAction optionFix : action.getOptionErrorFixes()) {
-      intentions.errorFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, getIcon(optionFix)));
+      intentions.errorFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
     for (final IntentionAction optionFix : action.getOptionInspectionFixes()) {
-      intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, getIcon(optionFix)));
+      intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
 
     return new IntentionListStep(myPopup, myEditor, myFile, myProject,

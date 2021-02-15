@@ -16,6 +16,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -239,6 +240,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   private boolean isHandleSelectionEnabled(@NotNull KeyType selected, boolean processIfUnfocused) {
     return myEnabled &&
+           !ScreenReader.isActive() &&
            myComponent.isEnabled() &&
            myComponent.isShowing() &&
            myComponent.getVisibleRect().intersects(getVisibleRect(selected)) &&

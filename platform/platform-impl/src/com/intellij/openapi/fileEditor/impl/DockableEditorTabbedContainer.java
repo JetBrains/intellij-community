@@ -102,7 +102,8 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
   @Override
   public @NotNull ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
-    return getTabsAt(content, point) != null ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
+    JBTabs tabs = getTabsAt(content, point);
+    return tabs != null && !tabs.getPresentation().isHideTabs() ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
   }
 
   private @Nullable JBTabs getTabsAt(DockableContent<?> content, RelativePoint point) {

@@ -18,13 +18,6 @@ public interface IdeGlassPane {
 
   void addPainter(@Nullable Component component, @NotNull Painter painter, @NotNull Disposable parent);
 
-  /**
-   * @deprecated to remove the listener, invoke {@code Disposer.dispose(disposable);} on the disposable
-   * which you've passed to {@link #addMouseMotionPreprocessor(MouseMotionListener, Disposable)} instead
-   */
-  @Deprecated
-  void removeMouseMotionPreprocessor(@NotNull MouseMotionListener listener);
-
   void setCursor(@Nullable Cursor cursor, @NotNull Object requestor);
 
   interface TopComponent {

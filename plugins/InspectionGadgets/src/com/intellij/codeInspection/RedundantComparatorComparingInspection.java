@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -256,11 +257,11 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     @NotNull
     private static String getGenericParameters(PsiMethodCallExpression call) {
       PsiClassType callType = tryCast(call.getType(), PsiClassType.class);
-      if (callType == null || !callType.rawType().equalsToText(JAVA_UTIL_COMPARATOR)) return "";
+      if (!PsiTypesUtil.classNameEquals(callType, JAVA_UTIL_COMPARATOR)) return "";
       PsiType[] parameters = callType.getParameters();
       if (parameters.length != 1) return "";
       PsiClassType entryClass = tryCast(parameters[0], PsiClassType.class);
-      if (entryClass == null || !entryClass.rawType().equalsToText(JAVA_UTIL_MAP_ENTRY)) return "";
+      if (!PsiTypesUtil.classNameEquals(entryClass, JAVA_UTIL_MAP_ENTRY)) return "";
       PsiType[] entryClassParameters = entryClass.getParameters();
       if (entryClassParameters.length != 2) return "";
       return "<" + entryClassParameters[0].getCanonicalText() + "," + entryClassParameters[1].getCanonicalText() + ">";

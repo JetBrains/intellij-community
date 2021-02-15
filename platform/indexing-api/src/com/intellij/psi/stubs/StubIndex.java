@@ -71,19 +71,6 @@ public abstract class StubIndex {
     return processAllKeys(indexKey, Objects.requireNonNull(scope.getProject()), processor);
   }
 
-  /**
-   * @deprecated use {@link #getElements(StubIndexKey, Object, Project, GlobalSearchScope, Class)}
-   */
-  @Deprecated
-  @NotNull
-  public <Key, Psi extends PsiElement> Collection<Psi> safeGet(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                               @NotNull Key key,
-                                                               @NotNull final Project project,
-                                                               @Nullable GlobalSearchScope scope,
-                                                               @NotNull Class<Psi> requiredClass) {
-    return getElements(indexKey, key, project, scope, requiredClass);
-  }
-
   @NotNull
   public static <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                           @NotNull Key key,

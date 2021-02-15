@@ -8,8 +8,8 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -20,11 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
-/**
- * @author ven
- */
-public class GroovyImportOptimizer implements ImportOptimizer {
-
+public final class GroovyImportOptimizer implements ImportOptimizer {
   public static Comparator<GrImportStatement> getComparator(final GroovyCodeStyleSettings settings) {
     return (statement1, statement2) -> {
       if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
@@ -125,8 +121,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final GroovyCodeStyleSettings settings = GroovyCodeStyleSettings.getInstance(myFile);
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
-      TObjectIntHashMap<String> packageCountMap = new TObjectIntHashMap<>();
-      TObjectIntHashMap<String> classCountMap = new TObjectIntHashMap<>();
+      Object2IntOpenHashMap<String> packageCountMap = new Object2IntOpenHashMap<>();
+      packageCountMap.defaultReturnValue(-1);
+      Object2IntOpenHashMap<String> classCountMap = new Object2IntOpenHashMap<>();
+      classCountMap.defaultReturnValue(-1);
 
       //init packageCountMap
       for (String importedClass : importedClasses) {
@@ -139,64 +137,55 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
         final String packageName = StringUtil.getPackageName(importedClass);
 
-        if (!packageCountMap.containsKey(packageName)) packageCountMap.put(packageName, 0);
-        packageCountMap.increment(packageName);
+        packageCountMap.addTo(packageName, 1);
       }
 
       //init classCountMap
       for (String importedMember : staticallyImportedMembers) {
-        if (aliased.containsKey(importedMember) || annotations.containsKey(importedMember)) continue;
+        if (aliased.containsKey(importedMember) || annotations.containsKey(importedMember)) {
+          continue;
+        }
 
-        final String className = StringUtil.getPackageName(importedMember);
-
-        if (!classCountMap.containsKey(className)) classCountMap.put(className, 0);
-        classCountMap.increment(className);
+        classCountMap.addTo(StringUtil.getPackageName(importedMember), 1);
       }
 
       final Set<String> onDemandImportedSimpleClassNames = new HashSet<>();
       final List<GrImportStatement> result = new ArrayList<>();
 
-      packageCountMap.forEachEntry(new TObjectIntProcedure<String>() {
-        @Override
-        public boolean execute(String s, int i) {
-          if (i >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND || settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(s)) {
-            final GrImportStatement imp = factory.createImportStatementFromText(s, false, true, null);
-            String annos = annotations.remove(s + ".*");
-            if (annos != null) {
-              imp.getAnnotationList().replace(factory.createModifierList(annos));
-            }
-            result.add(imp);
-            final PsiPackage aPackage = JavaPsiFacade.getInstance(myFile.getProject()).findPackage(s);
-            if (aPackage != null) {
-              for (PsiClass clazz : aPackage.getClasses(myFile.getResolveScope())) {
-                onDemandImportedSimpleClassNames.add(clazz.getName());
-              }
+      for (Object2IntMap.Entry<String> entry : packageCountMap.object2IntEntrySet()) {
+        String s = entry.getKey();
+        if (entry.getIntValue() >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND || settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(s)) {
+          final GrImportStatement imp = factory.createImportStatementFromText(s, false, true, null);
+          String annos = annotations.remove(s + ".*");
+          if (annos != null) {
+            imp.getAnnotationList().replace(factory.createModifierList(annos));
+          }
+          result.add(imp);
+          final PsiPackage aPackage = JavaPsiFacade.getInstance(myFile.getProject()).findPackage(s);
+          if (aPackage != null) {
+            for (PsiClass clazz : aPackage.getClasses(myFile.getResolveScope())) {
+              onDemandImportedSimpleClassNames.add(clazz.getName());
             }
           }
-          return true;
         }
-      });
+      }
 
-      classCountMap.forEachEntry(new TObjectIntProcedure<String>() {
-        @Override
-        public boolean execute(String s, int i) {
-          if (i >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
-            final GrImportStatement imp = factory.createImportStatementFromText(s, true, true, null);
-            String annos = annotations.remove(s + ".*");
-            if (annos != null) {
-              imp.getAnnotationList().replace(factory.createModifierList(annos));
-            }
-            result.add(imp);
+      for (Object2IntMap.Entry<String> entry : classCountMap.object2IntEntrySet()) {
+        if (entry.getIntValue() >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
+          final GrImportStatement imp = factory.createImportStatementFromText(entry.getKey(), true, true, null);
+          String annos = annotations.remove(entry.getKey() + ".*");
+          if (annos != null) {
+            imp.getAnnotationList().replace(factory.createModifierList(annos));
           }
-          return true;
+          result.add(imp);
         }
-      });
+      }
 
       List<GrImportStatement> explicated = new ArrayList<>();
       for (String importedClass : importedClasses) {
         final String parentName = StringUtil.getPackageName(importedClass);
         if (!annotations.containsKey(importedClass) && !aliased.containsKey(importedClass)) {
-          if (packageCountMap.get(parentName) >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND ||
+          if (packageCountMap.getInt(parentName) >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND ||
               settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(parentName)) {
             continue;
           }
@@ -217,7 +206,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       for (String importedMember : staticallyImportedMembers) {
         final String className = StringUtil.getPackageName(importedMember);
         if (!annotations.containsKey(importedMember) && !aliased.containsKey(importedMember)) {
-          if (classCountMap.get(className) >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) continue;
+          if (classCountMap.getInt(className) >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) continue;
         }
         result.add(factory.createImportStatementFromText(importedMember, true, false, null));
       }

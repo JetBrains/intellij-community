@@ -41,4 +41,12 @@ class DependenciesProperties {
     }
     return value
   }
+
+  String propertyOrNull(String name) {
+    def value = props.get(name)
+    if (value == null) {
+      context.messages.warning("`$name` is not defined in `$directory/gradle.properties`")
+    }
+    return value
+  }
 }

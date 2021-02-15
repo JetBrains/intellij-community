@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.wm.IdeFrame;
@@ -11,7 +11,8 @@ import java.awt.*;
  * @author yole
  */
 public interface ApplicationActivationListener {
-  Topic<ApplicationActivationListener> TOPIC = Topic.create("Application activation notifications", ApplicationActivationListener.class);
+  @Topic.AppLevel
+  Topic<ApplicationActivationListener> TOPIC = new Topic<>(ApplicationActivationListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * Called when app is activated by transferring focus to it.

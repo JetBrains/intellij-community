@@ -13,11 +13,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
@@ -33,7 +33,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<? extends RangeHighlighter> highlighters) {
     LineTooltipRenderer bigRenderer = null;
     List<HighlightInfo> infos = new SmartList<>();
-    Collection<String> tooltips = new THashSet<>(); //do not show same tooltip twice
+    Collection<String> tooltips = new HashSet<>(); //do not show same tooltip twice
     for (RangeHighlighter marker : highlighters) {
       final Object tooltipObject = marker.getErrorStripeTooltip();
       if (tooltipObject == null) continue;

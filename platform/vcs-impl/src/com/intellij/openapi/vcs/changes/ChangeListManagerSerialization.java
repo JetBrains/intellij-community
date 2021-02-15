@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.impl.PartialLineStatusTrackerManagerState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -18,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 final class ChangeListManagerSerialization {
+  private static final int DISABLED_CHANGES_THRESHOLD = 100;
+
   @NonNls private static final String ATT_ID = "id";
   @NonNls private static final String ATT_NAME = "name";
   @NonNls private static final String ATT_COMMENT = "comment";
@@ -32,58 +33,22 @@ final class ChangeListManagerSerialization {
   @NonNls private static final String NODE_LIST = "list";
   @NonNls private static final String NODE_CHANGE = "change";
 
-  @NonNls private static final String NODE_DISABLED = "disabled";
-  @NonNls private static final String NODE_WORKER_DISABLED = "disabled_changelists";
-  @NonNls private static final String NODE_LSTM_DISABLED = "disabled_trackers";
-
-  public static void writeExternal(@NotNull Element element, @NotNull ChangeListWorker worker) {
-    for (LocalChangeList list : worker.getChangeLists()) {
-      element.addContent(writeChangeList(list));
+  static void writeExternal(@NotNull Element element,
+                            @Nullable List<? extends LocalChangeList> changeLists,
+                            boolean areChangeListsEnabled) {
+    if (changeLists == null) return;
+    for (LocalChangeList list : changeLists) {
+      element.addContent(writeChangeList(list, areChangeListsEnabled));
     }
-  }
-
-  public static void readExternal(@NotNull Element element, @NotNull ChangeListWorker worker) {
-    List<LocalChangeListImpl> lists = new ArrayList<>();
-    for (Element listNode : element.getChildren(NODE_LIST)) {
-      lists.add(readChangeList(listNode, worker.getProject()));
-    }
-    worker.setChangeLists(removeDuplicatedLists(lists));
-  }
-
-  public static void writeDisabledChangeLists(@NotNull Element element, @Nullable Element disabledLists) {
-    if (disabledLists != null) element.addContent(disabledLists.clone());
-  }
-
-  @Nullable
-  public static Element readDisabledChangeLists(@NotNull Element element) {
-    return element.getChild(NODE_DISABLED);
   }
 
   @NotNull
-  public static Element saveDisabledChangeLists(@NotNull ChangeListWorker worker) {
-    Element element = new Element(NODE_DISABLED);
-
-    Element workerElement = new Element(NODE_WORKER_DISABLED);
-    element.addContent(workerElement);
-    writeExternal(workerElement, worker);
-
-    Element lstmElement = new Element(NODE_LSTM_DISABLED);
-    element.addContent(lstmElement);
-    PartialLineStatusTrackerManagerState.writeState(worker.getProject(), lstmElement);
-
-    return element;
-  }
-
-  public static void loadDisabledChangeLists(@NotNull Element element, @NotNull ChangeListWorker worker) {
-    Element workerElement = element.getChild(NODE_WORKER_DISABLED);
-    if (workerElement != null) {
-      readExternal(workerElement, worker);
+  static List<LocalChangeListImpl> readExternal(@NotNull Element element, @NotNull Project project) {
+    List<LocalChangeListImpl> lists = new ArrayList<>();
+    for (Element listNode : element.getChildren(NODE_LIST)) {
+      lists.add(readChangeList(listNode, project));
     }
-
-    Element lstmElement = element.getChild(NODE_LSTM_DISABLED);
-    if (lstmElement != null) {
-      PartialLineStatusTrackerManagerState.restoreState(worker.getProject(), lstmElement);
-    }
+    return new ArrayList<>(removeDuplicatedLists(lists));
   }
 
   @NotNull
@@ -113,7 +78,7 @@ final class ChangeListManagerSerialization {
   }
 
   @NotNull
-  private static Element writeChangeList(@NotNull LocalChangeList list) {
+  private static Element writeChangeList(@NotNull LocalChangeList list, boolean areChangeListsEnabled) {
     Element listNode = new Element(NODE_LIST);
 
     if (list.isDefault()) listNode.setAttribute(ATT_DEFAULT, ATT_VALUE_TRUE);
@@ -130,9 +95,12 @@ final class ChangeListManagerSerialization {
       listNode.addContent(ChangeListData.writeExternal((ChangeListData)listData));
     }
 
-    List<Change> changes = ContainerUtil.sorted(list.getChanges(), new ChangeComparator());
-    for (Change change : changes) {
-      listNode.addContent(writeChange(change));
+    Collection<Change> changes = list.getChanges();
+    if (areChangeListsEnabled || changes.size() < DISABLED_CHANGES_THRESHOLD) {
+      List<Change> sortedChanges = ContainerUtil.sorted(changes, new ChangeComparator());
+      for (Change change : sortedChanges) {
+        listNode.addContent(writeChange(change));
+      }
     }
 
     return listNode;

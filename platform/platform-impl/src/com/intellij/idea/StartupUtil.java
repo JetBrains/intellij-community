@@ -38,7 +38,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -64,17 +63,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-
-import static java.nio.file.attribute.PosixFilePermission.*;
 
 @ApiStatus.Internal
 public final class StartupUtil {
@@ -167,7 +164,7 @@ public final class StartupUtil {
 
   public static void prepareApp(@NotNull String @NotNull [] args, @NotNull String mainClass) throws Exception {
     LoadingState.setStrictMode();
-    LoadingState.setErrorHandler((message, throwable) -> Logger.getInstance(LoadingState.class).error(message, throwable));
+    LoadingState.errorHandler = (message, throwable) -> Logger.getInstance(LoadingState.class).error(message, throwable);
 
     Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
@@ -234,7 +231,13 @@ public final class StartupUtil {
     });
 
     Activity subActivity = StartUpMeasurer.startActivity("environment loading");
-    EnvironmentUtil.loadEnvironment(subActivity::end);
+    Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
+    if (envReaderFile == null) {
+      subActivity.end();
+    }
+    else {
+      EnvironmentUtil.loadEnvironment(envReaderFile, subActivity::end);
+    }
 
     if (!configImportNeeded) {
       runPreAppClass(log);
@@ -440,12 +443,6 @@ public final class StartupUtil {
       }
     }
 
-    if ("true".equals(System.getProperty("idea.64bit.check")) && !SystemInfoRt.is64Bit && PlatformUtils.isCidr()) {
-      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.jvm"),
-                       BootstrapBundle.message("bootstrap.error.message.use.64.jvm.instead.of.32"), true);
-      return false;
-    }
-
     return true;
   }
 
@@ -506,20 +503,22 @@ public final class StartupUtil {
         problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.temporary.file.in.the.directory";
         reason = "bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions";
         tempFile = directory.resolve("ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
-        OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
-        Files.write(tempFile, "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
+        Files.writeString(tempFile, "#!/bin/sh\nexit 0", StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
 
         if (checkLock) {
           problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.lock.in.directory";
           reason = "bootstrap.error.message.check.ide.directory.possible.reason.the.directory.is.located.on.a.network.disk";
-          try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE); FileLock lock = channel.tryLock()) {
-            if (lock == null) throw new IOException("File is locked");
+          try (FileChannel channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE)); FileLock lock = channel.tryLock()) {
+            if (lock == null) {
+              throw new IOException("File is locked");
+            }
           }
         }
         else if (checkExec) {
           problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.execute.test.script";
           reason = "bootstrap.error.message.check.ide.directory.possible.reason.partition.is.mounted.with.no.exec.option";
-          Files.getFileAttributeView(tempFile, PosixFileAttributeView.class).setPermissions(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE));
+          Files.getFileAttributeView(tempFile, PosixFileAttributeView.class)
+            .setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
           int ec = new ProcessBuilder(tempFile.toAbsolutePath().toString()).start().waitFor();
           if (ec != 0) {
             throw new IOException("Unexpected exit value: " + ec);
@@ -725,11 +724,14 @@ public final class StartupUtil {
     appStarter.beforeStartupWizard();
 
     String stepsDialogName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardDialog();
+    if (System.getProperty("idea.temp.change.ide.wizard") != null) { // temporary until 211 release
+      stepsDialogName = System.getProperty("idea.temp.change.ide.wizard");
+    }
     if (stepsDialogName != null) {
       try {
         Class<?> dialogClass = Class.forName(stepsDialogName);
-        Constructor<?> constr = dialogClass.getConstructor(CustomizeIDEWizardStepsProvider.class, AppStarter.class, boolean.class, boolean.class);
-        ((CommonCustomizeIDEWizardDialog) constr.newInstance(provider, appStarter, true, false)).showIfNeeded();
+        Constructor<?> constr = dialogClass.getConstructor(AppStarter.class);
+        ((CommonCustomizeIDEWizardDialog) constr.newInstance(appStarter)).showIfNeeded();
       } catch (Throwable e) {
         Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
         return;

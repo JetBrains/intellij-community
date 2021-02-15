@@ -98,7 +98,7 @@ class PythonRenameLesson(module: Module)
           TreeUtil.collapseAll(tree, 1)
         }
       }
-      val dynamicReferencesString = "Dynamic references"
+      val dynamicReferencesString = "[${UsageViewBundle.message("usage.view.results.node.dynamic")}]"
       text(PythonLessonsBundle.message("python.rename.expand.dynamic.references",
                                  code("teams"), strong(dynamicReferencesString)))
 

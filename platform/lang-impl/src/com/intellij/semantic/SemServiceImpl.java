@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.semantic;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,7 +19,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,24 +57,23 @@ public final class SemServiceImpl extends SemService {
       }
     };
 
-    for (SemContributorEP contributor : SemContributor.EP_NAME.getExtensionList()) {
+    SemContributor.EP_NAME.processWithPluginDescriptor((contributor, pluginDescriptor) -> {
       SemContributor semContributor;
       try {
-        semContributor =
-          myProject.instantiateExtensionWithPicoContainerOnlyIfNeeded(contributor.implementation, contributor.getPluginDescriptor());
+        semContributor = myProject.instantiateClass(contributor.implementation, pluginDescriptor);
       }
       catch (ProcessCanceledException e) {
         throw e;
       }
       catch (ExtensionNotApplicableException e) {
-        continue;
+        return;
       }
       catch (Exception e) {
         LOG.error(e);
-        continue;
+        return;
       }
       semContributor.registerSemProviders(registrar, myProject);
-    }
+    });
 
     return map;
   }
@@ -96,7 +95,7 @@ public final class SemServiceImpl extends SemService {
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
     LinkedHashSet<T> result = new LinkedHashSet<>();
-    Map<SemKey<?>, List<SemElement>> map = new THashMap<>();
+    Map<SemKey<?>, List<SemElement>> map = new HashMap<>();
 
     ProcessingContext processingContext = new ProcessingContext();
     for (SemKey<?> each : key.getInheritors()) {
@@ -178,7 +177,7 @@ public final class SemServiceImpl extends SemService {
   }
 
   private static class SemCacheChunk {
-    private final IntObjectMap<List<SemElement>> map = ContainerUtil.createConcurrentIntObjectMap();
+    private final IntObjectMap<List<SemElement>> map = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
     List<SemElement> getSemElements(SemKey<?> key) {
       return map.get(key.getUniqueId());

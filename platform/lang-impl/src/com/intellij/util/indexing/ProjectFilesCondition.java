@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 
 final class ProjectFilesCondition implements Condition<VirtualFile> {
   private static final int MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT = 2;
@@ -28,7 +29,7 @@ final class ProjectFilesCondition implements Condition<VirtualFile> {
   @Override
   public boolean value(VirtualFile file) {
     int fileId = ((VirtualFileWithId)file).getId();
-    if (myIndexableFilesFilter != null && fileId > 0 && !myIndexableFilesFilter.containsFileId(fileId)) {
+    if (myIndexableFilesFilter != null && !(file instanceof DeletedVirtualFileStub) && !myIndexableFilesFilter.containsFileId(fileId)) {
       if (myFilesFromOtherProjects >= MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) return false;
       ++myFilesFromOtherProjects;
       return true;

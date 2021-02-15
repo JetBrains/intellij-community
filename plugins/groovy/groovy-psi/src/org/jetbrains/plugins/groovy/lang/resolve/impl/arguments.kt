@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiClassType
@@ -12,9 +12,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
-import java.util.*
 
 fun GrCall.getArguments(): Arguments? {
   val argumentList = argumentList ?: return null
@@ -88,7 +87,7 @@ fun <X : CallParameter> argumentMapping(signature: CallSignature<X>, arguments: 
     }
     arguments.isEmpty() -> {
       val parameter = parameters.singleOrNull()
-      if (parameter != null && !parameter.isOptional && parameter.type is PsiClassType && !PsiUtil.isCompileStatic(context)) {
+      if (parameter != null && !parameter.isOptional && parameter.type is PsiClassType && !isCompileStatic(context)) {
         NullArgumentMapping(parameter)
       }
       else {

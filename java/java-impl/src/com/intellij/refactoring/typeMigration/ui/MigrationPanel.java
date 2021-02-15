@@ -59,8 +59,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class MigrationPanel extends JPanel implements Disposable {
-  @NonNls private static final String MIGRATION_USAGES = "migration.usages";
-  private static final DataKey<TypeMigrationUsageInfo[]> MIGRATION_USAGES_KEYS = DataKey.create(MIGRATION_USAGES);
+  private static final DataKey<TypeMigrationUsageInfo[]> MIGRATION_USAGES_KEY = DataKey.create("migration.usages");
 
   private final PsiElement[] myInitialRoots;
   private final TypeMigrationLabeler myLabeler;
@@ -283,7 +282,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
         return selectedNodes.length == 1 && selectedNodes[0].getUserObject() instanceof MigrationNode
                ? ((MigrationNode)selectedNodes[0].getUserObject()).getInfo().getElement() : null;
       }
-      if (MIGRATION_USAGES.equals(dataId)) {
+      if (MIGRATION_USAGES_KEY.is(dataId)) {
         DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
         final Set<TypeMigrationUsageInfo> usageInfos = new HashSet<>();
         for (DefaultMutableTreeNode selectedNode : selectedNodes) {
@@ -353,7 +352,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
     }
 
     private TypeMigrationUsageInfo @Nullable [] getUsages(AnActionEvent context) {
-      return context.getData(MIGRATION_USAGES_KEYS);
+      return context.getData(MIGRATION_USAGES_KEY);
     }
 
     @Override

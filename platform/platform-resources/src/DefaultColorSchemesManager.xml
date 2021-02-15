@@ -12,6 +12,7 @@
       <option name="WHITESPACES" value="adadad"/>
       <option name="INDENT_GUIDE" value="e6e6e6"/>
       <option name="GUTTER_BACKGROUND" value="f0f0f0" />
+      <option name="DOCUMENTATION_COLOR" value="f7f7f7"/>
       <option name="NOTIFICATION_BACKGROUND" value="fff8d1" />
       <option name="SELECTED_INDENT_GUIDE" value="c8c8c8"/>
       <option name="SELECTION_FOREGROUND" value="ffffff"/>
@@ -78,6 +79,10 @@
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
+      <option name="BookmarkIcon.background" value="F4AF3D"/>
+      <option name="MnemonicIcon.foreground" value="000000"/>
+      <option name="MnemonicIcon.background" value="FEF7EC"/>
+      <option name="MnemonicIcon.borderColor" value="F4AF3D"/>
       <option name="ScrollBar.background" value="F5F5F5"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
       <option name="ScrollBar.thumbColor" value="73737333"/>
@@ -1283,6 +1288,7 @@
       <option name="FILESTATUS_changelistConflict" value="d5756c" />
       <option name="FILESTATUS_modifiedOutside" value="6897bb" />
       <option name="GUTTER_BACKGROUND" value="313335" />
+      <option name="DOCUMENTATION_COLOR" value="46484a"/>
       <option name="INDENT_GUIDE" value="373737" />
       <option name="LINE_NUMBERS_COLOR" value="606366" />
       <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="a4a3a3" />
@@ -1320,6 +1326,10 @@
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
+      <option name="BookmarkIcon.background" value="D9A343"/>
+      <option name="MnemonicIcon.foreground" value="BBBBBB"/>
+      <option name="MnemonicIcon.background" value="5B5341"/>
+      <option name="MnemonicIcon.borderColor" value="D9A343"/>
       <option name="ScrollBar.background" value="3F4244"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
       <option name="ScrollBar.thumbColor" value="A6A6A647"/>

@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -52,37 +51,38 @@ final class ITNProxy {
   private static final String NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
 
-  private static final NotNullLazyValue<Map<String, String>> TEMPLATE = AtomicNotNullLazyValue.createValue(() -> {
-    Map<String, String> template = new LinkedHashMap<>();
+  private static final NotNullLazyValue<Map<String, String>> TEMPLATE =
+    NotNullLazyValue.atomicLazy(() -> {
+      Map<String, String> template = new LinkedHashMap<>();
 
-    template.put("protocol.version", "1.1");
-    template.put("os.name", SystemInfo.OS_NAME);
-    template.put("java.version", SystemInfo.JAVA_VERSION);
-    template.put("java.vm.vendor", SystemInfo.JAVA_VENDOR);
+      template.put("protocol.version", "1.1");
+      template.put("os.name", SystemInfo.OS_NAME);
+      template.put("java.version", SystemInfo.JAVA_VERSION);
+      template.put("java.vm.vendor", SystemInfo.JAVA_VENDOR);
 
-    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-    ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
-    BuildNumber build = appInfo.getBuild();
-    String buildNumberWithAllDetails = build.asString();
-    if (buildNumberWithAllDetails.startsWith(build.getProductCode() + "-")) {
-      buildNumberWithAllDetails = buildNumberWithAllDetails.substring(build.getProductCode().length() + 1);
-    }
+      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+      ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
+      BuildNumber build = appInfo.getBuild();
+      String buildNumberWithAllDetails = build.asString();
+      if (buildNumberWithAllDetails.startsWith(build.getProductCode() + "-")) {
+        buildNumberWithAllDetails = buildNumberWithAllDetails.substring(build.getProductCode().length() + 1);
+      }
 
-    template.put("app.name", namesInfo.getProductName());
-    template.put("app.name.full", namesInfo.getFullProductName());
-    template.put("app.name.version", appInfo.getVersionName());
-    template.put("app.eap", Boolean.toString(appInfo.isEAP()));
-    template.put("app.internal", Boolean.toString(ApplicationManager.getApplication().isInternal()));
-    template.put("app.build", appInfo.getApiVersion());
-    template.put("app.version.major", appInfo.getMajorVersion());
-    template.put("app.version.minor", appInfo.getMinorVersion());
-    template.put("app.build.date", format(appInfo.getBuildDate()));
-    template.put("app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
-    template.put("app.product.code", build.getProductCode());
-    template.put("app.build.number", buildNumberWithAllDetails);
+      template.put("app.name", namesInfo.getProductName());
+      template.put("app.name.full", namesInfo.getFullProductName());
+      template.put("app.name.version", appInfo.getVersionName());
+      template.put("app.eap", Boolean.toString(appInfo.isEAP()));
+      template.put("app.internal", Boolean.toString(ApplicationManager.getApplication().isInternal()));
+      template.put("app.build", appInfo.getApiVersion());
+      template.put("app.version.major", appInfo.getMajorVersion());
+      template.put("app.version.minor", appInfo.getMinorVersion());
+      template.put("app.build.date", format(appInfo.getBuildDate()));
+      template.put("app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
+      template.put("app.product.code", build.getProductCode());
+      template.put("app.build.number", buildNumberWithAllDetails);
 
-    return template;
-  });
+      return template;
+    });
 
   private static @Nullable String format(@Nullable Calendar calendar) {
     return calendar == null ?  null : Long.toString(calendar.getTime().getTime());

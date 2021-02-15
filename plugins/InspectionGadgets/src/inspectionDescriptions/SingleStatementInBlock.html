@@ -1,7 +1,15 @@
 <html>
 <body>
-Reports control flow statements with
-only a single statement in their code block.
-<p>The quick fix for the inspection removes braces from the statement body.
+Reports control flow statements with only a single statement in their code block.
+<p>Example:</p>
+<pre>
+  if (x > 0) {
+    System.out.println("x is positive");
+  }
+</pre>
+<p>The quick fix for the inspection removes braces from the statement body:</p>
+<pre>
+  if (x > 0) System.out.println("x is positive");
+</pre>
 </body>
 </html>

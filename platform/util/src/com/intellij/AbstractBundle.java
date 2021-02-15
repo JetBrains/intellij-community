@@ -2,9 +2,9 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
@@ -18,15 +18,8 @@ import java.util.function.Supplier;
 
 /**
  * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
- * <p/>
- * Usage pattern:
- * <ol>
- *   <li>Create class that extends this class and provides path to the target bundle to the current class constructor;</li>
- *   <li>
- *     Optionally create static facade method at the subclass - create single shared instance and delegate
- *     to its {@link #getMessage(String, Object...)};
- *   </li>
- * </ol>
+ * <br/>
+ * <b>This class is not supposed to be extended directly. Extend your bundle from {@link com.intellij.DynamicBundle} or {@link org.jetbrains.jps.api.JpsDynamicBundle}</b>
  *
  * @author Denis Zhdanov
  */
@@ -47,7 +40,7 @@ public class AbstractBundle {
 
   @Contract(pure = true)
   public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return message(getResourceBundle(getClass().getClassLoader()), key, params);
+    return BundleBase.messageOrDefault(getResourceBundle(getClass().getClassLoader()), key, null, params);
   }
 
   /**
@@ -163,10 +156,11 @@ public class AbstractBundle {
   //see https://docs.oracle.com/javase/9/docs/api/java/util/PropertyResourceBundle.html and
   //https://docs.oracle.com/javase/8/docs/api/java/util/PropertyResourceBundle.html
   //for more details
+  @ReviseWhenPortedToJDK("9")
   private ResourceBundle.Control getResourceBundleControl() {
     ResourceBundle.Control control = com.intellij.reference.SoftReference.dereference(myControl);
     if (control == null) {
-      if (SystemInfo.isJavaVersionAtLeast(9)) {
+      if (JavaVersion.current().feature >= 9) {
         control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
       }
       else {
@@ -185,7 +179,7 @@ public class AbstractBundle {
     ourCache.clear();
   }
 
-  protected void clearLocaleCache() {
+  public void clearLocaleCache() {
     if (myBundle != null) {
       myBundle.clear();
     }

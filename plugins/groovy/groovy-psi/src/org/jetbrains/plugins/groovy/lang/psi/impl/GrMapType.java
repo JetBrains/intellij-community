@@ -3,13 +3,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -20,25 +17,19 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.*;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
-
 /**
  * @author peter
  */
 public abstract class GrMapType extends GrLiteralClassType {
-
-  private final VolatileNotNullLazyValue<PsiType[]> myParameters = new VolatileNotNullLazyValue<PsiType[]>() {
-    @Override
-    protected PsiType @NotNull [] compute() {
-      final PsiType[] keyTypes = getAllKeyTypes();
-      final PsiType[] valueTypes = getAllValueTypes();
-      if (keyTypes.length == 0 && valueTypes.length == 0) {
-        return EMPTY_ARRAY;
-      }
-
-      return new PsiType[]{getLeastUpperBound(keyTypes), getLeastUpperBound(valueTypes)};
+  private final NotNullLazyValue<PsiType[]> myParameters = NotNullLazyValue.volatileLazy(() -> {
+    final PsiType[] keyTypes = getAllKeyTypes();
+    final PsiType[] valueTypes = getAllValueTypes();
+    if (keyTypes.length == 0 && valueTypes.length == 0) {
+      return EMPTY_ARRAY;
     }
-  };
+
+    return new PsiType[]{getLeastUpperBound(keyTypes), getLeastUpperBound(valueTypes)};
+  });
 
   protected GrMapType(JavaPsiFacade facade, GlobalSearchScope scope) {
     this(facade, scope, LanguageLevel.JDK_1_5);
@@ -71,7 +62,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   protected PsiType @NotNull [] getAllKeyTypes() {
     Set<PsiType> result = new HashSet<>();
     if (!getStringEntries().isEmpty()) {
-      result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(JAVA_LANG_STRING, getResolveScope()));
+      result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, getResolveScope()));
     }
     for (Couple<PsiType> entry : getOtherEntries()) {
       result.add(entry.first);

@@ -29,7 +29,7 @@ import javax.swing.*;
  * @author yole
  */
 public class GenerateToStringConfigurable implements Configurable {
-  private static final Logger log = Logger.getInstance("#GenerateToStringConfigurable");
+  private static final Logger LOG = Logger.getInstance(GenerateToStringConfigurable.class);
 
   private ConfigUI configUI;
   private final Project myProject;
@@ -63,7 +63,7 @@ public class GenerateToStringConfigurable implements Configurable {
       Config config = configUI.getConfig();
       GenerateToStringContext.setConfig(config); // update context
 
-      if (log.isDebugEnabled()) log.debug("Config updated:\n" + config);
+      if (LOG.isDebugEnabled()) LOG.debug("Config updated:\n" + config);
   }
 
   @Override

@@ -1,17 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.jar.BasicJarHandler;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.openapi.vfs.impl.jar.JarHandler;
+import com.intellij.openapi.vfs.impl.jar.TimedZipHandler;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -24,12 +22,10 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +38,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -131,8 +126,8 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBasicJarHandlerWithInvalidJar() throws Exception {
-    final BasicJarHandler handler = new BasicJarHandler("some invalid path");
+  public void testTimedZipHandlerWithInvalidJar() throws Exception {
+    final TimedZipHandler handler = new TimedZipHandler("some invalid path");
     Runnable failingIOAction = () -> {
       try {
         handler.getInputStream("").close();
@@ -151,13 +146,13 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBasicJarHandlerConcurrency() throws Exception {
+  public void testTimedZipHandlerConcurrency() throws Exception {
     try {
       int number = 40;
-      List<BasicJarHandler> handlers = new ArrayList<>();
+      List<TimedZipHandler> handlers = new ArrayList<>();
       for (int i = 0; i < number; ++i) {
         File jar = IoTestUtil.createTestJar(tempDir.newFile("test" + i + ".jar"));
-        handlers.add(new BasicJarHandler(jar.getPath()));
+        handlers.add(new TimedZipHandler(jar.getPath()));
       }
 
       int N = Math.max(2, Runtime.getRuntime().availableProcessors());
@@ -172,7 +167,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
               sameStartCondition.await();
               Random random = new Random();
               for (int j = 0; j < 2 * number; ++j) {
-                BasicJarHandler handler = handlers.get(random.nextInt(handlers.size()));
+                TimedZipHandler handler = handlers.get(random.nextInt(handlers.size()));
                 if (random.nextBoolean()) {
                   assertNotNull(handler.getAttributes(JarFile.MANIFEST_NAME));
                 }
@@ -190,7 +185,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
         for (Future<?> future : futuresToWait) future.get(2, TimeUnit.SECONDS);
       }
 
-      for (BasicJarHandler handler : handlers) handler.dispose();
+      for (TimedZipHandler handler : handlers) handler.dispose();
     }
     catch (TimeoutException e) {
       fail("Deadlock detected");
@@ -200,53 +195,31 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
-    JarHandler handler = new JarHandler(jar.getPath());
-    FileAttributes attributes = handler.getAttributes(JarFile.MANIFEST_NAME);
-    assertNotNull(attributes);
-    assertEquals(0, attributes.length);
-    assertTimestampsEqual(jar.lastModified(), attributes.lastModified);
-
-    JarFileSystemImpl jarFileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
-    if (jarFileSystem.isMakeCopyOfJar(jar)) {
-      // for performance reasons we create file copy on windows when we read contents and have the handle open to the copy
-      Field resolved = handler.getClass().getDeclaredField("myFileWithMirrorResolved");
-      resolved.setAccessible(true);
-      assertNull(resolved.get(handler));
-    }
-
-    jarFileSystem.setNoCopyJarForPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    assertFalse(jarFileSystem.isMakeCopyOfJar(jar));
+    JarFileSystemImpl fs = (JarFileSystemImpl)JarFileSystem.getInstance();
+    fs.setNoCopyJarForPath(jar.getPath());
+    assertFalse(fs.isMakeCopyOfJar(jar));
   }
 
   @Test
   public void testInvalidZip() {
-    VirtualFile vf = createJar(
-      "a"
-      , "a/b"
-      , "a/b/c.txt"
-      , "x\\y\\z.txt"
-      , "/x/f.txt"
-      , "d1/aB"
-      , "d1/ab"
-      , "D2/f1"
-      , "d2/f2");
-
-    String rootPath = vf.getPath() + JarFileSystem.JAR_SEPARATOR;
-    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vf);
+    VirtualFile zip = createJar(
+      "/", "a", "a/b", "a/b/c.txt", "x\\y\\z.txt", "/x/f.txt", "d1/aB", "d1/ab", "D2/f1", "//d2//f2", "empty/", "w/../W");
+    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(zip);
     assertNotNull(jarRoot);
+    int prefixLength = zip.getPath().length() + JarFileSystem.JAR_SEPARATOR.length();
     List<String> entries = new ArrayList<>();
-    VfsUtilCore.visitChildrenRecursively(jarRoot, new VirtualFileVisitor<Object>() {
+    VfsUtilCore.visitChildrenRecursively(jarRoot, new VirtualFileVisitor<>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!jarRoot.equals(file)) {
-          String path = file.getPath().substring(rootPath.length());
+          String path = file.getPath().substring(prefixLength);
           entries.add(file.isDirectory() ? path + '/' : path);
         }
         return true;
       }
     });
     assertThat(entries).containsExactlyInAnyOrder(
-      "a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/f.txt", "x/y/z.txt", "d1/", "d1/aB", "d1/ab", "D2/", "D2/f1", "d2/", "d2/f2");
+      "a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/f.txt", "x/y/z.txt", "d1/", "d1/aB", "d1/ab", "D2/", "D2/f1", "d2/", "d2/f2", "empty/");
   }
 
   @Test
@@ -347,8 +320,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertEquals("Hello.class", UsefulTestCase.assertOneElement(JarFileSystem.getInstance().list(jarRoot.findFileByRelativePath("com"))));
   }
 
-  @NotNull
-  private VirtualFile createJar(String @NotNull ... entryNames) {
+  private VirtualFile createJar(String... entryNames) {
     String[] namesAndTexts = Arrays.stream(entryNames).flatMap(n -> Stream.of(n, null)).toArray(String[]::new);
     File jar = IoTestUtil.createTestJar(tempDir.newFile("p.jar"), namesAndTexts);
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
@@ -356,7 +328,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testCrazyJarWithBackSlashedLongEntryMustNotCrashAnything() {
-    VirtualFile vFile = createJar("META-INF/MANIFEST.MF", "\\META-INF\\RETLD-00.00015.xml");
+    VirtualFile vFile = createJar("META-INF/MANIFEST.MF", "\\META-INF\\RET-LD00.00015.xml");
 
     VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
     assertNotNull(jarRoot);
@@ -366,7 +338,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
     child.getChildren();
     assertNotNull(jarRoot.findFileByRelativePath("META-INF/MANIFEST.MF"));
-    assertNotNull(jarRoot.findFileByRelativePath("META-INF/RETLD-00.00015.xml"));
+    assertNotNull(jarRoot.findFileByRelativePath("META-INF/RET-LD00.00015.xml"));
   }
 
   @Test

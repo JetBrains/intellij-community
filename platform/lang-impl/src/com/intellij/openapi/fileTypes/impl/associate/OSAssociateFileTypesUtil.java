@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.impl.associate.ui.FileTypeAssociationDialo
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -139,7 +140,13 @@ public class OSAssociateFileTypesUtil {
       return Collections.singletonList(((MyFileSubtype)fileType).getMatcher());
     }
     else {
-      return FileTypeManager.getInstance().getAssociations(fileType);
+      List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
+      if (matchers.size() > 0) return matchers;
+      String defaultExt = fileType.getDefaultExtension();
+      if (!StringUtil.isEmptyOrSpaces(defaultExt)) {
+        return Collections.singletonList(new ExtensionFileNameMatcher(defaultExt));
+      }
+      return Collections.emptyList();
     }
   }
 

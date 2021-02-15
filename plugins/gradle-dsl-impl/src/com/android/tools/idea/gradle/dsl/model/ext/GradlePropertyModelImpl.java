@@ -16,14 +16,17 @@ package com.android.tools.idea.gradle.dsl.model.ext;
 import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel;
 import com.android.tools.idea.gradle.dsl.api.ext.PropertyType;
 import com.android.tools.idea.gradle.dsl.api.ext.ReferenceTo;
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil;
 import com.android.tools.idea.gradle.dsl.api.util.TypeReference;
 import com.android.tools.idea.gradle.dsl.model.ext.transforms.PropertyTransform;
 import com.android.tools.idea.gradle.dsl.parser.GradleReferenceInjection;
 import com.android.tools.idea.gradle.dsl.parser.elements.*;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,23 +41,18 @@ import static com.android.tools.idea.gradle.dsl.model.ext.PropertyUtil.*;
 public class GradlePropertyModelImpl implements GradlePropertyModel {
   @Nullable protected GradleDslElement myElement;
   @Nullable protected GradleDslElement myDefaultElement;
-  @NotNull private GradleDslElement myPropertyHolder;
-  // Indicates whether this property represents a method call or an assignment. This is needed to remove the braces when creating
-  // properties for example "android.defaultConfig.proguardFiles" requires "proguardFiles "file.txt", "file.pro"" whereas
-  // assignments require "prop = ["file.txt", "file.pro"]". If the method syntax is required #markAsMethodCall should be used.
-  private boolean myIsMethodCall;
-
-  // Indicates whether this property, if list-like, is a List or a Set
-  private boolean myIsSet;
+  @NotNull protected GradleDslElement myPropertyHolder;
 
   // The list of transforms to be checked for this property model. Only the first transform that has its PropertyTransform#condition
   // return true will be used.
   @NotNull
   private List<PropertyTransform> myTransforms = new ArrayList<>();
 
-  // The following properties should always be kept up to date with the values given by myElement.getElementType() and myElement.getName().
+  // The following properties should always be kept up to date with the values given by myElement.getElementType(), myElement.getName()
+  // and myElement.getModelProperty().
   @NotNull private final PropertyType myPropertyType;
   @NotNull protected String myName;
+  @Nullable protected ModelPropertyDescription myPropertyDescription;
 
   public GradlePropertyModelImpl(@NotNull GradleDslElement element) {
     myElement = element;
@@ -67,26 +65,21 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
 
     myPropertyType = myElement.getElementType();
     myName = myElement.getName();
-
-    myIsMethodCall = false;
+    myPropertyDescription = myElement.getModelProperty();
   }
 
   // Used to create an empty property with no backing element.
-  public GradlePropertyModelImpl(@NotNull GradleDslElement element, @NotNull PropertyType type, @NotNull String name) {
-    myPropertyHolder = element;
+  public GradlePropertyModelImpl(@NotNull GradleDslElement holder, @NotNull PropertyType type, @NotNull String name) {
+    myPropertyHolder = holder;
     myPropertyType = type;
     myName = name;
     myTransforms.add(DEFAULT_TRANSFORM);
-
-    myIsMethodCall = false;
+    myPropertyDescription = null; // TODO(xof): this does not actually mean (yet, during transition) that this is not a model property
   }
 
-  public void markAsMethodCall() {
-    myIsMethodCall = true;
-  }
-
-  public void markAsSet() {
-    myIsSet = true;
+  public GradlePropertyModelImpl(@NotNull GradleDslElement holder, @NotNull PropertyType type, @NotNull ModelPropertyDescription description) {
+    this(holder, type, description.name);
+    myPropertyDescription = description;
   }
 
   public void addTransform(@NotNull PropertyTransform transform) {
@@ -186,7 +179,7 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
       }
     }
 
-    return list.getExpressions().stream().map(e -> new GradlePropertyModelImpl(e)).collect(Collectors.toList());
+    return ContainerUtil.map(list.getExpressions(), e -> new GradlePropertyModelImpl(e));
   }
 
   @Override
@@ -215,7 +208,7 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
   @Override
   @NotNull
   public String getFullyQualifiedName() {
-    GradleDslElement element = getElement();
+    GradleDslElement element = getRawElement();
 
     if (element != null && element.getParent() instanceof GradleDslExpressionList) {
       GradleDslExpressionList list = (GradleDslExpressionList)element.getParent();
@@ -233,7 +226,13 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
 
   @Override
   public void setValue(@NotNull Object value) {
-    GradleDslExpression newElement = getTransform().bind(myPropertyHolder, myElement, value, myName);
+    GradleDslExpression newElement;
+    if (myPropertyDescription == null) {
+      newElement = getTransform().bind(myPropertyHolder, myElement, value, getName());
+    }
+    else {
+      newElement = getTransform().bind(myPropertyHolder, myElement, value, myPropertyDescription);
+    }
     bindToNewElement(newElement);
   }
 
@@ -398,9 +397,14 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
 
   @Override
   public void rename(@NotNull String name) {
+    rename(Arrays.asList(name));
+  }
+
+  @Override
+  public void rename(@NotNull List<String> name) {
     // If we have no backing element then just alter the name that we will change.
     if (myElement == null) {
-      myName = name;
+      myName = GradleNameElementUtil.join(name);
       return;
     }
 
@@ -442,7 +446,7 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
       holder = (GradlePropertiesDslElement)myPropertyHolder;
     }
 
-    GradleDslElement originalElement = holder.getOriginalElementForNameAndType(myName, myPropertyType);
+    GradleDslElement originalElement = holder.getOriginalElementForNameAndType(getName(), myPropertyType);
     GradleDslElement holderOriginalElement = findOriginalElement(holder.getParent(), holder);
     // For a property element to be modified : it should either be under a modified state itself, or should have made a modification
     // to the original state of the dsl tree.
@@ -614,11 +618,21 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
   }
 
   private void makeEmptyMap() {
-    bindToNewElement(getTransform().bindMap(myPropertyHolder, myElement, myName, myIsMethodCall));
+    if (myPropertyDescription == null) {
+      bindToNewElement(getTransform().bindMap(myPropertyHolder, myElement, getName(), false));
+    }
+    else {
+      bindToNewElement(getTransform().bindMap(myPropertyHolder, myElement, myPropertyDescription, false));
+    }
   }
 
   private void makeEmptyList() {
-    bindToNewElement(getTransform().bindList(myPropertyHolder, myElement, myName, myIsMethodCall, myIsSet));
+    if (myPropertyDescription == null) {
+      bindToNewElement(getTransform().bindList(myPropertyHolder, myElement, getName(), false));
+    }
+    else {
+      bindToNewElement(getTransform().bindList(myPropertyHolder, myElement, myPropertyDescription, false));
+    }
   }
 
   private void bindToNewElement(@NotNull GradleDslExpression newElement) {
@@ -631,9 +645,16 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
       throw new UnsupportedOperationException("Can't bind from a fake element!");
     }
 
-    GradleDslElement element = getTransform().replace(myPropertyHolder, myElement, newElement, myName);
+    GradleDslElement element = getTransform().replace(myPropertyHolder, myElement, newElement, getName());
     element.setElementType(myPropertyType);
-    element.setUseAssignment(!myIsMethodCall); // TODO(b/141970574): myElement.useAssignment
+    if (myElement != null) {
+      element.setUseAssignment(myElement.shouldUseAssignment());
+    }
+    // TODO(b/...): this is necessary until models store the properties they're associated with: for now, the models have only names
+    //  while the Dsl elements are annotated with model effect / properties.
+    if (myElement != null) {
+      element.setModelEffect(myElement.getModelEffect());
+    }
     // We need to ensure the parent will be modified so this change takes effect.
     element.setModified();
     myElement = element;
@@ -644,14 +665,20 @@ public class GradlePropertyModelImpl implements GradlePropertyModel {
    * extract custom types.
    */
   @Nullable
-  GradleDslElement getElement() {
+  public GradleDslElement getElement() {
     return getTransform().transform(myElement);
+  }
+
+  @Override
+  @Nullable
+  public GradleDslElement getRawElement() {
+    return myElement;
   }
 
   @NotNull
   protected PropertyTransform getTransform() {
     for (PropertyTransform transform : myTransforms) {
-      if (transform.test(myElement)) {
+      if (transform.test(myElement, myPropertyHolder)) {
         return transform;
       }
     }

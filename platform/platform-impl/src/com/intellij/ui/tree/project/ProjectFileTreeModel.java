@@ -54,7 +54,12 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
         SmartHashSet<Node> nodes = fromRoot || filtered ? null : new SmartHashSet<>();
         root.children.forEach(child -> child.invalidateChildren(node -> {
           if (!updatedFiles.contains(node.file)) return true;
-          if (filtered) node.resetParentVisibility();
+          if (filtered) {
+            node.resetVisibility(); // because of moving within the same root
+            for (Node parent = node.parent; parent != null; parent = parent.parent) {
+              parent.visibility = null;
+            }
+          }
           if (nodes == null) return false;
           Node n = node.file.isDirectory() ? node : node.parent;
           if (n == null) return false;
@@ -76,6 +81,10 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
         }
       }
     };
+  }
+
+  public @NotNull ProjectFileNodeUpdater getUpdater() {
+    return updater;
   }
 
   @NotNull
@@ -213,12 +222,6 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     final void resetVisibility() {
       visibility = null;
       children.forEach(Node::resetVisibility);
-    }
-
-    final void resetParentVisibility() {
-      for (Node node = parent; node != null; node = node.parent) {
-        node.visibility = null;
-      }
     }
 
     @SuppressWarnings("SameParameterValue")

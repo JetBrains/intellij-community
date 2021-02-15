@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.diff.util.FileEditorBase
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -28,7 +28,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
   : FileEditorBase() {
 
   val securityService = dataContext.securityService
-  val avatarIconsProviderFactory = dataContext.avatarIconsProviderFactory
+  val avatarIconsProvider = dataContext.avatarIconsProvider
 
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, this)
   val detailsData = dataProvider.detailsData
@@ -39,8 +39,6 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
   val timelineLoader = dataProvider.acquireTimelineLoader(this)
 
-  val repository = dataContext.parsedRepositoryCoordinates
-
   override fun getName() = GithubBundle.message("pull.request.editor.timeline")
 
   private val content by lazy(LazyThreadSafetyMode.NONE, ::createContent)
@@ -49,7 +47,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
   private fun createContent(): JComponent {
     return doCreateContent().also {
-      GithubUIUtil.overrideUIDependentProperty(it) {
+      GHUIUtil.overrideUIDependentProperty(it) {
         isOpaque = true
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }

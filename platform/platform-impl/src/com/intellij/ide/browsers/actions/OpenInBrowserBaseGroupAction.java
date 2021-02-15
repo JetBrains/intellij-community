@@ -3,14 +3,16 @@ package com.intellij.ide.browsers.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
+import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.ui.jcef.JBCefApp;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,8 +35,15 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     return () -> {
       List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
       boolean addDefaultBrowser = isPopup();
-      int offset = addDefaultBrowser ? 1 : 0;
+      boolean hasLocalBrowser = JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled");
+      int offset = 0;
+      if (addDefaultBrowser) offset++;
+      if (hasLocalBrowser) offset++;
       AnAction[] actions = new AnAction[browsers.size() + offset];
+
+      if (hasLocalBrowser) {
+        actions[0] = new OpenHtmlInEmbeddedBrowserAction();
+      }
 
       if (addDefaultBrowser) {
         if (myDefaultBrowserAction == null) {
@@ -42,7 +51,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
           myDefaultBrowserAction.getTemplatePresentation().setText(IdeBundle.message("default"));
           myDefaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
         }
-        actions[0] = myDefaultBrowserAction;
+        actions[hasLocalBrowser ? 1 : 0] = myDefaultBrowserAction;
       }
 
       for (int i = 0, size = browsers.size(); i < size; i++) {

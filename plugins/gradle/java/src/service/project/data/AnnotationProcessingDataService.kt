@@ -33,7 +33,6 @@ import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.File
 import java.util.*
-import kotlin.collections.ArrayList
 
 @Order(ExternalSystemConstants.UNORDERED)
 class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationProcessingData, ProcessorConfigProfile>() {
@@ -194,15 +193,14 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
                                  project: Project,
                                  modelsProvider: IdeModifiableModelsProvider): Computable<MutableCollection<ProcessorConfigProfile>> =
     Computable {
-      val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+      val profiles = ArrayList((CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl).moduleProcessorProfiles)
       val importedProcessingProfiles = ArrayList(toImport).asSequence()
         .map { it.data }
         .distinct()
         .map { createProcessorConfigProfile(it) }
         .toList()
 
-      val orphans = config
-        .moduleProcessorProfiles
+      val orphans = profiles
         .filter { importedProcessingProfiles.none { imported -> imported.matches(it) } }
         .toMutableList()
 
@@ -241,7 +239,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
 
   private fun CompilerConfigurationImpl.findOrCreateProcessorConfigProfile(data: AnnotationProcessingData): ProcessorConfigProfile {
     val newProfile = createProcessorConfigProfile(data)
-    return this.moduleProcessorProfiles
+    return ArrayList(this.moduleProcessorProfiles)
              .find { existing -> existing.matches(newProfile) }
            ?: newProfile.also { addModuleProcessorProfile(it) }
   }

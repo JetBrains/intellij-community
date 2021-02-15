@@ -35,7 +35,7 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionH
           XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).getWatchesManager();
           XSourcePosition caretPosition = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
           if (text != null) {
-            watchesManager.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, caretPosition, true);
+            watchesManager.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, caretPosition, false);
           } else if (caretPosition != null) {
             watchesManager.showInplaceEditor(caretPosition, editor, session, null);
           }

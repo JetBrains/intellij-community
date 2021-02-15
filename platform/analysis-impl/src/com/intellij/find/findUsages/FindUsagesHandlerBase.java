@@ -14,7 +14,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +60,7 @@ public class FindUsagesHandlerBase {
   public boolean processElementUsages(@NotNull final PsiElement element,
                                       @NotNull final Processor<? super UsageInfo> processor,
                                       @NotNull final FindUsagesOptions options) {
-    final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<PsiReference>() {
+    final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(final PsiReference ref) {
         return processor.process(new UsageInfo(ref));
@@ -107,14 +106,6 @@ public class FindUsagesHandlerBase {
   }
 
   protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
-    return isSearchForTextOccurencesAvailable(psiElement, isSingleFile);
-  }
-
-  /** @deprecated use/override {@link #isSearchForTextOccurrencesAvailable(PsiElement, boolean)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings({"SpellCheckingInspection", "DeprecatedIsStillUsed", "unused"})
-  protected boolean isSearchForTextOccurencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return false;
   }
 

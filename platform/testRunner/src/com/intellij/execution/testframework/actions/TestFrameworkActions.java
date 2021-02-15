@@ -14,12 +14,12 @@ import org.jetbrains.annotations.NotNull;
 public final class TestFrameworkActions {
   public static void installFilterAction(final TestFrameworkRunningModel model) {
     final TestConsoleProperties properties = model.getProperties();
-    final TestFrameworkPropertyListener<Boolean> propertyListener = new TestFrameworkPropertyListener<Boolean>() {
-        @Override
-        public void onChanged(final Boolean value) {
-          model.setFilter(getFilter(properties));
-        }
-      };
+    final TestFrameworkPropertyListener<Boolean> propertyListener = new TestFrameworkPropertyListener<>() {
+      @Override
+      public void onChanged(final Boolean value) {
+        model.setFilter(getFilter(properties));
+      }
+    };
     addPropertyListener(TestConsoleProperties.HIDE_PASSED_TESTS, propertyListener, model, true);
     addPropertyListener(TestConsoleProperties.HIDE_IGNORED_TEST, propertyListener, model, true);
     addPropertyListener(TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG, propertyListener, model, true);

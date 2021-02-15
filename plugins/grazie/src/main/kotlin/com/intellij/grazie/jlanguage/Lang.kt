@@ -5,10 +5,11 @@ import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.detector.model.LanguageISO
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.RemoteLangDescriptor
+import com.intellij.openapi.util.NlsSafe
 import org.languagetool.Language
 import org.languagetool.noop.NoopChunker
 
-enum class Lang(val displayName: String, val className: String, val remote: RemoteLangDescriptor, val nativeName: String,
+enum class Lang(val displayName: String, val className: String, val remote: RemoteLangDescriptor, @NlsSafe val nativeName: String,
                 val initialize: (language: Language) -> Unit = { }) {
   BRITISH_ENGLISH("English (GB)", "BritishEnglish", RemoteLangDescriptor.ENGLISH, "English (Great Britain)", {
     //it.tagger = GrazieEnglishTagger()

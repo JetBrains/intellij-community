@@ -33,10 +33,16 @@ public interface ExternalFormatProcessor {
    * @param source the source file with code
    * @param range the range for formatting
    * @param canChangeWhiteSpacesOnly procedure can change only whitespaces
+   * @param keepLineBreaks don't add or remove line breaks
+   * @param enableBulkUpdate don't turn on the bulk update
    * @return the range after formatting or null, if external format procedure cannot be applied to the source
    */
   @Nullable
-  TextRange format(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly, boolean keepLineBreaks);
+  TextRange format(@NotNull PsiFile source,
+                   @NotNull TextRange range,
+                   boolean canChangeWhiteSpacesOnly,
+                   boolean keepLineBreaks,
+                   boolean enableBulkUpdate);
 
   /**
    * Indents the line.
@@ -96,15 +102,26 @@ public interface ExternalFormatProcessor {
    * @param source the source file with code
    * @param range the range for formatting
    * @param canChangeWhiteSpacesOnly procedure can change only whitespaces
+   * @param keepLineBreaks don't add or remove line breaks
+   * @param enableBulkUpdate don't turn on the bulk update
    * @return the range after formatting or null, if external format procedure was not found or inactive (disabled)
    */
   @Nullable
   static TextRange formatRangeInFile(@NotNull PsiFile source,
                                      @NotNull TextRange range,
                                      boolean canChangeWhiteSpacesOnly,
-                                     boolean keepLineBreaks) {
+                                     boolean keepLineBreaks,
+                                     boolean enableBulkUpdate) {
     ExternalFormatProcessor efp = activeExternalFormatProcessor(source);
-    return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly, keepLineBreaks) : null;
+    return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, enableBulkUpdate) : null;
+  }
+
+  @Nullable
+  static TextRange formatRangeInFile(@NotNull PsiFile source,
+                                     @NotNull TextRange range,
+                                     boolean canChangeWhiteSpacesOnly,
+                                     boolean keepLineBreaks) {
+    return formatRangeInFile(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, true);
   }
 
   /**

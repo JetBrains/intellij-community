@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -8,12 +7,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -48,29 +45,7 @@ public final class CompletionUtil {
   @Nullable
   public static CompletionData getCompletionDataByElement(@Nullable final PsiElement position, @NotNull PsiFile originalFile) {
     if (position == null) return null;
-
-    PsiElement parent = position.getParent();
-    Language language = parent == null ? position.getLanguage() : parent.getLanguage();
-    final FileType fileType = language.getAssociatedFileType();
-    if (fileType != null) {
-      final CompletionData mainData = getCompletionDataByFileType(fileType);
-      if (mainData != null) {
-        return mainData;
-      }
-    }
-
-    final CompletionData mainData = getCompletionDataByFileType(originalFile.getFileType());
-    return mainData != null ? mainData : ourGenericCompletionData;
-  }
-
-  @Nullable
-  private static CompletionData getCompletionDataByFileType(FileType fileType) {
-    for(CompletionDataEP ep: CompletionDataEP.EP_NAME.getExtensionList()) {
-      if (ep.fileType.equals(fileType.getName())) {
-        return ep.getHandler();
-      }
-    }
-    return null;
+    return ourGenericCompletionData;
   }
 
   public static boolean shouldShowFeature(CompletionParameters parameters, @NonNls final String id) {
@@ -274,12 +249,12 @@ public final class CompletionUtil {
   }
 
   public static Iterable<String> iterateLookupStrings(@NotNull final LookupElement element) {
-    return new Iterable<String>() {
+    return new Iterable<>() {
       @NotNull
       @Override
       public Iterator<String> iterator() {
         final Iterator<String> original = element.getAllLookupStrings().iterator();
-        return new UnmodifiableIterator<String>(original) {
+        return new UnmodifiableIterator<>(original) {
           @Override
           public boolean hasNext() {
             try {

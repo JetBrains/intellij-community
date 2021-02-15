@@ -405,4 +405,22 @@ static void main(String[] args) {
     new Rr("", true)
 }"""
   }
+
+  @Test
+  void 'inner class'() {
+    highlightingTest """
+@groovy.transform.CompileStatic
+class DtoTest {
+
+    @groovy.transform.TupleConstructor
+    class Dto {
+        String value
+    }
+    
+    void useGeneratedConstructor() {
+        new Dto("abc")
+    }
+}
+"""
+  }
 }

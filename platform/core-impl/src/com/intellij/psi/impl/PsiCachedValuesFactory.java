@@ -17,14 +17,6 @@ public final class PsiCachedValuesFactory implements CachedValuesFactory {
     myManager = PsiManager.getInstance(project);
   }
 
-  /**
-   * @deprecated use {@link #PsiCachedValuesFactory(Project)}
-   */
-  @Deprecated
-  public PsiCachedValuesFactory(PsiManager manager) {
-    myManager = manager;
-  }
-
   @Override
   public @NotNull <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
     return new PsiCachedValueImpl<>(myManager, provider, trackValue);

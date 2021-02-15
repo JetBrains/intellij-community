@@ -7,7 +7,6 @@ import com.intellij.codeInsight.CodeInsightWorkspaceSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.ide.DataManager
-import com.intellij.ide.JavaLanguageCodeStyleSettingsProvider
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationBundle
@@ -59,7 +58,11 @@ class JavaAutoImportOptions(val project: Project) : DslConfigurableBase(), AutoI
           }
         }
         row {
-          checkBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"), ciSettings::ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
+          cell {
+            checkBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"),
+                     ciSettings::ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
+            ContextHelpLabel.create(ApplicationBundle.message("help.add.unambiguous.imports"))()
+          }
         }
         row {
           cell {

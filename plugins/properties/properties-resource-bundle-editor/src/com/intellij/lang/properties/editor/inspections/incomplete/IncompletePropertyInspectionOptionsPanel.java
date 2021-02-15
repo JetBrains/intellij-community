@@ -57,7 +57,7 @@ public class IncompletePropertyInspectionOptionsPanel {
         changed();
       }
     }).createPanel();
-    myList.setCellRenderer(new ColoredListCellRenderer<String>() {
+    myList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, @NlsSafe String suffix, int index, boolean selected, boolean hasFocus) {
         append(suffix);
@@ -67,7 +67,8 @@ public class IncompletePropertyInspectionOptionsPanel {
             append(" ");
             append(PropertiesUtil.getPresentableLocale(locale), SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
-        } else {
+        }
+        else {
           append(ResourceBundleEditorBundle.message("incomplete.property.inspection.default.locale.presentation"));
         }
       }

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
@@ -44,7 +45,7 @@ import static com.intellij.patterns.StandardPatterns.or;
  * User: dcheryasov
  */
 @SuppressWarnings({"InstanceVariableOfConcreteClass"})
-public class PyKeywordCompletionContributor extends CompletionContributor {
+public class PyKeywordCompletionContributor extends CompletionContributor implements DumbAware {
   /**
    * Matches places where a keyword-based statement might be appropriate.
    */
@@ -260,7 +261,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   public static final PsiElementPattern.Capture<PsiElement> IN_FROM_IMPORT_AFTER_REF =
     psiElement().afterLeaf(
       or(psiElement().withElementType(PyTokenTypes.IDENTIFIER).inside(PyReferenceExpression.class),
-         psiElement().with(new PatternCondition<PsiElement>("dotFollowedByWhitespace") {
+         psiElement().with(new PatternCondition<>("dotFollowedByWhitespace") {
            @Override
            public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
              return element.getNode().getElementType() == PyTokenTypes.DOT && element.getNextSibling() instanceof PsiWhiteSpace;
@@ -269,7 +270,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     ).inside(PyFromImportStatement.class);
 
   public static final ElementPattern<PsiElement> IN_WITH_AFTER_REF =
-    psiElement().afterLeaf(psiElement().inside(psiElement(PyWithItem.class).with(new PatternCondition<PyWithItem>("withoutAsKeyword") {
+    psiElement().afterLeaf(psiElement().inside(psiElement(PyWithItem.class).with(new PatternCondition<>("withoutAsKeyword") {
       @Override
       public boolean accepts(@NotNull PyWithItem item, ProcessingContext context) {
         return item.getNode().findChildByType(PyTokenTypes.AS_KEYWORD) == null;
@@ -400,10 +401,12 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         .andNot(BEFORE_COND)
         .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new CompletionProvider<CompletionParameters>() {
+      new CompletionProvider<>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters,
+          @NotNull final ProcessingContext context,
+          @NotNull final CompletionResultSet result
         ) {
           putKeywords(result, TailType.NONE, PyNames.DEF, PyNames.CLASS, PyNames.FOR, PyNames.IF, PyNames.WHILE, PyNames.WITH);
           putKeywords(result, TailType.CASE_COLON, PyNames.TRY);
@@ -426,10 +429,12 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     extend(
       CompletionType.BASIC,
       inStatement,
-      new CompletionProvider<CompletionParameters>() {
+      new CompletionProvider<>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters,
+          @NotNull final ProcessingContext context,
+          @NotNull final CompletionResultSet result
         ) {
           putKeywords(result, TailType.SPACE, PyNames.ASSERT, PyNames.DEL, PyNames.EXEC, PyNames.FROM, PyNames.IMPORT, PyNames.RAISE);
           putKeywords(result, TailType.NONE, PyNames.PASS);
@@ -496,7 +501,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
              .withLanguage(PythonLanguage.getInstance())
              .and(PY35)
              .andNot(AFTER_QUALIFIER)
-             .with(new PatternCondition<PsiElement>("insideAsyncDef") {
+             .with(new PatternCondition<>("insideAsyncDef") {
                @Override
                public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
                  final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
@@ -535,10 +540,12 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       .andNot(AFTER_FINALLY)
       ,
-      new CompletionProvider<CompletionParameters>() {
+      new CompletionProvider<>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters,
+          @NotNull final ProcessingContext context,
+          @NotNull final CompletionResultSet result
         ) {
           putKeyword(PyNames.FINALLY, PyUnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
         }
@@ -553,10 +560,12 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       .andNot(AFTER_FINALLY).andNot(AFTER_ELSE)
       ,
-      new CompletionProvider<CompletionParameters>() {
+      new CompletionProvider<>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters,
+          @NotNull final ProcessingContext context,
+          @NotNull final CompletionResultSet result
         ) {
           putKeyword(PyNames.EXCEPT, PyUnindentingInsertHandler.INSTANCE, TailType.NONE, result);
         }

@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -80,7 +79,7 @@ public final class MvcConsole implements Disposable {
   }
 
   public static MvcConsole getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, MvcConsole.class);
+    return project.getService(MvcConsole.class);
   }
 
   public static boolean isUpdatingVfsByConsoleProcess(@NotNull Module module) {
@@ -122,7 +121,7 @@ public final class MvcConsole implements Disposable {
     myToolWindow.activate(r, focus);
   }
 
-  private static class MyProcessInConsole implements ConsoleProcessDescriptor {
+  private static final class MyProcessInConsole implements ConsoleProcessDescriptor {
     final Module module;
     final GeneralCommandLine commandLine;
     @Nullable final Runnable onDone;

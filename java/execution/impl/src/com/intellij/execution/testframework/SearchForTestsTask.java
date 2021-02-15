@@ -21,10 +21,11 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,7 @@ import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class SearchForTestsTask extends Task.Backgroundable {
+  public static final Key<Boolean> CONNECT_IN_UNIT_TEST_MODE_PROPERTY_KEY = Key.create("SearchForTestsTask.connect.in.unit.test.mode");
 
   private static final Logger LOG = Logger.getInstance(SearchForTestsTask.class);
   protected Socket mySocket;
@@ -64,7 +66,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   }
 
   public void startSearch() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CONNECT_IN_UNIT_TEST_MODE_PROPERTY_KEY)) {
       try {
         search();
       }
@@ -112,7 +114,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
         try {
           if (myAllowIndexInDumbMode && DumbService.isDumb(myProject)) {
             myIncompleteIndexUsageCallback.run();
-            FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+            DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
               search();
               return null;
             });
@@ -158,7 +160,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       try {
         if (myAllowIndexInDumbMode && DumbService.isDumb(myProject)) {
           myIncompleteIndexUsageCallback.run();
-          FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+          DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
             onFound();
             return null;
           });

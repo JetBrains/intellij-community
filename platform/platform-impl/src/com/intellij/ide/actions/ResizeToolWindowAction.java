@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -54,7 +55,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   @Override
   public final void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null) {
+    if (project == null || e.getData(CommonDataKeys.HOST_EDITOR) != null) {
       setDisabled(e);
       return;
     }
@@ -75,7 +76,8 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
       return;
     }
 
-    final Window windowAncestor = SwingUtilities.getWindowAncestor(owner);
+    Window windowAncestor = SwingUtilities.getWindowAncestor(owner);
+    if (windowAncestor instanceof JWindow) windowAncestor = windowAncestor.getOwner();//SearchEverywhere popup case
     if (!(windowAncestor instanceof IdeFrame) || windowAncestor instanceof IdeFrame.Child) {
       setDisabled(e);
       return;
@@ -87,7 +89,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     ToolWindow window = getToolWindow(project);
 
     if (window != null) {
-      if (!window.isAvailable() || !window.isVisible() || window.getType() == ToolWindowType.FLOATING || window.getType() == ToolWindowType.WINDOWED || !window.isActive()) {
+      if (!window.isAvailable() || !window.isVisible() || window.getType() == ToolWindowType.FLOATING || window.getType() == ToolWindowType.WINDOWED) {
         setDisabled(e);
         return;
       }
@@ -112,7 +114,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
       return myToolWindow;
     }
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    String id = manager.getActiveToolWindowId();
+    String id = manager.getLastActiveToolWindowId();
     if (id != null) {
       return manager.getToolWindow(id);
     }
@@ -121,7 +123,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
 
   private void setDisabled(@Nullable AnActionEvent e) {
     if (e != null) {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setEnabledAndVisible(false);
     }
 
     myLastWindow = null;

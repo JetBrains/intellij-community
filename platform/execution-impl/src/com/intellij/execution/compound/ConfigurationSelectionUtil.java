@@ -10,6 +10,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 public final class ConfigurationSelectionUtil {
-  @NotNull
+  @NotNull @NlsSafe
   public static String getDisplayText(@NotNull RunConfiguration configuration, @Nullable ExecutionTarget target) {
     return configuration.getType().getDisplayName() + " '" + configuration.getName() +
            "'" + (target != null && target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged() ?
@@ -66,7 +67,7 @@ public final class ConfigurationSelectionUtil {
           return FINAL_CHOICE;
         }
         else {
-          return new BaseListPopupStep<ExecutionTarget>(null, getTargets(selectedConfigs)) {
+          return new BaseListPopupStep<>(null, getTargets(selectedConfigs)) {
             @Override
             public boolean isSpeedSearchEnabled() {
               return true;

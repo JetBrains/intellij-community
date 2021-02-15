@@ -15,19 +15,28 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android;
 
-import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.ADDITIONAL_PARAMETERS;
+import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.JAVA_MAX_HEAP_SIZE;
+import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.JUMBO_MODE;
+import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.KEEP_RUNTIME_ANNOTATED_CLASSES;
+import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.MAX_PROCESS_COUNT;
+import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.OPTIMIZE;
+import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.PRE_DEX_LIBRARIES;
+import static com.android.tools.idea.gradle.dsl.model.android.DexOptionsModelImpl.THREAD_COUNT;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.atLeast;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.ADD_AS_LIST;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSimpleExpression;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -35,7 +44,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DexOptionsDslElement extends GradleDslBlockElement {
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"additionalParameters", property, ADDITIONAL_PARAMETERS, VAR},
     {"additionalParameters", atLeast(0), ADDITIONAL_PARAMETERS, ADD_AS_LIST},
     {"javaMaxHeapSize", property, JAVA_MAX_HEAP_SIZE, VAR},
@@ -55,7 +64,7 @@ public class DexOptionsDslElement extends GradleDslBlockElement {
   }).collect(toModelMap());
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> groovyToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.of(new Object[][]{
     {"additionalParameters", property, ADDITIONAL_PARAMETERS, VAR},
     {"additionalParameters", atLeast(0), ADDITIONAL_PARAMETERS, ADD_AS_LIST},
     {"javaMaxHeapSize", property, JAVA_MAX_HEAP_SIZE, VAR},
@@ -78,7 +87,7 @@ public class DexOptionsDslElement extends GradleDslBlockElement {
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }

@@ -63,12 +63,12 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
         selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
       }
       else {
-        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<GrExpression>() {
-          @Override
-          public void pass(final GrExpression selectedValue) {
-            invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
-          }
-        }, grExpression -> grExpression.getText()
+        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
+                                             @Override
+                                             public void pass(final GrExpression selectedValue) {
+                                               invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
+                                             }
+                                           }, grExpression -> grExpression.getText()
         );
         return;
       }
@@ -139,7 +139,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     if (isInplace(info, editor)) {
       final GrIntroduceContext context = createContext(info, editor);
       Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = GrIntroduceHandlerBase.fillChoice(context);
-      new IntroduceOccurrencesChooser(editor).showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
+      new IntroduceOccurrencesChooser(editor).showChooser(new Pass<>() {
         @Override
         public void pass(OccurrencesChooser.ReplaceChoice choice) {
           startInplace(info, context, choice);

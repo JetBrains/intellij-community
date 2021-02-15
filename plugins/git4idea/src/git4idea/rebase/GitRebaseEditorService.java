@@ -4,6 +4,7 @@ package git4idea.rebase;
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.Pair;
 import git4idea.commands.GitHandler;
 import git4idea.config.GitExecutable;
@@ -22,7 +23,8 @@ import java.util.UUID;
 /**
  * The service that generates editor script for
  */
-public class GitRebaseEditorService implements Disposable {
+@Service(Service.Level.APP)
+public final class GitRebaseEditorService implements Disposable {
   /**
    * The lock object
    */

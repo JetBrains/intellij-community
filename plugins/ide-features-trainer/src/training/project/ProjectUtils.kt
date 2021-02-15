@@ -158,7 +158,7 @@ object ProjectUtils {
   }
 
   private fun copyLearnProjectIcon(projectDir: File) {
-    val iconPath = "/learnProjects/.idea"
+    val iconPath = "learnProjects/.idea"
     val iconUrl = ProjectUtils::class.java.classLoader.getResource(iconPath) ?: throw IllegalArgumentException(
       "Unable to locate icon for learn project by path: $iconPath")
     val ideaDir = File(projectDir, ".idea")

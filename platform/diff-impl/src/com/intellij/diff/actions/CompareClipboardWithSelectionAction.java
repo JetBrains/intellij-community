@@ -87,8 +87,9 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     DiffContent selectedContent = e.getData(DiffDataKeys.CURRENT_CONTENT);
     DocumentContent content2 = createContent(project, editor, editorFileType, selectedContent);
     DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(project, content2);
+    content1.putUserData(BlankDiffWindowUtil.REMEMBER_CONTENT_KEY, true);
 
-    MutableDiffRequestChain chain = new MutableDiffRequestChain(content1, content2);
+    MutableDiffRequestChain chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, null);
     chain.setWindowTitle(DiffBundle.message("diff.clipboard.vs.editor.dialog.title"));
     chain.setTitle1(DiffBundle.message("diff.content.clipboard.content.title"));
     chain.setTitle2(createContentTitle(editor));

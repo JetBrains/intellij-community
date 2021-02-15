@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -19,7 +19,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
@@ -43,13 +43,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
-
 public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
-  public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
+  public static final ExtensionPointName<WelcomeFrameProvider> EP = new ExtensionPointName<>("com.intellij.welcomeFrameProvider");
   @NonNls static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static IdeFrame ourInstance;
   private static Disposable ourTouchbar;
+
   private final WelcomeScreen myScreen;
   private final BalloonLayout myBalloonLayout;
 
@@ -124,17 +123,18 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     });
   }
 
-  private static WelcomeScreen createScreen(JRootPane rootPane) {
-    WelcomeScreen screen = null;
-    for (WelcomeScreenProvider provider : WelcomeScreenProvider.EP_NAME.getExtensions()) {
-      if (!provider.isAvailable()) continue;
-      screen = provider.createWelcomeScreen(rootPane);
-      if (screen != null) break;
+  private static @NotNull WelcomeScreen createScreen(JRootPane rootPane) {
+    for (WelcomeScreenProvider provider : WelcomeScreenProvider.EP_NAME.getExtensionList()) {
+      if (!provider.isAvailable()) {
+        continue;
+      }
+
+      WelcomeScreen screen = provider.createWelcomeScreen(rootPane);
+      if (screen != null) {
+        return screen;
+      }
     }
-    if (screen == null) {
-      screen = new NewWelcomeScreen();
-    }
-    return screen;
+    return new NewWelcomeScreen();
   }
 
   public static void resetInstance() {
@@ -156,8 +156,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     }
   }
 
-  @Nullable
-  public static Runnable prepareToShow() {
+  public static @Nullable Runnable prepareToShow() {
     if (ourInstance != null) {
       return null;
     }
@@ -165,47 +164,38 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
     ApplicationManager.getApplication().executeOnPooledThread(() -> ActionManager.getInstance());
 
-    IdeFrame frame = createWelcomeFrame();
-    registerKeyboardShortcuts(frame);
     return () -> {
       if (ourInstance != null) {
         return;
       }
 
-      ((JFrame)frame).setVisible(true);
+      IdeFrame frame = EP.computeSafeIfAny(provider -> provider.createFrame());
+      if (frame == null) {
+        throw new IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point");
+      }
 
-      IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
+      JFrame jFrame = (JFrame)frame;
+
+      registerKeyboardShortcuts(jFrame.getRootPane());
+
+      jFrame.setVisible(true);
+
+      IdeMenuBar.installAppMenuIfNeeded(jFrame);
       ourInstance = frame;
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
       }
     };
   }
 
-  private static void registerKeyboardShortcuts(IdeFrame frame) {
-    JRootPane rootPane = frame.getComponent().getRootPane();
-
-    ActionListener helpAction = e -> doHelpAction();
-    ActionUtil.registerForEveryKeyboardShortcut(rootPane, helpAction, CommonShortcuts.getContextHelp());
-    rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), WHEN_IN_FOCUSED_WINDOW);
-  }
-
-  private static void doHelpAction() {
-    String helpId = getHelpId();
-    if (helpId != null) {
+  private static void registerKeyboardShortcuts(@NotNull JRootPane rootPane) {
+    ActionListener helpAction = e -> {
       FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(WelcomeFrame.class.getName(), WelcomeFrame.class);
-      HelpManager.getInstance().invokeHelp(helpId);
-    }
-  }
+      HelpManager.getInstance().invokeHelp("welcome");
+    };
 
-  protected static String getHelpId() {
-    return "welcome";
-  }
-
-  @NotNull
-  private static IdeFrame createWelcomeFrame() {
-    IdeFrame frame = EP.computeSafeIfAny(provider -> provider.createFrame());
-    return frame == null ? new WelcomeFrame() : frame;
+    ActionUtil.registerForEveryKeyboardShortcut(rootPane, helpAction, CommonShortcuts.getContextHelp());
+    rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   public static void showIfNoProjectOpened() {

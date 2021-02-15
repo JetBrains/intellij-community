@@ -59,8 +59,8 @@ PRODUCT_VENDOR="__product_vendor__"
 PATHS_SELECTOR="__system_selector__"
 
 # ---------------------------------------------------------------------
-# Locate a JDK installation directory which will be used to run the IDE.
-# Try (in order): __product_uc___JDK, __vm_options__.jdk, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Locate a JDK installation directory command -v will be used to run the IDE.
+# Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr[-x86], $JDK_HOME, $JAVA_HOME, "java" in $PATH.
 # ---------------------------------------------------------------------
 if [ -n "$__product_uc___JDK" -a -x "$__product_uc___JDK/bin/java" ]; then
   JDK="$__product_uc___JDK"

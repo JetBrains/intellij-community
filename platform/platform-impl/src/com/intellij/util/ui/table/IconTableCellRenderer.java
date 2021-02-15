@@ -10,7 +10,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
 public abstract class IconTableCellRenderer<T> extends DefaultTableCellRenderer {
-  public static final IconTableCellRenderer<Iconable> ICONABLE = new IconTableCellRenderer<Iconable>() {
+  public static final IconTableCellRenderer<Iconable> ICONABLE = new IconTableCellRenderer<>() {
     @Nullable
     @Override
     protected Icon getIcon(@NotNull Iconable value, JTable table, int row) {

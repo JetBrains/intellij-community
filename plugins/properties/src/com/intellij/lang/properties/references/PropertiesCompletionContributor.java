@@ -16,7 +16,10 @@
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.EmptyResourceBundle;
 import com.intellij.lang.properties.IProperty;
@@ -47,7 +50,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  */
 public class PropertiesCompletionContributor extends CompletionContributor {
   public PropertiesCompletionContributor() {
-    extend(null, psiElement(), new CompletionProvider<CompletionParameters>() {
+    extend(null, psiElement(), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -80,7 +83,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
     return propertyReference.isSoft() && ContainerUtil.or(references, reference -> !reference.isSoft());
   }
 
-  public static final LookupElementRenderer<LookupElement> LOOKUP_ELEMENT_RENDERER = new LookupElementRenderer<LookupElement>() {
+  public static final LookupElementRenderer<LookupElement> LOOKUP_ELEMENT_RENDERER = new LookupElementRenderer<>() {
     @Override
     public void renderElement(LookupElement element, LookupElementPresentation presentation) {
       IProperty property = (IProperty)element.getObject();
@@ -106,7 +109,8 @@ public class PropertiesCompletionContributor extends CompletionContributor {
         presentation.setTypeText(resourceBundle.getBaseName(), AllIcons.FileTypes.Properties);
       }
 
-      TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
+      TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme()
+        .getAttributes(PropertiesHighlighter.PropertiesComponent.PROPERTY_VALUE.getTextAttributesKey());
       presentation.setTailText("=" + value, attrs.getForegroundColor());
     }
   };

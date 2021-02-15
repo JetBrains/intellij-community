@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.regexp;
 
 import com.intellij.lang.PsiParser;
@@ -34,17 +34,17 @@ public class PythonVerboseRegexpParserDefinition extends PythonRegexpParserDefin
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new RegExpParser(VERBOSE_CAPABILITIES);
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return VERBOSE_PYTHON_REGEXP_FILE;
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new RegExpFile(viewProvider, PythonVerboseRegexpLanguage.INSTANCE);
   }
 }

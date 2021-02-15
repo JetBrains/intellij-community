@@ -56,7 +56,6 @@ public final class DvcsUtil {
 
   private static final Logger LOG = Logger.getInstance(DvcsUtil.class);
 
-  private static final Logger LOGGER = Logger.getInstance(DvcsUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
 
   /**
@@ -191,14 +190,6 @@ public final class DvcsUtil {
     };
   }
 
-  /**
-   * @deprecated Call {@link AccessToken#finish()} directly from the AccessToken received by {@link #workingTreeChangeStarted(Project)}
-   */
-  @Deprecated
-  public static void workingTreeChangeFinished(@NotNull Project project, @NotNull AccessToken token) {
-    token.finish();
-  }
-
   public static final Comparator<Repository> REPOSITORY_COMPARATOR = Comparator.comparing(Repository::getPresentableUrl);
 
   public static void assertFileExists(File file, @NonNls @Nls String message) throws IllegalStateException {
@@ -255,21 +246,21 @@ public final class DvcsUtil {
    * If an other exception happens, rethrows it as a {@link RepoStateException}.
    * In the case of success returns the result of the task execution.
    */
-  private static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) throws RepoStateException {
+  public static <T> T tryOrThrow(Callable<T> actionToTry, Object details) throws RepoStateException {
     IOException cause = null;
     for (int i = 0; i < IO_RETRIES; i++) {
       try {
         return actionToTry.call();
       }
       catch (IOException e) {
-        LOG.info("IOException while loading " + fileToLoad, e);
+        LOG.info("IOException while loading " + details, e);
         cause = e;
       }
       catch (Exception e) {    // this shouldn't happen since only IOExceptions are thrown in clients.
-        throw new RepoStateException("Couldn't load file " + fileToLoad, e);
+        throw new RepoStateException("Couldn't load file " + details, e);
       }
     }
-    throw new RepoStateException("Couldn't load file " + fileToLoad, cause);
+    throw new RepoStateException("Couldn't load file " + details, cause);
   }
 
   public static void visitVcsDirVfs(@NotNull VirtualFile vcsDir, @NotNull Collection<String> subDirs) {
@@ -381,7 +372,7 @@ public final class DvcsUtil {
     // for a file inside .jar/.zip consider the .jar/.zip file itself
     VirtualFile root = vcsManager.getVcsRootFor(VfsUtilCore.getVirtualFileForJar(file));
     if (root != null) {
-      LOGGER.debug("Found root for zip/jar file: " + root);
+      LOG.debug("Found root for zip/jar file: " + root);
       return root;
     }
 
@@ -398,7 +389,7 @@ public final class DvcsUtil {
     }
 
     if (libraryRoots.isEmpty()) {
-      LOGGER.debug("No library roots");
+      LOG.debug("No library roots");
       return null;
     }
 
@@ -412,7 +403,7 @@ public final class DvcsUtil {
         topLibraryRoot = libRoot;
       }
     }
-    LOGGER.debug("Several library roots, returning " + topLibraryRoot);
+    LOG.debug("Several library roots, returning " + topLibraryRoot);
     return topLibraryRoot;
   }
 
@@ -422,7 +413,7 @@ public final class DvcsUtil {
     if (file != null) {
       root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
       if (root == null) {
-        LOGGER.debug("Cannot get root by file. Trying with get by library: " + file);
+        LOG.debug("Cannot get root by file. Trying with get by library: " + file);
         root = getVcsRootForLibraryFile(project, file);
       }
     }
@@ -437,7 +428,7 @@ public final class DvcsUtil {
     for (VcsFullCommitDetails commit : commits) {
       R repository = repoManager.getRepositoryForRoot(commit.getRoot());
       if (repository == null) {
-        LOGGER.info("No repository found for commit " + commit);
+        LOG.info("No repository found for commit " + commit);
         continue;
       }
       List<VcsFullCommitDetails> commitsInRoot = groupedCommits.computeIfAbsent(repository, __ -> new ArrayList<>());

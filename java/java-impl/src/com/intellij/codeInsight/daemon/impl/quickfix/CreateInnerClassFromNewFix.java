@@ -53,7 +53,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
   }
 
   @Override
-  protected boolean rejectQualifier(PsiExpression qualifier) {
+  protected boolean rejectContainer(PsiNewExpression qualifier) {
     return false;
   }
 

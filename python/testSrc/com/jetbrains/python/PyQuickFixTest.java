@@ -211,6 +211,12 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest("AddClass.py", PyUnresolvedReferencesInspection.class, "Create class 'Xyzzy'", true, true);
   }
 
+  // PY-42389
+  public void testAddClassFixPython3() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () ->
+                         doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'Xyzzy'", true, true));
+  }
+
   // PY-21204
   public void testAddClassFromTypeComment() {
     doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'MyClass'", true, true);
@@ -377,7 +383,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-1265
   public void testStatementEffectIntroduceVariable() {
-    doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
+    doInspectionTest(PyStatementEffectInspection.class, PyPsiBundle.message("QFIX.introduce.variable"), true, true);
   }
 
   // PY-2092
@@ -713,33 +719,33 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8174
   public void testChangeSignatureKeywordAndPositionalParameters() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of f(x, foo, <b>bar</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of f(x, foo, <b>bar</b>)</html>", true, true);
   }
 
   // PY-8174
   public void testChangeSignatureAddKeywordOnlyParameter() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
-      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
+      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
     );
   }
 
   // PY-8174
   public void testChangeSignatureNewParametersNames() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
   }
 
   // PY-8174
   public void testChangeSignatureParametersDefaultValues() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(<b>i</b>, <b>foo</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(<b>i</b>, <b>foo</b>)</html>", true, true);
   }
 
   public void testAddKwargsToNewMethodIncompatibleWithInit() {
-    doInspectionTest(PyInitNewSignatureInspection.class, "<html>Change signature of __new__(cls, <b>**kwargs</b>)</html>", true, true);
+    doInspectionTest(PyInitNewSignatureInspection.class, "<html>Change the signature of __new__(cls, <b>**kwargs</b>)</html>", true, true);
   }
 
   public void testAddKwargsToIncompatibleOverridingMethod() {
-    doInspectionTest(PyMethodOverridingInspection.class, "<html>Change signature of m(self, <b>**kwargs</b>)</html>", true, true);
+    doInspectionTest(PyMethodOverridingInspection.class, "<html>Change the signature of m(self, <b>**kwargs</b>)</html>", true, true);
   }
 
   // PY-30789

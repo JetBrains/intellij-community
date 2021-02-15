@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,6 +12,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,10 +23,10 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
@@ -194,7 +194,7 @@ final class InProcessGroovyc implements GroovycFlavor {
       ClassLoader auxiliary = parent != null ? parent : buildCompilationClassLoader(compilationClassPath, null).get();
       Class<?> gcl = auxiliary.loadClass("groovy.lang.GroovyClassLoader");
       groovyClassLoader = (ClassLoader)gcl.getConstructor(ClassLoader.class)
-        .newInstance(parent != null ? parent : ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9());
+        .newInstance(parent != null ? parent : getPlatformLoaderParentIfOnJdk9());
     }
     catch (ClassNotFoundException e) {
       return null;
@@ -203,28 +203,32 @@ final class InProcessGroovyc implements GroovycFlavor {
     return new JointCompilationClassLoader(buildCompilationClassLoader(compilationClassPath, groovyClassLoader));
   }
 
-  private UrlClassLoader.Builder buildCompilationClassLoader(Collection<String> compilationClassPath, ClassLoader parent)
-    throws MalformedURLException {
+  private UrlClassLoader.Builder buildCompilationClassLoader(Collection<String> compilationClassPath, ClassLoader parent) {
     return UrlClassLoader.build().
-      urls(toUrls(compilationClassPath)).parent(parent).allowLock().
-      useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
-        @Override
-        public boolean shouldCacheData(@NotNull URL url) {
-          try {
-            String file = FileUtil.toCanonicalPath(new File(url.toURI()).getPath());
-            for (String output : myOutputs) {
-              if (FileUtil.startsWith(output, file)) {
-                return false;
-              }
-            }
-            return true;
-          }
-          catch (URISyntaxException e) {
-            LOG.info(e);
+      files(toPaths(compilationClassPath))
+      .parent(parent)
+      .useCache(ourLoaderCachePool, file -> {
+        String filePath = FileUtil.toCanonicalPath(file.toString());
+        for (String output : myOutputs) {
+          if (FileUtil.startsWith(output, filePath)) {
             return false;
           }
         }
+        return true;
       });
+  }
+
+  private static @Nullable ClassLoader getPlatformLoaderParentIfOnJdk9() {
+    if (JavaVersion.current().feature >= 9) {
+      // on Java 8, 'tools.jar' is on a classpath; on Java 9, its classes are available via the platform loader
+      try {
+        return (ClassLoader)ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -265,8 +269,7 @@ final class InProcessGroovyc implements GroovycFlavor {
     return null;
   }
 
-  @Nullable
-  private static ClassLoader obtainParentLoader(Collection<String> compilationClassPath) throws MalformedURLException {
+  private static @Nullable ClassLoader obtainParentLoader(Collection<String> compilationClassPath) {
     String groovyJar = evaluatePathToGroovyJarForParentClassloader(compilationClassPath);
     if (groovyJar == null) return null;
 
@@ -305,18 +308,10 @@ final class InProcessGroovyc implements GroovycFlavor {
         return false;
       }
     };
-    UrlClassLoader.Builder builder = UrlClassLoader.build();
-    builder.urls(toUrls(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))));
-    builder.allowLock();
-    builder.useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
-      @Override
-      public boolean shouldCacheData(
-        @NotNull URL url) {
-        return true;
-      }
-    });
-    ClassLoaderUtil.addPlatformLoaderParentIfOnJdk9(builder);
-    UrlClassLoader groovyAllLoader = builder.get();
+    UrlClassLoader groovyAllLoader = UrlClassLoader.build()
+      .files(toPaths(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))))
+      .useCache(ourLoaderCachePool, url -> true)
+      .parent(getPlatformLoaderParentIfOnJdk9()).get();
 
     ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
       @Override
@@ -344,13 +339,12 @@ final class InProcessGroovyc implements GroovycFlavor {
   }
 
 
-  @NotNull
-  private static List<URL> toUrls(Collection<String> paths) throws MalformedURLException {
-    List<URL> urls = new ArrayList<>();
+  private static @NotNull List<Path> toPaths(Collection<String> paths) {
+    List<Path> result = new ArrayList<>();
     for (String s : paths) {
-      urls.add(new File(s).toURI().toURL());
+      result.add(Paths.get(s));
     }
-    return urls;
+    return result;
   }
 
   @NotNull

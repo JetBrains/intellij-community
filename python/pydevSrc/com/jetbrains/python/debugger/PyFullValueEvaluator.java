@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class PyFullValueEvaluator extends XFullValueEvaluator {
@@ -14,7 +15,7 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
    * @param debugProcess
    * @param expression
    */
-  protected PyFullValueEvaluator(String linkText, @NotNull PyFrameAccessor debugProcess, @NotNull String expression) {
+  protected PyFullValueEvaluator(@Nls String linkText, @NotNull PyFrameAccessor debugProcess, @NotNull String expression) {
     super(linkText);
     myDebugProcess = debugProcess;
     myExpression = expression;

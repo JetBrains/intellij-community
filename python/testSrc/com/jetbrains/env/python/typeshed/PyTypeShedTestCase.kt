@@ -102,7 +102,7 @@ abstract class PyTypeShedTestCase(protected val path: String, protected val sdkP
 
     internal fun getSdkPaths(): List<String> {
       val tags = setOf("typeshed")
-      return getPythonRoots()
+      return getDefaultPythonRoots()
         .asSequence()
         .filter { PyEnvTaskRunner.isSuitableForTags(loadEnvTags(it), tags) }
         .map { PythonSdkUtil.getPythonExecutable(it) }

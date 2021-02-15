@@ -29,6 +29,7 @@ import com.intellij.ui.InplaceButton
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Dimension
@@ -342,7 +343,7 @@ object LocalTrackerDiffUtil {
       }
     }
 
-    protected open fun getText(changes: List<LocalTrackerChange>): String {
+    protected open fun getText(changes: List<LocalTrackerChange>): @Nls String {
       return templatePresentation.text
     }
 

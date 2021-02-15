@@ -21,7 +21,6 @@ import static com.android.tools.idea.gradle.dsl.model.android.productFlavors.ext
 import static com.android.tools.idea.gradle.dsl.model.android.productFlavors.externalNativeBuild.AbstractBuildOptionsModelImpl.C_FLAGS;
 import static com.android.tools.idea.gradle.dsl.model.android.productFlavors.externalNativeBuild.AbstractBuildOptionsModelImpl.TARGETS;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.atLeast;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.OTHER;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
@@ -31,7 +30,7 @@ import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -39,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractBuildOptionsDslElement extends GradleDslBlockElement {
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"abiFilters", property, ABI_FILTERS, VAR},
     {"abiFilters", atLeast(0), ABI_FILTERS, OTHER},
     {"arguments", property, ARGUMENTS, VAR},
@@ -55,11 +54,11 @@ public abstract class AbstractBuildOptionsDslElement extends GradleDslBlockEleme
   }).collect(toModelMap());
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> groovyToModelNameMap = ktsToModelNameMap;
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> groovyToModelNameMap = ktsToModelNameMap;
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }

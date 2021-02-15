@@ -474,11 +474,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     activateIfNeeded();
   }
 
-  @Override
-  public void removeMouseMotionPreprocessor(@NotNull MouseMotionListener listener) {
-    removeListener(listener);
-  }
-
   private void removeListener(@NotNull EventListener listener) {
     if (myMouseListeners.remove(listener)) {
       updateSortedList();

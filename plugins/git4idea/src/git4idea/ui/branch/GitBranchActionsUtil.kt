@@ -14,6 +14,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
+import git4idea.GitNotificationIdsHolder.Companion.BRANCHES_UPDATE_SUCCESSFUL
+import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CHECKOUT_FAILED
+import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CREATION_FAILED
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchPair
@@ -90,7 +93,7 @@ internal fun checkoutOrReset(project: Project,
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
       VcsNotifier.getInstance(project)
-        .notifyError("git.branch.checkout.failed",
+        .notifyError(BRANCH_CHECKOUT_FAILED,
                      GitBundle.message("branches.checkout.failed.title"),
                      GitBundle.message("branches.checkout.failed.description", name))
       return
@@ -106,7 +109,7 @@ internal fun createNewBranch(project: Project, repositories: List<GitRepository>
   if (options.reset) {
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
-      VcsNotifier.getInstance(project).notifyError("git.branch.creation.failed",
+      VcsNotifier.getInstance(project).notifyError(BRANCH_CREATION_FAILED,
                                                    GitBundle.message("branches.creation.failed.title"),
                                                    GitBundle.message("branches.checkout.failed.description", name))
       return
@@ -190,7 +193,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
 
     override fun onSuccess() {
       if (successfullyUpdated.isNotEmpty()) {
-        VcsNotifier.getInstance(myProject).notifySuccess("git.branches.update.successful", "",
+        VcsNotifier.getInstance(myProject).notifySuccess(BRANCHES_UPDATE_SUCCESSFUL, "",
                                                          GitBundle.message("branches.selected.branches.updated.title",
                                                                            successfullyUpdated.size,
                                                                            successfullyUpdated.joinToString("\n")))

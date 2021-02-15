@@ -172,11 +172,8 @@ public class PythonSdkUtil {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         final Sdk sdk = findPythonSdk(element);
-        if (sdk != null) {
-          final VirtualFile skeletonsDir = findSkeletonsDir(sdk);
-          if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false)) {
-            return true;
-          }
+        if (sdk != null && isFileInSkeletons(virtualFile, sdk)) {
+          return true;
         }
       }
     }
@@ -531,7 +528,7 @@ public class PythonSdkUtil {
       return null;
     }
     final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
-                                                           : homeDirectory.getParent().getParent();
+                                                         : homeDirectory.getParent().getParent();
     return condaParent.findChild("conda-meta");
   }
 }

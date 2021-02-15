@@ -3,13 +3,17 @@ package com.intellij.filePrediction.candidates
 import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
 import com.intellij.filePrediction.predictor.model.unregisterCandidateProvider
+import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
 import com.intellij.util.containers.ContainerUtil
+import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
 
 class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
 
@@ -53,7 +57,9 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
     val file = FilePredictionTestDataHelper.findMainTestFile(root)
     assertNotNull("Cannot find file with '${FilePredictionTestDataHelper.DEFAULT_MAIN_FILE}' name", file)
 
-    val result = FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, file!!).value
+    val result: ExternalReferencesResult = ApplicationManager.getApplication().executeOnPooledThread(Callable {
+      FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, file!!).value
+    }).get(1, TimeUnit.SECONDS)
     val candidates = provider.provideCandidates(myFixture.project, file, result.references, limit)
 
     val actual = candidates.map {

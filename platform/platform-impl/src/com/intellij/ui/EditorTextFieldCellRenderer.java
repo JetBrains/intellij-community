@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
@@ -248,6 +249,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     private final char myReturnSymbol;
 
     private Dimension myPreferredSize;
+
+    @NlsSafe
     private String myRawText;
 
     public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {

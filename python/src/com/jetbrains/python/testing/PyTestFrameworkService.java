@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -49,7 +50,7 @@ public class PyTestFrameworkService implements PersistentStateComponent<PyTestFr
   }
 
   @NotNull
-  public static String getSdkReadableNameByFramework(@NotNull final String frameworkName) {
+  public static @Nls String getSdkReadableNameByFramework(@NotNull final String frameworkName) {
     switch (frameworkName) {
       case PyNames.PY_TEST: {
         return PyBundle.message("runcfg.pytest.display_name");

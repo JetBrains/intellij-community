@@ -8,14 +8,17 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public abstract class RunAnythingSearchListModel extends CollectionListModel<Object> {
@@ -89,10 +92,13 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
     private final List<RunAnythingGroup> myGroups;
 
     RunAnythingHelpListModel() {
+      Function<Map.Entry<@Nls String, List<RunAnythingProvider>>, RunAnythingGroup> mapping =
+        entry -> new RunAnythingHelpGroup(entry.getKey(), entry.getValue());
+
       myGroups = ContainerUtil.map(StreamEx.of(RunAnythingProvider.EP_NAME.extensions())
                                      .filter(provider -> provider.getHelpGroupTitle() != null)
                                      .groupingBy(provider -> provider.getHelpGroupTitle())
-                                     .entrySet(), entry -> new RunAnythingHelpGroup(entry.getKey(), entry.getValue()));
+                                     .entrySet(), mapping);
 
       myGroups.addAll(RunAnythingHelpGroup.EP_NAME.getExtensionList());
     }

@@ -3,21 +3,38 @@ package com.intellij.openapi.startup;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>Runs an activity on project open.</p>
- *
- * <p>If the activity implements {@link com.intellij.openapi.project.DumbAware} interface, e.g. {@link DumbAware}, it will be started in a pooled thread
- * under 'Loading Project' dialog, otherwise it will be started in the dispatch thread after the initialization.</p>
- *
  * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity.
+ *
+ * @see com.intellij.openapi.startup.StartupManager
  */
 public interface StartupActivity {
+  /**
+   * Activity is executed on a pooled thread under 'Loading Project' dialog
+   * after {@link com.intellij.openapi.components.ProjectComponent} initializations.
+   * <p>
+   * This extension point can be only used by platform itself.
+   *
+   * @see StartupManager#registerStartupActivity
+   */
+  @ApiStatus.Internal
+  ExtensionPointName<StartupActivity> STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.startupActivity");
+
+  /**
+   * If activity implements {@link com.intellij.openapi.project.DumbAware}, it is executed after project is opened on a background thread with no visible progress indicator.
+   * Otherwise it is executed on EDT when indexes are ready.
+   *
+   * @see StartupManager#registerPostStartupActivity
+   * @see DumbAware
+   */
   ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.postStartupActivity");
 
   /**
-   * Please see https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
+   * Acts as {@link #POST_STARTUP_ACTIVITY}, but executed with 5 seconds delay after project opening.
    */
   ExtensionPointName<StartupActivity.Background> BACKGROUND_POST_STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.backgroundPostStartupActivity");
 
@@ -32,5 +49,6 @@ public interface StartupActivity {
   interface DumbAware extends StartupActivity, com.intellij.openapi.project.DumbAware {
   }
 
-  interface Background extends StartupActivity, com.intellij.openapi.project.DumbAware {}
+  interface Background extends StartupActivity, com.intellij.openapi.project.DumbAware {
+  }
 }

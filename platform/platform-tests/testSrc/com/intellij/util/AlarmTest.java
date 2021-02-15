@@ -2,22 +2,25 @@
 package com.intellij.util;
 
  import com.intellij.diagnostic.PerformanceWatcher;
- import com.intellij.openapi.application.ApplicationManager;
- import com.intellij.openapi.application.ModalityState;
- import com.intellij.openapi.application.impl.LaterInvocator;
- import com.intellij.testFramework.LightPlatformTestCase;
- import com.intellij.util.ui.UIUtil;
- import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
- import java.util.Collections;
- import java.util.List;
- import java.util.Set;
- import java.util.concurrent.*;
- import java.util.concurrent.atomic.AtomicInteger;
- import java.util.stream.Collectors;
- import java.util.stream.Stream;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
- import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
  public class AlarmTest extends LightPlatformTestCase {
   public void testTwoAddsWithZeroDelayMustExecuteSequentially() throws Exception {
@@ -27,11 +30,6 @@ package com.intellij.util;
 
   public void testAlarmRequestsShouldExecuteSequentiallyEvenInPooledThread() throws Exception {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    assertRequestsExecuteSequentially(alarm);
-  }
-
-  public void testAlarmRequestsShouldExecuteSequentiallyEveryWhere() throws Exception {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getTestRootDisposable());
     assertRequestsExecuteSequentially(alarm);
   }
 
@@ -72,7 +70,7 @@ package com.intellij.util;
     Alarm alarm = new Alarm(getTestRootDisposable());
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
-    Set<Thread> used = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    Set<Thread> used = ContainerUtil.newConcurrentSet();
     for (int i = 0; i < N; i++) {
       alarm.addRequest(() -> {
         executed.incrementAndGet();
@@ -88,7 +86,7 @@ package com.intellij.util;
   }
 
   public void testManyAlarmsDoNotStartTooManyThreads() {
-    Set<Thread> used = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    Set<Thread> used = ContainerUtil.newConcurrentSet();
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
     List<Alarm> alarms = Stream.generate(() -> new Alarm(getTestRootDisposable())).limit(N).collect(Collectors.toList());

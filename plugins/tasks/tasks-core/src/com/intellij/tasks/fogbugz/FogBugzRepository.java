@@ -131,7 +131,7 @@ public class FogBugzRepository extends BaseRepositoryImpl {
         catch (Exception e) {
           throw new RuntimeException("Error selecting comment nodes", e);
         }
-        List<Comment> comments = ContainerUtil.mapNotNull(nodes, new NotNullFunction<Element, Comment>() {
+        List<Comment> comments = ContainerUtil.mapNotNull(nodes, new NotNullFunction<>() {
           @NotNull
           @Override
           public Comment fun(Element element) {

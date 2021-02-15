@@ -13,6 +13,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -29,12 +32,16 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -46,6 +53,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
 
@@ -57,8 +65,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   @NotNull private final Project myProject;
   @Nullable private final Executor myExecutor;
-  private ValidationResult myLastValidationResult = null;
-  private boolean myValidationResultValid = false;
   private MyValidatableComponent myComponent;
   private final @NlsContexts.ConfigurableName String myDisplayName;
   private final String myHelpTopic;
@@ -67,6 +73,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private String myDefaultTargetName;
   private String myFolderName;
   private boolean myChangingNameFromCode;
+  private CancellablePromise<ValidationResult> myCancellablePromise;
+  private final SingleAlarm myValidationAlarm;
 
   private SingleConfigurationConfigurable(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(ConfigurationSettingsEditorWrapper.createWrapper(settings), settings);
@@ -98,9 +106,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     getEditor().addSettingsEditorListener(new SettingsEditorListener<>() {
       @Override
       public void stateChanged(@NotNull SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
-        myValidationResultValid = false;
+        requestToUpdateWarning();
       }
     });
+    myValidationAlarm = new SingleAlarm(() -> {
+      if (myComponent != null) {
+        validateResultOnBackgroundThread(configurationException -> myComponent.updateValidationResultVisibility(configurationException));
+      }
+    }, 100, getEditor(), Alarm.ThreadToUse.SWING_THREAD, ModalityState.current());
   }
 
   @NotNull
@@ -147,11 +160,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myComponent.doReset();
   }
 
-  void updateWarning() {
-    myValidationResultValid = false;
-    if (myComponent != null) {
-      myComponent.updateWarning();
-    }
+  void requestToUpdateWarning() {
+    myValidationAlarm.request();
   }
 
   @Override
@@ -182,11 +192,22 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   public boolean isStoredInFile() {
     return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isStoredInFile();
   }
+  
+  private void validateResultOnBackgroundThread(Consumer<ValidationResult> onUIThread) {
+    if (myCancellablePromise != null && !myCancellablePromise.isDone()) {
+      myCancellablePromise.cancel();
+    }
+    myCancellablePromise = getValidateAction()
+      .finishOnUiThread(ModalityState.current(), onUIThread)
+      .submit(NonUrgentExecutor.getInstance());
+  }
 
-  @Nullable
-  private ValidationResult getValidationResult() {
-    if (!myValidationResultValid) {
-      myLastValidationResult = null;
+  public boolean isValid() {
+    return getValidateAction().executeSynchronously() == null;
+  }
+  
+  private NonBlockingReadAction<ValidationResult> getValidateAction() {
+    return ReadAction.nonBlocking(() -> {
       RunnerAndConfigurationSettings snapshot = null;
       try {
         snapshot = createSnapshot(false);
@@ -200,12 +221,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         }
       }
       catch (ConfigurationException e) {
-        myLastValidationResult = createValidationResult(snapshot, e);
+        return createValidationResult(snapshot, e);
       }
-
-      myValidationResultValid = true;
-    }
-    return myLastValidationResult;
+      return null;
+    })
+      .expireWith(getEditor());
   }
 
   private ValidationResult createValidationResult(RunnerAndConfigurationSettings snapshot, ConfigurationException e) {
@@ -282,10 +302,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     finally {
       myChangingNameFromCode = false;
     }
-  }
-
-  public final boolean isValid() {
-    return getValidationResult() == null;
   }
 
   public final JTextField getNameTextField() {
@@ -367,7 +383,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myNameLabel.setLabelFor(myNameText);
       myNameText.setDocument(myNameDocument);
 
-      getEditor().addSettingsEditorListener(settingsEditor -> updateWarning());
+      getEditor().addSettingsEditorListener(settingsEditor -> requestToUpdateWarning());
       myWarningLabel.setCopyable(true);
       myWarningLabel.setAllowAutoWrapping(true);
       myWarningLabel.setIcon(AllIcons.General.BalloonError);
@@ -378,7 +394,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
                                                   JBUI.emptyInsets(), 0, 0));
       myComponentPlace.doLayout();
       myFixButton.setIcon(AllIcons.Actions.QuickfixBulb);
-      updateWarning();
+      requestToUpdateWarning();
       myFixButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
@@ -386,8 +402,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
             return;
           }
           myQuickFix.run();
-          myValidationResultValid = false;
-          updateWarning();
+          requestToUpdateWarning();
         }
       });
 
@@ -425,9 +440,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         if (!StringUtil.equals(myDefaultTargetName, chosenTarget)) {
           setModified(true);
           setTargetName(chosenTarget);
-          SingleConfigurationConfigurable.this.updateWarning();
+          requestToUpdateWarning();
         }
       });
+      //hide validation result
+      updateValidationResultVisibility(null);
     }
 
     private void doReset() {
@@ -475,14 +492,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       return getEditor().getComponent();
     }
 
-    @Nullable
-    public ValidationResult getValidationResult() {
-      return SingleConfigurationConfigurable.this.getValidationResult();
-    }
-
-    private void updateWarning() {
-      final ValidationResult configurationException = getValidationResult();
-
+    private void updateValidationResultVisibility(ValidationResult configurationException) {
       if (configurationException != null) {
         mySeparator.setVisible(true);
         myWarningLabel.setVisible(true);
@@ -529,7 +539,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
             String chosenTargetName = lastEdited != null ? lastEdited.getDisplayName() : selectedName;
             resetRunOnComboBox(chosenTargetName);
             setTargetName(chosenTargetName);
-            SingleConfigurationConfigurable.this.updateWarning();
+            requestToUpdateWarning();
           }
         });
       myJBScrollPane = wrapWithScrollPane(null);

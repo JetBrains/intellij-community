@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 final class EmptyFMap implements KeyFMap {
   private static final Key[] EMPTY_KEYS_ARRAY = {};
 
-  EmptyFMap() {
-  }
-
   @NotNull
   @Override
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {

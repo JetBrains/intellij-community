@@ -18,6 +18,9 @@ package com.intellij.openapi.util;
 
 import com.intellij.util.ReflectionUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
@@ -38,22 +41,22 @@ public class ReflectionUtilTest extends TestCase {
     fail();
   }
 
-  public void testResetField() {
+  public void testResetField() throws NoSuchFieldException {
     final Reset reset = new Reset();
 
-    ReflectionUtil.resetField(reset, String.class, "STRING");
+    resetField(reset, String.class, "STRING");
     assertNull(reset.STRING);
 
-    ReflectionUtil.resetField(reset, boolean.class, "BOOLEAN");
+    resetField(reset, boolean.class, "BOOLEAN");
     assertFalse(reset.BOOLEAN);
 
-    ReflectionUtil.resetField(reset, int.class, "INT");
+    resetField(reset, int.class, "INT");
     assertEquals(0, reset.INT);
 
-    ReflectionUtil.resetField(reset, double.class, "DOUBLE");
+    resetField(reset, double.class, "DOUBLE");
     assertEquals(0d, reset.DOUBLE);
 
-    ReflectionUtil.resetField(reset, float.class, "FLOAT");
+    resetField(reset, float.class, "FLOAT");
     assertEquals(0f, reset.FLOAT);
 
     ReflectionUtil.resetField(Reset.class, String.class, "STATIC_STRING");
@@ -64,6 +67,11 @@ public class ReflectionUtilTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     Reset.STATIC_STRING = "value";
+  }
+
+  private static void resetField(@NotNull Object object, @Nullable("null means any type") Class<?> type, @NotNull @NonNls String name)
+    throws NoSuchFieldException {
+    ReflectionUtil.resetField(object, ReflectionUtil.findField(object.getClass(), type, name));
   }
 
   static class Reset {

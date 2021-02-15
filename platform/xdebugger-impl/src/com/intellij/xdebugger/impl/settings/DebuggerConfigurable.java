@@ -5,6 +5,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -76,10 +77,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
         myChildren = EMPTY_CONFIGURABLES;
       }
       else {
-        Configurable[] generalConfigurables = mergedGeneralConfigurable.children;
-        Configurable[] mergedArray = new Configurable[generalConfigurables.length + 1];
-        System.arraycopy(generalConfigurables, 0, mergedArray, 0, generalConfigurables.length);
-        mergedArray[generalConfigurables.length] = firstConfigurable;
+        Configurable[] mergedArray = ArrayUtil.append(mergedGeneralConfigurable.children, firstConfigurable);
         myRootConfigurable = new MergedCompositeConfigurable(getId(), getDisplayName(), null, mergedArray);
         myChildren = firstConfigurable instanceof SearchableConfigurable.Parent ? ((Parent)firstConfigurable).getConfigurables() : EMPTY_CONFIGURABLES;
       }

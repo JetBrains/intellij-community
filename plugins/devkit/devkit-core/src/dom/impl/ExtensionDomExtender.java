@@ -353,7 +353,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
   @NotNull
   private static ResolvingConverter<PsiEnumConstant> createEnumConverter(PsiClass fieldPsiClass) {
-    return new ResolvingConverter<PsiEnumConstant>() {
+    return new ResolvingConverter<>() {
 
       @Override
       public String getErrorMessage(@Nullable String s, ConvertContext context) {

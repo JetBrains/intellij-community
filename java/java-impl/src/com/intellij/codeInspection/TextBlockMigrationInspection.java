@@ -12,7 +12,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -48,11 +47,13 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         int nNewLines = 0;
         PsiExpression[] operands = expression.getOperands();
         TextRange firstNewLineTextRange = null;
+        boolean hasEscapedQuotes = false;
         for (PsiExpression operand : operands) {
           PsiLiteralExpression literal = getLiteralExpression(operand);
           if (literal == null) return;
           if (nNewLines > 1) continue;
           String text = literal.getText();
+          hasEscapedQuotes |= (getQuoteIndex(text) != -1);
           int newLineIdx = getNewLineIndex(text, 0);
           if (newLineIdx == -1) continue;
           if (firstNewLineTextRange == null) {
@@ -64,25 +65,40 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
             newLineIdx = getNewLineIndex(text, newLineIdx + 1);
           }
         }
-        if (nNewLines <= 1) return;
-        boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
-        holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
-                               JavaBundle.message("inspection.text.block.migration.message", "Concatenation"),
-                               new ReplaceWithTextBlockFix());
+        if (nNewLines > 1) {
+          boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
+          holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
+                                 JavaBundle.message("inspection.text.block.migration.concatenation.message"),
+                                 new ReplaceWithTextBlockFix());
+          return;
+        }
+        if (isOnTheFly && hasEscapedQuotes) {
+          holder.registerProblem(expression,
+                                 JavaBundle.message("inspection.text.block.migration.string.message"),
+                                 ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
+        }
       }
 
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
+        if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiPolyadicExpression) return;
         boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
         if (!mySuggestLiteralReplacement && !quickFixOnly) return;
         PsiLiteralExpression literal = getLiteralExpression(expression);
         if (literal == null) return;
         String text = literal.getText();
         int newLineIdx = getNewLineIndex(text, 0);
-        if (newLineIdx == -1 || getNewLineIndex(text, newLineIdx + 1) == -1) return;
-        holder.registerProblem(expression, quickFixOnly ? null : new TextRange(newLineIdx, newLineIdx + 2),
-                               JavaBundle.message("inspection.text.block.migration.message", "String"),
-                               new ReplaceWithTextBlockFix());
+        if (newLineIdx != -1 && getNewLineIndex(text, newLineIdx + 1) != -1) {
+          holder.registerProblem(expression, quickFixOnly ? null : new TextRange(newLineIdx, newLineIdx + 2),
+                                 JavaBundle.message("inspection.text.block.migration.string.message"),
+                                 new ReplaceWithTextBlockFix());
+          return;
+        }
+        if (isOnTheFly && getQuoteIndex(text) != -1) {
+          holder.registerProblem(expression, 
+                                 JavaBundle.message("inspection.text.block.migration.string.message"),
+                                 ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
+        }
       }
     };
   }
@@ -116,7 +132,8 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       String[] lines = getContentLines(operands);
       if (lines == null) return;
       String textBlock = getTextBlock(lines);
-      PsiReplacementUtil.replaceExpression(toReplace, textBlock, new CommentTracker());
+      CommentTracker tracker = new CommentTracker();
+      tracker.replaceAndRestoreComments(toReplace, textBlock);
     }
 
     @NotNull
@@ -160,11 +177,19 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
   }
 
   private static int getNewLineIndex(@NotNull String text, int start) {
+    return getEscapedCharIndex(text, start, 'n');
+  }
+  
+  private static int getQuoteIndex(@NotNull String text) {
+    return getEscapedCharIndex(text, 0, '"');
+  }
+
+  private static int getEscapedCharIndex(@NotNull String text, int start, char escapedChar) {
     int i = start;
     while (i < text.length()) {
       char c = text.charAt(i);
       if (c == '\\') {
-        if (i + 1 < text.length() && text.charAt(i + 1) == 'n') return i;
+        if (i + 1 < text.length() && text.charAt(i + 1) == escapedChar) return i;
         i += 2;
       }
       else {

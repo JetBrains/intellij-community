@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -223,7 +223,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       return previousBranch; // the code without a label is not allowed in 'switch', just ignore it
     }
     Branch branch = new Branch(labels, statementList, hasImplicitBreak, comments.fetchTexts());
-    if (previousBranch == null || !previousBranch.canFallThrough()) {
+    if (!branch.canFallThrough() && (previousBranch == null || !previousBranch.canFallThrough())) {
       int hash = branch.hash();
       List<Branch> branches = branchesByHash.get(hash);
       if (branches == null) branchesByHash.put(hash, branches = new ArrayList<>());

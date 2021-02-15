@@ -68,7 +68,7 @@ public final class VirtualFilePointerTracker {
     }
 
     try {
-      Set<VirtualFilePointer> leaked = new ObjectOpenCustomHashSet<>(pointers, new Hash.Strategy<VirtualFilePointer>() {
+      Set<VirtualFilePointer> leaked = new ObjectOpenCustomHashSet<>(pointers, new Hash.Strategy<>() {
         @Override
         public int hashCode(@Nullable VirtualFilePointer pointer) {
           return pointer == null ? 0 : FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());

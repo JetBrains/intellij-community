@@ -22,7 +22,7 @@ public final class RareLogger extends Logger {
     myLogger = logger;
 
     final Object lock = new Object();
-    myCache = new SLRUMap<Object, Long>(64, 32) {
+    myCache = new SLRUMap<>(64, 32) {
       @Override
       public Long get(Object key) {
         if (fairSync) {
@@ -153,7 +153,7 @@ public final class RareLogger extends Logger {
   }
 
   @Override
-  public void setLevel(Level level) {
+  public void setLevel(@NotNull Level level) {
     myLogger.setLevel(level);
   }
 

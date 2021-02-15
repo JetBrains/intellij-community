@@ -218,13 +218,31 @@ public class AnnotationUtil {
   @Nullable
   public static PsiAnnotation findAnnotationInHierarchy(@NotNull final PsiModifierListOwner listOwner,
                                                         @NotNull Set<String> annotationNames, boolean skipExternal) {
+    AnnotationAndOwner result = findAnnotationAndOwnerInHierarchy(listOwner, annotationNames, skipExternal);
+    return result == null ? null : result.annotation;
+  }
+  
+  static final class AnnotationAndOwner {
+    final @NotNull PsiModifierListOwner owner;
+    final @NotNull PsiAnnotation annotation;
+
+    AnnotationAndOwner(@NotNull PsiModifierListOwner owner, @NotNull PsiAnnotation annotation) {
+      this.owner = owner;
+      this.annotation = annotation;
+    }
+  }
+
+  @Nullable
+  static AnnotationAndOwner findAnnotationAndOwnerInHierarchy(@NotNull PsiModifierListOwner listOwner,
+                                                              @NotNull Set<String> annotationNames,
+                                                              boolean skipExternal) {
     PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames, skipExternal);
-    if (directAnnotation != null) return directAnnotation;
+    if (directAnnotation != null) return new AnnotationAndOwner(listOwner, directAnnotation);
 
     for (PsiModifierListOwner superOwner : getSuperAnnotationOwners(listOwner)) {
       PsiAnnotation annotation = findAnnotation(superOwner, annotationNames, skipExternal);
       if (annotation != null) {
-        return annotation;
+        return new AnnotationAndOwner(superOwner, annotation);
       }
     }
     return null;

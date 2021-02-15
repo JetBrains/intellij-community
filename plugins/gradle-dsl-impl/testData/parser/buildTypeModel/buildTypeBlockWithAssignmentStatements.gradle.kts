@@ -6,7 +6,7 @@ android {
       isDebuggable = true
       isEmbedMicroApp = true
       isJniDebuggable= true
-      manifestPlaceholders = mapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
+      manifestPlaceholders = mutableMapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
       isMinifyEnabled = true
       multiDexEnabled = true
       proguardFiles(listOf("proguard-android.txt", "proguard-rules.pro"))

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -71,10 +69,10 @@ public class UsageViewTreeTest extends UsefulTestCase {
   public void testSimpleModule() throws Exception {
     addModule("main");
     PsiFile file = myFixture.addFileToProject("main/A.txt", "hello");
-    assertUsageViewStructureEquals(new UsageInfo(file), "Usage (1 usage)\n" +
-                                                        " Non-code usages (1 usage)\n" +
-                                                        "  main (1 usage)\n" +
-                                                        "   A.txt (1 usage)\n" +
+    assertUsageViewStructureEquals(new UsageInfo(file), "<root> (1)\n" +
+                                                        " Non-code usages (1)\n" +
+                                                        "  main (1)\n" +
+                                                        "   A.txt (1)\n" +
                                                         "    1hello\n");
   }
 
@@ -83,11 +81,11 @@ public class UsageViewTreeTest extends UsefulTestCase {
     PsiFile file = myFixture.addFileToProject("xxx.main/A.txt", "hello");
     UsageViewSettings.getInstance().setFlattenModules(false);
     ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> {
-      assertUsageViewStructureEquals(new UsageInfo(file), "Usage (1 usage)\n" +
-                                                          " Non-code usages (1 usage)\n" +
-                                                          "  xxx (1 usage)\n" +
-                                                          "   main (1 usage)\n" +
-                                                          "    A.txt (1 usage)\n" +
+      assertUsageViewStructureEquals(new UsageInfo(file), "<root> (1)\n" +
+                                                          " Non-code usages (1)\n" +
+                                                          "  xxx (1)\n" +
+                                                          "   main (1)\n" +
+                                                          "    A.txt (1)\n" +
                                                           "     1hello\n");
       return null;
     });
@@ -99,18 +97,19 @@ public class UsageViewTreeTest extends UsefulTestCase {
     UsageViewSettings.getInstance().setGroupByDirectoryStructure(true); // must ignore group by package
     PsiFile file = myFixture.addFileToProject("xxx.main/x/i1/A.txt", "hello");
     PsiFile file2 = myFixture.addFileToProject("xxx.main/y/B.txt", "hello");
-    assertEquals("Usage (2 usages)\n" +
-                 " Non-code usages (2 usages)\n" +
-                 "  xxx.main (2 usages)\n" +
-                 "   x (1 usage)\n" +
-                 "    i1 (1 usage)\n" +
-                 "     A.txt (1 usage)\n" +
+    assertEquals("<root> (2)\n" +
+                 " Non-code usages (2)\n" +
+                 "  xxx.main (2)\n" +
+                 "   x (1)\n" +
+                 "    i1 (1)\n" +
+                 "     A.txt (1)\n" +
                  "      1hello\n" +
-                 "   y (1 usage)\n" +
-                 "    B.txt (1 usage)\n" +
+                 "   y (1)\n" +
+                 "    B.txt (1)\n" +
                  "     1hello\n"
       , myFixture.getUsageViewTreeTextRepresentation(Arrays.asList(new UsageInfo(file), new UsageInfo(file2))));
   }
+
 
   private void assertUsageViewStructureEquals(@NotNull UsageInfo usage, String expected) {
     assertEquals(expected, myFixture.getUsageViewTreeTextRepresentation(Collections.singleton(usage)));

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class MarkdownAccessor {
+public final class MarkdownAccessor {
   private static final SafeOpenerAccessor ourSafeOpenerAccessor = new MarkdownAccessor.SafeOpenerAccessor() {
     @Override
     public void openLink(@NotNull String link) {

@@ -5,9 +5,11 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.util.containers.ConcurrentBitSet
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.kind.IndexableSetContributorOriginImpl
 
 internal class IndexableSetContributorFilesIterator(private val indexableSetContributor: IndexableSetContributor,
                                                     private val projectAware: Boolean) : IndexableFilesIterator {
@@ -31,18 +33,20 @@ internal class IndexableSetContributorFilesIterator(private val indexableSetCont
     return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
   }
 
+  override fun getOrigin(): IndexableSetOrigin = IndexableSetContributorOriginImpl(indexableSetContributor)
+
   private fun getName() = (indexableSetContributor as? ItemPresentation)?.presentableText
 
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
-    visitedFileSet: ConcurrentBitSet
+    fileFilter: VirtualFileFilter
   ): Boolean {
     val allRoots = runReadAction {
       if (projectAware) indexableSetContributor.getAdditionalProjectRootsToIndex(project)
       else indexableSetContributor.additionalRootsToIndex
     }
-    return IndexableFilesIterationMethods.iterateRoots(project, allRoots, fileIterator, visitedFileSet, excludeNonProjectRoots = false)
+    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, allRoots, fileIterator, fileFilter)
   }
 
 }

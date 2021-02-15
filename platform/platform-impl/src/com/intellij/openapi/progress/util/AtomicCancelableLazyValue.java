@@ -45,7 +45,7 @@ public abstract class AtomicCancelableLazyValue<T> {
 
   @NotNull
   public static <T> AtomicCancelableLazyValue<T> createValue(@NotNull NotNullFactory<? extends T> value) {
-    return new AtomicCancelableLazyValue<T>() {
+    return new AtomicCancelableLazyValue<>() {
       @NotNull
       @Override
       protected T compute() {

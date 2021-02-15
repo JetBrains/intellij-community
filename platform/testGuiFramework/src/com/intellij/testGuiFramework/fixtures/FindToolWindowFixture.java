@@ -47,7 +47,7 @@ public class FindToolWindowFixture {
     public void findUsageGroup(@NotNull final String groupText) {
       final Tree tree = getContentsTree();
       final List<String> groupNames = Lists.newArrayList();
-      GroupNode foundGroup = execute(new GuiQuery<GroupNode>() {
+      GroupNode foundGroup = execute(new GuiQuery<>() {
         @Override
         @Nullable
         protected GroupNode executeInEDT() throws Throwable {

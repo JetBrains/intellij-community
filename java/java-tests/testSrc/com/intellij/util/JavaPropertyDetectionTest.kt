@@ -30,8 +30,7 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testSuperFieldRef() {
-    doTest("""class Some extends SomeBase {public String getN<caret>ame() { return name; }}class SomeBase { private String name;}""", PropertyMemberType.GETTER,
-           false)
+    assertNotPropertyMember("""class Some extends SomeBase {public String getN<caret>ame() { return name; }}class SomeBase { private String name;}""", PropertyMemberType.GETTER)
   }
 
   fun testSuperFieldRef2() {
@@ -59,11 +58,33 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
                             }""", PropertyMemberType.GETTER)
   }
 
+  fun testParenthesesGetter() {
+    assertPropertyMember("""
+      class X {
+        String prop;
+        String getProp<caret>() {
+         return ((X.this).prop);
+        }
+      }
+      """, PropertyMemberType.GETTER)
+  }
+
   // setter field test
 
   fun testSimpleSetter() {
     assertPropertyMember("""class Some {
       |private String name;   public void set<caret>Name(String name) { this.name = name; }}""".trimMargin(), PropertyMemberType.SETTER)
+  }
+
+  fun testParenthesesSetter() {
+    assertPropertyMember("""
+      class Y {
+        private String prop;
+        void set<caret>Prop(String prop) {
+          ((Y.this).prop) = (prop);
+        }
+      }
+    """, PropertyMemberType.SETTER)
   }
 
   fun testFieldNotResolved() {
@@ -128,10 +149,16 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
             return Foo.this.getName(100);
           }
         }
+        
+        class X {
+          public String getX() {
+            return (((x)));
+          }
       }
     """.trimIndent(), Int2ObjectOpenHashMap<PropertyIndexValue>().apply {
       put(0, PropertyIndexValue("name", true))
       put(2, PropertyIndexValue("Boo.Foo.CONST", true))
+      put(6, PropertyIndexValue("(((x)))", true))
     })
   }
 

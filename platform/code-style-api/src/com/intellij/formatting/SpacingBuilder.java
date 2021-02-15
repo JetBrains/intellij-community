@@ -60,14 +60,6 @@ public class SpacingBuilder {
     Spacing createSpacing(@NotNull TextRange parentRange) {
       return Spacing.createSpacing(myMinSpaces, myMaxSpaces, myMinLF, myKeepLineBreaks, myKeepBlankLines);
     }
-
-    /**
-     * @deprecated use #createSpacing(com.intellij.openapi.util.TextRange) instead
-     */
-    @Deprecated
-    Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
-      return this.createSpacing(parentBlock.getTextRange());
-    }
   }
 
   private static class DependentLFSpacingRule extends SpacingRule {
@@ -83,12 +75,6 @@ public class SpacingBuilder {
     @Override
     Spacing createSpacing(@NotNull TextRange parentRange) {
       return Spacing.createDependentLFSpacing(myMinSpaces, myMaxSpaces, parentRange, myKeepLineBreaks, myKeepBlankLines);
-    }
-
-
-    @Override @Deprecated @SuppressWarnings("deprecation")
-    Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
-      return this.createSpacing(parentBlock.getTextRange());
     }
   }
 
@@ -206,18 +192,6 @@ public class SpacingBuilder {
 
   private final CommonCodeStyleSettings myCodeStyleSettings;
   private final List<SpacingRule> myRules = new ArrayList<>();
-
-  /**
-   * @param codeStyleSettings
-   * @deprecated Use {@link #SpacingBuilder(CodeStyleSettings, Language)} or {@link #SpacingBuilder(CommonCodeStyleSettings)} instead
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public SpacingBuilder(CodeStyleSettings codeStyleSettings) {
-    // TODO: remove deprecated method (v.14)
-    myCodeStyleSettings = new CommonCodeStyleSettings(Language.ANY);
-    LOG.error("The plugin calling this method uses deprecated API and must be updated.");
-  }
 
   /**
    * Creates SpacingBuilder with given code style settings and language whose settings must be used.

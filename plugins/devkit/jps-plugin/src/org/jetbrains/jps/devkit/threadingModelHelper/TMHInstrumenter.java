@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class TMHInstrumenter {
+public final class TMHInstrumenter {
   static boolean instrument(ClassReader classReader, ClassVisitor classWriter, Set<TMHAssertionGenerator> generators) {
     AnnotatedMethodsCollector collector = new AnnotatedMethodsCollector(generators);
     classReader.accept(collector, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);

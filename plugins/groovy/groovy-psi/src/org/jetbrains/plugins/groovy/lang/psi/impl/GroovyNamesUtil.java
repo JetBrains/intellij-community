@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lexer.Lexer;
@@ -10,7 +9,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
@@ -19,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -28,7 +27,6 @@ import java.util.regex.Pattern;
  * @author ven
  */
 public final class GroovyNamesUtil {
-
   private static final Pattern PATTERN = Pattern.compile("[A-Za-z][a-z0-9]*");
 
   private GroovyNamesUtil() {
@@ -97,7 +95,7 @@ public final class GroovyNamesUtil {
 
   public static String[] getMethodArgumentsNames(Project project, PsiType[] types) {
     Set<String> uniqNames = new LinkedHashSet<>();
-    Set<String> nonUniqNames = new THashSet<>();
+    Set<String> nonUniqNames = new HashSet<>();
     for (PsiType type : types) {
       final SuggestedNameInfo nameInfo =
         JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type);

@@ -4,8 +4,6 @@ package com.intellij.platform;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -28,18 +26,6 @@ public final class ProjectBaseDirectory {
 
   public Path getBaseDir(Path baseDir) {
     return ObjectUtils.chooseNotNull(getBase(), baseDir);
-  }
-
-  /**
-   * @deprecated Use {@link #getBase()}
-   */
-  @Nullable
-  @Deprecated
-  public VirtualFile getBaseDir() {
-    if (baseDir == null) {
-      return null;
-    }
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(baseDir.toString()));
   }
 
   @Nullable

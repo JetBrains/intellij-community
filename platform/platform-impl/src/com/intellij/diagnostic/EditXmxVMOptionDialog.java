@@ -8,9 +8,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -66,17 +66,11 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
       mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", file.toString()));
       myMessageLabel.setText(DiagnosticBundle.message("change.memory.restart"));
 
-      int newMemory;
-      if (SystemInfo.is64Bit) {
-        newMemory = Math.min(MAX_SUGGESTED_HEAP_SIZE, Math.round(currentMemory * 1.5f));
-      }
-      else {
-        newMemory = Math.min(800, Math.round(currentMemory * 1.5f));
-      }
+      int newMemory = Math.min(CpuArch.is32Bit() ? 800 : MAX_SUGGESTED_HEAP_SIZE, Math.round(currentMemory * 1.5f));
       myHeapSizeField.setText(String.valueOf(newMemory));
     }
     else {
-      myMessageLabel.setText(DiagnosticBundle.message("change.memory.nofile"));
+      myMessageLabel.setText(DiagnosticBundle.message("change.memory.no.file"));
       mySettingsFileHintLabel.setVisible(false);
       myHeapSizeField.setEnabled(false);
       myShutdownAction.setEnabled(false);
@@ -126,7 +120,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
           mySettingsFileHintLabel.setText(DiagnosticBundle.message("change.memory.low"));
           return false;
         }
-        if (heapSize > 800 && !SystemInfo.is64Bit) {
+        if (heapSize > 800 && CpuArch.is32Bit()) {
           mySettingsFileHintLabel.setText(DiagnosticBundle.message("change.memory.large"));
           return false;
         }

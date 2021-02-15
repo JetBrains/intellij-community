@@ -173,7 +173,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
           return;
         }
         LanguageLevel level = PsiUtil.getLanguageLevel(method);
-        if (level != LanguageLevel.JDK_14_PREVIEW && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+        if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
           result.requireAnnotation = true;
           return;
         }

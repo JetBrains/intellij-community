@@ -209,7 +209,12 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       if (qContainingClass != null && PsiUtil.isRawSubstitutor(qContainingClass, qualifierResolveResult.getSubstitutor())) {
         //15.13.1 If there exist a parameterization, then it would be used to search, the *raw type* would be used otherwise
         if (getParameterization(signature, qualifierResolveResult, method, myExpression, qContainingClass) == null) {
-          referencedMethodReturnType = TypeConversionUtil.erasure(referencedMethodReturnType);
+          if (!PsiMethodReferenceUtil.isSecondSearchPossible(signature.getParameterTypes(), qualifierResolveResult, myExpression)) {
+            session.initBounds(myExpression, qContainingClass.getTypeParameters());
+          }
+          else {
+            referencedMethodReturnType = TypeConversionUtil.erasure(referencedMethodReturnType);
+          }
         }
       }
 

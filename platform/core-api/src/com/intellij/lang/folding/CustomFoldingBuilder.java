@@ -84,7 +84,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
           ASTNode startNode = localFoldingStack.pop();
           int startOffset = startNode.getTextRange().getStartOffset();
           TextRange range = new TextRange(startOffset, child.getTextRange().getEndOffset());
-          descriptors.add(new CompositeFoldingBuilder.FoldingDescriptorWrapper(new FoldingDescriptor(startNode, range), this));
+          descriptors.add(new FoldingDescriptor(startNode, range));
           Set<ASTNode> nodeSet = ourCustomRegionElements.get();
           nodeSet.add(startNode);
           nodeSet.add(child);
@@ -122,11 +122,23 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   @Override
   public final boolean isCollapsedByDefault(@NotNull ASTNode node) {
     if (isCustomRegionStart(node)) {
-      String childText = node.getText();
-      CustomFoldingProvider defaultProvider = getDefaultProvider(childText);
-      return defaultProvider != null && defaultProvider.isCollapsedByDefault(childText);
+      return isCustomRegionCollapsedByDefault(node);
     }
     return isRegionCollapsedByDefault(node);
+  }
+
+  @Override
+  public final boolean isCollapsedByDefault(@NotNull FoldingDescriptor descriptor) {
+    if (isCustomRegionStart(descriptor.getElement())) {
+      return isCustomRegionCollapsedByDefault(descriptor.getElement());
+    }
+    return isRegionCollapsedByDefault(descriptor);
+  }
+
+  private boolean isCustomRegionCollapsedByDefault(@NotNull ASTNode node) {
+    String childText = node.getText();
+    CustomFoldingProvider defaultProvider = getDefaultProvider(childText);
+    return defaultProvider != null && defaultProvider.isCollapsedByDefault(childText);
   }
 
   /**
@@ -136,6 +148,10 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
    * @return true if the region is collapsed by default, false otherwise.
    */
   protected abstract boolean isRegionCollapsedByDefault(@NotNull ASTNode node);
+
+  protected boolean isRegionCollapsedByDefault(@NotNull FoldingDescriptor descriptor) {
+    return isRegionCollapsedByDefault(descriptor.getElement());
+  }
 
   /**
    * Returns true if the node corresponds to custom region start. The node must be a custom folding candidate and match custom folding

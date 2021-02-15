@@ -145,19 +145,6 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
   }
 
   @Override
-  public void registerRunnableToRunOnChange(@NotNull Runnable runnable) {
-  }
-
-  @Override
-  public void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable) {
-  }
-
-  @Override
-  public void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable) {
-    throw new UnsupportedOperationException("Method registerRunnableToRunAfterAnyChange is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
   @NotNull
   public FileManager getFileManager() {
     if (myMockFileManager == null) {

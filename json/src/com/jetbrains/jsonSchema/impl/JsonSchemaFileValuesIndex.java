@@ -35,7 +35,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
   }
 
   private final DataIndexer<String, String, FileContent> myIndexer =
-    new DataIndexer<String, String, FileContent>() {
+    new DataIndexer<>() {
       @Override
       @NotNull
       public Map<String, String> map(@NotNull FileContent inputData) {

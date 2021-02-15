@@ -4,6 +4,7 @@ package com.intellij.application.options
 import com.intellij.openapi.application.PathMacroContributor
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.ContainerUtil
@@ -29,6 +30,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
 
   companion object {
     private val EP_NAME = ExtensionPointName<PathMacroContributor>("com.intellij.pathMacroContributor")
+    private val LOG = logger<PathMacrosImpl>()
 
     const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
     const val MAVEN_REPOSITORY = "MAVEN_REPOSITORY"
@@ -137,6 +139,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
       macroElement.setAttribute(PathVariablesSerializer.NAME_ATTRIBUTE, macro)
       element.addContent(macroElement)
     }
+    LOG.info("Saved path macros: $macros") //temporary added to debug IDEA-256482; LOG.debug cannot be used due to IDEA-256647
     return element
   }
 
@@ -196,6 +199,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     legacyMacros = if (newLegacyMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newLegacyMacros)
     ignoredMacros.clear()
     ignoredMacros.addAll(newIgnoredMacros)
+    LOG.info("Loaded path macros: $macros") //temporary added to debug IDEA-256482; LOG.debug cannot be used due to IDEA-256647
   }
 
   fun addMacroReplacements(result: ReplacePathToMacroMap) {

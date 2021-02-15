@@ -24,8 +24,4 @@ public abstract class XsltElementFactory {
     }
 
     public abstract <T extends XsltElement> T wrapElement(XmlTag target, Class<T> clazz);
-
-    /** @deprecated */
-    @Deprecated
-    public abstract <T extends XsltElement> T wrapElement(XmlTag target);
 }

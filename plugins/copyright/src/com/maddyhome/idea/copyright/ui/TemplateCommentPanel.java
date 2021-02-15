@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightManager;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -144,7 +143,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     });
 
 
-    preview.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
+    preview.setFont(EditorFontType.PLAIN.getGlobalFont());
 
     myUseDefaultSettingsRadioButton.setSelected(true);
 

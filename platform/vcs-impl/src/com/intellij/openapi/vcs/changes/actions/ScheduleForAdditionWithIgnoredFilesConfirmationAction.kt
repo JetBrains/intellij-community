@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.Messages.getQuestionIcon
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.VcsBundle.getString
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -23,12 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Functions.identity
 import com.intellij.util.PairConsumer
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.isEmpty
-import com.intellij.util.containers.notNullize
 import com.intellij.util.containers.stream
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
-import java.util.*
+import one.util.streamex.StreamEx
 import java.util.stream.Stream
 import kotlin.streams.toList
 
@@ -41,7 +40,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     val changeStream = e.getData(VcsDataKeys.CHANGES).stream<Change>()
     if (!collectPathsFromChanges(project, changeStream).isEmpty()) return true
 
-    val filesStream = e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM).notNullize<VirtualFile>()
+    val filesStream = StreamEx.of(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).iterator())
     return !collectPathsFromFiles(project, filesStream).isEmpty()
   }
 
@@ -54,7 +53,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     val changeStream = e.getData(VcsDataKeys.CHANGES).stream()
     ContainerUtil.addAll(toAdd, collectPathsFromChanges(project, changeStream).iterator())
 
-    val filesStream = e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM).notNullize()
+    val filesStream = StreamEx.of(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).iterator())
     ContainerUtil.addAll(toAdd, collectPathsFromFiles(project, filesStream).iterator())
 
     val unversionedFiles = getUnversionedFiles(e, project).toList()

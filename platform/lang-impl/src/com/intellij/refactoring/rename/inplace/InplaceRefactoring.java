@@ -276,7 +276,7 @@ public abstract class InplaceRefactoring {
   protected Collection<PsiReference> collectRefs(SearchScope referencesSearchScope) {
     final Query<PsiReference> search = ReferencesSearch.search(myElementToRename, referencesSearchScope, false);
 
-    final CommonProcessors.CollectProcessor<PsiReference> processor = new CommonProcessors.CollectProcessor<PsiReference>() {
+    final CommonProcessors.CollectProcessor<PsiReference> processor = new CommonProcessors.CollectProcessor<>() {
       @Override
       protected boolean accept(PsiReference reference) {
         return acceptReference(reference);
@@ -877,7 +877,7 @@ public abstract class InplaceRefactoring {
 
   protected void showBalloonInEditor() {
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
+    myBalloon.show(new PositionTracker<>(myEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(@NotNull Balloon object) {
         if (myTarget != null && !popupFactory.isBestPopupLocationVisible(myEditor)) {

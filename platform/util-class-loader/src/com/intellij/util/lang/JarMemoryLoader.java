@@ -1,54 +1,73 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
-/**
- * @author Dmitry Avdeev
- */
 public final class JarMemoryLoader {
-  /** Special entry to keep the number of reordered classes in jar. */
+  // special entry to keep the number of reordered classes in jar
   public static final String SIZE_ENTRY = "META-INF/jb/$$size$$";
 
-  private final Map<String, Resource> myResources = Collections.synchronizedMap(new HashMap<String, Resource>()); // todo do we need it ?
+  private final AtomicReferenceArray<Object> resources;
 
-  private JarMemoryLoader() { }
-
-  public Resource getResource(@NotNull String entryName) {
-    return myResources.remove(entryName);
+  JarMemoryLoader(Object @NotNull [] resources) {
+    this.resources = new AtomicReferenceArray<>(resources);
   }
 
-  @Nullable static JarMemoryLoader load(@NotNull ZipFile zipFile, @NotNull URL baseUrl, @Nullable JarLoader attributesProvider) throws IOException {
-    Enumeration<? extends ZipEntry> entries = zipFile.entries();
-    if (!entries.hasMoreElements()) {
-      return null;
+  public Resource getResource(@NotNull String entryName) {
+    int i = probe(entryName, resources);
+    if (i >= 0) {
+      resources.set(i, null);
+      return (Resource)resources.getAndSet(i + 1, null);
     }
+    return null;
+  }
 
-    ZipEntry sizeEntry = entries.nextElement();
-    if (sizeEntry == null || !sizeEntry.getName().equals(SIZE_ENTRY)) {
-      return null;
+  public byte[] getBytes(@NotNull String entryName) throws IOException {
+    int i = probe(entryName, resources);
+    if (i >= 0) {
+      resources.set(i, null);
+      MemoryResource resource = (MemoryResource)resources.getAndSet(i + 1, null);
+      return resource == null ? null : resource.getBytes();
     }
+    return null;
+  }
 
-    byte[] bytes = FileUtilRt.loadBytes(zipFile.getInputStream(sizeEntry), 2);
-    int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);
-
-    JarMemoryLoader loader = new JarMemoryLoader();
-    for (int i = 0; i < size && entries.hasMoreElements(); i++) {
-      ZipEntry entry = entries.nextElement();
-      MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, attributesProvider != null ? attributesProvider.getAttributes() : null);
-      loader.myResources.put(entry.getName(), resource);
+  private static int probe(Object key, AtomicReferenceArray<Object> table) {
+    int length = table.length();
+    int index = Math.floorMod(key.hashCode(), length >> 1) << 1;
+    while (true) {
+      Object foundKey = table.get(index);
+      if (foundKey == null) {
+        return -index - 1;
+      }
+      else if (key.equals(foundKey)) {
+        return index;
+      }
+      else if ((index += 2) == length) {
+        index = 0;
+      }
     }
-    return loader;
+  }
+
+  // returns index at which the probe key is present; or if absent,
+  // (-i - 1) where i is location where element should be inserted.
+  @SuppressWarnings("DuplicatedCode")
+  public static int probePlain(Object key, Object[] table) {
+    int index = Math.floorMod(key.hashCode(), table.length >> 1) << 1;
+    while (true) {
+      Object foundKey = table[index];
+      if (foundKey == null) {
+        return -index - 1;
+      }
+      else if (key.equals(foundKey)) {
+        return index;
+      }
+      else if ((index += 2) == table.length) {
+        index = 0;
+      }
+    }
   }
 }

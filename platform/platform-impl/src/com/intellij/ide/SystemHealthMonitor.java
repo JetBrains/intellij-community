@@ -1,8 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.diagnostic.VMOptions;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
@@ -17,11 +21,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.JdkBundle;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.system.CpuArch;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,9 +47,7 @@ import java.util.stream.Stream;
 
 final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
-
   private static final String DISPLAY_ID = "System Health";
-  private static final int MIN_RESERVED_CODE_CACHE_SIZE = 240;
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
@@ -80,43 +82,54 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
-    JdkBundle bootJre = JdkBundle.createBoot();
-
-    if (!bootJre.isBundled() && !SystemInfo.isJetBrainsJvm) {
+    if (!(SystemInfo.isJetBrainsJvm || PathManager.isUnderHomeDirectory(SystemProperties.getJavaHome()))) {
       NotificationAction switchAction = null;
 
-      if (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) {
-        JdkBundle bundledJre = JdkBundle.createBundled();
-        if (bundledJre != null && bundledJre.isOperational()) {
-          String appName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);
-          String configName = appName + (!SystemInfo.isWindows ? "" : SystemInfo.is64Bit ? "64.exe" : ".exe") + ".jdk";
-          Path configFile = Paths.get(PathManager.getConfigPath(), configName);
-          if (Files.isRegularFile(configFile)) {
-            switchAction = new NotificationAction(IdeBundle.message("action.SwitchToJBR.text")) {
-              @Override
-              public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                notification.expire();
-                try {
-                  Files.delete(configFile);
-                }
-                catch (IOException x) {
-                  LOG.warn("Can't delete JDK configuration file: " + configFile, x);
-                }
-                ApplicationManager.getApplication().restart();
+      if ((SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
+        String appName = ApplicationNamesInfo.getInstance().getScriptName();
+        String configName = appName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
+        Path configFile = Paths.get(PathManager.getConfigPath(), configName);
+        if (Files.isRegularFile(configFile)) {
+          switchAction = new NotificationAction(IdeBundle.message("action.SwitchToJBR.text")) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+              notification.expire();
+              try {
+                Files.delete(configFile);
               }
-            };
-          }
+              catch (IOException x) {
+                LOG.warn("Can't delete JDK configuration file: " + configFile, x);
+              }
+              ApplicationManager.getApplication().restart();
+            }
+          };
         }
       }
 
-      String current = bootJre.getBundleVersion() + " by " + SystemInfo.JAVA_VENDOR;
+      String current = JavaVersion.current() + " by " + SystemInfo.JAVA_VENDOR;
       showNotification("bundled.jre.version.message", switchAction, current);
     }
   }
 
+  private static boolean isJbrOperational() {
+    Path bin = Path.of(PathManager.getBundledRuntimePath(), SystemInfo.isWindows ? "bin/java.exe" : SystemInfo.isMac ? "Contents/Home/bin/java" : "bin/java");
+    if (Files.isRegularFile(bin) && (SystemInfo.isWindows || Files.isExecutable(bin))) {
+      try {
+        ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(bin.toString(), "-version"));
+        return output.getExitCode() == 0;
+      }
+      catch (ExecutionException e) {
+        LOG.debug(e);
+      }
+    }
+
+    return false;
+  }
+
   private static void checkReservedCodeCacheSize() {
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
-    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < MIN_RESERVED_CODE_CACHE_SIZE) {
+    int minReservedCodeCacheSize = 240;  //todo[r.sh] PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.is32Bit() ? 384 : 512;
+    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
       EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
       NotificationAction action = new NotificationAction(IdeBundle.message("vm.options.edit.action.cap")) {
         @Override
@@ -125,7 +138,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
           ActionUtil.performActionDumbAware(vmEditAction, e);
         }
       };
-      showNotification("code.cache.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, MIN_RESERVED_CODE_CACHE_SIZE);
+      showNotification("code.cache.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
 
@@ -142,8 +155,9 @@ final class SystemHealthMonitor extends PreloadingActivity {
     if (SystemInfo.isUnix & JnaLoader.isLoaded()) {
       try {
         Memory sa = new Memory(256);
-        if (LibC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
-          LibC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE);
+        LibC libC = Native.load("c", LibC.class);
+        if (libC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
+          libC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE);
           LOG.info("restored ignored INT handler");
         }
       }
@@ -267,12 +281,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
     }, 1, TimeUnit.SECONDS);
   }
 
-  private static final class LibC {
-    static {
-      Native.register(LibC.class, NativeLibrary.getInstance("c"));
-    }
-
-    static final Pointer SIG_IGN = new Pointer(1L);
+  private interface LibC extends Library {
+    Pointer SIG_IGN = new Pointer(1L);
 
     interface Handler extends Callback {
       void callback(int sig);
@@ -280,7 +290,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       Handler TERMINATE = sig -> System.exit(128 + sig);  // ref: java.lang.Terminator
     }
 
-    static native int sigaction(int sig, Pointer action, Pointer oldAction);
-    static native Pointer signal(int sig, Handler handler);
+    int sigaction(int sig, Pointer action, Pointer oldAction);
+    Pointer signal(int sig, Handler handler);
   }
 }

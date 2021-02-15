@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
 import circlet.client.api.ProjectKey
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.identifier
+import circlet.code.api.CodeReviewListItem
 import circlet.code.api.CodeReviewService
 import circlet.code.api.CodeReviewStateFilter
-import circlet.code.api.CodeReviewWithCount
 import circlet.code.api.ReviewSorting
 import circlet.code.codeReview
 import circlet.platform.client.KCircletClient
@@ -22,8 +22,6 @@ internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
                                       override val spaceProjectInfo: SpaceProjectInfo,
                                       val me: Property<TD_MemberProfile>) : SpaceReviewsListVm {
   private val codeReviewService: CodeReviewService = client.codeReview
-
-  override val isLoading: MutableProperty<Boolean> = mutableProperty(false)
 
   override val sorting: MutableProperty<ReviewSorting> = mutableProperty(ReviewSorting.CreatedAtDesc)
 
@@ -41,14 +39,14 @@ internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
       refresh.value = refresh.forceNotify()
   }
 
-  override val reviews: Property<XPagedListOnFlux<CodeReviewWithCount>> = lifetime.map(refresh, spaceReviewsFilterSettings) { _, filterSettings ->
+  override val reviews: Property<XPagedListOnFlux<CodeReviewListItem>> = lifetime.map(refresh, spaceReviewsFilterSettings) { _, filterSettings ->
     lifetime.xPagedListOnFlux(
       client = client,
       batchSize = DEFAULT_BATCH_SIZE,
       keyFn = { it.review.id },
       loadImmediately = true
     ) { batch ->
-      codeReviewService.listReviews(
+      codeReviewService.listReviewsV2(
         batchInfo = batch,
         project = spaceProjectInfo.key.identifier,
         state = filterSettings.state,
@@ -61,6 +59,14 @@ internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
       )
     }
   }
+
+  override val isLoading: Property<Boolean> = lifetime.flatten(
+    lifetime.map(reviews) { reviewList ->
+      lifetime.mapInit(reviewList.isLoading, false) {
+        it
+      }
+    }
+  )
 }
 
 private fun defaultQuickFiltersMap(spaceProjectKey: ProjectKey,

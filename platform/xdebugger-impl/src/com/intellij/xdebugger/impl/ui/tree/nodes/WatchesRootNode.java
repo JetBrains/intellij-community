@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.ArrayUtil;
@@ -6,8 +6,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
@@ -89,15 +91,6 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     return ContainerUtil.concat(myChildren, children);
   }
 
-  /**
-   * @deprecated use {@link #getWatchChildren()} instead
-   */
-  @Deprecated
-  @NotNull
-  public List<? extends WatchNode> getAllChildren() {
-    return getWatchChildren();
-  }
-
   @NotNull
   public List<? extends WatchNode> getWatchChildren() {
     return myChildren;
@@ -113,15 +106,25 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     myChildren.forEach(WatchNodeImpl::computePresentationIfNeeded);
   }
 
-  /**
-   * @deprecated Use {@link #addWatchExpression(XStackFrame, XExpression, int, boolean)}
-   */
-  @Deprecated
-  public void addWatchExpression(@Nullable XDebuggerEvaluator evaluator,
-                                 @NotNull XExpression expression,
-                                 int index,
-                                 boolean navigateToWatchNode) {
-    addWatchExpression((XStackFrame)null, expression, index, navigateToWatchNode);
+  public void addResultNode(@Nullable XStackFrame stackFrame, @NotNull XExpression expression) {
+    class ResultNode extends WatchNodeImpl {
+      ResultNode(@NotNull XDebuggerTree tree,
+                 @NotNull WatchesRootNode parent,
+                 @NotNull XExpression expression,
+                 @Nullable XStackFrame stackFrame) {
+        super(tree, parent, expression, stackFrame, "result");
+      }
+    }
+    WatchNodeImpl message = new ResultNode(myTree, this, expression, stackFrame);
+    if (ContainerUtil.getFirstItem(myChildren) instanceof ResultNode) {
+      myChildren.set(0, message);
+      message.fireNodeStructureChanged();
+    }
+    else {
+      myChildren.add(0, message);
+      fireNodeInserted(0);
+    }
+    TreeUtil.selectNode(myTree, message);
   }
 
   public void addWatchExpression(@Nullable XStackFrame stackFrame,

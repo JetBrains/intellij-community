@@ -5,7 +5,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -22,10 +22,10 @@ import java.nio.file.NoSuchFileException;
 import static com.intellij.notification.NotificationsManager.getNotificationsManager;
 import static git4idea.config.GitExecutableProblemHandlersKt.findGitExecutableProblemHandler;
 
-public class GitExecutableProblemsNotifier {
-
+@Service(Service.Level.PROJECT)
+public final class GitExecutableProblemsNotifier {
   public static GitExecutableProblemsNotifier getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GitExecutableProblemsNotifier.class);
+    return project.getService(GitExecutableProblemsNotifier.class);
   }
 
   @NotNull private final Project myProject;

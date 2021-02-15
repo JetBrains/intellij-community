@@ -37,6 +37,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
+import static git4idea.GitNotificationIdsHolder.CHECKOUT_ROLLBACK_ERROR;
+import static git4idea.GitNotificationIdsHolder.CHECKOUT_SUCCESS;
 import static git4idea.GitUtil.*;
 import static git4idea.branch.GitSmartOperationDialog.Choice.FORCE;
 import static git4idea.branch.GitSmartOperationDialog.Choice.SMART;
@@ -147,7 +149,7 @@ class GitCheckoutOperation extends GitBranchOperation {
           }
           builder.br().appendLink(ROLLBACK_HREF_ATTRIBUTE, GitBundle.message("checkout.operation.rollback"));
 
-          VcsNotifier.getInstance(myProject).notifySuccess("git.checkout.success", "",
+          VcsNotifier.getInstance(myProject).notifySuccess(CHECKOUT_SUCCESS, "",
                                                            builder.toString(),
                                                            new RollbackOperationNotificationListener());
         }
@@ -258,7 +260,7 @@ class GitCheckoutOperation extends GitBranchOperation {
         message.append(GitBundle.message("checkout.operation.errors.during.deleting", code(myNewBranch)));
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
-      VcsNotifier.getInstance(myProject).notifyError("git.checkout.rollback.error",
+      VcsNotifier.getInstance(myProject).notifyError(CHECKOUT_ROLLBACK_ERROR,
                                                      GitBundle.message("checkout.operation.error.during.rollback"),
                                                      message.toString(),
                                                      true);

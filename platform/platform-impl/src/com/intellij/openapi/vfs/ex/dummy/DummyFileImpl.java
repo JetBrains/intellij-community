@@ -33,7 +33,7 @@ class DummyFileImpl extends DummyFileBase {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     return VfsUtilCore.byteStreamSkippingBOM(myContents, this);
   }
 

@@ -4,6 +4,7 @@ package com.intellij.ui.layout.migLayout
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.JBUIScale
@@ -171,6 +172,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     }
     else {
       for ((rowIndex, row) in physicalRows.withIndex()) {
+        row.rowConstraints = rowConstraints.index(rowIndex).constaints[rowIndex];
         if (row.noGrid) {
           rowConstraints.noGrid(rowIndex)
         }
@@ -282,7 +284,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
       if (row.components.all {
           it is JCheckBox || it is JLabel ||
           it is JTextField || it is JPasswordField ||
-          it is JComboBox<*>
+          it is JBTextArea || it is JComboBox<*>
         }) return RowType.CHECKBOX_TALL
     }
     return RowType.GENERIC

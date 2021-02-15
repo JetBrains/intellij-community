@@ -65,9 +65,10 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_CLONE_CARET_BELOW= "EditorCloneCaretBelow";
   @NonNls String ACTION_EDITOR_CLONE_CARET_ABOVE= "EditorCloneCaretAbove";
   @NonNls String ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE = "EditorAddCaretPerSelectedLine";
-  @NonNls String ACTION_EDITOR_TOGGLE_STICKY_SELECTION= "EditorToggleStickySelection";
-  @NonNls String ACTION_EDITOR_TOGGLE_OVERWRITE_MODE= "EditorToggleInsertState";
-  @NonNls String ACTION_EDITOR_TOGGLE_CASE= "EditorToggleCase";
+  @NonNls String ACTION_EDITOR_TOGGLE_STICKY_SELECTION = "EditorToggleStickySelection";
+  @NonNls String ACTION_EDITOR_TOGGLE_OVERWRITE_MODE = "EditorToggleInsertState";
+  @NonNls String ACTION_EDITOR_TOGGLE_CASE = "EditorToggleCase";
+  @NonNls String ACTION_EDITOR_TRANSPOSE = "EditorTranspose";
 
   @NonNls String ACTION_EDITOR_SHOW_PARAMETER_INFO = "ParameterInfo";
   @NonNls String ACTION_EDITOR_NEXT_PARAMETER = "NextParameter";
@@ -109,6 +110,7 @@ public interface IdeActions {
 
   @NonNls String GROUP_MAIN_MENU = "MainMenu";
   @NonNls String GROUP_MAIN_TOOLBAR = "MainToolBar";
+  @NonNls String GROUP_EXPERIMENTAL_TOOLBAR = "NewToolbarActions";
   @NonNls String GROUP_EDITOR_POPUP = "EditorPopupMenu";
   @NonNls String GROUP_BASIC_EDITOR_POPUP = "BasicEditorPopupMenu";
   @NonNls String GROUP_CONSOLE_EDITOR_POPUP = "ConsoleEditorPopupMenu";
@@ -246,7 +248,7 @@ public interface IdeActions {
 
   @NonNls String GROUP_RUN = "RunMenu";
   @NonNls String GROUP_RUNNER_ACTIONS = "RunnerActions";
-  @NonNls String RUN_DEBUG_CONFIG_GROUP = "RunDebugConfigRunnerActions";
+  @NonNls String STATE_WIDGET_PROCESSES_ACTION_GROUP = "StateWidgetProcessesActionGroup";
   @NonNls String ACTION_DEFAULT_RUNNER = "Run";
   @NonNls String ACTION_DEFAULT_DEBUGGER = "Debug";
   @NonNls String ACTION_EDIT_RUN_CONFIGURATIONS = "editRunConfigurations";

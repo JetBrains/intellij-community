@@ -41,6 +41,6 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.SystemIndependent;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class LocalFilePath implements FilePath {
   @NotNull
@@ -52,14 +54,18 @@ public class LocalFilePath implements FilePath {
     LocalFilePath path = (LocalFilePath)o;
 
     if (myIsDirectory != path.myIsDirectory) return false;
-    if (!FileUtil.PATH_HASHING_STRATEGY.equals(myPath, path.myPath)) return false;
-
-    return true;
+    if (myPath.equals(path.myPath)) return true;
+    if (!CaseInsensitiveStringHashingStrategy.INSTANCE.equals(myPath, path.myPath)) return false;
+    // make sure to not query (expensive) getVirtualFile() until it's absolutely necessary, e.g. we encountered two file paths differ by case only
+    VirtualFile file = getVirtualFile();
+    VirtualFile oFile = path.getVirtualFile();
+    if (file == null && oFile == null) return !SystemInfo.isFileSystemCaseSensitive;
+    return Objects.equals(file, oFile);
   }
 
   @Override
   public int hashCode() {
-    int result = FileUtil.PATH_HASHING_STRATEGY.computeHashCode(myPath);
+    int result = CaseInsensitiveStringHashingStrategy.INSTANCE.computeHashCode(myPath);
     result = 31 * result + (myIsDirectory ? 1 : 0);
     return result;
   }

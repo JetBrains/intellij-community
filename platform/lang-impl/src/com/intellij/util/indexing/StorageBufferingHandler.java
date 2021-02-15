@@ -8,15 +8,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.stream.Stream;
 
 abstract class StorageBufferingHandler {
-  private static final Logger LOG = Logger.getInstance(StorageBufferingHandler.class);
-
   private final StorageGuard myStorageLock = new StorageGuard();
   private volatile boolean myPreviousDataBufferingState;
   private final Object myBufferingStateUpdateLock = new Object();
 
   boolean runUpdate(boolean transientInMemoryIndices, @NotNull Computable<Boolean> update) {
     StorageGuard.StorageModeExitHandler storageModeExitHandler = myStorageLock.enter(transientInMemoryIndices);
+    try {
+      ensureBufferingState(transientInMemoryIndices);
+      return update.compute();
+    } finally {
+      storageModeExitHandler.leave();
+    }
+  }
 
+  private void ensureBufferingState(boolean transientInMemoryIndices) {
     if (myPreviousDataBufferingState != transientInMemoryIndices) {
       synchronized (myBufferingStateUpdateLock) {
         if (myPreviousDataBufferingState != transientInMemoryIndices) {
@@ -28,24 +34,10 @@ abstract class StorageBufferingHandler {
         }
       }
     }
-
-    try {
-      return update.compute();
-    } finally {
-      storageModeExitHandler.leave();
-    }
   }
 
   void resetState() {
     myPreviousDataBufferingState = false;
-  }
-
-  void assertTransientMode() {
-    LOG.assertTrue(myPreviousDataBufferingState);
-  }
-
-  void assertOnTheDiskMode() {
-    LOG.assertTrue(!myPreviousDataBufferingState);
   }
 
   @NotNull

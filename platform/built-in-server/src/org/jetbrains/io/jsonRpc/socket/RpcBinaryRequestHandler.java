@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.jsonRpc.socket;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -19,24 +19,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionHandler, ClientListener {
+public final class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionHandler, ClientListener {
   private static final Logger LOG = Logger.getInstance(RpcBinaryRequestHandler.class);
 
   private static final UUID ID = UUID.fromString("69957EEB-AFB8-4036-A9A8-00D2D022F9BD");
 
-  private final AtomicNotNullLazyValue<ClientManager> clientManager = new AtomicNotNullLazyValue<ClientManager>() {
-    @NotNull
-    @Override
-    protected ClientManager compute() {
-      ClientManager result = new ClientManager(RpcBinaryRequestHandler.this, RpcBinaryRequestHandler.this, null);
-      Disposable serverDisposable = BuiltInServerManager.getInstance().getServerDisposable();
-      assert serverDisposable != null;
-      Disposer.register(serverDisposable, result);
+  private final NotNullLazyValue<ClientManager> clientManager = NotNullLazyValue.atomicLazy(() -> {
+    ClientManager result = new ClientManager(this, this, null);
+    Disposable serverDisposable = BuiltInServerManager.getInstance().getServerDisposable();
+    assert serverDisposable != null;
+    Disposer.register(serverDisposable, result);
 
-      rpcServer = new JsonRpcServer(result);
-      return result;
-    }
-  };
+    rpcServer = new JsonRpcServer(result);
+    return result;
+  });
 
   private JsonRpcServer rpcServer;
 

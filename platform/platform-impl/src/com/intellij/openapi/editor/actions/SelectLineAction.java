@@ -28,11 +28,7 @@ public class SelectLineAction extends TextComponentEditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       editor.getSelectionModel().selectLineAtCaret();

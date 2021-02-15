@@ -204,9 +204,12 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     final PsiFile file = method.getContainingFile();
     Document document = file != null ? PsiDocumentManager.getInstance(myProject).getDocument(file) : null;
     if (document != null) {
-      final int start = document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
-      final int end = document.getLineEndOffset(document.getLineNumber(method.getTextRange().getEndOffset()));
-      return document.getText().substring(start, end);
+      TextRange textRange = method.getTextRange();
+      if (textRange != null) {
+        final int start = document.getLineStartOffset(document.getLineNumber(textRange.getStartOffset()));
+        final int end = document.getLineEndOffset(document.getLineNumber(textRange.getEndOffset()));
+        return document.getText().substring(start, end);
+      }
     }
     return "";
   }

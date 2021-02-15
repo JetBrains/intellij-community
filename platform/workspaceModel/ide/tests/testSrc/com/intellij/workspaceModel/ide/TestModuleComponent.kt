@@ -1,3 +1,5 @@
+@file:Suppress("ComponentNotRegistered")
+
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.PersistentStateComponent

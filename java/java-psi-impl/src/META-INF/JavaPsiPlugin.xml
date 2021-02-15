@@ -21,7 +21,6 @@
     <extensionPoint qualifiedName="com.intellij.javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javaCompilerConfigurationProxy" interface="com.intellij.psi.JavaCompilerConfigurationProxy" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.lang.psiTypeAnnotationModifier" interface="com.intellij.psi.augment.TypeAnnotationModifier" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.inferredAnnotationProvider" interface="com.intellij.codeInsight.InferredAnnotationProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy" dynamic="true"/>

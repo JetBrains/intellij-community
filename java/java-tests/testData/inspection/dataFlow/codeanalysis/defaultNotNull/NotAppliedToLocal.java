@@ -1,5 +1,5 @@
-import jspecify.annotations.DefaultNonNull;
-import jspecify.annotations.Nullable;
+import org.jspecify.annotations.DefaultNonNull;
+import org.jspecify.annotations.Nullable;
 
 @DefaultNonNull
 class NullnessDemo {

@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptDefinitionsProvider
       id="spaceScriptDefinitionsProvider"

@@ -221,11 +221,4 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
       exceptions.add(e);
     }
   }
-
-  public static void resetHardLocal(@NotNull Project project, @NotNull VirtualFile root) {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
-    handler.addParameters("--hard");
-    handler.endOptions();
-    Git.getInstance().runCommand(handler);
-  }
 }

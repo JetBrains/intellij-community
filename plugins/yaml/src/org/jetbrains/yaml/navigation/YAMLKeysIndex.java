@@ -32,7 +32,7 @@ public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer
   @NotNull
   @Override
   public DataIndexer<String, Integer, FileContent> getIndexer() {
-    return new DataIndexer<String, Integer, FileContent>() {
+    return new DataIndexer<>() {
       @NotNull
       @Override
       public Map<String, Integer> map(@NotNull FileContent inputData) {
@@ -66,7 +66,7 @@ public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer
   @NotNull
   @Override
   public DataExternalizer<Integer> getValueExternalizer() {
-    return new DataExternalizer<Integer>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Integer value) throws IOException {
         out.writeInt(value);

@@ -59,28 +59,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
-                                @NotNull FindSymbolParameters parameters,
-                                @NotNull ProgressIndicator indicator,
-                                @NotNull Processor<Object> consumer) {
-    return filterElements((ChooseByNameViewModel)base, parameters, indicator, consumer);
-  }
-
-  @Override
   public boolean filterElements(@NotNull ChooseByNameViewModel base,
                                 @NotNull FindSymbolParameters parameters,
                                 @NotNull ProgressIndicator indicator,
                                 @NotNull Processor<Object> consumer) {
     return filterElementsWithWeights(base, parameters, indicator, res -> consumer.process(res.getItem()));
-  }
-
-  @Override
-  public boolean filterElementsWithWeights(@NotNull ChooseByNameBase base,
-                                           @NotNull String pattern,
-                                           boolean everywhere,
-                                           @NotNull ProgressIndicator indicator,
-                                           @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
-    return filterElementsWithWeights((ChooseByNameViewModel)base, pattern, everywhere, indicator, consumer);
   }
 
   @Override
@@ -90,14 +73,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
                                            @NotNull ProgressIndicator indicator,
                                            @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
     return filterElementsWithWeights(base, createParameters(base, pattern, everywhere), indicator, consumer);
-  }
-
-  @Override
-  public boolean filterElementsWithWeights(@NotNull ChooseByNameBase base,
-                                           @NotNull FindSymbolParameters parameters,
-                                           @NotNull ProgressIndicator indicator,
-                                           @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
-    return filterElementsWithWeights((ChooseByNameViewModel)base, parameters, indicator, consumer);
   }
 
   @Override
@@ -265,7 +240,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     List<Pair<Object, MatchResult>> sameNameElements = new SmartList<>();
 
     ChooseByNameModel model = base.getModel();
-    Comparator<Pair<Object, MatchResult>> weightComparator = new Comparator<Pair<Object, MatchResult>>() {
+    Comparator<Pair<Object, MatchResult>> weightComparator = new Comparator<>() {
       @SuppressWarnings("unchecked") final
       Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model :
                                            new PathProximityComparator(context);

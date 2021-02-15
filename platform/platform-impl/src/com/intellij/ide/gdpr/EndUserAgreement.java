@@ -5,9 +5,9 @@ import com.intellij.ide.Prefs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -150,7 +150,7 @@ public final class EndUserAgreement {
   private static @NotNull Document loadContent(String docName, String resourcePath) {
     try (InputStream stream = EndUserAgreement.class.getResourceAsStream(resourcePath)) {
       if (stream != null) {
-        return new Document(docName, new String(StreamUtil.readBytes(stream), StandardCharsets.UTF_8));
+        return new Document(docName, ResourceUtil.loadText(stream));
       }
     }
     catch (IOException e) {

@@ -61,6 +61,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
   public Options FIELD_OPTIONS = new Options("none", "");
   public boolean IGNORE_DEPRECATED;
   public boolean IGNORE_JAVADOC_PERIOD = true;
+  /** @deprecated unused, left to avoid modifications in config files */
   @Deprecated
   public boolean IGNORE_DUPLICATED_THROWS;
   public boolean IGNORE_POINT_TO_ITSELF;
@@ -88,6 +89,10 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
 
   protected LocalQuickFix createRegisterTagFix(@NotNull String tag) {
     return new AddUnknownTagToCustoms(this, tag);
+  }
+
+  private static LocalQuickFix createRemoveTagFix(@NotNull String tag) {
+    return new RemoveTagFix(tag);
   }
 
   public void setPackageOption(String modifier, String tags) {
@@ -322,7 +327,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
         }
 
         if (!myIgnoreEmptyDescriptions) {
-          JavadocHighlightUtil.checkEmptyMethodTagsDescription(tags, holder);
+          JavadocHighlightUtil.checkEmptyMethodTagsDescription(tags, method, holder);
         }
 
         checkBasics(docComment, tags, method, false, METHOD_OPTIONS, holder);
@@ -793,6 +798,34 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     }
   }
 
+  private static class RemoveTagFix implements LocalQuickFix {
+    private final String myTagName;
+
+    RemoveTagFix(String tagName) {
+      myTagName = tagName;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return JavaBundle.message("quickfix.text.remove.javadoc.0", myTagName);
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return JavaBundle.message("quickfix.family.remove.javadoc.tag");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiDocTag tag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
+      if (tag != null) {
+        tag.delete();
+      }
+    }
+  }
+
   private final class ProblemHolderImpl implements JavadocHighlightUtil.ProblemHolder {
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
@@ -843,6 +876,11 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @Override
     public LocalQuickFix registerTagFix(@NotNull String tag) {
       return createRegisterTagFix(tag);
+    }
+
+    @Override
+    public LocalQuickFix removeTagFix(@NotNull String tag) {
+      return createRemoveTagFix(tag);
     }
   }
 }

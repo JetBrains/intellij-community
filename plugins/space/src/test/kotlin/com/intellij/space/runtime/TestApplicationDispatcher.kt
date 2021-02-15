@@ -1,10 +1,11 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.runtime
 
-import com.intellij.space.utils.application
 import com.intellij.mock.MockApplication
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
 import junit.framework.TestCase
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.Runnable
@@ -21,12 +22,12 @@ class TestApplicationDispatcher : TestCase() {
 
   init {
     ApplicationManager.setApplication(TestApplication()) {}
-    dispatcher = ApplicationDispatcher(application)
+    dispatcher = ApplicationDispatcher(Disposer.newDisposable(), ApplicationManager.getApplication())
   }
 
   fun testCoroutineDispatched() = runBlocking {
     val job = async(dispatcher.coroutineContext) {
-      application.assertIsDispatchThread()
+      ApplicationManager.getApplication().assertIsDispatchThread()
     }
     job.await()
   }
@@ -34,7 +35,7 @@ class TestApplicationDispatcher : TestCase() {
   fun testCoroutineDelay() = runBlocking {
     val job = async(dispatcher.coroutineContext) {
       delay(10)
-      application.assertIsDispatchThread()
+      ApplicationManager.getApplication().assertIsDispatchThread()
     }
     job.await()
   }
@@ -43,7 +44,7 @@ class TestApplicationDispatcher : TestCase() {
     val runner = DispatchRunner(CountDownLatch(1))
     dispatcher.dispatch {
       runner.run {
-        application.assertIsDispatchThread()
+        ApplicationManager.getApplication().assertIsDispatchThread()
       }
     }
     runner.assertNoError()
@@ -53,7 +54,7 @@ class TestApplicationDispatcher : TestCase() {
     val runner = DispatchRunner(CountDownLatch(1))
     dispatcher.dispatch(10) {
       runner.run {
-        application.assertIsDispatchThread()
+        ApplicationManager.getApplication().assertIsDispatchThread()
       }
     }
     runner.assertNoError()
@@ -63,7 +64,7 @@ class TestApplicationDispatcher : TestCase() {
     val runner = DispatchRunner(CountDownLatch(2))
     val cancellable = dispatcher.dispatchInterval(10, 10) {
       runner.run {
-        application.assertIsDispatchThread()
+        ApplicationManager.getApplication().assertIsDispatchThread()
       }
     }
     runner.assertNoError()

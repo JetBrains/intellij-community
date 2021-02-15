@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
+import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
@@ -49,6 +50,8 @@ internal open class StorageIndexes(
     assertPersistentIdIndex(storage)
 
     assertSoftLinksIndex(storage)
+
+    virtualFileIndex.assertConsistency()
 
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
@@ -165,7 +168,7 @@ internal class MutableStorageIndexes(
       persistentIdIndex.index(pid, persistentId)
     }
 
-    entitySource.virtualFileUrl?.let { virtualFileIndex.index(pid, "entitySource", listOf(it)) }
+    entitySource.virtualFileUrl?.let { virtualFileIndex.index(pid, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
   }
 
   fun updateSoftLinksIndex(softLinkable: SoftLinkable) {
@@ -187,7 +190,6 @@ internal class MutableStorageIndexes(
   fun updateIndices(oldEntityId: EntityId, newEntityData: WorkspaceEntityData<*>, builder: AbstractEntityStorage) {
     val newEntityId = newEntityData.createEntityId()
     builder.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldEntityId)
-      .groupBy({ it.propertyName }, { it.vfu })
       .forEach { (property, vfus) ->
         virtualFileIndex.index(newEntityId, property, vfus)
       }
@@ -215,8 +217,7 @@ internal class MutableStorageIndexes(
   }
 
   fun applyExternalMappingChanges(diff: WorkspaceEntityStorageBuilderImpl,
-                                  replaceMap: HashBiMap<EntityId, EntityId>,
-                                  target: WorkspaceEntityStorageBuilderImpl) {
+                                  replaceMap: HashBiMap<EntityId, EntityId>) {
     diff.indexes.externalMappings.keys.asSequence().filterNot { it in externalMappings.keys }.forEach {
       externalMappings[it] = MutableExternalEntityMappingImpl<Any>()
     }
@@ -224,7 +225,7 @@ internal class MutableStorageIndexes(
     diff.indexes.externalMappings.forEach { (identifier, index) ->
       val mapping = externalMappings[identifier]
       if (mapping != null) {
-        mapping.applyChanges(index, replaceMap, target)
+        mapping.applyChanges(index, replaceMap)
         if (mapping.index.isEmpty()) {
           externalMappings.remove(identifier)
         }
@@ -238,11 +239,11 @@ internal class MutableStorageIndexes(
       val externalMapping = externalMappings[id]
       if (externalMapping == null) {
         val newMapping = MutableExternalEntityMappingImpl<Any>()
-        newMapping.index[newId] = data
+        newMapping.add(newId, data)
         externalMappings[id] = newMapping
       } else {
         externalMapping as MutableExternalEntityMappingImpl<Any>
-        externalMapping.index[newId] = data
+        externalMapping.add(newId, data)
       }
     }
   }

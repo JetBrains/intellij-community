@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist
+import com.intellij.internal.statistic.collectors.fus.ActionPlaceHolder
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
@@ -58,13 +59,6 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test add os data`() {
-    val build = FeatureUsageData().addOS().build()
-    Assert.assertTrue(build.size == 1)
-    Assert.assertTrue(build.containsKey("os"))
-  }
-
-  @Test
   fun `test add null place`() {
     val build = FeatureUsageData().addPlace(null).build()
     Assert.assertTrue(build.isEmpty())
@@ -117,19 +111,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("file_path"))
     Assert.assertTrue(build["file_path"] != path)
-    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getOrCreate("ABC").anonymize(path))
-    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getOrCreate("FUS").anonymize(path))
-  }
-
-  @Test
-  fun `test add anonymized path with another recorder`() {
-    val path = "/my/path/to/smth"
-    val build = FeatureUsageData("ABC").addAnonymizedPath(path).build()
-    Assert.assertTrue(build.size == 1)
-    Assert.assertTrue(build.containsKey("file_path"))
-    Assert.assertTrue(build["file_path"] != path)
-    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getOrCreate("FUS").anonymize(path))
-    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getOrCreate("ABC").anonymize(path))
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.anonymize(path))
   }
 
   @Test
@@ -147,19 +129,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("anonymous_id"))
     Assert.assertTrue(build["anonymous_id"] != id)
-    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getOrCreate("ABC").anonymize(id))
-    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getOrCreate("FUS").anonymize(id))
-  }
-
-  @Test
-  fun `test add anonymized id with another recorder`() {
-    val id = "item-id"
-    val build = FeatureUsageData("ABC").addAnonymizedId(id).build()
-    Assert.assertTrue(build.size == 1)
-    Assert.assertTrue(build.containsKey("anonymous_id"))
-    Assert.assertTrue(build["anonymous_id"] != id)
-    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getOrCreate("FUS").anonymize(id))
-    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getOrCreate("ABC").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.anonymize(id))
   }
 
   @Test
@@ -538,6 +508,6 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   private fun registerCustomActionPlace(place: String) {
     val extension = ActionCustomPlaceAllowlist()
     extension.places = place
-    ApplicationManager.getApplication().registerExtension(ActionCustomPlaceAllowlist.EP_NAME, extension, testRootDisposable)
+    ApplicationManager.getApplication().registerExtension(ActionPlaceHolder.EP_NAME, extension, testRootDisposable)
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.*;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -12,7 +13,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.util.Consumer;
-import com.intellij.openapi.ListSelection;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -60,11 +60,11 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
   private static ChangeGoToChangePopupAction<DiffRequestChain> createGoToChangeAction(@NotNull DiffRequestChain chain,
                                                                                       @NotNull Consumer<? super Integer> onSelected,
                                                                                       int defaultSelection) {
-    return new ChangeGoToChangePopupAction<DiffRequestChain>(chain) {
+    return new ChangeGoToChangePopupAction<>(chain) {
       @NotNull
       @Override
       protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
-        MultiMap<Object, GenericChangesBrowserNode> groups = new MultiMap<>();
+        MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = new MultiMap<>();
         List<? extends DiffRequestProducer> producers = chain.getRequests();
         for (int i = 0; i < producers.size(); i++) {
           Producer producer = ObjectUtils.tryCast(producers.get(i), Producer.class);
@@ -72,12 +72,12 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
 
           FilePath filePath = producer.getFilePath();
           FileStatus fileStatus = producer.getFileStatus();
-          Object tag = producer.getPopupTag();
+          ChangesBrowserNode.Tag tag = producer.getTag();
           groups.putValue(tag, new GenericChangesBrowserNode(filePath, fileStatus, i));
         }
 
         MyTreeModelBuilder builder = new MyTreeModelBuilder(project, grouping);
-        for (Object tag : groups.keySet()) {
+        for (ChangesBrowserNode.Tag tag : groups.keySet()) {
           builder.setGenericNodes(groups.get(tag), tag);
         }
         return builder.build();
@@ -92,7 +92,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
       @Override
       protected Condition<? super DefaultMutableTreeNode> initialSelection() {
         return node -> node instanceof GenericChangesBrowserNode &&
-                       ((GenericChangesBrowserNode)node).getIndex() == defaultSelection;
+                ((GenericChangesBrowserNode) node).getIndex() == defaultSelection;
       }
     };
   }
@@ -104,9 +104,18 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
     @NotNull
     FileStatus getFileStatus();
 
+    /**
+     * @deprecated Use {@link #getTag()} instead.
+     */
+    @Deprecated
     @Nullable
     default Object getPopupTag() {
       return null;
+    }
+
+    @Nullable
+    default ChangesBrowserNode.Tag getTag() {
+      return ChangesBrowserNode.WrapperTag.wrap(getPopupTag());
     }
   }
 
@@ -115,7 +124,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
       super(project, grouping);
     }
 
-    public void setGenericNodes(@NotNull Collection<GenericChangesBrowserNode> nodes, @Nullable Object tag) {
+    public void setGenericNodes(@NotNull Collection<GenericChangesBrowserNode> nodes, @Nullable ChangesBrowserNode.Tag tag) {
       ChangesBrowserNode<?> parentNode = createTagNode(tag);
 
       for (GenericChangesBrowserNode node : sorted(nodes, comparing(data -> data.myFilePath, PATH_COMPARATOR))) {

@@ -43,15 +43,15 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
 
   protected void updateAll(List<String> profiles, VirtualFile... files) {
     myTree.resetManagedFilesAndProfiles(asList(files), new MavenExplicitProfiles(profiles));
-    myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
   }
 
   protected void update(VirtualFile file) {
-    myTree.update(asList(file), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.update(asList(file), false, getMavenGeneralSettings(), getMavenProgressIndicator());
   }
 
   protected void deleteProject(VirtualFile file) {
-    myTree.delete(asList(file), getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myTree.delete(asList(file), getMavenGeneralSettings(), getMavenProgressIndicator());
   }
 
   protected void updateTimestamps(final VirtualFile... files) throws IOException {

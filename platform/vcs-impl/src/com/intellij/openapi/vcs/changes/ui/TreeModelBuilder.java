@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,20 +100,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return new DefaultTreeModel(ChangesBrowserNode.createRoot());
   }
 
-  /**
-   * @deprecated Use {@link TreeModelBuilder#buildFromChanges(Project, ChangesGroupingPolicyFactory, Collection, ChangeNodeDecorator)}.
-   */
-  @Deprecated
-  @NotNull
-  public static DefaultTreeModel buildFromChanges(@NotNull Project project,
-                                                  boolean showFlatten,
-                                                  @NotNull Collection<? extends Change> changes,
-                                                  @Nullable ChangeNodeDecorator changeNodeDecorator) {
-    return new TreeModelBuilder(project, showFlatten)
-      .setChanges(changes, changeNodeDecorator)
-      .build();
-  }
-
   @NotNull
   public static DefaultTreeModel buildFromChanges(@Nullable Project project,
                                                   @NotNull ChangesGroupingPolicyFactory grouping,
@@ -166,7 +153,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @NotNull
   public TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes,
                                      @Nullable ChangeNodeDecorator changeNodeDecorator,
-                                     @Nullable Object tag) {
+                                     @Nullable ChangesBrowserNode.Tag tag) {
     insertChanges(changes, createTagNode(tag), changeNodeDecorator);
     return this;
   }
@@ -271,19 +258,38 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  private TreeModelBuilder setVirtualFiles(@Nullable Collection<? extends VirtualFile> files, @Nullable Object tag) {
+  private TreeModelBuilder setVirtualFiles(@Nullable Collection<? extends VirtualFile> files, @Nullable ChangesBrowserNode.Tag tag) {
     if (ContainerUtil.isEmpty(files)) return this;
     insertFilesIntoNode(files, createTagNode(tag));
     return this;
   }
 
   @NotNull
+  public ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag) {
+    return createTagNode(new ChangesBrowserNode.TagImpl(tag));
+  }
+
+  /**
+   * @deprecated Use {@link #createTagNode(ChangesBrowserNode.Tag)} instead.
+   */
+  @NotNull
+  @Deprecated
   public ChangesBrowserNode<?> createTagNode(@Nullable Object tag) {
+    return createTagNode(ChangesBrowserNode.WrapperTag.wrap(tag));
+  }
+
+  @NotNull
+  public ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag) {
     return createTagNode(tag, true);
   }
 
   @NotNull
-  public ChangesBrowserNode<?> createTagNode(@Nullable Object tag, boolean expandByDefault) {
+  public ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag, boolean expandByDefault) {
+    return createTagNode(new ChangesBrowserNode.TagImpl(tag), expandByDefault);
+  }
+
+  @NotNull
+  public ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag, boolean expandByDefault) {
     if (tag == null) return myRoot;
 
     ChangesBrowserNode<?> subtreeRoot = new TagChangesBrowserNode(tag, expandByDefault);
@@ -362,13 +368,13 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setSwitchedFiles(@NotNull MultiMap<String, VirtualFile> switchedFiles) {
+  public TreeModelBuilder setSwitchedFiles(@NotNull MultiMap<@NlsSafe String, VirtualFile> switchedFiles) {
     if (switchedFiles.isEmpty()) return this;
     ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.SWITCHED_FILES_TAG);
-    for(String branchName: switchedFiles.keySet()) {
+    for (@Nls String branchName : switchedFiles.keySet()) {
       List<VirtualFile> switchedFileList = sorted(switchedFiles.get(branchName), VirtualFileHierarchicalComparator.getInstance());
       if (switchedFileList.size() > 0) {
-        ChangesBrowserNode<?> branchNode = ChangesBrowserNode.createObject(branchName);
+        ChangesBrowserNode<?> branchNode = new ChangesBrowserStringNode(branchName);
         branchNode.markAsHelperNode();
 
         insertSubtreeRoot(branchNode, subtreeRoot);
@@ -560,6 +566,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return myModel.getChildCount(myRoot) == 0;
   }
 
+  /**
+   * @deprecated Use {@link #setChanges(Collection, ChangeNodeDecorator)} directly.
+   */
   @NotNull
   @Deprecated
   public DefaultTreeModel buildModel(@NotNull List<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {

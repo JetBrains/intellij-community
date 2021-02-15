@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -10,7 +10,6 @@ import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -28,7 +27,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
 
-  private static final HashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new HashingStrategy<String>() {
+  private static final HashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(String object) {
       return Character.toLowerCase(object.charAt(object.length() - 1));
@@ -153,11 +152,11 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   private void checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(Map<Object, Object> map) {
     Object key = new Object();
-    class MyValue {}
-    map.put(key, strong = new MyValue());
+    class MyValue_ {}
+    map.put(key, strong = new MyValue_());
     map.put(key, this);
     strong = null;
-    LeakHunter.checkLeak(map, MyValue.class);
+    LeakHunter.checkLeak(map, MyValue_.class);
   }
 
   @Test(timeout = TIMEOUT)
@@ -370,17 +369,17 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentLongObjectHashMap() {
-    ConcurrentLongObjectMap<Object> map = ContainerUtil.createConcurrentLongObjectMap();
-    for (int i = 0; i < 1000; i++) {
+    ConcurrentLongObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentLongObjectMap();
+    for (long i = Long.MAX_VALUE-1000; i != Long.MIN_VALUE+1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
       Object ret = map.get(i);
-      assertTrue(ret instanceof Integer);
+      assertTrue(ret instanceof Long);
       assertEquals(i, ret);
 
-      if (i != 0) {
+      if (map.size() > 1) {
         Object remove = map.remove(i - 1);
-        assertTrue(remove instanceof Integer);
+        assertTrue(remove instanceof Long);
         assertEquals(i - 1, remove);
       }
       assertEquals(1, map.size());
@@ -393,7 +392,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentIntObjectHashMap() {
-    IntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectMap();
+    IntObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
     for (int i = 0; i < 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
@@ -462,14 +461,10 @@ public class ContainerUtilCollectionsTest extends Assert {
     Map<String, Object> map = ContainerUtil.createConcurrentSoftValueMap();
     checkPutIfAbsent(map);
   }
-  @Test
-  public void testConcurrentIntKeyWeakValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
-    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectWeakValueMap();
-    checkPutIfAbsent(map);
-  }
+
   @Test
   public void testConcurrentIntKeySoftValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
-    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectSoftValueMap();
+    ConcurrentIntObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap();
     checkPutIfAbsent(map);
   }
 
@@ -537,15 +532,15 @@ public class ContainerUtilCollectionsTest extends Assert {
       }
     }
 
-    ConcurrentMap<Object, Object> map = ConcurrentCollectionFactory.createMap(new TObjectHashingStrategy<Object>() {
+    ConcurrentMap<Object, Object> map = ConcurrentCollectionFactory.createConcurrentMap(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(Object object) {
+      public int hashCode(Object object) {
         return 0;
       }
 
       @Override
       public boolean equals(Object o1, Object o2) {
-        return o1==o2;
+        return o1 == o2;
       }
     });
     int N = 1000;
@@ -592,16 +587,14 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testEntrySet() {
-    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectMap());
-    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectSoftValueMap());
-    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectWeakValueMap());
+    checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectMap());
+    checkEntrySetIterator(ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap());
     checkEntrySetIterator(ContainerUtil.createIntKeyWeakValueMap());
   }
 
   @Test
   public void testEntrySetTossesValue() {
-    checkEntrySetIteratorTossesValue(ContainerUtil.createConcurrentIntObjectSoftValueMap());
-    checkEntrySetIteratorTossesValue(ContainerUtil.createConcurrentIntObjectWeakValueMap());
+    checkEntrySetIteratorTossesValue(ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap());
     checkEntrySetIteratorTossesValue(ContainerUtil.createIntKeyWeakValueMap());
   }
 

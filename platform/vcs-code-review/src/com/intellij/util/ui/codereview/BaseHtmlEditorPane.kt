@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.codereview
 
-import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -20,6 +21,8 @@ import javax.swing.text.html.InlineView
 import javax.swing.text.html.ParagraphView
 import kotlin.math.max
 
+private const val ICON_INLINE_ELEMENT_NAME = "icon-inline" // NON-NLS
+
 open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
   init {
     editorKit = object : JBHtmlEditorKit(true) {
@@ -30,8 +33,7 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
     isOpaque = false
     addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
     margin = JBUI.emptyInsets()
-    UISettings.setupComponentAntialiasing(this)
-
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
 
     val caret = caret as DefaultCaret
     caret.updatePolicy = DefaultCaret.NEVER_UPDATE
@@ -50,7 +52,7 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
 
   protected open class HtmlEditorViewFactory(private val iconsClass: Class<*>) : JBHtmlEditorKit.JBHtmlFactory() {
     override fun create(elem: Element): View {
-      if ("icon-inline" == elem.name) {
+      if (ICON_INLINE_ELEMENT_NAME == elem.name) {
         val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)
           ?.let { IconLoader.getIcon(it as String, iconsClass) }
 
@@ -74,21 +76,23 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
 
       val view = super.create(elem)
       if (view is ParagraphView) {
-        return object : ParagraphView(elem) {
-          override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements {
-            var r = r
-            if (r == null) {
-              r = SizeRequirements()
-            }
-            r.minimum = layoutPool.getMinimumSpan(axis).toInt()
-            r.preferred = max(r.minimum, layoutPool.getPreferredSpan(axis).toInt())
-            r.maximum = Integer.MAX_VALUE
-            r.alignment = 0.5f
-            return r
-          }
-        }
+        return MyParagraphView(elem)
       }
       return view
+    }
+  }
+
+  protected open class MyParagraphView(elem: Element) : ParagraphView(elem) {
+    override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements {
+      var r = r
+      if (r == null) {
+        r = SizeRequirements()
+      }
+      r.minimum = layoutPool.getMinimumSpan(axis).toInt()
+      r.preferred = max(r.minimum, layoutPool.getPreferredSpan(axis).toInt())
+      r.maximum = Integer.MAX_VALUE
+      r.alignment = 0.5f
+      return r
     }
   }
 }

@@ -68,7 +68,7 @@ public interface Application extends ComponentManager {
    * @param modal  the state in which action will be executed
    */
   @ApiStatus.Experimental
-  void invokeLaterOnWriteThread(Runnable action, ModalityState modal);
+  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
 
   /**
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
@@ -80,7 +80,7 @@ public interface Application extends ComponentManager {
    * @param expired condition to check before execution.
    */
   @ApiStatus.Experimental
-  void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired);
+  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired);
 
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately

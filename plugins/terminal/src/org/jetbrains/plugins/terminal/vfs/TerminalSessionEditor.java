@@ -47,7 +47,7 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
       public List<TerminalAction> getActions() {
         return Collections.singletonList(
           new TerminalAction(settings.getCloseSessionActionPresentation(), input -> {
-            handleCloseSession();
+            myFile.getTerminalWidget().close();
             return true;
           }).withMnemonicKey(KeyEvent.VK_S)
         );
@@ -60,10 +60,6 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
       }, myProject.getDisposed());
     };
     myFile.getTerminalWidget().addListener(myListener);
-  }
-
-  private void handleCloseSession() {
-    myFile.getTerminalWidget().terminateProcess();
   }
 
   @NotNull

@@ -120,21 +120,4 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
   fun onCommit(delegate : (String) -> Boolean) {
     myCommitDelegate = delegate
   }
-
-  @Deprecated("use onCommit") fun registerHandler(handler: CommitHandler) {
-    myCommitDelegate = { handler.commit(it) }
-  }
-
-  @Deprecated("use onMerge") fun registerHandler(handler: MergeHandler) {
-    myMergeDelegate = { handler.showMergeDialog() }
-  }
-
-  @Deprecated("use onCommit") interface CommitHandler {
-    fun commit(commitMessage: String): Boolean
-  }
-
-  @Deprecated("use onMerge") interface MergeHandler {
-    fun showMergeDialog()
-  }
-
 }

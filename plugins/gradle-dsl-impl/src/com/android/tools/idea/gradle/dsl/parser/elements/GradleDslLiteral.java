@@ -116,7 +116,7 @@ public final class GradleDslLiteral extends GradleDslSettableExpression {
   @Override
   public String toString() {
     Object value = getValue();
-    String nameString = myName.toString();
+    String nameString = getName();
     String namePrefix = nameString.equals("") ? "" : (nameString + ": ");
     return namePrefix + (value != null ? value.toString() : super.toString());
   }

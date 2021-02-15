@@ -18,6 +18,9 @@ private class GraphPropertyView<S, T>(
   private val map: (S) -> T,
   private val comap: (T) -> S
 ) : GraphProperty<T>, ObservableClearableProperty<T> by ObservableClearablePropertyView(instance, map, comap) {
+  override fun dependsOn(parent: ObservableClearableProperty<*>) =
+    instance.dependsOn(parent)
+
   override fun dependsOn(parent: ObservableClearableProperty<*>, default: () -> T) =
     instance.dependsOn(parent) { comap(default()) }
 

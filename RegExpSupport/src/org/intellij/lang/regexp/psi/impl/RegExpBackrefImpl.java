@@ -19,12 +19,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.SyntaxTraverser;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiElementFilter;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpBackref;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
@@ -48,6 +47,10 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
 
     @NotNull
     private String getIndexNumberText() {
+        final ASTNode node = getNode().findChildByType(RegExpTT.NUMBER);
+        if (node != null) {
+            return node.getText();
+        }
         final String s = getUnescapedText();
         assert s.charAt(0) == '\\';
         boolean pcreBackReference = s.charAt(1) == 'g';
@@ -66,19 +69,27 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
 
     @Override
     public RegExpGroup resolve() {
-        final int index = getIndex();
+        return resolve(getIndex(), getContainingFile());
+    }
+
+    static RegExpGroup resolve(int index, PsiFile file) {
         if (index < 0) {
-            return resolveRelativeGroup(Math.abs(index));
+            return resolveRelativeGroup(Math.abs(index), file);
         }
 
-        return SyntaxTraverser.psiTraverser(getContainingFile()).traverse().takeWhile(e -> e != RegExpBackrefImpl.this)
-          .filter(RegExpGroup.class).filter(RegExpGroup::isCapturing).skip(index - 1).first();
+        return SyntaxTraverser.psiTraverser(file)
+          .filter(RegExpGroup.class)
+          .filter(RegExpGroup::isCapturing)
+          .skip(index - 1)
+          .first();
     }
 
     @Nullable
-    private RegExpGroup resolveRelativeGroup(int index) {
-        List<RegExpGroup> groups = SyntaxTraverser.psiTraverser(getContainingFile()).filter(RegExpGroup.class)
-          .filter(RegExpGroup::isCapturing).toList();
+    private static RegExpGroup resolveRelativeGroup(int index, PsiFile file) {
+        List<RegExpGroup> groups = SyntaxTraverser.psiTraverser(file)
+          .filter(RegExpGroup.class)
+          .filter(RegExpGroup::isCapturing)
+          .toList();
         return index <= groups.size() ? groups.get(groups.size() - index) : null;
     }
 

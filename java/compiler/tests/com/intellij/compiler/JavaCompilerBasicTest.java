@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.javac.JpsJavacFileManager;
@@ -233,7 +234,7 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     }
 
     @Override
-    public void reportMessage(Diagnostic.Kind kind, String message) {
+    public void reportMessage(Diagnostic.Kind kind, @Nls String message) {
     }
   }
 }

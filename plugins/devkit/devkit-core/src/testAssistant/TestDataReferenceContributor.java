@@ -38,8 +38,6 @@ import org.jetbrains.uast.UastUtils;
 
 import java.util.Collection;
 
-import static org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider.*;
-
 /**
  * @author zolotov
  */
@@ -48,7 +46,8 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar.registerUastReferenceProvider(registrar,
                                                          UastPatterns.injectionHostUExpression()
-                                                                     .annotationParam(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME, "value"),
+                                                                     .annotationParam(
+                                                                       TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME, "value"),
                                                          new TestDataReferenceProvider(), PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
@@ -122,13 +121,13 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
         Collection<Object> variants = ContainerUtil.newHashSet(super.getVariants());
         final PsiDirectory projectPsiRoot = getProjectPsiRoot();
         if (projectPsiRoot != null) {
-          variants.add(FileInfoManager.getFileLookupItem(projectPsiRoot, PROJECT_ROOT_VARIABLE, projectPsiRoot.getIcon(0))
+          variants.add(FileInfoManager.getFileLookupItem(projectPsiRoot, TestFrameworkConstants.PROJECT_ROOT_VARIABLE, projectPsiRoot.getIcon(0))
                          .withTypeText(projectPsiRoot.getVirtualFile().getPath(), true));
         }
 
         final PsiDirectory contentPsiRoot = getContentPsiRoot();
         if (contentPsiRoot != null) {
-          variants.add(FileInfoManager.getFileLookupItem(contentPsiRoot, CONTENT_ROOT_VARIABLE, contentPsiRoot.getIcon(0))
+          variants.add(FileInfoManager.getFileLookupItem(contentPsiRoot, TestFrameworkConstants.CONTENT_ROOT_VARIABLE, contentPsiRoot.getIcon(0))
                          .withTypeText(contentPsiRoot.getVirtualFile().getPath(), true));
         }
         return ArrayUtil.toObjectArray(variants);
@@ -140,13 +139,13 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
     @Override
     protected ResolveResult @NotNull [] innerResolve(boolean caseSensitive, @NotNull PsiFile containingFile) {
       if (getIndex() == 0 && StringUtil.startsWithChar(getText(), '$')) {
-        if (PROJECT_ROOT_VARIABLE.equals(getText())) {
+        if (TestFrameworkConstants.PROJECT_ROOT_VARIABLE.equals(getText())) {
           final PsiDirectory projectPsiRoot = getProjectPsiRoot();
           if (projectPsiRoot != null) {
             return new ResolveResult[]{new PsiElementResolveResult(projectPsiRoot)};
           }
         }
-        else if (CONTENT_ROOT_VARIABLE.equals(getText())) {
+        else if (TestFrameworkConstants.CONTENT_ROOT_VARIABLE.equals(getText())) {
           final PsiDirectory contentPsiRoot = getContentPsiRoot();
           if (contentPsiRoot != null) {
             return new ResolveResult[]{new PsiElementResolveResult(contentPsiRoot)};

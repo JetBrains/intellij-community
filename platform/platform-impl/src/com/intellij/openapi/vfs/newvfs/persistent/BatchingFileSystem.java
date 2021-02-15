@@ -12,5 +12,8 @@ import java.util.Map;
 @ApiStatus.Internal
 public interface BatchingFileSystem {
   @NotNull
-  Map<String, FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @NotNull Collection<String> childNames);
+  Map<String, FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @NotNull Collection<String> childrenNames);
+
+  @NotNull
+  Map<String, FileAttributes> listWithAttributes(@NotNull VirtualFile dir);
 }

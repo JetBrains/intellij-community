@@ -364,8 +364,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
 }
 
 fun removeMacroIfStartsWith(path: String, macro: String): String {
-  val i = macro.length
-  return if (path.getOrNull(i) == '/' && path.startsWith(macro)) path.substring(i + 1) else path
+  return path.removePrefix("$macro/")
 }
 
 @Suppress("DEPRECATION")

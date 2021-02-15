@@ -12,7 +12,6 @@ import java.io.IOException;
 /**
  * Represents key-value storage held by <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#The_forward_index">forward index data structure</a>.
  */
-@ApiStatus.Experimental
 public interface ForwardIndex extends KeyValueStore<Integer, ByteArraySequence> {
   @Nullable
   @Override

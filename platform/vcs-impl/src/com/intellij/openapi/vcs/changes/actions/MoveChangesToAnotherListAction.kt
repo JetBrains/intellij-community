@@ -16,15 +16,16 @@ import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.isEmpty
+import com.intellij.util.containers.asJBIterable
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.Nls
 
 class MoveChangesToAnotherListAction : AbstractChangeListAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val enabled = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
                   ChangeListManager.getInstance(project).areChangeListsEnabled() &&
-                  (!e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY).isEmpty() ||
+                  (!e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY).asJBIterable().isEmpty() ||
                    !e.getData(VcsDataKeys.CHANGES).isNullOrEmpty() ||
                    !e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).isNullOrEmpty())
 
@@ -122,7 +123,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
     private fun askTargetChangelist(project: Project,
                                     affectedLists: Set<LocalChangeList>,
                                     sameFileChangeLists: Set<LocalChangeList>,
-                                    title: String): LocalChangeList? {
+                                    title: @Nls String): LocalChangeList? {
       val changeListManager = ChangeListManager.getInstance(project)
       val allChangelists = changeListManager.changeListsCopy
 

@@ -374,6 +374,7 @@ public final class ActionMenu extends JBMenu {
         IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)this);
         context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor((Window)frame));
       }
+      context = Utils.wrapDataContext(context);
     }
 
     final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();

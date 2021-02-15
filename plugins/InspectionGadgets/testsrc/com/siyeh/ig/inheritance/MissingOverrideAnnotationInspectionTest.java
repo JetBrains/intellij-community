@@ -52,8 +52,8 @@ public class MissingOverrideAnnotationInspectionTest extends LightJavaInspection
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_7, this::doTest);
   }
   
-  public void testRecordAccessorJava14() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14_PREVIEW, this::doTest);
+  public void _testRecordAccessorJava14() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, this::doTest);
   }
   
   public void testRecordAccessorJava15() {

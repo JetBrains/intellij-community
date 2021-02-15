@@ -161,6 +161,19 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
       }
     }
 
+    if (status == FileStatus.NOT_CHANGED) {
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+      DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
+      ChangeProvider cp = vcs != null ? vcs.getChangeProvider() : null;
+      if (diffProvider != null && cp != null) {
+        if (cp.isModifiedDocumentTrackingRequired() &&
+            FileDocumentManager.getInstance().isFileModified(file)) {
+          ContentRevision beforeRevision = diffProvider.createCurrentFileContent(file);
+          if (beforeRevision != null) return createBaseContent(myProject, beforeRevision);
+        }
+      }
+    }
+
     return null;
   }
 

@@ -308,6 +308,31 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     doAntiTest();
   }
 
+  @NeedsIndex.Full
+  public void testPublicClassInPrivateSuper() {
+    myFixture.addClass("package pkg;\n" +
+                       "public class Sub extends Super {\n" +
+                       "}\n" +
+                       "class Super {\n" +
+                       "  public static class Foo {\n" +
+                       "  }\n" +
+                       "}");
+    myFixture.configureByText("Main.java",
+                              "import pkg.*;\n" +
+                              "public class Main {\n" +
+                              "  public static void main(String[] args) {\n" +
+                              "    Sub.F<caret>\n" +
+                              "  }\n" +
+                              "}");
+    myFixture.completeBasic();
+    myFixture.checkResult("import pkg.*;\n" +
+                          "public class Main {\n" +
+                          "  public static void main(String[] args) {\n" +
+                          "    Sub.Foo\n" +
+                          "  }\n" +
+                          "}");
+  }
+
   private void doJavaTest(char toType) {
     final String path = "/nameCompletion/java";
     myFixture.configureByFile(path + "/" + getTestName(false) + "-source.java");

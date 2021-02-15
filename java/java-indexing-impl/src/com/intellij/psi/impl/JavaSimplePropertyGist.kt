@@ -8,10 +8,10 @@ import com.intellij.lang.LighterASTNode
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.cache.RecordUtil
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
-import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.LightTreeUtil
@@ -30,11 +30,11 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.io.DataInput
 import java.io.DataOutput
 
-fun getFieldOfGetter(method: PsiMethodImpl): PsiField? = resolveFieldFromIndexValue(method, true)
+fun getFieldOfGetter(method: PsiMethod): PsiField? = resolveFieldFromIndexValue(method, true)
 
-fun getFieldOfSetter(method: PsiMethodImpl): PsiField? = resolveFieldFromIndexValue(method, false)
+fun getFieldOfSetter(method: PsiMethod): PsiField? = resolveFieldFromIndexValue(method, false)
 
-private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean): PsiField? {
+private fun resolveFieldFromIndexValue(method: PsiMethod, isGetter: Boolean): PsiField? {
   val file = method.containingFile
   if (file.fileType != JavaFileType.INSTANCE) return null
   val id = JavaStubImplUtil.getMethodStubIndex(method)
@@ -51,12 +51,12 @@ private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean)
 }
 
 @VisibleForTesting
-val javaSimplePropertyGist = GistManager.getInstance().newPsiFileGist("java.simple.property", 1, SimplePropertiesExternalizer()) { file ->
+val javaSimplePropertyGist = GistManager.getInstance().newPsiFileGist("java.simple.property", 2, SimplePropertiesExternalizer()) { file ->
   findSimplePropertyCandidates(file.node.lighterAST)
 }
 
 private val allowedExpressions by lazy {
-  TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION)
+  TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION, ElementType.PARENTH_EXPRESSION)
 }
 
 private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<PropertyIndexValue> {
@@ -144,8 +144,10 @@ private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<Proper
         ?.takeIf { it.tokenType == JavaElementType.EXPRESSION_STATEMENT }
         ?.let { LightTreeUtil.firstChildOfType(tree, it, JavaElementType.ASSIGNMENT_EXPRESSION) }
       if (assignment == null || LightTreeUtil.firstChildOfType(tree, assignment, JavaTokenType.EQ) == null) return null
-      val operands = LightTreeUtil.getChildrenOfType(tree, assignment, ElementType.EXPRESSION_BIT_SET)
-      if (operands.size != 2 || LightTreeUtil.toFilteredString(tree, operands[1], null) != setterParameterName) return null
+      val operands = JavaLightTreeUtil.getExpressionChildren(tree, assignment)
+      if (operands.size != 2) return null
+      val unwrapped = JavaLightTreeUtil.skipParenthesesDown(tree, operands[1])
+      if (unwrapped == null || LightTreeUtil.toFilteredString(tree, unwrapped, null) != setterParameterName) return null
       val lhsText = LightTreeUtil.toFilteredString(tree, operands[0], null)
       if (lhsText == setterParameterName) return null
       return lhsText
@@ -195,7 +197,7 @@ private class SimplePropertiesExternalizer : DataExternalizer<Int2ObjectMap<Prop
     repeat(size) {
       val id = DataInputOutputUtil.readINT(input)
       val value = PropertyIndexValue(EnumeratorStringDescriptor.INSTANCE.read(input), input.readBoolean())
-      values.put(id, value)
+      values[id] = value
     }
     return values
   }

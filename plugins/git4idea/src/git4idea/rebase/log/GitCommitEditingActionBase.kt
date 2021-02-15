@@ -259,7 +259,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
   protected open fun getProhibitedStateMessage(
     commitEditingData: T,
     @Nls operation: String
-  ): String? = when (commitEditingData.repository.state) {
+  ): @Nls String? = when (commitEditingData.repository.state) {
     Repository.State.NORMAL, Repository.State.DETACHED -> null
     Repository.State.REBASING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.rebasing", operation)
     Repository.State.MERGING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.merging", operation)

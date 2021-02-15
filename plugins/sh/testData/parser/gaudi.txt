@@ -13,8 +13,8 @@ SHELL_SCRIPT
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
           PsiElement(word)('XDG_RUNTIME_DIR')
-          PsiElement(param_separator)(':-/')
-          PsiElement(word)('run')
+          PsiElement(param_separator)(':-')
+          PsiElement(word)('/run')
           PsiElement(param_separator)('/')
           PsiElement(word)('user')
           PsiElement(param_separator)('/')
@@ -38,8 +38,7 @@ SHELL_SCRIPT
           PsiElement(param_separator)(':-')
           VARIABLE
             PsiElement(var)('$HOME')
-          PsiElement(param_separator)('/')
-          PsiElement(word)('.config')
+          PsiElement(word)('/.config')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('/gaudi.config')
         PsiElement(CLOSE_QUOTE)('"')
@@ -58,8 +57,7 @@ SHELL_SCRIPT
           PsiElement(param_separator)(':-')
           VARIABLE
             PsiElement(var)('$HOME')
-          PsiElement(param_separator)('/')
-          PsiElement(word)('.cache')
+          PsiElement(word)('/.cache')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('/gaudi')
         PsiElement(CLOSE_QUOTE)('"')

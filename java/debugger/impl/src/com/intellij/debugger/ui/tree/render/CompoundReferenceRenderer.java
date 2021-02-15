@@ -61,8 +61,8 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     myLabelRenderer = labelRenderer;
     myChildrenRenderer = childrenRenderer;
     myProperties.setClassName(CommonClassNames.JAVA_LANG_OBJECT);
-    LOG.assertTrue(labelRenderer == null || labelRenderer instanceof ReferenceRenderer);
-    LOG.assertTrue(childrenRenderer == null || childrenRenderer instanceof ReferenceRenderer);
+    LOG.assertTrue(labelRenderer == null || labelRenderer instanceof ReferenceRenderer || labelRenderer instanceof ClassRenderer);
+    LOG.assertTrue(childrenRenderer == null || childrenRenderer instanceof ReferenceRenderer || childrenRenderer instanceof ClassRenderer);
   }
 
   public CompoundReferenceRenderer(String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {

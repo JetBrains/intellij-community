@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -16,7 +16,7 @@ class JdkListTest {
   private val om = ObjectMapper()
 
   private fun buildPredicate(build: String = "203.123",
-                             archs : Set<String> = setOf("x86_64")) = JdkPredicate(BuildNumber.fromString(build)!!, "any", archs)
+                             archs : Set<String> = setOf("x86_64")) = JdkPredicate(BuildNumber.fromString(build)!!, archs.map { JdkPlatform("any", it) }.toSet())
 
   @Test
   fun `parse feed v1`() {
@@ -29,8 +29,7 @@ class JdkListTest {
     val json = loadTestData("feed-v2.json")
 
     val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
-                                 expectedOS = "macOS",
-                                 supportedArchs = setOf("aarch64")
+                                 supportedPlatforms = setOf(JdkPlatform("macOS", "aarch64")),
     )
 
     val items = JdkListParser.parseJdkList(json, predicate)
@@ -43,8 +42,7 @@ class JdkListTest {
     val json = loadTestData("feed-v2.json")
 
     val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
-                                 expectedOS = "windows",
-                                 supportedArchs = setOf("aarch64")
+                                 supportedPlatforms = setOf(JdkPlatform("windows", "aarch64")),
     )
 
     val items = JdkListParser.parseJdkList(json, predicate)
@@ -57,8 +55,7 @@ class JdkListTest {
     val json = loadTestData("feed-v2.json")
 
     val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
-                                 expectedOS = "linux",
-                                 supportedArchs = setOf("aarch64")
+                                 supportedPlatforms = setOf(JdkPlatform("linux", "aarch64")),
     )
 
     val items = JdkListParser.parseJdkList(json, predicate)
@@ -71,8 +68,7 @@ class JdkListTest {
     val json = loadTestData("feed-v2.json")
 
     val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
-                                 expectedOS = "macOS",
-                                 supportedArchs = setOf("aarch64", "x86_64")
+                                 supportedPlatforms = setOf(JdkPlatform("macOS", "aarch64"), JdkPlatform("macOS", "x86_64")),
     )
 
     val items = JdkListParser.parseJdkList(json, predicate)
@@ -228,9 +224,10 @@ class JdkListTest {
     this.size().isZero
   }
 
-  private inline fun assertForEachOS(json: ObjectNode, archs: Set<String> = setOf("x86_64"), assert: ListAssert<JdkItem>.() -> Unit) {
+  private inline fun assertForEachOS(json: ObjectNode, assert: ListAssert<JdkItem>.() -> Unit) {
     for (osType in listOf("windows", "linux", "macOS")) {
-      val predicate = JdkPredicate(BuildNumber.fromString("201.123")!!, osType, archs)
+      val archs: Set<JdkPlatform> = setOf(JdkPlatform(osType,"x86_64"))
+      val predicate = JdkPredicate(BuildNumber.fromString("201.123")!!, archs)
       val data = JdkListParser.parseJdkList(json, predicate)
       assertThat(data)
         .withFailMessage("should have items for $osType")

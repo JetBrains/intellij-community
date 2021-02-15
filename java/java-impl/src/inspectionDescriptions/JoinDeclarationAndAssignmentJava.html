@@ -1,6 +1,15 @@
 <html>
 <body>
 Reports variable assignments that can be joined with the variable's declaration.
+<p>Example:</p>
+<pre>
+  int x;
+  x = 1;
+</pre>
+The quick-fix converts the assignment to an initializer:
+<pre>
+  int x = 1;
+</pre>
 <!-- tooltip end -->
 <p><small>New in 2018.3</small></p>
 </body>

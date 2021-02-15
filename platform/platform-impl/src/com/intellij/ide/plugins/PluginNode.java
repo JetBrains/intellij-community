@@ -25,6 +25,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private boolean licenseOptional;
   private String version;
   private String vendor;
+  private String organization;
   private @NlsSafe String description;
   private String sinceBuild;
   private String untilBuild;
@@ -177,6 +178,15 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
+  public String getOrganization() {
+    return organization;
+  }
+
+  public void setOrganization(@NotNull String organization) {
+    this.organization = organization;
+  }
+
+  @Override
   public String getDescription() {
     return description;
   }
@@ -307,6 +317,11 @@ public final class PluginNode implements IdeaPluginDescriptor {
   @Override
   public @NotNull List<IdeaPluginDependency> getDependencies() {
     return myDependencies;
+  }
+
+  @Override
+  public @Nullable String getDescriptorPath() {
+    return null;
   }
 
   public List<String> getTags() {

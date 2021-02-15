@@ -5,11 +5,8 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -54,8 +51,7 @@ public final class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHan
             final boolean doSearch;
             if (arePhysical(getters) || arePhysical(setters)) {
               if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
-              doSearch = MessageDialogBuilder.yesNo(JavaBundle.message("find.field.accessors.title"),
-                                                    JavaBundle.message("find.field.accessors.prompt", field.getName())).show() == Messages.YES;
+              doSearch = askShouldSearchAccessors(field.getName());
             }
             else {
               doSearch = true;

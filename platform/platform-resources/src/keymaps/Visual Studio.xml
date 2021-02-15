@@ -277,7 +277,9 @@
     <keyboard-shortcut first-keystroke="control E" second-keystroke="U"/>
     <keyboard-shortcut first-keystroke="control E" second-keystroke="control U"/>
   </action>
-  <action id="Vcs.ShowMessageHistory"/>
+  <action id="Vcs.ShowMessageHistory">
+    <keyboard-shortcut first-keystroke="control H"/>
+  </action>
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="alt PAGE_DOWN"/>
   </action>

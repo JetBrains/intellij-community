@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
@@ -76,6 +78,19 @@ internal class ChangesViewCommitWorkflowHandler(
     setupCommitHandlersTracking()
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
+    currentChangeList = workflow.getAffectedChangeList(emptySet())
+
+    if (isToggleMode()) deactivate(false)
+    project.messageBus.connect(this).subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
+      override fun commitModeChanged() {
+        if (isToggleMode()) {
+          deactivate(false)
+        }
+        else {
+          activate()
+        }
+      }
+    })
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
@@ -110,14 +125,11 @@ internal class ChangesViewCommitWorkflowHandler(
 
     inclusionModel.changeLists = changeLists
     ui.setCompletionContext(changeLists)
-    currentChangeList = currentChangeList?.run { changeLists.find { it.id == id } }
   }
 
   fun setCommitState(changeList: LocalChangeList, items: Collection<Any>, force: Boolean) {
     setInclusion(items, force)
     setSelection(changeList)
-
-    currentChangeList = workflow.getAffectedChangeList(inclusionModel.getInclusion().filterIsInstance<Change>())
   }
 
   private fun setInclusion(items: Collection<Any>, force: Boolean) {
@@ -194,6 +206,7 @@ internal class ChangesViewCommitWorkflowHandler(
     // ensure all included active changes are known => if user explicitly checks and unchecks some change, we know it is unchecked
     knownActiveChanges = knownActiveChanges.union(includedActiveChanges)
 
+    currentChangeList = workflow.getAffectedChangeList(inclusion.filterIsInstance<Change>())
     super.inclusionChanged()
   }
 
@@ -203,8 +216,13 @@ internal class ChangesViewCommitWorkflowHandler(
       // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
       workflow.commitState = workflow.commitState.copy(getCommitMessage())
 
-      if (isToggleCommitUi.asBoolean()) deactivate(true)
+      if (isToggleMode()) deactivate(true)
     }
+  }
+
+  private fun isToggleMode(): Boolean {
+    val commitMode = CommitModeManager.getInstance(project).getCurrentCommitMode()
+    return commitMode is CommitMode.NonModalCommitMode && commitMode.isToggleMode
   }
 
   override fun updateWorkflow() {

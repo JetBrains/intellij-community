@@ -20,13 +20,16 @@ import static com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement.APP
 import static com.android.tools.idea.gradle.dsl.model.BaseCompileOptionsModelImpl.SOURCE_COMPATIBILITY;
 import static com.android.tools.idea.gradle.dsl.model.BaseCompileOptionsModelImpl.TARGET_COMPATIBILITY;
 import static com.android.tools.idea.gradle.dsl.parser.java.JavaDslElement.JAVA;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 
-import com.android.tools.idea.gradle.dsl.parser.BuildModelContext;
+import com.android.tools.idea.gradle.dsl.model.BuildModelContext;
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslLiteral;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
 import com.android.tools.idea.gradle.dsl.parser.java.JavaDslElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -55,18 +58,19 @@ public class GradleBuildFile extends GradleDslFile {
 
   @Override
   public void setParsedElement(@NotNull GradleDslElement element) {
-    // TODO(xof): explicit renaming here is ugly, but a GradleDslFile is not a GradleBlockDslElement, but a
-    //  GradlePropertiesDslElement.  Maybe we should rethink where in the hierarchy the renaming logic should go?
+    // TODO(xof): doing explicit effect assignment here is ugly, but a GradleDslFile is not a GradleBlockDslElement, but a
+    //  GradlePropertiesDslElement.  Maybe we should rethink where in the hierarchy the effect logic should go?
+    ModelEffectDescription effect = null;
 
     if (element instanceof GradleDslLiteral) {
       // This is only in setParsedElement, not addParsedElement, because these are only supported as properties, not as setter methods.
       //
       // TODO(xof): these are only supported in Groovy.  Or maybe the criterion is something else?
       if (element.getName().equals("sourceCompatibility")) {
-        element.getNameElement().canonize(SOURCE_COMPATIBILITY); // NOTYPO
+        effect = new ModelEffectDescription(new ModelPropertyDescription(SOURCE_COMPATIBILITY), SET);
       }
       else if (element.getName().equals("targetCompatibility")) {
-        element.getNameElement().canonize(TARGET_COMPATIBILITY); // NOTYPO
+        effect = new ModelEffectDescription(new ModelPropertyDescription(TARGET_COMPATIBILITY), SET);
       }
       else {
         super.setParsedElement(element);
@@ -77,6 +81,7 @@ public class GradleBuildFile extends GradleDslFile {
         javaDslElement = new JavaDslElement(this, GradleNameElement.create(JAVA.name));
         setParsedElement(javaDslElement);
       }
+      element.setModelEffect(effect);
       javaDslElement.setParsedElement(element);
       return;
     }

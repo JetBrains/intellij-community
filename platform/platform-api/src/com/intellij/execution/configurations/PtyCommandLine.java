@@ -48,6 +48,17 @@ public class PtyCommandLine extends GeneralCommandLine {
   }
 
   private boolean myUseCygwinLaunch = false;
+  /**
+   * Setting this to true means that process started with this command line will works with our default ConsoleViewImpl.
+   * <p>
+   * Namely:
+   * <ul>
+   *   <li>Terminal echo suppressed (like {@code stty -echo}).</li>
+   *   <li>Process {@code stderr} will be available separately from process {@code stdout}, unlike regular terminal, when they are merged together.</li>
+   * </ul>
+   * <p>
+   * False means terminal console going to be used, which is working more like regular terminal window.
+   */
   private boolean myConsoleMode = true;
   private int myInitialColumns = -1;
   private int myInitialRows = -1;
@@ -56,48 +67,22 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   public PtyCommandLine() { }
 
-  /**
-   * @deprecated use {@link #withUseCygwinLaunch(boolean)}
-   */
-  @Deprecated
-  public void setUseCygwinLaunch(boolean useCygwinLaunch) {
-    withUseCygwinLaunch(useCygwinLaunch);
-  }
-
-  /**
-   * @deprecated use {@link #withConsoleMode(boolean)}
-   */
-  @Deprecated
-  public void setConsoleMode(boolean consoleMode) {
-    withConsoleMode(consoleMode);
-  }
-
-  /**
-   * @deprecated use {@link #withInitialColumns(int)}
-   */
-  @Deprecated
-  public void setInitialColumns(int initialColumns) {
-    withInitialColumns(initialColumns);
-  }
-
-  /**
-   * @deprecated use {@link #withInitialRows(int)}
-   */
-  @Deprecated
-  public void setInitialRows(int initialRows) {
-    withInitialRows(initialRows);
-  }
-
   public PtyCommandLine withUseCygwinLaunch(boolean useCygwinLaunch) {
     myUseCygwinLaunch = useCygwinLaunch;
     return this;
   }
 
+  /**
+   * @see #myConsoleMode
+   */
   public PtyCommandLine withConsoleMode(boolean consoleMode) {
     myConsoleMode = consoleMode;
     return this;
   }
 
+  /**
+   * @see #myConsoleMode
+   */
   public boolean isConsoleMode() {
     return myConsoleMode;
   }

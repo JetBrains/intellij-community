@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.ide.IdeTooltip
@@ -15,8 +15,8 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import icons.DvcsImplIcons
 import icons.GithubIcons
@@ -24,7 +24,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Consumer
@@ -43,12 +43,12 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
                          .gridGap("0", "0")
                          .insets("0", "0", "0", "0"))
 
-    add(to, CC().minWidth("${UI.scale(30)}"))
+    add(to, CC().minWidth("${JBUIScale.scale(30)}"))
     add(JLabel(" ${UIUtil.leftArrow()} ").apply {
       foreground = CurrentBranchComponent.TEXT_COLOR
       border = JBUI.Borders.empty(0, 5)
     })
-    add(from, CC().minWidth("${UI.scale(30)}"))
+    add(from, CC().minWidth("${JBUIScale.scale(30)}"))
     add(branchActionsToolbar)
   }
 
@@ -207,7 +207,7 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
 
   companion object {
     private fun createLabel() = JBLabel(GithubIcons.Branch).also {
-      GithubUIUtil.overrideUIDependentProperty(it) {
+      GHUIUtil.overrideUIDependentProperty(it) {
         foreground = CurrentBranchComponent.TEXT_COLOR
         background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
       }

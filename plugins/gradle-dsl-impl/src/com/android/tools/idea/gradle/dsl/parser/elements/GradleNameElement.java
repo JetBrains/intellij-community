@@ -17,19 +17,20 @@ package com.android.tools.idea.gradle.dsl.parser.elements;
 
 import static com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT;
 
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil;
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
-import com.google.common.base.Splitter;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
+import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class GradleNameElement {
   /**
@@ -49,9 +50,6 @@ public final class GradleNameElement {
    */
   @NotNull
   public static final Pattern INDEX_PATTERN = Pattern.compile("\\[(.+?)\\]|(.+?)(?=\\[)");
-
-  @NotNull
-  private static final Pattern SPACES = Pattern.compile("\\s+");
 
   @Nullable
   private PsiElement myNameElement;
@@ -79,7 +77,7 @@ public final class GradleNameElement {
 
   @NotNull
   public static GradleNameElement create(@NotNull String name) {
-    return new GradleNameElement(name, false);
+    return new GradleNameElement(GradleNameElementUtil.escape(name), false);
   }
 
   @NotNull
@@ -121,54 +119,57 @@ public final class GradleNameElement {
                                GradleDslNameConverter converter,
                                GradleDslElement context) {
     setUpFrom(nameElement, converter);
-    canonize(converter.modelNameForParent(fullName(), context));  // NOTYPO
+    ModelPropertyDescription property = converter.modelDescriptionForParent(fullName(), context);
+    String newName = property == null ? fullName() : property.name;
+    rename(newName);
+    myOriginalName = newName;
   }
 
   @NotNull
   public String fullName() {
-    List<String> parts = qualifyingParts();
-    parts.add(name());
+    List<String> parts = fullNameParts();
     return createNameFromParts(parts);
   }
 
   @NotNull
   public List<String> fullNameParts() {
-    return Splitter.on(".").splitToList(fullName());
+    String name = findName();
+    if (name == null) {
+      return Lists.newArrayList();
+    }
+    List<String> nameSegments = GradleNameElementUtil.split(name);
+    return ContainerUtil.map(nameSegments, GradleNameElement::convertNameToKey);
   }
 
   public static String createNameFromParts(@NotNull List<String> parts) {
-    return String.join(".", parts);
+    return GradleNameElementUtil.join(parts);
   }
 
   @NotNull
   public List<String> qualifyingParts() {
-    String name = findName();
-    if (name == null) {
-      return new ArrayList<>();
+    List<String> parts = fullNameParts();
+    if (parts.isEmpty()) {
+      return parts;
     }
-
-    List<String> nameSegments = Splitter.on('.').splitToList(name);
-    // Remove the last element, which is not a qualifying part;
-    return nameSegments.subList(0, nameSegments.size() - 1).stream().map(GradleNameElement::convertNameToKey).collect(Collectors.toList());
+    else {
+      return parts.subList(0, parts.size() - 1);
+    }
   }
 
   public boolean isQualified() {
-    String name = findName();
-    if (name == null) {
-      return false;
-    }
-
-    return name.contains(".");
+    List<String> parts = fullNameParts();
+    return parts.size() > 1;
   }
 
   @NotNull
   public String name() {
-    String name = findName();
-    if (name == null) {
+    List<String> parts = fullNameParts();
+    if (parts.isEmpty()) {
       return "";
     }
-    int lastDotIndex = name.lastIndexOf('.') + 1;
-    return convertNameToKey(name.substring(lastDotIndex));
+    else {
+      return parts.get(parts.size() - 1);
+    }
   }
 
   @Nullable
@@ -186,7 +187,7 @@ public final class GradleNameElement {
     return myOriginalName;
   }
 
-  public void rename(@NotNull String newName) {
+  private void internalRename(@NotNull String newName) {
     if (!isFake()) {
       myLocalName = newName;
     }
@@ -196,15 +197,12 @@ public final class GradleNameElement {
     myName = null;
   }
 
-  /**
-   * Arranges that this element have the name given by its argument, and also that that name be considered canonical (which in practice
-   * means preventing any client from detecting a difference between its current name and its original name).
-   *
-   * @param newName the new name to be considered canonical
-   */
-  public void canonize(@NotNull String newName) { // NOTYPO
-    rename(newName);
-    myOriginalName = newName;
+  public void rename(@NotNull String newName) {
+    internalRename(GradleNameElementUtil.escape(newName));
+  }
+
+  public void rename(@NotNull List<String> hierarchicalName) {
+    internalRename(GradleNameElementUtil.join(hierarchicalName));
   }
 
   public boolean isEmpty() {
@@ -222,7 +220,7 @@ public final class GradleNameElement {
     return fullName();
   }
 
-  public boolean containsPropertyReference(@NotNull String propertyReference) {
+  public boolean isReferencedIn(@NotNull String propertyReference) {
     String name = name();
     if (propertyReference.equals(name)) {
       return true;
@@ -236,7 +234,7 @@ public final class GradleNameElement {
       }
     }
 
-    List<String> parts = Arrays.asList(propertyReference.split("\\."));
+    List<String> parts = GradleNameElementUtil.split(propertyReference);
     if (!parts.isEmpty() && parts.get(0).equals(name)) {
       return true;
     }
@@ -258,10 +256,6 @@ public final class GradleNameElement {
       name = myFakeName;
     }
 
-    if (name != null) {
-      // Remove whitespace
-      name = SPACES.matcher(name).replaceAll("");
-    }
     myName = name;
     return name;
   }
@@ -277,7 +271,7 @@ public final class GradleNameElement {
   private void setUpFrom(@Nullable PsiElement element, GradleDslNameConverter converter) {
     myNameElement = element;
     if (myNameElement instanceof PsiNamedElement) {
-      myLocalName = ((PsiNamedElement)myNameElement).getName();
+      myLocalName = GradleNameElementUtil.escape(((PsiNamedElement)myNameElement).getName());
     }
     else if (myNameElement != null) {
       myLocalName = converter.psiToName(myNameElement);

@@ -251,7 +251,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void removeFromGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
-    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.myPlugin == descriptor);
+    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.getPluginDescriptor() == descriptor);
     assert index != -1;
     ListPluginComponent component = group.ui.plugins.remove(index);
     component.close();

@@ -76,7 +76,7 @@ public class MavenIndicesTestFixture {
   }
 
   public MavenIndicesManager getIndicesManager() {
-    return MavenIndicesManager.getInstance();
+    return MavenIndicesManager.getInstance(myProject);
   }
 
   public MavenProjectIndicesManager getProjectIndicesManager() {

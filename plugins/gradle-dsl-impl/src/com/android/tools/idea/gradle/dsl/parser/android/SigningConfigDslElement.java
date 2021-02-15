@@ -15,7 +15,11 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android;
 
-import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.*;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.KEY_ALIAS;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.KEY_PASSWORD;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.STORE_FILE;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.STORE_PASSWORD;
+import static com.android.tools.idea.gradle.dsl.model.android.SigningConfigModelImpl.STORE_TYPE;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
@@ -27,8 +31,8 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslNamedDomainElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -40,7 +44,7 @@ public final class SigningConfigDslElement extends GradleDslBlockElement impleme
     new PropertiesElementDescription<>(null, SigningConfigDslElement.class, SigningConfigDslElement::new);
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"keyAlias", property, KEY_ALIAS, VAR},
     {"setKeyAlias", exactly(1), KEY_ALIAS, SET},
     {"keyPassword", property, KEY_PASSWORD, VAR},
@@ -54,7 +58,7 @@ public final class SigningConfigDslElement extends GradleDslBlockElement impleme
   }).collect(toModelMap());
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> groovyToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.of(new Object[][]{
     {"keyAlias", property, KEY_ALIAS, VAR},
     {"keyAlias", exactly(1), KEY_ALIAS, SET},
     {"keyPassword", property, KEY_PASSWORD, VAR},
@@ -69,7 +73,7 @@ public final class SigningConfigDslElement extends GradleDslBlockElement impleme
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
@@ -97,5 +101,11 @@ public final class SigningConfigDslElement extends GradleDslBlockElement impleme
 
   public SigningConfigDslElement(@NotNull GradleDslElement parent, @NotNull GradleNameElement name) {
     super(parent, name);
+  }
+
+  @Override
+  public boolean isInsignificantIfEmpty() {
+    // the debug signingConfig is automatically created
+    return getName().equals("debug");
   }
 }

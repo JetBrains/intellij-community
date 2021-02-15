@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel.renderSeverity
 import com.intellij.util.ui.tree.TreeUtil.promiseExpandAll
+import org.jetbrains.annotations.Nls
 
 internal class ProblemFilter(val state: ProblemsViewState) : (Problem) -> Boolean {
   override fun invoke(problem: Problem): Boolean {
@@ -26,13 +27,14 @@ internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
     val panel = ProblemsView.getSelectedPanel(project) as? HighlightingPanel ?: return AnAction.EMPTY_ARRAY
     return SeverityRegistrar.getSeverityRegistrar(project).allSeverities.reversed()
       .filter { it != HighlightSeverity.INFO && it > HighlightSeverity.INFORMATION && it < HighlightSeverity.ERROR }
-      .map { Pair(ProblemsViewBundle.message("problems.view.highlighting.severity.show", renderSeverity(it)), it.myVal) }
-      .map { SeverityFilterAction(it.first, it.second, panel) }
+      .map { 
+        SeverityFilterAction(ProblemsViewBundle.message("problems.view.highlighting.severity.show", renderSeverity(it)), it.myVal, panel)
+      }
       .toTypedArray()
   }
 }
 
-private class SeverityFilterAction(name: String, val severity: Int, val panel: HighlightingPanel) : DumbAwareToggleAction(name) {
+private class SeverityFilterAction(@Nls name: String, val severity: Int, val panel: HighlightingPanel) : DumbAwareToggleAction(name) {
   override fun isSelected(event: AnActionEvent) = !panel.state.hideBySeverity.contains(severity)
   override fun setSelected(event: AnActionEvent, selected: Boolean) {
     val changed = with(panel.state.hideBySeverity) { if (selected) remove(severity) else add(severity) }

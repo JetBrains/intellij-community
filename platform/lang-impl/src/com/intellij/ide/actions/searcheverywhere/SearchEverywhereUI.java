@@ -1,16 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
-import com.intellij.ide.actions.bigPopup.ShowFilterAction;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
-import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.actionSystem.*;
@@ -33,6 +33,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
@@ -56,6 +59,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -331,7 +335,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @Override
-  protected @NotNull String getAccessibleName() {
+  @Nls
+  protected String getAccessibleName() {
     return IdeBundle.message("searcheverywhere.accessible.name");
   }
 
@@ -577,14 +582,20 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   private void showDescriptionForIndex(int index) {
-    if (index >= 0 && !myListModel.isMoreElement(index)) {
-      SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(index);
-      //noinspection ConstantConditions
-      Object data = contributor.getDataForItem(
-        myListModel.getElementAt(index), SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.getName());
-      if (data instanceof String) {
-        ActionMenu.showDescriptionInStatusBar(true, myResultsList, (String)data);
-      }
+    if (index < 0 || myListModel.isMoreElement(index)) return;
+
+    if (Registry.is("search.everywhere.show.weights")) {
+      @NlsSafe String weight = Integer.toString(myListModel.getWeightAt(index));
+      ActionMenu.showDescriptionInStatusBar(true, myResultsList, weight);
+      return;
+    }
+
+    SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(index);
+    //noinspection ConstantConditions
+    Object data = contributor.getDataForItem(
+      myListModel.getElementAt(index), SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.getName());
+    if (data instanceof String) {
+      ActionMenu.showDescriptionInStatusBar(true, myResultsList, (String)data);
     }
   }
 
@@ -851,8 +862,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       UsageViewPresentation presentation = new UsageViewPresentation();
       String tabCaptionText = IdeBundle.message("searcheverywhere.found.matches.title", searchText, contributorsString);
       presentation.setCodeUsagesString(tabCaptionText);
-      presentation.setUsagesInGeneratedCodeString(
-        IdeBundle.message("searcheverywhere.found.matches.generated.code.title", searchText, contributorsString));
       presentation.setTargetsNodeText(IdeBundle.message("searcheverywhere.found.targets.title", searchText, contributorsString));
       presentation.setTabName(tabCaptionText);
       presentation.setTabText(tabCaptionText);
@@ -1086,12 +1095,48 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
       }
 
-      myResultsList.setEmptyText(pattern.isEmpty() ? "" : getNotFoundText());
+      updateEmptyText(pattern);
+
       hasMoreContributors.forEach(myListModel::setHasMore);
 
       mySelectionTracker.resetSelectionIfNeeded();
 
       if (testCallback != null) testCallback.consume(myListModel.getItems());
+    }
+
+    private void updateEmptyText(String pattern) {
+      StatusText emptyStatus = myResultsList.getEmptyText();
+      emptyStatus.clear();
+
+      if (pattern.isEmpty()) return;
+      emptyStatus.appendLine(getNotFoundText());
+
+      if (myHeader.getSelectedTab().canClearFilter()) {
+        ActionListener clearFiltersAction = e -> {
+          myHeader.getSelectedTab().clearFilter();
+          scheduleRebuildList();
+        };
+        emptyStatus.appendLine(IdeBundle.message("searcheverywhere.reset.filters"),
+                               SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, clearFiltersAction);
+      }
+
+      boolean showFindInFilesAction = myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
+      if (showFindInFilesAction) {
+        Optional.ofNullable(myProject)
+          .map(project -> FindInProjectManager.getInstance(project))
+          .filter(manager -> manager.isEnabled())
+          .ifPresent(manager -> {
+            DataContext context = DataManager.getInstance().getDataContext(SearchEverywhereUI.this);
+            ActionListener findInFilesAction = e -> manager.findInProject(context, null);
+
+            String findInFilesText = IdeBundle.message("searcheverywhere.try.to.find.in.files");
+            String findInFilesShortcut = KeymapUtil.getFirstKeyboardShortcutText("FindInPath");
+            emptyStatus.appendLine(findInFilesText, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, findInFilesAction);
+            if (StringUtil.isEmpty(findInFilesShortcut)) {
+              emptyStatus.appendText(" " + findInFilesShortcut);
+            }
+          });
+      }
     }
 
     @TestOnly

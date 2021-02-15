@@ -176,7 +176,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
         @Override
         public String getProcessedElementsHeader() {
-            return "Adding parameter to template";
+            return XPathBundle.message("header.adding.parameter.to.template");
         }
     }
 }

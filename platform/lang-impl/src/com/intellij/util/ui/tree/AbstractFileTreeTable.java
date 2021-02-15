@@ -26,7 +26,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,7 +163,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
                                                      final @NlsContexts.DialogMessage String message,
                                                      final @NlsContexts.DialogTitle String title) {
     Map<VirtualFile, T> mappings = myModel.myCurrentMapping;
-    Map<VirtualFile, T> subdirectoryMappings = new THashMap<>();
+    Map<VirtualFile, T> subdirectoryMappings = new HashMap<>();
     for (VirtualFile file : mappings.keySet()) {
       if (file != null && (parent == null || VfsUtilCore.isAncestor(parent, file, true))) {
         subdirectoryMappings.put(file, mappings.get(file));

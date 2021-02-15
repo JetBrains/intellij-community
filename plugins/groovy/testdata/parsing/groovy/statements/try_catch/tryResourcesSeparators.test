@@ -56,7 +56,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Literal
             PsiElement(Integer)('3')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Variable definitions
         Modifiers
           PsiElement(def)('def')
@@ -68,7 +68,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Literal
             PsiElement(Integer)('4')
-      PsiWhiteSpace('\n\n  ')
+      PsiElement(new line)('\n\n  ')
       Variable definitions
         Modifiers
           PsiElement(def)('def')
@@ -80,11 +80,11 @@ Groovy script
           PsiWhiteSpace(' ')
           Literal
             PsiElement(Integer)('5')
-      PsiWhiteSpace('\n\n')
+      PsiElement(new line)('\n\n')
       PsiElement(;)(';')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(;)(';')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Variable definitions
         Modifiers
           PsiElement(def)('def')
@@ -96,11 +96,11 @@ Groovy script
           PsiWhiteSpace(' ')
           Literal
             PsiElement(Integer)('6')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(;)(';')
       PsiElement(;)(';')
       PsiElement(;)(';')
-      PsiWhiteSpace('\n  ')
+      PsiElement(new line)('\n  ')
       Variable definitions
         Modifiers
           PsiElement(def)('def')
@@ -112,9 +112,9 @@ Groovy script
           PsiWhiteSpace(' ')
           Literal
             PsiElement(Integer)('7')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(;)(';')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement())(')')
     PsiWhiteSpace(' ')
     Open block

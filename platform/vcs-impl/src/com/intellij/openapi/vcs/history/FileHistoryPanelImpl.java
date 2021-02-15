@@ -464,9 +464,6 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
       VirtualFile virtualFile = myFilePath.getVirtualFile();
       return virtualFile == null || !virtualFile.isValid() ? null : virtualFile;
     }
-    else if (VcsDataKeys.FILE_HISTORY_PANEL.is(dataId)) {
-      return this;
-    }
     else if (VcsDataKeys.HISTORY_SESSION.is(dataId)) {
       return myHistorySession;
     }
@@ -739,7 +736,10 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
         setBackground(table.getBackground());
         setForeground(table.getForeground());
       }
-      if (value != null) append(value.toString(), getDefaultAttributes());
+      if (value != null)  {
+        //noinspection HardCodedStringLiteral
+        append(value.toString(), getDefaultAttributes());
+      }
       SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
     }
   }

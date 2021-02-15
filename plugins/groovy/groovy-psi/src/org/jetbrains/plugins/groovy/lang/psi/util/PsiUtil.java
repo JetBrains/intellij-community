@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -18,7 +18,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TIntStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -66,7 +67,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -74,12 +78,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.*;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.AccessibilityKt;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt;
+import org.jetbrains.plugins.groovy.lang.resolve.impl.NullArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
@@ -338,11 +341,11 @@ public final class PsiUtil {
   }
 
   public static Iterable<PsiClass> iterateSupers(@NotNull final PsiClass psiClass, final boolean includeSelf) {
-    return new Iterable<PsiClass>() {
+    return new Iterable<>() {
       @Override
       public Iterator<PsiClass> iterator() {
-        return new Iterator<PsiClass>() {
-          final TIntStack indices = new TIntStack();
+        return new Iterator<>() {
+          final IntArrayList indices = new IntArrayList();
           final Stack<PsiClassType[]> superTypesStack = new Stack<>();
           final Set<PsiClass> visited = new HashSet<>();
           PsiClass current;
@@ -622,22 +625,12 @@ public final class PsiUtil {
     return isWhiteSpaceOrLineFeed(element) && element.getText().contains("\n");
   }
 
-  @Nullable
-  public static PsiElement getPrevNonSpace(@NotNull final PsiElement elem) {
-    PsiElement prevSibling = elem.getPrevSibling();
-    while (prevSibling instanceof PsiWhiteSpace) {
-      prevSibling = prevSibling.getPrevSibling();
-    }
-    return prevSibling;
+  public static @Nullable PsiElement getPrevNonSpace(@NotNull PsiElement elem) {
+    return PsiUtilKt.skipWhiteSpacesAndNewLinesBackward(elem);
   }
 
-  @Nullable
-  public static PsiElement getNextNonSpace(final PsiElement elem) {
-    PsiElement nextSibling = elem.getNextSibling();
-    while (nextSibling instanceof PsiWhiteSpace) {
-      nextSibling = nextSibling.getNextSibling();
-    }
-    return nextSibling;
+  public static @Nullable PsiElement getNextNonSpace(@NotNull PsiElement elem) {
+    return PsiUtilKt.skipWhiteSpacesAndNewLinesForward(elem);
   }
 
   @NotNull
@@ -1202,12 +1195,7 @@ public final class PsiUtil {
   }
 
   public static boolean isInStaticCompilationContext(@NotNull GrReferenceExpression expression) {
-    return isCompileStatic(expression) || GrStaticChecker.isPropertyAccessInStaticMethod(expression);
-  }
-
-  public static boolean isCompileStatic(PsiElement e) {
-    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
-    return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
+    return CompileStaticUtil.isCompileStatic(expression) || GrStaticChecker.isPropertyAccessInStaticMethod(expression);
   }
 
   public static boolean isNewified(@Nullable PsiElement expr) {
@@ -1253,10 +1241,12 @@ public final class PsiUtil {
       PsiClass containingClass = ((PsiMethod)method).getContainingClass();
       if (containingClass == null) return false;
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
-      if (parameters.length == 1 &&
-          containingClass.hasAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR) &&
-          TypesUtil.isAssignableByMethodCallConversion(parameters[0].getType(), factory.createTypeByFQClassName(JAVA_UTIL_MAP), method)) {
-        return true;
+      if (parameters.length <= 2 && containingClass.hasAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR)) {
+        if (parameters.length == 2 && !(parameters[0] instanceof ConstructorAnnotationsProcessor.EnclosingClassParameter)) {
+          return false;
+        }
+        PsiType lastParameterType = parameters[parameters.length - 1].getType();
+        return TypesUtil.isAssignableByMethodCallConversion(lastParameterType, factory.createTypeByFQClassName(JAVA_UTIL_MAP), method);
       }
     }
     return false;
@@ -1456,5 +1446,24 @@ public final class PsiUtil {
     }
 
     return GrLiteralImpl.getLiteralValue(element);
+  }
+
+  public static boolean isEligibleForInvocationWithNull(@NotNull GrCall call) {
+    if (CompileStaticUtil.isCompileStatic(call) || call.hasClosureArguments()) {
+      return false;
+    }
+    var argumentList = call.getArgumentList();
+    if (argumentList == null || !argumentList.isEmpty()) {
+      return false;
+    }
+    GroovyResolveResult result = call.advancedResolve();
+    if (!(result instanceof GroovyMethodResult)) {
+      return false;
+    }
+    GroovyMethodCandidate candidate = ((GroovyMethodResult)result).getCandidate();
+    if (candidate == null) {
+      return false;
+    }
+    return candidate.getArgumentMapping() instanceof NullArgumentMapping<?>;
   }
 }

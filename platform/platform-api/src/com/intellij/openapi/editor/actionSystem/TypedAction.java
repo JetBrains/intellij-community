@@ -177,7 +177,7 @@ public abstract class TypedAction {
     }
   }
 
-  public final void actionPerformed(@Nullable final Editor editor, final char charTyped, final DataContext dataContext) {
+  public final void actionPerformed(@Nullable final Editor editor, final char charTyped, @NotNull DataContext dataContext) {
     if (editor == null) return;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     FreezeLogger.getInstance().runUnderPerformanceMonitor(project, () -> myRawHandler.execute(editor, charTyped, dataContext));

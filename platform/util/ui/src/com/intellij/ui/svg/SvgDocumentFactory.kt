@@ -57,7 +57,7 @@ private fun buildDocument(reader: XMLStreamReader): SVGOMDocument {
       }
       XMLStreamConstants.START_ELEMENT -> {
         var version: String? = null
-        for (i in 0 until reader.getAttributeCount()) {
+        for (i in 0 until reader.attributeCount) {
           val localName = reader.getAttributeLocalName(i)
           val prefix = reader.getAttributePrefix(i)
           if (prefix.isEmpty() && localName == "version") {
@@ -130,7 +130,7 @@ private fun processElementFragment(reader: XMLStreamReader, document: SVGOMDocum
 }
 
 private fun readAttributes(element: Element, reader: XMLStreamReader) {
-  for (i in 0 until reader.getAttributeCount()) {
+  for (i in 0 until reader.attributeCount) {
     val localName = reader.getAttributeLocalName(i)
     val prefix = reader.getAttributePrefix(i)
     element.setAttributeNS(reader.getAttributeNamespace(i), getRawName(prefix, localName), reader.getAttributeValue(i))

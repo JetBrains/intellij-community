@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -134,11 +135,8 @@ public class CallTracer implements OverheadProducer {
           myDebugProcess.printToConsole(res.toString());
         }
       }
-      catch (VMDisconnectedException vmd) {
-        throw vmd;
-      }
       catch (Exception e) {
-        LOG.error(e);
+        DebuggerUtilsImpl.logError(e);
       }
     }
   }

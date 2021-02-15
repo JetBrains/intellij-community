@@ -89,8 +89,10 @@ public class TestCompositeNode implements XCompositeNode {
     assert content == null;
 
     content = new Content();
-    return result.thenAsync(new Function<XValueChildrenList, Promise<Content>>() {
-      private void resolveGroups(@NotNull List<XValueGroup> valueGroups, @NotNull List<TestCompositeNode> resultNodes, @NotNull List<Promise<?>> promises) {
+    return result.thenAsync(new Function<>() {
+      private void resolveGroups(@NotNull List<XValueGroup> valueGroups,
+                                 @NotNull List<TestCompositeNode> resultNodes,
+                                 @NotNull List<Promise<?>> promises) {
         for (XValueGroup group : valueGroups) {
           TestCompositeNode node = new TestCompositeNode(group);
           boolean computeChildren = groupContentResolveCondition.value(group);
@@ -119,7 +121,9 @@ public class TestCompositeNode implements XCompositeNode {
           promises.add(node.getResult());
 
           // myHasChildren could be not computed yet
-          if (value instanceof VariableView && ((VariableView)value).getValue() instanceof ObjectValue && valueSubContentResolveCondition.value((VariableView)value)) {
+          if (value instanceof VariableView &&
+              ((VariableView)value).getValue() instanceof ObjectValue &&
+              valueSubContentResolveCondition.value((VariableView)value)) {
             promises.add(node.loadChildren(value));
           }
         }

@@ -1163,6 +1163,32 @@ public class Py3TypeTest extends PyTestCase {
            "expr = example.__doc__");
   }
 
+  // PY-29891
+  public void testContextManagerType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("str",
+                   "from typing import Type, ContextManager\n" +
+                   "def example():\n" +
+                   "  manager: Type[ContextManager[str]]\n" +
+                   "  with manager() as m:\n" +
+                   "        expr = m")
+    );
+  }
+
+  // PY-29891
+  public void testAsyncContextManager() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("str",
+                   "from typing import AsyncContextManager\n" +
+                   "async def example():\n" +
+                   "    manager: AsyncContextManager[str]\n" +
+                   "    async with manager as m:\n" +
+                   "        expr = m")
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

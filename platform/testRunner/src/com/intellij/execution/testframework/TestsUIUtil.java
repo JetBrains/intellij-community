@@ -89,8 +89,13 @@ public final class TestsUIUtil {
     return false;
   }
 
-  public static Navigatable getOpenFileDescriptor(final AbstractTestProxy testProxy, final TestFrameworkRunningModel model) {
-    final TestConsoleProperties testConsoleProperties = model.getProperties();
+  public static Navigatable getOpenFileDescriptor(final AbstractTestProxy testProxy,
+                                                  final TestFrameworkRunningModel model) {
+    return getOpenFileDescriptor(testProxy, model.getProperties());
+  }
+
+  public static Navigatable getOpenFileDescriptor(final AbstractTestProxy testProxy,
+                                                  final TestConsoleProperties testConsoleProperties) {
     return getOpenFileDescriptor(testProxy, testConsoleProperties,
                                  TestConsoleProperties.OPEN_FAILURE_LINE.value(testConsoleProperties));
   }

@@ -80,6 +80,10 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_METHOD_THIS = isInlineThisOnly();
     }
+
+    if (myKeepTheDeclaration != null && myKeepTheDeclaration.isEnabled()) {
+      settings.INLINE_METHOD_KEEP = isKeepTheDeclaration();
+    }
   }
 
   @Override
@@ -100,6 +104,11 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   @Override
   protected boolean isInlineThis() {
     return JavaRefactoringSettings.getInstance().INLINE_METHOD_THIS;
+  }
+
+  @Override
+  protected boolean isKeepTheDeclarationByDefault() {
+    return JavaRefactoringSettings.getInstance().INLINE_METHOD_KEEP;
   }
 
   @Override

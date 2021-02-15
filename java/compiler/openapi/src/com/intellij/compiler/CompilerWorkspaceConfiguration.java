@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(name = "CompilerWorkspaceConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
+public final class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
   private static final Logger LOG = Logger.getInstance(CompilerWorkspaceConfiguration.class);
 
   static {
@@ -25,7 +25,6 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
 
   public boolean AUTO_SHOW_ERRORS_IN_EDITOR = true;
   public boolean DISPLAY_NOTIFICATION_POPUP = true;
-  @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
   public boolean MAKE_PROJECT_ON_SAVE = false; // until we fix problems with several open projects (IDEA-104064), daemon slowness (IDEA-104666)
 

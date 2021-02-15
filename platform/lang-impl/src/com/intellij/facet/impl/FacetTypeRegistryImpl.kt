@@ -53,7 +53,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
   }
 
   @Synchronized
-  override fun unregisterFacetType(facetType: FacetType<*, *>) {
+  private fun unregisterFacetType(facetType: FacetType<*, *>) {
     val id = facetType.id
     val stringId = facetType.stringId
     LOG.assertTrue(myFacetTypes.remove(id) != null, "Facet type '$stringId' is not registered")
@@ -146,8 +146,10 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
     synchronized(myTypeRegistrationLock) {
       if (myExtensionsLoaded) return
 
-      FacetType.EP_NAME.forEachExtensionSafe {
-        registerFacetType(it)
+      //we cannot use forEachExtensionSafe here because it may throw ProcessCanceledException during iteration
+      // and we'll get partially initialized state here
+      for (type in FacetType.EP_NAME.extensions) {
+        registerFacetType(type)
       }
       FacetType.EP_NAME.addExtensionPointListener(
         object : ExtensionPointListener<FacetType<*, *>?> {

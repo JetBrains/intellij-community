@@ -5,8 +5,9 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
+import java.nio.file.Path;
 import java.util.Collection;
 
 public interface PluginAwareClassLoader {
@@ -25,8 +26,16 @@ public interface PluginAwareClassLoader {
 
   long getLoadedClassCount();
 
-  @NotNull Collection<URL> getUrls();
+  @NotNull Collection<Path> getFiles();
 
   @MagicConstant(intValues = {ACTIVE, UNLOAD_IN_PROGRESS})
   int getState();
+
+  /**
+   * Loads class by name from this classloader and delegates loading to parent classloaders if and only if not found.
+   */
+  @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader)
+    throws ClassNotFoundException;
+
+  @Nullable String getPackagePrefix();
 }

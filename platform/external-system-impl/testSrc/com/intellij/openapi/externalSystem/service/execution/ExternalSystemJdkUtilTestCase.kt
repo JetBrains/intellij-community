@@ -52,10 +52,10 @@ abstract class ExternalSystemJdkUtilTestCase : SdkTestCase() {
 
   companion object {
     fun assertUnexpectedSdksRegistration(action: () -> Unit) {
-      assertNewlyRegisteredSdks({ null }, action)
+      assertNewlyRegisteredSdks({ null }, action = action)
     }
 
-    fun assertNewlyRegisteredSdks(expectedNewSdk: () -> TestSdk?, action: () -> Unit) {
+    fun assertNewlyRegisteredSdks(expectedNewSdk: () -> TestSdk?, isAssertSdkName: Boolean = true, action: () -> Unit) {
       val projectSdkTable = ProjectJdkTable.getInstance()
       val beforeSdks = projectSdkTable.allJdks.toSet()
 
@@ -64,18 +64,20 @@ abstract class ExternalSystemJdkUtilTestCase : SdkTestCase() {
       val afterSdks = projectSdkTable.allJdks.toSet()
       val newSdks = afterSdks - beforeSdks
 
-      throwable = throwable ?: runCatching { assertNewlyRegisteredSdks(expectedNewSdk(), newSdks) }.exceptionOrNull()
+      throwable = throwable ?: runCatching {
+        assertNewlyRegisteredSdks(expectedNewSdk(), newSdks, isAssertSdkName)
+      }.exceptionOrNull()
 
       removeSdks(*newSdks.toTypedArray())
 
       if (throwable != null) throw throwable
     }
 
-    private fun assertNewlyRegisteredSdks(expectedNewSdk: TestSdk?, newSdks: Set<Sdk>) {
+    private fun assertNewlyRegisteredSdks(expectedNewSdk: TestSdk?, newSdks: Set<Sdk>, isAssertSdkName: Boolean) {
       if (expectedNewSdk != null) {
         assertTrue("Expected registration of $expectedNewSdk but found $newSdks", newSdks.size == 1)
         val newSdk = newSdks.first()
-        assertSdk(expectedNewSdk, newSdk)
+        assertSdk(expectedNewSdk, newSdk, isAssertSdkName)
       }
       else {
         assertTrue("Unexpected sdk registration $newSdks", newSdks.isEmpty())

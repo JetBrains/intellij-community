@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -63,6 +64,7 @@ import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static java.awt.GridBagConstraints.*;
+import static java.util.Objects.requireNonNullElse;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, DataProvider {
   private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class);
@@ -99,7 +101,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     super(project, true);
     myMessagePool = messagePool;
     myProject = project;
-    myAssigneeVisible = ApplicationManager.getApplication().isInternal() || PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
+    myAssigneeVisible = (ApplicationManager.getApplication().isInternal() || PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))) &&
+                        Registry.is("ea.enable.developers.list", true);
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
@@ -467,13 +470,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         .append(DiagnosticBundle.message("error.list.disable.plugin")).append("</a>");
     }
 
-    if (message.isSubmitted()) {
+    if (message.isSubmitting()) {
+      info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"));
+    }
+    else if (message.getSubmissionInfo() != null) {
       info.append(' ').append("<span style=\"white-space: nowrap;\">");
       appendSubmissionInformation(message.getSubmissionInfo(), info);
       info.append("</span>");
-    }
-    else if (message.isSubmitting()) {
-      info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"));
     }
 
     myInfoLabel.setText(info.toString());
@@ -613,7 +616,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     Container parentComponent = getRootPane();
     if (dialogClosed) {
       IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)parentComponent);
-      parentComponent = frame != null ? frame.getComponent() : WindowManager.getInstance().findVisibleFrame();
+      parentComponent = requireNonNullElse(frame != null ? frame.getComponent() : WindowManager.getInstance().findVisibleFrame(), parentComponent);
     }
 
     boolean accepted = submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
@@ -641,7 +644,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     String message;
     if (pluginsToDisable.size() == 1) {
       IdeaPluginDescriptor plugin = pluginsToDisable.iterator().next();
-      //noinspection HardCodedStringLiteral
       message = "<html>" +
                 DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) + "<br/>" +
                 DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") + "<br/><br/>" +
@@ -649,7 +651,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
                 "</html>";
     }
     else {
-      //noinspection HardCodedStringLiteral
       message = "<html>" +
                 DiagnosticBundle.message("error.dialog.disable.prompt.multiple") + "<br/>" +
                 DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps.multiple" : "error.dialog.disable.prompt.lone.multiple") + "<br/><br/>" +
@@ -977,7 +978,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   public static void appendSubmissionInformation(@NotNull SubmittedReportInfo info, @NotNull StringBuilder out) {
     if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
-      out.append(DiagnosticBundle.message("error.list.message.submission.failed"));
+      String details = info.getLinkText();
+      out.append(details != null ? DiagnosticBundle.message("error.list.message.submission.failed.details", details)
+                                 : DiagnosticBundle.message("error.list.message.submission.failed"));
     }
     else if (info.getURL() != null && info.getLinkText() != null) {
       out.append(DiagnosticBundle.message("error.list.message.submitted.as.link", info.getURL(), info.getLinkText()));

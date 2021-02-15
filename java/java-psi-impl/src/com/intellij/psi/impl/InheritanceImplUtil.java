@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,10 +7,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.JavaClassSupers;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -131,7 +131,7 @@ public final class InheritanceImplUtil {
     }
 
     if (checkedClasses == null) {
-      checkedClasses = new THashSet<>();
+      checkedClasses = new HashSet<>();
     }
     checkedClasses.add(aClass);
 
@@ -173,7 +173,7 @@ public final class InheritanceImplUtil {
 
     Set<PsiClass> checkedClasses = null;
     if (classToByPass != null) {
-      checkedClasses = new THashSet<>();
+      checkedClasses = new HashSet<>();
       checkedClasses.add(classToByPass);
     }
     return isInheritor(candidateClass.getManager(), candidateClass, baseClass, true, checkedClasses);

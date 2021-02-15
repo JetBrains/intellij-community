@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.SingleComponentCenteringLayout
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import javax.swing.JComponent
@@ -16,7 +16,7 @@ import javax.swing.event.ListDataListener
 object GHPRReviewThreadsPanel {
 
   fun create(model: GHPRReviewThreadsModel, threadComponentFactory: (GHPRReviewThreadModel) -> JComponent): JComponent {
-    val panel = JPanel(VerticalLayout(UI.scale(12))).apply {
+    val panel = JPanel(VerticalLayout(JBUIScale.scale(12))).apply {
       isOpaque = false
     }
 

@@ -3,9 +3,7 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.actions.MoveModulesToGroupAction;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -132,13 +130,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   }
 
   @Override
-  public int getWeight() {
-    return 0;
-  }
-
-  @Override
-  public int getTypeSortWeight(final boolean sortByType) {
-    return 1;
+  public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+    return NodeSortOrder.MODULE_GROUP;
   }
 
   @Override

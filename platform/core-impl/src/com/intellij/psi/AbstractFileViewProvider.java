@@ -3,10 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.undo.UndoConstants;
@@ -352,11 +349,11 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       return;
     }
 
-    List<FileElement> knownTreeRoots = getKnownTreeRoots();
+    List<FileASTNode> knownTreeRoots = getKnownTreeRoots();
     if (knownTreeRoots.isEmpty()) return;
 
     int fileLength = myContent.getTextLength();
-    for (FileElement fileElement : knownTreeRoots) {
+    for (FileASTNode fileElement : knownTreeRoots) {
       int nodeLength = fileElement.getTextLength();
       if (!isDocumentConsistentWithPsi(fileLength, fileElement, nodeLength)) {
         PsiUtilCore.ensureValid(fileElement.getPsi());
@@ -372,11 +369,11 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  private boolean isDocumentConsistentWithPsi(int fileLength, FileElement fileElement, int nodeLength) {
+  private boolean isDocumentConsistentWithPsi(int fileLength, FileASTNode fileElement, int nodeLength) {
     if (nodeLength != fileLength) return false;
 
     if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-      return fileElement.textMatches(myContent.getText());
+      return fileElement.getPsi().textMatches(myContent.getText());
     }
 
     return true;
@@ -397,7 +394,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   public abstract List<PsiFile> getCachedPsiFiles();
 
   @NotNull
-  public abstract List<FileElement> getKnownTreeRoots();
+  public abstract List<FileASTNode> getKnownTreeRoots();
 
   public final void markInvalidated() {
     invalidateCachedPsi();

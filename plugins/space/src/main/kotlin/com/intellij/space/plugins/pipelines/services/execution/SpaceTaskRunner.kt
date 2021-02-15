@@ -2,13 +2,14 @@
 package com.intellij.space.plugins.pipelines.services.execution
 
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import libraries.io.random.Random
 import libraries.klogging.KLogging
 import java.io.OutputStream
 
+@Service
 class SpaceTaskRunner(val project: Project) {
-
   companion object : KLogging()
 
   private val ideaLocalRunnerLabel = "SpaceTaskRunner_${Random.nextString(10)}"

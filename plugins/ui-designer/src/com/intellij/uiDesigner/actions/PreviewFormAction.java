@@ -78,7 +78,7 @@ public final class PreviewFormAction extends AnAction{
    */
   private static final String CLASS_TO_BIND_NAME = "com.intellij.uiDesigner.FormPreviewFrame";
   private static final String CLASS_TO_BIND_RESOURCE_NAME = "com/intellij/uiDesigner/FormPreviewFrame";
-  @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
+  @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "messages.RuntimeBundle";
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
   @NotNull
@@ -233,7 +233,7 @@ public final class PreviewFormAction extends AnAction{
       final HashSet<String> bundleSet = new HashSet<>();
       FormEditingUtil.iterateStringDescriptors(
         rootContainer,
-        new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
+        new FormEditingUtil.StringDescriptorVisitor<>() {
           @Override
           public boolean visit(final IComponent component, final StringDescriptor descriptor) {
             if (descriptor.getBundleName() != null) {

@@ -43,7 +43,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
 
   public UserColorLookup(final Function<? super Color, String> colorToStringConverter, int priority) {
     super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(getColorString()).withInsertHandler(
-      new InsertHandler<LookupElement>() {
+      new InsertHandler<>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           handleUserSelection(context, colorToStringConverter);

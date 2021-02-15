@@ -71,7 +71,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
 
   @Override
   public void installWatcher(JComponent c) {
-    myChildSettingsListener = new SettingsEditorListener<Settings>() {
+    myChildSettingsListener = new SettingsEditorListener<>() {
       @Override
       public void stateChanged(@NotNull SettingsEditor<Settings> editor) {
         fireEditorStateChanged();

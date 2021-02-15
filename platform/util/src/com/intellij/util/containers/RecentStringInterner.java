@@ -61,8 +61,8 @@ public class RecentStringInterner {
   public String get(@Nullable String s) {
     if (s == null) return null;
     final int stripe = Math.abs(s.hashCode()) & myStripeMask;
+    myStripeLocks[stripe].lock();
     try {
-      myStripeLocks[stripe].lock();
       return myInterns[stripe].get(s);
     }
     finally {
@@ -72,8 +72,8 @@ public class RecentStringInterner {
 
   public void clear() {
     for(int i = 0; i < myInterns.length; ++i) {
+      myStripeLocks[i].lock();
       try {
-        myStripeLocks[i].lock();
         myInterns[i].clear();
       }
       finally {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.LookupManagerListener
@@ -38,7 +38,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
       `when`(getUniqueFile()).thenReturn(logFile)
     }
 
-    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer(project))
+    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer())
   }
 
   override fun tearDown() {
@@ -62,7 +62,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
 
     val loggerProvider = CompletionFileLoggerProvider()
 
-    val logger = loggerProvider.newCompletionLogger(Language.ANY)
+    val logger = loggerProvider.newCompletionLogger(Language.ANY.displayName)
 
     val documentMock = mock(Document::class.java).apply {
       `when`(text).thenReturn("")

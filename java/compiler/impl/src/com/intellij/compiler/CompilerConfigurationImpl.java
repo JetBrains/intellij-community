@@ -155,7 +155,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
       private void clearState() {
         if (project.isOpen()) {
-          BuildManager.getInstance().clearState(project);
+          clearBuildManagerState(project);
         }
       }
     });
@@ -285,7 +285,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
 
     if (updated) {
-      BuildManager.getInstance().clearState(myProject);
+      clearBuildManagerState(myProject);
     }
   }
 
@@ -293,8 +293,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public void setProjectBytecodeTarget(@Nullable String level) {
     final String previous = myBytecodeTargetLevel;
     myBytecodeTargetLevel = level;
-    if (!myProject.isDefault() && !Objects.equals(previous, level)) {
-      BuildManager.getInstance().clearState(myProject);
+    if (!Objects.equals(previous, level)) {
+      clearBuildManagerState(myProject);
     }
   }
 
@@ -334,11 +334,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public void setModulesBytecodeTargetMap(@NotNull Map<String, String> mapping) {
-    final boolean shouldNotify = !myProject.isDefault() && !myModuleBytecodeTarget.equals(mapping);
+    final boolean shouldNotify = !myModuleBytecodeTarget.equals(mapping);
     myModuleBytecodeTarget.clear();
     myModuleBytecodeTarget.putAll(mapping);
     if (shouldNotify) {
-      BuildManager.getInstance().clearState(myProject);
+      clearBuildManagerState(myProject);
     }
   }
 
@@ -356,10 +356,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       previous = myModuleBytecodeTarget.put(module.getName(), level);
     }
     if (!Objects.equals(previous, level)) {
-      final Project project = module.getProject();
-      if (!project.isDefault()) {
-        BuildManager.getInstance().clearState(project);
-      }
+      clearBuildManagerState(module.getProject());
     }
   }
 
@@ -413,7 +410,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     String newValue = ParametersListUtil.join(options);
     if (!newValue.equals(previous)) {
       settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
-      BuildManager.getInstance().clearState(myProject);
+      clearBuildManagerState(myProject);
     }
   }
 
@@ -1066,6 +1063,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
     final Collection<? extends Artifact> artifacts = ArtifactBySourceFileFinder.getInstance(project).findArtifacts(file);
     return artifacts.isEmpty();
+  }
+
+  private static void clearBuildManagerState(Project project) {
+    if (!project.isDefault()) {
+      BuildManager.getInstance().clearState(project);
+    }
   }
 
   private static final class CompiledPattern {

@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude
 data class JsonScanningStatistics(
   val providerName: String,
   val numberOfScannedFiles: Int,
+  val numberOfSkippedFiles: Int,
+  val numberOfFilesForIndexing: Int,
   val numberOfUpToDateFiles: Int,
   val numberOfFilesFullyIndexedByInfrastructureExtensions: Int,
   val scanningTime: JsonDuration,

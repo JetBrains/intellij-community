@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
@@ -143,8 +144,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return componentManager;
   }
 
-  private synchronized void doRegisterExtension(@NotNull T extension, @NotNull LoadingOrder order,
-                                                @NotNull PluginDescriptor pluginDescriptor, @Nullable Disposable parentDisposable) {
+  private synchronized void doRegisterExtension(@NotNull T extension,
+                                                @NotNull LoadingOrder order,
+                                                @NotNull PluginDescriptor pluginDescriptor,
+                                                @Nullable Disposable parentDisposable) {
     assertNotReadOnlyMode();
     checkExtensionType(extension, getExtensionClass(), null);
 
@@ -226,11 +229,15 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   private void checkExtensionType(@NotNull T extension, @NotNull Class<T> extensionClass, @Nullable ExtensionComponentAdapter adapter) {
     if (!extensionClass.isInstance(extension)) {
-      @NonNls String message = "Extension " + extension.getClass() + " does not implement " + extensionClass;
-      if (adapter != null) {
-        message += " (adapter=" + adapter + ")";
+      @NonNls String message = "Extension " + extension.getClass().getName() + " does not implement " + extensionClass;
+      if (adapter == null) {
+        throw new RuntimeException(message);
       }
-      throw new ExtensionException(message, extension.getClass());
+      else {
+        message += " (adapter=" + adapter + ")";
+        throw componentManager.createError(message, adapter.getPluginDescriptor().getPluginId(),
+                                           Collections.singletonMap("threadDump", ThreadDumper.dumpThreadsToString()));
+      }
     }
   }
 
@@ -318,13 +325,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   public final void processIdentifiableImplementations(@NotNull BiConsumer<? super @NotNull Supplier<T>, ? super @Nullable String> consumer) {
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-      String id = adapter.getOrderId();
-      // https://github.com/JetBrains/kotlin/pull/3522
-      if (id == null && "org.jetbrains.kotlin.idea.roots.KotlinNonJvmSourceRootConverterProvider".equals(adapter.getAssignableToClassName())) {
-        id = "kotlin-non-jvm-source-roots";
-      }
-      Supplier<T> supplier = () -> adapter.createInstance(componentManager);
-      consumer.accept(supplier, id);
+      consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.getOrderId());
     }
   }
 
@@ -552,7 +553,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     for (int i = adapters.size() - 1; i >= 0; i--) {
       ExtensionComponentAdapter adapter = adapters.get(i);
       try {
-        adapter.getImplementationClass();
+        adapter.getImplementationClass(componentManager);
       }
       catch (Throwable e) {
         if (adapters == myAdapters) {
@@ -851,11 +852,6 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   @Override
-  public final void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    addExtensionPointListener(listener, true, null);
-  }
-
-  @Override
   public final void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener,
                                               boolean invokeForLoadedExtensions,
                                               @Nullable Disposable parentDisposable) {
@@ -906,9 +902,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     Class<T> extensionClass = myExtensionClass;
     if (extensionClass == null) {
       try {
-        ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
-        //noinspection unchecked
-        extensionClass = (Class<T>)(pluginClassLoader == null ? Class.forName(myClassName) : Class.forName(myClassName, true, pluginClassLoader));
+        extensionClass = componentManager.loadClass(myClassName, pluginDescriptor);
         myExtensionClass = extensionClass;
       }
       catch (ClassNotFoundException e) {
@@ -1049,7 +1043,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
         // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g. FacetTypeRegistryImpl)
         try {
-          if (aClass.isAssignableFrom(adapter.getImplementationClass())) {
+          if (aClass.isAssignableFrom(adapter.getImplementationClass(componentManager))) {
             //noinspection unchecked
             return (V)processAdapter(adapter);
           }
@@ -1105,7 +1099,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     private ObjectComponentAdapter(@NotNull T extension,
                                    @NotNull PluginDescriptor pluginDescriptor,
                                    @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), pluginDescriptor, null, loadingOrder);
+      super(extension.getClass().getName(), pluginDescriptor, null, loadingOrder, (componentManager1, adapter) -> extension.getClass());
 
       componentInstance = extension;
     }

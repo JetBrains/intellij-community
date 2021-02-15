@@ -1,41 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindowManager
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHEnterpriseServerMeta
 import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
 
 object GHPRStatisticsCollector : ProjectUsagesCollector() {
-
-  private val STATE_GROUP = EventLogGroup("vcs.github.pullrequests", 2)
-  private val TOOL_WINDOW_EVENT = STATE_GROUP.registerEvent("toolwindow", EventFields.Int("tabs"), EventFields.Int("initialized_tabs"))
-
-  class ProjectState : ProjectUsagesCollector() {
-    override fun getMetrics(project: Project): Set<MetricEvent> {
-      val contents = project.service<ToolWindowManager>().getToolWindow(GHPRToolWindowFactory.ID)
-        ?.contentManagerIfCreated?.contents
-
-      val tabsCount = contents?.size ?: 0
-      val initializedTabsCount = contents?.count {
-        it.getUserData(GHPRToolWindowTabsContentManager.INIT_DONE_KEY) != null
-      } ?: 0
-
-      return setOf(TOOL_WINDOW_EVENT.metric(tabsCount, initializedTabsCount))
-    }
-
-    override fun getGroup() = STATE_GROUP
-  }
 
   private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 1)
 

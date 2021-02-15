@@ -6,12 +6,12 @@ import com.intellij.util.SystemProperties
 
 interface PathsProvider {
   val productId: String
-  val projectRootFolder: File
+  val ultimateRootFolder: File
   val communityRootFolder: File
   val outputRootFolder: File
 
   val tempFolder: File
-    get() = TeamCityHelper.tempDirectory ?: projectRootFolder.resolve("out").resolve("tmp")
+    get() = TeamCityHelper.tempDirectory ?: ultimateRootFolder.resolve("out").resolve("tmp")
 
   val launcherFolder: File
     get() = tempFolder.resolve("launcher").resolve(productId)
@@ -25,12 +25,21 @@ interface PathsProvider {
   val systemFolder: File
     get() = launcherFolder.resolve("system")
 
-  private val javaHomeFolder: File
+  val javaHomeFolder: File
     get() = File(SystemProperties.getJavaHome())
+
+  val mavenHomeFolder: File
+    get() = File(System.getProperty("user.home"), ".m2")
+
+  val communityBinFolder: File
+    get() = communityRootFolder.resolve("bin")
 
   val javaExecutable: File
     get() = when {
       SystemInfo.isWindows -> javaHomeFolder.resolve("bin").resolve("java.exe")
       else -> javaHomeFolder.resolve("bin").resolve("java")
     }
+
+  val dockerVolumesToWritable: Map<File, Boolean>
+    get() = emptyMap()
 }

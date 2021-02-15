@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REBASE_CONTINUE_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REBASE_ERROR;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.MERGE;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.ONLY_UPDATE;
 import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
@@ -228,7 +230,7 @@ public class HgRegularUpdater implements HgUpdater {
     HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repository);
     HgCommandResult result = new HgRebaseCommand(project, repository).startRebase();
     if (HgErrorUtil.isCommandExecutionFailed(result)) {
-      new HgCommandResultNotifier(project).notifyError("hg.rebase.error",
+      new HgCommandResultNotifier(project).notifyError(REBASE_ERROR,
                                                        result,
                                                        HgBundle.message("hg4idea.hg.error"),
                                                        HgBundle.message("action.hg4idea.Rebase.error"));
@@ -242,7 +244,7 @@ public class HgRegularUpdater implements HgUpdater {
       }
       result = rebaseCommand.continueRebase();
       if (HgErrorUtil.isAbort(result)) {
-        new HgCommandResultNotifier(project).notifyError("hg.rebase.continue.error",
+        new HgCommandResultNotifier(project).notifyError(REBASE_CONTINUE_ERROR,
                                                          result,
                                                          HgBundle.message("hg4idea.hg.error"),
                                                          HgBundle.message("action.hg4idea.Rebase.Continue.error"));

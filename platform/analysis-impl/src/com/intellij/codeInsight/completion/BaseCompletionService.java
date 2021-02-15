@@ -209,7 +209,7 @@ public class BaseCompletionService extends CompletionService {
         });
       }
     }
-    return sorter.withClassifier("priority", true, new ClassifierFactory<LookupElement>("liftShorter") {
+    return sorter.withClassifier("priority", true, new ClassifierFactory<>("liftShorter") {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
         return new LiftShorterItemsClassifier("liftShorter", next, new LiftShorterItemsClassifier.LiftingCondition(), false);

@@ -71,11 +71,8 @@ import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -95,6 +92,8 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
   public static final String ID = "ShowUsages";
+
+  private static int ourPopupDelayTimeout = 300;
 
   public ShowUsagesAction() {
     setInjectedContext(true);
@@ -377,7 +376,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     List<Usage> usages = new ArrayList<>();
     Set<Usage> visibleUsages = new LinkedHashSet<>();
-    table.setTableModel(new SmartList<>(createStringNode(UsageViewBundle.message("progress.searching"))));
+    table.setTableModel(new SmartList<>(new StringNode(UsageViewBundle.message("progress.searching"))));
 
     Runnable itemChosenCallback = table.prepareTable(
       showMoreUsagesRunnable(parameters, actionHandler),
@@ -398,7 +397,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         if (!usageView.isDisposed()) {
           showPopupIfNeedTo(popup, parameters.popupPosition);
         }
-      }, 300, TimeUnit.MILLISECONDS);
+      }, ourPopupDelayTimeout, TimeUnit.MILLISECONDS);
     }
 
     UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, table.USAGES_OUTSIDE_SCOPE_SEPARATOR);
@@ -564,11 +563,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         return ShowUsagesSettings.getInstance().getState();
       }
     };
-  }
-
-  @NotNull
-  static UsageNode createStringNode(@NotNull Object string) {
-    return new StringNode(string);
   }
 
   private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition) {
@@ -1070,37 +1064,45 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   static final class StringNode extends UsageNode {
-    @NotNull private final Object myString;
+    private final @Nls @NotNull String myString;
 
-    private StringNode(@NotNull Object string) {
+    private StringNode(@Nls @NotNull String string) {
       super(null, NullUsage.INSTANCE);
       myString = string;
     }
 
-    @Override
-    public String toString() {
-      return myString.toString();
-    }
-  }
-
-  static abstract class FilteredOutUsagesNode extends UsageNode {
-    @NotNull private final String myString;
-    private final String myToolTip;
-
-    private FilteredOutUsagesNode(@NotNull Usage fakeUsage, @NotNull String string, @NotNull String toolTip) {
-      super(null, fakeUsage);
-      myString = string;
-      myToolTip = toolTip;
+    @Nls @NotNull String getString() {
+      return myString;
     }
 
     @Override
     public String toString() {
       return myString;
     }
+  }
 
-    @NotNull
-    public String getTooltip() {
+  static abstract class FilteredOutUsagesNode extends UsageNode {
+
+    private final @Nls @NotNull String myString;
+    private final @Nls @NotNull String myToolTip;
+
+    private FilteredOutUsagesNode(@NotNull Usage fakeUsage, @Nls @NotNull String string, @Nls @NotNull String toolTip) {
+      super(null, fakeUsage);
+      myString = string;
+      myToolTip = toolTip;
+    }
+
+    @Nls @NotNull String getString() {
+      return myString;
+    }
+
+    @Nls @NotNull String getTooltip() {
       return myToolTip;
+    }
+
+    @Override
+    public String toString() {
+      return myString;
     }
 
     public abstract void onSelected();
@@ -1176,5 +1178,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
                               @Nullable Editor editor,
                               int maxUsages) {
     startFindUsages(element, popupPosition, editor);
+  }
+
+  @TestOnly
+  public static void setPopupDelayTimeout(int timeout) {
+    ourPopupDelayTimeout = timeout;
   }
 }

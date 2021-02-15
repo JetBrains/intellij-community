@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui.message
 
-import circlet.client.api.CExternalServicePrincipalDetails
+import circlet.client.api.CApplicationPrincipalDetails
 import circlet.client.api.CPrincipal
 import circlet.client.api.CUserPrincipalDetails
-import circlet.client.api.Navigator
-import circlet.platform.api.format
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
@@ -14,6 +12,8 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.link
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.utils.SpaceUrls
+import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
@@ -25,15 +25,13 @@ import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
 import runtime.Ui
-import runtime.date.DateFormat
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class MessageTitleComponent(
   private val lifetime: Lifetime,
-  message: SpaceChatItem,
-  private val server: String
+  message: SpaceChatItem
 ) : JPanel(HorizontalLayout(JBUI.scale(5))) {
   val actionsPanel = JPanel(HorizontalLayout(JBUI.scale(5))).apply {
     isOpaque = false
@@ -44,24 +42,18 @@ internal class MessageTitleComponent(
 
   init {
     val authorPanel = HtmlEditorPane().apply {
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       setBody(createMessageAuthorChunk(message.author).bold().toString())
     }
     val timePanel = HtmlEditorPane().apply {
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       foreground = UIUtil.getContextHelpForeground()
-      setBody(HtmlChunk.text(message.created.format(DateFormat.HOURS_AND_MINUTES)).toString()) // NON-NLS
-    }
-    val editedPanel = JBLabel(SpaceBundle.message("chat.message.edited.text"), UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-      isOpaque = true
+      setBody(HtmlChunk.text(message.created.formatPrettyDateTime()).toString()) // NON-NLS
     }
 
     isOpaque = false
     add(authorPanel)
     add(timePanel)
-    if (message.isEdited) {
-      add(editedPanel)
-    }
     add(actionsPanel)
     launch(lifetime, Ui) {
       delay(2000)
@@ -77,12 +69,11 @@ internal class MessageTitleComponent(
     when (val details = author.details) {
       is CUserPrincipalDetails -> {
         val user = details.user.resolve()
-        user.link(server)
+        user.link()
       }
-      is CExternalServicePrincipalDetails -> {
-        val service = details.service.resolve()
-        val location = Navigator.manage.oauthServices.service(service)
-        HtmlChunk.link(location.href, service.name) // NON-NLS
+      is CApplicationPrincipalDetails -> {
+        val app = details.app.resolve()
+        HtmlChunk.link(SpaceUrls.app(app), app.name) // NON-NLS
       }
       else -> {
         HtmlChunk.text(author.name) // NON-NLS

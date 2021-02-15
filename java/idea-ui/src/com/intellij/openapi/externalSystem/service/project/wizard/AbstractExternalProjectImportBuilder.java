@@ -69,16 +69,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, NotNullFactory, ProjectSystemId)}
    */
   @Deprecated
-  public AbstractExternalProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager projectDataManager,
-                                              @NotNull C control,
-                                              @NotNull ProjectSystemId externalSystemId) {
-    this((ProjectDataManager)projectDataManager, control, externalSystemId);
-  }
-
-  /**
-   * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, NotNullFactory, ProjectSystemId)}
-   */
-  @Deprecated
   public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
                                               @NotNull C control,
                                               @NotNull ProjectSystemId externalSystemId) {

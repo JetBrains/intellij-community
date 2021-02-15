@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.clientProperties;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -6,7 +6,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.serviceContainer.NonInjectable;
@@ -32,20 +31,16 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     return ServiceManager.getService(project, ClientPropertiesManager.class);
   }
 
-  private static final NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = new AtomicNotNullLazyValue<ClientPropertiesManager>() {
-    @NotNull
-    @Override
-    protected ClientPropertiesManager compute() {
-      ClientPropertiesManager result = new ClientPropertiesManager();
-      try {
-        result.loadState(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      return result;
+  private static final NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = NotNullLazyValue.atomicLazy(() -> {
+    ClientPropertiesManager result = new ClientPropertiesManager();
+    try {
+      result.loadState(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
     }
-  };
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return result;
+  });
 
   private final Map<String, List<ClientProperty>> myPropertyMap = new TreeMap<>();
 

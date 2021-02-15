@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BundledJreManager
 import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.jps.model.module.JpsModule
+
+import java.nio.file.Path
 
 @CompileStatic
 abstract class BuildContext implements CompilationContext {
@@ -53,23 +43,26 @@ abstract class BuildContext implements CompilationContext {
    */
   List<String> bootClassPathJarNames
 
+  /**
+   * Add file to be copied into application resources.
+   */
+  abstract void addResourceFile(@NotNull Path file)
+
+  abstract @NotNull Collection<Path> getResourceFiles();
+
   abstract boolean includeBreakGenLibraries()
 
-  /**
-   * If the method returns {@code false} 'idea.jars.nocopy' property will be set to {@code true} in idea.properties by default. Otherwise it
-   * won't be set and the IDE will copy library *.jar files to avoid their locking when running under Windows.
-   */
-  abstract boolean shouldIDECopyJarsByDefault()
-
-  abstract void patchInspectScript(String path)
+  abstract void patchInspectScript(@NotNull Path path)
 
   abstract String getAdditionalJvmArguments()
 
   abstract void notifyArtifactBuilt(String artifactPath)
 
+  abstract void notifyArtifactBuilt(Path artifactPath)
+
   abstract JpsModule findApplicationInfoModule()
 
-  abstract File findFileInModuleSources(String moduleName, String relativePath)
+  abstract @Nullable Path findFileInModuleSources(String moduleName, String relativePath)
 
   abstract void signExeFile(String path)
 
@@ -77,7 +70,7 @@ abstract class BuildContext implements CompilationContext {
    * Execute a build step or skip it if {@code stepId} is included into {@link BuildOptions#buildStepsToSkip}
    * @return {@code true} if the step was executed
    */
-  abstract boolean executeStep(String stepMessage, String stepId, Closure step)
+  abstract boolean executeStep(String stepMessage, String stepId, Runnable step)
 
   abstract boolean shouldBuildDistributions()
 

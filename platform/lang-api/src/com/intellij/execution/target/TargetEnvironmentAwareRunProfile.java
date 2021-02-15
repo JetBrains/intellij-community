@@ -68,4 +68,8 @@ public interface TargetEnvironmentAwareRunProfile extends RunProfile {
         ExecutionBundle.message("TargetEnvironmentAwareRunProfile.error.run.target.error.0", e.getMessage()));
     }
   }
+
+  default boolean needPrepareTarget() {
+    return getDefaultTargetName() != null;
+  }
 }

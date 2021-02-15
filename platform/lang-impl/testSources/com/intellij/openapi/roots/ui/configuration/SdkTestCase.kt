@@ -19,7 +19,6 @@ import java.io.File
 import java.util.*
 import java.util.function.Consumer
 import javax.swing.JComponent
-import kotlin.collections.LinkedHashMap
 
 abstract class SdkTestCase : LightPlatformTestCase() {
 
@@ -234,10 +233,17 @@ abstract class SdkTestCase : LightPlatformTestCase() {
   }
 
   companion object {
-    fun assertSdk(expected: TestSdk, actual: Sdk) {
-      assertEquals(expected.name, actual.name)
-      assertEquals(expected.sdkType, actual.sdkType)
-      assertEquals(expected, TestSdkGenerator.findTestSdk(actual))
+    fun assertSdk(expected: TestSdk?, actual: Sdk?, isAssertSdkName: Boolean = true) {
+      if (expected != null && actual != null) {
+        if (isAssertSdkName) {
+          assertEquals(expected.name, actual.name)
+        }
+        assertEquals(expected.sdkType, actual.sdkType)
+        assertEquals(expected, TestSdkGenerator.findTestSdk(actual))
+      }
+      else {
+        assertEquals(expected, actual)
+      }
     }
 
     fun registerSdk(sdk: TestSdk, parentDisposable: Disposable) {

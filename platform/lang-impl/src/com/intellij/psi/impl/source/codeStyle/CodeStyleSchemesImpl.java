@@ -40,7 +40,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     mySchemeManager.loadSchemes();
     setCurrentScheme(getDefaultScheme());
 
-    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeIndentOptionsProvider>() {
+    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
                                  @NotNull PluginDescriptor pluginDescriptor) {
@@ -56,7 +56,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
       }
     }, null);
 
-    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
+    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(),
@@ -74,7 +74,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
         });
       }
     }, null);
-    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<CodeStyleSettingsProvider>() {
+    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull CodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         ObjectUtils.consumeIfNotNull(CodeStyleSettingsManager.getInstance(),

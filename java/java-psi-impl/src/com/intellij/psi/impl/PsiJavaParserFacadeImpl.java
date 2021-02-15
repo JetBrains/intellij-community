@@ -155,7 +155,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   private @NotNull PsiClass createRecordFromText(@NotNull String text) {
-    JavaDummyElement dummyElement = new JavaDummyElement(text, DECLARATION, LanguageLevel.JDK_14_PREVIEW);
+    JavaDummyElement dummyElement = new JavaDummyElement(text, DECLARATION, LanguageLevel.JDK_15_PREVIEW);
     DummyHolder holder = DummyHolderFactory.createHolder(myManager, dummyElement, null);
     PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiClass)) {

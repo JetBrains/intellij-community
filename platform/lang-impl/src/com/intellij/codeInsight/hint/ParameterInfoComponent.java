@@ -129,7 +129,7 @@ public class ParameterInfoComponent extends JPanel {
     setPanels();
 
     if (myRequestFocus) {
-      AccessibleContextUtil.setName(this, "Parameter Info. Press TAB to navigate through each element. Press ESC to close.");
+      AccessibleContextUtil.setName(this, CodeInsightBundle.message("accessible.name.parameter.info.press.tab"));
     }
 
     myDumbLabel.setForeground(CONTEXT_HELP_FOREGROUND);
@@ -200,7 +200,7 @@ public class ParameterInfoComponent extends JPanel {
   public String toString() {
     return Stream.of(myPanels)
       .filter(Component::isVisible)
-      .map(c -> c.toString() + (c.getBorder() == BOTTOM_BORDER ? "\n-" : ""))
+      .map(c -> c + (c.getBorder() == BOTTOM_BORDER ? "\n-" : ""))
       .collect(Collectors.joining("\n"));
   }
 
@@ -335,8 +335,7 @@ public class ParameterInfoComponent extends JPanel {
       }
       else {
         setVisible(i, true);
-        FileBasedIndex.getInstance().ignoreDumbMode(() -> myParameterInfoControllerData.getHandler().updateUI(o, context),
-                                                    DumbModeAccessType.RELIABLE_DATA_ONLY);
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> myParameterInfoControllerData.getHandler().updateUI(o, context));
 
         // ensure that highlighted element is visible
         if (context.isHighlighted()) {

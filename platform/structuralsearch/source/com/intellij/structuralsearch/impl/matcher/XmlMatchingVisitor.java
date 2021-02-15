@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
-import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
@@ -53,7 +53,8 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
   }
 
   @Override public void visitXmlTag(XmlTag tag) {
-    final XmlTag another = (XmlTag)myMatchingVisitor.getElement();
+    final XmlTag another = myMatchingVisitor.getElement(XmlTag.class);
+    if (another == null) return;
     final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
     final XmlToken name = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_NAME);
     final boolean isTypedVar = pattern.isTypedVar(name);
@@ -64,10 +65,9 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final XmlTagChild[] children1 = tag.getValue().getChildren();
     if (children1.length != 0) {
       if (children1.length == 1 && pattern.isTypedVar(children1[0])) {
-        final SsrFilteringNodeIterator patternNodes = new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(tag.getValue().getChildren()));
+        final NodeIterator patternNodes = SsrFilteringNodeIterator.create(tag.getValue().getChildren());
         if (patternNodes.current() != null) {
-          final SsrFilteringNodeIterator matchNodes =
-            new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(another.getValue().getChildren()));
+          final NodeIterator matchNodes = SsrFilteringNodeIterator.create(another.getValue().getChildren());
           if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(patternNodes, matchNodes))) return;
         }
       }

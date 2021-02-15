@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.GitUtil.*;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.RESET;
 
@@ -121,11 +122,11 @@ public class GitResetOperation {
     }
 
     if (errors.isEmpty()) {
-      myNotifier.notifySuccess("git.reset.successful", "", GitBundle.message("git.reset.successful.notification.message"));
+      myNotifier.notifySuccess(RESET_SUCCESSFUL, "", GitBundle.message("git.reset.successful.notification.message"));
     }
     else if (!successes.isEmpty()) {
 
-      myNotifier.notifyImportantWarning("git.reset.partially.failed",
+      myNotifier.notifyImportantWarning(RESET_PARTIALLY_FAILED,
                                         GitBundle.message("git.reset.partially.failed.notification.title"),
                                         GitBundle.message("git.reset.partially.failed.notification.msg",
                                                           joinRepos(successes.keySet()),
@@ -133,7 +134,7 @@ public class GitResetOperation {
                                                           formErrorReport(errors)));
     }
     else {
-      myNotifier.notifyError("git.reset.failed", GitBundle.message("git.reset.failed.notification.title"), formErrorReport(errors), true);
+      myNotifier.notifyError(RESET_FAILED, GitBundle.message("git.reset.failed.notification.title"), formErrorReport(errors), true);
     }
   }
 

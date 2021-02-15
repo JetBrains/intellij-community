@@ -4,6 +4,7 @@
 package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
@@ -20,7 +21,23 @@ import one.util.streamex.StreamEx
 class PyDataclassTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
-    return getDataclassTypeForCallee(referenceExpression, context) ?: getDataclassesReplaceType(referenceExpression, context)
+    return getDataclassesReplaceType(referenceExpression, context)
+  }
+
+  override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
+    val result = when {
+      referenceTarget is PyClass && anchor is PyCallExpression -> getDataclassTypeForClass(referenceTarget, context)
+      referenceTarget is PyParameter && referenceTarget.isSelf && anchor is PyCallExpression -> {
+        PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
+          ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
+          ?.let {
+            it.containingClass?.let { getDataclassTypeForClass(it, context) }
+          }
+      }
+      else -> null
+    }
+
+    return PyTypeUtil.notNullToRef(result)
   }
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
@@ -47,30 +64,6 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
   }
 
   companion object {
-
-    private fun getDataclassTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
-      if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null
-
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
-      val resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false)
-
-      return PyUtil.filterTopPriorityResults(resolveResults)
-        .asSequence()
-        .map {
-          when {
-            it is PyClass -> getDataclassTypeForClass(it, context)
-            it is PyParameter && it.isSelf -> {
-              PsiTreeUtil.getParentOfType(it, PyFunction::class.java)
-                ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
-                ?.let {
-                  it.containingClass?.let { getDataclassTypeForClass(it, context) }
-                }
-            }
-            else -> null
-          }
-        }
-        .firstOrNull { it != null }
-    }
 
     private fun getDataclassesReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
       val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) ?: return null

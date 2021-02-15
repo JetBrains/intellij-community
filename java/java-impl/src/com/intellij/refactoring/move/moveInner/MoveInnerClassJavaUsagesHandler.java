@@ -59,9 +59,4 @@ public class MoveInnerClassJavaUsagesHandler implements MoveInnerClassUsagesHand
       }
     }
   }
-
-  @Override
-  public void correctInnerClassUsage(@NotNull UsageInfo usage, @NotNull PsiClass outerClass) {
-    correctInnerClassUsage(usage, outerClass, null);
-  }
 }

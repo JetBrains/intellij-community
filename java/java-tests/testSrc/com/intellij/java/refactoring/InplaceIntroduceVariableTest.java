@@ -19,12 +19,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -201,6 +203,60 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testInBlockLambda2() {
     doTestReplaceChoice("Replace 0 occurrences in outer 'lambda' block");
   }
+  
+  public void testAllLValues() {
+    doTestReplaceChoice("Replace all 2 occurrences (will change semantics!)", null,
+                        List.of("Replace this occurrence only", "Replace all 2 occurrences (will change semantics!)"));
+  }
+  
+  public void testHeavilyBrokenFile() {
+    doTest(null);
+  }
+  
+  public void testHeavilyBrokenFile2() {
+    doTest(null);
+  }
+
+  public void testHeavilyBrokenFile3() {
+    doTest(null);
+  }
+
+  public void testHeavilyBrokenFile4() {
+    doTest(null);
+  }
+
+  public void testHeavilyBrokenFile5() {
+    doTest(null);
+  }
+  
+  public void testHeavilyBrokenFile6() {
+    doTest(null);
+  }
+
+  public void testAnnotationArgument() {
+    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class, 
+                 "Introduce Variable refactoring is not supported in the current context", () -> doTest(null));
+  }
+
+  public void testNullTypeAddCast() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+
+  public void testLambdaParameterAddCast() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+  
+  public void testWhileTrue() {
+    doTest(null);
+  }
+
+  public void testWhilePolyadicWholeCondition() {
+    doTest(null);
+  }
+
+  public void testWhilePolyadicWholeConditionParens() {
+    doTest(null);
+  }
 
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
@@ -250,6 +306,12 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   private void doTestReplaceChoice(String choiceText, Consumer<AbstractInplaceIntroducer<?, ?>> pass) {
+    doTestReplaceChoice(choiceText, pass, null);
+  }
+
+  private void doTestReplaceChoice(String choiceText,
+                                   Consumer<AbstractInplaceIntroducer<?, ?>> pass,
+                                   @Nullable List<String> expectedOptions) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -258,7 +320,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       MyIntroduceHandler handler = createIntroduceHandler();
-      UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote(choiceText)));
+      UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(choiceText)));
       final AbstractInplaceIntroducer<?, ?> introducer = invokeRefactoring(handler);
       if (pass != null) {
         pass.accept(introducer);

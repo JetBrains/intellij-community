@@ -1612,7 +1612,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateReturnsSection(StringBuilder buffer, PsiMethod method, PsiDocComment comment, boolean rendered) {
-    PsiDocTag tag = comment == null ? null : comment.findTagByName("return");
+    PsiDocTag tag = comment == null ? null : new ReturnTagLocator().find(method, comment);
     Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = tag == null ? null : new Pair<>(tag, new InheritDocProvider<>() {
       @Override
       public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
@@ -2206,7 +2206,20 @@ public class JavaDocInfoGenerator {
   private static class ReturnTagLocator implements DocTagLocator<PsiDocTag> {
     @Override
     public PsiDocTag find(PsiDocCommentOwner owner, PsiDocComment comment) {
-      return comment != null ? comment.findTagByName("return") : null;
+      if (comment != null) {
+        PsiDocTag returnTag = comment.findTagByName("return");
+        if (returnTag != null) {
+          return returnTag;
+        }
+        if (PsiUtil.isLanguageLevel16OrHigher(comment)) {
+          for (PsiElement child : comment.getChildren()) {
+            if (child instanceof PsiDocTag && "return".equals(((PsiDocTag)child).getName())) {
+              return (PsiDocTag)child;
+            }
+          }
+        }
+      }
+      return null;
     }
   }
 

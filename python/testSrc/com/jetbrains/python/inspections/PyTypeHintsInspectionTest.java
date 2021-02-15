@@ -689,22 +689,22 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> doTestByText(
-        "a<warning descr=\"Type(s) specified both in type comment and annotation\">: int</warning> = None  <warning descr=\"Type(s) specified both in type comment and annotation\"># type: int</warning>\n" +
+        "a<warning descr=\"Types specified both in a type comment and annotation\">: int</warning> = None  <warning descr=\"Types specified both in a type comment and annotation\"># type: int</warning>\n" +
         "\n" +
-        "def foo(a<warning descr=\"Type(s) specified both in type comment and annotation\">: int</warning>  <warning descr=\"Type(s) specified both in type comment and annotation\"># type: int</warning>\n" +
+        "def foo(a<warning descr=\"Types specified both in a type comment and annotation\">: int</warning>  <warning descr=\"Types specified both in a type comment and annotation\"># type: int</warning>\n" +
         "        ,):\n" +
         "    pass\n" +
         "\n" +
-        "def <warning descr=\"Type(s) specified both in type comment and annotation\">bar</warning>(a: int) -> int:\n" +
-        "    <warning descr=\"Type(s) specified both in type comment and annotation\"># type: (int) -> int</warning>\n" +
+        "def <warning descr=\"Types specified both in a type comment and annotation\">bar</warning>(a: int) -> int:\n" +
+        "    <warning descr=\"Types specified both in a type comment and annotation\"># type: (int) -> int</warning>\n" +
         "    pass\n" +
         "    \n" +
-        "def <warning descr=\"Type(s) specified both in type comment and annotation\">baz1</warning>(a: int):\n" +
-        "    <warning descr=\"Type(s) specified both in type comment and annotation\"># type: (int) -> int</warning>\n" +
+        "def <warning descr=\"Types specified both in a type comment and annotation\">baz1</warning>(a: int):\n" +
+        "    <warning descr=\"Types specified both in a type comment and annotation\"># type: (int) -> int</warning>\n" +
         "    pass\n" +
         "    \n" +
-        "def <warning descr=\"Type(s) specified both in type comment and annotation\">baz2</warning>(a) -> int:\n" +
-        "    <warning descr=\"Type(s) specified both in type comment and annotation\"># type: (int) -> int</warning>\n" +
+        "def <warning descr=\"Types specified both in a type comment and annotation\">baz2</warning>(a) -> int:\n" +
+        "    <warning descr=\"Types specified both in a type comment and annotation\"># type: (int) -> int</warning>\n" +
         "    pass"
       )
     );

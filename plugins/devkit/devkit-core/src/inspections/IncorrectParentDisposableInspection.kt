@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter.Companion.create
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -35,6 +34,7 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpres
 
   private fun checkCallExpression(node: UCallExpression, holder: ProblemsHolder) {
     val psiMethod = node.resolve() ?: return
+    if (psiMethod.name == "isDisposed") return
     psiMethod.parameters.forEachIndexed { index, parameter ->
       val parameterType = (parameter.type as? PsiClassType)?.resolve() ?: return@forEachIndexed
       if (parameterType.qualifiedName != Disposable::class.java.name) return@forEachIndexed

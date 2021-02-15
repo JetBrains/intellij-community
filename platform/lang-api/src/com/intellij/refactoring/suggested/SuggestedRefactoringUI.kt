@@ -39,7 +39,7 @@ abstract class SuggestedRefactoringUI {
   }
 
   data class NewParameterData @JvmOverloads constructor(
-    val presentableName: String,
+    @Nls val presentableName: String,
     val valueFragment: PsiCodeFragment,
     val offerToUseAnyVariable: Boolean,
     @Nls(capitalization = Nls.Capitalization.Sentence) val placeholderText: String? = null,

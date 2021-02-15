@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.daemon.impl.GutterIntentionAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -12,27 +14,36 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.ui.EmptyIcon;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 
-public class CachedIntentions {
+public final class CachedIntentions {
   private static final Logger LOG = Logger.getInstance(CachedIntentions.class);
 
   private final Set<IntentionActionWithTextCaching> myIntentions = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
@@ -47,6 +58,8 @@ public class CachedIntentions {
   private final PsiFile myFile;
   @NotNull
   private final Project myProject;
+
+  private final List<AnAction> myGuttersRaw = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public CachedIntentions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor) {
     myProject = project;
@@ -112,39 +125,61 @@ public class CachedIntentions {
     return res;
   }
 
-  private static final TObjectHashingStrategy<IntentionActionWithTextCaching> ACTION_TEXT_AND_CLASS_EQUALS = new TObjectHashingStrategy<IntentionActionWithTextCaching>() {
-    @Override
-    public int computeHashCode(final IntentionActionWithTextCaching object) {
-      return object.getText().hashCode();
-    }
-
-    @Override
-    public boolean equals(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
-      return getActionClass(o1) == getActionClass(o2) && o1.getText().equals(o2.getText());
-    }
-
-    private Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
-      return IntentionActionDelegate.unwrap(o1.getAction()).getClass();
-    }
-  };
+  private static final IntentionActionWithTextCachingHashingStrategy ACTION_TEXT_AND_CLASS_EQUALS =
+    new IntentionActionWithTextCachingHashingStrategy();
 
   public boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo newInfo, boolean callUpdate) {
     myOffset = newInfo.getOffset();
     boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myErrorFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myInspectionFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.intentionsToShow, myIntentions, callUpdate);
-    changed |= wrapActionsTo(newInfo.guttersToShow, myGutters, callUpdate);
+    changed |= updateGuttersRaw(newInfo);
     changed |= wrapActionsTo(newInfo.notificationActionsToShow, myNotifications, callUpdate);
     return changed;
+  }
+
+  private boolean updateGuttersRaw(@NotNull ShowIntentionsPass.IntentionsInfo newInfo) {
+    if (newInfo.guttersToShow.isEmpty()) return false;
+    myGuttersRaw.addAll(newInfo.guttersToShow);
+    return true;
   }
 
   public boolean addActions(@NotNull ShowIntentionsPass.IntentionsInfo info) {
     boolean changed = addActionsTo(info.errorFixesToShow, myErrorFixes);
     changed |= addActionsTo(info.inspectionFixesToShow, myInspectionFixes);
     changed |= addActionsTo(info.intentionsToShow, myIntentions);
-    changed |= addActionsTo(info.guttersToShow, myGutters);
+    changed |= updateGuttersRaw(info);
     changed |= addActionsTo(info.notificationActionsToShow, myNotifications);
     return changed;
+  }
+
+  public void wrapAndUpdateGutters() {
+    LOG.assertTrue(myEditor != null);
+    if (myGuttersRaw.isEmpty()) return;
+    myGutters.clear();
+
+    Predicate<IntentionAction> filter = action -> ContainerUtil.and(
+      IntentionActionFilter.EXTENSION_POINT_NAME.getExtensionList(), f -> f.accept(action, myFile));
+
+    DataContext dataContext = ((EditorEx)myEditor).getDataContext();
+    PresentationFactory presentationFactory = new PresentationFactory();
+    List<AnAction> actions = Utils.expandActionGroup(
+      false, new DefaultActionGroup(myGuttersRaw), presentationFactory,
+      dataContext, ActionPlaces.INTENTION_MENU);
+    List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
+    int order = 0;
+    for (AnAction action : actions) {
+      Presentation presentation = presentationFactory.getPresentation(action);
+      Icon icon = ObjectUtils.notNull(presentation.getIcon(), EmptyIcon.ICON_16);
+      String text = presentation.getText();
+      if (StringUtil.isEmpty(text)) continue;
+      IntentionAction intentionAction = new GutterIntentionAction(action, order++, icon, text);
+      if (!filter.test(intentionAction)) continue;
+      HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(
+        intentionAction, Collections.emptyList(), text, icon, null, null, null);
+      descriptors.add(descriptor);
+    }
+    wrapActionsTo(descriptors, myGutters, false);
   }
 
   private boolean addActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
@@ -182,7 +217,7 @@ public class CachedIntentions {
     }
     else {
       hostElement = myFile.getViewProvider().findElementAt(fileOffset, myFile.getLanguage());
-      element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
+      element = InjectedLanguageUtilBase.findElementAtNoCommit(myFile, fileOffset);
     }
     PsiFile injectedFile;
     Editor injectedEditor;
@@ -208,7 +243,7 @@ public class CachedIntentions {
       }
     }
 
-    Set<IntentionActionWithTextCaching> wrappedNew = new THashSet<>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
+    Set<IntentionActionWithTextCaching> wrappedNew = new ObjectOpenCustomHashSet<>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
     for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
       final IntentionAction action = descriptor.getAction();
       if (element != null &&
@@ -405,5 +440,21 @@ public class CachedIntentions {
            ", myGutters=" + myGutters +
            ", myNotifications=" + myNotifications +
            '}';
+  }
+
+  private static class IntentionActionWithTextCachingHashingStrategy implements HashingStrategy<IntentionActionWithTextCaching>, Hash.Strategy<IntentionActionWithTextCaching> {
+    @Override
+    public int hashCode(final IntentionActionWithTextCaching object) {
+      return object == null ? 0 : object.getText().hashCode();
+    }
+
+    @Override
+    public boolean equals(IntentionActionWithTextCaching o1, IntentionActionWithTextCaching o2) {
+      return o1 == o2 || (o1 != null && o2 != null && getActionClass(o1) == getActionClass(o2) && o1.getText().equals(o2.getText()));
+    }
+
+    private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
+      return IntentionActionDelegate.unwrap(o1.getAction()).getClass();
+    }
   }
 }

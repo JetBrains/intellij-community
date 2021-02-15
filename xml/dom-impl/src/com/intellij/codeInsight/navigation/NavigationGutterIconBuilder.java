@@ -225,7 +225,7 @@ public class NavigationGutterIconBuilder<T> {
   @NotNull
   private static <T> NotNullFactory<T> evaluateAndForget(@NotNull NotNullLazyValue<T> lazyValue) {
     final Ref<NotNullLazyValue<T>> ref = Ref.create(lazyValue);
-    return new NotNullFactory<T>() {
+    return new NotNullFactory<>() {
       volatile T value;
 
       @NotNull
@@ -290,13 +290,7 @@ public class NavigationGutterIconBuilder<T> {
       return NotNullLazyValue.createConstantValue(calcPsiTargets(project, targets.create(), converter));
     }
 
-    return new NotNullLazyValue<List<SmartPsiElementPointer<?>>>() {
-      @Override
-      @NotNull
-      public List<SmartPsiElementPointer<?>> compute() {
-        return calcPsiTargets(project, targets.create(), converter);
-      }
-    };
+    return NotNullLazyValue.lazy(() -> calcPsiTargets(project, targets.create(), converter));
   }
 
   @NotNull

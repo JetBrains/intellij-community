@@ -11,6 +11,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Ensure that type equality doesn't fail on captured wildcards when only contexts are different.
+ * And the new context has origin which is equals to the initial context.
+ * <p/>
+ * Sample code usage:
+ * 
+ * <pre>
+ * try {
+ *  RecaptureTypeMapper.encode(expr);
+ *  copy or replace expr
+ *  psiSubstitutor = ...
+ *  new RecaptureTypeMapper().recapture(psiSubstitutor);
+ * }
+ * finally {
+ *   RecaptureTypeMapper.clear(expr);
+ * }
+ * </pre>
+ */
 public final class RecaptureTypeMapper extends PsiTypeMapper {
   public static final Key<PsiElement> SELF_REFERENCE = Key.create("SELF_REFERENCE");
   private final Set<PsiClassType> myVisited = new ReferenceOpenHashSet<>();

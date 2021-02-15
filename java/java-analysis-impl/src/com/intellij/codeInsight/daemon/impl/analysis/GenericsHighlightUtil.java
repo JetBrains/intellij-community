@@ -430,87 +430,102 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
+  /**
+   * @param skipMethodInSelf pass false if you check if method in {@code aClass} can be deleted
+   *
+   * @return error message if class inherits 2 unrelated default methods or abstract and default methods which do not belong to one hierarchy
+   */
+  @Nullable
+  public static @NlsContexts.DetailedDescription String getUnrelatedDefaultsMessage(@NotNull PsiClass aClass,
+                                                                                    @NotNull Collection<PsiMethod> overrideEquivalentSuperMethods,
+                                                                                    boolean skipMethodInSelf) {
+    if (overrideEquivalentSuperMethods.size() <= 1) return null;
+    final boolean isInterface = aClass.isInterface();
+    List<PsiMethod> defaults = null;
+    List<PsiMethod> abstracts = null;
+    boolean hasConcrete = false;
+    for (PsiMethod method : overrideEquivalentSuperMethods) {
+      final boolean isDefault = method.hasModifierProperty(PsiModifier.DEFAULT);
+      final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+      if (isDefault) {
+        if (defaults == null) defaults = new ArrayList<>(2);
+        defaults.add(method);
+      }
+      if (isAbstract) {
+        if (abstracts == null) abstracts = new ArrayList<>(2);
+        abstracts.add(method);
+      }
+      hasConcrete |= !isDefault && !isAbstract && !method.hasModifierProperty(PsiModifier.STATIC);
+    }
+
+    if (!hasConcrete && defaults != null) {
+      final PsiMethod defaultMethod = defaults.get(0);
+      if (!skipMethodInSelf && MethodSignatureUtil.findMethodBySuperMethod(aClass, defaultMethod, false) != null) return null;
+      final PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
+      if (defaultMethodContainingClass == null) return null;
+      final PsiMethod unrelatedMethod;
+      if (abstracts != null) {
+        unrelatedMethod = abstracts.get(0);
+      }
+      else if (defaults.size() > 1) {
+        unrelatedMethod = defaults.get(1);
+      }
+      else {
+        return null;
+      }
+      final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
+      if (unrelatedMethodContainingClass == null) return null;
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(aClass instanceof PsiTypeParameter)
+          && abstracts != null && unrelatedMethodContainingClass.isInterface()) {
+        if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) &&
+            MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(unrelatedMethodContainingClass, defaultMethodContainingClass, PsiSubstitutor.EMPTY)),
+                                               defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
+          return null;
+        }
+        final String key = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() ?
+                           "class.must.implement.method" : "class.must.be.abstract";
+        return JavaErrorBundle.message(key,
+                                       HighlightUtil.formatClass(aClass, false),
+                                       JavaHighlightUtil.formatMethod(abstracts.get(0)),
+                                       HighlightUtil.formatClass(unrelatedMethodContainingClass, false));
+      }
+      if (isInterface || abstracts == null || unrelatedMethodContainingClass.isInterface()) {
+        final List<PsiClass> defaultContainingClasses = ContainerUtil.mapNotNull(defaults, PsiMethod::getContainingClass);
+        final String unrelatedDefaults = hasUnrelatedDefaults(defaultContainingClasses);
+        if (unrelatedDefaults == null &&
+            (abstracts == null || !hasNotOverriddenAbstract(defaultContainingClasses, unrelatedMethodContainingClass))) {
+          return null;
+        }
+
+        if (unrelatedDefaults == null) {
+          return JavaErrorBundle.message("text.class.inherits.abstract.and.default", HighlightUtil.formatClass(aClass),
+                                            JavaHighlightUtil.formatMethod(defaultMethod),
+                                            HighlightUtil.formatClass(defaultMethodContainingClass),
+                                            HighlightUtil.formatClass(unrelatedMethodContainingClass));
+        }
+        else {
+          return JavaErrorBundle.message("text.class.inherits.unrelated.defaults",
+                                         HighlightUtil.formatClass(aClass),
+                                         JavaHighlightUtil.formatMethod(defaultMethod), 
+                                         unrelatedDefaults);
+        }
+      }
+    }
+    return null;
+  }
+  
   static HighlightInfo checkUnrelatedDefaultMethods(@NotNull PsiClass aClass, @NotNull PsiIdentifier classIdentifier) {
     final Map<? extends MethodSignature, Set<PsiMethod>> overrideEquivalent = PsiSuperMethodUtil.collectOverrideEquivalents(aClass);
 
-    final boolean isInterface = aClass.isInterface();
     for (Set<PsiMethod> overrideEquivalentMethods : overrideEquivalent.values()) {
-      if (overrideEquivalentMethods.size() <= 1) continue;
-      List<PsiMethod> defaults = null;
-      List<PsiMethod> abstracts = null;
-      boolean hasConcrete = false;
-      for (PsiMethod method : overrideEquivalentMethods) {
-        final boolean isDefault = method.hasModifierProperty(PsiModifier.DEFAULT);
-        final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-        if (isDefault) {
-          if (defaults == null) defaults = new ArrayList<>(2);
-          defaults.add(method);
-        }
-        if (isAbstract) {
-          if (abstracts == null) abstracts = new ArrayList<>(2);
-          abstracts.add(method);
-        }
-        hasConcrete |= !isDefault && !isAbstract && !method.hasModifierProperty(PsiModifier.STATIC);
-      }
-
-      if (!hasConcrete && defaults != null) {
-        final PsiMethod defaultMethod = defaults.get(0);
-        if (MethodSignatureUtil.findMethodBySuperMethod(aClass, defaultMethod, false) != null) continue;
-        final PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
-        if (defaultMethodContainingClass == null) continue;
-        final PsiMethod unrelatedMethod;
-        if (abstracts != null) {
-          unrelatedMethod = abstracts.get(0);
-        }
-        else if (defaults.size() > 1) {
-          unrelatedMethod = defaults.get(1);
-        }
-        else {
-          continue;
-        }
-        final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
-        if (unrelatedMethodContainingClass == null) continue;
-        if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(aClass instanceof PsiTypeParameter)
-            && abstracts != null && unrelatedMethodContainingClass.isInterface()) {
-          if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) &&
-              MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(unrelatedMethodContainingClass, defaultMethodContainingClass, PsiSubstitutor.EMPTY)),
-                                                 defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
-            continue;
-          }
-          final String key = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() ?
-                             "class.must.implement.method" : "class.must.be.abstract";
-          final String message = JavaErrorBundle
-            .message(key, HighlightUtil.formatClass(aClass, false), JavaHighlightUtil.formatMethod(abstracts.get(0)),
-                     HighlightUtil.formatClass(unrelatedMethodContainingClass, false));
-          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(message).create();
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
-          return info;
-        }
-        if (isInterface || abstracts == null || unrelatedMethodContainingClass.isInterface()) {
-          final List<PsiClass> defaultContainingClasses = ContainerUtil.mapNotNull(defaults, PsiMethod::getContainingClass);
-          final String unrelatedDefaults = hasUnrelatedDefaults(defaultContainingClasses);
-          if (unrelatedDefaults == null &&
-              (abstracts == null || !hasNotOverriddenAbstract(defaultContainingClasses, unrelatedMethodContainingClass))) {
-            continue;
-          }
-
-          final String message;
-          if (unrelatedDefaults == null) {
-            message = JavaErrorBundle.message("text.class.inherits.abstract.and.default", HighlightUtil.formatClass(aClass),
-                                              JavaHighlightUtil.formatMethod(defaultMethod),
-                                              HighlightUtil.formatClass(defaultMethodContainingClass),
-                                              HighlightUtil.formatClass(unrelatedMethodContainingClass));
-          }
-          else {
-            message = JavaErrorBundle.message("text.class.inherits.unrelated.defaults", HighlightUtil.formatClass(aClass),
-                                              JavaHighlightUtil.formatMethod(defaultMethod), unrelatedDefaults);
-          }
-          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier)
-            .descriptionAndTooltip(message)
-            .create();
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
-          return info;
-        }
+      String errorMessage = getUnrelatedDefaultsMessage(aClass, overrideEquivalentMethods, false);
+      if (errorMessage != null) {
+        final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(classIdentifier)
+          .descriptionAndTooltip(errorMessage)
+          .create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+        return info;
       }
     }
     return null;
@@ -812,36 +827,54 @@ public final class GenericsHighlightUtil {
 
   //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.9.2
   static HighlightInfo checkAccessStaticFieldFromEnumConstructor(@NotNull PsiReferenceExpression expr, @NotNull JavaResolveResult result) {
-    final PsiElement resolved = result.getElement();
+    PsiField field = ObjectUtils.tryCast(result.getElement(), PsiField.class);
+    if (field == null) return null;
 
-    if (!(resolved instanceof PsiField)) return null;
-    if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) return null;
+    PsiClass enumClass = getEnumClassForExpressionInInitializer(expr);
+    if (enumClass == null || !isRestrictedStaticEnumField(field, enumClass)) return null;
+
+    String description = JavaErrorBundle.message(
+      "illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
+      HighlightMessageUtil.getSymbolName(field, result.getSubstitutor())
+    );
+
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description).create();
+  }
+
+  /**
+   * @param field field to check
+   * @param enumClass an enum class returned from {@link #getEnumClassForExpressionInInitializer(PsiExpression)}
+   * @return true if given field cannot be referenced in constructors or instance initializers of given enum class.
+   */
+  public static boolean isRestrictedStaticEnumField(@NotNull PsiField field, @NotNull PsiClass enumClass) {
+    if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (field.getContainingClass() != enumClass) return false;
+
+    if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_6)) {
+      final PsiType type = field.getType();
+      if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == enumClass) return false;
+    }
+
+    return !PsiUtil.isCompileTimeConstant(field);
+  }
+
+  /**
+   * @param expr expression to analyze
+   * @return a enum class, whose non-constant static fields cannot be used at given place, 
+   * null if there's no such restriction 
+   */
+  public static @Nullable PsiClass getEnumClassForExpressionInInitializer(@NotNull PsiExpression expr) {
     if (PsiImplUtil.getSwitchLabel(expr) != null) return null;
     final PsiMember constructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
     if (constructorOrInitializer == null) return null;
     if (constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
-    final PsiClass aClass = constructorOrInitializer instanceof PsiEnumConstantInitializer ?
-                            (PsiClass)constructorOrInitializer : constructorOrInitializer.getContainingClass();
-    if (aClass == null || !(aClass.isEnum() || aClass instanceof PsiEnumConstantInitializer)) return null;
-    final PsiField field = (PsiField)resolved;
-    if (aClass instanceof PsiEnumConstantInitializer) {
-      if (field.getContainingClass() != aClass.getSuperClass()) return null;
-    } else if (field.getContainingClass() != aClass) return null;
-
-
-    if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_6)) {
-      final PsiType type = field.getType();
-      if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) return null;
+    PsiClass enumClass = constructorOrInitializer instanceof PsiEnumConstantInitializer ?
+                      (PsiClass)constructorOrInitializer : constructorOrInitializer.getContainingClass();
+    if (enumClass instanceof PsiEnumConstantInitializer) {
+      enumClass = enumClass.getSuperClass();
     }
-
-    if (PsiUtil.isCompileTimeConstant(field)) return null;
-
-    String description = JavaErrorBundle.message(
-      "illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
-      HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor())
-    );
-
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description).create();
+    if (enumClass == null || !enumClass.isEnum()) return null;
+    return enumClass;
   }
 
   static HighlightInfo checkEnumInstantiation(@NotNull PsiElement expression, @Nullable PsiClass aClass) {
@@ -1021,7 +1054,7 @@ public final class GenericsHighlightUtil {
         }
       }
       if (superMethod == null) {
-        if (languageLevel != LanguageLevel.JDK_14_PREVIEW && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+        if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
           return null;
         }
         String description = JavaErrorBundle.message("method.does.not.override.super");
@@ -1333,61 +1366,6 @@ public final class GenericsHighlightUtil {
         !((PsiTypeParameterListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
       final String message = JavaErrorBundle.message("text.improper.formed.type");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(message).create();
-    }
-    return null;
-  }
-
-  static HighlightInfo checkCannotPassInner(@NotNull PsiJavaCodeReferenceElement ref) {
-    if (ref.getParent() instanceof PsiTypeElement) {
-      final PsiClass psiClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-      if (psiClass == null) return null;
-      if (PsiTreeUtil.isAncestor(psiClass.getExtendsList(), ref, false) ||
-          PsiTreeUtil.isAncestor(psiClass.getImplementsList(), ref, false)) {
-        final PsiElement qualifier = ref.getQualifier();
-        if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() == psiClass) {
-          final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getParentOfType(ref, PsiJavaCodeReferenceElement.class);
-          if (referenceElement == null) return null;
-          final PsiElement typeClass = referenceElement.resolve();
-          if (!(typeClass instanceof PsiClass)) return null;
-          final PsiElement resolve = ref.resolve();
-          final PsiClass containingClass = resolve != null ? ((PsiClass)resolve).getContainingClass() : null;
-          if (containingClass == null) return null;
-          PsiClass hiddenClass;
-          if (psiClass.isInheritor(containingClass, true)) {
-            hiddenClass = (PsiClass)resolve;
-          }
-          else {
-            hiddenClass = unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance((PsiClass)typeClass, ((PsiClass)resolve).getExtendsList());
-            if (hiddenClass == null) {
-              hiddenClass = unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance((PsiClass)typeClass, ((PsiClass)resolve).getImplementsList());
-            }
-          }
-          if (hiddenClass != null) {
-            final String message = JavaErrorBundle.message("text.class.is.not.accessible", hiddenClass.getName());
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).description(message).range(ref).create();
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static PsiClass unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(@NotNull PsiClass containingClass,
-                                                                                               @Nullable PsiReferenceList referenceList) {
-    if (referenceList != null) {
-      for (PsiJavaCodeReferenceElement referenceElement : referenceList.getReferenceElements()) {
-        if (!referenceElement.isQualified()) {
-          final PsiElement superClass = referenceElement.resolve();
-          if (superClass instanceof PsiClass) {
-            final PsiClass superContainingClass = ((PsiClass)superClass).getContainingClass();
-            if (superContainingClass != null &&
-                InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true) &&
-                !PsiTreeUtil.isAncestor(superContainingClass, containingClass, true)) {
-              return (PsiClass)superClass;
-            }
-          }
-        }
-      }
     }
     return null;
   }

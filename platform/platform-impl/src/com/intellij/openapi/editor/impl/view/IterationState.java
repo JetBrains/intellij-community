@@ -218,13 +218,14 @@ public class IterationState {
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
       final List<RangeHighlighterEx> list = new ArrayList<>();
       markupModel.processRangeHighlightersOverlappingWith(myReverseIteration ? end : start, myReverseIteration ? start : end,
-                                                          new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
+                                                          new CommonProcessors.CollectProcessor<>(list) {
                                                             @Override
                                                             protected boolean accept(RangeHighlighterEx ex) {
                                                               return (!onlyFullLine ||
                                                                       ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) &&
                                                                      (!onlyFontOrForegroundAffecting ||
-                                                                      EditorUtil.attributesImpactFontStyleOrColor(ex.getTextAttributes(myColorsScheme)));
+                                                                      EditorUtil.attributesImpactFontStyleOrColor(
+                                                                        ex.getTextAttributes(myColorsScheme)));
                                                             }
                                                           });
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(RangeHighlighterEx.EMPTY_ARRAY);

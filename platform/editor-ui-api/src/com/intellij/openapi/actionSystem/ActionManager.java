@@ -178,13 +178,4 @@ public abstract class ActionManager {
 
   @Nullable
   public abstract KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
-
-  /**
-   * @deprecated Don't use
-   */
-  @Deprecated
-  @NotNull
-  public String getComponentName() {
-    return "ActionManager";
-  }
 }

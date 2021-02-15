@@ -22,7 +22,8 @@ import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.GradleReferenceInjection;
 import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile;
 import com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiElement;
 import kotlin.Pair;
@@ -78,6 +79,8 @@ public interface GradleDslElement extends AnchorProvider {
   GradleNameElement getNameElement();
 
   void rename(@NotNull String newName);
+
+  void rename(@NotNull List<String> hierarchicalName);
 
   @Nullable
   GradleDslElement getParent();
@@ -221,12 +224,29 @@ public interface GradleDslElement extends AnchorProvider {
    * The keys of the map represent user Dsl code as the (name, null) Pair for properties, and (name, arity) for method calls, with an
    * encoding to handle varargs documented in {@link ArityHelper}.
    *
-   * The values of the map represent the model property, and the effect of this code on the property, encoded as a value in subclasses of
-   * {@link SemanticsDescription}.
+   * The values of the map represent the model property, and the effect of this code on the property, encoded as an instance of
+   * {@link ModelEffectDescription}.
    *
    * @param converter
    * @return a map from expressed code to model semantics
    */
   @NotNull
-  ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter);
+  ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter);
+
+
+  /**
+   * The effect of this element on the Dsl model.
+   *
+   * @return the effect on the model, or null if the element has no or unknown effect.
+   */
+  @Nullable
+  ModelEffectDescription getModelEffect();
+
+  void setModelEffect(@Nullable ModelEffectDescription effect);
+
+  /**
+   *  A convenience function to extract the property if the effect is not null.
+   */
+  @Nullable
+  ModelPropertyDescription getModelProperty();
 }

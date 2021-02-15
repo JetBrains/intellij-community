@@ -18,7 +18,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
   private static final Logger LOG = Logger.getInstance(ProjectFileBasedIndexStartupActivity.class);
 
   ProjectFileBasedIndexStartupActivity() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         removeProjectIndexableSet(project);
@@ -32,11 +32,8 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
       project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void exitDumbMode() {
-          LOG.info("Has changed files: " +
-                   (FileBasedIndexProjectHandler
-                      .createChangedFilesIndexingTask(project) != null) +
-                   "; project=" +
-                   project);
+          LOG.info("Has changed files: " + FileBasedIndexProjectHandler.mightHaveManyChangedFilesInProject(project) +
+                   "; project=" + project);
         }
       });
     }

@@ -17,6 +17,7 @@
 
 package com.intellij.ui.colorpicker
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.GraphicsUtil
@@ -29,11 +30,12 @@ import java.awt.event.MouseEvent
 import java.awt.image.ColorModel
 import java.awt.image.MemoryImageSource
 import javax.swing.JComponent
+import kotlin.math.ceil
 
 private val KNOB_COLOR = Color.WHITE
 private const val KNOB_RADIUS = 4
 
-class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener {
+class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener, ColorPipette.Callback {
   var brightness = 1f
     private set
   var hue = 1f
@@ -42,6 +44,8 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     private set
   var alpha: Int = 255
     private set
+  var pipetteMode = false
+  val robot = Robot()
 
   init {
     isOpaque = false
@@ -60,6 +64,9 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     addMouseMotionListener(mouseAdapter)
 
     myModel.addListener(this)
+    if (Registry.`is`("ide.color.picker.new.pipette")) {
+      myModel.addPipetteListener(this)
+    }
   }
 
   private fun handleMouseEvent(e: MouseEvent) {
@@ -82,7 +89,32 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
 
   override fun getMinimumSize(): Dimension = JBUI.size(150, 140)
 
+  fun paintPipetteMode(graphics: Graphics) {
+    graphics.color = parent.background
+    graphics.fillRect(0,0, width, height)
+    val g = graphics.create() as Graphics2D
+    val p = MouseInfo.getPointerInfo().location
+    val size = width / 21.0
+    val img = robot.createMultiResolutionScreenCapture(Rectangle(p.x - 10, p.y - 5, 21, 11))
+    val image = img.resolutionVariants.last()
+    val iW = image.getWidth(null)
+    val iH = image.getHeight(null)
+    g.scale(width / 21.0, width / 21.0)
+    g.drawImage(image, -((iW - 21) / 2.0).toInt(), -ceil((iH - 11) / 2.0).toInt(), null)
+    g.dispose()
+    val xx = ceil(size * 10).toInt()
+    val yy = ceil(size * 5).toInt()
+    graphics.color = Color.white
+    graphics.drawRect(xx, yy, (size - 1).toInt(), (size - 1).toInt())
+    graphics.color = Color.black
+    graphics.drawRect(xx+1, yy+1, (size - 3).toInt(), (size - 3).toInt())
+  }
+
   override fun paintComponent(g: Graphics) {
+    if (Registry.`is`("ide.color.picker.new.pipette") && pipetteMode) {
+      paintPipetteMode(g)
+      return
+    }
     val component = Rectangle(0, 0, size.width, size.height)
     val image = createImage(SaturationBrightnessImageProducer(size.width, size.height, hue))
 
@@ -119,6 +151,19 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     brightness = b
     alpha = a
     repaint()
+  }
+
+  override fun picked(pickedColor: Color) {
+    pipetteMode = false
+  }
+
+  override fun update(updatedColor: Color) {
+    pipetteMode = true
+    repaint()
+  }
+
+  override fun cancel() {
+    pipetteMode = false
   }
 }
 

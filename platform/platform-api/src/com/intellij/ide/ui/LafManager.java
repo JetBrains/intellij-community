@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.Disposable;
@@ -15,13 +15,13 @@ import java.util.Objects;
 
 public abstract class LafManager {
   public static LafManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(LafManager.class);
+    return ApplicationManager.getApplication().getService(LafManager.class);
   }
 
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
   @ApiStatus.Internal
-  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel();
+  public abstract @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel();
 
   @ApiStatus.Internal
   public abstract UIManager.LookAndFeelInfo findLaf(LafReference reference);
@@ -52,6 +52,10 @@ public abstract class LafManager {
   public abstract void setAutodetect(boolean value);
 
   public abstract boolean getAutodetectSupported();
+
+  public abstract void setPreferredDarkLaf(@NotNull UIManager.LookAndFeelInfo myPreferredDarkLaf);
+
+  public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo myPreferredLightLaf);
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}

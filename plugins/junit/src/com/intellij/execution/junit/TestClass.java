@@ -2,7 +2,7 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
@@ -14,6 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -81,8 +82,9 @@ class TestClass extends TestObject {
     final String testClassName = getConfiguration().getPersistentData().getMainClassName();
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final PsiClass testClass = configurationModule.checkModuleAndClassName(testClassName, JUnitBundle.message("no.test.class.specified.error.text"));
-    if (!JUnitUtil.isTestClass(testClass)) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));
+    TestFramework framework = TestFrameworks.detectFramework(testClass);
+    if (framework == null || !framework.isTestClass(testClass)) {
+      throw new RuntimeConfigurationWarning(JUnitBundle.message("class.not.test.error.message", testClassName));
     }
   }
 }

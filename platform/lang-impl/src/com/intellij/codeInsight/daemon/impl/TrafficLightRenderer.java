@@ -526,32 +526,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         result.add(DaemonEditorPopup.createGotoGroup());
 
         result.add(Separator.create());
-        result.add(new ToggleAction(EditorBundle.message("iw.show.import.tooltip")) {
-          @Override
-          public boolean isSelected(@NotNull AnActionEvent e) {
-            PsiFile psiFile = getPsiFile();
-            return psiFile != null && myDaemonCodeAnalyzer.isImportHintsEnabled(psiFile);
-          }
-
-          @Override
-          public void setSelected(@NotNull AnActionEvent e, boolean state) {
-            PsiFile psiFile = getPsiFile();
-            if (psiFile != null) {
-              myDaemonCodeAnalyzer.setImportHintsEnabled(psiFile, state);
-            }
-          }
-
-          @Override
-          public void update(@NotNull AnActionEvent e) {
-            super.update(e);
-            e.getPresentation().setEnabled(myDaemonCodeAnalyzer.isAutohintsAvailable(getPsiFile()));
-          }
-
-          @Override
-          public boolean isDumbAware() {
-            return true;
-          }
-        });
+        result.add(new ShowImportTooltipAction());
 
         return result;
     }
@@ -564,6 +539,38 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     @Override
     public boolean enableToolbar() {
       return true;
+    }
+
+    // Actions shouldn't be anonymous classes for statistics reasons.
+    private class ShowImportTooltipAction extends ToggleAction {
+      private ShowImportTooltipAction() {
+        super(EditorBundle.message("iw.show.import.tooltip"));
+      }
+
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        PsiFile psiFile = getPsiFile();
+        return psiFile != null && myDaemonCodeAnalyzer.isImportHintsEnabled(psiFile);
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        PsiFile psiFile = getPsiFile();
+        if (psiFile != null) {
+          myDaemonCodeAnalyzer.setImportHintsEnabled(psiFile, state);
+        }
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabled(myDaemonCodeAnalyzer.isAutohintsAvailable(getPsiFile()));
+      }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     }
   }
 

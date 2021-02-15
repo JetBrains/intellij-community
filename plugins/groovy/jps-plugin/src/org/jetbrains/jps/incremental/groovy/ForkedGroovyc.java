@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
@@ -9,8 +9,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
@@ -32,7 +30,7 @@ import java.util.concurrent.Future;
 /**
  * @author peter
  */
-class ForkedGroovyc implements GroovycFlavor {
+final class ForkedGroovyc implements GroovycFlavor {
   private final boolean myOptimizeClassLoading;
   private final ModuleChunk myChunk;
 
@@ -52,9 +50,8 @@ class ForkedGroovyc implements GroovycFlavor {
     if (myOptimizeClassLoading) {
       classpath.addAll(GroovyBuilder.getGroovyRtRoots());
       classpath.add(ClasspathBootstrap.getResourcePath(Function.class));
-      classpath.add(ClasspathBootstrap.getResourcePath(UrlClassLoader.class));
-      classpath.add(ClasspathBootstrap.getResourceFile(THashMap.class).getPath());
-    } else {
+    }
+    else {
       classpath.addAll(compilationClassPath);
     }
 

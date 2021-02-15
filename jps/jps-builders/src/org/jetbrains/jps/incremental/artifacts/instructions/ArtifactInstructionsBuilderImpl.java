@@ -91,18 +91,6 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
 
   @NotNull
   @Override
-  public FileCopyingHandler createCopyingHandler(@NotNull File file, @NotNull JpsPackagingElement contextElement) {
-    for (ArtifactRootCopyingHandlerProvider provider : myCopyingHandlerProviders) {
-      FileCopyingHandler handler = provider.createCustomHandler(myBuildTarget.getArtifact(), file, contextElement, myModel, myBuildDataPaths);
-      if (handler != null) {
-        return handler;
-      }
-    }
-    return FileCopyingHandler.DEFAULT;
-  }
-
-  @NotNull
-  @Override
   public FileCopyingHandler createCopyingHandler(@NotNull File file,
                                                  @NotNull JpsPackagingElement contextElement,
                                                  @NotNull ArtifactCompilerInstructionCreator instructionCreator) {

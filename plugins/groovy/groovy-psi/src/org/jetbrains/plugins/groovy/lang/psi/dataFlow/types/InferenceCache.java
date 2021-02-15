@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +19,9 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDe
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -36,18 +36,17 @@ import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInference
 import static org.jetbrains.plugins.groovy.util.GraphKt.findNodesOutsideCycles;
 import static org.jetbrains.plugins.groovy.util.GraphKt.mapGraph;
 
-class InferenceCache {
-
-  private final GrControlFlowOwner myScope;
+final class InferenceCache {
+  private final @NotNull GrControlFlowOwner myScope;
   private final Instruction[] myFlow;
   private final Map<PsiElement, List<Instruction>> myFromByElements;
 
-  private final Lazy<TObjectIntHashMap<VariableDescriptor>> myVarIndexes;
+  private final Lazy<Object2IntMap<VariableDescriptor>> myVarIndexes;
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
   private final SharedVariableInferenceCache mySharedVariableInferenceCache;
-  private final Set<Instruction> myTooComplexInstructions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
     myScope = scope;
@@ -149,7 +148,12 @@ class InferenceCache {
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptor));
     Set<Instruction> dependentOnSharedVariables = new LinkedHashSet<>();
-    List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions = getClosureInstructionsWithForeigns();
+    List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions;
+    if (FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
+      closureInstructions = getClosureInstructionsWithForeigns();
+    } else {
+      closureInstructions = emptyList();
+    }
 
     while (!queue.isEmpty()) {
       Pair<Instruction, VariableDescriptor> pair = queue.removeFirst();
@@ -180,7 +184,7 @@ class InferenceCache {
   }
 
   private List<Pair<Instruction, Set<? extends VariableDescriptor>>> getClosureInstructionsWithForeigns() {
-    if (PsiUtil.isCompileStatic(myScope)) {
+    if (CompileStaticUtil.isCompileStatic(myScope)) {
       return emptyList();
     }
     List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions = new ArrayList<>();
@@ -191,8 +195,7 @@ class InferenceCache {
         if (owner == null) {
           continue;
         }
-        Set<ResolvedVariableDescriptor> foreignVariables =
-          ControlFlowUtils.getForeignVariableDescriptors(owner, ReadWriteVariableInstruction::isWrite);
+        Set<ResolvedVariableDescriptor> foreignVariables = ControlFlowUtils.getOverwrittenForeignVariableDescriptors(owner);
         closureInstructions.add(Pair.create(closureInstruction, foreignVariables));
       }
     }
@@ -205,7 +208,7 @@ class InferenceCache {
                                                                       @NotNull Instruction instruction,
                                                                       @NotNull VariableDescriptor descriptor) {
     DefinitionMap definitionMap = definitionMaps.get(instruction.num());
-    int varIndex = myVarIndexes.getValue().get(descriptor);
+    int varIndex = myVarIndexes.getValue().getInt(descriptor);
     int[] definitions = definitionMap.getDefinitions(varIndex);
 
     LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = new LinkedHashSet<>();

@@ -914,6 +914,11 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return collection;
   }
 
+  /**
+   * Base class for all stateful filters and functions.
+   * A separate cloned instance (shallow copy) is used for each iterator.
+   * All mutable non-primitive fields <b>MUST BE</b> lazily initialized in {@link Condition#value(Object)} or {@link Function#fun(Object)} method.
+   * */
   public abstract static class Stateful<Self extends Stateful<?>> implements Cloneable {
     @NotNull
     static <T> T copy(@NotNull T o) {
@@ -935,12 +940,16 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Stateful {@link Conditions}: a separate cloned instance is used for each iterator.
+   * Stateful {@link Conditions}.
+   * A separate cloned instance (shallow copy) is used for each iterator.
+   * All mutable non-primitive fields <b>MUST BE</b> lazily initialized in {@link #value(Object)} method.
    */
   public abstract static class SCond<T> extends Stateful<SCond<T>> implements Condition<T> { }
 
   /**
-   * Stateful {@link Function}: a separate cloned instance is used for each iterator.
+   * Stateful {@link Function}. 
+   * A separate cloned instance (shallow copy) is used for each iterator.
+   * All mutable non-primitive fields <b>MUST BE</b> lazily initialized in {@link #fun(Object)} method.
    */
   public abstract static class SFun<S, T> extends Stateful<SFun<S, T>> implements Function<S, T> { }
 

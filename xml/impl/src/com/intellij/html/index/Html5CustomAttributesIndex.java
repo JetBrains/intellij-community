@@ -15,6 +15,8 @@
  */
 package com.intellij.html.index;
 
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -43,14 +45,16 @@ import java.util.Map;
 public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> INDEX_ID = ID.create("html5.custom.attributes.index");
 
-  private final DataIndexer<String, Void, FileContent> myIndexer = new DataIndexer<String, Void, FileContent>() {
+  private final DataIndexer<String, Void, FileContent> myIndexer = new DataIndexer<>() {
     @Override
     @NotNull
     public Map<String, Void> map(@NotNull FileContent inputData) {
       CharSequence input = inputData.getContentAsText();
       Language language = ((LanguageFileType)inputData.getFileType()).getLanguage();
       if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
-        final Lexer lexer = (language == HTMLLanguage.INSTANCE ? new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS")) : new XHtmlHighlightingLexer());
+        final Lexer lexer = (language == HTMLLanguage.INSTANCE
+                             ? new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS"))
+                             : new XHtmlHighlightingLexer());
         lexer.start(input);
         Map<String, Void> result = new HashMap<>();
         IElementType tokenType = lexer.getTokenType();
@@ -95,7 +99,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.HTML, StdFileTypes.XHTML) {
+    return new DefaultFileTypeSpecificInputFilter(HtmlFileType.INSTANCE, XHtmlFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull final VirtualFile file) {
         return file.isInLocalFileSystem();

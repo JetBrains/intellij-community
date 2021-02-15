@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -14,16 +15,15 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.io.File;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -48,8 +48,9 @@ class FilePartNode {
     this.nameId = nameId;
     myFileOrUrl = fileOrUrl;
     if (fileOrUrl instanceof VirtualFile) {
-      assert myFile().getFileSystem() == myFS : "myFs=" + myFS + "; myFile().getFileSystem()=" + myFile().getFileSystem() + "; " + fileOrUrl;
-      if (myFile().getParent() == null && fs instanceof ArchiveFileSystem) {
+      VirtualFile file = (VirtualFile)fileOrUrl;
+      assert file.getFileSystem() == myFS : "myFs=" + myFS + "; myFile().getFileSystem()=" + file.getFileSystem() + "; " + fileOrUrl;
+      if (file.getParent() == null && fs instanceof ArchiveFileSystem) {
         assert nameId == JAR_SEPARATOR_NAME_ID : nameId;
       }
     }
@@ -182,7 +183,7 @@ class FilePartNode {
     return ObjectUtils.binarySearch(0, children.length, i -> {
       FilePartNode child = children[i];
       CharSequence childName = child.getName();
-      return StringUtil.compare(childName, name, !child.isCaseSensitive());
+      return StringUtil.compare(childName, name, !isCaseSensitive());
     });
   }
 
@@ -208,9 +209,13 @@ class FilePartNode {
     }
     assert !"..".equals(name) && !".".equals(name) : "url must not contain '.' or '..' but got: " + this;
     String prevChildName = "";
+    Set<String> childNames = CollectionFactory.createFilePathSet(children.length, isCaseSensitive());
     for (int i = 0; i < children.length; i++) {
       FilePartNode child = children[i];
       String childName = child.getName().toString();
+      boolean added = childNames.add(childName);
+      assert added : "'" + childName + "' is already in the childNames set (" + childNames + "). isCaseSensitive()=" + isCaseSensitive() + ";\n all children=" + Arrays.toString(children);
+
       boolean needSeparator = !urlFromRoot.isEmpty() && !urlFromRoot.endsWith("/") && !childName.equals(JarFileSystem.JAR_SEPARATOR);
       String childUrlFromRoot = needSeparator ? urlFromRoot + "/" + childName : urlFromRoot + childName;
       if (child.myFS != myFS) {
@@ -219,7 +224,7 @@ class FilePartNode {
       }
       child.doCheckConsistency(myFile, childName, childUrlFromRoot);
       if (i != 0) {
-        assert StringUtil.compare(prevChildName, childName, !child.isCaseSensitive()) < 0: "child[" + i + "] = " + child + "; [-1] = " + children[i - 1];
+        assert StringUtil.compare(prevChildName, childName, !isCaseSensitive()) < 0: "children[" + i + "] = " + child + "; [-1] = " + children[i - 1] +"; isCaseSensitive()="+isCaseSensitive();
       }
       // fs is allowed to change in one direction only: local->jar
       assert myFS instanceof LocalFileSystem && (child.myFS instanceof ArchiveFileSystem || child.myFS instanceof LocalFileSystem)
@@ -251,6 +256,7 @@ class FilePartNode {
 
   // update myFileOrUrl to a VirtualFile and replace UrlPartNode with FilePartNode if the file exists, including all subnodes
   void update(@NotNull FilePartNode parent, @NotNull FilePartNodeRoot root, @NotNull String debugSource, @Nullable Object debugInvalidationReason) {
+    boolean oldCaseSensitive = isCaseSensitive();
     Object fileOrUrl = myFileOrUrl;
     VirtualFile file = myFile(fileOrUrl);
     boolean changed = false;
@@ -356,7 +362,14 @@ class FilePartNode {
       }
     }
     if (toReplaceParent != null) {
-      replaceWithFPPN(toReplaceParent, parent);
+      thisNode = replaceWithFPPN(toReplaceParent, parent);
+    }
+    // sometimes the case sensitivity of the directory is established only after its children.
+    // when it's changed, we should re-sort children according to the new case sensitivity
+    VirtualFile newFile = thisNode.myFile();
+    boolean newCaseSensitive = thisNode.isCaseSensitive();
+    if (newFile != null && newCaseSensitive != oldCaseSensitive) {
+      Arrays.sort(thisNode.children, (c1, c2) -> StringUtil.compare(c1.getName(), c2.getName(), !newCaseSensitive));
     }
   }
 
@@ -503,5 +516,22 @@ class FilePartNode {
   private boolean isCaseSensitive() {
     VirtualFile file = myFile();
     return file == null ? myFS.isCaseSensitive() : file.isCaseSensitive();
+  }
+
+  private void print(StringBuilder buffer, boolean recheck, String prefix) {
+    buffer.append(prefix + " " + getName() + " isCaseSensitive:" + isCaseSensitive());
+    VirtualFile file = myFile();
+    if (recheck && file != null && myFS instanceof LocalFileSystem) {
+      buffer.append(" really parent sensitive: " + FileSystemUtil.readParentCaseSensitivity(new File(file.getPath())));
+    }
+    buffer.append("\n");
+    for (FilePartNode child : children) {
+      child.print(buffer, recheck, prefix + "  ");
+    }
+  }
+  StringBuilder print(boolean recheck) {
+    StringBuilder buffer = new StringBuilder();
+    print(buffer, recheck,"");
+    return buffer;
   }
 }

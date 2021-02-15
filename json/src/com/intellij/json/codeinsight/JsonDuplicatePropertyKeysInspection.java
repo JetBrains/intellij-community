@@ -102,36 +102,38 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
       else {
         final List<PsiElement> allElements =
           mySameNamedKeys.stream().map(k -> k.getElement()).filter(k -> k != startElement).collect(Collectors.toList());
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiElement>(JsonBundle.message("navigate.to.duplicates.header", myEntryKey), allElements) {
-          @NotNull
-          @Override
-          public Icon getIconFor(PsiElement aValue) {
-            return AllIcons.Nodes.Property;
-          }
+        JBPopupFactory.getInstance().createListPopup(
+          new BaseListPopupStep<>(JsonBundle.message("navigate.to.duplicates.header", myEntryKey), allElements) {
+            @NotNull
+            @Override
+            public Icon getIconFor(PsiElement aValue) {
+              return AllIcons.Nodes.Property;
+            }
 
-          @NotNull
-          @Override
-          public String getTextFor(PsiElement value) {
-            return JsonBundle.message("navigate.to.duplicates.desc", myEntryKey, editor.getDocument().getLineNumber(value.getTextOffset()));
-          }
+            @NotNull
+            @Override
+            public String getTextFor(PsiElement value) {
+              return JsonBundle
+                .message("navigate.to.duplicates.desc", myEntryKey, editor.getDocument().getLineNumber(value.getTextOffset()));
+            }
 
-          @Override
-          public int getDefaultOptionIndex() {
-            return 0;
-          }
+            @Override
+            public int getDefaultOptionIndex() {
+              return 0;
+            }
 
-          @Nullable
-          @Override
-          public PopupStep onChosen(PsiElement selectedValue, boolean finalChoice) {
-            navigateTo(editor, selectedValue);
-            return PopupStep.FINAL_CHOICE;
-          }
+            @Nullable
+            @Override
+            public PopupStep onChosen(PsiElement selectedValue, boolean finalChoice) {
+              navigateTo(editor, selectedValue);
+              return PopupStep.FINAL_CHOICE;
+            }
 
-          @Override
-          public boolean isSpeedSearchEnabled() {
-            return true;
-          }
-        }).showInBestPositionFor(editor);
+            @Override
+            public boolean isSpeedSearchEnabled() {
+              return true;
+            }
+          }).showInBestPositionFor(editor);
       }
     }
 

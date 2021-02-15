@@ -41,6 +41,8 @@ class JavaReflectionInvocationTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testConstructorParamCount() = doTest()
   fun testConstructorParamTypes() = doTest()
+  
+  fun testNonVarargCall() = doTest()
 
   private fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")

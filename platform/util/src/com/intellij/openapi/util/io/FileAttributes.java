@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import org.intellij.lang.annotations.MagicConstant;
@@ -68,8 +68,8 @@ public class FileAttributes {
    *                        both "readme.txt" and "README.TXT" files and consider them different. Examples of case-sensitive directories are
    *                        regular directories on Linux, directories in case-sensitive volumes on macOS, or NTFS directories
    *                        configured with "fsutil.exe file setCaseSensitiveInfo" on Windows 10+.<br/>
-   *                        In case of {@code isDirectory==false} the caseSensitivity argument must be {@link CaseSensitivity#UNKNOWN}
-   *                        because case sensitivity is configured on a directory level.
+   *                        When {@code isDirectory == false}, the caseSensitivity argument is ignored
+   *                        (set to {@link CaseSensitivity#UNKNOWN}), because case sensitivity is configured on a directory level.
    */
   public FileAttributes(boolean isDirectory,
                         boolean isSpecial,
@@ -80,9 +80,6 @@ public class FileAttributes {
                         boolean isWritable,
                         @NotNull CaseSensitivity caseSensitivity) {
     this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, caseSensitivity), length, lastModified);
-    if (!isDirectory && caseSensitivity != CaseSensitivity.UNKNOWN) {
-      throw new IllegalArgumentException("case-sensitivity for a file must be UNKNOWN, but got: "+this);
-    }
   }
 
   protected FileAttributes(@Flags byte flags, long length, long lastModified) {
@@ -107,7 +104,7 @@ public class FileAttributes {
     if (!isWritable) flags |= READ_ONLY;
     @Flags int type_flags = (isSpecial ? 0b11 : isDirectory ? 0b10 : 0b01) << TYPE_SHIFT;
     flags |= type_flags;
-    flags = packSensitivityIntoFlags(sensitivity, flags);
+    flags = packSensitivityIntoFlags(isDirectory ? sensitivity : CaseSensitivity.UNKNOWN, flags);
     return flags;
   }
 

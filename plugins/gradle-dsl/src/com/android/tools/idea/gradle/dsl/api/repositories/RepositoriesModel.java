@@ -16,11 +16,9 @@
 package com.android.tools.idea.gradle.dsl.api.repositories;
 
 import com.android.tools.idea.gradle.dsl.api.util.GradleDslModel;
-import com.intellij.openapi.project.Project;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public interface RepositoriesModel extends GradleDslModel {
   @NotNull

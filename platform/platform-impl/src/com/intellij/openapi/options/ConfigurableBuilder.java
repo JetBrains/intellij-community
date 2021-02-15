@@ -186,7 +186,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
                                @NotNull Setter<? super V> beanSetter,
                                @NotNull Getter<? extends V> componentGetter,
                                @NotNull Setter<? super V> componentSetter) {
-    BeanField<JComponent, V> field = new BeanField<JComponent, V>(new CallbackAccessor<>(beanGetter, beanSetter)) {
+    BeanField<JComponent, V> field = new BeanField<>(new CallbackAccessor<>(beanGetter, beanSetter)) {
       @NotNull
       @Override
       protected JComponent createComponent() {

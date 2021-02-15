@@ -7,7 +7,7 @@ import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
-import com.intellij.util.io.PersistentEnumeratorDelegate
+import com.intellij.util.io.PersistentEnumerator
 import com.intellij.util.io.PersistentHashMap
 import java.io.Closeable
 import java.io.DataInput
@@ -45,8 +45,8 @@ class CompositeHashIdEnumerator(private val indexId: ID<*, *>): Closeable, Force
 
   private fun getBasePath() = IndexInfrastructure.getIndexRootDir(indexId).toPath().resolve("compositeHashId")
 
-  private fun init(): PersistentEnumeratorDelegate<CompositeHashId> {
-    enumerator = PersistentEnumeratorDelegate(getBasePath(), CompositeHashIdDescriptor(), 64 * 1024)
+  private fun init(): PersistentEnumerator<CompositeHashId> {
+    enumerator = PersistentEnumerator(getBasePath(), CompositeHashIdDescriptor(), 64 * 1024)
     return enumerator
   }
 }

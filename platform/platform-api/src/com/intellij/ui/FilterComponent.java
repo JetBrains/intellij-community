@@ -73,7 +73,7 @@ public abstract class FilterComponent extends JPanel {
     });
 
     myFilter.setHistorySize(historySize);
-    AccessibleContextUtil.setName(myFilter.getTextEditor(), "Message text filter");
+    AccessibleContextUtil.setName(myFilter.getTextEditor(), UIBundle.message("filter.component.accessible.name"));
     add(myFilter, BorderLayout.CENTER);
   }
 

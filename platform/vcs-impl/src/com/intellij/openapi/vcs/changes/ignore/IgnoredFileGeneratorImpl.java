@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.MANAGE_IGNORE_FILES;
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY;
 import static java.lang.System.lineSeparator;
@@ -156,7 +157,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
       myIgnoreFileRootNotificationShowFor = ignoreFileRoot;
       myNotification = VcsNotifier.getInstance(project).notifyMinorInfo(
-        "vcs.manage.ignored.files",
+        MANAGE_IGNORE_FILES,
         true,
         "",
         VcsBundle.message("ignored.file.manage.message",

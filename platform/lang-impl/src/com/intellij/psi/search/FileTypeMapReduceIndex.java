@@ -5,9 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
-import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
+import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
+import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StorageLockContext;
@@ -17,12 +17,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 
-class FileTypeMapReduceIndex extends VfsAwareMapReduceIndex<FileType, Void> {
+class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void> {
   private static final Logger LOG = Logger.getInstance(FileTypeIndexImpl.class);
   private PersistentStringEnumerator myFileTypeNameEnumerator;
 
-  FileTypeMapReduceIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension, @NotNull IndexStorage<FileType, Void> storage) throws IOException {
-    super(extension, storage);
+  FileTypeMapReduceIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension,
+                         @NotNull VfsAwareIndexStorageLayout<FileType, Void> layout) throws IOException {
+    super(extension, layout, null);
     myFileTypeNameEnumerator = createFileTypeNameEnumerator();
   }
 

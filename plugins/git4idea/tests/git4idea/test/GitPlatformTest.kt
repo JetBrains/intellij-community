@@ -91,14 +91,14 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { restoreCredentialHelpers() })
-      .append(ThrowableRunnable { restoreGlobalSslVerify() })
-      .append(ThrowableRunnable { if (::dialogManager.isInitialized) dialogManager.cleanup() })
-      .append(ThrowableRunnable { if (::git.isInitialized) git.reset() })
-      .append(ThrowableRunnable { if (::settings.isInitialized) settings.appSettings.setPathToGit(null) })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { restoreCredentialHelpers() },
+      ThrowableRunnable { restoreGlobalSslVerify() },
+      ThrowableRunnable { if (::dialogManager.isInitialized) dialogManager.cleanup() },
+      ThrowableRunnable { if (::git.isInitialized) git.reset() },
+      ThrowableRunnable { if (::settings.isInitialized) settings.appSettings.setPathToGit(null) },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   override fun getDebugLogCategories(): Collection<String> {

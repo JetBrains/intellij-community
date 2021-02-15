@@ -36,11 +36,12 @@ public enum LanguageLevel {
   JDK_12(JavaPsiBundle.messagePointer("jdk.12.language.level.description"), 12),
   JDK_13(JavaPsiBundle.messagePointer("jdk.13.language.level.description"), 13),
   JDK_14(JavaPsiBundle.messagePointer("jdk.14.language.level.description"), 14),
-  JDK_14_PREVIEW(JavaPsiBundle.messagePointer("jdk.14.preview.language.level.description"), 14),
   JDK_15(JavaPsiBundle.messagePointer("jdk.15.language.level.description"), 15),
   JDK_15_PREVIEW(JavaPsiBundle.messagePointer("jdk.15.preview.language.level.description"), 15),
+  JDK_16(JavaPsiBundle.messagePointer("jdk.16.language.level.description"), 16),
+  JDK_16_PREVIEW(JavaPsiBundle.messagePointer("jdk.16.preview.language.level.description"), 16),
   
-  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 16);
+  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 17);
 
   public static final LanguageLevel HIGHEST = JDK_15;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");

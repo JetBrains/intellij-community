@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.navigation.ItemPresentation;
@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.usages.ConfigurableUsageTarget;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,11 +34,6 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
   @Override
   public String getPresentableText() {
     return myConfiguration.getMatchOptions().getSearchPattern();
-  }
-
-  @Override
-  public String getLocationString() {
-    return null;
   }
 
   @Override
@@ -92,9 +88,8 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
                                                            : "StructuralSearchPlugin.StructuralSearchAction");
   }
 
-  @NotNull
   @Override
-  public String getLongDescriptiveName() {
+  public @Nls @NotNull String getLongDescriptiveName() {
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     final String pattern = matchOptions.getSearchPattern();
     final SearchScope scope = matchOptions.getScope();

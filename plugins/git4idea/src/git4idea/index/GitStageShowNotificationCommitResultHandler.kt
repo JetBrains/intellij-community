@@ -10,6 +10,8 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsImplUtil.getShortVcsRootName
 import com.intellij.xml.util.XmlStringUtil.escapeString
+import git4idea.GitNotificationIdsHolder.Companion.STAGE_COMMIT_ERROR
+import git4idea.GitNotificationIdsHolder.Companion.STAGE_COMMIT_SUCCESS
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 
@@ -31,7 +33,7 @@ internal class GitStageShowNotificationCommitResultHandler(private val committer
 
     val repositoriesText = repositories.joinToString { "'${getShortVcsRootName(project, it.root)}'" }
     notifier.notifySuccess(
-      "git.stage.commit.successful",
+      STAGE_COMMIT_SUCCESS,
       "",
       message("stage.commit.successful", repositoriesText, escapeString(commitMessage))
     )
@@ -41,7 +43,7 @@ internal class GitStageShowNotificationCommitResultHandler(private val committer
     if (failures.isEmpty()) return
 
     notifier.notifyError(
-      "git.stage.commit.error",
+      STAGE_COMMIT_ERROR,
       message("stage.commit.failed", failures.keys.joinToString { "'${getShortVcsRootName(project, it)}'" }),
       HtmlBuilder().appendWithSeparators(br(), failures.values.map { text(it.localizedMessage) }).toString()
     )

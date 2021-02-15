@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.rt.junit;
 
@@ -21,7 +21,7 @@ public interface IdeaTestRunner<T> {
 
   String getTestClassName(T child);
 
-  class Repeater {
+  final class Repeater {
     public static int startRunnerWithArgs(IdeaTestRunner<?> testRunner,
                                           String[] args,
                                           ArrayList<String> listeners,

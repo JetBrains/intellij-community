@@ -3,7 +3,6 @@ package git4idea.reset;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -13,7 +12,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+import static git4idea.GitNotificationIdsHolder.COULD_NOT_LOAD_CHANGES_OF_COMMIT;
 import static git4idea.reset.GitResetMode.SOFT;
 import static java.util.Collections.singletonMap;
 
@@ -105,7 +104,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         catch (VcsException e) {
           String message = GitBundle.message("git.undo.action.could.not.load.changes.of.commit", commit.getId().asString());
           LOG.warn(message, e);
-          VcsNotifier.getInstance(project).notifyError("git.could.not.load.changes.of.commit",
+          VcsNotifier.getInstance(project).notifyError(COULD_NOT_LOAD_CHANGES_OF_COMMIT,
                                                        "",
                                                        message);
           return;
@@ -116,12 +115,11 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
 
         if (targetChangeList != null) {
           ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-          changeListManager.invokeAfterUpdate(
-            () -> {
+          changeListManager.invokeAfterUpdateWithModal(true,
+                                                       GitBundle.message("git.undo.action.refreshing.changes.process"), () -> {
               Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
               changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[0]));
-            }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, GitBundle.message("git.undo.action.refreshing.changes.process"),
-            ModalityState.defaultModalityState()
+            }
           );
         }
       }

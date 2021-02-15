@@ -13,7 +13,9 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.fileTypes.FileType;
@@ -87,6 +89,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     ASTNode treeElement = element.getNode();
     final PsiFile file = element.getContainingFile();
+
+    if (file == null)
+      return element;
+
     if (ExternalFormatProcessor.useExternalFormatter(file)) {
       return ExternalFormatProcessor.formatElement(element, element.getTextRange(), canChangeWhiteSpacesOnly);
     }
@@ -107,9 +113,15 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       postProcessEnabledRanges((PsiFile) formatted, formatted.getTextRange(), settingsForFile);
     }
     else {
+      boolean brokenProcFound = false;
       for (PostFormatProcessor postFormatProcessor : PostFormatProcessor.EP_NAME.getExtensionList()) {
         try {
           result = postFormatProcessor.processElement(result, settingsForFile);
+          if (!result.isValid() && !brokenProcFound) {
+            LOG.error(new RuntimeExceptionWithAttachments(String.format("PSI crash detected: processor=%s, result=%s", postFormatProcessor,
+                                                                        result), new Attachment("text", result.getText())));
+            brokenProcFound = true;
+          }
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -411,7 +423,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
-    new CodeStyleManagerRunnable<Object>(this, FormattingMode.ADJUST_INDENT) {
+    new CodeStyleManagerRunnable<>(this, FormattingMode.ADJUST_INDENT) {
       @Override
       protected Object doPerform(int offset, TextRange range) {
         FormatterEx.getInstanceEx().adjustLineIndentsForRange(myModel, mySettings, myIndentOptions, range);
@@ -967,28 +979,27 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public void scheduleReformatWhenSettingsComputed(@NotNull PsiFile file) {
-    Project project = file.getProject();
     if (ModelBranch.getPsiBranch(file) != null) {
-      PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
-        () -> CodeStyleManager.getInstance(project).reformat(file));
+      commitAndFormat(file);
       return;
     }
 
-    CodeStyleCachingService.getInstance(project).scheduleWhenSettingsComputed(
+    CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(
       file,
       () -> CommandProcessor.getInstance().executeCommand(
-        project,
-        () -> {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
-              () -> {
-                CodeStyleManager.getInstance(project).reformat(file);
-              }
-            );
-          });
-        },
+        myProject,
+        () -> ApplicationManager.getApplication().runWriteAction(() -> commitAndFormat(file)),
         CodeStyleBundle.message("command.name.reformat"), null
       )
     );
+  }
+
+  private void commitAndFormat(@NotNull PsiFile file) {
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    Document document = documentManager.getDocument(file);
+    if (document != null) {
+      documentManager.commitDocument(document);
+    }
+    PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> reformat(file));
   }
 }

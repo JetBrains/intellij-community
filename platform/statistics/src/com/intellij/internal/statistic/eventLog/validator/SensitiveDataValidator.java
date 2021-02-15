@@ -32,7 +32,9 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  * <p>
  *   Therefore, each collector should define data scheme and rules which will be used in validation.<br/>
  *   Rules are stored in a separate repository, IDE loads rules from the server during runtime.<br/>
- *   To register rules for a new group or change existing ones, create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a>.
+ *   If you use new FUS API (docs: fus-collectors.md) and group is implemented in a platform or bundled plugin,
+ *   synchronization between statistics metadata repository and source code is performed semi-automatically.
+ *   In other cases or when you need to change group scheme without changing the code, create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a>.
  * </p>
  *
  * <p>

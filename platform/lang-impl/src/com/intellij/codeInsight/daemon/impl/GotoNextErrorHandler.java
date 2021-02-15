@@ -49,13 +49,14 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   }
 
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
+    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int maxSeverity = settings.isNextErrorActionGoesToErrorsFirst() ? severityRegistrar.getSeveritiesCount() - 1
                                                                     : SeverityRegistrar.SHOWN_SEVERITIES_OFFSET;
 
     for (int idx = maxSeverity; idx >= SeverityRegistrar.SHOWN_SEVERITIES_OFFSET; idx--) {
-      final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
+      HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
+      if (minSeverity == null) continue;
       HighlightInfo infoToGo = findInfo(project, editor, caretOffset, minSeverity);
       if (infoToGo != null) {
         navigateToError(project, editor, infoToGo, () -> {
@@ -74,10 +75,10 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     showMessageWhenNoHighlights(project, file, editor, caretOffset);
   }
 
-  private HighlightInfo findInfo(Project project, Editor editor, final int caretOffset, HighlightSeverity minSeverity) {
-    final Document document = editor.getDocument();
-    final HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
-    final int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
+  private HighlightInfo findInfo(@NotNull Project project, @NotNull Editor editor, int caretOffset, @NotNull HighlightSeverity minSeverity) {
+    Document document = editor.getDocument();
+    HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
+    int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
 
     DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), info -> {
       int startOffset = getNavigationPositionFor(info, document);
@@ -149,10 +150,10 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   static void navigateToError(@NotNull Project project, @NotNull Editor editor, @NotNull HighlightInfo info, @Nullable Runnable postNavigateRunnable) {
     int oldOffset = editor.getCaretModel().getOffset();
 
-    final int offset = getNavigationPositionFor(info, editor.getDocument());
-    final int endOffset = info.getActualEndOffset();
+    int offset = getNavigationPositionFor(info, editor.getDocument());
+    int endOffset = info.getActualEndOffset();
 
-    final ScrollingModel scrollingModel = editor.getScrollingModel();
+    ScrollingModel scrollingModel = editor.getScrollingModel();
     if (offset != oldOffset) {
       ScrollType scrollType = offset > oldOffset ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
       editor.getSelectionModel().removeSelection();

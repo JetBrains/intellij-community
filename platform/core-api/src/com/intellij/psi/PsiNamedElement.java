@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a declaration which introduces a named entity and can be renamed (for example, a class or a method).
  * References should not implement this interface since they don't usually introduce a new entity.
+ *
+ * @see com.intellij.model.psi.PsiSymbolDeclaration
  */
 public interface PsiNamedElement extends PsiElement {
   /**

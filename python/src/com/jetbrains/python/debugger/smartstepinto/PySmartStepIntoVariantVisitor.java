@@ -26,7 +26,7 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
   @NotNull private final List<Pair<String, Boolean>> myVariantsFromPython;
   @NotNull private final PySmartStepIntoContext myContext;
   @NotNull private final Map<String, Integer> mySeenVariants = Maps.newHashMap();
-  @NotNull private final Set<PsiElement> alreadyVisited = new HashSet<PsiElement>();
+  @NotNull private final Set<PsiElement> alreadyVisited = new HashSet<>();
 
   public PySmartStepIntoVariantVisitor(@NotNull List<PySmartStepIntoVariant> collector,
                                        @NotNull List<Pair<String, Boolean>> variantsFromPython,

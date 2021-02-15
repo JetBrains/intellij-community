@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.ProjectTopics
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -22,6 +23,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.VersionComparatorUtil
@@ -120,55 +122,62 @@ internal class JdkUpdatesCollector(
   fun updateNotifications() {
     if (!isEnabled()) return
 
-    project.service<JdkUpdatesCollectorQueue>().queue { updateNotificationsDebounced() }
-  }
-
-  private fun updateNotificationsDebounced() {
-    if (!isEnabled()) return
-
-    object : UnknownSdkCollector(project) {
-      override fun getContributors(): List<UnknownSdkContributor> {
-        return super.getContributors() + EP_NAME.extensionList.map {
-          object : UnknownSdkContributor {
-            override fun contributeUnknownSdks(project: Project) = listOf<UnknownSdk>()
-            override fun contributeKnownSdks(project: Project): List<Sdk> = it.contributeJdks(project)
+    project.service<JdkUpdatesCollectorQueue>().queue(object: UnknownSdkTrackerTask {
+      override fun createCollector(): UnknownSdkCollector? {
+        if (!isEnabled()) return null
+        return object : UnknownSdkCollector(project) {
+          override fun getContributors(): List<UnknownSdkContributor> {
+            return super.getContributors() + EP_NAME.extensionList.map {
+              object : UnknownSdkContributor {
+                override fun contributeUnknownSdks(project: Project) = listOf<UnknownSdk>()
+                override fun contributeKnownSdks(project: Project): List<Sdk> = it.contributeJdks(project)
+              }
+            }
           }
         }
       }
-    }.collectSdksPromise { snapshot ->
-      //this callback happens in the GUI thread!
-      val knownSdks = snapshot
-        .knownSdks
-        .filter { it.sdkType is JavaSdkType && it.sdkType !is DependentSdkType }
 
-      if (knownSdks.isEmpty()) return@collectSdksPromise
+      override fun onLookupCompleted(snapshot: UnknownSdkSnapshot) {
+        if (!isEnabled()) return
 
-      ProgressManager.getInstance().run(
-        object : Task.Backgroundable(project, ProjectBundle.message("progress.title.checking.for.jdk.updates"), true, ALWAYS_BACKGROUND) {
-          override fun run(indicator: ProgressIndicator) {
-            updateWithSnapshot(knownSdks.distinct().sortedBy { it.name }, indicator)
+        //this callback happens in the GUI thread!
+        val knownSdks = snapshot
+          .knownSdks
+          .filter { it.sdkType is JavaSdkType && it.sdkType !is DependentSdkType }
+
+        if (knownSdks.isEmpty()) return
+
+        ProgressManager.getInstance().run(
+          object : Task.Backgroundable(project, ProjectBundle.message("progress.title.checking.for.jdk.updates"), true, ALWAYS_BACKGROUND) {
+            override fun run(indicator: ProgressIndicator) {
+              updateWithSnapshot(knownSdks.distinct().sortedBy { it.name }, indicator)
+            }
           }
-        }
-      )
-    }
+        )
+      }
+    })
   }
 
   private fun updateWithSnapshot(knownSdks: List<Sdk>, indicator: ProgressIndicator) {
     val jdkFeed by lazy {
-      JdkListDownloader
-        .getInstance()
-        .downloadModelForJdkInstaller(progress = indicator)
+      val listDownloader = JdkListDownloader.getInstance()
+
+      var items = listDownloader.downloadModelForJdkInstaller(predicate = JdkPredicate.default(), progress = indicator)
+
+      if (SystemInfo.isWindows && WslDistributionManager.getInstance().installedDistributions.isNotEmpty()) {
+        @Suppress("SuspiciousCollectionReassignment")
+        items += listDownloader.downloadModelForJdkInstaller(predicate = JdkPredicate.forWSL(), progress = indicator)
+      }
+      items.toList()
     }
 
     val notifications = service<JdkUpdaterNotifications>()
 
-    val jdksToTest = notifications.filterNotPendingSdks(knownSdks)
-    val noUpdatesFor = HashSet<Sdk>(jdksToTest)
-
-    for (jdk in jdksToTest) {
+    val noUpdatesFor = HashSet<Sdk>(knownSdks)
+    for (jdk in knownSdks) {
       val actualItem = JdkInstaller.getInstance().findJdkItemForInstalledJdk(jdk.homePath) ?: continue
       val feedItem = jdkFeed.firstOrNull {
-        it.suggestedSdkName == actualItem.suggestedSdkName && it.arch == actualItem.arch
+        it.suggestedSdkName == actualItem.suggestedSdkName && it.arch == actualItem.arch && it.os == actualItem.os
       } ?: continue
 
       if (!service<JdkUpdaterState>().isAllowed(jdk, feedItem)) continue
@@ -194,10 +203,6 @@ class JdkUpdaterNotifications : Disposable {
 
   override fun dispose() : Unit = lock.withLock {
     pendingNotifications.clear()
-  }
-
-  fun filterNotPendingSdks(sdks: List<Sdk>): List<Sdk> = lock.withLock {
-    sdks.filterNot { pendingNotifications.containsKey(it) }
   }
 
   fun showNotification(jdk: Sdk, actualItem: JdkItem, newItem: JdkItem) : Unit = lock.withLock {

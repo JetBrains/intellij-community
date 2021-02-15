@@ -16,22 +16,14 @@
 package org.intellij.lang.regexp.psi;
 
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RegExpGroup extends RegExpAtom, PsiNamedElement {
 
   boolean isCapturing();
 
-  @Nullable
-  RegExpPattern getPattern();
-
-  /** @deprecated use #getType() */
-  @Deprecated
-  boolean isPythonNamedGroup();
-
-  /** @deprecated use #getType() */
-  @Deprecated
-  boolean isRubyNamedGroup();
+  @NotNull RegExpPattern getPattern();
 
   /** @return true, if this is a named group of any kind, false otherwise */
   boolean isAnyNamedGroup();

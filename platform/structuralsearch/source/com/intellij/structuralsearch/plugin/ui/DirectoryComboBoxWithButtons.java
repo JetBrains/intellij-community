@@ -81,7 +81,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
     comboBox.setMaximumRowCount(8);
 
-    myDirectoryComboBox.addBrowseFolderListener(null, null, project, descriptor, new TextComponentAccessor<ComboBox<String>>() {
+    myDirectoryComboBox.addBrowseFolderListener(null, null, project, descriptor, new TextComponentAccessor<>() {
       @Override
       public String getText(ComboBox comboBox) {
         return comboBox.getEditor().getItem().toString();

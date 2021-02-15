@@ -126,7 +126,7 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
   @NotNull
   @Override
   public PermanentCommitsInfo<CommitId> getPermanentCommitsInfo() {
-    return new PermanentCommitsInfo<CommitId>() {
+    return new PermanentCommitsInfo<>() {
       @NotNull
       @Override
       public CommitId getCommitId(int nodeId) {

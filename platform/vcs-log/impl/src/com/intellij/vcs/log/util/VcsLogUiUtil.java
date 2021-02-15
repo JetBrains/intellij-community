@@ -216,7 +216,7 @@ public final class VcsLogUiUtil {
 
       ListenableFuture<Boolean> future = ((VcsLogImpl)myUi.getVcsLog()).jumpToCommit(commitId.getHash(), commitId.getRoot());
 
-      Futures.addCallback(future, new FutureCallback<Boolean>() {
+      Futures.addCallback(future, new FutureCallback<>() {
         @Override
         public void onSuccess(Boolean success) {
           if (success) {

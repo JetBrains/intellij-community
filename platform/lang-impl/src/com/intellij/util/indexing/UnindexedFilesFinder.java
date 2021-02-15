@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -49,16 +50,6 @@ final class UnindexedFilesFinder {
     myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
   }
 
-  private boolean tryIndexWithoutContentViaInfrastructureExtension(IndexedFile fileContent, int inputId, ID<?, ?> indexId) {
-    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
-      if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
-        FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)")
   public UnindexedFileStatus getFileStatus(@NotNull VirtualFile file) {
     return ReadAction.compute(() -> {
@@ -74,7 +65,7 @@ final class UnindexedFilesFinder {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, myProject);
       if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
-        int inputId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
+        int inputId = FileBasedIndex.getFileId(file);
 
         boolean wasInvalidated = false;
         if (myRunExtensionsForFilesMarkedAsIndexed && myShouldProcessUpToDateFiles) {
@@ -108,9 +99,9 @@ final class UnindexedFilesFinder {
 
       AtomicBoolean shouldIndex = new AtomicBoolean();
 
-      FileBasedIndexImpl.getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
+      FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
         boolean isDirectory = file.isDirectory();
-        int inputId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
+        int inputId = FileBasedIndex.getFileId(file);
         FileIndexingState fileTypeIndexState = null;
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
@@ -118,7 +109,7 @@ final class UnindexedFilesFinder {
             shouldIndex.set(true);
           }
           else {
-            final List<ID<?, ?>> affectedIndexCandidates = myFileBasedIndex.getAffectedIndexCandidates(file);
+            final List<ID<?, ?>> affectedIndexCandidates = myFileBasedIndex.getAffectedIndexCandidates(indexedFile);
             applicableIndexes.addAll(affectedIndexCandidates);
             //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
@@ -208,5 +199,15 @@ final class UnindexedFilesFinder {
                                      timeUpdatingContentLessIndexes.get(),
                                      timeIndexingWithoutContent.get());
     });
+  }
+
+  private boolean tryIndexWithoutContentViaInfrastructureExtension(IndexedFile fileContent, int inputId, ID<?, ?> indexId) {
+    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
+      if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
+        FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
+        return true;
+      }
+    }
+    return false;
   }
 }

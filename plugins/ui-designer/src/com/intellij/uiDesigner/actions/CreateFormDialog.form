@@ -72,7 +72,7 @@
         </constraints>
         <properties>
           <text value=""/>
-          <toolTipText value="Pressing Up or Down arrows while in editor changes the layout manager"/>
+          <toolTipText resource-bundle="messages/UIDesignerBundle" key="pressing.up.or.down.arrows.while.in.editor.changes.the.layout.manager"/>
         </properties>
       </component>
     </children>

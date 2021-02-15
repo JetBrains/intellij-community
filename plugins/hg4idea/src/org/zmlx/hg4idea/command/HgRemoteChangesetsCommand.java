@@ -37,6 +37,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 import javax.swing.event.HyperlinkEvent;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.CHANGESETS_ERROR;
+
 /**
  * Common ancestor for HgIncomingCommand and HgOutgoingCommand - changeset commands which need connection to the server.
  * @author Kirill Likhodedov
@@ -78,7 +80,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
       if (vcs == null) {
         return result;
       }
-      new HgCommandResultNotifier(project).notifyError("hg4idea.changesets.error",
+      new HgCommandResultNotifier(project).notifyError(CHANGESETS_ERROR,
                                                        result,
                                                        HgBundle.message("hg4idea.changesets.error"),
                                                        HgBundle.message("hg4idea.changesets.error.msg", repositoryURL),

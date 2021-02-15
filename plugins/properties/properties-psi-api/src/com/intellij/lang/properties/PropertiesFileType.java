@@ -5,8 +5,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,7 @@ public final class PropertiesFileType extends LanguageFileType {
     LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
     Charset charset = guessed.hardCodedCharset == null ? EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file) : guessed.hardCodedCharset;
     if (charset == null) {
-      charset = CharsetToolkit.getDefaultSystemCharset();
+      charset = EncodingManager.getInstance().getDefaultCharset();
     }
     if (EncodingRegistry.getInstance().isNative2Ascii(file)) {
       charset = Native2AsciiCharset.wrap(charset);

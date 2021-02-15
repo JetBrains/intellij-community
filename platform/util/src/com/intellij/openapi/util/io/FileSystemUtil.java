@@ -10,8 +10,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
+import com.intellij.util.system.CpuArch;
 import com.sun.jna.*;
-import com.sun.jna.platform.win32.WTypes;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -29,6 +31,7 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public final class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
@@ -48,13 +51,15 @@ public final class FileSystemUtil {
 
   private static final Mediator ourMediator = computeMediator();
 
+  @NotNull
   static Mediator computeMediator() {
     if (!Boolean.getBoolean(FORCE_USE_NIO2_KEY)) {
       try {
         if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
           return check(new IdeaWin32MediatorImpl());
         }
-        else if ((SystemInfo.isLinux || SystemInfo.isMac && !SystemInfo.isArm64 || SystemInfo.isSolaris || SystemInfo.isFreeBSD) && JnaLoader.isLoaded()) {
+        else if ((SystemInfo.isLinux || SystemInfo.isMac && CpuArch.isIntel64() || SystemInfo.isSolaris || SystemInfo.isFreeBSD) &&
+                 JnaLoader.isLoaded() && JnaLoader.supportsDirectMapping) {
           return check(new JnaUnixMediatorImpl());
         }
       }
@@ -66,7 +71,8 @@ public final class FileSystemUtil {
     return new Nio2MediatorImpl();
   }
 
-  private static Mediator check(Mediator mediator) throws Exception {
+  @NotNull
+  private static Mediator check(@NotNull Mediator mediator) throws Exception {
     String quickTestPath = SystemInfo.isWindows ? "C:\\" : "/";
     mediator.getAttributes(quickTestPath);
     return mediator;
@@ -77,11 +83,10 @@ public final class FileSystemUtil {
   public static @Nullable FileAttributes getAttributes(@NotNull String path) {
     try {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("getAttributes(" + path + ")");
         long t = System.nanoTime();
         FileAttributes result = ourMediator.getAttributes(path);
-        t = (System.nanoTime() - t) / 1000;
-        LOG.trace("  " + t + " mks");
+        t = System.nanoTime() - t;
+        LOG.trace("getAttributes(" + path + ") = " + result + " in " + TimeUnit.NANOSECONDS.toMicros(t) + " mks");
         return result;
       }
       else {
@@ -89,7 +94,7 @@ public final class FileSystemUtil {
       }
     }
     catch (Exception e) {
-      LOG.warn(e);
+      LOG.warn("getAttributes(" + path + ")", e);
     }
     return null;
   }
@@ -107,11 +112,8 @@ public final class FileSystemUtil {
    * Checks if a last element in the path is a symlink.
    */
   public static boolean isSymLink(@NotNull String path) {
-    if (SystemInfo.areSymLinksSupported) {
-      FileAttributes attributes = getAttributes(path);
-      return attributes != null && attributes.isSymLink();
-    }
-    return false;
+    FileAttributes attributes = getAttributes(path);
+    return attributes != null && attributes.isSymLink();
   }
 
   /**
@@ -125,11 +127,10 @@ public final class FileSystemUtil {
     try {
       String realPath;
       if (LOG.isTraceEnabled()) {
-        LOG.trace("resolveSymLink(" + path + ")");
         long t = System.nanoTime();
         realPath = ourMediator.resolveSymLink(path);
-        t = (System.nanoTime() - t) / 1000;
-        LOG.trace("  " + t + " mks");
+        t = System.nanoTime() - t;
+        LOG.trace("resolveSymLink(" + path + ") = "+realPath+" in " + TimeUnit.NANOSECONDS.toMicros(t) + " mks");
       }
       else {
         realPath = ourMediator.resolveSymLink(path);
@@ -276,6 +277,8 @@ public final class FileSystemUtil {
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
     JnaUnixMediatorImpl() {
+      assert JnaLoader.supportsDirectMapping : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
+
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_ARM32;
@@ -319,8 +322,8 @@ public final class FileSystemUtil {
         boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
         boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
         long size = buffer.getLong(myOffsets[OFF_SIZE]);
-        long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME]) : buffer.getLong(myOffsets[OFF_TIME]);
-        long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
+        long mTime1 = Native.LONG_SIZE == 4 ? buffer.getInt(myOffsets[OFF_TIME]) : buffer.getLong(myOffsets[OFF_TIME]);
+        long mTime2 = myCoarseTs ? 0 : Native.LONG_SIZE == 4 ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
         long mTime = mTime1 * 1000 + mTime2 / 1000000;
 
         boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
@@ -471,27 +474,19 @@ public final class FileSystemUtil {
    * via different names.
    */
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull File anyChild) {
-    File parent = anyChild.getParentFile();
-
-    if (JnaLoader.isLoaded()) {
-      String path = (parent != null ? parent : anyChild).getAbsolutePath();
-      FileAttributes.CaseSensitivity detected = FileAttributes.CaseSensitivity.UNKNOWN;
-      if (SystemInfo.isWin10OrNewer && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
-        detected = getNtfsCaseSensitivity(path);
-      }
-      else if (SystemInfo.isMac) {
-        detected = getMacOsCaseSensitivity(path);
-      }
-      else if (SystemInfo.isLinux) {
-        detected = getLinuxCaseSensitivity(path);
-      }
-      if (detected != FileAttributes.CaseSensitivity.UNKNOWN) {
-        return detected;
-      }
-    }
+    FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
+    if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
 
     // when native queries failed, fallback to the Java File IO:
+    return readParentCaseSensitivityByJavaIO(anyChild);
+  }
+
+  static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull File anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
+    if (!anyChild.exists()) {
+      return FileAttributes.CaseSensitivity.UNKNOWN;
+    }
+    File parent = anyChild.getParentFile();
     if (parent == null) {
       String probe = findCaseToggleableChild(anyChild);
       if (probe == null) return FileAttributes.CaseSensitivity.UNKNOWN;
@@ -513,12 +508,12 @@ public final class FileSystemUtil {
 
     String altPath = parent.getPath() + '/' + altName;
     FileAttributes newAttributes = getAttributes(altPath);
-    if (newAttributes == null) {
-      // couldn't file this file by other-cased name, so deduce FS is sensitive
-      return FileAttributes.CaseSensitivity.SENSITIVE;
-    }
 
     try {
+      if (newAttributes == null) {
+        // couldn't file this file by other-cased name, so deduce FS is sensitive
+        return FileAttributes.CaseSensitivity.SENSITIVE;
+      }
       // if changed-case file found, there is a slim chance that the FS is still case-sensitive but there are two files with different case
       File altCanonicalFile = new File(altPath).getCanonicalFile();
       String altCanonicalName = altCanonicalFile.getName();
@@ -535,19 +530,41 @@ public final class FileSystemUtil {
     return FileAttributes.CaseSensitivity.SENSITIVE;
   }
 
-  private static String toggleCase(@NotNull String name) {
+  static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByNativeAPI(@NotNull File anyChild) {
+    FileAttributes.CaseSensitivity detected = FileAttributes.CaseSensitivity.UNKNOWN;
+    if (JnaLoader.isLoaded()) {
+      File parent = anyChild.getParentFile();
+      String path = (parent != null ? parent : anyChild).getAbsolutePath();
+      if (SystemInfo.isWin10OrNewer && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
+        detected = getNtfsCaseSensitivity(path);
+      }
+      else if (SystemInfo.isMac) {
+        detected = getMacOsCaseSensitivity(path);
+      }
+      else if (SystemInfo.isLinux) {
+        detected = getLinuxCaseSensitivity(path);
+      }
+    }
+    return detected;
+  }
+
+  private static String toggleCase(String name) {
     String altName = name.toUpperCase(Locale.getDefault());
     if (altName.equals(name)) altName = name.toLowerCase(Locale.getDefault());
     return altName;
   }
 
-  public static boolean isCaseSensitive(@NotNull String name) {
+  /**
+   * @return {@code true} when the {@code name} contains case-toggleable characters (for which toLowerCase() != toUpperCase()).
+   * E.g. "Child.txt" is case-toggleable because "CHILD.TXT" != "child.txt", but "122.45" is not.
+   */
+  public static boolean isCaseToggleable(@NotNull String name) {
     return !toggleCase(name).equals(name);
   }
 
   // return child which name can be used for querying by different-case names (e.g "child.txt" vs "CHILD.TXT")
   // or null if there are none (e.g there's only one child "123.456").
-  private static String findCaseToggleableChild(@NotNull File dir) {
+  private static @Nullable String findCaseToggleableChild(File dir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
       for (Path path : stream) {
         String name = path.getFileName().toString();
@@ -561,25 +578,32 @@ public final class FileSystemUtil {
   }
 
   //<editor-fold desc="Windows case sensitivity detection (NTFS-only)">
-  @NotNull
-  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(@NotNull String path) {
+  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(String path) {
     try {
+      Kernel32 kernel32 = Kernel32.INSTANCE;
       NtOsKrnl ntOsKrnl = NtOsKrnl.INSTANCE;
 
-      NtOsKrnl.OBJECT_ATTRIBUTES_P objectAttributes = new NtOsKrnl.OBJECT_ATTRIBUTES_P();
-      objectAttributes.ObjectName = new NtOsKrnl.UNICODE_STRING_P("\\??\\" + path);
+      String name = "\\\\?\\" + path;
+      WinNT.HANDLE handle = kernel32.CreateFile(name, 0, NtOsKrnl.FILE_SHARE_ALL, null, WinNT.OPEN_EXISTING, WinNT.FILE_FLAG_BACKUP_SEMANTICS, null);
+      if (handle == WinBase.INVALID_HANDLE_VALUE) {
+        if (LOG.isDebugEnabled()) LOG.debug("CreateFile(" + path + "): 0x" + Integer.toHexString(kernel32.GetLastError()));
+        return FileAttributes.CaseSensitivity.UNKNOWN;
+      }
 
       NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P fileInformation = new NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P();
 
-      int result = ntOsKrnl.NtQueryInformationByName(
-        objectAttributes,
+      int result = ntOsKrnl.NtQueryInformationFile(
+        handle,
         new NtOsKrnl.IO_STATUS_BLOCK_P(),
         fileInformation,
         fileInformation.size(),
         NtOsKrnl.FileCaseSensitiveInformation);
 
+      kernel32.CloseHandle(handle);
+
       if (result != 0) {
-        if (LOG.isTraceEnabled()) LOG.trace("NtQueryInformationByName(" + path + "): " + result);
+        // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
+        if (LOG.isDebugEnabled()) LOG.debug("NtQueryInformationFile(" + path + "): 0x" + Integer.toHexString(result));
       }
       else if (fileInformation.Flags == 0) {
         return FileAttributes.CaseSensitivity.INSENSITIVE;
@@ -588,7 +612,7 @@ public final class FileSystemUtil {
         return FileAttributes.CaseSensitivity.SENSITIVE;
       }
       else {
-        LOG.warn("NtQueryInformationByName(" + path + "): unexpected 'FileCaseSensitiveInformation' value " + fileInformation.Flags);
+        LOG.warn("NtQueryInformationFile(" + path + "): unexpected 'FileCaseSensitiveInformation' value " + fileInformation.Flags);
       }
     }
     catch (Throwable t) {
@@ -601,27 +625,7 @@ public final class FileSystemUtil {
   private interface NtOsKrnl extends StdCallLibrary, WinNT {
     NtOsKrnl INSTANCE = Native.load("NtDll", NtOsKrnl.class, W32APIOptions.UNICODE_OPTIONS);
 
-    @Structure.FieldOrder({"Length", "MaximumLength", "Buffer"})
-    class UNICODE_STRING_P extends Structure implements Structure.ByReference {
-      public short Length;
-      public short MaximumLength;
-      public WTypes.LPWSTR Buffer;
-
-      public UNICODE_STRING_P(String value) {
-        Buffer = new WTypes.LPWSTR(value);
-        Length = MaximumLength = (short)(value.length() * 2);
-      }
-    }
-
-    @Structure.FieldOrder({"Length", "RootDirectory", "ObjectName", "Attributes", "SecurityDescriptor", "SecurityQualityOfService"})
-    class OBJECT_ATTRIBUTES_P extends Structure implements Structure.ByReference {
-      public long Length = size();
-      public WinNT.HANDLE RootDirectory;
-      public UNICODE_STRING_P ObjectName;
-      public long Attributes;
-      public Pointer SecurityDescriptor;
-      public Pointer SecurityQualityOfService;
-    }
+    int FILE_SHARE_ALL = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
     @Structure.FieldOrder({"Pointer", "Information"})
     class IO_STATUS_BLOCK_P extends Structure implements Structure.ByReference {
@@ -631,13 +635,14 @@ public final class FileSystemUtil {
 
     @Structure.FieldOrder("Flags")
     class FILE_CASE_SENSITIVE_INFORMATION_P extends Structure implements Structure.ByReference {
-      public long Flags;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1
+      // initialize with something crazy to make sure the native call did write 0 or 1 to this field
+      public long Flags = 0xFFFF_FFFFL;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1
     }
 
     int FileCaseSensitiveInformation = 71;
 
-    int NtQueryInformationByName(
-      OBJECT_ATTRIBUTES_P objectAttributes,
+    int NtQueryInformationFile(
+      HANDLE FileHandle,
       IO_STATUS_BLOCK_P ioStatusBlock,
       Structure fileInformation,
       long length,
@@ -646,8 +651,7 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="macOS case sensitivity detection">
-  @NotNull
-  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(@NotNull String path) {
+  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
     try {
       CoreFoundation cf = CoreFoundation.INSTANCE;
 
@@ -688,15 +692,14 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="Linux case sensitivity detection">
-  @NotNull
-  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(@NotNull String path) {
+  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
     try {
       Memory buf = new Memory(256);
       if (LibC.INSTANCE.statfs(path, buf) != 0) {
-        if (LOG.isTraceEnabled()) LOG.trace("statfs(" + path + "): error");
+        if (LOG.isDebugEnabled()) LOG.debug("statfs(" + path + "): error");
       }
       else {
-        long fs = SystemInfo.is32Bit ? buf.getInt(0) : buf.getLong(0);
+        long fs = Native.LONG_SIZE == 4 ? buf.getInt(0) : buf.getLong(0);
         // Btrfs, XFS
         if (fs == 0x9123683e || fs == 0x58465342) {
           return FileAttributes.CaseSensitivity.SENSITIVE;
@@ -708,11 +711,13 @@ public final class FileSystemUtil {
         // Ext*, F2FS
         if ((fs == 0xef53 || fs == 0xf2f52010) && ourLibExt2FsPresent) {
           LongByReference flags = new LongByReference();
-          if (E2P.INSTANCE.fgetflags(path, flags) == 0) {
-            if (LOG.isTraceEnabled()) LOG.trace("fgetflags(" + path + "): error");
+          if (E2P.INSTANCE.fgetflags(path, flags) != 0) {
+            if (LOG.isDebugEnabled()) LOG.debug("fgetflags(" + path + "): error");
           }
           else {
-            return (flags.getValue() & E2P.CASE_FOLD) != 0 ? FileAttributes.CaseSensitivity.INSENSITIVE : FileAttributes.CaseSensitivity.SENSITIVE;
+            // Ext4/F2FS inodes on file systems with "casefold" option enable may have EXT4_CASEFOLD_FL (F2FS_CASEFOLD_FL) attribute
+            // see e.g. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b886ee3e778ec2ad43e276fd378ab492cf6819b7
+            return (flags.getValue() & E2P.EXT4_CASEFOLD_FL) == 0 ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
           }
         }
       }
@@ -739,7 +744,7 @@ public final class FileSystemUtil {
   interface E2P extends Library {
     E2P INSTANCE = Native.load("e2p", E2P.class);
 
-    long CASE_FOLD = 0x4000_0000L;
+    long EXT4_CASEFOLD_FL = 0x4000_0000L;
 
     int fgetflags(String path, LongByReference flags);
   }

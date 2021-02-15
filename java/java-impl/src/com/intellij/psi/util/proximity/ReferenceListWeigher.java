@@ -88,6 +88,11 @@ public class ReferenceListWeigher extends ProximityWeigher {
   @NotNull
   public ReferenceListApplicability getApplicability(@NotNull PsiClass aClass, @NotNull PsiElement position) {
     Preference condition = getPreferredCondition(position);
+    if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      if (condition == Preference.Interfaces || condition == Preference.Classes) {
+        return inapplicable;
+      }
+    }
     if (condition == Preference.Interfaces) return aClass.isInterface() ? applicableByKind : inapplicable;
     if (condition == Preference.Classes) {
       if (aClass.isInterface()) return inapplicable;

@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ktor-websockets" type="repository">
-    <properties maven-id="io.ktor:ktor-websockets:1.3.1">
+    <properties maven-id="io.ktor:ktor-websockets:1.5.0">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-common" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
@@ -23,11 +23,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets/1.3.1/ktor-websockets-1.3.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets/1.5.0/ktor-websockets-1.5.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets/1.3.1/ktor-websockets-1.3.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets/1.5.0/ktor-websockets-1.5.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

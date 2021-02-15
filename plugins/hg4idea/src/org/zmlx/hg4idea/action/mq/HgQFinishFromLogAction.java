@@ -27,6 +27,7 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import static java.util.Collections.singletonList;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QFINISH_ERROR;
 
 public class HgQFinishFromLogAction extends HgMqAppliedPatchAction {
   @Override
@@ -37,7 +38,7 @@ public class HgQFinishFromLogAction extends HgMqAppliedPatchAction {
       HgCommandExecutor executor = new HgCommandExecutor(project);
       HgCommandResult result = executor.executeInCurrentThread(repository.getRoot(), "qfinish", singletonList("qbase:" + revision));
       if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-        new HgCommandResultNotifier(project).notifyError("hg.qfinish.error",
+        new HgCommandResultNotifier(project).notifyError(QFINISH_ERROR,
                                                          result,
                                                          HgBundle.message("action.hg4idea.QFinish.error"),
                                                          HgBundle.message("action.hg4idea.QFinish.error.msg"));

@@ -464,7 +464,7 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample,
                                        logicalPosition: () -> LogicalPosition,
                                        checkLine: Boolean = true,
                                        @Nls message: TaskContext.() -> String) {
-  highlightBreakpointGutter(logicalPosition())
+  highlightBreakpointGutter(logicalPosition)
 
   prepareRuntimeTask {
     runWriteAction {

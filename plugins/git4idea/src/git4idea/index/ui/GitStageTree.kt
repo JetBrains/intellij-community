@@ -27,10 +27,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.isEmpty
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.conflicts.getConflictType
 import git4idea.i18n.GitBundle
@@ -45,20 +44,18 @@ import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionListener
-import java.util.stream.Stream
-import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.SwingConstants
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
-import kotlin.streams.toList
 
 abstract class GitStageTree(project: Project, private val settings: GitStageUiSettings, parentDisposable: Disposable) :
   ChangesTree(project, false, true) {
@@ -77,7 +74,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   init {
     isKeepTreeState = true
     isScrollToSelection = false
-    setCellRenderer(GitStageTreeRenderer(ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, true)))
+    setCellRenderer(GitStageTreeRenderer(myProject) { isShowFlatten })
     MyMouseListener().also {
       addMouseMotionListener(it)
       addMouseListener(it)
@@ -119,7 +116,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   }
 
   private fun getComponentWidth(icon: Icon): Int {
-    val hasTransparentScrollbar = JBScrollPane.findScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } ?: false
+    val hasTransparentScrollbar = JBScrollPane.findScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } == true
     if (hasTransparentScrollbar) return icon.iconWidth + UIUtil.getScrollBarWidth()
     return icon.iconWidth
   }
@@ -155,9 +152,9 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     return when {
       GitStageDataKeys.GIT_STAGE_TREE.`is`(dataId) -> this
       GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
-      GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
-      VcsDataKeys.FILE_PATH_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
-      VcsDataKeys.VIRTUAL_FILE_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
+      GitStageDataKeys.GIT_FILE_STATUS_NODES.`is`(dataId) -> selectedStatusNodes()
+      VcsDataKeys.FILE_PATHS.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
+      VcsDataKeys.VIRTUAL_FILES.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
         .toList().toTypedArray()
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
@@ -167,8 +164,9 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }
   }
 
-  fun selectedStatusNodes(): Stream<GitFileStatusNode> {
-    return VcsTreeModelData.selected(this).userObjectsStream(GitFileStatusNode::class.java)
+  fun selectedStatusNodes(): JBIterable<GitFileStatusNode> {
+    val data = VcsTreeModelData.selected(this)
+    return JBIterable.create { data.userObjectsStream(GitFileStatusNode::class.java).iterator() }
   }
 
   fun statusNodesListSelection(preferLimitedContext: Boolean): ListSelection<GitFileStatusNode> {
@@ -201,7 +199,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }
   }
 
-  private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory)
+  private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)
     : TreeModelBuilder(project, grouping) {
     private val parentNodes: MutableMap<NodeKind, MyKindNode> = mutableMapOf()
     private val untrackedFilesMap = mutableMapOf<VirtualFile, MutableCollection<GitFileStatus>>()
@@ -308,12 +306,12 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   }
 
   private open inner class MyKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
-    internal val kind: NodeKind
+    val kind: NodeKind
       get() = userObject as NodeKind
 
     init {
       markAsHelperNode()
-      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
     }
 
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
@@ -323,7 +321,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
         renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"),
                         SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
                         Runnable {
-                          val conflictedFiles = getObjectsUnderStream(GitFileStatusNode::class.java).map {
+                          val conflictedFiles = traverseObjectsUnder().filter(GitFileStatusNode::class.java).map {
                             it.filePath.virtualFile
                           }.filter { it != null }.toList() as List<VirtualFile>
                           showMergeDialog(conflictedFiles)
@@ -344,7 +342,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.IGNORED, files, { IgnoredViewDialog(project).show() }) {
     init {
       markAsHelperNode()
-      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
     }
 
     @Nls
@@ -356,7 +354,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project, files).show() }) {
     init {
       markAsHelperNode()
-      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
     }
 
     @Nls
@@ -364,17 +362,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     override fun getSortWeight(): Int = sortOrder.getValue(NodeKind.UNTRACKED)
   }
 
-  private class GitStageTreeRenderer(textRenderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(textRenderer) {
+  private class GitStageTreeRenderer(project: Project, isShowFlatten: () -> Boolean) : ChangesBrowserNodeRenderer(project, isShowFlatten, true) {
     private var floatingIcon: FloatingIcon? = null
-
-    init {
-      buildLayout()
-    }
-
-    private fun buildLayout() {
-      layout = BorderLayout()
-      add(textRenderer)
-    }
 
     override fun paint(g: Graphics) {
       super.paint(g)
@@ -384,16 +373,15 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       }
     }
 
-    override fun getTreeCellRendererComponent(tree: JTree,
-                                              value: Any,
-                                              selected: Boolean,
-                                              expanded: Boolean,
-                                              leaf: Boolean,
-                                              row: Int,
-                                              hasFocus: Boolean): Component {
-      val treeCellRendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
+    override fun customizeCellRenderer(tree: JTree,
+                                       value: Any?,
+                                       selected: Boolean,
+                                       expanded: Boolean,
+                                       leaf: Boolean,
+                                       row: Int,
+                                       hasFocus: Boolean) {
+      super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
       floatingIcon = prepareIcon(tree as GitStageTree, value as ChangesBrowserNode<*>, row, selected)
-      return treeCellRendererComponent
     }
 
     fun prepareIcon(tree: GitStageTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {
@@ -413,7 +401,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
                        else IconLoader.getDisabledIcon(baseIcon, this)
 
       val componentWidth = tree.getComponentWidth(foreground)
-      val componentHeight = tree.getRowHeight().takeIf { it != 0 } ?: this.preferredSize.height
+      val componentHeight = if (tree.isFixedRowHeight) tree.getRowHeight() else preferredSize.height
       val background = ColorIcon(componentWidth, componentHeight, componentWidth, componentHeight,
                                  tree.getBackground(row, selected), false)
 
@@ -433,47 +421,22 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       if (selected) return UIUtil.getTreeBackground(selected, treeFocused)
       return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: UIUtil.getTreeBackground(selected, treeFocused)
     }
-
-    override fun getAccessibleContext(): AccessibleContext {
-      if (accessibleContext == null) {
-        accessibleContext = object : AccessibleContextDelegate(textRenderer.accessibleContext) {
-          override fun getDelegateParent(): Container? = parent
-
-          override fun getAccessibleRole(): AccessibleRole {
-            // Because of a problem with NVDA we have to make this a LABEL,
-            // or otherwise NVDA will read out the entire tree path, causing confusion.
-            return AccessibleRole.LABEL
-          }
-        }
-      }
-      return accessibleContext
-    }
   }
 
   private data class FloatingIcon(val icon: Icon, val location: Int)
 
-  private inner class MyMouseListener : MouseAdapter(), MouseMotionListener {
+  private inner class MyMouseListener : MouseAdapter() {
 
     override fun mouseMoved(e: MouseEvent?) {
-      val hoverData = e?.let { getHoverData(it.point) }
-      if (hoverData == null) {
-        toolTipText = null
-        this@GitStageTree.hoverData = null
-        expandableItemsHandler.isEnabled = true
-        return
-      }
-
-      this@GitStageTree.hoverData = hoverData
-      toolTipText = if (hoverData.isOverOperationIcon) hoverData.operation.actionText.get() else null
-      expandableItemsHandler.isEnabled = !hoverData.isOverOperationIcon
+      hoverData = e?.let { getHoverData(it.point) }
+      toolTipText = hoverData?.takeIf { it.isOverOperationIcon }?.operation?.actionText?.get()
+      expandableItemsHandler.isEnabled = hoverData?.isOverOperationIcon != true
     }
 
     override fun mouseExited(e: MouseEvent?) {
-      this@GitStageTree.hoverData = null
+      hoverData = null
       expandableItemsHandler.isEnabled = true
     }
-
-    override fun mouseDragged(e: MouseEvent?) = Unit
   }
 
   private data class HoverData(val node: ChangesBrowserNode<*>,

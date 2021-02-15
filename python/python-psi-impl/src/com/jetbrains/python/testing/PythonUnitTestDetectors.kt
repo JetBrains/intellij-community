@@ -12,20 +12,20 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Any "test_" function could be used as test by pytest.
- * @see [PythonUnitTestDetectorsBasedOnSettings.isTestFunction]
+ * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
  */
 fun isTestFunction(function: PyFunction) = function.name?.startsWith("test") == true
 
 /**
  * Inheritor of TestCase class is always test for unittest and could also be launched with pytest.
- * @see [PythonUnitTestDetectorsBasedOnSettings.isTestClass]
+ * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
  */
 fun isUnitTestCaseClass(clazz: PyClass, context: TypeEvalContext) = clazz.inherits(context, "unittest.TestCase", "unittest.case.TestCase")
 
 /**
  * Checks if class [isUnitTestCaseClass] or both conditions are true: it's name starts/ends with "Test" and it has at least one
  * "test" or setup method.
- * @see [PythonUnitTestDetectorsBasedOnSettings.isTestClass]
+ * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
  */
 fun isTestClass(clazz: PyClass, context: TypeEvalContext): Boolean {
   if (isUnitTestCaseClass(clazz, context)) {

@@ -3,9 +3,9 @@ package com.intellij.util;
 
 import com.intellij.patterns.*;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -13,9 +13,8 @@ import java.util.Set;
  * @author Gregory.Shrago
  */
 public final class PatternValuesIndex {
-
   public static Set<String> buildStringIndex(Collection<? extends ElementPattern<?>> patterns) {
-    final THashSet<String> result = new THashSet<>();
+    final Set<String> result = new HashSet<>();
     processStringValues(patterns, (elementPattern, value) -> {
       for (Object o : value) {
         if (o instanceof String) {

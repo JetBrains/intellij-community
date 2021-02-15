@@ -140,7 +140,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                       final Runnable onYes,
                                       final Runnable onNo,
                                       int defaultOptionIndex) {
-    final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, yesText, noText) {
+    final BaseListPopupStep<String> step = new BaseListPopupStep<>(title, yesText, noText) {
       @Override
       public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
         return doFinalStep(selectedValue.equals(yesText) ? onYes : onNo);
@@ -279,20 +279,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
       return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                  preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
-    }
-
-    /** @deprecated Use {@link ActionPopupStep#createActionItems(ActionGroup, DataContext, boolean, boolean, boolean, boolean, String, PresentationFactory)} instead. */
-    @Deprecated
-    @NotNull
-    public static List<ActionItem> getActionItems(@NotNull ActionGroup actionGroup,
-                                                  @NotNull DataContext dataContext,
-                                                  boolean showNumbers,
-                                                  boolean useAlphaAsNumbers,
-                                                  boolean showDisabledActions,
-                                                  boolean honorActionMnemonics,
-                                                  @Nullable String actionPlace) {
-      return ActionPopupStep.createActionItems(
-        actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, null);
     }
 
     @Override

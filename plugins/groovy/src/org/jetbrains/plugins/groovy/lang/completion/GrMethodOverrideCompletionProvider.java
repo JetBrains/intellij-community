@@ -29,7 +29,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   private static final ElementPattern<PsiElement> PLACE = psiElement().withParent(GrTypeDefinitionBody.class).with(
-    new PatternCondition<PsiElement>("Not in extends/implements clause of inner class") {
+    new PatternCondition<>("Not in extends/implements clause of inner class") {
       @Override
       public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
         final GrTypeDefinition innerDefinition = PsiTreeUtil.getPrevSiblingOfType(element, GrTypeDefinition.class);

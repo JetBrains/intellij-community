@@ -131,7 +131,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     EditorGutter gutter = editor.getGutter();
     if (gutter instanceof EditorGutterComponentEx) {
       EditorGutterComponentEx gutterComponent = (EditorGutterComponentEx)gutter;
-      MouseEventAdapter mouseListener = new MouseEventAdapter<EditorGutterComponentEx>(gutterComponent) {
+      MouseEventAdapter mouseListener = new MouseEventAdapter<>(gutterComponent) {
         @NotNull
         @Override
         protected MouseEvent convert(@NotNull MouseEvent event) {

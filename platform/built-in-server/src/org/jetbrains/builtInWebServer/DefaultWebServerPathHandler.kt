@@ -5,8 +5,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.endsWithName
-import com.intellij.openapi.util.io.endsWithSlash
-import com.intellij.openapi.util.io.getParentPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
@@ -94,7 +92,7 @@ Android Studio: BuiltinWebServerAccess */
       }
       else {
         // FallbackResource feature in action, /login requested, /index.php retrieved, we must not redirect /login to /login/
-        val parentPath = getParentPath(pathInfo.path)
+        val parentPath = PathUtilRt.getParentPath(pathInfo.path).takeIf { it.isNotEmpty() }
         if (parentPath != null && endsWithName(path, PathUtilRt.getFileName(parentPath))) {
           redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path", extraHeaders)
           return true
@@ -152,3 +150,5 @@ private fun canBeAccessedDirectly(path: String): Boolean {
   }
   return false
 }
+
+private fun endsWithSlash(path: String): Boolean = path.getOrNull(path.length - 1) == '/'

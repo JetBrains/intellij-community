@@ -94,7 +94,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   /**
    * @deprecated please use {@link HyperlinkLabel#setTextWithHyperlink(String) with "beforeLinkText<hyperlink>linkText</hyperlink>" instead}
    */
-  @Deprecated()
+  @Deprecated
   public void setHyperlinkText(@LinkLabel String beforeLinkText, @LinkLabel String linkText, @LinkLabel String afterLinkText) {
     doSetHyperLinkText(beforeLinkText, linkText, afterLinkText);
   }
@@ -183,8 +183,9 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   private boolean isOnLink(int x) {
-    if (myUseIconAsLink && myIcon != null && x < myIcon.getIconWidth()) {
-      return true;
+    if (myUseIconAsLink && myIcon != null) {
+      int offset = getIconOffset();
+      if (x >= offset && x < offset + myIcon.getIconWidth()) return true;
     }
     final HighlightedRegion region = findRegionByX(x);
     return region != null && region.textAttributes == myAnchorAttributes;

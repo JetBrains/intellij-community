@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -38,6 +39,15 @@ public final class Utils {
     }
   };
 
+  @NotNull
+  public static DataContext wrapDataContext(@NotNull DataContext dataContext) {
+    if (dataContext instanceof DataManagerImpl.MyDataContext &&
+        Registry.is("actionSystem.update.actions.asynchronously")) {
+      return new PreCachedDataContext(dataContext);
+    }
+    return dataContext;
+  }
+
   /**
    * @return actions from the given and nested non-popup groups that are visible after updating
    */
@@ -72,8 +82,9 @@ public final class Utils {
                                                                           PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           String place, @Nullable Utils.ActionGroupVisitor visitor) {
-    if (!(context instanceof AsyncDataContext))
-      context = new AsyncDataContext(context);
+    if (!(context instanceof PreCachedDataContext)) {
+      context = new PreCachedDataContext(context);
+    }
     return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }

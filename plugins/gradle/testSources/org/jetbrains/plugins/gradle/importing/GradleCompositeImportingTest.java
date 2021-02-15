@@ -699,6 +699,50 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     }
   }
 
+  @Test
+  @TargetVersions("4.10+") // https://docs.gradle.org/4.10/release-notes.html#nested-included-builds
+  public void testNestedCompositeBuilds() throws Exception {
+    createSettingsFile("rootProject.name = 'root'\n" +
+                       "includeBuild('A')");
+    createProjectSubFile("A/settings.gradle", "includeBuild('AA')");
+    createProjectSubFile("A/AA/settings.gradle", "includeBuild('AAA')");
+    createProjectSubFile("A/AA/AAA/settings.gradle");
+
+    importProject("");
+
+    assertModules("root", "A", "AA", "AAA");
+  }
+
+  @Test
+  @TargetVersions("6.8+") // https://docs.gradle.org/6.8-rc-1/release-notes.html#desired-cycles-between-builds-are-now-fully-supported
+  public void testNestedCyclicCompositeBuilds() throws Exception {
+    createSettingsFile("rootProject.name = 'root'\n" +
+                       "includeBuild('A')\n" +
+                       "includeBuild('B')\n" +
+                       "includeBuild('C')\n" +
+                       "includeBuild('.')");
+    createProjectSubFile("A/settings.gradle", "includeBuild('AA')");
+    createProjectSubFile("A/AA/settings.gradle", "includeBuild('AAA')");
+    createProjectSubFile("A/AA/AAA/settings.gradle");
+
+    createProjectSubFile("B/settings.gradle", "includeBuild('../C')\n" +
+                                              "includeBuild('../D')");
+
+    createProjectSubFile("C/settings.gradle", "includeBuild('..')\n" +
+                                              "includeBuild('../D')");
+
+    createProjectSubFile("D/settings.gradle", "includeBuild('../A')\n" +
+                                              "includeBuild('../C')");
+
+    importProject("");
+
+    assertModules("root",
+                  "A", "AA", "AAA",
+                  "B",
+                  "C",
+                  "D");
+  }
+
   private static void addToComposite(GradleProjectSettings settings, String buildRootProjectName, String buildPath) {
     GradleProjectSettings.CompositeBuild compositeBuild = settings.getCompositeBuild();
     if (compositeBuild == null) {

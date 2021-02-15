@@ -35,7 +35,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * </code></pre>
  */
 public class PyFStringLikeCompletionContributor extends CompletionContributor {
-  private static final String FEATURE_ID = "python.completion.fstring.like";
 
   private static final PsiElementPattern.Capture<PyPlainStringElement> INSIDE_NON_FORMATTED_STRING_ELEMENT =
     psiElement(PyPlainStringElement.class)
@@ -43,7 +42,7 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
       .andNot(psiElement().inside(PyStringFormatCompletionContributor.FORMAT_STRING_CAPTURE));
 
   public PyFStringLikeCompletionContributor() {
-    extend(CompletionType.BASIC, INSIDE_NON_FORMATTED_STRING_ELEMENT, new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, INSIDE_NON_FORMATTED_STRING_ELEMENT, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -65,7 +64,12 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
           return;
         }
         String completionPrefix = stringElemText.substring(braceOffset + 1, relOffset);
-        if (!PyNames.isIdentifier(completionPrefix)) {
+        boolean autoPopupAfterOpeningBrace = completionPrefix.isEmpty() && parameters.isAutoPopup();
+        if (autoPopupAfterOpeningBrace) {
+          return;
+        }
+        boolean prefixCannotStartReference = !completionPrefix.isEmpty() && !PyNames.isIdentifier(completionPrefix);
+        if (prefixCannotStartReference) {
           return;
         }
         PyExpression fString = PyUtil.createExpressionFromFragment("f" + stringElemText, stringLiteral.getParent());
@@ -80,11 +84,9 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
         }
         CompletionResultSet prefixPatchedResultSet = result.withPrefixMatcher(completionPrefix);
         for (LookupElement variant : fStringVariants) {
-          prefixPatchedResultSet.addElement(new LookupElementDecorator<LookupElement>(variant) {
+          prefixPatchedResultSet.addElement(new LookupElementDecorator<>(variant) {
             @Override
             public void handleInsert(@NotNull InsertionContext context) {
-              FeatureUsageTracker.getInstance().triggerFeatureUsed(FEATURE_ID);
-
               super.handleInsert(context);
               Document document = context.getDocument();
               CharSequence docChars = document.getCharsSequence();

@@ -51,12 +51,12 @@ public class DependencyConfigurationModelImpl implements DependencyConfiguration
   @Override
   @NotNull
   public ResolvedPropertyModel force() {
-    return GradlePropertyModelBuilder.create(myConfigurationElement, FORCE).asMethod(true).buildResolved();
+    return GradlePropertyModelBuilder.create(myConfigurationElement, FORCE).buildResolved();
   }
 
   @Override
   @NotNull
   public ResolvedPropertyModel transitive() {
-    return GradlePropertyModelBuilder.create(myConfigurationElement, TRANSITIVE).asMethod(true).buildResolved();
+    return GradlePropertyModelBuilder.create(myConfigurationElement, TRANSITIVE).buildResolved();
   }
 }

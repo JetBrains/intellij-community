@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.studio.updater.UpdaterService;
@@ -21,6 +21,7 @@ import java.util.zip.ZipInputStream;
 
 public class Runner {
   private static final String PATCH_FILE_NAME = "patch-file.zip";
+  private static final String LOG_FILE_NAME = "idea_updater.log";
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";  // must be equal to UpdateCheckerComponent.ERROR_LOG_FILE_NAME
 
   private static Logger logger = null;
@@ -35,20 +36,33 @@ public class Runner {
     return ourCaseSensitiveFs;
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
     initLogger();
     try {
-      _main(args);
+      List<String> effectiveArgs = new ArrayList<>();
+      for (String arg : args) {
+        if (arg.startsWith("@")) {
+          effectiveArgs.addAll(Files.readAllLines(Paths.get(arg.substring(1))));
+        }
+        else {
+          effectiveArgs.add(arg);
+        }
+      }
+      //noinspection SSBasedInspection
+      _main(effectiveArgs.toArray(new String[0]));
     }
     catch (Throwable t) {
       logger().error("internal error", t);
+      t.printStackTrace(System.err);
       System.exit(2);
     }
   }
 
   public static void initLogger() {
-    String logDirectory = Utils.findDirectory(1_000_000L);
-    logPath = new File(logDirectory, "idea_updater.log").getAbsolutePath();
+    String dirPath = System.getProperty("idea.updater.log", System.getProperty("java.io.tmpdir", System.getProperty("user.home", ".")));
+    Path logDir = Paths.get(dirPath).toAbsolutePath().normalize();
+    logPath = logDir.resolve(LOG_FILE_NAME).toString();
 
     FileAppender update = new FileAppender();
     update.setFile(logPath);
@@ -58,7 +72,7 @@ public class Runner {
     update.activateOptions();
 
     FileAppender updateError = new FileAppender();
-    updateError.setFile(new File(logDirectory, ERROR_LOG_FILE_NAME).getAbsolutePath());
+    updateError.setFile(logDir.resolve(ERROR_LOG_FILE_NAME).toString());
     updateError.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
     updateError.setThreshold(Level.ERROR);
     updateError.setAppend(false);
@@ -107,6 +121,7 @@ public class Runner {
       }
 
       List<String> ignoredFiles = extractArguments(args, "ignored");
+      List<String> strictFiles = extractArguments(args, "strictfiles");
       List<String> criticalFiles = extractArguments(args, "critical");
       List<String> optionalFiles = extractArguments(args, "optional");
       List<String> deleteFiles = extractArguments(args, "delete");
@@ -127,6 +142,7 @@ public class Runner {
         .setNormalized(normalized)
         .setIgnoredFiles(ignoredFiles)
         .setCriticalFiles(criticalFiles)
+        .setStrictFiles(strictFiles)
         .setOptionalFiles(optionalFiles)
         .setDeleteFiles(deleteFiles)
         .setWarnings(warnings);
@@ -255,6 +271,7 @@ public class Runner {
       "  <file_set>: Can be one of:\n" +
       "    ignored: The set of files that will not be included in the patch.\n" +
       "    critical: Fully included in the patch, so they can be replaced at the destination even if they have changed.\n" +
+      "    strictfiles: A set of files for which conflicts can't be ignored (a mismatch forbids patch installation).\n" +
       "    optional: A set of files that is okay for them not to exist when applying the patch.\n" +
       "    delete: A set of regular expressions for paths that is safe to delete without user confirmation.\n" +
       "  <flags>: Can be:\n" +

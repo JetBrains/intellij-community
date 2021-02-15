@@ -78,15 +78,6 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return cache;
   }
 
-  /**
-   * @deprecated use {@link PackageDirectoryCache#createCache(List)}
-   */
-  @NotNull
-  @Deprecated
-  protected static PackageDirectoryCache createCache(@NotNull final List<? extends VirtualFile> roots) {
-    return PackageDirectoryCache.createCache(roots);
-  }
-
   public void clearCache() {
     myCache = null;
   }
@@ -190,7 +181,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @Override
   public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     final String pkgName = psiPackage.getQualifiedName();
-    final Set<String> names = getCache(scope).getSubpackageNames(pkgName);
+    final Set<String> names = getCache(scope).getSubpackageNames(pkgName, scope);
     if (names.isEmpty()) {
       return super.getSubPackages(psiPackage, scope);
     }

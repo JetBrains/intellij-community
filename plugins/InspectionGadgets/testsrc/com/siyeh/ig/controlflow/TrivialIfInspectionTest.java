@@ -100,7 +100,7 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  "    else return true;\n" +
                  "}\n");
   }
-  
+
   public void testMethodCall() {
     doMemberTest("void test(int x, Boolean foo) {\n" +
                  "  if (x == 0) System.out.println(foo);\n" +
@@ -108,6 +108,14 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  "    /*'if' statement can be simplified*/if/**/ (x > 0) test(0, true);\n" +
                  "    else test(0, false);\n" +
                  "  }\n" +
+                 "}");
+  }
+
+  public void testOverwrittenDeclaration() {
+    doMemberTest("boolean test(int x) {\n" +
+                 "  boolean result = false;\n" +
+                 "  /*'if' statement can be simplified*/if/**/ (x == 0) result = true;\n" +
+                 "  return result;\n" +
                  "}");
   }
 

@@ -233,7 +233,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       myRepositoryChangesBrowser.repaint();
     };
     final MyListCellRenderer listCellRenderer = new MyListCellRenderer();
-    myRevisionsList = new TableView<SvnChangeList>() {
+    myRevisionsList = new TableView<>() {
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         return listCellRenderer;
@@ -246,7 +246,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       }
     };
     myRevisionsList.setExpandableItemsEnabled(false);
-    new TableViewSpeedSearch<SvnChangeList>(myRevisionsList) {
+    new TableViewSpeedSearch<>(myRevisionsList) {
       @Override
       protected String getItemText(@NotNull SvnChangeList element) {
         return element.getComment();

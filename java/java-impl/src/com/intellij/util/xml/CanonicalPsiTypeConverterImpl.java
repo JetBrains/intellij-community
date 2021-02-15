@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
@@ -15,16 +15,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
+public final class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
   @NonNls static final String[] PRIMITIVES = {"boolean", "byte", "char", "double", "float", "int", "long", "short"};
   @NonNls private static final String ARRAY_PREFIX = "[L";
 
   @Override
   public PsiType fromString(final String s, final ConvertContext context) {
-    if (s == null) return null;
+    if (s == null) {
+      return null;
+    }
+
     try {
       return JavaPsiFacade.getElementFactory(context.getFile().getProject()).createTypeFromText(s.replace('$', '.'), null);
     }

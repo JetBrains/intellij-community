@@ -43,7 +43,7 @@ public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCa
   }
 
   public void testNarrowingCastTextBlock() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
       doTest("class X {" +
              "  String s = (byte)321 +/*_Replace '+' with 'formatted()'*/ \" parsecs\";" +
              "}",

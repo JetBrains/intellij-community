@@ -18,14 +18,12 @@ private val EP_NAME = ExtensionPointName<RegistryKeyBean>("com.intellij.registry
 @NonNls
 private val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
 
-private fun String.unescapeString() = StringUtil.unescapeStringCharacters(replace(CONSECUTIVE_SPACES_REGEX, " "))
-
 /**
  * Registers custom key for [Registry].
  */
 class RegistryKeyBean : PluginAware {
   companion object {
-    private val pendingRemovalKeys = mutableSetOf<String>()
+    private val pendingRemovalKeys = HashSet<String>()
 
     @JvmStatic
     fun addKeysFromPlugins() {
@@ -55,7 +53,9 @@ class RegistryKeyBean : PluginAware {
 
     private fun createRegistryKeyDescriptor(extension: RegistryKeyBean): RegistryKeyDescriptor {
       val pluginId = extension.descriptor?.pluginId?.idString
-      return RegistryKeyDescriptor(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired,
+      return RegistryKeyDescriptor(extension.key,
+                                   StringUtil.unescapeStringCharacters(extension.description.replace(CONSECUTIVE_SPACES_REGEX, " ")),
+                                   extension.defaultValue, extension.restartRequired,
                                    pluginId)
     }
   }

@@ -20,6 +20,7 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -38,7 +39,10 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
@@ -66,15 +70,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -189,7 +193,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     null,
     "AppCode", "SwiftTests",
     "DataGrip",
-    "Python", "PyCharmCore",
+    "Python", "PyCharmDS", "PyCharmCore",
     "Ruby",
     "PhpStorm",
     "UltimateLangXml", "Idea", "PlatformLangXml"};
@@ -243,6 +247,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   @Override
   final void removeGlobalTempDirectory(@NotNull Path dir) {
     temporaryDirectory.after();
+  }
+
+  @Override
+  protected void addTmpFileToKeep(@NotNull Path file) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -711,6 +720,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return dir.toFile();
   }
 
+  @NotNull
   protected static VirtualFile getVirtualFile(@NotNull File file) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
@@ -730,26 +740,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       PathKt.write(file, text);
     }
     return file.toFile();
-  }
-
-  protected final @NotNull VirtualFile createVirtualFileWithBom(@NotNull String ext, @NotNull String content) throws IOException {
-    VirtualFile file = temporaryDirectory.createVirtualFile('.' + ext);
-    WriteAction.runAndWait(() -> {
-      try (OutputStream stream = file.getOutputStream(HeavyPlatformTestCase.class)) {
-        stream.write(CharsetToolkit.UTF8_BOM);
-        try (OutputStreamWriter writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
-          writer.write(content);
-        }
-      }
-    });
-    return file;
-  }
-
-  protected final @NotNull VirtualFile createVirtualFileWithEncodingUsingNio(@NotNull String ext,
-                                                                             byte @Nullable [] bom,
-                                                                             @NotNull String content,
-                                                                             @NotNull Charset charset) {
-    return HeavyTestHelper.createVirtualFileWithEncodingUsingNio(ext, bom, content, charset, getTempDir());
   }
 
   protected final @Nullable PsiFile getPsiFile(@NotNull Document document) {
@@ -828,7 +818,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   public static void setFileText(final @NotNull VirtualFile file, final @NotNull String text) {
     try {
-      WriteAction.runAndWait(() -> VfsUtil.saveText(file, text));
+      WriteAction.runAndWait(() -> LoadTextUtil.write(null, file, file,text, -1));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -22,4 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public interface BuildFeaturesModel extends GradleDslModel {
   @NotNull
   ResolvedPropertyModel compose();
+
+  @NotNull
+  ResolvedPropertyModel mlModelBinding();
 }

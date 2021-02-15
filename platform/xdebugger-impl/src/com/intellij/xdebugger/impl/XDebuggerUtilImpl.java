@@ -66,7 +66,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.ui.DebuggerColors;
-import com.intellij.xml.CommonXmlStrings;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,9 +159,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
               return StringUtil.notNullize(StringUtil.unpluralize(type.getTitle()), type.getTitle());
             }
 
-            @Nullable
             @Override
-            public Icon getIcon() {
+            public @NotNull Icon getIcon() {
               return type.getEnabledIcon();
             }
           });
@@ -260,7 +258,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
             final MySelectionListener selectionListener = new MySelectionListener();
             BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant> step =
-              new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>(XDebuggerBundle.message("popup.title.set.breakpoint"), variants) {
+              new BaseListPopupStep<>(XDebuggerBundle.message("popup.title.set.breakpoint"), variants) {
                 @NotNull
                 @Override
                 public String getTextFor(XLineBreakpointType.XLineBreakpointVariant value) {

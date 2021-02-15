@@ -26,7 +26,6 @@ import git4idea.util.GitFileUtils
 import java.nio.charset.Charset
 
 class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
-  private val LOG = Logger.getInstance(GitStageLineStatusTrackerProvider::class.java)
 
   override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = tracker is GitStageLineStatusTracker
 
@@ -110,4 +109,8 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
 
   private class StagedContentInfo(val currentRevision: String?, val charset: Charset, val virtualFile: VirtualFile) : ContentInfo
   private class StagedTrackerContent(val vcsContent: CharSequence, val stagedDocument: Document) : TrackerContent
+
+  companion object {
+    private val LOG = Logger.getInstance(GitStageLineStatusTrackerProvider::class.java)
+  }
 }

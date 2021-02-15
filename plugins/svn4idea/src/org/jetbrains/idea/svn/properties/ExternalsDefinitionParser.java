@@ -15,7 +15,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class ExternalsDefinitionParser {
+public final class ExternalsDefinitionParser {
 
   /**
    * Parses "svn:externals" property in format starting from svn 1.5.

@@ -28,6 +28,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                      configuration -> configuration.getOptions().isIncludeProvidedScope(),
                                      (configuration, value) -> configuration.getOptions().setIncludeProvidedScope(value)));
     fragments.add(commonParameterFragments.programArguments());
+    fragments.add(new TargetPathFragment<>());
     fragments.add(commonParameterFragments.createRedirectFragment());
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment = createMainClass(moduleClasspath.component());
     fragments.add(mainClassFragment);

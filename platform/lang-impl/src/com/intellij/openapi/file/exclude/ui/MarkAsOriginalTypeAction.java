@@ -30,7 +30,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-        .filter(file -> isApplicableFor(file) && typeManager.isMarkedAsPlainText(file));
+        .filter(file -> isApplicableFor(file, true) && typeManager.isMarkedAsPlainText(file));
     typeManager.resetOriginalFileType(project, VfsUtilCore.toVirtualFileArray(selectedFiles.toList()));
   }
 
@@ -39,7 +39,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-        .filter(file -> isApplicableFor(file) && typeManager.isMarkedAsPlainText(file));
+        .filter(file -> isApplicableFor(file, true) && typeManager.isMarkedAsPlainText(file));
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     Set<FileType> fileTypes = selectedFiles.map(file -> fileTypeManager.getFileTypeByFileName(file.getNameSequence())).toSet();
     if (fileTypes.size() == 1) {

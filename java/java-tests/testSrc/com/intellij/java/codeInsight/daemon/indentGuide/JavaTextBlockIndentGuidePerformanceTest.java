@@ -35,7 +35,7 @@ public class JavaTextBlockIndentGuidePerformanceTest extends LightDaemonAnalyzer
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_14;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 
   private static String createCodeBlocks(int n, int nLines) {

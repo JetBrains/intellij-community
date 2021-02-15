@@ -45,6 +45,9 @@
         <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
         <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
       </action>
+      <action class="org.intellij.images.actions.EditExternalImageEditorAction"
+              id="Images.EditExternalEditorPath">
+      </action>
       <action class="org.intellij.images.actions.ConvertSvgToPngAction"
               id="Images.ConvertSvgToPng">
         <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
@@ -161,6 +164,7 @@
       <reference id="VersionControlsGroup"/>
       <separator/>
       <reference id="Images.EditExternally"/>
+      <reference id="Images.EditExternalEditorPath"/>
       <reference id="ExternalToolsGroup"/>
     </group>
     <group id="Images.ThumbnailsToolbar">

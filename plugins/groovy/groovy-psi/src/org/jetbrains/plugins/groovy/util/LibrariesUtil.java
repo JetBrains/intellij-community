@@ -19,13 +19,13 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -45,7 +45,7 @@ public final class LibrariesUtil {
     if (module == null) return Library.EMPTY_ARRAY;
     final ArrayList<Library> libraries = new ArrayList<>();
 
-    ApplicationManager.getApplication().runReadAction(() -> populateOrderEntries(module, condition, libraries, false, new THashSet<>()));
+    ApplicationManager.getApplication().runReadAction(() -> populateOrderEntries(module, condition, libraries, false, new HashSet<>()));
 
     return libraries.toArray(Library.EMPTY_ARRAY);
   }

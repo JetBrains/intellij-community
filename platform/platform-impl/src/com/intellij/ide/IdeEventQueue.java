@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.codeWithMe.ClientId;
@@ -33,7 +33,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -46,6 +45,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -82,13 +83,11 @@ public final class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
-  private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
-  private static final boolean ourActionAwareTypeaheadEnabled = !SystemInfo.isMac && !SystemInfo.isLinux &&
-                                                                SystemProperties.getBooleanProperty("action.aware.typeAhead", true);
+  private static final boolean ourActionAwareTypeaheadEnabled = !SystemInfoRt.isMac && Boolean.getBoolean("action.aware.typeAhead");
   private static final boolean ourTypeAheadSearchEverywhereEnabled =
     SystemProperties.getBooleanProperty("action.aware.typeAhead.searchEverywhere", false);
   private static final boolean ourSkipTypedEvent = SystemProperties.getBooleanProperty("skip.typed.event", true);
-  private static final boolean ourSkipMetaPressOnLinux = SystemProperties.getBooleanProperty("keymap.skip.meta.press.on.linux", false);
+  private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
   private static PerformanceWatcher ourPerformanceWatcher;
@@ -178,18 +177,18 @@ public final class IdeEventQueue extends EventQueue {
         if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
           FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run on EDT if needed : " + no.getClass().getName());
         }
-        UIUtil.invokeLaterIfNeeded(no);
+        EdtInvocationManager.invokeLaterIfNeeded(no);
       }
     }
     else {
       if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
         FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
       }
-      UIUtil.invokeLaterIfNeeded(no);
+      EdtInvocationManager.invokeLaterIfNeeded(no);
     }
   }
 
-  private static class IdeEventQueueHolder {
+  private static final class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
   }
 
@@ -206,16 +205,15 @@ public final class IdeEventQueue extends EventQueue {
 
     KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
-      final Application application = ApplicationManager.getApplication();
-      if (application == null) {
-        // We can get focus event before application is initialized
-        return;
+      Application app = ApplicationManager.getApplication();
+      // we can get focus event before application is initialized
+      if (app != null) {
+        app.assertIsDispatchThread();
       }
-      application.assertIsDispatchThread();
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
-    if (SystemInfo.isWin7OrNewer && SystemProperties.getBooleanProperty("keymap.windows.up.to.maximize.dialogs", true)) {
+    if (SystemInfoRt.isWindows && Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
       // 'Windows+Up' shortcut would maximize active dialog under Win 7+
       addDispatcher(new WindowsUpMaximizer(), null);
     }
@@ -292,7 +290,7 @@ public final class IdeEventQueue extends EventQueue {
       myIdleListeners.add(runnable);
       final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeoutMillis);
       myListenerToRequest.put(runnable, request);
-      UIUtil.invokeLaterIfNeeded(() -> myIdleRequestsAlarm.addRequest(request, timeoutMillis));
+      EdtInvocationManager.invokeLaterIfNeeded(() -> myIdleRequestsAlarm.addRequest(request, timeoutMillis));
     }
   }
 
@@ -349,8 +347,7 @@ public final class IdeEventQueue extends EventQueue {
     myEventCount = evCount;
   }
 
-  @NotNull
-  public AWTEvent getTrueCurrentEvent() {
+  public @NotNull AWTEvent getTrueCurrentEvent() {
     return myCurrentEvent;
   }
 
@@ -368,7 +365,7 @@ public final class IdeEventQueue extends EventQueue {
     return ourAppIsLoaded;
   }
 
-  //Use for GuiTests to stop IdeEventQueue when application is disposed already
+  // used for GuiTests to stop IdeEventQueue when application is disposed already
   public static void applicationClose() {
     ourAppIsLoaded = false;
   }
@@ -431,7 +428,7 @@ public final class IdeEventQueue extends EventQueue {
       if (metaEvent != null && Registry.is("keymap.windows.as.meta")) {
         e = metaEvent;
       }
-      if (JAVA11_ON_MAC && e instanceof InputEvent) {
+      if (SystemInfoRt.isMac && e instanceof InputEvent) {
         disableAltGrUnsupportedOnMac(e);
       }
 
@@ -442,10 +439,7 @@ public final class IdeEventQueue extends EventQueue {
 
       AWTEvent finalE1 = e;
       Runnable runnable = extractRunnable(e);
-      Class<? extends Runnable> runnableClass = runnable != null ?
-                                                runnable.getClass() :
-                                                Runnable.class;
-
+      Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
       Runnable processEventRunnable = () -> {
         try (AccessToken ignored = startActivity(finalE1)) {
           ProgressManager progressManager = obtainProgressManager();
@@ -541,12 +535,14 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private static void disableAltGrUnsupportedOnMac(@NotNull AWTEvent e) {
-    if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
+    if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) {
+      ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
+    }
     IdeKeyEventDispatcher.removeAltGraph((InputEvent)e);
   }
 
-  private void onFocusEvent(@NotNull AWTEvent e) {
-    TouchBarsManager.onFocusEvent(e);
+  private void onFocusEvent(@NotNull AWTEvent event) {
+    TouchBarsManager.onFocusEvent(event);
 
     if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
       FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState());
@@ -555,22 +551,28 @@ public final class IdeEventQueue extends EventQueue {
     while (!focusEventsList.isEmpty()) {
       AWTEvent f = focusEventsList.poll();
       events.add(f);
-      if (f.equals(e)) break;
+      if (f.equals(event)) {
+        break;
+      }
     }
-    events.stream()
-      .map(entry -> myRunnablesWaitingFocusChange.remove(entry))
-      .filter(lor -> lor != null)
-      .flatMap(listOfRunnables -> listOfRunnables.stream())
-      .filter(r -> r != null)
-      .filter(r -> !(r instanceof ExpirableRunnable && ((ExpirableRunnable)r).isExpired()))
-      .forEach(runnable -> {
-        try {
-          runnable.run();
+
+    for (AWTEvent entry : events) {
+      List<Runnable> runnables = myRunnablesWaitingFocusChange.remove(entry);
+      if (runnables == null) {
+        continue;
+      }
+
+      for (Runnable r : runnables) {
+        if (r != null && !(r instanceof ExpirableRunnable && ((ExpirableRunnable)r).isExpired())) {
+          try {
+            r.run();
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
         }
-        catch (Exception ex) {
-          LOG.error(ex);
-        }
-      });
+      }
+    }
   }
 
   /**
@@ -631,7 +633,7 @@ public final class IdeEventQueue extends EventQueue {
 
     boolean metaIsPressed = e instanceof InputEvent && (((InputEvent)e).getModifiersEx() & InputEvent.META_DOWN_MASK) != 0;
     boolean typedKeyEvent = e.getID() == KeyEvent.KEY_TYPED;
-    return SystemInfo.isLinux && typedKeyEvent && metaIsPressed;
+    return SystemInfoRt.isLinux && typedKeyEvent && metaIsPressed;
   }
 
   private boolean skipTypedKeyEventsIfFocusReturnsToOwner(@NotNull AWTEvent e) {
@@ -655,7 +657,7 @@ public final class IdeEventQueue extends EventQueue {
     return false;
   }
 
-  //As we rely on system time monotonicity in many places let's log anomalies at least.
+  // as we rely on system time monotonicity in many places let's log anomalies at least.
   private void checkForTimeJump(long now) {
     if (myLastEventTime > now + 1000) {
       LOG.warn("System clock's jumped back by ~" + (myLastEventTime - now) / 1000 + " sec");
@@ -668,8 +670,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   @Override
-  @NotNull
-  public AWTEvent getNextEvent() throws InterruptedException {
+  public @NotNull AWTEvent getNextEvent() throws InterruptedException {
     AWTEvent event = appIsLoaded() ?
                      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> super.getNextEvent()) :
                      super.getNextEvent();
@@ -679,8 +680,7 @@ public final class IdeEventQueue extends EventQueue {
     return event;
   }
 
-  @Nullable
-  static AccessToken startActivity(@NotNull AWTEvent e) {
+  static @Nullable AccessToken startActivity(@NotNull AWTEvent e) {
     if (ourTransactionGuard == null && appIsLoaded()) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
@@ -700,13 +700,11 @@ public final class IdeEventQueue extends EventQueue {
     StartupAbortedException.processException(t);
   }
 
-  @NotNull
-  private static AWTEvent mapEvent(@NotNull AWTEvent e) {
-    return SystemInfo.isXWindow && e instanceof MouseEvent && ((MouseEvent)e).getButton() > 3 ? mapXWindowMouseEvent((MouseEvent)e) : e;
+  private static @NotNull AWTEvent mapEvent(@NotNull AWTEvent e) {
+    return SystemInfoRt.isXWindow && e instanceof MouseEvent && ((MouseEvent)e).getButton() > 3 ? mapXWindowMouseEvent((MouseEvent)e) : e;
   }
 
-  @NotNull
-  private static AWTEvent mapXWindowMouseEvent(MouseEvent src) {
+  private static @NotNull AWTEvent mapXWindowMouseEvent(MouseEvent src) {
     if (src.getButton() < 6) {
       // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
       return new MouseWheelEvent(src.getComponent(), MouseEvent.MOUSE_WHEEL, src.getWhen(),
@@ -751,7 +749,7 @@ public final class IdeEventQueue extends EventQueue {
         return null;
       }
       if (myWinMetaPressed) {
-        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | ke.getModifiersEx() | InputEvent.META_MASK,
+        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | ke.getModifiersEx() | Event.META_MASK,
                             ke.getKeyCode(),
                             ke.getKeyChar(), ke.getKeyLocation());
       }
@@ -759,7 +757,7 @@ public final class IdeEventQueue extends EventQueue {
 
     if (myWinMetaPressed && e instanceof MouseEvent && ((MouseEvent)e).getButton() != 0) {
       MouseEvent me = (MouseEvent)e;
-      return new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers() | me.getModifiersEx() | InputEvent.META_MASK,
+      return new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers() | me.getModifiersEx() | Event.META_MASK,
                             me.getX(), me.getY(),
                             me.getClickCount(), me.isPopupTrigger(), me.getButton());
     }
@@ -778,7 +776,7 @@ public final class IdeEventQueue extends EventQueue {
     myEventCount++;
 
     if (e instanceof WindowEvent) {
-      processAppActivationEvent((WindowEvent)e);
+      processAppActivationEvent((WindowEvent)e, myWindowManager);
     }
 
     myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsPosted.get() > myKeyboardEventsDispatched.get();
@@ -811,11 +809,10 @@ public final class IdeEventQueue extends EventQueue {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
       }
-
       return;
     }
 
-    if (e instanceof InputEvent && SystemInfo.isMac) {
+    if (e instanceof InputEvent && SystemInfoRt.isMac) {
       TouchBarsManager.onInputEvent((InputEvent)e);
     }
 
@@ -823,13 +820,11 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (e instanceof InputMethodEvent) {
-      if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
-        return;
-      }
+    if (e instanceof InputMethodEvent && SystemInfoRt.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
+      return;
     }
 
-    if (e instanceof ComponentEvent && myWindowManager != null) {
+    if (e instanceof ComponentEvent && myWindowManager != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myWindowManager.dispatchComponentEvent((ComponentEvent)e);
     }
 
@@ -845,16 +840,17 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private static boolean processMouseWheelEvent(@NotNull MouseWheelEvent e) {
-    final MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
-    if (selectedPath.length > 0 && !(selectedPath[0] instanceof ComboPopup)) {
-      e.consume();
-      Component component = selectedPath[0].getComponent();
-      if (component instanceof JBPopupMenu) {
-        ((JBPopupMenu)component).processMouseWheelEvent(e);
-      }
-      return true;
+    MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
+    if (selectedPath.length <= 0 || selectedPath[0] instanceof ComboPopup) {
+      return false;
     }
-    return false;
+
+    e.consume();
+    Component component = selectedPath[0].getComponent();
+    if (component instanceof JBPopupMenu) {
+      ((JBPopupMenu)component).processMouseWheelEvent(e);
+    }
+    return true;
   }
 
   private void processIdleActivityListeners(@NotNull AWTEvent e) {
@@ -899,7 +895,9 @@ public final class IdeEventQueue extends EventQueue {
   private void dispatchMouseEvent(@NotNull AWTEvent e) {
     MouseEvent me = (MouseEvent)e;
 
-    if (me.getClickCount() > 10) LOG.warn(String.format("Too many mouse clicks (%d)!!!", me.getClickCount()));
+    if (me.getClickCount() > 10) {
+      LOG.warn(String.format("Too many mouse clicks (%d)!!!", me.getClickCount()));
+    }
 
     if (me.getID() == MouseEvent.MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0) {
       resetGlobalMouseEventTarget(me);
@@ -938,7 +936,7 @@ public final class IdeEventQueue extends EventQueue {
     return false;
   }
 
-  private static void processAppActivationEvent(@NotNull WindowEvent event) {
+  private static void processAppActivationEvent(@NotNull WindowEvent event, @Nullable WindowManagerEx windowManager) {
     ApplicationActivationStateManager.updateState(event);
 
     if (event.getID() != WindowEvent.WINDOW_DEACTIVATED && event.getID() != WindowEvent.WINDOW_LOST_FOCUS) {
@@ -951,13 +949,12 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    Component frame = ComponentUtil.findUltimateParent(eventWindow);
-    WindowManager windowManager = ApplicationManager.getApplication().getServiceIfCreated(WindowManager.class);
     if (windowManager == null) {
       return;
     }
 
-    for (ProjectFrameHelper frameHelper : ((WindowManagerEx)windowManager).getProjectFrameHelpers()) {
+    Component frame = ComponentUtil.findUltimateParent(eventWindow);
+    for (ProjectFrameHelper frameHelper : windowManager.getProjectFrameHelpers()) {
       if (frame == frameHelper.getFrame()) {
         IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
         if (focusManager instanceof FocusManagerImpl) {
@@ -970,7 +967,6 @@ public final class IdeEventQueue extends EventQueue {
   private void defaultDispatchEvent(@NotNull AWTEvent e) {
     try {
       maybeReady();
-      fixStickyAlt(e);
       KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
       boolean consumed = ke == null || ke.isConsumed();
       super.dispatchEvent(e);
@@ -1001,16 +997,6 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  private static void fixStickyAlt(@NotNull AWTEvent e) {
-    if (SystemInfo.isWinXpOrNewer &&
-        !SystemInfo.isWinVistaOrNewer &&
-        e instanceof KeyEvent &&
-        ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT &&
-        !Registry.is("actionSystem.win.suppressAlt.new")) {
-      ((KeyEvent)e).consume();  // IDEA-17359
-    }
-  }
-
   public void flushQueue() {
     while (true) {
       AWTEvent event = peekEvent();
@@ -1024,44 +1010,46 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Predicate<? super AWTEvent> exitCondition) {
+  public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Future<?> exitCondition, @NotNull Predicate<? super AWTEvent> isCancelEvent) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
     }
-    AWTEvent event;
-    do {
+    while (!exitCondition.isDone()) {
       try {
-        event = getNextEvent();
-        boolean eventOk = true;
-        if (event instanceof InputEvent) {
-          final Object s = event.getSource();
-          if (s instanceof Component) {
-            Component c = (Component)s;
-            Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
-            while (c != null && c != modalWindow) c = c.getParent();
-            if (c == null) {
-              eventOk = false;
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("pumpEventsForHierarchy.consumed: " + event);
-              }
-              ((InputEvent)event).consume();
-            }
-          }
-        }
-
-        if (eventOk) {
+        AWTEvent event = getNextEvent();
+        boolean consumed = consumeUnrelatedEvent(modalComponent, event);
+        if (!consumed) {
           dispatchEvent(event);
         }
       }
       catch (Throwable e) {
         LOG.error(e);
-        event = null;
       }
     }
-    while (!exitCondition.test(event));
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
     }
+  }
+
+  // return true if consumed
+  private static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
+    boolean consumed = false;
+    if (event instanceof InputEvent) {
+      Object s = event.getSource();
+      if (s instanceof Component) {
+        Component c = (Component)s;
+        Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
+        while (c != null && c != modalWindow) c = c.getParent();
+        if (c == null) {
+          consumed = true;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("pumpEventsForHierarchy.consumed: " + event);
+          }
+          ((InputEvent)event).consume();
+        }
+      }
+    }
+    return consumed;
   }
 
   @FunctionalInterface
@@ -1167,7 +1155,7 @@ public final class IdeEventQueue extends EventQueue {
     return myPopupManager.isPopupActive();
   }
 
-  private static class WindowsAltSuppressor implements EventDispatcher {
+  private static final class WindowsAltSuppressor implements EventDispatcher {
     private boolean myWaitingForAltRelease;
     private Robot myRobot;
 
@@ -1176,53 +1164,60 @@ public final class IdeEventQueue extends EventQueue {
       return e instanceof KeyEvent && dispatchKeyEvent((KeyEvent)e);
     }
 
-    private boolean dispatchKeyEvent(@NotNull KeyEvent ke) {
-      boolean dispatch = true;
-      final Component component = ke.getComponent();
-      boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
+    private boolean dispatchKeyEvent(@NotNull KeyEvent keyEvent) {
+      boolean pureAlt = keyEvent.getKeyCode() == KeyEvent.VK_ALT && (keyEvent.getModifiers() | Event.ALT_MASK) == Event.ALT_MASK;
       if (!pureAlt) {
         myWaitingForAltRelease = false;
+        return false;
       }
-      else {
-        UISettings uiSettings = UISettings.getInstanceOrNull();
-        if (uiSettings == null ||
-            !SystemInfo.isWindows ||
-            !Registry.is("actionSystem.win.suppressAlt") ||
-            !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
-          return false;
-        }
 
-        if (ke.getID() == KeyEvent.KEY_PRESSED) {
-          dispatch = !myWaitingForAltRelease;
-        }
-        else if (ke.getID() == KeyEvent.KEY_RELEASED) {
-          if (myWaitingForAltRelease) {
-            myWaitingForAltRelease = false;
-            dispatch = false;
-          }
-          else if (component != null) {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(() -> {
-              try {
-                final Window window = ComponentUtil.getWindow(component);
-                if (window == null || !window.isActive()) {
-                  return;
-                }
-                myWaitingForAltRelease = true;
-                if (myRobot == null) {
-                  myRobot = new Robot();
-                }
-                myRobot.keyPress(KeyEvent.VK_ALT);
-                myRobot.keyRelease(KeyEvent.VK_ALT);
-              }
-              catch (AWTException e1) {
-                LOG.debug(e1);
-              }
-            });
-          }
-        }
+      if (!SystemInfoRt.isWindows || !Registry.is("actionSystem.win.suppressAlt", true)) {
+        return false;
       }
-      return !dispatch;
+
+      UISettings uiSettings = UISettings.getInstanceOrNull();
+      if (uiSettings == null || !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
+        return false;
+      }
+
+      if (keyEvent.getID() == KeyEvent.KEY_PRESSED) {
+        return myWaitingForAltRelease;
+      }
+
+      if (keyEvent.getID() != KeyEvent.KEY_RELEASED) {
+        return false;
+      }
+
+      if (myWaitingForAltRelease) {
+        myWaitingForAltRelease = false;
+        return false;
+      }
+
+      Component component = keyEvent.getComponent();
+      if (component == null) {
+        return false;
+      }
+
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
+        try {
+          Window window = ComponentUtil.getWindow(component);
+          if (window == null || !window.isActive()) {
+            return;
+          }
+
+          myWaitingForAltRelease = true;
+          if (myRobot == null) {
+            myRobot = new Robot();
+          }
+          myRobot.keyPress(KeyEvent.VK_ALT);
+          myRobot.keyRelease(KeyEvent.VK_ALT);
+        }
+        catch (AWTException e1) {
+          LOG.debug(e1);
+        }
+      });
+      return false;
     }
   }
 
@@ -1254,7 +1249,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   //We have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
-  private static class EditingCanceller implements EventDispatcher {
+  private static final class EditingCanceller implements EventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
       return e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE &&
@@ -1278,7 +1273,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   public boolean isInputMethodEnabled() {
-    return !SystemInfo.isMac || myInputMethodLock == 0;
+    return !SystemInfoRt.isMac || myInputMethodLock == 0;
   }
 
   public void disableInputMethods(@NotNull Disposable parentDisposable) {
@@ -1307,7 +1302,7 @@ public final class IdeEventQueue extends EventQueue {
     return doesFocusGoIntoPopupFromWindowEvent(unwrappedEvent);
   }
 
-  private static class SequencedEventNestedFieldHolder {
+  private static final class SequencedEventNestedFieldHolder {
     private static final Field NESTED_FIELD;
     private static final Method DISPOSE_METHOD;
     private static final Class<?> SEQUENCED_EVENT_CLASS;
@@ -1334,8 +1329,7 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  @NotNull
-  private static AWTEvent unwrapWindowEvent(@NotNull AWTEvent e) {
+  private static @NotNull AWTEvent unwrapWindowEvent(@NotNull AWTEvent e) {
     AWTEvent unwrappedEvent = e;
     if (e.getClass() == SequencedEventNestedFieldHolder.SEQUENCED_EVENT_CLASS) {
       try {
@@ -1350,7 +1344,9 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private boolean isTypeaheadTimeoutExceeded() {
-    if (!delayKeyEvents.get()) return false;
+    if (!delayKeyEvents.get()) {
+      return false;
+    }
     long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
     if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimeout").asDouble()) {
       // Log4j uses appenders. The appenders potentially may use invokeLater method
@@ -1366,8 +1362,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private static boolean doesFocusGoIntoPopupFromWindowEvent(@NotNull AWTEvent e) {
-    if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
-        SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED) {
+    if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS || SystemInfoRt.isLinux && e.getID() == WindowEvent.WINDOW_OPENED) {
       if (UIUtil.isTypeAheadAware(((WindowEvent)e).getWindow())) {
         TYPEAHEAD_LOG.debug("Focus goes into TypeAhead aware window");
         return true;
@@ -1392,7 +1387,9 @@ public final class IdeEventQueue extends EventQueue {
   // return true if posted, false if consumed immediately
   boolean doPostEvent(@NotNull AWTEvent event) {
     for (PostEventHook listener : myPostEventListeners.getListeners()) {
-      if (listener.consumePostedEvent(event)) return false;
+      if (listener.consumePostedEvent(event)) {
+        return false;
+      }
     }
 
     if (event instanceof InvocationEvent && !ClientId.isCurrentlyUnderLocalId() && ClientId.Companion.getPropagateAcrossThreads()) {
@@ -1401,11 +1398,10 @@ public final class IdeEventQueue extends EventQueue {
       super.postEvent(new InvocationEvent(event.getSource(), () -> ClientId.withClientId(clientId, () -> {
         dispatchEvent(event);
       })));
-
       return true;
     }
 
-    if (isKeyboardEvent(event)) {
+    if (event instanceof KeyEvent) {
       myKeyboardEventsPosted.incrementAndGet();
       if (ourActionAwareTypeaheadEnabled && delayKeyEvents.get()) {
         myDelayedKeyEvents.offer((KeyEvent)event);
@@ -1640,7 +1636,7 @@ public final class IdeEventQueue extends EventQueue {
     myPostEventListeners.addListener(listener, parentDisposable);
   }
 
-  private static class Holder {
+  private static final class Holder {
     // JBSDK only
     private static final Method unsafeNonBlockingExecuteRef = ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class);
   }

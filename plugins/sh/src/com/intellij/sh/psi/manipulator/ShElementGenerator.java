@@ -11,7 +11,7 @@ import com.intellij.sh.psi.ShFunctionDefinition;
 import com.intellij.sh.psi.ShLiteral;
 import org.jetbrains.annotations.NotNull;
 
-public class ShElementGenerator {
+public final class ShElementGenerator {
   @NotNull
   public static ShLiteral createLiteral(@NotNull Project project, @NotNull String command) {
     PsiFile file = createTempFile(project, command);

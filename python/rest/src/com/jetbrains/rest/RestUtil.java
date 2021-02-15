@@ -24,8 +24,8 @@ public final class RestUtil {
   };
 
 
-  public static final Set<String> PREDEFINED_ROLES = new HashSet<String>();
-  public static final Set<String> SPHINX_ROLES = new HashSet<String>();
+  public static final Set<String> PREDEFINED_ROLES = new HashSet<>();
+  public static final Set<String> SPHINX_ROLES = new HashSet<>();
   private static final Map<String, String[]> DIRECTIVES = Maps.newHashMap();
 
   static {

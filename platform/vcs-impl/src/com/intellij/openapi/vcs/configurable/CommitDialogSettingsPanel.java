@@ -17,13 +17,12 @@ import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.message.CommitMessageInspectionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.vcs.commit.CommitWorkflowManager.setCommitFromLocalChanges;
+import static com.intellij.vcs.commit.CommitModeManager.setCommitFromLocalChanges;
 
 public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguration>, Disposable {
   @NotNull private final Project myProject;

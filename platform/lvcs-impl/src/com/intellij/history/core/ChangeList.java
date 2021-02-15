@@ -100,10 +100,10 @@ public class ChangeList {
 
   // todo synchronization issue: changeset may me modified while being iterated
   public synchronized Iterable<ChangeSet> iterChanges() {
-    return new Iterable<ChangeSet>() {
+    return new Iterable<>() {
       @Override
       public Iterator<ChangeSet> iterator() {
-        return new Iterator<ChangeSet>() {
+        return new Iterator<>() {
           private final TIntHashSet recursionGuard = new TIntHashSet(1000);
 
           private ChangeSetHolder currentBlock;

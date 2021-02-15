@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
@@ -10,7 +11,9 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
@@ -150,6 +153,21 @@ public enum SpecialField implements VariableDescriptor {
     @Override
     public PsiPrimitiveType getType(DfaVariableValue variableValue) {
       return PsiPrimitiveType.getUnboxedType(variableValue.getType());
+    }
+
+    @Override
+    public @NotNull DfType getFromQualifier(@NotNull DfType dfType) {
+      DfType fromQualifier = super.getFromQualifier(dfType);
+      if (dfType instanceof DfReferenceType) {
+        TypeConstraint constraint = ((DfReferenceType)dfType).getConstraint();
+        if (constraint.isExact()) {
+          PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(PsiTypesUtil.unboxIfPossible(constraint.toString()));
+          if (primitiveType != null) {
+            return fromQualifier.meet(DfTypes.typedObject(primitiveType, Nullability.NOT_NULL));
+          }
+        }
+      }
+      return fromQualifier;
     }
 
     @NotNull

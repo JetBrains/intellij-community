@@ -43,6 +43,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.UPDATE_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.UPDATE_UNRESOLVED_CONFLICTS_ERROR;
 import static org.zmlx.hg4idea.util.HgErrorUtil.hasUncommittedChangesConflict;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
@@ -161,11 +163,11 @@ public class HgUpdateCommand {
     boolean hasUnresolvedConflicts = HgConflictResolver.hasConflicts(project, repository);
     if (!success) {
       new HgCommandResultNotifier(project)
-        .notifyError("hg.update.error", result, "", HgBundle.message("hg4idea.update.failed"));
+        .notifyError(UPDATE_ERROR, result, "", HgBundle.message("hg4idea.update.failed"));
     }
     else if (hasUnresolvedConflicts) {
       new VcsNotifier(project)
-        .notifyImportantWarning("hg.update.unresolved.conflicts.error",
+        .notifyImportantWarning(UPDATE_UNRESOLVED_CONFLICTS_ERROR,
                                 HgBundle.message("hg4idea.update.unresolved.conflicts"),
                                 HgBundle.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
     }

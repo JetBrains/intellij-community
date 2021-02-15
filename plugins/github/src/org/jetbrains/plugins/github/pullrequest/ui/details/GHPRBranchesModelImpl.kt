@@ -5,11 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
@@ -49,7 +49,7 @@ internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GH
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun addAndInvokeChangeListener(listener: () -> Unit) =
     SimpleEventListener.addAndInvokeListener(changeEventDispatcher, parentDisposable, listener)
 

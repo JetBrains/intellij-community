@@ -39,6 +39,14 @@ public class NumberEqualityInspectionTest extends LightJavaInspectionTestCase {
     doTest();
   }
 
+  public void testBooleanExpression() {
+    doTest();
+  }
+
+  public void testSingleComparisonWithNull() {
+    doTest();
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new NumberEqualityInspection();

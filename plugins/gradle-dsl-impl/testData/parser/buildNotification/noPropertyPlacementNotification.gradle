@@ -1,4 +1,5 @@
 ext {
+  hello = "hello"
   prop = "${greeting}"
   prop1 = prop
 }

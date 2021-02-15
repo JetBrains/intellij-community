@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 final class TouchBar implements NSTLibrary.ItemCreator {
-  private static final boolean ourAsyncUpdate = Registry.is("actionSystem.update.touchbar.actions.asynchronously");
   private static final boolean ourUseCached = Registry.is("actionSystem.update.touchbar.actions.use.cached");
   private static final boolean ourCollectStats = Boolean.getBoolean("touchbar.collect.stats");
   private static final Logger LOG = Logger.getInstance(TouchBar.class);
@@ -448,8 +447,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
     if (myActionGroup != null) {
       DataContext dctx = DataManager.getInstance().getDataContext(BuildUtils.getCurrentFocusComponent());
       BuildUtils.GroupVisitor visitor = new BuildUtils.GroupVisitor(this, mySkipSubgroupsPrefix, null, myStats, myAllowSkipSlowUpdates);
-      if (ourAsyncUpdate) {
-        //System.out.printf("%s:\t start update %s\n", new SimpleDateFormat("hhmmss.SSS").format(new Date()), myItems.toString());
+      if (Registry.is("actionSystem.update.actions.asynchronously")) {
         if (myLastUpdate != null) myLastUpdate.cancel();
         myLastUpdate = Utils
           .expandActionGroupAsync(LaterInvocator.isInModalContext(), myActionGroup, myFactory, dctx, ActionPlaces.TOUCHBAR_GENERAL,

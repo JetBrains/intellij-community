@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.BaseOutputReader;
 import io.netty.bootstrap.ServerBootstrap;
@@ -65,15 +64,6 @@ public class ExternalJavacManager extends ProcessAdapter {
   private boolean myOwnExecutor;
   private final long myKeepAliveTimeout;
 
-  /**
-   * @deprecated: use {@link #ExternalJavacManager(File, Executor)} instead with explicit executor parameter
-   */
-  @Deprecated
-  public ExternalJavacManager(@NotNull final File workingDir) {
-    this(workingDir, ConcurrencyUtil.newSingleThreadExecutor("Javac server event loop pool"));
-    myOwnExecutor = true;
-  }
-
   public ExternalJavacManager(@NotNull final File workingDir, @NotNull Executor executor) {
     this(workingDir, executor, 5 * 60 * 1000L /* 5 minutes default*/);
   }
@@ -113,39 +103,13 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
   }
 
-  /**
-   * @deprecated Use {@link #forkJavac(String, int, List, List, CompilationPaths, Collection, Map, DiagnosticOutputConsumer, OutputFileConsumer, JavaCompilingTool, CanceledStatus, boolean)} instead
-   */
-  @Deprecated
-  public boolean forkJavac(String javaHome,
-                           int heapSize,
-                           List<String> vmOptions,
-                           List<String> options,
-                           Collection<? extends File> platformCp,
-                           Collection<? extends File> classpath,
-                           Collection<? extends File> upgradeModulePath,
-                           Collection<? extends File> modulePath,
-                           Collection<? extends File> sourcePath,
-                           Collection<? extends File> files,
-                           Map<File, Set<File>> outs,
-                           DiagnosticOutputConsumer diagnosticSink,
-                           OutputFileConsumer outputSink,
-                           JavaCompilingTool compilingTool,
-                           CanceledStatus cancelStatus) {
-    return forkJavac(
-      javaHome, heapSize, vmOptions, options,
-      CompilationPaths.create(platformCp, classpath, upgradeModulePath, ModulePath.create(modulePath), sourcePath),
-      files, outs, diagnosticSink, outputSink, compilingTool, cancelStatus, false
-    ).get();
-  }
-
 
   public ExternalJavacRunResult forkJavac(String javaHome,
                                           int heapSize,
-                                          List<String> vmOptions,
-                                          List<String> options,
+                                          Iterable<String> vmOptions,
+                                          Iterable<String> options,
                                           CompilationPaths paths,
-                                          Collection<? extends File> files,
+                                          Iterable<? extends File> files,
                                           Map<File, Set<File>> outs,
                                           DiagnosticOutputConsumer diagnosticSink,
                                           OutputFileConsumer outputSink,
@@ -256,14 +220,20 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
   }
 
-  private static int processHash(String sdkHomePath, List<String> vmOptions, JavaCompilingTool tool) {
-    return Objects.hash(sdkHomePath.replace(File.separatorChar, '/'), vmOptions, tool.getId());
+  private static int processHash(String sdkHomePath, Iterable<String> vmOptions, JavaCompilingTool tool) {
+    Collection<? extends String> opts = vmOptions instanceof Collection<?>? (Collection<String>)vmOptions : Iterators.collect(vmOptions, new ArrayList<>());
+    return Objects.hash(sdkHomePath.replace(File.separatorChar, '/'), opts, tool.getId());
   }
 
   @Nullable
-  private static String getEncodingName(List<String> options) {
-    int p = options.indexOf("-encoding");
-    return p >= 0 && p < options.size() - 1 ? options.get(p + 1) : null;
+  private static String getEncodingName(Iterable<String> options) {
+    for (Iterator<String> it = options.iterator(); it.hasNext(); ) {
+      final String option = it.next();
+      if ("-encoding".equals(option)) {
+        return it.hasNext()? it.next() : null;
+      }
+    }
+    return null;
   }
 
   public boolean isRunning() {
@@ -324,7 +294,7 @@ public class ExternalJavacManager extends ProcessAdapter {
                                                                  int heapSize,
                                                                  int port,
                                                                  File workingDir,
-                                                                 List<String> vmOptions,
+                                                                 Iterable<String> vmOptions,
                                                                  JavaCompilingTool compilingTool,
                                                                  final boolean keepProcessAlive) throws Exception {
     final UUID processId = UUID.randomUUID();

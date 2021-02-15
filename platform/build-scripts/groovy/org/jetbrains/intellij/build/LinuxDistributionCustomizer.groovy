@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 
+import java.nio.file.Path
+
 @CompileStatic
 abstract class LinuxDistributionCustomizer {
   /**
@@ -54,5 +56,5 @@ abstract class LinuxDistributionCustomizer {
    * Override this method to copy additional files to Linux distribution of the product.
    * @param targetDirectory contents of this directory will be packed into .tar.gz archive under {@link #getRootDirectoryName(ApplicationInfoProperties, String)}
    */
-  void copyAdditionalFiles(BuildContext context, String targetDirectory) {}
+  void copyAdditionalFiles(BuildContext context, Path targetDir) {}
 }

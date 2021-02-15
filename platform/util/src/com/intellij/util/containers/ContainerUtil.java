@@ -39,15 +39,6 @@ public class ContainerUtil {
     return new HashMap<>();
   }
 
-  /**
-   * @deprecated Use {@link HashMap#HashMap(Map)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new HashMap<>(map);
-  }
-
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, Pair<? extends K,? extends V> @NotNull ... entries) {
@@ -73,39 +64,12 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link TreeMap#TreeMap()}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
-    return new TreeMap<>();
-  }
-
-  /**
-   * @deprecated Use {@link TreeMap#TreeMap(Map)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new TreeMap<>(map);
-  }
-
-  /**
    * @deprecated Use {@link LinkedHashMap#LinkedHashMap()}
    */
   @Contract(pure = true)
   @Deprecated
   public static @NotNull <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
     return new LinkedHashMap<>();
-  }
-
-  /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new LinkedHashMap<>(map);
   }
 
   @SafeVarargs
@@ -123,6 +87,7 @@ public class ContainerUtil {
    * @deprecated Use {@link THashMap#THashMap(Map)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Contract(pure = true)
   public static @NotNull <K, V> THashMap<K, V> newTroveMap() {
     return new THashMap<>();
@@ -309,15 +274,6 @@ public class ContainerUtil {
     return new HashSet<>();
   }
 
-  /**
-   * @deprecated Use {@link HashSet#HashSet(int)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <T> HashSet<T> newHashSet(int initialCapacity) {
-    return new HashSet<>(initialCapacity);
-  }
-
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(T @NotNull ... elements) {
@@ -412,15 +368,6 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link THashSet#THashSet(Collection)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <T> THashSet<T> newTroveSet(@NotNull Collection<? extends T> elements) {
-    return new THashSet<>(elements);
-  }
-
-  /**
    * @deprecated Use {@link it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap}
    */
   @Deprecated
@@ -438,17 +385,9 @@ public class ContainerUtil {
     return new TreeSet<>();
   }
 
-  /**
-   * @deprecated Use {@link TreeSet#TreeSet(Comparator)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
-    return new TreeSet<>(comparator);
-  }
-
   @Contract(pure = true)
   public static @NotNull <T> Set<T> newConcurrentSet() {
+    //noinspection SSBasedInspection
     return Collections.newSetFromMap(new ConcurrentHashMap<>());
   }
 
@@ -459,16 +398,6 @@ public class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> newConcurrentMap() {
     return new ConcurrentHashMap<>();
-  }
-
-  @Contract(pure = true)
-  public static @NotNull <K, V> ConcurrentMap<K,V> newConcurrentMap(int initialCapacity) {
-    return new ConcurrentHashMap<>(initialCapacity);
-  }
-
-  @Contract(pure = true)
-  public static @NotNull <K, V> ConcurrentMap<K,V> newConcurrentMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    return new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
   }
 
   @Contract(pure = true)
@@ -870,15 +799,6 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link Collections#emptyIterator()} instead
-   */
-  @Deprecated
-  @Contract(pure = true)
-  public static @NotNull <T> Iterator<T> emptyIterator() {
-    return Collections.emptyIterator();
-  }
-
-  /**
    * @deprecated Use {@link Collections#emptyList()} instead
    */
   @Deprecated
@@ -1072,6 +992,12 @@ public class ContainerUtil {
   public static @NotNull <T> List<T> filterIsInstance(@NotNull Collection<?> collection, final @NotNull Class<? extends T> aClass) {
     //noinspection unchecked
     return filter((Collection<T>)collection, Conditions.instanceOf(aClass));
+  }
+
+  @Contract(pure = true)
+  public static @NotNull <T> List<T> filterIsInstance(final Object @NotNull [] collection, final @NotNull Class<? extends T> aClass) {
+    //noinspection unchecked
+    return (List<T>)filter(collection, Conditions.instanceOf(aClass));
   }
 
   @Contract(pure = true)
@@ -2118,12 +2044,6 @@ public class ContainerUtil {
     return new HashSet<>(Arrays.asList(items));
   }
 
-  public static <K, V> void putIfAbsent(final K key, @Nullable V value, final @NotNull Map<? super K, ? super V> result) {
-    if (!result.containsKey(key)) {
-      result.put(key, value);
-    }
-  }
-
   public static <K, V> void putIfNotNull(final K key, @Nullable V value, final @NotNull Map<? super K, ? super V> result) {
     if (value != null) {
       result.put(key, value);
@@ -2588,39 +2508,36 @@ public class ContainerUtil {
     return new LockFreeCopyOnWriteArrayList<>(c);
   }
 
-  @Contract(value = " -> new", pure = true)
-  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
-    return new ConcurrentIntObjectHashMap<>();
-  }
-
-  @Contract(value = "_,_,_ -> new", pure = true)
-  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    return new ConcurrentIntObjectHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
-  }
-
-  @Contract(value = " -> new", pure = true)
-  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
-    return new ConcurrentIntKeySoftValueHashMap<>();
-  }
-
+  /**
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} instead
+   */
+  @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
     return new ConcurrentLongObjectHashMap<>();
   }
 
-  @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap(int initialCapacity) {
-    return new ConcurrentLongObjectHashMap<>(initialCapacity);
+  /**
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectMap()} instead
+   */
+  @Deprecated
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
+    return new ConcurrentIntObjectHashMap<>();
+  }
+
+  /**
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectWeakValueMap()} instead
+   */
+  @Deprecated
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
+    return new ConcurrentIntKeyWeakValueHashMap<>();
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakValueMap() {
-    return new ConcurrentWeakValueHashMap<>();
-  }
-
-  @Contract(value = " -> new", pure = true)
-  public static @NotNull <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
-    return new ConcurrentIntKeyWeakValueHashMap<>();
+    return CollectionFactory.createConcurrentWeakValueMap();
   }
 
   @Contract(value = "_,_,_,_ -> new", pure = true)
@@ -2656,7 +2573,7 @@ public class ContainerUtil {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
-    return new ConcurrentSoftValueHashMap<>();
+    return CollectionFactory.createConcurrentSoftValueMap();
   }
 
   @Contract(value = " -> new", pure = true)
@@ -2666,7 +2583,7 @@ public class ContainerUtil {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
-    return new ConcurrentWeakHashMap<>(0.75f);
+    return CollectionFactory.createConcurrentWeakMap();
   }
 
   @ApiStatus.Internal

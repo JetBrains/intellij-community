@@ -51,7 +51,7 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
       final String lookupString = lookupElement.getLookupString();
       if (myHandledTags.contains(lookupString)) {
         LookupElement decorator =
-          LookupElementDecorator.withInsertHandler(lookupElement, new InsertHandler<LookupElementDecorator<LookupElement>>() {
+          LookupElementDecorator.withInsertHandler(lookupElement, new InsertHandler<>() {
             @Override
             public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
               lookupElement.handleInsert(context);

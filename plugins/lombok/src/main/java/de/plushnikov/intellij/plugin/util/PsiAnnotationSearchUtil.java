@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class PsiAnnotationSearchUtil {
@@ -20,7 +21,7 @@ public class PsiAnnotationSearchUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationFQNs) {
+  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String... annotationFQNs) {
     return Stream.of(annotationFQNs).map(psiModifierListOwner::getAnnotation).filter(Objects::nonNull).findAny().orElse(null);
   }
 
@@ -32,12 +33,25 @@ public class PsiAnnotationSearchUtil {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypeName);
   }
 
-  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationTypes) {
+  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final String... annotationTypes) {
     return null != findAnnotation(psiModifierListOwner, annotationTypes);
   }
 
-  public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationTypes) {
+  public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final String... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
+  }
+
+  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Pattern annotationPattern) {
+    final PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
+    if (psiModifierList != null) {
+      for (PsiAnnotation psiAnnotation : psiModifierList.getAnnotations()) {
+        final String suspect = getSimpleNameOf(psiAnnotation);
+        if (annotationPattern.matcher(suspect).matches()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -46,8 +60,7 @@ public class PsiAnnotationSearchUtil {
     return StringUtil.notNullize(null == referenceElement ? null : referenceElement.getReferenceName());
   }
 
-  public static boolean checkAnnotationsSimpleNameExistsIn(@NotNull PsiModifierListOwner modifierListOwner,
-                                                           @NotNull Collection<String> annotationNames) {
+  public static boolean checkAnnotationsSimpleNameExistsIn(@NotNull PsiModifierListOwner modifierListOwner, @NotNull Collection<String> annotationNames) {
     final PsiModifierList modifierList = modifierListOwner.getModifierList();
     if (null != modifierList) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {

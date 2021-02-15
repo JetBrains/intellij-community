@@ -19,12 +19,14 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,9 +34,9 @@ import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
-public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
+public class MethodSourceReference extends PsiReferenceBase<PsiLanguageInjectionHost> {
 
-  public MethodSourceReference(PsiLiteral element) {
+  public MethodSourceReference(PsiLanguageInjectionHost element) {
     super(element, false);
   }
 
@@ -51,47 +53,73 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     String methodName = getValue();
     String className = StringUtil.getPackageName(methodName, '#');
     boolean selfClassReference = className.isEmpty() ||
-                                 ClassUtil.findPsiClass(getElement().getManager(), className, null, false, getElement().getResolveScope()) == null;
+                                 ClassUtil
+                                   .findPsiClass(getElement().getManager(), className, null, false, getElement().getResolveScope()) == null;
     return super.handleElementRename(selfClassReference ? newElementName : className + '#' + newElementName);
   }
 
   @Override
   @Nullable
   public PsiElement resolve() {
-    PsiClass cls = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
-    if (cls != null) {
-      String methodName = getValue();
-      String className = StringUtil.getPackageName(methodName, '#');
-      if (!className.isEmpty()) {
-        PsiClass aClass = ClassUtil.findPsiClass(cls.getManager(), className, null, false, cls.getResolveScope());
-        if (aClass != null) {
-          cls = aClass;
-          methodName = StringUtil.getShortName(methodName, '#');
-        }
+    UExpression myLiteral = UastContextKt.toUElement(getElement(), UExpression.class);
+    if (myLiteral == null) return null;
+    UClass clazz = UastUtils.getParentOfType(myLiteral, UClass.class);
+    if (clazz == null) return null;
+    PsiClass psiClazz = clazz.getPsi();
+    String methodName = (String)myLiteral.evaluate();
+    if (methodName == null) return null;
+    String className = StringUtil.getPackageName(methodName, '#');
+    if (!className.isEmpty()) {
+      PsiClass aClass = ClassUtil.findPsiClass(psiClazz.getManager(), className, null, false, psiClazz.getResolveScope());
+      if (aClass != null) {
+        psiClazz = aClass;
+        methodName = StringUtil.getShortName(methodName, '#');
       }
-      PsiMethod[] methods = cls.findMethodsByName(methodName, true);
-      final PsiClass finalCls = cls;
-      return Arrays.stream(methods)
-        .filter(method -> staticOrOneInstancePerClassNoParams(method, finalCls))
-        .findFirst()
-        .orElse(methods.length == 0 ? null : methods[0]);
     }
-    return null;
+    PsiMethod[] clazzMethods = psiClazz.findMethodsByName(methodName, true);
+    if (clazzMethods.length == 0 && (psiClazz.isInterface() || PsiUtil.isAbstractClass(psiClazz))) {
+      final PsiMethod[] neededMethod = new PsiMethod[1];
+      final String finalMethodName = methodName;
+      ClassInheritorsSearch.search(psiClazz, psiClazz.getResolveScope(), false)
+        .anyMatch(aClazz -> {
+                    PsiMethod[] methods = aClazz.findMethodsByName(finalMethodName, false);
+                    PsiMethod method = filteredMethod(methods, aClazz);
+                    if (method != null) {
+                      neededMethod[0] = method;
+                      return true;
+                    }
+                    return false;
+                  }
+        );
+      return neededMethod[0];
+    }
+    return filteredMethod(clazzMethods, psiClazz);
+  }
+
+  @Nullable
+  private static PsiMethod filteredMethod(PsiMethod[] clazzMethods, PsiClass finalCls) {
+    return Arrays.stream(clazzMethods)
+      .filter(method -> staticOrOneInstancePerClassNoParams(method, finalCls))
+      .findFirst()
+      .orElse(clazzMethods.length == 0 ? null : clazzMethods[0]);
   }
 
   @Override
   public Object @NotNull [] getVariants() {
+    UExpression myLiteral = UastContextKt.toUElement(getElement(), UExpression.class);
     final List<Object> list = new ArrayList<>();
-    final PsiClass topLevelClass = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
+    if (myLiteral == null) return list.toArray();
+    final UClass topLevelClass = UastUtils.getParentOfType(myLiteral, UClass.class);
     if (topLevelClass != null) {
-      final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
-      final PsiMethod[] methods = topLevelClass.getAllMethods();
+      final UMethod current = UastUtils.getParentOfType(myLiteral, UMethod.class);
+      PsiClass psiTopLevelClass = topLevelClass.getJavaPsi();
+      final PsiMethod[] methods = psiTopLevelClass.getAllMethods();
       for (PsiMethod method : methods) {
         PsiClass aClass = method.getContainingClass();
         if (aClass == null) continue;
         if (JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
         if (current != null && method.getName().equals(current.getName())) continue;
-        if (!staticOrOneInstancePerClassNoParams(method, topLevelClass)) continue;
+        if (!staticOrOneInstancePerClassNoParams(method, psiTopLevelClass)) continue;
         final LookupElementBuilder builder = LookupElementBuilder.create(method);
         list.add(builder.withAutoCompletionPolicy(AutoCompletionPolicy.SETTINGS_DEPENDENT));
       }

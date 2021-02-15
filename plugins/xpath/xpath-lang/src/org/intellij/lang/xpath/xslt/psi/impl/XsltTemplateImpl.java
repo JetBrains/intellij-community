@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.xml.namespace.QName;
+import java.util.Arrays;
 
 public class XsltTemplateImpl extends XsltElementImpl implements XsltTemplate {
 
@@ -78,10 +79,7 @@ public class XsltTemplateImpl extends XsltElementImpl implements XsltTemplate {
     public XsltParameter @NotNull [] getParameters() {
         final PsiElement[] elements = ResolveUtil.collect(new ParamMatcher(getTag(), null));
 
-        final XsltParameter[] xsltParameters = new XsltParameter[elements.length];
-        //noinspection SuspiciousSystemArraycopy
-        System.arraycopy(elements, 0, xsltParameters, 0, elements.length);
-        return xsltParameters;
+        return Arrays.copyOf(elements, elements.length, XsltParameter[].class);
     }
 
     @Override

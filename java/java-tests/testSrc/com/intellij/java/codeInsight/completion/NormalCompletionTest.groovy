@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
@@ -12,20 +13,23 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.psi.*
+import com.intellij.psi.augment.PsiAugmentProvider
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.psi.impl.light.LightMethodBuilder
+import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ServiceContainerUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import java.util.stream.Collectors
 
@@ -1505,6 +1509,7 @@ class XInternalError {}
     assert renderElement(items[0]).tailText == ' (java.lang)'
   }
 
+  @NeedsIndex.Full
   void testDuplicateInnerClass() {
     configure()
     def items = myFixture.lookupElements.findAll { it.lookupString == 'Inner' }
@@ -1572,7 +1577,7 @@ class XInternalError {}
   void testInnerChainedReturnType() { doTest() }
 
   private CommonCodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
+    return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
   }
 
   void testCompatibleInterfacesCast() {
@@ -2283,6 +2288,22 @@ class Abc {
                           "class X { Charset test() {return StandardCharsets.UTF_8;}}")
   }
 
+  @NeedsIndex.ForStandardLibrary
+  void "test static fields in enum initializer"() {
+    myFixture.configureByText("a.java", "enum MyEnum {\n" +
+                                        "    A, B, C, D, E, F;\n" +
+                                        "    static int myEnumField;\n" +
+                                        "    static int myEnumField2;\n" +
+                                        "    static final int myEnumField3 = 10;\n" +
+                                        "    static final String myEnumField4 = \"\";\n" +
+                                        "    {\n" +
+                                        "        System.out.println(myE<caret>);\n" +
+                                        "    }\n" +
+                                        "}");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["myEnumField3", "myEnumField4"]
+  }
+
   void "test qualified outer class name"() {
     myFixture.configureByText("a.java", "class A {\n" +
                                         "    private static final long sss = 0L;\n" +
@@ -2296,5 +2317,47 @@ class Abc {
     myFixture.completeBasic()
     assert myFixture.getLookupElementStrings().stream().filter({ it.contains("sss") }).collect(Collectors.toList()) == 
            ["A.sss", "sss"]
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test private constructor"() {
+    myFixture.configureByText("A.java", "class A {{new Syst<caret>}}")
+    myFixture.completeBasic()
+    assert ContainerUtil.filter(myFixture.getLookupElementStrings(), {it.startsWith("S")}) == ['System.Logger', 'System.LoggerFinder']
+  }
+  
+  @NeedsIndex.SmartMode // looks like augments don't work in dumb mode
+  void "test member as Java keyword"() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), PsiAugmentProvider.EP_NAME, new PsiAugmentProvider() {
+      @Override
+      protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                               @NotNull Class<Psi> type,
+                                                               @Nullable String nameHint) {
+        if (element instanceof PsiExtensibleClass && element.getName() == "A" && type == PsiMethod.class) {
+          PsiMethod method1 = new LightMethodBuilder(getPsiManager(), "default").setMethodReturnType(PsiType.VOID)
+          PsiMethod method2 = new LightMethodBuilder(getPsiManager(), "define").setMethodReturnType(PsiType.VOID)
+          return List.of(type.cast(method1), type.cast(method2))
+        }
+        return Collections.emptyList()
+      }
+    }, getTestRootDisposable());
+    myFixture.configureByText("A.java", "class A {\n  void test() {\n    Runnable r = A::def<caret>\n  }\n}")
+    myFixture.completeBasic()
+    myFixture.checkResult("class A {\n" +
+                          "  void test() {\n" +
+                          "    Runnable r = A::define;\n" +
+                          "  }\n" +
+                          "}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test no final library classes in extends"() {
+    myFixture.configureByText("X.java", "class StriFoo{}final class StriBar{}class X extends Stri<caret>")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == [
+      "StriFoo", // non-final project class
+      "StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException", "StringReader", "StringWriter", // non-final library classes
+      "StriBar", // final project class (red)
+      "StringBufferInputStream"] // deprecated library class
   }
 }

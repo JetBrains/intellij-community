@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.PsiElementTargetPopupPresentation
 import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.codeInsight.navigation.targetPopupPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
@@ -59,23 +58,19 @@ private class GTDProviderData(
   }
 
   override fun result(): GTDActionResult? {
-    val singleTarget = targetElements.singleOrNull()
-    if (singleTarget != null) {
-      return gtdTargetNavigatable(singleTarget)?.let { navigatable ->
+    return when (targetElements.size) {
+      0 -> null
+      1 -> {
+        val navigatable = gtdTargetNavigatable(targetElements.single())
         GTDActionResult.SingleTarget(navigatable, navigationProvider)
       }
-    }
-    val result: List<Pair<Navigatable, PsiElement>> = targetElements.mapNotNullTo(SmartList()) { targetElement ->
-      psiNavigatable(targetElement)?.let { navigatable ->
-        Pair(navigatable, targetElement)
+      else -> {
+        val targets = targetElements.mapTo(SmartList()) { targetElement ->
+          val navigatable = psiNavigatable(targetElement)
+          GTDTarget(navigatable, targetPopupPresentation(targetElement), navigationProvider)
+        }
+        GTDActionResult.MultipleTargets(targets)
       }
-    }
-    return when (result.size) {
-      0 -> null
-      1 -> GTDActionResult.SingleTarget(result.single().first, navigationProvider)
-      else -> GTDActionResult.MultipleTargets(result.map { (navigatable, targetElement) ->
-        GTDTarget(navigatable, PsiElementTargetPopupPresentation(targetElement), navigationProvider)
-      })
     }
   }
 }

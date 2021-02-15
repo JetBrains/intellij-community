@@ -14,44 +14,7 @@ import javax.accessibility.AccessibleRole
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
-abstract class ChangesTreeCellRenderer(
-  protected val textRenderer: ChangesBrowserNodeRenderer
-) : CellRendererPanel(),
-    TreeCellRenderer {
-
-  /**
-   * Otherwise incorrect node sizes are cached - see [com.intellij.ui.tree.ui.DefaultTreeUI.createNodeDimensions].
-   * And [com.intellij.ui.ExpandableItemsHandler] does not work correctly.
-   */
-  override fun getPreferredSize(): Dimension = layout.preferredLayoutSize(this)
-
-  override fun getTreeCellRendererComponent(
-    tree: JTree,
-    value: Any,
-    selected: Boolean,
-    expanded: Boolean,
-    leaf: Boolean,
-    row: Int,
-    hasFocus: Boolean
-  ): Component {
-    tree as ChangesTree
-    background = null
-    isSelected = selected
-
-    textRenderer.apply {
-      isOpaque = false
-      isTransparentIconBackground = true
-      toolTipText = null
-      getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-    }
-
-    return this
-  }
-
-  override fun getToolTipText(): String? = textRenderer.toolTipText
-}
-
-class CheckboxTreeCellRenderer(textRenderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(textRenderer) {
+class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
   private val component = ThreeStateCheckBox()
 
   init {
@@ -65,18 +28,27 @@ class CheckboxTreeCellRenderer(textRenderer: ChangesBrowserNodeRenderer) : Chang
     add(textRenderer, BorderLayout.CENTER)
   }
 
-  override fun getTreeCellRendererComponent(tree: JTree,
-                                            value: Any,
-                                            selected: Boolean,
-                                            expanded: Boolean,
-                                            leaf: Boolean,
-                                            row: Int,
-                                            hasFocus: Boolean): Component {
-    val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-
-    value as ChangesBrowserNode<*>
+  override fun getTreeCellRendererComponent(
+    tree: JTree,
+    value: Any,
+    selected: Boolean,
+    expanded: Boolean,
+    leaf: Boolean,
+    row: Int,
+    hasFocus: Boolean
+  ): Component {
     tree as ChangesTree
+    value as ChangesBrowserNode<*>
 
+    background = null
+    isSelected = selected
+
+    textRenderer.apply {
+      isOpaque = false
+      isTransparentIconBackground = true
+      toolTipText = null
+      getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
+    }
     component.apply {
       background = null
       isOpaque = false
@@ -88,7 +60,7 @@ class CheckboxTreeCellRenderer(textRenderer: ChangesBrowserNodeRenderer) : Chang
       }
     }
 
-    return rendererComponent
+    return this
   }
 
   override fun getAccessibleContext(): AccessibleContext {
@@ -112,4 +84,12 @@ class CheckboxTreeCellRenderer(textRenderer: ChangesBrowserNodeRenderer) : Chang
     }
     return accessibleContext
   }
+
+  /**
+   * Otherwise incorrect node sizes are cached - see [com.intellij.ui.tree.ui.DefaultTreeUI.createNodeDimensions].
+   * And [com.intellij.ui.ExpandableItemsHandler] does not work correctly.
+   */
+  override fun getPreferredSize(): Dimension = layout.preferredLayoutSize(this)
+
+  override fun getToolTipText(): String? = textRenderer.toolTipText
 }

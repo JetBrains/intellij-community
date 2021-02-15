@@ -455,8 +455,8 @@ public class Mock {
     }
 
     @Override
-    public InputStream getInputStream() {
-      return null;
+    public @NotNull InputStream getInputStream() {
+      throw new UnsupportedOperationException();
     }
 
     @Override

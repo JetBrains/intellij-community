@@ -16,8 +16,10 @@
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.Set;
@@ -31,7 +33,7 @@ public abstract class PlaybackContext  {
   private final PlaybackCommand myCurrentCmd;
   private File myBaseDir;
   private final Set<Class<?>> myCallClasses;
-  private final PlaybackRunner myRunner;
+  protected final PlaybackRunner myRunner;
   private final boolean myUseTypingTargets;
 
   public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, boolean useTypingTargets, PlaybackCommand currentCmd, File baseDir, Set<Class<?>> callClasses) {
@@ -120,4 +122,9 @@ public abstract class PlaybackContext  {
   public abstract boolean isDisposed();
 
   public abstract void storeRegistryValue(String key);
+
+  public abstract void setProject(@Nullable Project project);
+
+  @NotNull
+  public abstract Project getProject();
 }

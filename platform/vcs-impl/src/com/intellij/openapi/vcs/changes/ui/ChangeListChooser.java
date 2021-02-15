@@ -27,7 +27,7 @@ public class ChangeListChooser extends DialogWrapper {
     super(project, false);
     myProject = project;
 
-    myPanel = new ChangeListChooserPanel(myProject, new NullableConsumer<String>() {
+    myPanel = new ChangeListChooserPanel(myProject, new NullableConsumer<>() {
       @Override
       public void consume(final @Nullable @NlsContexts.DialogMessage String errorMessage) {
         setOKActionEnabled(errorMessage == null);

@@ -14,7 +14,7 @@ import org.junit.Test
 class NonNegativeIntIntMultiMapPropertyTest {
   @Test
   fun propertyTest() {
-    PropertyChecker.customized().rechecking("y+fEmBrsyuOsGxAMAAAAAAMAAA==").checkScenarios {
+    PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
         val myMap = MutableNonNegativeIntIntMultiMap.ByList()
         val workingMap = MultiMap<Int, Int>()

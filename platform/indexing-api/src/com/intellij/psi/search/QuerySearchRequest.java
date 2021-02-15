@@ -23,7 +23,7 @@ public class QuerySearchRequest {
     this.query = query;
     this.collector = collector;
     if (inReadAction) {
-      this.processor = new ReadActionProcessor<PsiReference>() {
+      this.processor = new ReadActionProcessor<>() {
         @Override
         public boolean processInReadAction(PsiReference psiReference) {
           return processor.process(psiReference, collector);

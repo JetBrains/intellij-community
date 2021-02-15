@@ -158,25 +158,4 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
       return Holder.ourMap.get(tokenType).toArray(TextAttributesKey.EMPTY_ARRAY);
     }
   }
-
-  /**
-   * @deprecated use {@link EmbeddedTokenHighlighter} extension
-   */
-  @Deprecated
-  public static synchronized void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
-                                                     Map<IElementType, TextAttributesKey> _keys2) {
-    HashSet<IElementType> existingKeys = new HashSet<>(Holder.ourMap.keySet());
-    addMissing(_keys1, existingKeys, Holder.ourMap);
-    addMissing(_keys2, existingKeys, Holder.ourMap);
-  }
-
-  static void addMissing(Map<IElementType, TextAttributesKey> from, Set<IElementType> existingKeys, MultiMap<IElementType, TextAttributesKey> to) {
-    if (from != null) {
-      for (Map.Entry<IElementType, TextAttributesKey> entry : from.entrySet()) {
-        if (!existingKeys.contains(entry.getKey())) {
-          to.putValue(entry.getKey(), entry.getValue());
-        }
-      }
-    }
-  }
 }

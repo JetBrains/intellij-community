@@ -30,7 +30,7 @@ public class InspectionsFixture extends ToolWindowFixture {
     activate();
     waitUntilIsVisible();
 
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       @NotNull
       protected String executeInEDT() {

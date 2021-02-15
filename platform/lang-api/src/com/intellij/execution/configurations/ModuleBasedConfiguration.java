@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Transient;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,7 +203,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
 
     Deque<Module> queue = new ArrayDeque<>();
     queue.addLast(originalModule);
-    Set<Module> modules = new THashSet<>();
+    Set<Module> modules = new HashSet<>();
     while (!queue.isEmpty()) {
       Module module = queue.removeFirst();
       //configModules contains 1 element
@@ -236,5 +235,13 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public Module getDefaultModule() {
     final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     return modules.length == 1 ? modules[0] : null;
+  }
+
+  public String getProjectPathOnTarget() {
+    return getOptions().getProjectPathOnTarget();
+  }
+
+  public void setProjectPathOnTarget(String path) {
+    getOptions().setProjectPathOnTarget(path);
   }
 }

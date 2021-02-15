@@ -67,17 +67,20 @@ public final class GlobalSearchScopesCore {
   private static final class FilterScopeAdapter extends GlobalSearchScope {
     private final NamedScope mySet;
     private final PsiManager myManager;
+    private final @NotNull GlobalSearchScope myAllScope;
 
     private FilterScopeAdapter(@NotNull Project project, @NotNull NamedScope set) {
       super(project);
       mySet = set;
       myManager = PsiManager.getInstance(project);
+      myAllScope = GlobalSearchScope.allScope(project);
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
+      if (!myAllScope.contains(file)) return false;
       Project project = getProject();
-      NamedScopesHolder holder = NamedScopeManager.getInstance(project);
+      NamedScopesHolder holder = NamedScopeManager.getInstance(Objects.requireNonNull(project));
       final PackageSet packageSet = mySet.getValue();
       if (packageSet != null) {
         if (packageSet instanceof PackageSetBase) return ((PackageSetBase)packageSet).contains(file, project, holder);
@@ -278,7 +281,7 @@ public final class GlobalSearchScopesCore {
         DirectoryScope other = (DirectoryScope)scope;
         if (containsScope(other)) return this;
         if (other.containsScope(this)) return other;
-        return new DirectoriesScope(getProject(),
+        return new DirectoriesScope(Objects.requireNonNull(getProject()),
                                     union(!myWithSubdirectories, myDirectory, !other.myWithSubdirectories, other.myDirectory),
                                     union(myWithSubdirectories, myDirectory, other.myWithSubdirectories, other.myDirectory));
       }
@@ -379,7 +382,7 @@ public final class GlobalSearchScopesCore {
           copy.add(other.myDirectory);
           directories = copy;
         }
-        return new DirectoriesScope(getProject(), directories, directoriesWithSubdirectories);
+        return new DirectoriesScope(Objects.requireNonNull(getProject()), directories, directoriesWithSubdirectories);
       }
       if (scope instanceof DirectoriesScope) {
         DirectoriesScope other = (DirectoriesScope)scope;
@@ -395,7 +398,7 @@ public final class GlobalSearchScopesCore {
           copy.addAll(other.myDirectoriesWithSubdirectories);
           directoriesWithSubdirectories = copy;
         }
-        return new DirectoriesScope(getProject(), directories, directoriesWithSubdirectories);
+        return new DirectoriesScope(Objects.requireNonNull(getProject()), directories, directoriesWithSubdirectories);
       }
       return super.uniteWith(scope);
     }

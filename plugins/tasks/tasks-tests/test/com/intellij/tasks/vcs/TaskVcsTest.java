@@ -517,17 +517,17 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() {
-    new RunAll()
-      .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
-      .append(() -> myTaskManager.setRepositories(Collections.emptyList()))
-      .append(() -> AllVcses.getInstance(getProject()).unregisterManually(myVcs))
-      .append(() -> {
+    new RunAll(
+      () -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed(),
+      () -> myTaskManager.setRepositories(Collections.emptyList()),
+      () -> AllVcses.getInstance(getProject()).unregisterManually(myVcs),
+      () -> {
         myTaskManager = null;
         myVcs = null;
         myChangeListManager = null;
-      })
-      .append(() -> super.tearDown())
-      .run();
+      },
+      () -> super.tearDown()
+    ).run();
   }
 
   @NotNull

@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -68,7 +67,7 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
   }
 
   private void getReportText(StringBuffer buffer, final ErrorTreeElement element, boolean withUsages, final int indent) {
-    final String newline = SystemProperties.getLineSeparator();
+    final String newline = System.lineSeparator();
     Object[] children = myStructure.getChildElements(element);
     for (final Object child : children) {
       if (!(child instanceof ErrorTreeElement)) {

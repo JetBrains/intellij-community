@@ -28,13 +28,9 @@ public class MoveCaretUpAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       int lineShift = -1;
       editor.getCaretModel().moveCaretRelatively(0, lineShift, false, false, caret == editor.getCaretModel().getPrimaryCaret());
     }

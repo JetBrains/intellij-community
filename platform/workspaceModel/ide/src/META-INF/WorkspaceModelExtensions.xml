@@ -1,4 +1,8 @@
 <idea-plugin>
+  <projectListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.JpsProjectLoadedListenerImpl"
+              topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
+  </projectListeners>
   <extensionPoints>
     <extensionPoint name="workspaceModel.customModuleRootsSerializer"
                     interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer"
@@ -13,7 +17,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="ide.new.project.model" defaultValue="true" restartRequired="true"
                  description="Enable new entities-based project model (workspace model)"/>
-    <registryKey key="ide.new.project.model.cache" defaultValue="false" restartRequired="false"
+    <registryKey key="ide.new.project.model.cache" defaultValue="true" restartRequired="false"
                  description="Enable cache for the workspace model"/>
     <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="true" restartRequired="true"
                  description="Enable additional checks after replaceBySource and addDiff"/>
@@ -23,6 +27,11 @@
     <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl" />
 
+    <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
+                    serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>
+
     <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
+
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.JpsProjectLoadedBridge"/>
   </extensions>
 </idea-plugin>

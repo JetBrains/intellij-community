@@ -31,7 +31,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   }
 
   private void createUIComponents() {
-    myReloadableComboBoxPanel = new ReloadableComboBoxPanel<GithubTagInfo>() {
+    myReloadableComboBoxPanel = new ReloadableComboBoxPanel<>() {
 
       @Override
       protected void doUpdateValues(@NotNull Set<GithubTagInfo> tags) {
@@ -68,7 +68,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
           return true;
         }
         int count = myComboBox.getItemCount();
-        Set<GithubTagInfo> oldTags = new HashSet<GithubTagInfo>();
+        Set<GithubTagInfo> oldTags = new HashSet<>();
         for (int i = 1; i < count; i++) {
           GithubTagInfo item = ObjectUtils.tryCast(myComboBox.getItemAt(i), GithubTagInfo.class);
           if (item != null) {
@@ -117,7 +117,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
 
     myTagListProvider = new GithubTagListProvider(ghUserName, ghRepoName);
 
-    myReloadableComboBoxPanel.setDataProvider(new ReloadableComboBoxPanel.DataProvider<GithubTagInfo>() {
+    myReloadableComboBoxPanel.setDataProvider(new ReloadableComboBoxPanel.DataProvider<>() {
       @Override
       public Set<GithubTagInfo> getCachedValues() {
         return myTagListProvider.getCachedTags();

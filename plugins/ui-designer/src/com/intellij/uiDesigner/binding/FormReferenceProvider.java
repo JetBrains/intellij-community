@@ -330,8 +330,9 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     CachedValue<CachedFormData> data = element.getUserData(CACHED_DATA);
 
     if(data == null) {
-      data = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<CachedFormData>() {
+      data = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<>() {
         final Map<String, Pair<PsiType, TextRange>> map = new HashMap<>();
+
         @Override
         public Result<CachedFormData> compute() {
           final PsiReferenceProcessor.CollectElements processor = new PsiReferenceProcessor.CollectElements() {

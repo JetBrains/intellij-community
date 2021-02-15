@@ -39,7 +39,7 @@ public class ArtifactDependencyNodeImpl extends AbstractDependencyNode implement
   @NotNull
   @Override
   public String getDisplayName() {
-    return group + ':' + module + ':' + version;
+    return group + ':' + module + ':' + version; //NON-NLS
   }
 
   @Override

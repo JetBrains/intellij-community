@@ -106,7 +106,7 @@ envs {
                python27version,
                ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages", "django-nose",
                 "untangle"] + ( isWindows ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
-               "python2.7\ndjango\nnose\npytest\nbehave\nnpackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
+               "python2.7\ndjango\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
 
   createPython("py38_django22_full",
@@ -123,7 +123,7 @@ envs {
   createPython("python3.9",
                python39version,
                ["pytest", "pytest-xdist"],
-               "python3.9\npython3\npytest\nxdist",
+               "python3.9\npython3\npytest\nxdist\npackaging",
                true)
 
   // For tox

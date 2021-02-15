@@ -13,7 +13,7 @@ import com.intellij.psi.search.SearchScope
  * Lifecycle: single read action.
  *
  * @see com.intellij.refactoring.rename.symbol.SymbolRenameTarget
- * @see com.intellij.find.usages.SearchTarget
+ * @see com.intellij.find.usages.api.SearchTarget
  */
 interface RenameTarget {
 
@@ -40,7 +40,7 @@ interface RenameTarget {
    * when several [different][equals] targets exist to choose from,
    * or in the Usage View (only [icon][TargetPopupPresentation.getIcon]
    * and [presentable text][TargetPopupPresentation.getPresentableText] are used)
-   * @see com.intellij.find.usages.SearchTarget.presentation
+   * @see com.intellij.find.usages.api.SearchTarget.presentation
    */
   val presentation: TargetPopupPresentation
 

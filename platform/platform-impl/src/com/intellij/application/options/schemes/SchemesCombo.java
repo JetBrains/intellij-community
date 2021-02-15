@@ -27,6 +27,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
   public SchemesCombo() {
     super(new MyComboBoxModel<>());
     setRenderer(new MyListCellRenderer());
+    setSwingPopup(false);
   }
 
   public void resetSchemes(@NotNull Collection<? extends T> schemes) {

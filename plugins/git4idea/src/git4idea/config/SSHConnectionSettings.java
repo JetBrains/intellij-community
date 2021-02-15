@@ -2,13 +2,16 @@
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -20,11 +23,11 @@ import java.util.TreeMap;
   storages = @Storage(value = "security.xml", roamingType = RoamingType.DISABLED),
   reportStatistic = false
 )
-public class SSHConnectionSettings implements PersistentStateComponent<SSHConnectionSettings.State> {
+public final class SSHConnectionSettings implements PersistentStateComponent<SSHConnectionSettings.State> {
   /**
    * The last successful hosts, the entries are sorted to save on efforts on sorting during saving and loading
    */
-  THashMap<String, String> myLastSuccessful = new THashMap<>();
+  Map<String, String> myLastSuccessful = new HashMap<>();
 
   /**
    * {@inheritDoc}

@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.JavaOverrideMethodsHandler;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -26,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.MethodSignature;
@@ -110,7 +110,7 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   public void testVoidNameSuggestion() { doTest(false); }
 
   public void testLongFinalParameterList() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.RIGHT_MARGIN = 80;
     javaSettings.KEEP_LINE_BREAKS = true;
@@ -125,7 +125,7 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   }
 
   public void testLongParameterList() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.RIGHT_MARGIN = 80;
     javaSettings.KEEP_LINE_BREAKS = false;

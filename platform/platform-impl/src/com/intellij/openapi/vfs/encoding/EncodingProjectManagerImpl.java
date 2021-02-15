@@ -36,7 +36,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,19 +58,18 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   private @Nullable Charset myDefaultConsoleCharset;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
   private BOMForNewUTF8Files myBomForNewUtf8Files = BOMForNewUTF8Files.NEVER;
-  private final Map<VirtualFilePointer, Charset> myMapping = ConcurrentCollectionFactory.createMap(
-    new TObjectHashingStrategy<VirtualFilePointer>() {
-      @Override
-      public int computeHashCode(VirtualFilePointer pointer) {
-        // TODO !! hashCode is unstable - VirtualFilePointer URL can change
-        return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
-      }
+  private final Map<VirtualFilePointer, Charset> myMapping = ConcurrentCollectionFactory.createConcurrentMap(new HashingStrategy<>() {
+    @Override
+    public int hashCode(VirtualFilePointer pointer) {
+      // TODO !! hashCode is unstable - VirtualFilePointer URL can change
+      return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
+    }
 
-      @Override
-      public boolean equals(VirtualFilePointer o1, VirtualFilePointer o2) {
-        return FileUtil.PATH_HASHING_STRATEGY.equals(o1.getUrl(), o2.getUrl());
-      }
-    });
+    @Override
+    public boolean equals(VirtualFilePointer o1, VirtualFilePointer o2) {
+      return FileUtil.PATH_HASHING_STRATEGY.equals(o1.getUrl(), o2.getUrl());
+    }
+  });
   private volatile Charset myProjectCharset;
 
   public EncodingProjectManagerImpl(@NotNull Project project) {
@@ -181,6 +180,12 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   @Override
   @Nullable
   public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
+    if (virtualFile != null) {
+      for (FileEncodingProvider encodingProvider : FileEncodingProvider.EP_NAME.getIterable()) {
+        Charset encoding = encodingProvider.getEncoding(virtualFile);
+        if (encoding != null) return encoding;
+      }
+    }
     VirtualFile parent = virtualFile;
     while (parent != null) {
       Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));

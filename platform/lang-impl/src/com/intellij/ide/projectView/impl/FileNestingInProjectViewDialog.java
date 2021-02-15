@@ -76,7 +76,7 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
   private static JPanel createRulesPanel(@NotNull final TableView<CombinedNestingRule> table) {
     final ToolbarDecorator toolbarDecorator =
       ToolbarDecorator.createDecorator(table,
-                                       new ElementProducer<CombinedNestingRule>() {
+                                       new ElementProducer<>() {
                                          @Override
                                          public boolean canCreateElement() {
                                            return true;

@@ -2,17 +2,28 @@
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.JbXmlOutputter
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Tag
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.io.StringWriter
 
 internal class ForbidSensitiveInformationTest {
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
+  @Before
+  fun before() {
+    DefaultLogger.disableStderrDumping(disposableRule.disposable);
+  }
   @Test
   fun `do not store password as attribute`() {
     @Tag("bean")

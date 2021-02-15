@@ -25,7 +25,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance(PackageSetFactoryImpl.class);
 
   public PackageSetFactoryImpl() {
-    PackageSetParserExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<PackageSetParserExtension>() {
+    PackageSetParserExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
         for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -48,7 +48,8 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
               PackageSet value = scope.getValue();
               if (value != null && value.getClass().getClassLoader() == pluginClassLoader) {
                 String presentableName = scope.getPresentableName();
-                scopes[i] = new NamedScope(scope.getScopeId(), () -> presentableName, AllIcons.Ide.LocalScope, new InvalidPackageSet(value.getText()));
+                scopes[i] = new NamedScope(scope.getScopeId(), () -> presentableName, AllIcons.Ide.LocalScope,
+                                           new InvalidPackageSet(value.getText()));
                 changed = true;
               }
             }

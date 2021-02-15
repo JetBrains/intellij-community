@@ -101,7 +101,7 @@ public final class GrTraitType extends PsiType {
 
   @NotNull
   public static PsiType createTraitType(PsiType @NotNull [] types) {
-    final Set<PsiType> flattened = PsiIntersectionType.flatten(types, new LinkedHashSet<PsiType>() {
+    final Set<PsiType> flattened = PsiIntersectionType.flatten(types, new LinkedHashSet<>() {
       @Override
       public boolean add(PsiType type) {
         remove(type);

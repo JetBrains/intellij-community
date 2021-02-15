@@ -188,6 +188,7 @@ public abstract class LineStatusMarkerRenderer {
   private void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
     List<? extends Range> ranges = getSelectedRanges(editor, e.getY());
     if (!ranges.isEmpty()) {
+      e.consume();
       doAction(editor, ranges, e);
     }
   }

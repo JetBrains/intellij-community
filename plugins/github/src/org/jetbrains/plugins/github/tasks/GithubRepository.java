@@ -4,14 +4,12 @@ package org.jetbrains.plugins.github.tasks;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
@@ -41,12 +39,8 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Dennis.Ushakov
- */
 @Tag("GitHub")
-public class GithubRepository extends BaseRepository {
-  private static final Logger LOG = Logger.getInstance(GithubRepository.class);
+final class GithubRepository extends BaseRepository {
 
   private Pattern myPattern = Pattern.compile("($^)");
   @NotNull private String myRepoAuthor = "";
@@ -55,17 +49,17 @@ public class GithubRepository extends BaseRepository {
   private boolean myAssignedIssuesOnly = false;
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public GithubRepository() {
+  GithubRepository() {
   }
 
-  public GithubRepository(GithubRepository other) {
+  GithubRepository(GithubRepository other) {
     super(other);
     setRepoName(other.myRepoName);
     setRepoAuthor(other.myRepoAuthor);
     setAssignedIssuesOnly(other.myAssignedIssuesOnly);
   }
 
-  public GithubRepository(GithubRepositoryType type) {
+  GithubRepository(GithubRepositoryType type) {
     super(type);
     setUrl("https://" + GithubServerPath.DEFAULT_HOST);
   }
@@ -338,23 +332,6 @@ public class GithubRepository extends BaseRepository {
 
   public void setAssignedIssuesOnly(boolean value) {
     myAssignedIssuesOnly = value;
-  }
-
-  @Deprecated
-  @Tag("token")
-  public String getEncodedToken() {
-    return null;
-  }
-
-  @Deprecated
-  @SuppressWarnings("unused")
-  public void setEncodedToken(String password) {
-    try {
-      setPassword(PasswordUtil.decodePassword(password));
-    }
-    catch (NumberFormatException e) {
-      LOG.warn("Can't decode token", e);
-    }
   }
 
   @Override

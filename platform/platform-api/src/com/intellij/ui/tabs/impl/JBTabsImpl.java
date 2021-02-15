@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ScreenUtil;
@@ -34,6 +35,7 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -428,11 +430,24 @@ public class JBTabsImpl extends JComponent
     myMoreToolbar.getComponent().setOpaque(false);
     myMoreToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     add(myMoreToolbar.getComponent());
+    final double[] directionAccumulator = new double[]{0};
     addMouseWheelListener(event -> {
-      int units = event.getUnitsToScroll();
+
+      double units = event.getUnitsToScroll();
       if (units == 0) return;
+      if (directionAccumulator[0] == 0) {
+        directionAccumulator[0] += units;
+      } else {
+        if (directionAccumulator[0] * units < 0) {
+          directionAccumulator[0] = 0;
+          return;
+        }
+      }
+      if (Math.abs(event.getPreciseWheelRotation()) > 1) {
+        units = event.getPreciseWheelRotation();
+      }
       if (mySingleRowLayout.myLastSingRowLayout != null) {
-        mySingleRowLayout.scroll((int)(event.getPreciseWheelRotation() * mySingleRowLayout.getScrollUnitIncrement()));
+        mySingleRowLayout.scroll((int)Math.round(units * mySingleRowLayout.getScrollUnitIncrement()));
         revalidateAndRepaint(false);
       }
     });
@@ -489,7 +504,7 @@ public class JBTabsImpl extends JComponent
       }
     });
 
-    new LazyUiDisposable<JBTabsImpl>(parentDisposable, this, this) {
+    new LazyUiDisposable<>(parentDisposable, this, this) {
       @Override
       protected void initialize(@NotNull Disposable parent, @NotNull JBTabsImpl child, @Nullable Project project) {
         if (myProject == null && project != null) {
@@ -524,6 +539,44 @@ public class JBTabsImpl extends JComponent
                                         .filter(Conditions.not(Conditions.is(mySelectedInfo)))
                                         .transform(info -> info.getComponent()).iterator();
                                     });
+  }
+
+  @Override
+  protected void paintChildren(Graphics g) {
+    super.paintChildren(g);
+    if (Registry.is("ui.no.bangs.and.whistles", false)) {
+      return;
+    }
+    if (Registry.is("ide.editor.tabs.show.fadeout") && !getTabsPosition().isSide() && myMoreToolbar.getComponent().isShowing()) {
+      int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
+      Rectangle labelsArea = null;
+      boolean showRightFadeout = false;
+      boolean showLeftFadeout = false;
+      for (TabLabel label : myInfo2Label.values()) {
+        if (labelsArea == null) {
+          labelsArea = label.getBounds();
+        } else {
+          labelsArea = labelsArea.union(label.getBounds());
+        }
+        showLeftFadeout |= label.getX() < 0;
+        showRightFadeout |= label.getWidth() < label.getPreferredSize().width - 1;
+      }
+      Color transparent = ColorUtil.withAlpha(UIUtil.getPanelBackground(), 0);
+      if (showLeftFadeout) {
+        Rectangle leftSide = new Rectangle(0, labelsArea.y, width, labelsArea.height);
+        ((Graphics2D)g).setPaint(
+          new GradientPaint(leftSide.x, leftSide.y, UIUtil.getPanelBackground(), leftSide.x + leftSide.width,
+                            leftSide.y, transparent));
+        ((Graphics2D)g).fill(leftSide);
+      }
+      if (showRightFadeout) {
+        Rectangle rightSide = new Rectangle(myMoreToolbar.getComponent().getX() - 1 - width, labelsArea.y, width, labelsArea.height);
+        ((Graphics2D)g).setPaint(
+          new GradientPaint(rightSide.x, rightSide.y, transparent, rightSide.x + rightSide.width, rightSide.y,
+                            UIUtil.getPanelBackground()));
+        ((Graphics2D)g).fill(rightSide);
+      }
+    }
   }
 
   @NotNull
@@ -822,7 +875,7 @@ public class JBTabsImpl extends JComponent
 
 
   /**
-   * TODO use {@link RdGraphicsExKt#childAtMouse(IdeGlassPane, Container)}
+   * TODO use RdGraphicsExKt#childAtMouse(IdeGlassPane, Container)
    */
   @Deprecated
   final class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
@@ -2741,7 +2794,7 @@ public class JBTabsImpl extends JComponent
       if (value != null) return value;
     }
 
-    if (QuickActionProvider.KEY.getName().equals(dataId)) {
+    if (QuickActionProvider.KEY.is(dataId)) {
       return this;
     }
     if (MorePopupAware.KEY.is(dataId)) {

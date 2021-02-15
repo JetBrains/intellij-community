@@ -18,10 +18,14 @@ package com.intellij.application.options.editor.fonts;
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.FontEditorPreview;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,14 +37,21 @@ public class AppEditorFontPanel implements Disposable {
   @NotNull private final FontEditorPreview myPreview;
   @NotNull private final EditorColorsScheme myPreviewScheme;
   @NotNull private final JPanel myTopPanel;
+  @NotNull private final JLabel myRestoreLabel;
 
   public AppEditorFontPanel() {
-    myTopPanel = new JPanel(new BorderLayout(0,10));
+    myTopPanel = new JPanel(new BorderLayout());
+    JPanel restorePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    myRestoreLabel = createRestoreLabel();
+    restorePanel.add(myRestoreLabel);
+    myTopPanel.add(restorePanel, BorderLayout.NORTH);
+    JBSplitter splitter = new JBSplitter(false, 0.3f);
     myPreviewScheme = createPreviewScheme();
-    myOptionsPanel = new AppEditorFontOptionsPanel(myPreviewScheme);
-    myTopPanel.add(myOptionsPanel, BorderLayout.NORTH);
+    myOptionsPanel = new AppEditorFontOptionsPanel(this, myPreviewScheme);
     myPreview = new FontEditorPreview(()-> myPreviewScheme, true);
-    myTopPanel.add(myPreview.getPanel(), BorderLayout.CENTER);
+    splitter.setFirstComponent(myOptionsPanel);
+    splitter.setSecondComponent(myPreview.getPanel());
+    myTopPanel.add(splitter, BorderLayout.CENTER);
     myOptionsPanel.addListener(
       new ColorAndFontSettingsListener.Abstract() {
         @Override
@@ -49,6 +60,20 @@ public class AppEditorFontPanel implements Disposable {
         }
       }
     );
+  }
+
+  void setRestoreLabelEnabled(boolean isEnabled) {
+    myRestoreLabel.setEnabled(isEnabled);
+  }
+
+  @NotNull
+  private JLabel createRestoreLabel() {
+    return new LinkLabel<>(ApplicationBundle.message("settings.editor.font.restored.defaults"), null, new LinkListener<>() {
+      @Override
+      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
+        myOptionsPanel.restoreDefaults();
+      }
+    });
   }
 
   public void updatePreview() {

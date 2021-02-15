@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class EnterAction extends EditorAction implements LatencyAwareEditorAction {
   public EnterAction() {
@@ -20,13 +19,9 @@ public class EnterAction extends EditorAction implements LatencyAwareEditorActio
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
-    public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.command.name"));
       insertNewLineAtCaret(editor);
     }

@@ -18,10 +18,10 @@ package org.intellij.images.options.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.BaseConfigurableWithChangeSupport;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.intellij.images.ImagesBundle;
+import org.intellij.images.actions.EditExternalImageEditorAction;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jetbrains.annotations.NonNls;
@@ -96,7 +96,7 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
   }
 
   public static void show(Project project) {
-    ShowSettingsUtil.getInstance().editConfigurable(project, new ImagesConfigurable());
+    EditExternalImageEditorAction.Companion.showDialog(project);
   }
 
   @Override

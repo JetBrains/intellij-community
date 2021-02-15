@@ -46,8 +46,7 @@ import java.util.Collections;
  *
  * @see MessageBundleReferenceContributor
  */
-public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProviderBase {
-
+public final class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProviderBase {
   @Override
   public String getName() {
     return DevKitBundle.message("line.marker.related.property.description");
@@ -103,13 +102,10 @@ public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProv
       NavigationGutterIconBuilder.create(DevkitIcons.Gutter.Properties,
                                          e -> Collections.singletonList(((PsiElement)e)),
                                          e -> Collections.singletonList(new GotoRelatedItem((PsiElement)e)))
-        .setTargets(new NotNullLazyValue<>() {
-          @Override
-          protected @NotNull Collection<PsiElement> compute() {
-            return ContainerUtil.map(query.findAll(),
-                                     reference -> PsiTreeUtil.getParentOfType(reference.getElement(), Property.class));
-          }
-        })
+        .setTargets(NotNullLazyValue.createValue(() -> {
+          return ContainerUtil.map(query.findAll(),
+                                   reference -> PsiTreeUtil.getParentOfType(reference.getElement(), Property.class));
+        }))
         .setPopupTitle(DevKitBundle.message("line.marker.related.property.popup.title"))
         .setTooltipText(DevKitBundle.message("line.marker.related.property.tooltip"))
         .setAlignment(GutterIconRenderer.Alignment.RIGHT)

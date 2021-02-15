@@ -3,40 +3,50 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacDockDelegate;
 import com.intellij.ui.win.WinDockDelegate;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Fokin
+ * @author Nikita Provotorov
  */
 public final class SystemDock {
-  private static final Delegate ourDelegate;
+  public interface Delegate {
+    void updateRecentProjectsMenu();
+  }
+
+
+  synchronized public static void updateMenu() {
+    try {
+      if (ourDelegate != null) {
+        ourDelegate.updateRecentProjectsMenu();
+      }
+    }
+    catch (Throwable err) {
+      log.error(err);
+    }
+  }
+
+
+  private static final Logger log = Logger.getInstance(SystemDock.class);
+  private static final @Nullable Delegate ourDelegate;
 
   static {
-    Delegate delegate = null;
+    SystemDock.Delegate delegate = null;
 
-    Application app = ApplicationManager.getApplication();
+    final Application app = ApplicationManager.getApplication();
     if (app != null && !app.isUnitTestMode()) {
       if (SystemInfo.isMac) {
         delegate = MacDockDelegate.getInstance();
       }
-      else if (SystemInfo.isWin7OrNewer && Registry.is("windows.jumplist")) {
+      else if (SystemInfo.isWindows) {
         delegate = WinDockDelegate.getInstance();
       }
     }
 
     ourDelegate = delegate;
-  }
-
-  public static void updateMenu() {
-    if (ourDelegate != null) {
-      ourDelegate.updateRecentProjectsMenu();
-    }
-  }
-
-  public interface Delegate {
-    void updateRecentProjectsMenu();
   }
 }

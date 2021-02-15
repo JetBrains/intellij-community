@@ -18,7 +18,7 @@ public class ClassCanBeRecordInspectionTest extends LightQuickFixParameterizedTe
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_14;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 
   @Override

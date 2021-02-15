@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.impl.ToolWindowEventSource
 
 class ToolWindowEventLogGroup : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("toolwindow", 57)
+    private val GROUP = EventLogGroup("toolwindow", 58)
 
     @JvmField
     val TOOLWINDOW_ID = EventFields.StringValidatedByCustomRule("id", "toolwindow")

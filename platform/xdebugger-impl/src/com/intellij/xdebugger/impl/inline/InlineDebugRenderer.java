@@ -33,6 +33,8 @@ import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +60,7 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private int myRemoveXCoordinate = Integer.MAX_VALUE;
   private int myTextStartXCoordinate;
   private XSourcePosition myPosition;
+  private SimpleColoredText myPresentation;
 
   InlineDebugRenderer(XValueNodeImpl valueNode,
                       @NotNull XSourcePosition position,
@@ -68,10 +71,20 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
     myEditor = editor;
+    myPresentation = getPresentation();
     myTreeCreator = new XDebuggerTreeCreator(session.getProject(),
                                              session.getDebugProcess().getEditorsProvider(),
                                              session.getCurrentPosition(),
                                              ((XDebugSessionImpl)session).getValueMarkers());
+    myValueNode.getTree().addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void nodeLoaded(@NotNull RestorableStateNode node,
+                             @NotNull String name) {
+        if (node == myValueNode) {
+          myPresentation = getPresentation();
+        }
+      }
+    });
   }
 
   private SimpleColoredText getPresentation() {
@@ -181,13 +194,12 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
   private int getInlayTextWidth(@NotNull Inlay inlay) {
     Font font = getFont(inlay.getEditor());
-    SimpleColoredText presentation = getPresentation();
     String text;
     if (isErrorMessage()) {
-      text = presentation.getTexts().get(0);
+      text = myPresentation.getTexts().get(0);
     }
     else {
-      text = presentation.toString() + NAME_VALUE_SEPARATION;
+      text = myPresentation.toString() + NAME_VALUE_SEPARATION;
     }
     return getFontMetrics(font, inlay.getEditor()).stringWidth(text + INDENT);
   }
@@ -209,7 +221,6 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     EditorImpl editor = (EditorImpl)inlay.getEditor();
     TextAttributes inlineAttributes = getAttributes(editor);
     if (inlineAttributes == null || inlineAttributes.getForegroundColor() == null) return;
-    SimpleColoredText presentation = getPresentation();
 
     Font font = getFont(editor);
     g.setFont(font);
@@ -236,12 +247,12 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
       curX += watchIcon.getIconWidth() + margin * 2;
     }
     myTextStartXCoordinate = curX;
-    for (int i = 0; i < presentation.getTexts().size(); i++) {
-      String curText = presentation.getTexts().get(i);
+    for (int i = 0; i < myPresentation.getTexts().size(); i++) {
+      String curText = myPresentation.getTexts().get(i);
       if (i == 0 && !isErrorMessage()) {
         curText += NAME_VALUE_SEPARATION;
       }
-      SimpleTextAttributes attr = presentation.getAttributes().get(i);
+      SimpleTextAttributes attr = myPresentation.getAttributes().get(i);
 
       Color fgColor = isHovered ? inlineAttributes.getForegroundColor() : attr.getFgColor();
       g.setColor(fgColor);

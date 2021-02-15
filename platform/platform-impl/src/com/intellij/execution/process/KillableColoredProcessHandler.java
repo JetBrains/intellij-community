@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.util.io.BaseOutputReader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,13 +54,6 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
                                        @Nullable Set<? extends File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(true);
-  }
-
-  /** @deprecated use {@link #KillableColoredProcessHandler(GeneralCommandLine, boolean)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static KillableColoredProcessHandler create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new KillableColoredProcessHandler(commandLine, true);
   }
 
   public static class Silent extends KillableColoredProcessHandler {

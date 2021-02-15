@@ -10,11 +10,12 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.*
 import libraries.io.FileUtil
+import org.jetbrains.annotations.Nls
 import java.awt.GridBagLayout
 import javax.swing.*
 
 internal class SpaceCloneListItemRenderer : ListCellRenderer<SpaceCloneListItem> {
-  private val starIcon: Icon = AllIcons.Nodes.Favorite as Icon
+  private val starIcon: Icon = AllIcons.Nodes.Favorite
 
   private val insetsLeft: JBInsets = JBUI.insetsLeft(30)
   private val smallLeftInset: JBInsets = JBUI.insetsLeft(3)
@@ -64,7 +65,7 @@ internal class SpaceCloneListItemRenderer : ListCellRenderer<SpaceCloneListItem>
                                             selected: Boolean,
                                             focused: Boolean): JComponent {
     repoNameComponent.clear()
-    repoNameComponent.append(value.repoInfo.name)
+    repoNameComponent.append(value.repoInfo.name) // NON-NLS
 
     repoDetailsComponent.clear()
     val details = value.repoDetails.value?.let { buildDetailsString(it, value.repoInfo) }
@@ -88,7 +89,7 @@ internal class SpaceCloneListItemRenderer : ListCellRenderer<SpaceCloneListItem>
     projectNameComponent.clear()
 
     val spaceProject = value.project
-    projectNameComponent.append(spaceProject.name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+    projectNameComponent.append(spaceProject.name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) // NON-NLS
     starLabel.icon = if (value.starred) starIcon else EmptyIcon.ICON_13
 
     val projectDescription = spaceProject.description
@@ -108,6 +109,7 @@ internal class SpaceCloneListItemRenderer : ListCellRenderer<SpaceCloneListItem>
     }
   }
 
+  @Nls
   private fun buildDetailsString(repoDetails: RepoDetails, repo: PR_RepositoryInfo) = with(repoDetails) {
     SpaceBundle.message(
       "clone.dialog.projects.list.repository.description",

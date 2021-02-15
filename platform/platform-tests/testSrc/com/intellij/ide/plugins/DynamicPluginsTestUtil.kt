@@ -11,7 +11,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.write
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -45,7 +44,14 @@ fun loadExtensionWithText(
 }
 
 internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoader, fs: FileSystem): Disposable {
-  val descriptor = preparePluginDescriptor(pluginBuilder.text(), fs).second
+  val directory = if (fs == FileSystems.getDefault())
+    FileUtil.createTempDirectory("test", "test", true).toPath()
+  else
+    fs.getPath("/").resolve(Ksuid.generate())
+  val pluginDirectory = directory.resolve("plugin")
+
+  pluginBuilder.build(pluginDirectory)
+  val descriptor = loadDescriptorInTest(pluginDirectory)
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   setPluginClassLoaderForMainAndSubPlugins(descriptor, loader)
   try {
@@ -57,20 +63,12 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
   }
 
   return Disposable {
-    val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
+    val unloadDescriptor = loadDescriptorInTest(pluginDirectory)
+    val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(unloadDescriptor)
     unloadPlugin(descriptor)
 
     assertThat(canBeUnloaded).isTrue()
   }
-}
-
-private fun preparePluginDescriptor(pluginXml: String, fs: FileSystem): Pair<Path, IdeaPluginDescriptorImpl> {
-  val directory = if (fs == FileSystems.getDefault()) FileUtil.createTempDirectory("test", "test", true).toPath() else fs.getPath("/").resolve(
-    Ksuid.generate())
-  val plugin = directory.resolve("plugin/META-INF/plugin.xml")
-  plugin.write(pluginXml)
-  val descriptor = loadDescriptorInTest(plugin.parent.parent)
-  return Pair(plugin, descriptor)
 }
 
 internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {

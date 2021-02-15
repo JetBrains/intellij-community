@@ -37,6 +37,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_CREATION_FAILED;
+
 public abstract class CreatePatchFromChangesAction extends ExtendableAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CreatePatchFromChangesAction.class);
   private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME_DIALOG =
@@ -163,7 +165,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
       }
       catch (IOException | VcsException exception) {
         LOG.warn("Can't create patch", exception);
-        VcsNotifier.getInstance(project).notifyWeakError("vcs.patch.creation.failed",
+        VcsNotifier.getInstance(project).notifyWeakError(PATCH_CREATION_FAILED,
                                                          VcsBundle.message("patch.creation.failed"),
                                                          exception.getMessage());
       }

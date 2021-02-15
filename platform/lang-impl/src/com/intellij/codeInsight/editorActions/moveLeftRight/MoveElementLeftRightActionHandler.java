@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler {
+public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler.ForEachCaret {
   private static final Comparator<PsiElement> BY_OFFSET = Comparator.comparingInt(PsiElement::getTextOffset);
 
   private static final Set<String> OUR_ACTIONS =
@@ -32,7 +32,6 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
   private final boolean myIsLeft;
 
   public MoveElementLeftRightActionHandler(boolean isLeft) {
-    super(true);
     myIsLeft = isLeft;
   }
 
@@ -87,8 +86,7 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    assert caret != null;
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     DocumentEx document = (DocumentEx)editor.getDocument();
     Project project = editor.getProject();
     assert project != null;

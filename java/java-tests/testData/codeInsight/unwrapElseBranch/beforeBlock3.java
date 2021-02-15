@@ -1,4 +1,4 @@
-// "Unwrap 'else' branch" "true"
+// "Unwrap 'else' branch" "false"
 
 class T {
     void f(boolean b) {

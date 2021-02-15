@@ -149,7 +149,7 @@ class Aaaa {}
     testHighlighting '''\
 class <caret><warning descr="Class Aaaa is unused">Aaaa</warning> {}
 '''
-    def action = fixture.findSingleIntention 'Suppress'
+    def action = fixture.findSingleIntention 'Suppress for class'
     fixture.launchAction(action)
 
     fixture.checkResult '''\

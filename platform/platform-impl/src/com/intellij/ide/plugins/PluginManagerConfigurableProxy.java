@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -8,7 +8,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class PluginManagerConfigurableProxy extends PluginManagerConfigurable {
+public final class PluginManagerConfigurableProxy {
+  private PluginManagerConfigurableProxy() {
+  }
 
   public static void showPluginConfigurable(@Nullable Component parent,
                                             @Nullable Project project,

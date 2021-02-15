@@ -5,8 +5,8 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
-import gnu.trove.TIntIntHashMap
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jdom.Element
 import kotlin.math.max
 
@@ -27,16 +27,15 @@ class FilePredictionHistoryState {
     val serialized = XmlSerializer.serialize(this)
     val sequences = Element("sequences")
     sequences.setAttribute("count", root.count.toString())
-    root.usages.forEachEntry { code, node ->
+    for (entry in root.usages.int2ObjectEntrySet()) {
       val child = Element("usage")
-      child.setAttribute("code", code.toString())
-      child.setAttribute("count", node.count.toString())
-      val keys = node.usages.keys().joinToString(separator = ",")
+      child.setAttribute("code", entry.intKey.toString())
+      child.setAttribute("count", entry.value.count.toString())
+      val keys = entry.value.usages.keys.joinToString(separator = ",")
       child.setAttribute("keys", keys)
-      val values = node.usages.values.joinToString(separator = ",")
+      val values = entry.value.usages.values.joinToString(separator = ",")
       child.setAttribute("values", values)
       sequences.addContent(child)
-      return@forEachEntry true
     }
     serialized.addContent(sequences)
     return serialized
@@ -130,14 +129,14 @@ abstract class NGramModelNode<T> {
 }
 
 class NGramMapNode: NGramModelNode<NGramListNode>() {
-  val usages: TIntObjectHashMap<NGramListNode> = TIntObjectHashMap()
+  val usages = Int2ObjectOpenHashMap<NGramListNode>()
 
   override fun addOrIncrement(code: Int) {
-    usages.getOrPut(code).count++
+    getOrPut(usages, code).count++
   }
 
   override fun getOrCreate(code: Int): NGramListNode {
-    return usages.getOrPut(code)
+    return getOrPut(usages, code)
   }
 
   override fun getNode(code: Int): NGramListNode? {
@@ -151,7 +150,7 @@ class NGramMapNode: NGramModelNode<NGramListNode>() {
   override fun findMinMax(): Pair<Int, Int> {
     var minCount: Int = -1
     var maxCount: Int = -1
-    usages.forEachValue { listNode ->
+    for (listNode in usages.values) {
       val count = listNode.count
       if (minCount < 0 || minCount > count) {
         minCount = count
@@ -159,7 +158,6 @@ class NGramMapNode: NGramModelNode<NGramListNode>() {
       if (maxCount < 0 || maxCount < count) {
         maxCount = count
       }
-      true
     }
     return max(minCount, 0) to max(maxCount, 0)
   }
@@ -184,18 +182,17 @@ class NGramMapNode: NGramModelNode<NGramListNode>() {
 }
 
 class NGramListNode: NGramModelNode<Int>() {
-  val usages: TIntIntHashMap = TIntIntHashMap()
+  val usages: Int2IntOpenHashMap = Int2IntOpenHashMap()
 
   override fun addOrIncrement(code: Int) {
-    val current = usages.getOrPut(code)
-    usages.put(code, current + 1)
+    usages.addTo(code, 1)
   }
 
   override fun getOrCreate(code: Int): Int {
-    return usages.getOrPut(code)
+    return usages.addTo(code, 0)
   }
 
-  override fun getNode(code: Int): Int? {
+  override fun getNode(code: Int): Int {
     return usages.get(code)
   }
 
@@ -206,14 +203,15 @@ class NGramListNode: NGramModelNode<Int>() {
   override fun findMinMax(): Pair<Int, Int> {
     var minCount: Int = -1
     var maxCount: Int = -1
-    usages.forEachValue { count ->
+    val iterator = usages.values.iterator()
+    while (iterator.hasNext()) {
+      val count = iterator.nextInt()
       if (minCount < 0 || minCount > count) {
         minCount = count
       }
       if (maxCount < 0 || maxCount < count) {
         maxCount = count
       }
-      true
     }
     return max(minCount, 0) to max(maxCount, 0)
   }
@@ -245,16 +243,9 @@ private fun Element.getIntListAttribute(name: String): IntArray? {
   return getAttributeValue(name)?.split(',')?.mapNotNull { it.toIntOrNull() }?.toIntArray()
 }
 
-private fun TIntIntHashMap.getOrPut(code: Int): Int {
-  if (!this.containsKey(code)) {
-    this.put(code, 0)
+private fun getOrPut(int2ObjectOpenHashMap: Int2ObjectOpenHashMap<NGramListNode>, code: Int): NGramListNode {
+  if (!int2ObjectOpenHashMap.containsKey(code)) {
+    int2ObjectOpenHashMap.put(code, NGramListNode())
   }
-  return this.get(code)
-}
-
-private fun TIntObjectHashMap<NGramListNode>.getOrPut(code: Int): NGramListNode {
-  if (!this.containsKey(code)) {
-    this.put(code, NGramListNode())
-  }
-  return this.get(code)
+  return int2ObjectOpenHashMap.get(code)
 }

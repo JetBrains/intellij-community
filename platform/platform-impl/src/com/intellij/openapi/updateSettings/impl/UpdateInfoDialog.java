@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -49,7 +50,8 @@ import static com.intellij.openapi.util.Pair.pair;
 /**
  * @author pti
  */
-final class UpdateInfoDialog extends AbstractUpdateDialog {
+public final class UpdateInfoDialog extends AbstractUpdateDialog {
+  private final Project myProject;
   private final UpdateChannel myUpdatedChannel;
   private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
@@ -59,13 +61,15 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final File myTestPatch;
   private final AbstractAction myWhatsNewAction;
 
-  UpdateInfoDialog(@NotNull UpdateChannel channel,
-                   @NotNull BuildInfo newBuild,
-                   @Nullable UpdateChain patches,
-                   boolean enableLink,
-                   @Nullable Collection<PluginDownloader> updatedPlugins,
-                   @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
+  public UpdateInfoDialog(@Nullable Project project,
+                          @NotNull UpdateChannel channel,
+                          @NotNull BuildInfo newBuild,
+                          @Nullable UpdateChain patches,
+                          boolean enableLink,
+                          @Nullable Collection<PluginDownloader> updatedPlugins,
+                          @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
+    myProject = project;
     myUpdatedChannel = channel;
     myUpdatedPlugins = updatedPlugins;
     myNewBuild = newBuild;
@@ -85,6 +89,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
   @SuppressWarnings("HardCodedStringLiteral")
   UpdateInfoDialog(@Nullable Project project, UpdateChannel channel, BuildInfo newBuild, UpdateChain patches, @Nullable File patchFile) {
     super(true);
+    myProject = project;
     myUpdatedChannel = channel;
     myUpdatedPlugins = null;
     myNewBuild = newBuild;
@@ -134,13 +139,11 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
   protected JComponent createCenterPanel() {
     String licenseInfo = myLicenseInfo != null ? myLicenseInfo.first : null;
     boolean licenseWarn = myLicenseInfo != null && myLicenseInfo.second;
-    return UpdateInfoPanel
-      .create(myNewBuild, myPatches, myTestPatch, myWriteProtected, licenseInfo, licenseWarn, myEnableLink, myUpdatedChannel);
+    return UpdateInfoPanel.create(myNewBuild, myPatches, myTestPatch, myWriteProtected, licenseInfo, licenseWarn, myEnableLink, myUpdatedChannel);
   }
 
-  @NotNull
   @Override
-  protected DialogStyle getStyle() {
+  protected @NotNull DialogStyle getStyle() {
     return DialogStyle.COMPACT;
   }
 
@@ -223,34 +226,46 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart() {
-    boolean updatePlugins = !ContainerUtil.isEmpty(myUpdatedPlugins);
-    if (updatePlugins && !new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet()) {
+    if (!ContainerUtil.isEmpty(myUpdatedPlugins) && !new PluginUpdateDialog(myProject, myUpdatedPlugins, null).showAndGet()) {
       return;  // update cancelled
     }
+    downloadPatchAndRestart(myNewBuild, myUpdatedChannel, myPatches, myTestPatch, myUpdatedPlugins, null);
+  }
 
+  public static void downloadPatchAndRestart(@NotNull BuildInfo newBuild,
+                                             @NotNull UpdateChannel updatedChannel,
+                                             @NotNull UpdateChain patches,
+                                             @Nullable File testPatch,
+                                             @Nullable Collection<PluginDownloader> updatedPlugins,
+                                             @Nullable ActionCallback callback) {
     new Task.Backgroundable(null, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
         try {
-          if (myTestPatch != null) {
-            // Android Studio: Analytics
-            AndroidStudioAnalytics.getInstance().logDownloadSuccess(myNewBuild.getNumber().asStringWithoutProductCode());
-            command = UpdateInstaller.preparePatchCommand(myTestPatch, indicator);
+          if (testPatch != null) {
+            command = UpdateInstaller.preparePatchCommand(testPatch, indicator);
           }
           else {
-            List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), indicator);
+            List<File> files = UpdateInstaller.downloadPatchChain(patches.getChain(), indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
         }
-        catch (ProcessCanceledException e) { throw e; }
+        catch (ProcessCanceledException e) {
+          if (callback != null) {
+            callback.setRejected();
+          }
+          throw e;
+        }
         catch (Exception e) {
-          // Android Studio: Analytics
-          AndroidStudioAnalytics.getInstance().logDownloadFailure(myNewBuild.getNumber().asStringWithoutProductCode());
           Logger.getInstance(UpdateInstaller.class).warn(e);
 
+          if (callback != null) {
+            callback.setRejected();
+          }
+
           String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-          String downloadUrl = UpdateInfoPanel.downloadUrl(myNewBuild, myUpdatedChannel);
+          String downloadUrl = UpdateInfoPanel.downloadUrl(newBuild, updatedChannel);
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl);
           UpdateChecker.getNotificationGroup().createNotification(
             title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER, "ide.patch.download.failed").notify(null);
@@ -258,8 +273,12 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
           return;
         }
 
-        if (updatePlugins) {
-          UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
+        if (!ContainerUtil.isEmpty(updatedPlugins)) {
+          UpdateInstaller.installPluginUpdates(updatedPlugins, indicator);
+        }
+
+        if (callback != null) {
+          callback.setDone();
         }
 
         if (ApplicationManager.getApplication().isRestartCapable()) {

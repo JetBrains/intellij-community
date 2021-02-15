@@ -2,6 +2,7 @@
 package com.intellij.credentialStore.gpg
 
 import com.intellij.credentialStore.LOG
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SmartList
 
@@ -86,4 +87,4 @@ internal fun createGpg(): GpgToolWrapper {
   return result
 }
 
-internal data class PgpKey(val keyId: String, val userId: String)
+internal data class PgpKey(@NlsSafe val keyId: String, @NlsSafe val userId: String)

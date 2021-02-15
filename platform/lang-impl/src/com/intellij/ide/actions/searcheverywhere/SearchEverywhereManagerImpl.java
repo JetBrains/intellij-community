@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -152,7 +154,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       Dimension prefSize = mySearchEverywhereUI.getPreferredSize();
       myBalloon.setSize(prefSize);
     }
-    calcPositionAndShow(project, myBalloon);
+    calcPositionAndShow(initEvent, project, myBalloon);
   }
 
   private WindowStateService getStateService() {
@@ -181,7 +183,16 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return res;
   }
 
-  private void calcPositionAndShow(Project project, JBPopup balloon) {
+  private void calcPositionAndShow(@NotNull AnActionEvent initEvent,
+                                   Project project,
+                                   JBPopup balloon) {
+    if(initEvent.getPlace().equals(ActionPlaces.NEW_TOOLBAR)){
+      var component = (Component)initEvent.getInputEvent().getSource();
+      balloon.setLocation(component.getLocationOnScreen());
+      ((AbstractPopup)balloon).show(component, 0, 0, true);
+      return;
+    }
+
     Point savedLocation = getStateService().getLocation(LOCATION_SETTINGS_KEY);
 
     //for first show and short mode popup should be shifted to the top screen half

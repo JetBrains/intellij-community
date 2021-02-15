@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.JreHiDpiUtil
@@ -89,6 +90,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.reuseNotModifiedTabs
     set(value) {
       state.reuseNotModifiedTabs = value
+    }
+
+  var openTabsInMainWindow: Boolean
+    get() = state.openTabsInMainWindow
+    set(value) {
+      state.openTabsInMainWindow = value
     }
 
   var openInPreviewTabIfPossible: Boolean
@@ -210,14 +217,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.compactTreeIndents
     set(value) {
       state.compactTreeIndents = value
-    }
-
-  var moveMouseOnDefaultButton: Boolean
-    @ScheduledForRemoval(inVersion = "2020.3")
-    @Deprecated("Use registry key 'ide.settings.move.mouse.on.default.button'")
-    get() = state.moveMouseOnDefaultButton
-    set(value) {
-      state.moveMouseOnDefaultButton = value
     }
 
   var showMainToolbar: Boolean
@@ -449,13 +448,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   companion object {
     init {
-      verbose("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale)
-    }
-
-    @JvmStatic
-    private fun verbose(msg: String, vararg args: Any) {
       if (JBUIScale.SCALE_VERBOSE) {
-        LOG.info(String.format(msg, *args))
+        LOG.info(String.format("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale))
       }
     }
 
@@ -534,9 +528,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       setupFractionalMetrics(g)
     }
 
-    /**
-     * @see #setupAntialiasing(Graphics)
-     */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
       GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
@@ -548,7 +539,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
     /**
-     * Returns the default font scale, which depends on the HiDPI mode (see JBUI#ScaleType).
+     * Returns the default font scale, which depends on the HiDPI mode (see [com.intellij.ui.scale.ScaleType]).
      * <p>
      * The font is represented:
      * - in relative (dpi-independent) points in the JRE-managed HiDPI mode, so the method returns 1.0f
@@ -573,14 +564,16 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     fun restoreFontSize(readSize: Int, readScale: Float?): Int {
       var size = readSize
       if (readScale == null || readScale <= 0) {
-        verbose("Reset font to default")
+        if (JBUIScale.SCALE_VERBOSE) LOG.info("Reset font to default")
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (JreHiDpiUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
+        if (!SystemInfoRt.isMac && JreHiDpiUtil.isJreHiDPIEnabled()) {
+          size = UISettingsState.defFontSize
+        }
       }
       else if (readScale != defFontScale) {
         size = ((readSize / readScale) * defFontScale).roundToInt()
       }
-      LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
+      if (JBUIScale.SCALE_VERBOSE) LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
     }
 

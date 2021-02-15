@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -454,6 +454,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult1 = "new Integer(get(\"smth\"))";
 
     assertEquals("Replacement of top-level expression only", expectedResult1, replace(s4, s5, s6));
+
+    String in = "class X {" +
+                "  boolean x(int foo, int bar) {" +
+                "    return foo - 1 < bar - 1;" +
+                "  }" +
+                "}";
+    String what = "'_intA:[exprtype( *int|Integer )] - '_const < '_intB:[exprtype( *int|Integer )] - '_const";
+    String by = "$intA$ < $intB$";
+    String expected = "class X {" +
+                      "  boolean x(int foo, int bar) {" +
+                      "    return foo < bar;" +
+                      "  }" +
+                      "}";
+
+    assertEquals("No errors in pattern", expected, replace(in, what, by));
   }
 
   public void testReplaceParameter() {
@@ -1533,7 +1548,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     try {
       replace(s1, s2, s3);
       fail("Undefined replace variable is not checked");
-    } catch (MalformedPatternException ignored) {}
+    }
+    catch (MalformedPatternException ignored) {}
 
     String s4 = "a=a;";
     String s5 = "a=a;";
@@ -1542,12 +1558,20 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     try {
       replace(s4, s5, s6);
       fail("Undefined no ; in replace");
-    } catch (UnsupportedPatternException ignored) {}
+    }
+    catch (UnsupportedPatternException ignored) {}
 
     try {
       replace(s4, s6, s5);
       fail("Undefined no ; in search");
-    } catch (UnsupportedPatternException ignored) {}
+    }
+    catch (UnsupportedPatternException ignored) {}
+
+    try {
+      replace(s4, "'_Instance.'MethodCall('_Parameter*);", "$Instance$.$MethodCall$($Parameter$);");
+      fail("Method call expression target can't be replaced with statement");
+    }
+    catch (UnsupportedPatternException ignored) {}
   }
 
   public void testActualParameterReplacementInConstructorInvokation() {

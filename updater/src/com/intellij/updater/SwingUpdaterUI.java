@@ -179,6 +179,7 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
       }
       else {
         message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
+                   "Please download this version from the developer Web site and reinstall it from scratch.<br>" +
                    "Press '" + CANCEL_BUTTON_TITLE + "' to exit.</html>";
       }
       JLabel label = new JLabel(message);

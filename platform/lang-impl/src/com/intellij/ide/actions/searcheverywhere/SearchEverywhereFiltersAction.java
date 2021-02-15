@@ -26,6 +26,10 @@ public class SearchEverywhereFiltersAction<T> extends ShowFilterAction {
     myStatisticsCollector = collector;
   }
 
+  public PersistentSearchEverywhereContributorFilter<T> getFilter() {
+    return filter;
+  }
+
   @Override
   public boolean isEnabled() {
     return true;

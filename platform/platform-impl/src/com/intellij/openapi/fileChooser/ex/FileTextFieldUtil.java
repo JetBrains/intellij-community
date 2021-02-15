@@ -81,7 +81,7 @@ public final class FileTextFieldUtil {
     }
 
 
-    ReadAction.run(new ThrowableRunnable<RuntimeException>() {
+    ReadAction.run(new ThrowableRunnable<>() {
       @Override
       public void run() {
         if (result.current != null) {

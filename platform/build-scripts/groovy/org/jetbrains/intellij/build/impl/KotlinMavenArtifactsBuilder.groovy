@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -9,8 +9,8 @@ import org.jetbrains.jps.model.module.JpsModule
  * Generates Maven artifacts for Kotlin IDE modules
  */
 @CompileStatic
-class KotlinMavenArtifactsBuilder extends MavenArtifactsBuilder {
-  private static final Set<String> MODULE_GROUP_NAMES = ["gradle", "uast"] as Set<String>
+final class KotlinMavenArtifactsBuilder extends MavenArtifactsBuilder {
+  private static final Set<String> MODULE_GROUP_NAMES = Set.of("gradle", "uast")
 
   KotlinMavenArtifactsBuilder(BuildContext buildContext) {
     super(buildContext)

@@ -5,16 +5,13 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.TestData;
-import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -33,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -42,8 +38,6 @@ import org.jetbrains.plugins.gradle.util.TasksToRun;
 
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getExternalProjectInfo;
-import static com.intellij.openapi.util.text.StringUtil.endsWithChar;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.escapeIfNeeded;
 import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
 
@@ -51,19 +45,10 @@ import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
  * @author Vladislav.Soroka
  */
 public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
-  private static final List<String> TEST_SOURCE_SET_TASKS = Collections.singletonList("test");
 
   protected static final Logger LOG = Logger.getInstance(GradleTestRunConfigurationProducer.class);
 
   private TestTasksChooser testTasksChooser = new TestTasksChooser();
-
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated
-  protected GradleTestRunConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
 
   protected GradleTestRunConfigurationProducer() {
     super(true);
@@ -221,57 +206,6 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       }
     }
     return testTasks;
-  }
-
-  @Deprecated
-  @NotNull
-  public static List<String> getTasksToRun(@NotNull Module module) {
-    for (GradleTestTasksProvider provider : GradleTestTasksProvider.EP_NAME.getExtensions()) {
-      final List<String> tasks = provider.getTasks(module);
-      if(!ContainerUtil.isEmpty(tasks)) {
-        return tasks;
-      }
-    }
-
-    final String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
-    if (externalProjectId == null) return ContainerUtil.emptyList();
-    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-    if (projectPath == null) return ContainerUtil.emptyList();
-    final ExternalProjectInfo externalProjectInfo =
-      getExternalProjectInfo(module.getProject(), GradleConstants.SYSTEM_ID, projectPath);
-    if (externalProjectInfo == null) return ContainerUtil.emptyList();
-
-    final List<String> tasks;
-    final String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
-    if (gradlePath == null) return ContainerUtil.emptyList();
-    String taskPrefix = endsWithChar(gradlePath, ':') ? gradlePath : (gradlePath + ':');
-
-    if (StringUtil.endsWith(externalProjectId, ":test") || StringUtil.endsWith(externalProjectId, ":main")) {
-      return ContainerUtil.map(TEST_SOURCE_SET_TASKS, task -> taskPrefix + task);
-    }
-
-    final DataNode<ModuleData> moduleNode =
-      GradleProjectResolverUtil.findModule(externalProjectInfo.getExternalProjectStructure(), projectPath);
-    if (moduleNode == null) return ContainerUtil.emptyList();
-
-    final DataNode<TaskData> taskNode;
-    final String sourceSetId = StringUtil.substringAfter(externalProjectId, moduleNode.getData().getExternalName() + ':');
-    if (sourceSetId == null) {
-      taskNode = ExternalSystemApiUtil.find(
-        moduleNode, ProjectKeys.TASK,
-        node -> node.getData().isTest() &&
-                StringUtil.equals("test", node.getData().getName()) || StringUtil.equals(taskPrefix + "test", node.getData().getName()));
-    }
-    else {
-      taskNode = ExternalSystemApiUtil.find(
-        moduleNode, ProjectKeys.TASK,
-        node -> node.getData().isTest() && StringUtil.startsWith(node.getData().getName(), sourceSetId));
-    }
-
-    if (taskNode == null) return ContainerUtil.emptyList();
-    String taskName = StringUtil.trimStart(taskNode.getData().getName(), taskPrefix);
-    tasks = Collections.singletonList(taskName);
-    return ContainerUtil.map(tasks, task -> taskPrefix + task);
   }
 
   private static TestRunner getTestRunner(@NotNull Project project, @NotNull String projectPath) {

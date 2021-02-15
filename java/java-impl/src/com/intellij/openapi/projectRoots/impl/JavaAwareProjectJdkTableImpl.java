@@ -12,7 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
@@ -55,18 +56,17 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   @Deprecated
   public Sdk getInternalJdk() {
     if (myInternalJdk == null) {
-      File javaHome = new File(SystemProperties.getJavaHome());
-
+      Path javaHome = Paths.get(SystemProperties.getJavaHome());
       if (JdkUtil.checkForJre(javaHome) && !JdkUtil.checkForJdk(javaHome)) {
         // handle situation like javaHome="<somewhere>/jdk1.8.0_212/jre" (see IDEA-226353)
-        File javaHomeParent = javaHome.getParentFile();
+        Path javaHomeParent = javaHome.getParent();
         if (javaHomeParent != null && JdkUtil.checkForJre(javaHomeParent) && JdkUtil.checkForJdk(javaHomeParent)) {
           javaHome = javaHomeParent;
         }
       }
 
       String versionName = JdkVersionDetector.formatVersionString(JavaVersion.current());
-      myInternalJdk = JavaSdk.getInstance().createJdk(versionName, javaHome.getAbsolutePath(), !JdkUtil.checkForJdk(javaHome));
+      myInternalJdk = JavaSdk.getInstance().createJdk(versionName, javaHome.toAbsolutePath().toString(), !JdkUtil.checkForJdk(javaHome));
     }
     return myInternalJdk;
   }

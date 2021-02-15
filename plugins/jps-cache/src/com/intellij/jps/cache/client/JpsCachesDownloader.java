@@ -133,21 +133,21 @@ class JpsCachesDownloader {
 
     return HttpRequests.request(description.getDownloadUrl())
       .tuner(tuner -> headers.forEach((k, v) -> tuner.addRequestProperty(k, v)))
-      .connect(new HttpRequests.RequestProcessor<File>() {
-      @Override
-      public File process(@NotNull HttpRequests.Request request) throws IOException {
-        URLConnection connection = request.getConnection();
-        int size = connection.getContentLength();
-        if (existingFile.exists() && size == existingFile.length()) {
-          return existingFile;
-        }
+      .connect(new HttpRequests.RequestProcessor<>() {
+        @Override
+        public File process(@NotNull HttpRequests.Request request) throws IOException {
+          URLConnection connection = request.getConnection();
+          int size = connection.getContentLength();
+          if (existingFile.exists() && size == existingFile.length()) {
+            return existingFile;
+          }
 
-        String header = connection.getHeaderField(CDN_CACHE_HEADER);
-        if (header != null && header.startsWith("Hit")) hitsCount++;
-        indicator.setText2(IdeBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
-        return request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
-      }
-    });
+          String header = connection.getHeaderField(CDN_CACHE_HEADER);
+          if (header != null && header.startsWith("Hit")) hitsCount++;
+          indicator.setText2(IdeBundle.message("progress.download.file.text", description.getPresentableFileName(), presentableUrl));
+          return request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
+        }
+      });
   }
 
   private static List<Pair<File, DownloadableFileDescription>> moveToDir(List<Pair<File, DownloadableFileDescription>> downloadedFiles,

@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -23,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class UnknownSdkEditorNotification {
+public final class UnknownSdkEditorNotification {
   public static final Key<List<EditorNotificationPanel>> NOTIFICATIONS = Key.create("notifications added to the editor");
 
   public static @NotNull UnknownSdkEditorNotification getInstance(@NotNull Project project) {
@@ -54,7 +52,7 @@ public class UnknownSdkEditorNotification {
   }
 
   public @NotNull List<UnknownSdkFix> getNotifications() {
-    return ImmutableList.copyOf(myNotifications.get());
+    return List.copyOf(myNotifications.get());
   }
 
   public void showNotifications(@NotNull List<UnknownSdkFix> notifications) {
@@ -62,7 +60,7 @@ public class UnknownSdkEditorNotification {
       notifications = Collections.emptyList();
     }
 
-    myNotifications.set(ImmutableSet.copyOf(notifications));
+    myNotifications.set(Set.copyOf(notifications));
     EditorNotifications.getInstance(myProject).updateAllNotifications();
 
     ApplicationManager.getApplication().invokeLater(() -> {

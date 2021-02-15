@@ -48,13 +48,13 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     myProject = project;
 
     LanguageFolding.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<KeyedLazyInstance<FoldingBuilder>>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull KeyedLazyInstance<FoldingBuilder> extension, @NotNull PluginDescriptor pluginDescriptor) {
           // Asynchronously remove foldings when extension is added
           for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
             if (fileEditor instanceof TextEditor) {
-              scheduleAsyncFoldingUpdate(((TextEditor) fileEditor).getEditor());
+              scheduleAsyncFoldingUpdate(((TextEditor)fileEditor).getEditor());
             }
           }
         }

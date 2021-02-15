@@ -32,11 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.build.ExecutionNode.getEventResultIcon;
@@ -68,7 +66,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
         return buildsView;
       }
     };
-    myPinnedViews = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    myPinnedViews = ContainerUtil.newConcurrentSet();
     @Nullable BuildViewProblemsService buildViewProblemsService = project.getService(BuildViewProblemsService.class);
     if (buildViewProblemsService != null) {
       buildViewProblemsService.listenToBuildView(this);

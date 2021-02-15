@@ -1,0 +1,5 @@
+ext {
+  prop1 = [1, true, 3]
+  prop2 = 77
+  prop3 = prop1[1]
+}

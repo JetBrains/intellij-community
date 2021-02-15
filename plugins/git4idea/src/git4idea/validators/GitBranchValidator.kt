@@ -8,6 +8,7 @@ import git4idea.GitUtil.HEAD
 import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundle.BUNDLE
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
 fun validateName(repositories: Collection<GitRepository>, inputString: String): ValidationInfo? =
@@ -49,6 +50,7 @@ private fun conflictsWithLocalOrRemote(repositories: Collection<GitRepository>,
   return ValidationInfo(errorText)
 }
 
+@Nls
 private fun getAdditionalDescription(repositories: List<GitRepository>) =
   " " +
   if (repositories.size > 1) GitBundle.message("common.suffix.in.several.repositories", repositories.size)

@@ -1,11 +1,38 @@
 <html>
 <body>
-Reports on uses of <b>instanceof</b> or <b>getClass() == SomeClass.class</b> where the
-expression checked is <b>this</b>. Such expressions
+Reports on uses of <code>instanceof</code> or <code>getClass() == SomeClass.class</code> where the
+expression checked is <code>this</code>. Such expressions
 are indicative of a failure of object-oriented design, and should be replaced by
 polymorphic constructions.
+<p>Example:</p>
+<pre>
+class Super {
+  void process() {
+    if (this instanceof Sub) { // warning
+      doSomething();
+    } else {
+      doSomethingElse();
+    }
+  }
+}
+  
+class Sub {}  
+</pre>
+To fix the problem, the method overriding should be used:
+<pre>
+class Super {
+  void process() {
+    doSomethingElse();
+  }
+}
+  
+class Sub {
+  @Override
+  void process() {
+    doSomething();
+  }
+}  
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

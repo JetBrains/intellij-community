@@ -226,8 +226,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
             DataProvider dataProvider = BuildConsoleUtils.getDataProvider(id, progressListener);
-            FailureResult failureResult =
-              ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject, dataProvider);
+            FailureResult failureResult = ExternalSystemUtil.createFailureResult(
+              executionName + " " + BuildBundle.message("build.status.failed"), e, id.getProjectSystemId(), myProject, dataProvider);
             eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                  BuildBundle.message("build.status.failed"), failureResult));
             processHandler.notifyProcessTerminated(1);

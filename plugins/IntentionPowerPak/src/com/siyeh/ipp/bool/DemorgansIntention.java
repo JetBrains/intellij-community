@@ -52,7 +52,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
     final CommentTracker tracker = new CommentTracker();
     final String newExpression = convertConjunctionExpression(polyadicExpression, tracker);
-    PsiReplacementUtil.replaceExpressionWithNegatedExpression(newExpression, polyadicExpression, tracker);
+    PsiReplacementUtil.replaceExpressionWithNegatedExpression(polyadicExpression, newExpression, tracker);
   }
 
   private static String convertConjunctionExpression(PsiPolyadicExpression polyadicExpression, CommentTracker tracker) {

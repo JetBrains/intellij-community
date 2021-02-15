@@ -8,8 +8,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -76,6 +74,14 @@ public class SearchTextField extends JPanel {
         //noinspection unchecked
         if (ui instanceof Condition && ((Condition)ui).value(e)) return;
 
+        if(e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
+          myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          if (e.getClickCount() == 1) {
+           showPopup();
+          }
+        } else {
+          myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+        }
         super.processMouseEvent(e);
       }
 
@@ -132,7 +138,7 @@ public class SearchTextField extends JPanel {
       myTextField.getInputMap().put(SHOW_HISTORY_KEYSTROKE, "showNextHistoryItem");
     }
 
-    myTextField.putClientProperty("JTextField.variant", "searchWithJbPopup");
+    myTextField.putClientProperty("JTextField.variant", "search");
     myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
     myTextField.putClientProperty("JTextField.Search.CancelAction", (ActionListener)e -> {
       myTextField.setText("");
@@ -167,24 +173,6 @@ public class SearchTextField extends JPanel {
   }
 
   protected void onFocusGained() {
-  }
-
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  protected boolean isSearchControlUISupported() {
-    return true;
-  }
-
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  protected boolean hasIconsOutsideOfTextField() {
-    return false;
   }
 
   public void addDocumentListener(DocumentListener listener) {
@@ -370,10 +358,7 @@ public class SearchTextField extends JPanel {
       final String value = (String)list.getSelectedValue();
       getTextEditor().setText(value != null ? value : "");
       addCurrentTextToHistory();
-      if (myPopup != null) {
-        myPopup.cancel();
-        myPopup = null;
-      }
+      reInitPopup();
     };
   }
 
@@ -388,21 +373,15 @@ public class SearchTextField extends JPanel {
   }
 
   private void reInitPopup() {
+    hidePopup();
     final JList<String> list = new JBList<>(myModel);
     final Runnable chooseRunnable = createItemChosenCallback(list);
-    myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-            .setMovable(false)
-            .setRequestFocus(true)
-            .addListener(new JBPopupListener() {
-              @Override
-              public void onClosed(@NotNull LightweightWindowEvent event) {
-                //because jbpopup can be shown only once
-                reInitPopup();
-              }
-            })
-            .setItemChoosenCallback(chooseRunnable).createPopup();
-    myTextField.putClientProperty("JTextField.Search.FindPopup", myPopup);
-    myTextField.putClientProperty("JTextField.variant", "searchWithJbPopup");
+    if(ApplicationManager.getApplication() != null && JBPopupFactory.getInstance() != null) {
+      myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+        .setMovable(false)
+        .setRequestFocus(true)
+        .setItemChoosenCallback(chooseRunnable).createPopup();
+    }
   }
 
   protected Component getPopupLocationComponent() {
@@ -429,7 +408,7 @@ public class SearchTextField extends JPanel {
   }
 
   protected boolean preprocessEventForTextField(KeyEvent e) {
-    if (SHOW_HISTORY_KEYSTROKE.equals(KeyStroke.getKeyStrokeForEvent(e)) && getClientProperty("JTextField.Search.FindPopup") instanceof JBPopup) {
+    if (SHOW_HISTORY_KEYSTROKE.equals(KeyStroke.getKeyStrokeForEvent(e))) {
       showPopup();
       return true;
     }

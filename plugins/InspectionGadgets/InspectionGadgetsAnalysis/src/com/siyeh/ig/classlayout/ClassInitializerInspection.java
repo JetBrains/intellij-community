@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -66,7 +67,8 @@ public class ClassInitializerInspection extends BaseInspection {
     PsiClassInitializer classInitializer = (PsiClassInitializer)infos[0];
     final PsiClass aClass = classInitializer.getContainingClass();
     assert aClass != null;
-    if (PsiUtil.isInnerClass(aClass) || ClassInitializerMayBeStaticInspection.dependsOnInstanceMembers(classInitializer)) {
+    if (PsiUtil.isInnerClass(aClass) && !HighlightingFeature.INNER_STATICS.isAvailable(aClass) || 
+        ClassInitializerMayBeStaticInspection.dependsOnInstanceMembers(classInitializer)) {
       return new InspectionGadgetsFix[] {new MoveToConstructorFix()};
     }
     return new InspectionGadgetsFix[] {
@@ -153,7 +155,7 @@ public class ClassInitializerInspection extends BaseInspection {
       if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      final PsiClass aClass =  initializer.getContainingClass();
+      final PsiClass aClass = initializer.getContainingClass();
       if (aClass == null || aClass instanceof PsiAnonymousClass) {
         return;
       }

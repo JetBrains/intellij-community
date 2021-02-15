@@ -1,0 +1,4 @@
+ext.prop1 = 123
+ext {
+  prop2 = true
+}

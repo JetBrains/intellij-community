@@ -90,6 +90,7 @@ public class InsertionContext {
     return myElements;
   }
 
+  @NotNull
   public Project getProject() {
     return myFile.getProject();
   }

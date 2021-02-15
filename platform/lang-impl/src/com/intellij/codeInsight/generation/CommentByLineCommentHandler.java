@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +166,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
       block.startOffsets = new int[endLine - startLine + 1];
       block.endOffsets = new int[endLine - startLine + 1];
       block.commenters = new Commenter[endLine - startLine + 1];
-      block.commenterStateMap = new THashMap<>();
+      block.commenterStateMap = new HashMap<>();
       CharSequence chars = document.getCharsSequence();
 
       boolean singleline = startLine == endLine;

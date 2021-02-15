@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -50,9 +51,34 @@ private class MessageInfo(val title: String,
                           window: Window?,
                           val defaultOptionIndex: Int,
                           val doNotAskDialogOption: DoNotAskOption?) {
-  val message = StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message ?: "", "\n")).replace("%", "%%").replace("&nbsp;", " ")
+  val message = MacMessageHelper.stripHtmlMessage(message)
   val window = window ?: JBMacMessages.getForemostWindow()
-  val nativeWindow: ID = MacUtil.findWindowFromJavaWindow(this.window)
+  val popupMode = StackingPopupDispatcher.getInstance().isPopupFocused
+  val nativeWindow: ID = if (popupMode) ID.NIL else MacUtil.findWindowFromJavaWindow(this.window)
+}
+
+class MacMessageHelper {
+  companion object {
+    @JvmStatic
+    fun stripHtmlMessage(message: String?): String {
+      if (message == null) {
+        return ""
+      }
+      var result: String = message
+      while (true) {
+        val start = StringUtil.indexOf(result, "<style>", 0)
+        if (start == -1) {
+          break
+        }
+        val end = StringUtil.indexOf(result, "</style>", start + 7)
+        if (end == -1) {
+          break
+        }
+        result = result.substring(0, start) + result.substring(end + 8)
+      }
+      return StringUtil.unescapeXmlEntities(StringUtil.stripHtml(result, "\n")).replace("%", "%%").replace("&nbsp;", " ")
+    }
+  }
 }
 
 @Service
@@ -146,6 +172,7 @@ private class NativeMacMessageManager : MacMessages() {
 
     try {
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false)
+      StackingPopupDispatcher.getInstance().hidePersistentPopups()
 
       val delegate = Foundation.invoke(Foundation.invoke(Foundation.getObjcClass("NSJavaAlertDelegate"), "alloc"), "init")
       Foundation.invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showAlert:"), ID.NIL,
@@ -154,6 +181,7 @@ private class NativeMacMessageManager : MacMessages() {
       Foundation.cfRelease(delegate)
     }
     finally {
+      StackingPopupDispatcher.getInstance().restorePersistentPopups()
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true)
       myInfo = null
       myLoop = null
@@ -178,13 +206,7 @@ private class NativeMacMessageManager : MacMessages() {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String, params: ID) {
       val info = myInfo!!
-
-      val window = getActualWindow(info.nativeWindow)
-      if (window == null) {
-        myLoop!!.exit()
-        return
-      }
-
+      val window = if (info.popupMode) null else getActualWindow(info.nativeWindow)
       val alert = Foundation.invoke(Foundation.invoke("NSAlert", "alloc"), "init")
 
       Foundation.invoke(alert, "setMessageText:", Foundation.nsString(info.title))
@@ -225,8 +247,13 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(Foundation.invoke(alert, "window"), "setDefaultButtonCell:", Foundation.invoke(button, "cell"))
       }
 
-      Foundation.invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", window, self,
-                        Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), ID.NIL)
+      if (window == null) {
+        setResult(alert, Foundation.invoke(alert, "runModal"))
+      }
+      else {
+        Foundation.invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", window, self,
+                          Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), ID.NIL)
+      }
       Foundation.cfRelease(alert)
     }
   }
@@ -234,10 +261,14 @@ private class NativeMacMessageManager : MacMessages() {
   private val ALERT_DID_END = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String, alert: ID, returnCode: ID, contextInfo: ID) {
-      myResult = returnCode.toInt()
-      mySuppress = Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "state").toInt() == 1
-      myLoop!!.exit()
+      setResult(alert, returnCode)
     }
+  }
+
+  private fun setResult(alert: ID, returnCode: ID) {
+    myResult = returnCode.toInt()
+    mySuppress = Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "state").toInt() == 1
+    myLoop!!.exit()
   }
 
   init {
@@ -254,7 +285,7 @@ private class NativeMacMessageManager : MacMessages() {
 
 private fun getActualWindow(window: ID): ID? {
   if (!Foundation.invoke(window, "isVisible").booleanValue() || ID.NIL.equals(Foundation.invoke(window, "screen"))) {
-    val parent = Foundation.invoke(window, "parentWindow")
+    val parent = Foundation.invoke(window, "parent")
     if (ID.NIL.equals(parent)) {
       return null
     }

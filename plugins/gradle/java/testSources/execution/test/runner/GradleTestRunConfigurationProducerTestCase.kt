@@ -1,21 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
-import com.intellij.execution.Location
-import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.testFramework.MapDataContext
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.util.*
@@ -27,14 +24,8 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
   protected fun getContextByLocation(vararg elements: PsiElement): ConfigurationContext {
     assertTrue(elements.isNotEmpty())
-    val dataContext = MapDataContext().apply {
-      put(LangDataKeys.PROJECT, myProject)
-      put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(elements[0]))
-      put(Location.DATA_KEY, PsiLocation.fromPsiElement(elements[0]))
-      put(LangDataKeys.PSI_ELEMENT_ARRAY, elements)
-    }
     return object : ConfigurationContext(elements[0]) {
-      override fun getDataContext() = dataContext
+      override fun getDataContext() = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT_ARRAY, elements, super.getDataContext())
       override fun containsMultipleSelection() = elements.size > 1
     }
   }

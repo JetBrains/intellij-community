@@ -2,10 +2,10 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.Disposer
@@ -39,12 +39,10 @@ class EditorCodePreview private constructor(val editor: Editor): Disposable {
 
   private var popups: List<CodeFragmentPopup> = emptyList()
 
-  private val documentListener = object : DocumentListener {
-    override fun documentChanged(event: DocumentEvent) {
-      if (!editor.isDisposed && !event.document.isInBulkUpdate) {
-        popups.forEach(CodeFragmentPopup::updateCodePreview)
-        updatePopupPositions()
-      }
+  private val documentListener = object : BulkAwareDocumentListener.Simple {
+    override fun afterDocumentChange(document: Document) {
+      popups.forEach(CodeFragmentPopup::updateCodePreview)
+      updatePopupPositions()
     }
   }
 

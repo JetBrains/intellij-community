@@ -43,7 +43,7 @@ import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class IfsUtil {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.images.vfs.IfsUtil");
+  private static final Logger LOG = Logger.getInstance(IfsUtil.class);
 
   public static final String ICO_FORMAT = "ico";
   public static final String SVG_FORMAT = "svg";

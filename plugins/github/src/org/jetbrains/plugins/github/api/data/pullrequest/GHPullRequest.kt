@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHNodes
@@ -21,7 +22,7 @@ class GHPullRequest(id: String,
                     @JsonProperty("labels") labels: GHNodes<GHLabel>,
                     viewerCanUpdate: Boolean,
                     viewerDidAuthor: Boolean,
-                    val bodyHTML: String,
+                    @NlsSafe val bodyHTML: String,
                     @JsonProperty("reviewRequests") reviewRequests: GHNodes<GHPullRequestReviewRequest>,
                     val baseRefName: String,
                     val baseRefOid: String,

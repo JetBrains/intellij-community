@@ -6,7 +6,7 @@ android {
       isDebuggable = true
       isEmbedMicroApp = false
       isJniDebuggable = true
-      manifestPlaceholders = mapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
+      manifestPlaceholders = mutableMapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
       isMinifyEnabled = false
       multiDexEnabled = true
       proguardFiles("proguard-android.txt", "proguard-rules.pro")
@@ -27,7 +27,7 @@ android.buildTypes.getByName("xyz") {
   isDebuggable = false
   isEmbedMicroApp = true
   isJniDebuggable = false
-  manifestPlaceholders = mapOf("activityLabel3" to "defaultName3", "activityLabel4" to "defaultName4")
+  manifestPlaceholders = mutableMapOf("activityLabel3" to "defaultName3", "activityLabel4" to "defaultName4")
   isMinifyEnabled = true
   multiDexEnabled = false
   setProguardFiles(listOf("proguard-android-1.txt", "proguard-rules-1.pro"))

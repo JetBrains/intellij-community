@@ -32,6 +32,7 @@ open class UIdentifier(
   override fun asLogString(): String = log("Identifier ($name)")
 
   @Suppress("OverridingDeprecatedMember")
+  @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi: PsiElement?
     get() = sourcePsi
 

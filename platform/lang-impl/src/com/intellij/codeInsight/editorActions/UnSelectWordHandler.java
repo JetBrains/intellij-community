@@ -32,18 +32,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class UnSelectWordHandler extends EditorActionHandler {
+public class UnSelectWordHandler extends EditorActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginalHandler;
 
   public UnSelectWordHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
@@ -108,7 +106,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
     final Ref<TextRange> maximumRange = new Ref<>();
 
     final int finalCursorOffset = cursorOffset;
-    SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<TextRange>() {
+    SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<>() {
       @Override
       public boolean process(TextRange range) {
         range = expandToFoldingBoundaries(range);

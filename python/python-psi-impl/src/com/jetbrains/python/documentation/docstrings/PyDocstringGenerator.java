@@ -219,7 +219,7 @@ public final class PyDocstringGenerator {
     if (myParametersPrepared) {
       return;
     }
-    final Set<Pair<String, Boolean>> withoutType = new HashSet<Pair<String, Boolean>>();
+    final Set<Pair<String, Boolean>> withoutType = new HashSet<>();
     final Map<Pair<String, Boolean>, String> paramTypes = Maps.newHashMap();
     for (DocstringParam param : myAddedParams) {
       if (param.getType() == null) {
@@ -238,7 +238,7 @@ public final class PyDocstringGenerator {
     }
     final DocStringFormat format = myDocStringFormat;
     final ArrayList<DocstringParam> filtered = new ArrayList<>();
-    final Set<Pair<String, Boolean>> processed = new HashSet<Pair<String, Boolean>>();
+    final Set<Pair<String, Boolean>> processed = new HashSet<>();
     for (DocstringParam param : myAddedParams) {
       final Pair<String, Boolean> paramCoordinates = Pair.create(param.getName(), param.isReturnValue());
       if (processed.contains(paramCoordinates)) {

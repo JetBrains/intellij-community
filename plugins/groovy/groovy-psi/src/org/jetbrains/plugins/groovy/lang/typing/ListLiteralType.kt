@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.util.RecursionManager
@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadAr
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 
 open class ListLiteralType(val expressions: List<GrExpression>, private val context: PsiElement) : GrTupleType(context) {
 
@@ -19,7 +19,7 @@ open class ListLiteralType(val expressions: List<GrExpression>, private val cont
   override fun isValid(): Boolean = context.isValid
 
   override fun getJavaClassName(): String {
-    return if (PsiUtil.isCompileStatic(context)) {
+    return if (isCompileStatic(context)) {
       CommonClassNames.JAVA_UTIL_LIST
     }
     else {

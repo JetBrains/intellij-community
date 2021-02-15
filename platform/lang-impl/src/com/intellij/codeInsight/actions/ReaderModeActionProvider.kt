@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -34,7 +34,7 @@ import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 
-class ReaderModeActionProvider : InspectionWidgetActionProvider {
+private class ReaderModeActionProvider : InspectionWidgetActionProvider {
   override fun createAction(editor: Editor): AnAction? {
     val project: Project? = editor.project
     return if (project == null || project.isDefault) null
@@ -56,9 +56,10 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
       }
   }
 
-  private class ReaderModeAction(private val editor: Editor) : DumbAwareAction(LangBundle.messagePointer("action.ReaderModeProvider.text"),
-                                                                       LangBundle.messagePointer("action.ReaderModeProvider.description"),
-                                                                       null), CustomComponentAction {
+  private class ReaderModeAction(private val editor: Editor) : DumbAwareToggleAction(
+    LangBundle.messagePointer("action.ReaderModeProvider.text"),
+    LangBundle.messagePointer("action.ReaderModeProvider.description"),
+    null), CustomComponentAction {
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
       object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
         override fun iconTextSpace() = JBUI.scale(2)
@@ -120,11 +121,16 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
         }
       }
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun isSelected(e: AnActionEvent): Boolean {
+      val project = e.project ?: return false
+      return ReaderModeSettings.instance(project).enabled
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
       val project = e.project ?: return
 
       ReaderModeSettings.instance(project).enabled = !ReaderModeSettings.instance(project).enabled
-      project.messageBus.syncPublisher(READER_MODE_TOPIC).modeChanged(project)
+      project.messageBus.syncPublisher(ReaderModeSettingsListener.TOPIC).modeChanged(project)
     }
 
     override fun update(e: AnActionEvent) {

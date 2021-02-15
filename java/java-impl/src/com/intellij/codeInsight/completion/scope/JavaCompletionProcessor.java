@@ -146,6 +146,12 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       return true;
     }
 
+    if (element instanceof PsiMember && !PsiNameHelper.getInstance(element.getProject()).isIdentifier(((PsiMember)element).getName())) {
+      // The member could be defined in another JVM language where its name is not a legal name in Java.
+      // In this case, just skip such the member. We cannot legally reference it from Java source.
+      return true;
+    }
+
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (PsiTypesUtil.isGetClass(method) && PsiUtil.isLanguageLevel5OrHigher(myElement)) {

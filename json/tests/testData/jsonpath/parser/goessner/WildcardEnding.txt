@@ -1,0 +1,10 @@
+JsonPathFile
+  JsonPathRootSegmentImpl(ROOT_SEGMENT)
+    PsiElement(ROOT_CONTEXT)('$')
+  PsiElement(DOT)('.')
+  JsonPathIdSegmentImpl(ID_SEGMENT)
+    JsonPathIdImpl(ID)
+      PsiElement(IDENTIFIER)('store')
+  PsiElement(DOT)('.')
+  JsonPathWildcardSegmentImpl(WILDCARD_SEGMENT)
+    PsiElement(WILDCARD)('*')

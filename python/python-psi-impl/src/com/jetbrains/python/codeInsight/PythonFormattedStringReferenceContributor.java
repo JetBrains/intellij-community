@@ -36,7 +36,7 @@ public class PythonFormattedStringReferenceContributor extends PsiReferenceContr
     static final PsiElementPattern.Capture<PyStringLiteralExpression> FORMAT_STRING_PATTERN =
       psiElement(PyStringLiteralExpression.class)
         .withParent(psiElement(PyReferenceExpression.class)
-                      .with(new PatternCondition<PyReferenceExpression>("isFormatFunction") {
+                      .with(new PatternCondition<>("isFormatFunction") {
 
                         @Override
                         public boolean accepts(@NotNull PyReferenceExpression expression, ProcessingContext context) {

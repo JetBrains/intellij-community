@@ -27,7 +27,7 @@ public class PythonPatterns extends PlatformPatterns {
   private static final int STRING_LITERAL_LIMIT = 10000;
 
   public static PyElementPattern.Capture<PyLiteralExpression> pyLiteralExpression() {
-    return new PyElementPattern.Capture<>(new InitialPatternCondition<PyLiteralExpression>(PyLiteralExpression.class) {
+    return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyLiteralExpression.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PyLiteralExpression;
@@ -37,7 +37,7 @@ public class PythonPatterns extends PlatformPatterns {
 
   public static PyElementPattern.Capture<PyStringLiteralExpression> pyStringLiteralMatches(final String regexp) {
     final Pattern pattern = Pattern.compile(regexp, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-    return new PyElementPattern.Capture<>(new InitialPatternCondition<PyStringLiteralExpression>(PyStringLiteralExpression.class) {
+    return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyStringLiteralExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         if (o instanceof PyStringLiteralExpression) {
@@ -54,7 +54,7 @@ public class PythonPatterns extends PlatformPatterns {
 
   @NotNull
   public static PyElementPattern.Capture<PyExpression> pyArgument(@Nullable String functionName, int index) {
-    return new PyElementPattern.Capture<>(new InitialPatternCondition<PyExpression>(PyExpression.class) {
+    return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         return isCallArgument(o, functionName, index);
@@ -66,7 +66,7 @@ public class PythonPatterns extends PlatformPatterns {
   public static PyElementPattern.Capture<PyExpression> pyModuleFunctionArgument(@Nullable String functionName,
                                                                                 int index,
                                                                                 @NotNull String moduleName) {
-    return new PyElementPattern.Capture<>(new InitialPatternCondition<PyExpression>(PyExpression.class) {
+    return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         return StreamEx
@@ -83,7 +83,7 @@ public class PythonPatterns extends PlatformPatterns {
   public static PyElementPattern.Capture<PyExpression> pyMethodArgument(@Nullable String functionName,
                                                                         int index,
                                                                         @NotNull String classQualifiedName) {
-    return new PyElementPattern.Capture<>(new InitialPatternCondition<PyExpression>(PyExpression.class) {
+    return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         return StreamEx

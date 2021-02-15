@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ui.DescriptionEditorPane;
+import com.intellij.profile.codeInspection.ui.DescriptionEditorPaneKt;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
@@ -62,11 +64,7 @@ public class InspectionNodeInfo extends JPanel {
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new JBInsets(0, 12, 5, 16),
                                0, 0));
 
-    JEditorPane description = new JEditorPane();
-    description.setContentType(UIUtil.HTML_MIME);
-    description.setEditable(false);
-    description.setOpaque(false);
-    description.setBackground(UIUtil.getLabelBackground());
+    DescriptionEditorPane description = new DescriptionEditorPane();
     description.addHyperlinkListener(SingleInspectionProfilePanel.createSettingsHyperlinkListener(project));
     String descriptionText = toolWrapper.loadDescription();
     if (descriptionText == null) {
@@ -75,7 +73,7 @@ public class InspectionNodeInfo extends JPanel {
     }
     final String toolDescription =
       stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
-    SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription, false));
+    DescriptionEditorPaneKt.readHTML(description, DescriptionEditorPaneKt.toHTML(description, toolDescription, false));
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
     int maxWidth = getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width;
     pane.setMaximumSize(new Dimension(maxWidth, Integer.MAX_VALUE));

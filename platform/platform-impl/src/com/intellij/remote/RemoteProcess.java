@@ -23,12 +23,17 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Koshevoy
  */
 public abstract class RemoteProcess extends Process implements SelfKiller {
-  //Emulate pid for UnixProcessManager.getProcessId
-  @SuppressWarnings("unused") private static final int pid = -1;
+  //Also, it emulates pid for UnixProcessManager.getProcessId
+  private static final int pid = -1;
 
   public abstract boolean killProcessTree();
 
   public abstract boolean isDisconnected();
+
+  @Override
+  public long pid() {
+    return pid;
+  }
 
   /**
    * Returns host and port which one should connect to get to the process remote port.

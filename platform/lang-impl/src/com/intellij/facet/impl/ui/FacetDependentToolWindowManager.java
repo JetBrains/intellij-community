@@ -44,7 +44,7 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
   }
 
   private static void projectOpened(@NotNull Project project) {
-    ProjectWideFacetListenersRegistry.getInstance(project).registerListener(new ProjectWideFacetAdapter<Facet>() {
+    ProjectWideFacetListenersRegistry.getInstance(project).registerListener(new ProjectWideFacetAdapter<>() {
       @Override
       public void facetAdded(@NotNull Facet facet) {
         for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
@@ -75,7 +75,7 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
       }
     }, project);
 
-    FacetDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<FacetDependentToolWindow>() {
+    FacetDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull FacetDependentToolWindow extension, @NotNull PluginDescriptor pluginDescriptor) {
         initToolWindowIfNeeded(extension, project);

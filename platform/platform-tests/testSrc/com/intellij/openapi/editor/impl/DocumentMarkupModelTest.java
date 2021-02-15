@@ -60,6 +60,15 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
     assertFalse(highlighter.isValid());
   }
 
+  public void testUpdateOfPersistentAndNormalHighlightersIsIndependent() {
+    Document document = new DocumentImpl("\n\n\n\n\n");
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter h = model.addLineHighlighter(2, 0, null);
+    model.addPersistentLineHighlighter(2, 0, null);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(1, 4));
+    assertFalse(h.isValid());
+  }
+
   public static class TestAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {

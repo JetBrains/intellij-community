@@ -2,13 +2,13 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +41,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testClassScope2() { doTest(4, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope3() { doTest(0, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope4() { doTest(10, CLASS_SCOPE_KEYWORDS_2); }
+  public void testInnerClassScope() {
+    doTest(10, CLASS_SCOPE_KEYWORDS_2); 
+  }
   public void testInterfaceScope() { setLanguageLevel(LanguageLevel.JDK_1_8); doTest(8, INTERFACE_SCOPE_KEYWORDS); }
   public void testAfterAnnotations() { doTest(6, "public", "final", "class", "interface", "abstract", "enum", null); }
   public void testAfterAnnotationsWithParams() { doTest(6, "public", "final", "class", "interface", "abstract", "enum", null); }
@@ -62,7 +65,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSynchronized1() { doTest(); }
 
   public void testSynchronized2() {
-    CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false;
+    CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false;
     doTest();
   }
 
@@ -147,7 +150,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
   public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
   public void testPrimitivesInMethodReturningClass() { doTest(3, "byte", "boolean", "void"); }
-  public void testPrimitivesInRecordHeader() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW); doTest(2, "byte", "boolean"); }
+  public void testPrimitivesInRecordHeader() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW); doTest(2, "byte", "boolean"); }
 
   public void testNoClassKeywordsInLocalArrayInitializer() { doTest(0, "class", "interface", "enum"); }
   public void testNoClassKeywordsInFieldArrayInitializer() { doTest(0, "class", "interface", "enum"); }
@@ -186,8 +189,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSuggestModifiersAfterUnfinishedMethod() { doTest(1, "public"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
   public void testQualifiedNew() { doTest(1, "new"); }
-  public void testRecord() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(); }
-  public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(1, "record"); }
+  public void testRecord() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(); }
+  public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "record"); }
   public void testNoLocalInterfaceAt15() {
     setLanguageLevel(LanguageLevel.JDK_15);  doTest(0);
   }
@@ -198,6 +201,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest();
   }
   public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed"); }
+  public void testNoSealedModifier() {setLanguageLevel(LanguageLevel.JDK_16);  doTest(1, "final"); }
   public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "permits"); }
   public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(0, "permits"); }
   public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed");}

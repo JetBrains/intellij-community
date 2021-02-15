@@ -146,7 +146,7 @@ fun isConcatenation(uExpression: UElement?): Boolean {
 }
 
 /**
- * @return a non-strict parent [PsiLanguageInjectionHost] for [sourcePsi] of given literal expression if it exists.
+ * @return a non-strict parent [PsiLanguageInjectionHost] for [ULiteralExpression.sourcePsi] of given literal expression if it exists.
  *
  * NOTE: consider using [sourceInjectionHost] as more performant. Probably will be deprecated in future.
  */

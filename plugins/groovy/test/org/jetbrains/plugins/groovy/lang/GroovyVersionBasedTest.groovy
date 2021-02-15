@@ -35,4 +35,6 @@ abstract class GroovyVersionBasedTest extends LightGroovyTestCase implements Hig
   void 'test type annotations'() { fileHighlightingTest() }
 
   void 'test application tuple initializer'() { fileHighlightingTest() }
+
+  void 'test tuple multiple assignment'() { fileHighlightingTest() }
 }

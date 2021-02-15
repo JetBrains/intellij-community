@@ -35,7 +35,7 @@ class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest {
   }
 
   override val targetPlatform: TargetPlatform
-    get() = TargetPlatform(Platform.UNIX, TargetPlatform.CURRENT.arch)
+    get() = TargetPlatform(Platform.UNIX)
 
   override val defaultVolume: TargetEnvironmentRequest.Volume
     get() {

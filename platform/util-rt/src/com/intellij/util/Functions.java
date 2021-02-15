@@ -12,6 +12,30 @@ import java.util.Map;
  * @author gregsh
  */
 public final class Functions {
+  private static final Function.Mono<?> ID = new Function.Mono<Object>() {
+    @Override
+    public Object fun(Object o) {
+      return o;
+    }
+
+    @Override
+    public String toString() {
+      return "Functions.ID";
+    }
+  };
+  private static final Function<?, String> TO_STRING = new Function<Object, String>() {
+    @Override
+    public String fun(Object o) {
+      return String.valueOf(o);
+    }
+
+    @Override
+    public String toString() {
+      return "Functions.TO_STRING";
+    }
+  };
+
+
   @NotNull
   public static <A> Function.Mono<A> id() {
     return (Function.Mono<A>)identity();
@@ -28,8 +52,8 @@ public final class Functions {
 
   @NotNull
   public static <A, B> Function<A, B> identity() {
-    //noinspection deprecation,unchecked
-    return (Function<A, B>)Function.ID;
+    //noinspection unchecked
+    return (Function<A, B>)ID;
   }
 
   @NotNull
@@ -60,7 +84,7 @@ public final class Functions {
   @NotNull
   public static <A> Function<A, String> TO_STRING() {
     //noinspection unchecked,deprecation
-    return (Function<A, String>)Function.TO_STRING;
+    return (Function<A, String>)TO_STRING;
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.application.Topics;
@@ -288,7 +288,7 @@ public final class WelcomeScreenComponentFactory {
 
   @NotNull
   public static Component createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
-    final AnAction action = new AnAction() {
+    ActionLink actionLink = new ActionLink(linkText, AllIcons.Ide.Notification.NoEvents, new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
@@ -300,14 +300,15 @@ public final class WelcomeScreenComponentFactory {
           welcomeBalloonLayout.showPopup();
         }
       }
-    };
-    ActionLink actionLink = new ActionLink(linkText, AllIcons.Ide.Notification.NoEvents, action);
+    });
     final JComponent panel = wrapActionLink(actionLink);
     panel.setVisible(false);
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
       if (!types.isEmpty()) {
         NotificationType type = Collections.max(types);
-        actionLink.setIcon(IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
+        actionLink.setIcon(type == NotificationType.IDE_UPDATE
+                           ? AllIcons.Ide.Notification.IdeUpdate
+                           : IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
       }
       panel.setVisible(!types.isEmpty());
     });

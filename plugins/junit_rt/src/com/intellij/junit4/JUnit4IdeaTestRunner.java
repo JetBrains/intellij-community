@@ -106,7 +106,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner<Description> {
       if (isMethodFilter && canCompress(description)) return description.getChildren().get(0);
       try {
         final Description failedTestsDescription = Description.createSuiteDescription(filterDescription, null);
-        if (filterDescription.startsWith("Tests") || filterDescription.startsWith("Ignored")) {
+        if (filterDescription.startsWith("Tests")) {
           for (final Description childDescription : description.getChildren()) {
             if (filter.shouldRun(childDescription)) {
               failedTestsDescription.addChild(childDescription);

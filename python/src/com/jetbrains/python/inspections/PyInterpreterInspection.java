@@ -35,7 +35,6 @@ import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.*;
-import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension;
 import com.jetbrains.python.ui.PyUiUtil;
@@ -44,7 +43,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,18 +80,8 @@ public final class PyInterpreterInspection extends PyInspection {
 
       final List<LocalQuickFix> fixes = new ArrayList<>();
       if (sdk == null) {
-        Optional<PyInterpreterInspectionQuickFixData> fixData = PySdkProvider.EP_NAME.extensions()
-          .map(ext -> ext.createMissingSdkFix(module, node))
-          .filter(it -> it != null)
-          .findFirst();
-
         final @InspectionMessage String message;
-        if (fixData.isPresent()) {
-          fixes.add(fixData.get().getQuickFix());
-          // noinspection HardCodedStringLiteral
-          message = fixData.get().getMessage();
-        }
-        else if (pyCharm) {
+        if (pyCharm) {
           message = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.project");
         }
         else {
@@ -160,51 +152,39 @@ public final class PyInterpreterInspection extends PyInspection {
     @Nullable
     private static LocalQuickFix getSuitableSdkFix(@Nullable String name, @NotNull Module module) {
       // this method is based on com.jetbrains.python.sdk.PySdkExtKt.suggestAssociatedSdkName
-      // please keep it in sync with the mentioned method and com.jetbrains.python.PythonSdkConfigurator.configureSdk
 
       final List<Sdk> existingSdks = getExistingSdks();
 
-      final var associatedSdk = PySdkExtKt.mostPreferred(PySdkExtKt.filterAssociatedSdks(module, existingSdks));
+      final Sdk associatedSdk = PySdkExtKt.findExistingAssociatedSdk(module, existingSdks);
       if (associatedSdk != null) return new UseExistingInterpreterFix(associatedSdk, module);
 
       final UserDataHolderBase context = new UserDataHolderBase();
 
-      final var detectedAssociatedSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectAssociatedEnvironments(module, existingSdks, context));
+      final PyDetectedSdk detectedAssociatedSdk = StreamEx.of(PySdkExtKt.detectVirtualEnvs(module, existingSdks, context))
+        .findFirst(sdk -> PySdkExtKt.isAssociatedWithModule(sdk, module))
+        .orElse(null);
+
       if (detectedAssociatedSdk != null) return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
 
       final var extension = PyProjectSdkConfigurationExtension.getEP_NAME().findFirstSafe(e -> e.isApplicable(module));
       if (extension != null) return new UseProvidedInterpreterFix(module, extension);
 
-      if (name != null) {
-        final Matcher matcher = NAME.matcher(name);
-        if (!matcher.matches()) {
-          final String venvName = matcher.group("name");
-          if (venvName != null) {
-            final PyDetectedSdk detectedAssociatedViaRootNameEnv = detectAssociatedViaRootNameEnv(venvName, module, existingSdks, context);
-            if (detectedAssociatedViaRootNameEnv != null) {
-              return new UseDetectedInterpreterFix(detectedAssociatedViaRootNameEnv, existingSdks, true, module);
-            }
-          }
-          else {
-            final PyDetectedSdk detectedSystemWideSdk = detectSystemWideSdk(matcher.group("version"), module, existingSdks, context);
-            if (detectedSystemWideSdk != null) return new UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module);
-          }
+      if (name == null) return null;
+
+      final Matcher matcher = NAME.matcher(name);
+      if (!matcher.matches()) return null;
+
+      final String venvName = matcher.group("name");
+      if (venvName != null) {
+        final PyDetectedSdk detectedAssociatedViaRootNameEnv = detectAssociatedViaRootNameEnv(venvName, module, existingSdks, context);
+        if (detectedAssociatedViaRootNameEnv != null) {
+          return new UseDetectedInterpreterFix(detectedAssociatedViaRootNameEnv, existingSdks, true, module);
         }
       }
-
-      if (PyCondaSdkCustomizer.Companion.getInstance().getSuggestSharedCondaEnvironments()) {
-        final var sharedCondaEnv = PySdkExtKt.mostPreferred(PySdkExtKt.filterSharedCondaEnvs(module, existingSdks));
-        if (sharedCondaEnv != null) return new UseExistingInterpreterFix(sharedCondaEnv, module);
-
-        final var detectedCondaEnv = ContainerUtil.getFirstItem(PySdkExtKt.detectCondaEnvs(module, existingSdks, context));
-        if (detectedCondaEnv != null) return new UseDetectedInterpreterFix(detectedCondaEnv, existingSdks, false, module);
+      else {
+        final PyDetectedSdk detectedSystemWideSdk = detectSystemWideSdk(matcher.group("version"), module, existingSdks, context);
+        if (detectedSystemWideSdk != null) return new UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module);
       }
-
-      final var systemWideSdk = PySdkExtKt.mostPreferred(PySdkExtKt.filterSystemWideSdks(existingSdks));
-      if (systemWideSdk != null) return new UseExistingInterpreterFix(systemWideSdk, module);
-
-      final var detectedSystemWideSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectSystemWideSdks(module, existingSdks));
-      if (detectedSystemWideSdk != null) return new UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module);
 
       return null;
     }

@@ -132,7 +132,7 @@ public abstract class UIPropertyBinding {
     }
 
     public void bindString(JLabel label, AbstractProperty<@Nls String> property) {
-      addBinding(new ComponentBinding<JLabel, AbstractProperty<@Nls String>>(label, property) {
+      addBinding(new ComponentBinding<>(label, property) {
         @Override
         public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
           getComponent().setText(getProperty().get(container));
@@ -206,7 +206,7 @@ public abstract class UIPropertyBinding {
 
   private static abstract class ListenerInstaller<Comp extends JComponent, Listener> {
     public static final ListenerInstaller<JToggleButton, ItemListener> TOGGLE_BUTTON =
-      new ListenerInstaller<JToggleButton, ItemListener>() {
+      new ListenerInstaller<>() {
         @Override
         public ItemListener create(final PropertyChangeSupport changeSupport, final @NonNls String propertyName) {
           return new ItemListener() {
@@ -235,7 +235,7 @@ public abstract class UIPropertyBinding {
     public abstract void removeListener(Comp component, Listener changeListener);
 
     public final static ListenerInstaller<JTextComponent, DocumentListener> TEXT_LISTENER_INSTALLER =
-      new ListenerInstaller<JTextComponent, DocumentListener>() {
+      new ListenerInstaller<>() {
         @Override
         public DocumentListener create(final PropertyChangeSupport changeSupport, final @NonNls String propertyName) {
           return new DocumentAdapter() {

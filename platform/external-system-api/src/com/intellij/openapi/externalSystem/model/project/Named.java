@@ -9,19 +9,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Named {
 
-  /**
-   * @deprecated use {@link #getExternalName()} or {@link #getInternalName()} instead
-   */
-  @NotNull
-  @Deprecated
-  String getName();
-
-  /**
-   * @deprecated use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
-   */
-  @Deprecated
-  void setName(@NotNull String name);
-
   @NlsSafe @NotNull String getExternalName();
   void setExternalName(@NotNull String name);
 

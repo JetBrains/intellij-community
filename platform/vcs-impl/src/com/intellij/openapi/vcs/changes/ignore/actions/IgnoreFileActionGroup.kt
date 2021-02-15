@@ -17,6 +17,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.Nls
 import kotlin.streams.toList
 
 open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
@@ -121,7 +122,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
     }
   }
 
-  private fun VirtualFile.toTextRepresentation(project: Project, projectDir: VirtualFile?, size: Int): String {
+  private fun VirtualFile.toTextRepresentation(project: Project, projectDir: VirtualFile?, size: Int): @Nls String {
     if (size == 1) {
       return message("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename)
     }

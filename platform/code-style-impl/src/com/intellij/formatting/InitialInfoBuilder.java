@@ -9,27 +9,22 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
  * The main idea of block wrapping is to associate information about {@link WhiteSpace white space before block} with the block itself.
  */
 public final class InitialInfoBuilder {
-
   @SuppressWarnings("unused") private static final Logger LOG = Logger.getInstance(InitialInfoBuilder.class);
 
   private static final RangesAssert ASSERT = new RangesAssert();
   private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
 
-  private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<>();
+  private final Map<AbstractBlockWrapper, Block> myResult = new HashMap<>();
   private final MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = MultiMap.createLinked();
   private final MultiMap<Alignment, Block> myBlocksToAlign = new MultiMap<>();
   private final Set<Alignment> myAlignmentsInsideRangeToModify = new HashSet<>();

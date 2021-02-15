@@ -16,8 +16,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.io.getParentPath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtilRt
 import com.intellij.util.io.copy
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
@@ -27,7 +27,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 
@@ -77,11 +76,6 @@ open class ImportSettingsAction : AnAction(), DumbAware {
   }
 
   protected open fun getMarkedComponents(components: Set<ExportableItem>): Set<ExportableItem> = components
-
-  @Deprecated("", replaceWith = ReplaceWith("doImport(saveFile.toPath())"))
-  protected open fun doImport(saveFile: File) {
-    doImport(saveFile.toPath())
-  }
 
   protected open fun doImport(saveFile: Path) {
     if (!saveFile.exists()) {
@@ -133,7 +127,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   private fun confirmRestart(@NlsContexts.DialogMessage message: String): Boolean =
     (Messages.OK == showOkCancelDialog(
-      title = IdeBundle.message("title.restart.needed"),
+      title = ConfigurationStoreBundle.message("import.settings.confirmation.title"),
       message = message,
       okText = getRestartActionName(),
       icon = Messages.getQuestionIcon()
@@ -141,14 +135,14 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   @NlsContexts.Button
   private fun getRestartActionName(): String =
-    if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
-    else IdeBundle.message("ide.shutdown.action")
+    if (ApplicationManager.getApplication().isRestartCapable)
+      ConfigurationStoreBundle.message("import.settings.confirmation.button.restart")
+    else
+      ConfigurationStoreBundle.message("import.default.settings.confirmation.button.shutdown")
 
   private fun doImportFromDirectory(saveFile: Path) {
-    val confirmationMessage =
-      ConfigurationStoreBundle.message("import.settings.confirmation.message", saveFile) + "\n\n" +
-      ConfigurationStoreBundle.message("restore.default.settings.confirmation.message", ConfigImportHelper.getBackupPath())
-
+    val confirmationMessage = ConfigurationStoreBundle.message("restore.default.settings.confirmation.message",
+                                                               ConfigBackup.getNextBackupPath(PathManager.getConfigDir()))
     if (confirmRestart(confirmationMessage)) {
       CustomConfigMigrationOption.MigrateFromCustomPlace(saveFile).writeConfigMarkerFile()
       restart()
@@ -175,7 +169,7 @@ fun getPaths(input: InputStream): Set<String> {
       var path = entry.name.trimEnd('/')
       result.add(path)
       while (true) {
-        path = getParentPath(path) ?: break
+        path = PathUtilRt.getParentPath(path).takeIf { it.isNotEmpty() } ?: break
         result.add(path)
       }
     }

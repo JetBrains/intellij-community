@@ -5,8 +5,12 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.PillBorder
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.ui.popup.ListPopupStep
+import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -35,10 +39,23 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
                                     preselectActionCondition,
                                     actionPlace, autoSelection) {
 
-  override fun getListElementRenderer(): ListCellRenderer<*> {
-    return object : PopupListElementRenderer<Any?>(this) {
+  override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
+    return if (step is ListPopupStep<*>) {
+      object : ListPopupImpl(project, parent, step, parentValue) {
+        override fun getListElementRenderer(): ListCellRenderer<*> {
+          return createRenderer(this)
+        }
+      }
+    }
+    else super.createPopup(parent, step, parentValue)
+
+  }
+
+  private fun createRenderer(popup: ListPopupImpl): PopupListElementRenderer<Any?> {
+    return object : PopupListElementRenderer<Any?>(popup) {
       private var stateLabel: JLabel? = null
       private var stateButton: JComponent? = null
+      private var shortcutLabel: JLabel? = null
 
       override fun createItemComponent(): JComponent {
         val panel = JPanel(BorderLayout())
@@ -51,10 +68,11 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
         rightPane.add(bt, BorderLayout.CENTER)
         stateButton = bt
 
-        val myShortcutLabel = JLabel()
-        myShortcutLabel.border = JBUI.Borders.emptyRight(3)
-        myShortcutLabel.foreground = UIManager.getColor("MenuItem.acceleratorForeground")
-        rightPane.add(myShortcutLabel, BorderLayout.EAST)
+        val shLabel = JLabel()
+        shortcutLabel = shLabel
+        shLabel.border = JBUI.Borders.emptyRight(3)
+        shLabel.foreground = UIManager.getColor("MenuItem.acceleratorForeground")
+        rightPane.add(shLabel, BorderLayout.EAST)
         panel.add(rightPane, BorderLayout.EAST)
         rightPane.border = JBUI.Borders.emptyLeft(5)
         return layoutComponent(panel)
@@ -92,6 +110,11 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
             button.isVisible = value?.let { vl ->
               if (vl is PopupFactoryImpl.ActionItem) {
                 val action = vl.action
+                var shortcutText = ""
+                if (action.shortcutSet.shortcuts.isNotEmpty()) {
+                  shortcutText = KeymapUtil.getShortcutText(action.shortcutSet.shortcuts.first())
+                }
+                shortcutLabel?.text = shortcutText
                 getState(action)?.let {
                   lb.foreground = UIUtil.getLabelForeground()
                   lb.text = it
@@ -104,9 +127,11 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
           }
         }
       }
-
-
     }
+  }
+
+  override fun getListElementRenderer(): ListCellRenderer<*> {
+    return createRenderer(this)
   }
 
 }

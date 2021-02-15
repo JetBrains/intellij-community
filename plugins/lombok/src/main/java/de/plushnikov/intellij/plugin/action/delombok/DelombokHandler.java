@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -265,12 +264,16 @@ public class DelombokHandler {
   }
 
   private void copyAnnotations(@NotNull PsiModifierList fromModifierList, @NotNull PsiModifierList toModifierList) {
+    final Set<String> existedAnnotation = Stream.of(toModifierList.getAnnotations())
+      .map(PsiAnnotation::getQualifiedName)
+      .collect(Collectors.toSet());
     for (PsiAnnotation originalAnnotation : fromModifierList.getAnnotations()) {
-      final String annotationQualifiedName = originalAnnotation.getQualifiedName();
-      if (!StringUtil.isEmptyOrSpaces(annotationQualifiedName)) {
-        AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotationQualifiedName,
-                                                          originalAnnotation.getParameterList().getAttributes(),
-                                                          toModifierList);
+      final String qualifiedName = StringUtil.notNullize(originalAnnotation.getQualifiedName());
+      if (!existedAnnotation.contains(qualifiedName)) {
+        final PsiAnnotation annotation = toModifierList.addAnnotation(qualifiedName);
+        for (PsiNameValuePair nameValuePair : originalAnnotation.getParameterList().getAttributes()) {
+          annotation.setDeclaredAttributeValue(nameValuePair.getName(), nameValuePair.getValue());
+        }
       }
     }
   }

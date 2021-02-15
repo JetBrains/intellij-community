@@ -2,7 +2,9 @@
 package git4idea.stash.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
@@ -13,10 +15,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
+import com.intellij.vcs.log.runInEdt
 import git4idea.i18n.GitBundle
-import git4idea.stash.GitStashTracker
-import git4idea.stash.isStashToolWindowAvailable
-import git4idea.stash.stashToolWindowRegistryOption
+import git4idea.stash.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
@@ -29,7 +30,13 @@ class GitStashContentProvider(private val project: Project) : ChangesViewContent
     project.service<GitStashTracker>().scheduleRefresh()
 
     disposable = Disposer.newDisposable("Git Stash Content Provider")
-    return GitStashUi(project, false, disposable!!).mainComponent
+    val gitStashUi = GitStashUi(project, ChangesViewContentManager.isCommitToolWindowShown(project), disposable!!)
+    project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+      override fun toolWindowMappingChanged() {
+        gitStashUi.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindowShown(project))
+      }
+    })
+    return gitStashUi.mainComponent
   }
 
   override fun disposeContent() {
@@ -42,15 +49,14 @@ class GitStashContentProvider(private val project: Project) : ChangesViewContent
   }
 }
 
-class GitStashContentPreloader : ChangesViewContentProvider.Preloader {
+class GitStashContentPreloader(val project: Project) : ChangesViewContentProvider.Preloader {
   override fun preloadTabContent(content: Content) {
-    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
-                        ChangesViewContentManager.TabOrderWeight.SHELF.weight + 1)
+    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.SHELF.weight + 1)
   }
 }
 
 class GitStashContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
-  override fun `fun`(project: Project) = isStashToolWindowAvailable()
+  override fun `fun`(project: Project) = isStashToolWindowAvailable(project)
 }
 
 class GitStashDisplayNameSupplier : Supplier<String> {
@@ -59,16 +65,32 @@ class GitStashDisplayNameSupplier : Supplier<String> {
   }
 }
 
-class GitStashStartupActivity : StartupActivity.Background {
+class GitStashStartupActivity : StartupActivity.DumbAware {
+  init {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.INSTANCE
+    }
+  }
+
   override fun runActivity(project: Project) {
-    val gitStashTracker = project.service<GitStashTracker>()
-    stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        if (isStashToolWindowAvailable()) {
-          gitStashTracker.scheduleRefresh()
+    runInEdt(project) {
+      val gitStashTracker = project.service<GitStashTracker>()
+      gitStashTracker.addListener(object : GitStashTrackerListener {
+        private var hasStashes = gitStashTracker.isNotEmpty()
+        override fun stashesUpdated() {
+          if (hasStashes != gitStashTracker.isNotEmpty()) {
+            hasStashes = gitStashTracker.isNotEmpty()
+            project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+          }
         }
-        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-      }
-    }, gitStashTracker)
+      }, gitStashTracker)
+      stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          gitStashTracker.scheduleRefresh()
+          project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+        }
+      }, gitStashTracker)
+    }
   }
 }

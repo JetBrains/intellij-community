@@ -5,10 +5,13 @@ import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -16,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -154,10 +158,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     setLayout(new BorderLayout());
     if (withDiffPreview) {
-      myDiffPreview = new FrameDiffPreview<VcsLogChangeProcessor>(createDiffPreview(false, myChangesBrowser),
-                                                                  myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
-                                                                  myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
-                                                                  0.7f) {
+      myDiffPreview = new FrameDiffPreview<>(createDiffPreview(false, myChangesBrowser),
+                                             myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
+                                             myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
+                                             0.7f) {
         @Override
         public void updatePreview(boolean state) {
           getPreviewDiff().updatePreview(state);
@@ -273,6 +277,24 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       Collection<VirtualFile> roots = getSelectedRoots();
       if (roots.size() != 1) return null;
       return myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getDiffHandler();
+    }
+    else if (QuickActionProvider.KEY.is(dataId)) {
+      return new QuickActionProvider() {
+        @Override
+        public @NotNull List<AnAction> getActions(boolean originalProvider) {
+          return SimpleToolWindowPanel.collectActions(myToolbar);
+        }
+
+        @Override
+        public JComponent getComponent() {
+          return MainFrame.this;
+        }
+
+        @Override
+        public @NlsActions.ActionText @Nullable String getName() {
+          return null;
+        }
+      };
     }
     return null;
   }

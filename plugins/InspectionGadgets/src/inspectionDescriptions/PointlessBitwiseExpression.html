@@ -1,12 +1,19 @@
 <html>
 <body>
 Reports pointless bitwise
-expressions. Such expressions include <b>and</b>ing with zero, <b>or</b>ing by zero,
+expressions. Such expressions include <code>and</code>ing with zero, <code>or</code>ing by zero,
 and shifting by zero. Such expressions may be the result of automated refactorings
 not completely followed through to completion, and in any case are unlikely to be what the developer
 intended to do.
+<p>Examples:</p>
+<pre>
+// Warning: operation is pointless and can be replaced with just `flags`
+int bits = flags & 0xFFFFFFFF;
+// Warning: operation is pointless and can be replaced with just `bits`
+int or = bits | 0x0;
+// Warning: operation is pointless, as always results in 0
+int xor = or ^ or;
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

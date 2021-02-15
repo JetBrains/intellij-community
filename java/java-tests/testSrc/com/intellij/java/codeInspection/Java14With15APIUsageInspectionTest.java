@@ -53,8 +53,4 @@ public class Java14With15APIUsageInspectionTest extends LightJavaCodeInsightFixt
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_14, () ->
       myFixture.testHighlighting(getTestName(false) + ".java"));
   }
-  public void testLanguageLevel14Preview() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_14_PREVIEW, () ->
-      myFixture.testHighlighting(getTestName(false) + ".java"));
-  }
 }

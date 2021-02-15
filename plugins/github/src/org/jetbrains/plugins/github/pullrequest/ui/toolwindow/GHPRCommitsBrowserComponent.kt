@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.ide.plugins.newui.VerticalLayout
@@ -8,12 +8,13 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.HashImpl
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsListCellRenderer
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JList
@@ -111,7 +111,7 @@ internal object GHPRCommitsBrowserComponent {
       font = FontUtil.getCommitMetadataFont()
     }
 
-    val commitDetailsPanel = ScrollablePanel(VerticalLayout(UI.scale(CommitDetailsPanel.INTERNAL_BORDER))).apply {
+    val commitDetailsPanel = ScrollablePanel(VerticalLayout(JBUIScale.scale(CommitDetailsPanel.INTERNAL_BORDER))).apply {
       border = JBUI.Borders.empty(CommitDetailsPanel.EXTERNAL_BORDER, CommitDetailsPanel.SIDE_BORDER)
       background = getCommitDetailsBackground()
 
@@ -153,6 +153,7 @@ internal object GHPRCommitsBrowserComponent {
     return commitDetailsScrollPane
   }
 
+  @NlsSafe
   private fun getHashAndAuthorText(hash: String, author: GHGitActor?, committer: GHGitActor?): String {
     val authorUser = createUser(author)
     val authorTime = author?.date?.time ?: 0L

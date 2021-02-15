@@ -20,7 +20,7 @@ import org.jetbrains.idea.devkit.dom.*;
 
 import java.util.List;
 
-public class DescriptorI18nUtil {
+public final class DescriptorI18nUtil {
 
   @NonNls
   public static final String CORE_ACTIONS_BUNDLE = "messages.ActionsBundle";

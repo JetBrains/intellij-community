@@ -108,7 +108,7 @@ public class Construct {
 fun lookupFirstItemsTexts(lookupItems: List<LookupElement?>, maxSize: Int): List<String> =
   // PsiJavaCodeReferenceElementImpl.getCanonicalText needs resolve()
   // see JavaReflectionParametersCompletionTest.testConstructor and JavaReflectionParametersCompletionTest.testDeclaredConstructor
-  FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable<List<String>, RuntimeException> {
+  DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable<List<String>, RuntimeException> {
     lookupItems.subList(0, Math.min(lookupItems.size, maxSize)).map {
       val obj = it?.`object`
       when (obj) {

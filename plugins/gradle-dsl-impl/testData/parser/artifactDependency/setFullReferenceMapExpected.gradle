@@ -1,0 +1,12 @@
+ext {
+  dependency = [group: 'group', name: 'name', version: '1.0']
+  guavaGroup = 'com.google.guava'
+  guavaName = 'guava'
+  otherDependency = [group: 'g', name: 'n', version: '2.0']
+}
+dependencies {
+  testCompile dependency
+  compile group: guavaGroup, name: guavaName, version: '4.0', {}
+  testCompile(otherDependency) {}
+  compile(group: guavaName, name: guavaGroup, version: '3.0')
+}

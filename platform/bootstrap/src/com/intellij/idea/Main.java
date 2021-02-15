@@ -9,22 +9,23 @@ import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.lang.PathClassLoader;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.lang.reflect.Method;
-import java.nio.charset.Charset;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
+import java.util.Properties;
 
 public final class Main {
   public static final int NO_GRAPHICS = 1;
@@ -46,14 +47,13 @@ public final class Main {
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
 
+  private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.ide.plugins.MainRunner";
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  @SuppressWarnings("SSBasedInspection")
-  private static final String[] NO_ARGS = new String[0];
-  private static final List<@NonNls String> HEADLESS_COMMANDS = Arrays.asList(
+  private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
     "rdserver-headless", "thinClient-headless");
-  private static final List<@NonNls String> GUI_COMMANDS = Arrays.asList("diff", "merge");
+  private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -63,16 +63,18 @@ public final class Main {
   private Main() { }
 
   public static void main(String[] args) {
-    LinkedHashMap<@NonNls String, Long> startupTimings = new LinkedHashMap<>(6);
+    LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>(6);
     startupTimings.put("startup begin", System.nanoTime());
 
-    if (args.length == 1 && "%f".equals(args[0])) { // NON-NLS
-      args = NO_ARGS;
+    if (args.length == 1 && "%f".equals(args[0])) {
+      //noinspection SSBasedInspection
+      args = new String[0];
     }
 
     if (args.length == 1 && args[0].startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(args[0]);
-      args = NO_ARGS;
+      //noinspection SSBasedInspection
+      args = new String[0];
     }
 
     setFlags(args);
@@ -82,7 +84,7 @@ public final class Main {
     }
 
     try {
-      if (!System.getProperty("java.version", "").startsWith("11.") && JavaVersion.current().feature < 11) {
+      if (Runtime.version().feature() < 11) {
         String baseName = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea")
           .replace("AndroidStudio", "studio").replace("Edu", "");
         if (baseName.startsWith("Py")) baseName = "pycharm";
@@ -105,7 +107,7 @@ public final class Main {
           String suffix = win ? x64 ? "64.exe" : ".exe" : "";
           Path file = Paths.get(configPath, baseName.toLowerCase(Locale.ENGLISH) + suffix + ".jdk");
           try {
-            Path jdkPath = Paths.get(new String(Files.readAllBytes(file), Charset.defaultCharset()));
+            Path jdkPath = Paths.get(Files.readString(file));
             if (Files.isSameFile(jdkPath, Paths.get(javaHome))) {
               message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.file", file));
             }
@@ -131,7 +133,7 @@ public final class Main {
     }
   }
 
-  private static void bootstrap(String[] args, LinkedHashMap<@NonNls String, Long> startupTimings) throws Exception {
+  private static void bootstrap(String[] args, LinkedHashMap<String, Long> startupTimings) throws Throwable {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
 
@@ -140,36 +142,43 @@ public final class Main {
       StudioCrashDetection.start();
     }
 
+    startupTimings.put("plugin updates install", System.nanoTime());
     // this check must be performed before system directories are locked
-    String configPath = PathManager.getConfigPath();
-    boolean configImportNeeded = !isHeadless() && !Files.exists(Paths.get(configPath));
-    if (!configImportNeeded) {
-      installPluginUpdates();
+    if (!isCommandLine || Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
+      boolean configImportNeeded = !isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()));
+      if (!configImportNeeded) {
+        installPluginUpdates();
+      }
     }
 
     startupTimings.put("classloader init", System.nanoTime());
-    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
+    PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
 
     startupTimings.put("MainRunner search", System.nanoTime());
-    Class<?> klass = Class.forName("com.intellij.ide.plugins.MainRunner", true, newClassLoader);
-    WindowsCommandLineProcessor.ourMainRunnerClass = klass;
-    Method startMethod = klass.getMethod("start", String.class, String[].class, LinkedHashMap.class);
-    startMethod.setAccessible(true);
-    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings); //NON-NLS
-  }
-
-  private static void installPluginUpdates() {
-    if (isCommandLine() && !Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
-      return;
+    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, true);
+    if (mainClass == null) {
+      throw new ClassNotFoundException(MAIN_RUNNER_CLASS_NAME);
     }
 
+    WindowsCommandLineProcessor.ourMainRunnerClass = mainClass;
+    MethodHandles.lookup()
+      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class, String[].class, LinkedHashMap.class))
+      .invokeExact(Main.class.getName() + "Impl", args, startupTimings);
+  }
+
+  @SuppressWarnings("HardCodedStringLiteral")
+  private static void installPluginUpdates() {
     try {
       StartupActionScriptManager.executeActionScript();
     }
     catch (IOException e) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.plugin.installation.error"),
-                  BootstrapBundle.message("bootstrap.error.message.plugin.installation.error", e.getMessage()), false);
+      showMessage("Plugin Installation Error",
+                  "The IDE failed to install some plugins.\n\n" +
+                  "Most probably, this happened because of a change in a serialization format.\n" +
+                  "Please try again, and if the problem persists, please report it\n" +
+                  "to https://jb.gg/ide/critical-startup-errors\n\n" +
+                  "The cause: " + e, false);
     }
   }
 
@@ -191,7 +200,6 @@ public final class Main {
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-
     isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || !isCommandLine && isFileAfterOptions(args);
   }
 
@@ -214,8 +222,8 @@ public final class Main {
   }
 
   @TestOnly
-  public static void setHeadlessInTestMode(boolean isHeadless) {
-    Main.isHeadless = isHeadless;
+  public static void setHeadlessInTestMode(boolean headless) {
+    isHeadless = headless;
     isCommandLine = true;
     isLightEdit = false;
   }
@@ -304,9 +312,7 @@ public final class Main {
     stream.println(message);
 
     boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless();
-    if (headless) {
-      return;
-    }
+    if (headless) return;
 
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -335,8 +341,7 @@ public final class Main {
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
     }
     catch (Throwable t) {
-      stream.println();
-      stream.println(BootstrapBundle.message("bootstrap.error.title.ui.exception.occurred.on.an.attempt.to.show.the.above.message"));
+      stream.println("\nAlso, a UI exception occurred on an attempt to show the above message");
       t.printStackTrace(stream);
     }
   }

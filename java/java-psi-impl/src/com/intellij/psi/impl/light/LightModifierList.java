@@ -6,11 +6,10 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public class LightModifierList extends LightElement implements PsiModifierList {
@@ -27,7 +26,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
 
   public LightModifierList(PsiManager manager, Language language, String... modifiers) {
     super(manager, language);
-    myModifiers = new HashSet<>(Arrays.asList(modifiers));
+    myModifiers = ContainerUtil.set(modifiers);
   }
 
   public void addModifier(String modifier) {

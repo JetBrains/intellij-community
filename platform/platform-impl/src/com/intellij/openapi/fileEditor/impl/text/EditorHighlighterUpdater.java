@@ -62,7 +62,7 @@ public class EditorHighlighterUpdater {
     updateHighlightersOnExtensionsChange(parentDisposable, SyntaxHighlighterLanguageFactory.EP_NAME);
     updateHighlightersOnExtensionsChange(parentDisposable, FileTypeEditorHighlighterProviders.EP_NAME);
 
-    SyntaxHighlighter.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedFactoryEPBean>() {
+    SyntaxHighlighter.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         checkUpdateHighlighters(extension.key, false);
@@ -94,7 +94,7 @@ public class EditorHighlighterUpdater {
 
   private <T> void updateHighlightersOnExtensionsChange(@NotNull Disposable parentDisposable, @NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
     epName.addExtensionPointListener(
-      new ExtensionPointListener<KeyedLazyInstance<T>>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
           checkUpdateHighlighters(extension.getKey(), false);
@@ -137,7 +137,8 @@ public class EditorHighlighterUpdater {
   protected EditorHighlighter createHighlighter(boolean forceEmpty) {
     EditorHighlighter highlighter = myFile != null && !forceEmpty
                                     ? EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile)
-                                    : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT));
+                                    : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme(),
+                                                                 HighlighterColors.TEXT);
     highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
     return highlighter;
   }

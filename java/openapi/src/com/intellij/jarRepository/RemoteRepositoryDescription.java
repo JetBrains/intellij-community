@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +11,7 @@ import java.util.Objects;
 /**
  * @author Eugene Zhuravlev
  */
-public class RemoteRepositoryDescription {
+public final class RemoteRepositoryDescription {
   public static final RemoteRepositoryDescription MAVEN_CENTRAL = new RemoteRepositoryDescription(
     "central",
     "Maven Central repository",
@@ -23,7 +22,7 @@ public class RemoteRepositoryDescription {
     "JBoss Community repository",
     "https://repository.jboss.org/nexus/content/repositories/public/"
   );
-  public static final List<RemoteRepositoryDescription> DEFAULT_REPOSITORIES = ContainerUtil.immutableList(
+  public static final List<RemoteRepositoryDescription> DEFAULT_REPOSITORIES = List.of(
     MAVEN_CENTRAL, JBOSS_COMMUNITY
   );
 

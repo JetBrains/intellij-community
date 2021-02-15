@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -38,15 +37,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
-public class ShowSerializedXmlAction extends DumbAwareAction {
+public final class ShowSerializedXmlAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(ShowSerializedXmlAction.class);
 
   @Override
@@ -77,19 +75,14 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
   }
 
   private static void generateAndShowXml(final Module module, final String className) {
-    final List<URL> urls = new ArrayList<>();
+    final List<Path> files = new ArrayList<>();
     final List<String> list = OrderEnumerator.orderEntries(module).recursively().runtimeOnly().getPathsList().getPathList();
     for (String path : list) {
-      try {
-        urls.add(new File(FileUtil.toSystemIndependentName(path)).toURI().toURL());
-      }
-      catch (MalformedURLException e1) {
-        LOG.info(e1);
-      }
+      files.add(Paths.get(path));
     }
 
     final Project project = module.getProject();
-    UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(XmlSerializer.class.getClassLoader()).get();
+    UrlClassLoader loader = UrlClassLoader.build().files(files).parent(XmlSerializer.class.getClassLoader()).get();
     final Class<?> aClass;
     try {
       aClass = Class.forName(className, true, loader);

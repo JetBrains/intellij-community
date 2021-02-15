@@ -267,7 +267,9 @@ class Test88 {
   @NeedsIndex.ForStandardLibrary
   void testCollectorsToSet() {
     configureByTestName()
-    selectItem(myItems.find { it.lookupString.contains('toSet') })
+    assert myItems.find { it.lookupString == 'collect(Collectors.joining())' } != null 
+    assert myItems.find { it.lookupString == 'collect(Collectors.toList())' } != null 
+    selectItem(myItems.find { it.lookupString == 'collect(Collectors.toSet())' })
     checkResultByFileName()
   }
 
@@ -488,6 +490,13 @@ class Test88 {
 
   void testNoStreamSuggestionsInMethodReference() { doAntiTest() }
 
+  void testNoCloneSuggestionOnStream() {
+    myFixture.configureByText("a.java", 'import java.util.stream.*;' +
+                                        'class Cls {{Stream.of("a,b,c").flatMap(l -> l.split(",").stre<caret>)}}')
+    def elements = myFixture.completeBasic()
+    assert elements.length == 0
+  }
+  
   @NeedsIndex.ForStandardLibrary
   void testToLowerCase() {
     myFixture.configureByText 'a.java', 'class C { String s = "hello".toUp<caret> }'

@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -104,13 +103,5 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   @RequiresEdt
   protected void onFileChange(@NotNull VirtualFile file) {
     scheduleRediff();
-  }
-
-  /**
-   * @deprecated See {@link #onFileChange(VirtualFile)}
-   */
-  @Deprecated
-  protected void onFileChange(@NotNull VirtualFileEvent event) {
-    onFileChange(event.getFile());
   }
 }

@@ -20,19 +20,18 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import java.io.*
 import java.nio.charset.Charset
 
 object ExecUtil {
-  private val hasGkSudo = PathExecLazyValue("gksudo")
-  private val hasKdeSudo = PathExecLazyValue("kdesudo")
-  private val hasPkExec = PathExecLazyValue("pkexec")
-  private val hasGnomeTerminal = PathExecLazyValue("gnome-terminal")
-  private val hasKdeTerminal = PathExecLazyValue("konsole")
-  private val hasUrxvt = PathExecLazyValue("urxvt")
-  private val hasXTerm = PathExecLazyValue("xterm")
-  private val hasSetsid = PathExecLazyValue("setsid")
+  private val hasGkSudo = PathExecLazyValue.create("gksudo")
+  private val hasKdeSudo = PathExecLazyValue.create("kdesudo")
+  private val hasPkExec = PathExecLazyValue.create("pkexec")
+  private val hasGnomeTerminal = PathExecLazyValue.create("gnome-terminal")
+  private val hasKdeTerminal = PathExecLazyValue.create("konsole")
+  private val hasUrxvt = PathExecLazyValue.create("urxvt")
+  private val hasXTerm = PathExecLazyValue.create("xterm")
+  private val hasSetsid = PathExecLazyValue.create("setsid")
 
   @field:NlsSafe
   private const val nicePath = "/usr/bin/nice"
@@ -151,16 +150,13 @@ object ExecUtil {
     command += commandLine.parametersList.list
 
     val sudoCommandLine = when {
-      SystemInfo.isWinVistaOrNewer -> {
+      SystemInfoRt.isWindows -> {
         val launcherExe = PathManager.findBinFileWithException("launcher.exe")
         GeneralCommandLine(listOf(launcherExe.toString(), commandLine.exePath) + commandLine.parametersList.parameters)
       }
-      SystemInfo.isWindows -> {
-        throw UnsupportedOperationException("Executing as Administrator is only available in Windows Vista or newer")
-      }
-      SystemInfo.isMac -> {
+      SystemInfoRt.isMac -> {
         val escapedCommand = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
-        val messageArg = if (SystemInfoRt.isMac) " with prompt \"${StringUtil.escapeQuotes(prompt)}\"" else "" //NON-NLS
+        val messageArg = " with prompt \"${StringUtil.escapeQuotes(prompt)}\""
         val escapedScript =
           "tell current application\n" +
           "   activate\n" +
@@ -202,10 +198,7 @@ object ExecUtil {
       }
     }
 
-    val parentEnvType = if (SystemInfo.isWinVistaOrNewer)
-      GeneralCommandLine.ParentEnvironmentType.NONE
-    else
-      commandLine.parentEnvironmentType
+    val parentEnvType = GeneralCommandLine.ParentEnvironmentType.NONE
     return sudoCommandLine
       .withWorkDirectory(commandLine.workDirectory)
       .withEnvironment(commandLine.environment)
@@ -233,7 +226,7 @@ object ExecUtil {
     execAndGetOutput(sudoCommand(commandLine, prompt))
 
   @NlsSafe
-  private fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"")}\""
+  private fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
 
   @JvmStatic
   fun escapeUnixShellArgument(arg: String): String = "'${arg.replace("'", "'\"'\"'")}'"

@@ -17,13 +17,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -45,7 +41,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.codeInsight.completion.JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER;
-import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
@@ -53,11 +48,6 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  */
 public class JavaClassNameCompletionContributor extends CompletionContributor implements DumbAware {
   public static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(PsiKeyword.NEW);
-  private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
-      psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
-          psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
-  private static final ElementPattern<PsiElement> IN_CLASS_REFERENCE_LIST =
-    psiElement().inside(psiElement(PsiReferenceList.class).withParent(psiClass()));
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet _result) {
@@ -110,12 +100,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
       return;
     }
 
-    final boolean inPermitsList = JavaCompletionContributor.isInPermitsList(insertedElement);
-    final ElementFilter filter =
-      inPermitsList ? JavaCompletionContributor.createPermitsListFilter() :
-      IN_CLASS_REFERENCE_LIST.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class)) :
-      IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) :
-      TrueFilter.INSTANCE;
+    final boolean inPermitsList = JavaCompletionContributor.IN_PERMITS_LIST.accepts(insertedElement);
+    final ElementFilter filter = JavaCompletionContributor.getReferenceFilter(insertedElement);
+    if (filter == null) return;
 
     final boolean inJavaContext = insertedElement instanceof PsiIdentifier;
     final boolean afterNew = AFTER_NEW.accepts(insertedElement);
@@ -231,11 +218,11 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
 
   @NotNull
   private static String getClassNameWithContainers(@NotNull PsiClass psiClass) {
-    String name = Objects.requireNonNull(psiClass.getName());
+    StringBuilder name = new StringBuilder(Objects.requireNonNull(psiClass.getName()));
     for (PsiClass parent : JBIterable.generate(psiClass, PsiClass::getContainingClass)) {
-      name = parent.getName() + "." + name;
+      name.insert(0, parent.getName() + ".");
     }
-    return name;
+    return name.toString();
   }
 
   public static JavaPsiClassReferenceElement createClassLookupItem(final PsiClass psiClass, final boolean inJavaContext) {

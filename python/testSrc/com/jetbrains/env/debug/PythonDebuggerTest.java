@@ -1549,7 +1549,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_shapes.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 30);
+        toggleBreakpoint(getFilePath(getScriptName()), 39);
       }
 
       @Override
@@ -1569,6 +1569,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         var = findDebugValueByName(frameVariables, "series");
         assertEquals("(5,)", var.getShape());
 
+        var = findDebugValueByName(frameVariables, "custom_shape");
+        assertEquals("(3,)", var.getShape());
+        var = findDebugValueByName(frameVariables, "custom_shape2");
+        assertEquals("(2, 3)", var.getShape());
         resume();
         waitForTerminate();
       }

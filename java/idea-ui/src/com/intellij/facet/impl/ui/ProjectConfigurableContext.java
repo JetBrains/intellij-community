@@ -18,8 +18,6 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -51,12 +49,6 @@ public abstract class ProjectConfigurableContext extends FacetEditorContextBase 
   }
 
   @Override
-  @Nullable
-  public ModuleBuilder getModuleBuilder() {
-    return null;
-  }
-
-  @Override
   public boolean isNewFacet() {
     return myNewFacet;
   }
@@ -83,12 +75,6 @@ public abstract class ProjectConfigurableContext extends FacetEditorContextBase 
   @NotNull
   public ModifiableRootModel getModifiableRootModel() {
     return myModuleConfigurationState.getRootModel();
-  }
-
-  @Override
-  @Nullable
-  public WizardContext getWizardContext() {
-    return null;
   }
 
   @Override

@@ -111,12 +111,16 @@ public interface EditorEx extends Editor {
 
   void setHorizontalScrollbarVisible(boolean b);
 
+  @NotNull
   CutProvider getCutProvider();
 
+  @NotNull
   CopyProvider getCopyProvider();
 
+  @NotNull
   PasteProvider getPasteProvider();
 
+  @NotNull
   DeleteProvider getDeleteProvider();
 
   void repaint(int startOffset, int endOffset);
@@ -272,7 +276,7 @@ public interface EditorEx extends Editor {
    * Registers a function which will be applied to a line number to obtain additional text fragments. The fragments returned by the
    * function will be drawn in the editor after end of the line (together with fragments returned by {@link EditorLinePainter} extensions).
    */
-  void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter);
+  void registerLineExtensionPainter(@NotNull IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>> lineExtensionPainter);
 
   /**
    * Allows to register a callback that will be called one each repaint of the editor vertical scrollbar.

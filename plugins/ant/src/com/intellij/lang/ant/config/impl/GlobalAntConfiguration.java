@@ -40,7 +40,7 @@ public final class GlobalAntConfiguration implements PersistentStateComponent<El
   private static final ListProperty<AntInstallation> ANTS = ListProperty.create("registeredAnts");
   private final ExternalizablePropertyContainer myProperties = new ExternalizablePropertyContainer();
   private final AntInstallation myBundledAnt;
-  public final Condition<AntInstallation> IS_USER_ANT = new Condition<AntInstallation>() {
+  public final Condition<AntInstallation> IS_USER_ANT = new Condition<>() {
     @Override
     public boolean value(AntInstallation antInstallation) {
       return antInstallation != myBundledAnt;

@@ -2,28 +2,32 @@
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 
 public class KeymapUsageCollector extends ApplicationUsagesCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "keymaps.name";
-  }
+  private static final EventLogGroup GROUP = new EventLogGroup("keymaps.name", 2);
+  private static final StringEventField KEYMAP_NAME = EventFields.StringValidatedByEnum("keymap_name", "keymaps");
+  private static final StringEventField BASED_ON = EventFields.StringValidatedByEnum("based_on", "keymaps");
+  private static final VarargEventId KEYMAP = GROUP.registerVarargEvent("ide.keymap", KEYMAP_NAME, BASED_ON);
 
   @Override
-  public int getVersion() {
-    return 2;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -33,13 +37,13 @@ public class KeymapUsageCollector extends ApplicationUsagesCollector {
     if (keymapManager == null) return Collections.emptySet();
 
     Keymap keymap = keymapManager.getActiveKeymap();
-    FeatureUsageData data = new FeatureUsageData().
-      addData("keymap_name", getKeymapName(keymap));
+    List<EventPair<String>> data = new ArrayList<>();
+    data.add(KEYMAP_NAME.with(getKeymapName(keymap)));
 
     if (keymap.canModify()) {
-      data.addData("based_on", getKeymapName(keymap.getParent()));
+      data.add(BASED_ON.with(getKeymapName(keymap.getParent())));
     }
-    return Collections.singleton(MetricEventFactoryKt.newMetric("ide.keymap", data));
+    return Collections.singleton(KEYMAP.metric(data));
   }
 
   @NotNull

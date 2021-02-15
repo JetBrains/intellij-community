@@ -80,8 +80,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
       LOG.error(e);
       return null;
     }
-    EventSetDescriptor[] sortedDescriptors = new EventSetDescriptor[eventSetDescriptors.length];
-    System.arraycopy(eventSetDescriptors, 0, sortedDescriptors, 0, eventSetDescriptors.length);
+    EventSetDescriptor[] sortedDescriptors = eventSetDescriptors.clone();
     Arrays.sort(sortedDescriptors, (o1, o2) -> o1.getListenerType().getName().compareTo(o2.getListenerType().getName()));
     for(EventSetDescriptor descriptor: sortedDescriptors) {
       actionGroup.add(new MyCreateListenerAction(selection, descriptor));

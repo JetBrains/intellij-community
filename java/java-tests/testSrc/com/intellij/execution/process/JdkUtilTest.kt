@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil

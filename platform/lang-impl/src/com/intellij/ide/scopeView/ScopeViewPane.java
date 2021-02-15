@@ -157,6 +157,11 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return AllIcons.Ide.LocalScope;
   }
 
+  @Override
+  public boolean isFileNestingEnabled() {
+    return true;
+  }
+
   @NotNull
   @Override
   public JComponent createComponent() {
@@ -191,7 +196,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     if (myScrollPane == null) {
       myScrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
       ErrorStripePainter painter = new ErrorStripePainter(true);
-      Disposer.register(this, new TreeUpdater<ErrorStripePainter>(painter, myScrollPane, myTree) {
+      Disposer.register(this, new TreeUpdater<>(painter, myScrollPane, myTree) {
         @Override
         protected void update(ErrorStripePainter painter, int index, Object object) {
           super.update(painter, index, myTreeModel.getStripe(object, myTree.isExpanded(index)));
@@ -260,7 +265,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);
     if (visitor == null) return true;
     JTree tree = myTree;
-    TreeState.expand(tree, promise -> TreeUtil.visit(tree, visitor, path -> {
+    myTreeModel.getUpdater().updateImmediately(() -> TreeState.expand(tree, promise -> TreeUtil.visit(tree, visitor, path -> {
       if (selectPath(tree, path) || element == null || Registry.is("async.project.view.support.extra.select.disabled")) {
         promise.setResult(null);
       }
@@ -272,7 +277,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
           promise.setResult(null);
         });
       }
-    }));
+    })));
     return true;
   }
 

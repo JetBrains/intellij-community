@@ -101,7 +101,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     myPanelForCustomDictionaries.setLayout(new BorderLayout());
     myPanelForCustomDictionaries.add(myDictionariesPanel, BorderLayout.CENTER);
 
-    myProvidedDictionariesChooserComponent = new OptionalChooserComponent<String>(providedDictionaries) {
+    myProvidedDictionariesChooserComponent = new OptionalChooserComponent<>(providedDictionaries) {
       @Override
       public JCheckBox createCheckBox(String path, boolean checked) {
         return new JCheckBox(FileUtil.toSystemDependentName(path), checked);

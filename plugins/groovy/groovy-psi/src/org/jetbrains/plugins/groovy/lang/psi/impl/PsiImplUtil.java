@@ -21,7 +21,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
@@ -347,7 +347,7 @@ public final class PsiImplUtil {
 
   public static boolean isMainMethod(GrMethod method) {
     if (!method.getName().equals(MAIN_METHOD)) return false;
-    else if (!method.hasModifierProperty(PsiModifier.STATIC))return false;
+    else if (!GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.STATIC)) return false;
 
     final GrParameter[] parameters = method.getParameters();
 
@@ -430,6 +430,7 @@ public final class PsiImplUtil {
   /**
    * see {@link AstBufferUtil#getTextSkippingWhitespaceComments(ASTNode)}
    */
+  @NotNull
   public static String getTextSkipWhiteSpaceAndComments(ASTNode node) {
     final TreeElement treeElement = (TreeElement)node;
     final int length;
@@ -443,14 +444,14 @@ public final class PsiImplUtil {
       final GroovyBufferVisitor textVisitor = new GroovyBufferVisitor(true, true, 0, buffer);
       treeElement.acceptTree(textVisitor);
     }
-    return StringFactory.createShared(buffer);
+    return new String(buffer);
   }
 
-  public static class GroovyBufferVisitor extends AstBufferUtil.BufferVisitor {
+  private static class GroovyBufferVisitor extends AstBufferUtil.BufferVisitor {
 
     private final boolean mySkipWhiteSpace;
 
-    public GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
+    GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
       super(skipWhitespace, skipComments, offset, buffer);
       mySkipWhiteSpace = skipWhitespace;
     }

@@ -165,10 +165,10 @@
     <extensionPoint qualifiedName="com.intellij.compiler.task" area="IDEA_PROJECT" beanClass="com.intellij.compiler.CompileTaskBean" dynamic="true">
       <with attribute="implementation" implements="com.intellij.openapi.compiler.CompileTask"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.compilerSettingsFactory" area="IDEA_PROJECT" interface="com.intellij.compiler.CompilerSettingsFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.compileServer.plugin" beanClass="com.intellij.compiler.server.CompileServerPlugin" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.buildProcess.parametersProvider" area="IDEA_PROJECT"
                     interface="com.intellij.compiler.server.BuildProcessParametersProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.buildIssueContributor" dynamic="true" interface="com.intellij.compiler.progress.BuildIssueContributor"/>
 
     <extensionPoint qualifiedName="com.intellij.attachSourcesProvider" interface="com.intellij.codeInsight.AttachSourcesProvider" dynamic="true"/>
 
@@ -257,7 +257,7 @@
 
     <!--<extensionPoint qualifiedName="com.intellij.expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
-    <extensionPoint qualifiedName="com.intellij.refactoring.overrideMethodProcessor" interface="com.intellij.refactoring.OverrideMethodsProcessor" dynamic="true"/> 
+    <extensionPoint qualifiedName="com.intellij.refactoring.overrideMethodProcessor" interface="com.intellij.refactoring.OverrideMethodsProcessor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector" dynamic="true"/>
 
     <!-- See com.intellij.execution.filters.ExceptionFilter -->
@@ -265,6 +265,7 @@
 
     <!-- See com.intellij.codeInspection.javaDoc.JavaDocLocalInspection -->
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -285,7 +286,6 @@
     <backgroundPostStartupActivity implementation="com.intellij.packaging.impl.artifacts.ArtifactTypeFeatureCollector"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerConfiguration" serviceImplementation="com.intellij.compiler.CompilerConfigurationImpl" preload="await"/>
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
-    <projectService serviceImplementation="com.intellij.compiler.ExternalCompilerConfigurationStorage"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerReferenceService" serviceImplementation="com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl"/>
     <postStartupActivity implementation="com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl$InitializationActivity"/>
 
@@ -336,6 +336,8 @@
                         serviceImplementation="com.intellij.psi.impl.CommonReferenceProviderTypesImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
                         serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeFactory"
+                        serviceImplementation="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeImpl$Factory"/>
 
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
@@ -351,7 +353,6 @@
     <projectService serviceInterface="com.intellij.refactoring.listeners.JavaRefactoringListenerManager"
                     serviceImplementation="com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl"/>
     <projectService serviceImplementation="com.intellij.refactoring.RefactoringManager"/>
-    <projectService serviceImplementation="com.intellij.psi.impl.migration.PsiMigrationManager"/>
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.JavaPsiImplementationHelper"
@@ -370,7 +371,6 @@
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
-    <projectService serviceImplementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
 
@@ -442,7 +442,6 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
-    <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
 
     <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
                     serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
@@ -501,7 +500,7 @@
       <configurable instance="com.intellij.compiler.options.JavaCompilersTab" id="reference.projectsettings.compiler.javacompiler"
                     key="java.compiler.description" bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.AnnotationProcessorsConfigurable"
-                    id="reference.projectsettings.compiler.annotationProcessors" 
+                    id="reference.projectsettings.compiler.annotationProcessors"
                     key="reference.projectsettings.compiler.annotationProcessors"
                     bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.ValidationConfigurable" id="project.validation" key="validation.display.name"
@@ -792,6 +791,7 @@
 
     <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
     <fileIconPatcher implementation="com.intellij.ide.JavaExcludedFileIconPatcher" order="after javaFileIconPatcher"/>
+    <editorTabTitleProvider implementation="com.intellij.ui.JavaEditorTabTitleProvider"/>
     <directoryIndexExcludePolicy implementation="com.intellij.openapi.roots.impl.ExcludeCompilerOutputPolicy"/>
     <problemFileHighlightFilter implementation="com.intellij.codeInsight.problems.DefaultProblemFileHighlightFilter"/>
     <macro implementation="com.intellij.ide.macro.OutputPathMacro"/>
@@ -806,7 +806,6 @@
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector"
                               order="first"/>
 
-    <applicationService serviceImplementation="com.intellij.execution.JavaRunConfigurationExtensionManager"/>
     <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
 
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
@@ -1156,6 +1155,8 @@
              order="before explicitlyImported"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ReferenceListWeigher" id="referenceList"
              order="before samePsiMember"/>
+    <completion.ml.contextFeatures language="JAVA" implementationClass="com.intellij.codeInsight.completion.ml.JavaContextFeaturesProvider"/>
+    <completion.ml.elementFeatures language="JAVA" implementationClass="com.intellij.codeInsight.completion.ml.JavaElementFeaturesProvider"/>
     <completion.ml.model implementation="com.intellij.codeInsight.completion.ml.JavaMLRankingProvider"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.NestedIfJoinLinesHandler"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.BlockJoinLinesHandler"/>
@@ -1178,6 +1179,7 @@
     <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
+    <codeCompletionConfigurable instance="com.intellij.application.options.JavaCompletionConfigurable" order="first"/>
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
     <codeStyle.ReferenceAdjuster language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjuster"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterAfterUnmatchedBraceHandler" order="before afterUnmatchedBrace"/>
@@ -1400,6 +1402,12 @@
                      bundle="messages.JavaBundle"
                      key="inspection.redundant.file.creation.display.name"
                      implementationClass="com.intellij.codeInspection.RedundantFileCreationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SlowAbstractSetRemoveAll"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     bundle="messages.JavaBundle"
+                     key="inspection.slow.abstract.set.remove.all.description"
+                     implementationClass="com.intellij.codeInspection.SlowAbstractSetRemoveAllInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantUnmodifiable"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
@@ -1443,11 +1451,23 @@
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection"
                      key="inspection.use.bulk.operation.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="InconsistentTextBlockIndent"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids15" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.InconsistentTextBlockIndentInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.inconsistent.text.block.indent.name"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyCollector"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyCollectorInspection"
                      key="inspection.simplify.collector.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="TrailingWhitespacesInTextBlock"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids15" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.TrailingWhitespacesInTextBlockInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.trailing.whitespaces.in.text.block.name"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyOptionalCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
@@ -1472,6 +1492,10 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
                      bundle="messages.JavaBundle" key="inspection.redundant.record.constructor.description"
                      implementationClass="com.intellij.codeInspection.RedundantRecordConstructorInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MeaninglessRecordAnnotationInspection" enabledByDefault="true" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     bundle="messages.JavaBundle" key="inspection.meaningless.record.annotation.description"
+                     implementationClass="com.intellij.codeInspection.MeaninglessRecordAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RecordCanBeClass" enabledByDefault="true" level="INFORMATION"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      bundle="messages.JavaBundle" key="inspection.message.record.can.be.converted.to.class"
@@ -1643,9 +1667,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="FieldCanBeLocal" bundle="messages.JavaBundle" key="inspection.field.can.be.local.display.name"
                      groupKey="group.names.class.structure" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Dependency" groupKey="group.names.dependency.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.codeInspection.dependencyViolation.DependencyInspection"
-                     key="inspection.dependency.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Since15" bundle="messages.JavaBundle" key="inspection.1.5.display.name"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.java15api.Java15APIUsageInspection"/>
@@ -1667,11 +1688,10 @@
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.intermediaryVariable.ReturnSeparatedFromComputationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RawTypeCanBeGeneric" bundle="messages.JavaBundle"
-                     key="inspection.raw.variable.type.can.be.generic.name"
-                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.miscGenerics.RawTypeCanBeGenericInspection"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" suppressId="rawtypes" alternativeId="RawUseOfParameterized" shortName="RawUseOfParameterizedType" bundle="messages.InspectionGadgetsBundle"
+                     key="raw.use.of.parameterized.type.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantArrayCreation" bundle="messages.JavaBundle"
                      key="inspection.redundant.array.creation.display.name"
                      groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"
@@ -1778,6 +1798,11 @@
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.FillPermitsListInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="synchronization" shortName="SynchronizeOnValueBasedClass"
+                     key="inspection.value.based.warnings" bundle="messages.JavaBundle"
+                     groupKey="group.names.compiler.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.valuebased.SynchronizeOnValueBasedClassInspection"/>
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
@@ -2089,6 +2114,7 @@
     <statistics.counterUsagesCollector groupId="java.lens" version="2"/>
     <notificationGroup id="Clean artifact" displayType="BALLOON"/>
     <notificationGroup id="Compiler" displayType="NONE"/>
+    <notificationGroup id="Build Profiler" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Analyze thread dump" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false"/>
     <notificationGroup id="JSHELL_NOTIFICATIONS" displayType="BALLOON"/>
     <notificationGroup id="Repository" displayType="BALLOON"/>
@@ -2098,10 +2124,12 @@
     <notificationGroup id="Quarantine Cleaner" displayType="BALLOON" bundle="messages.JavaUiBundle" key="quarantine.cleaner"/>
     <notificationGroup id="Build Script Found" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Java Preview Features" displayType="BALLOON"/>
+    <notificationGroup id="Remove redundant exports/opens" displayType="BALLOON"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
     <readerModeProvider implementation="com.intellij.ide.impl.JavaInlaysReaderModeProvider"/>
+    <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

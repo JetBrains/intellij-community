@@ -18,10 +18,11 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
   @NotNull
   protected DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
     int count = getSelectionCount(myTree);
-    String imageText = count + " " + StringUtil.pluralize("file", count);
+    String imageText = VcsBundle.message("vcs.dnd.image.text.n.files", count);
     return createDragImage(myTree, imageText);
   }
 
@@ -118,7 +119,7 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
   }
 
   @NotNull
-  public static DnDImage createDragImage(@NotNull Tree tree, @NotNull String imageText) {
+  public static DnDImage createDragImage(@NotNull Tree tree, @NotNull @Nls String imageText) {
     Image image = DnDAwareTree.getDragImage(tree, imageText, null).getFirst();
     return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
   }

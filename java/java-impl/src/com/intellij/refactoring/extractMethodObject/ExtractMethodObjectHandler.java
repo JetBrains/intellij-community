@@ -56,8 +56,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    final PsiElement[] elements = ExtractMethodHandler.getElements(file.getProject(), editor, file);
-    return elements != null && elements.length > 0;
+    return false;
   }
 
   private static void invokeOnElements(@NotNull final Project project,

@@ -2,7 +2,6 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,12 +19,7 @@ public abstract class CompoundPackageSet extends PackageSetBase {
       if (set == null) throw new IllegalArgumentException("null set in " + Arrays.toString(sets));
     }
   }
-
-  @Override
-  public boolean contains(@NotNull VirtualFile file, @NotNull NamedScopesHolder holder) {
-    return contains(file, holder.getProject(), holder);
-  }
-
+  
   @Override
   @NotNull
   public PackageSet createCopy() {

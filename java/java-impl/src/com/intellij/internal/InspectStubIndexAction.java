@@ -96,13 +96,12 @@ public class InspectStubIndexAction extends AnAction {
         }
       }
 
-      Map<Integer, SerializedStubTree> data = FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, vFile, project);
-      if (data.isEmpty()) {
+      SerializedStubTree tree = FileBasedIndex.getInstance().getSingleEntryIndexData(StubUpdatingIndex.INDEX_ID, vFile, project);
+      if (tree == null) {
         return true;
       }
 
       try {
-        SerializedStubTree tree = data.values().iterator().next();
         for (Map.Entry<StubIndexKey<?, ?>, Map<Object, StubIdList>> entry : tree.getStubIndicesValueMap().entrySet()) {
           StubIndexKey stubIndexKey = entry.getKey();
           Set<Object> keys = entry.getValue().keySet();

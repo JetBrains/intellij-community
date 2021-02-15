@@ -15,6 +15,8 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +34,7 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
@@ -55,6 +58,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -311,7 +315,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     AtomicReference<Project> project = new AtomicReference<>();
     checkNewDirAndRefresh(
       temp -> {
-        Project p = PlatformTestUtil.loadAndOpenProject(temp);
+        Project p = PlatformTestUtil.loadAndOpenProject(temp, getTestRootDisposable());
         project.set(p);
         assertTrue(p.isOpen());
       },
@@ -322,7 +326,6 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         finally {
           // this concoction is to ensure close() is called on the mock ProjectManagerImpl
           assertTrue(project.get().isOpen());
-          PlatformTestUtil.forceCloseProjectWithoutSaving(project.get());
         }
       }
     );
@@ -473,7 +476,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   @Test
   public void testVfsUtilCopyMustCopyBOMCorrectlyForFileUnderProjectRoot() throws IOException {
     File dir1 = myTempDir.newDirectory("dir1");
-    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()));
+    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()), getTestRootDisposable());
     WriteAction.runAndWait(() -> {
       VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
       Module module1 = PsiTestUtil.addModule(project, ModuleType.EMPTY, "module1", root);
@@ -496,7 +499,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   @Test
   public void testVfsUtilCopyMustCopyBOMLessFileCorrectlyWhenEncodingProjectManagerBOMForNewFilesOptionIsSetToTrue() throws IOException {
     File dir1 = myTempDir.newDirectory("dir1");
-    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()));
+    Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()), getTestRootDisposable());
     WriteAction.runAndWait(() -> {
       ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project)).setBOMForNewUtf8Files(
         EncodingProjectManagerImpl.BOMForNewUTF8Files.ALWAYS);
@@ -516,5 +519,30 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       assertEquals("xxx", VfsUtilCore.loadText(copy));
       assertArrayEquals(null, copy.getBOM());
     });
+  }
+
+  @Test
+  public void refreshAndFindFileMustUpdateParentDirectoryCaseSensitivityToReturnCorrectFile() throws IOException {
+    IoTestUtil.assumeWindows();
+    IoTestUtil.assumeWslPresence();
+    assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
+
+    File dir = new File(myTempDir.getRoot(), "dir");
+    File file = new File(dir, "child.txt");
+    assertFalse(file.exists());
+    assertEquals(myTempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(myTempDir.getRoot()));
+
+    assertTrue(dir.mkdirs());
+    assertTrue(file.createNewFile());
+
+    IoTestUtil.setCaseSensitivity(dir, true);
+    File file2 = new File(dir, "CHILD.TXT");
+    assertTrue(file2.createNewFile());
+    VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file2);
+    assertNotNull(vFile2);
+    assertEquals("CHILD.TXT", vFile2.getName());
+    assertTrue(vFile2.isCaseSensitive());
+    assertTrue(vFile2.getParent().isCaseSensitive());
+    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, ((VirtualDirectoryImpl)vFile2.getParent()).getChildrenCaseSensitivity());
   }
 }

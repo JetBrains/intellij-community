@@ -74,7 +74,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
           parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
           JavaCompletionContributor.isClassNamePossible(parameters) &&
-          !JavaCompletionContributor.isInPermitsList(parameters.getPosition())) {
+          !JavaCompletionContributor.IN_PERMITS_LIST.accepts(parameters.getPosition())) {
         suggestNonImportedClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)), tracker.session);
       }
     }
@@ -210,11 +210,16 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
         return;
       }
       JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
+      PsiElement position = parameters.getPosition();
       if (classElement != null && parameters.getInvocationCount() < 2) {
+        if (JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) &&
+            JavaPsiClassReferenceElement.isInaccessibleConstructorSuggestion(position, classElement.getObject())) {
+          return;
+        }
         classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       }
 
-      element = JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), parameters.getPosition());
+      element = JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), position);
       if (!sameNamedBatch.isEmpty() && !element.getLookupString().equals(sameNamedBatch.get(0).getLookupString())) {
         result.addAllElements(sameNamedBatch);
         sameNamedBatch.clear();

@@ -30,13 +30,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 
 import java.util.regex.Pattern;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.skipWhiteSpacesAndNewLines;
+
 public class GroovyFallthroughInspection extends BaseInspection {
 
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.fallthrough.in.switch.statement");
-
   }
 
   @NotNull
@@ -72,7 +73,7 @@ public class GroovyFallthroughInspection extends BaseInspection {
     }
 
     private static boolean isCommented(GrCaseSection caseClause) {
-      final PsiElement element = PsiTreeUtil.skipWhitespacesBackward(caseClause);
+      final PsiElement element = skipWhiteSpacesAndNewLines(caseClause, PsiTreeUtil::prevLeaf);
       if (!(element instanceof PsiComment)) {
         return false;
       }

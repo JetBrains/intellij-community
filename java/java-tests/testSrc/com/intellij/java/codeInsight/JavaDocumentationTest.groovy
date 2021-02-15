@@ -5,10 +5,12 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.javadoc.DocumentationDelegateProvider
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import groovy.transform.CompileStatic
@@ -164,6 +166,22 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
       "<div class='definition'><pre><a href=\"psi_element://C\"><code>C</code></a><br>public&nbsp;void&nbsp;<b>m</b>()</pre></div><div class='content'> Visit the \"<code>/login</code>\" URL. <p></div><table class='sections'><p></table>"
 
     assert doc == expected
+  }
+
+  void testInlineReturnJava16() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_16, { configure """\
+      class C {
+        /** {@return smth} */
+        public String <caret>m() { }
+      }""".stripIndent()
+      def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
+      def doc = new JavaDocumentationProvider().generateRenderedDoc(method.getDocComment())
+
+      def expected =
+      "<div class=\'content\'>  </div><table class=\'sections\'><tr><td valign=\'top\' class=\'section\'><p>Returns:</td><td valign=\'top\'><p> smth</td></table>"
+
+      assert doc == expected
+    })
   }
 
   void testMethodToMethodDelegate() {

@@ -99,7 +99,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
 
   @Override
   public @NotNull TypeInfo @NotNull [] getTypes() {
-    if (shouldSkipSoleObject()) return TypeInfo.EMPTY_ARRAY;
+    if (myInfos.length == 0 || shouldSkipSoleObject()) return TypeInfo.EMPTY_ARRAY;
     return myInfos.clone();
   }
 

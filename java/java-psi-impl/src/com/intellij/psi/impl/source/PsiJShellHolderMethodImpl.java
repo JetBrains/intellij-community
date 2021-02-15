@@ -92,7 +92,7 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     try {
       myThrowsList = elementFactory.createReferenceList(new PsiJavaCodeReferenceElement[]{
-        elementFactory.createFQClassNameReferenceElement("java.lang.Throwable", getResolveScope())
+        elementFactory.createFQClassNameReferenceElement(CommonClassNames.JAVA_LANG_THROWABLE, getResolveScope())
       });
       return myThrowsList;
     }

@@ -2,7 +2,9 @@
 package com.intellij.internal.statistic.collectors.fus
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 
@@ -10,15 +12,22 @@ import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
  * @author Konstantin Bulenkov
  */
 class UpdateManagerUsagesCollector : ApplicationUsagesCollector() {
+  companion object {
+    private val GROUP: EventLogGroup = EventLogGroup("platform.installer", 2)
+    private val UPDATE_MANAGER: EventId1<String?> =
+      GROUP.registerEvent(
+        "Update Manager",
+        EventFields.String("value", arrayListOf("Toolbox App", "Snap", "Other", "IDE"))
+      )
+  }
+
   override fun getMetrics(): Set<MetricEvent> = setOf(
-    newMetric("Update Manager", when (ExternalUpdateManager.ACTUAL) {
+    UPDATE_MANAGER.metric(when (ExternalUpdateManager.ACTUAL) {
       ExternalUpdateManager.TOOLBOX -> "Toolbox App"
       ExternalUpdateManager.SNAP -> "Snap"
       ExternalUpdateManager.UNKNOWN -> "Other"
       null -> "IDE"
     }))
 
-  override fun getGroupId(): String = "platform.installer"
-
-  override fun getVersion(): Int = 2
+  override fun getGroup(): EventLogGroup = GROUP
 }

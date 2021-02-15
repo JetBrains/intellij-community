@@ -515,7 +515,7 @@ public final class FindUsagesManager {
           myUsage.selectInEditor();
         }
         else if (!usagesWereFound.get()) {
-          String message = getNoUsagesFoundMessage(primaryElements[0]) + " in " + scopeFile.getName();
+          String message = getNoUsagesFoundMessage(primaryElements[0], scopeFile.getName());
           showEditorHint(message, editor);
         }
         else {
@@ -524,6 +524,13 @@ public final class FindUsagesManager {
         }
       }
     }.queue();
+  }
+
+  @NotNull
+  private static @NlsContexts.HintText String getNoUsagesFoundMessage(@NotNull PsiElement psiElement, @NotNull String fileName) {
+    String elementType = UsageViewUtil.getType(psiElement);
+    String elementName = UsageViewUtil.getShortName(psiElement);
+    return FindBundle.message("find.usages.of.element_type.element_name.not.found.in.scope.message", elementType, elementName, fileName);
   }
 
   @NotNull

@@ -117,11 +117,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
 
   @Override
   public @NotNull List<AnAction> getActions(boolean originalProvider) {
-    JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(myToolbar).traverse().filter(ActionToolbar.class);
-    if (toolbars.size() == 0) {
-      return Collections.emptyList();
-    }
-    return toolbars.flatten(ActionToolbar::getActions).toList();
+    return collectActions(myToolbar);
   }
 
   @Override
@@ -164,5 +160,14 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
         LinePainter2D.paint((Graphics2D)g, x, 0, x, getHeight());
       }
     }
+  }
+
+  @NotNull
+  public static List<AnAction> collectActions(@Nullable JComponent component) {
+    JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(component).traverse().filter(ActionToolbar.class);
+    if (toolbars.size() == 0) {
+      return Collections.emptyList();
+    }
+    return toolbars.flatten(ActionToolbar::getActions).toList();
   }
 }

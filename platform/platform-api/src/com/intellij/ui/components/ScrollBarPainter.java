@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 abstract class ScrollBarPainter implements RegionPainter<Float> {
@@ -90,14 +90,13 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
 
   @NotNull
   private static ColorKey key(int light, int dark, @NotNull String name) {
-    return ColorKey.createColorKey(name, JBColor.namedColor(name, new JBColor(new Color(light, true), new Color(dark, true))));
+    return EditorColorsUtil.createColorKey(name, new JBColor(new Color(light, true), new Color(dark, true)));
   }
 
   @NotNull
   private static Color getColor(@Nullable Component component, @NotNull ColorKey key) {
-    Function<ColorKey, Color> function = UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY);
-    Color color = function == null ? null : function.apply(key);
-    if (color == null) color = key.getDefaultColor();
+    Color color = EditorColorsUtil.getColor(component, key);
+    assert color != null : "default color is not specified for " + key;
 
     boolean useContrastScrollbars = UISettings.getShadowInstance().getUseContrastScrollbars();
     if (useContrastScrollbars) color = updateTransparency(color, key);

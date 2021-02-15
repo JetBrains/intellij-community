@@ -298,7 +298,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
       model.dependencies.dependencies.map {
         var scope = it.scope.stringValue;
         if (scope == SCOPE_COMPILE) scope = null
-        UnifiedDependency(it.groupId.stringValue, it.artifactId.stringValue, it.version.rawText, scope)
+        UnifiedDependency(it.groupId.stringValue, it.artifactId.stringValue, it.version.stringValue, scope)
       }
     }
 

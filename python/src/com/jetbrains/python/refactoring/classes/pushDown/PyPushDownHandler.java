@@ -49,7 +49,7 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
     }
 
     ViewPresenterUtils
-      .linkViewWithPresenterAndLaunch(PyPushDownPresenter.class, PyPushDownView.class, new Creator<PyPushDownView, PyPushDownPresenter>() {
+      .linkViewWithPresenterAndLaunch(PyPushDownPresenter.class, PyPushDownView.class, new Creator<>() {
         @NotNull
         @Override
         public PyPushDownPresenter createPresenter(@NotNull PyPushDownView view) {

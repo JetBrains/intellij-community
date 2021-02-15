@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
  * @deprecated Use {@link SaveAndSyncHandler} directly, do not use implementation class.
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public final class SaveAndSyncHandlerImpl {
   private SaveAndSyncHandlerImpl() {
   }

@@ -31,6 +31,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
+import static git4idea.GitNotificationIdsHolder.BRANCH_RENAME_ROLLBACK_FAILED;
+import static git4idea.GitNotificationIdsHolder.BRANCH_RENAME_ROLLBACK_SUCCESS;
+
 class GitRenameBranchOperation extends GitBranchOperation {
   @NotNull private final VcsNotifier myNotifier;
   @NotNull @NlsSafe private final String myCurrentName;
@@ -75,12 +78,12 @@ class GitRenameBranchOperation extends GitBranchOperation {
       repository.update();
     }
     if (result.totalSuccess()) {
-      myNotifier.notifySuccess("git.branch.rename.rollback.success",
+      myNotifier.notifySuccess(BRANCH_RENAME_ROLLBACK_SUCCESS,
                                GitBundle.message("git.rename.branch.rollback.successful"),
                                GitBundle.message("git.rename.branch.renamed.back.to", myCurrentName));
     }
     else {
-      myNotifier.notifyError("git.branch.rename.rollback.failed",
+      myNotifier.notifyError(BRANCH_RENAME_ROLLBACK_FAILED,
                              GitBundle.message("git.rename.branch.rollback.failed"),
                              result.getErrorOutputWithReposIndication(),
                              true);

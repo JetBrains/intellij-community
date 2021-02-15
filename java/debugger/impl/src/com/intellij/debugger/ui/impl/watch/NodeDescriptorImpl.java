@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -53,7 +52,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   @Override
   public <T> void putUserData(Key<T> key, T value) {
     if(myUserData == null) {
-      myUserData = new SmartHashMap<>();
+      myUserData = new HashMap<>();
     }
     myUserData.put(key, value);
   }

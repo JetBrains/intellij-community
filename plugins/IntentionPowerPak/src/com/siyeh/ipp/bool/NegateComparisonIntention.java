@@ -69,6 +69,6 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
     CommentTracker tracker = new CommentTracker();
     tracker.markUnchanged(lhs);
     tracker.markUnchanged(rhs);
-    PsiReplacementUtil.replaceExpressionWithNegatedExpression(lhsText + negatedOperator + rhsText, expression, tracker);
+    PsiReplacementUtil.replaceExpressionWithNegatedExpression(expression, lhsText + negatedOperator + rhsText, tracker);
   }
 }

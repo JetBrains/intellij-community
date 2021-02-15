@@ -9,10 +9,11 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.CommitTabTitleUpdater
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.GitStageContentProvider.Companion.STAGING_AREA_TAB_NAME
@@ -28,15 +29,25 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   override fun initContent(): JComponent {
     val tracker = GitStageTracker.getInstance(project)
     disposable = Disposer.newDisposable("Git Stage Content Provider")
-    val gitStagePanel = GitStagePanel(tracker, isCommitToolWindow(project), disposable!!)
+    val gitStagePanel = GitStagePanel(tracker, isVertical(), isDiffPreviewInEditor(), disposable!!) {
+      ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.activate(null)
+    }
     setupTabTitleUpdater(tracker, gitStagePanel)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
-      override fun toolWindowMappingChanged() {
-        gitStagePanel.setDiffPreviewInEditor(isCommitToolWindow(project))
-      }
+      override fun toolWindowMappingChanged() = gitStagePanel.updatePanelLayout()
     })
+    project.messageBus.connect(disposable!!).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager) = gitStagePanel.updatePanelLayout()
+    })
+
     return gitStagePanel
   }
+
+  private fun GitStagePanel.updatePanelLayout() = updateLayout(isVertical(), isDiffPreviewInEditor())
+
+  private fun isDiffPreviewInEditor() = ChangesViewContentManager.isCommitToolWindowShown(project)
+
+  private fun isVertical() = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.anchor?.isHorizontal == false
 
   private fun setupTabTitleUpdater(tracker: GitStageTracker, panel: GitStagePanel) {
     val updater = CommitTabTitleUpdater(panel.tree, STAGING_AREA_TAB_NAME) { VcsBundle.message("tab.title.commit") }
@@ -56,8 +67,6 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   companion object {
     @NonNls
     val STAGING_AREA_TAB_NAME = "Staging Area"
-
-    private fun isCommitToolWindow(project: Project) = ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindow == true
   }
 }
 

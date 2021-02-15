@@ -29,7 +29,7 @@ public abstract class CustomLoadingExtensionPointBean<T> extends BaseKeyedLazyIn
       instance = super.createInstance(componentManager, getPluginDescriptor());
     }
     else {
-      ExtensionFactory factory = componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(factoryClass, getPluginDescriptor());
+      ExtensionFactory factory = componentManager.instantiateClass(factoryClass, getPluginDescriptor());
       //noinspection unchecked
       instance = (T)factory.createInstance(factoryArgument, getImplementationClassName());
     }

@@ -42,7 +42,7 @@ private const val SEPARATOR_HEIGHT = 5
 /**
  * Builder class to help to create customized picker components depends on the requirement.
  */
-class ColorPickerBuilder(private val showAlpha: Boolean = false) {
+class ColorPickerBuilder(private val showAlpha: Boolean = false, private val showAlphaAsPercent: Boolean = true) {
 
   private val componentsToBuild = mutableListOf<JComponent>()
   private val model = ColorPickerModel()
@@ -62,7 +62,7 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false) {
     componentsToBuild.add(ColorAdjustPanel(model, colorPipetteProvider, showAlpha))
   }
 
-  fun addColorValuePanel() = apply { componentsToBuild.add(ColorValuePanel(model, showAlpha)) }
+  fun addColorValuePanel() = apply { componentsToBuild.add(ColorValuePanel(model, showAlpha, showAlphaAsPercent)) }
 
   /**
    * If both [okOperation] and [cancelOperation] are null, [IllegalArgumentException] will be raised.

@@ -43,7 +43,7 @@ public class MavenCompletionProviderFactory implements DependencySearchProviders
 
   private static void addRemoteIndices(Project project, List<DependencySearchProvider> result) {
     List<MavenIndex> privateIndices =
-      MavenIndicesManager.getInstance().ensureIndicesExist(collectRemoteRepositoriesIdsAndUrls(project));
+      MavenIndicesManager.getInstance(project).ensureIndicesExist(collectRemoteRepositoriesIdsAndUrls(project));
 
     for (MavenIndex index : privateIndices) {
       result.add(new IndexBasedCompletionProvider(index));
@@ -53,7 +53,7 @@ public class MavenCompletionProviderFactory implements DependencySearchProviders
   private static void addLocalIndex(Project project, List<DependencySearchProvider> result) {
     File localRepository = ReadAction
       .compute(() -> project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getLocalRepository());
-    MavenIndicesManager indicesManager = MavenIndicesManager.getInstance();
+    MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(project);
     MavenIndex localIndex = indicesManager.createIndexForLocalRepo(project, localRepository);
     if (localIndex != null) {
       result.add(new IndexBasedCompletionProvider(localIndex));

@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation;
 
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -26,4 +29,13 @@ public interface SymbolNavigationService {
 
   @NotNull
   Collection<? extends NavigationTarget> getNavigationTargets(@NotNull Project project, @NotNull Symbol symbol);
+
+  @Contract("_ -> new")
+  @NotNull NavigationTarget psiFileNavigationTarget(@NotNull PsiFile file);
+
+  /**
+   * Please use {@link TargetPopupPresentation#builder}
+   */
+  @ApiStatus.Internal
+  @NotNull TargetPopupPresentationBuilder presentationBuilder(@Nls @NotNull String presentableText);
 }

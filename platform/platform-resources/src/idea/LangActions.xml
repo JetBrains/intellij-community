@@ -16,6 +16,8 @@
       <group id="RunContextGroupInner">
         <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
           <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+          <separator/>
+          <action id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
         </group>
       </group>
       <separator/>
@@ -286,7 +288,9 @@
 
       <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
         <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
-        <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
+        <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction">
+          <synonym key="action.SmartTypeCompletion.synonym"/>
+        </action>
         <separator/>
         <reference ref="EditorCompleteStatement"/>
         <separator/>
@@ -444,7 +448,7 @@
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
 
-      <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction"/>
+      <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction"/>
     </group>
     <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
     <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.ScratchFileActions$LanguageAction">
@@ -501,8 +505,8 @@
       <separator/>
       <reference id="NavBarToolBarOthers"/>
       <separator/>
-      <reference ref="RunAnything"/>
       <reference ref="SearchEverywhere"/>
+      <reference ref="SettingsEntryPoint"/>
     </group>
 
 
@@ -510,28 +514,33 @@
       <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
+        <separator/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
-        <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
+        <action id="SegmentedSearchEverywhereAction" class="com.intellij.ide.navigationToolbar.experimental.SegmentedSearchEverywhereAction"/>
       </group>
       <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
       </group>
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
-        <action id="RunDebugConfigAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRDCAction"/>
+        <action id="StateWidgetAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetAction"/>
       </group>
     </group>
 
-    <group id="SegmentedRunDebugConfigActionGroup">
-      <!--<group class="com.intellij.execution.segmentedRunDebugWidget.RDCPillLabelGroup"/>-->
-      <action id="RunningRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.RunningRDCLabelAction"/>
-      <action id="DebuggingRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.DebuggingRDCLabelAction"/>
-      <action id="ProfilingRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.ProfilingRDCLabelAction"/>
-      <action id="RDCBar" class="com.intellij.execution.segmentedRunDebugWidget.RDCBarAction"/>
+    <group id="SegmentedSearchEverywhereGroup">
+      <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
     </group>
 
-    <group id="RunDebugConfigActionBarGroup" popup="false">
-      <reference ref="RunConfiguration"/>
-      <group id="RunDebugConfigRunnerActions"/>
-      <reference ref="Stop"/>
+    <group id="StateWidgetPillActionGroup">
+      <action id="StateWidgetActiveProcessesPillAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetActiveProcessesPillAction"/>
+      <action id="StateWidgetPillBarAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetPillBarAction"/>
+    </group>
+
+    <group id="StateWidgetBarGroup" popup="false">
+      <action id="StateWidgetRunConfigurationsAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetRunConfigurationsAction"/>
+      <action id="StateWidgetRerunAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetRerunAction"/>
+      <group id="StateWidgetAdditionalActions"/>
+      <group id="StateWidgetProcessesActionGroup"/>
+      <action id="StateWidgetStop" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetStopAction" icon="AllIcons.Actions.Suspend"/>
+      <group id="StateWidgetMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetMoreActionGroup"/>
     </group>
 
     <group id="Bookmarks">
@@ -625,6 +634,11 @@
         <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
         <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
         <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
+      </group>
+      <group id="AddBom.Group">
+        <action id="AddBom" class="com.intellij.openapi.editor.actions.AddBomAction"/>
+        <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="RemoveBom"/>
+        <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RemoveBom"/>
       </group>
     </group>
 
@@ -745,6 +759,8 @@
       <action id="ScopeView.EditScopes"
               class="com.intellij.ide.scopeView.EditScopesAction"
               icon="AllIcons.Ide.LocalScope"/>
+      <action id="ProjectView.FileNesting"
+              class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
     </group>
 
     <group id="StructureViewPopupMenu">
@@ -991,6 +1007,31 @@
       <reference ref="RunToCursor"/>
       <separator/>
       <reference ref="EvaluateExpression" />
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar3">
+      <reference ref="Resume"/>
+      <reference ref="StepOver"/>
+      <reference ref="StepInto"/>
+      <reference ref="StepOut"/>
+      <separator/>
+      <reference ref="Rerun"/>
+      <reference ref="Stop"/>
+      <separator/>
+      <reference ref="ViewBreakpoints"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
+      <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.xdebugger.impl.ui.MorePopupGroup">
+        <reference ref="ForceStepOver"/>
+        <reference ref="ForceStepInto"/>
+        <reference ref="SmartStepInto"/>
+        <separator/>
+        <reference ref="RunToCursor"/>
+        <reference ref="ForceRunToCursor"/>
+        <separator/>
+        <reference ref="Pause"/>
+        <reference ref="ShowExecutionPoint"/>
+        <separator/>
+      </group>
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
@@ -1404,6 +1445,9 @@
     <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+    <action id="DumpFormattingModel" class="com.intellij.internal.DumpFormattingModelAction" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
     <group id="TodoMainGroup">
       <add-to-group group-id="Other.KeymapGroup"/>
       <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" icon="AllIcons.Actions.GroupBy"
@@ -1433,5 +1477,7 @@
     <action class="com.intellij.codeInspection.ui.actions.ActivateInspectionResultsToolWindowAction" id="ActivateInspectionResultsToolWindow">
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
+
+    <action class="com.intellij.internal.DumpRunDebugActionStateAction" internal="true" text="Dump State of Run/Debug Combobox"/>
   </actions>
 </idea-plugin>

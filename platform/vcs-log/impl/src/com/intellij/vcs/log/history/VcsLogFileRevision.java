@@ -114,7 +114,7 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
       else {
         String content = myRevision.getContent();
         if (content != null) {
-          myContent = content.getBytes(myPath.getCharset().name());
+          myContent = content.getBytes(myPath.getCharset());
         }
       }
     }

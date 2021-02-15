@@ -304,4 +304,8 @@ public abstract class InstructionVisitor {
     pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
+  
+  public DfaInstructionState[] visitArraySizeCheck(ArraySizeCheckInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    return nextInstruction(instruction, runner, memState);
+  }
 }

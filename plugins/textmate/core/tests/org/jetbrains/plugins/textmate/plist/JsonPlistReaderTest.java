@@ -19,7 +19,7 @@ public class JsonPlistReaderTest extends PlistReaderTestCase {
   @Test
   public void parseArray() throws Exception {
     Plist plist = read("{list:['alex','zolotov',42]}");
-    HashMap<String, PListValue> map = new HashMap<String, PListValue>() {{
+    HashMap<String, PListValue> map = new HashMap<>() {{
       put("list", array(string("alex"), string("zolotov"), integer(Long.valueOf(42))));
     }};
     assertEquals(Plist.fromMap(map), plist);

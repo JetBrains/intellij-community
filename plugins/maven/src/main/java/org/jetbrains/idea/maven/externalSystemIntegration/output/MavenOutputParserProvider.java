@@ -5,6 +5,7 @@ import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.*;
@@ -26,14 +27,12 @@ public class MavenOutputParserProvider implements ExternalSystemOutputParserProv
     throw new UnsupportedOperationException();
   }
 
-  public static MavenLogOutputParser createMavenOutputParser(@NotNull ExternalSystemTaskId taskId,
+  public static MavenLogOutputParser createMavenOutputParser(@NotNull Project project,
+                                                             @NotNull ExternalSystemTaskId taskId,
                                                              @NotNull Function<String, String> targetFileMapper) {
-    return new MavenLogOutputParser(taskId,
+    return new MavenLogOutputParser(project,
+                                    taskId,
                                     targetFileMapper,
-                                    Arrays.asList( new JavaBuildErrorNotification(),
-                                                   new KotlinBuildErrorNotification(),
-                                                   new WarningNotifier(),
-
-                                                   new MavenBadConfigEventParser()));
+                                    MavenLoggedEventParser.EP_NAME.getExtensionList());
   }
 }

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class WSLCommandLineOptions {
-
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
   private boolean mySudo = false;
@@ -73,8 +72,8 @@ public final class WSLCommandLineOptions {
   }
 
   /**
-   * Enables passing environment variables to WSL process using environmental variable interoperability between Win32/WSL.
-   * See https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/ for details.
+   * Enables passing environment variables to WSL process using environmental variable interoperability between Windows and WSL.
+   * See <a href="https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/">Share Environment</a>.
    * @param passEnvVarsUsingInterop true to pass environment variables using interoperability
    */
   public @NotNull WSLCommandLineOptions setPassEnvVarsUsingInterop(boolean passEnvVarsUsingInterop) {
@@ -86,6 +85,14 @@ public final class WSLCommandLineOptions {
     return myInitShellCommands;
   }
 
+  /**
+   * Adds an initialize command that is applied only when executing in shell ({@link #isExecuteCommandInShell()} is true).
+   * The initialize command is a linux command that runs before the main command.
+   * If the initialize command fails (exit code != 0), the main command won't run.
+   * For example, it can be used to setup environment before running the app.
+   * 
+   * @param initCommand a linux shell command (may contain shell builtin commands)
+   */
   public @NotNull WSLCommandLineOptions addInitCommand(@NotNull String initCommand) {
     myInitShellCommands.add(initCommand);
     return this;

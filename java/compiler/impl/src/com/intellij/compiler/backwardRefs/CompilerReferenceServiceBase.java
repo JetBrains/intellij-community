@@ -456,10 +456,11 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     return myProject;
   }
 
-  protected static void executeOnBuildThread(Runnable compilationFinished) {
+  protected static void executeOnBuildThread(@NotNull Runnable compilationFinished) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       compilationFinished.run();
-    } else {
+    }
+    else {
       BuildManager.getInstance().runCommand(compilationFinished);
     }
   }
@@ -473,7 +474,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  protected static class ScopeWithoutReferencesOnCompilation extends GlobalSearchScope {
+  protected static final class ScopeWithoutReferencesOnCompilation extends GlobalSearchScope {
     private final IntSet myReferentIds;
     private final ProjectFileIndex myIndex;
 
@@ -503,7 +504,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     return myCompilationCount.longValue();
   }
 
-  protected static class CompilerElementInfo {
+  protected static final class CompilerElementInfo {
     public final ElementPlace place;
     public final CompilerRef[] searchElements;
 
@@ -513,7 +514,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  protected static class HierarchySearchKey {
+  protected static final class HierarchySearchKey {
     private final CompilerHierarchySearchType mySearchType;
     private final FileType mySearchFileType;
 
@@ -560,11 +561,6 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     return myDirtyScopeHolder;
   }
 
-  @TestOnly
-  public Set<Module> getAllDirtyModulesForTest() {
-    return myDirtyScopeHolder.getAllDirtyModulesForTest();
-  }
-
   @Nullable
   public CompilerReferenceFindUsagesTestInfo getTestFindUsages(@NotNull PsiElement element) {
     if (!myReadDataLock.tryLock()) return null;
@@ -572,7 +568,8 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       IntSet referentFileIds = getReferentFileIds(element);
       DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
       return new CompilerReferenceFindUsagesTestInfo(referentFileIds, dirtyScopeInfo);
-    } finally {
+    }
+    finally {
       myReadDataLock.unlock();
     }
   }
@@ -584,7 +581,8 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, fileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
       final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
       return new CompilerReferenceHierarchyTestInfo(hierarchyInfo, dirtyScopeInfo);
-    } finally {
+    }
+    finally {
       myReadDataLock.unlock();
     }
   }
@@ -596,7 +594,8 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, fileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
       final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
       return new CompilerReferenceHierarchyTestInfo(hierarchyInfo, dirtyScopeInfo);
-    } finally {
+    }
+    finally {
       myReadDataLock.unlock();
     }
   }

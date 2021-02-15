@@ -368,7 +368,7 @@ public final class RecursionManager {
     // WEB-42912
     "com.intellij.lang.javascript.psi.resolve.JSEvaluatorComplexityTracker.doRunTask(",
     "com.intellij.lang.javascript.ecmascript6.types.JSTypeSignatureChooser.chooseOverload(",
-    "com.intellij.lang.javascript.psi.resolve.JSTypeEvaluator.getElementType(",
+    "com.intellij.lang.javascript.psi.resolve.JSEvaluationCache.getElementType(",
     "com.intellij.lang.ecmascript6.psi.impl.ES6ImportSpecifierImpl.multiResolve(",
     "com.intellij.lang.javascript.psi.types.JSTypeBaseImpl.substitute(",
 

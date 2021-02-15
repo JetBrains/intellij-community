@@ -9,6 +9,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -211,6 +212,19 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testFindFileSeparatorNormalization() {
+    tempDir.newFile("a/b/c/f");
+    VirtualFile file = myFS.refreshAndFindFileByPath(tempDir.getRoot() + "/a\\b//c\\f");
+    assertNotNull(file);
+    assertEquals("f", file.getName());
+    assertEquals("c", file.getParent().getName());
+    assertEquals("b", file.getParent().getParent().getName());
+    assertEquals("a", file.getParent().getParent().getParent().getName());
+    assertEquals(file, myFS.refreshAndFindFileByIoFile(new File(tempDir.getRoot(), "a\\b//c\\f")));
+    assertEquals(file, myFS.refreshAndFindFileByNioFile(tempDir.getRoot().toPath().resolve("a\\b//c\\f")));
+  }
+
+  @Test
   public void testCopyFile() throws IOException {
     runInEdtAndWait(() -> {
       File fromDir = tempDir.newDirectory("from");
@@ -292,7 +306,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       root2 = myFS.findFileByPath("//SOME-UNC-SERVER/SOME-UNC-SHARE");
       assertSame(String.valueOf(root), root, root2);
       assertEquals("\\\\some-unc-server\\some-unc-share", root.getPresentableName());
-      RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
+      RefreshQueue.getInstance().processSingleEvent(false, new VFileDeleteEvent(this, root, false));
     }
     else if (SystemInfo.isUnix) {
       VirtualFile root = myFS.findFileByPath("/");
@@ -361,7 +375,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       assertThat(uncRootFile.getChildren()).isEmpty();
     }
     finally {
-      RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, uncRootFile, false));
+      RefreshQueue.getInstance().processSingleEvent(false, new VFileDeleteEvent(this, uncRootFile, false));
       assertFalse("still valid: " + uncRootFile, uncRootFile.isValid());
     }
   }
@@ -673,7 +687,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
         createTestDir(sub, "sub_" + j);
       }
     }
-    Files.walkFileTree(top.toPath(), new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(top.toPath(), new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
         for (int k = 1; k <= 3; k++) {
@@ -898,5 +912,19 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
     assertEquals(file.toPath(), nioFile.toNioPath());
     assertEquals(file.toPath(), ioFile.toNioPath());
+  }
+
+  @Test
+  public void caseSensitivityNativeAPIMustWorkInSimpleCasesAndIsCachedInVirtualFileFlags() {
+    File file = tempDir.newFile("dir/0");
+    assertFalse(FileSystemUtil.isCaseToggleable(file.getName()));
+
+    VirtualDirectoryImpl dir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
+    assertEquals(CaseSensitivity.UNKNOWN, dir.getChildrenCaseSensitivity());
+
+    VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(dir, file.getName());
+    CaseSensitivity expected = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
+    assertEquals(expected, dir.getChildrenCaseSensitivity());
+    assertEquals(expected == CaseSensitivity.SENSITIVE, dir.isCaseSensitive());
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.ui.Gray;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -32,8 +33,6 @@ public interface FileStatus {
   @Deprecated Color COLOR_MODIFIED = new Color(0, 50, 160);
   /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_MISSING = Gray._97;
-  /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated Color COLOR_ADDED = new Color(10, 119, 0);
   /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
   /** @deprecated use {@link FileStatus#getColor} */
@@ -79,6 +78,7 @@ public interface FileStatus {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   String getText();
 
+  @Nullable
   Color getColor();
 
   @NotNull

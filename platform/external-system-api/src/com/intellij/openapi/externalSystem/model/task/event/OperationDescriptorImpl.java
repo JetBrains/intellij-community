@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,10 +25,10 @@ public class OperationDescriptorImpl implements OperationDescriptor {
   private static final long serialVersionUID = 1L;
 
   private final long myEventTime;
-  private final String myDisplayName;
-  @Nullable private String myHint;
+  private final @Nls String myDisplayName;
+  @Nullable private @Nls String myHint;
 
-  public OperationDescriptorImpl(String displayName, long eventTime) {
+  public OperationDescriptorImpl(@Nls String displayName, long eventTime) {
     myDisplayName = displayName;
     myEventTime = eventTime;
   }
@@ -39,7 +40,7 @@ public class OperationDescriptorImpl implements OperationDescriptor {
   }
 
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return myDisplayName;
   }
 
@@ -49,7 +50,7 @@ public class OperationDescriptorImpl implements OperationDescriptor {
     return myHint;
   }
 
-  public void setHint(@Nullable String hint) {
+  public void setHint(@Nullable @Nls String hint) {
     myHint = hint;
   }
 }

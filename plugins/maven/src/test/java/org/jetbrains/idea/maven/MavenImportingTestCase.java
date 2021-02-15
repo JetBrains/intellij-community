@@ -156,7 +156,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doAssertContentFolders(root, Arrays.asList(root.getExcludeFolders()), expectedExcudes);
   }
 
-  private void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
+  protected void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
     ContentEntry contentRoot = getContentRoot(moduleName);
     doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expected);
   }
@@ -250,7 +250,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void assertExportedDeps(String moduleName, String... expectedDeps) {
     final List<String> actual = new ArrayList<>();
 
-    getRootManager(moduleName).orderEntries().withoutSdk().withoutModuleSourceEntries().exportedOnly().process(new RootPolicy<Object>() {
+    getRootManager(moduleName).orderEntries().withoutSdk().withoutModuleSourceEntries().exportedOnly().process(new RootPolicy<>() {
       @Override
       public Object visitModuleOrderEntry(@NotNull ModuleOrderEntry e, Object value) {
         actual.add(e.getModuleName());

@@ -18,9 +18,12 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaTestFrameworkRunnableState;
+import com.intellij.execution.configurations.CompositeParameterTargetedValue;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +44,7 @@ import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.CommandLineArgs;
 
 import java.io.File;
@@ -126,7 +130,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   @Override
-  public SearchingForTestsTask createSearchingForTestsTask() {
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
     return new SearchingForTestsTask(myServerSocket, config, myTempFile) {
       @Override
       protected void onFound() {
@@ -169,7 +173,8 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
   @Override
   protected void passTempFile(ParametersList parametersList, String tempFilePath) {
-    parametersList.add("-temp", tempFilePath);
+    parametersList.add(new CompositeParameterTargetedValue("-temp"));
+    parametersList.add(new CompositeParameterTargetedValue().addPathPart(tempFilePath));
   }
 
   @Override

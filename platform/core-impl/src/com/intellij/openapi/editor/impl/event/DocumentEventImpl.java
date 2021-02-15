@@ -30,15 +30,6 @@ public class DocumentEventImpl extends DocumentEvent {
                            @NotNull CharSequence oldString,
                            @NotNull CharSequence newString,
                            long oldTimeStamp,
-                           boolean wholeTextReplaced) {
-    this(document, offset, oldString, newString, oldTimeStamp, wholeTextReplaced, offset, oldString.length(), offset);
-  }
-
-  public DocumentEventImpl(@NotNull Document document,
-                           int offset,
-                           @NotNull CharSequence oldString,
-                           @NotNull CharSequence newString,
-                           long oldTimeStamp,
                            boolean wholeTextReplaced,
                            int initialStartOffset,
                            int initialOldLength,

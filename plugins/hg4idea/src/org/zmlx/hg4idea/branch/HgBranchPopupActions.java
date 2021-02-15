@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -22,7 +21,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,6 +57,7 @@ import java.util.List;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.BRANCH_CREATION_ERROR;
 import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
 import static org.zmlx.hg4idea.util.HgUtil.getSortedNamesWithoutHashes;
 
@@ -144,7 +147,7 @@ public class HgBranchPopupActions {
           repository.update();
           if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
             new HgCommandResultNotifier(myProject)
-              .notifyError("hg.branch.creation.error",
+              .notifyError(BRANCH_CREATION_ERROR,
                            result,
                            HgBundle.message("hg4idea.branch.creation.error"),
                            HgBundle.message("hg4idea.branch.creation.error.msg", name));
@@ -152,7 +155,7 @@ public class HgBranchPopupActions {
         }
         catch (HgCommandException exception) {
           HgErrorUtil.handleException(myProject,
-                                      "hg.branch.creation.error",
+                                      BRANCH_CREATION_ERROR,
                                       HgBundle.message("hg4idea.branch.cannot.create"),
                                       exception);
         }
@@ -176,10 +179,9 @@ public class HgBranchPopupActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       final Project project = myPreselectedRepo.getProject();
       StoreUtil.saveDocumentsAndProjectSettings(project);
-      ChangeListManager.getInstance(project)
-        .invokeAfterUpdate(() -> commitAndCloseBranch(project), InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle
-                             .message("waiting.changelists.update.for.show.commit.dialog.message"),
-                                                               ModalityState.current());
+      ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
+        true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"),
+        () -> commitAndCloseBranch(project));
     }
 
     private void commitAndCloseBranch(@NotNull final Project project) {

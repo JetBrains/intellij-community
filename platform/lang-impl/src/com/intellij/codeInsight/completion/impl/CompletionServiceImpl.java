@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,11 +17,9 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
 
 /**
  * @author peter
@@ -35,7 +32,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   public CompletionServiceImpl() {
     super();
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
@@ -213,7 +210,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
                                                      @NotNull Weigher weigher,
                                                      @NotNull CompletionLocation location) {
     CompletionSorterImpl processedSorter = super.processStatsWeigher(sorter, weigher, location);
-    return processedSorter.withClassifier(new ClassifierFactory<LookupElement>("stats") {
+    return processedSorter.withClassifier(new ClassifierFactory<>("stats") {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
         return new StatisticsWeigher.LookupStatisticsWeigher(location, next);

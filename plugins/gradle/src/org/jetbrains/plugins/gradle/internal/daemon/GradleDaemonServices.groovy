@@ -11,6 +11,7 @@ import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.TObjectHashingStrategy
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import it.unimi.dsi.fastutil.Hash
 import org.gradle.internal.classpath.ClassPath
 import org.gradle.tooling.internal.consumer.ConnectorServices
 import org.gradle.tooling.internal.consumer.connection.ConsumerConnection
@@ -22,9 +23,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 
 import java.lang.reflect.Method
 
-/**
- * @author Vladislav.Soroka
- */
 @ApiStatus.Internal
 @CompileStatic
 class GradleDaemonServices {
@@ -60,15 +58,16 @@ class GradleDaemonServices {
 
   private static Object runAction(Object daemonClientFactory, ConsumerConnection connection, Class actionClass, Object arg) {
     def daemonClientClassLoader = UrlClassLoader.build()
-      .urls(
-        new File(PathManager.getJarPathForClass(actionClass)).toURI().toURL(),
+      .files(List.of(
+        PathManager.getJarForClass(actionClass),
 
         // jars required for i18n utils
-        new File(PathManager.getJarPathForClass(DynamicBundle)).toURI().toURL(),
-        new File(PathManager.getJarPathForClass(AbstractBundle)).toURI().toURL(),
-        new File(PathManager.getJarPathForClass(TObjectHashingStrategy)).toURI().toURL(),
-        new File(PathManager.getJarPathForClass(Function)).toURI().toURL()
-      )
+        PathManager.getJarForClass(DynamicBundle),
+        PathManager.getJarForClass(AbstractBundle),
+        PathManager.getJarForClass(TObjectHashingStrategy),
+        PathManager.getJarForClass(Hash),
+        PathManager.getJarForClass(Function)
+      ))
       .parent(daemonClientFactory.class.classLoader)
       .allowLock(false)
       .get()

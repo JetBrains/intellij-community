@@ -23,10 +23,7 @@ import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.ActiveRunnable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -94,7 +91,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private final RunnerLayout myLayoutSettings;
 
   private final @NotNull ActionManager myActionManager;
-  private final String mySessionName;
+  private final @NlsSafe String mySessionName;
   private final String myRunnerId;
   private NonOpaquePanel myComponent;
 
@@ -846,7 +843,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       content.putUserData(RunnerLayout.DEFAULT_INDEX, null);
     }
 
-    TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
+    TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText(ExecutionBundle.message("runner.context.tab"));
 
     Wrapper leftWrapper = new Wrapper();
     Wrapper middleWrapper = new Wrapper();
@@ -987,6 +984,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private void setActions(Wrapper placeHolder, String place, DefaultActionGroup group) {
     String adjustedPlace = place == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : place;
     ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, group, true);
+    tb.setTargetComponent(myComponent);
     tb.getComponent().setBorder(null);
 
     placeHolder.setContent(tb.getComponent());
@@ -997,7 +995,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       Wrapper eachPlaceholder = entry.getValue();
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.RUNNER_LAYOUT_BUTTON_TOOLBAR, myViewActions, true);
       tb.setSecondaryActionsIcon(AllIcons.Debugger.RestoreLayout);
-      tb.setSecondaryActionsTooltip("Layout Settings");
+      tb.setSecondaryActionsTooltip(ExecutionBundle.message("runner.content.tooltip.layout.settings"));
       tb.setTargetComponent(myComponent);
       tb.getComponent().setBorder(null);
       tb.setReservePlaceAutoPopupIcon(false);

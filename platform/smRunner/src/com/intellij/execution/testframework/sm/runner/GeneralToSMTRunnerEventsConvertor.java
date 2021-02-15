@@ -58,7 +58,10 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onSuiteTreeEnded(String suiteName) {
-    myBuildTreeRunnables.add(() -> mySuitesStack.popSuite(suiteName));
+    myBuildTreeRunnables.add(() -> {
+      mySuitesStack.popSuite(suiteName);
+      myEventPublisher.onSuiteTreeEnded(myTestsRootProxy, suiteName);
+    });
     super.onSuiteTreeEnded(suiteName);
   }
 

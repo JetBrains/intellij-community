@@ -166,8 +166,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
                                     final PrefixMatcher matcher,
                                     final @Nullable CompletionResultSet resultSet,
                                     final Consumer<? super LookupElement> _consumer) {
-    final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
+    final Consumer<LookupElement> consumer = new Consumer<>() {
       final Set<LookupElement> added = new HashSet<>();
+
       @Override
       public void consume(LookupElement element) {
         if (added.add(element)) {

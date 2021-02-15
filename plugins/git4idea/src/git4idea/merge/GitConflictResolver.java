@@ -4,6 +4,8 @@ package git4idea.merge;
 import static com.intellij.openapi.util.NlsContexts.NotificationContent;
 import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+import static git4idea.GitNotificationIdsHolder.CANNOT_RESOLVE_CONFLICT;
+import static git4idea.GitNotificationIdsHolder.CONFLICT_RESOLVING_ERROR;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -12,6 +14,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -25,6 +29,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitDisposable;
 import git4idea.GitUtil;
@@ -171,10 +176,20 @@ public class GitConflictResolver {
 
   /**
    * Invoke the merge dialog, but execute nothing after merge is completed.
-   * @return true if all changes were merged, false if unresolved merges remain.
    */
-  public final boolean mergeNoProceed() {
-    return merge(true);
+  @RequiresBackgroundThread
+  public final void mergeNoProceed() {
+    merge(true);
+  }
+
+  @RequiresEdt
+  public final void mergeNoProceedInBackground() {
+    new Task.Backgroundable(myProject, GitBundle.message("apply.changes.resolving.conflicts.progress.title")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        mergeNoProceed();
+      }
+    }.queue();
   }
 
   /**
@@ -197,7 +212,7 @@ public class GitConflictResolver {
 
   protected void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null,
-                                                                                "git.cannot.resolve.conflict");
+                                                                                CANNOT_RESOLVE_CONFLICT);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
       notification.expire();
       BackgroundTaskUtil.executeOnPooledThread(GitDisposable.getInstance(myProject), () -> mergeNoProceed());
@@ -250,7 +265,7 @@ public class GitConflictResolver {
       myParams.myErrorNotificationAdditionalDescription
     );
     VcsNotifier.getInstance(myProject).notifyError(
-      "git.conflict.resolving.error",myParams.myErrorNotificationTitle,
+      CONFLICT_RESOLVING_ERROR, myParams.myErrorNotificationTitle,
       new HtmlBuilder().appendRaw(description).br().appendRaw(e.getLocalizedMessage()).toString()
     );
   }

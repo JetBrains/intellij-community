@@ -352,7 +352,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   private List<VirtualFile> getChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     CompletableFuture<List<VirtualFile>> future = new CompletableFuture<>();
-    changeListManager.invokeAfterUpdate(() -> {
+    changeListManager.invokeAfterUpdateWithModal(false, null, () -> {
       try {
         List<VirtualFile> files = changeListManager.getAffectedFiles();
         for (VirtualFile file : files) {
@@ -363,7 +363,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       catch (Throwable e) {
         future.completeExceptionally(e);
       }
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, null, null);
+    });
 
     return future.get();
   }
@@ -849,7 +849,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       @Override
       public void successfullyConverted(@NotNull Path backupDir) {
         reportMessage(1, InspectionsBundle.message(
-          "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
+          "inspection.application.project.was.successfully.converted.old.project.files.were.saved.to.0",
           backupDir.toString()));
       }
 

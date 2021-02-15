@@ -351,7 +351,10 @@ class ApplyPatchChange {
 
     @Override
     public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
-      if (getResultRange() != null) myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
+      if (getResultRange() != null) {
+        e.consume();
+        myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
+      }
     }
 
     @NotNull

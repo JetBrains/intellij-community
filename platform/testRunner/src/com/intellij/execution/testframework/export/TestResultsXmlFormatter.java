@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleBuffer;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -119,6 +120,7 @@ public final class TestResultsXmlFormatter {
       if (!DefaultExecutionTarget.INSTANCE.equals(myExecutionTarget)) {
         config.setAttribute("target", myExecutionTarget.getId());
       }
+      config.addContent(RunManagerImpl.getInstanceImpl(myRuntimeConfiguration.getProject()).writeBeforeRunTasks(myRuntimeConfiguration));
     }
     catch (WriteExternalException ignore) {}
     processJDomElement(config);
@@ -271,7 +273,21 @@ public final class TestResultsXmlFormatter {
       public void mark() {
       }
     };
-    node.printOwnPrintablesOn(printer);
+    node.printOwnPrintablesOn(printer, false);
+
+    for (DiffHyperlink hyperlink : node.getDiffViewerProviders()) {
+      printer.printHyperlink(hyperlink.getDiffTitle(), hyperlink.getInfo());
+    }
+
+    String errorMessage = node.getErrorMessage();
+    if (errorMessage != null) {
+      printer.print(errorMessage, ConsoleViewContentType.ERROR_OUTPUT);
+    }
+    String stacktrace = node.getStacktrace();
+    if (stacktrace != null) {
+      printer.print(stacktrace, ConsoleViewContentType.ERROR_OUTPUT);
+    }
+
     if (!error.isNull()) {
       throw error.get();
     }

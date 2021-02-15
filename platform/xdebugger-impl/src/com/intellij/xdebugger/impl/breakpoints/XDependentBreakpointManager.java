@@ -22,7 +22,7 @@ public final class XDependentBreakpointManager {
   public XDependentBreakpointManager(@NotNull XBreakpointManagerImpl breakpointManager, @NotNull MessageBusConnection messageBusConnection) {
     myBreakpointManager = breakpointManager;
     myEventPublisher = breakpointManager.getProject().getMessageBus().syncPublisher(XDependentBreakpointListener.TOPIC);
-    messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
+    messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
         XDependentBreakpointInfo info = mySlave2Info.remove(breakpoint);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ui.scale.JBUIScale;
@@ -19,7 +19,7 @@ public class JBDimension extends Dimension {
   Size2D size2D;
   private final MyScaler scaler = new MyScaler();
 
-  private static class Size2D {
+  private static final class Size2D {
     double width;
     double height;
 
@@ -60,29 +60,26 @@ public class JBDimension extends Dimension {
     set(size2D);
   }
 
-  private double scale(double size) {
+  private static double scale(double size) {
     return Math.max(-1, JBUIScale.scale((float)size));
   }
 
-  @NotNull
-  public static JBDimension create(Dimension from, boolean preScaled) {
+  public static @NotNull JBDimension create(Dimension from, boolean preScaled) {
     if (from instanceof JBDimension) {
       return ((JBDimension)from);
     }
     return new JBDimension(from.width, from.height, preScaled);
   }
 
-  @NotNull
-  public static JBDimension create(Dimension from) {
+  public static @NotNull JBDimension create(Dimension from) {
     return create(from, false);
   }
 
-  @NotNull
-  public JBDimensionUIResource asUIResource() {
+  public @NotNull JBDimensionUIResource asUIResource() {
     return new JBDimensionUIResource(this);
   }
 
-  public static class JBDimensionUIResource extends JBDimension implements UIResource {
+  public static final class JBDimensionUIResource extends JBDimension implements UIResource {
     public JBDimensionUIResource(JBDimension size) {
       super(0, 0);
       set(size.width, size.height);
@@ -91,8 +88,7 @@ public class JBDimension extends Dimension {
     }
   }
 
-  @NotNull
-  public JBDimension withWidth(int width) {
+  public @NotNull JBDimension withWidth(int width) {
     JBDimension size = new JBDimension(0, 0);
     size.size2D.set(scale(width), size2D.height);
 
@@ -100,8 +96,7 @@ public class JBDimension extends Dimension {
     return size;
   }
 
-  @NotNull
-  public JBDimension withHeight(int height) {
+  public @NotNull JBDimension withHeight(int height) {
     JBDimension size = new JBDimension(0, 0);
     size.size2D.set(size2D.width, scale(height));
 
@@ -136,8 +131,7 @@ public class JBDimension extends Dimension {
   /**
    * @return this JBDimension with updated size
    */
-  @NotNull
-  public JBDimension size() {
+  public @NotNull JBDimension size() {
     update();
     return this;
   }
@@ -145,8 +139,7 @@ public class JBDimension extends Dimension {
   /**
    * @return new JBDimension with updated size
    */
-  @NotNull
-  public JBDimension newSize() {
+  public @NotNull JBDimension newSize() {
     update();
     return new JBDimension(size2D.width, size2D.height, true);
   }
@@ -193,7 +186,7 @@ public class JBDimension extends Dimension {
   }
 }
 
-class MyScaler extends Scaler {
+final class MyScaler extends Scaler {
   @Override
   protected double currentScale() {
     return JBUIScale.scale(1f);

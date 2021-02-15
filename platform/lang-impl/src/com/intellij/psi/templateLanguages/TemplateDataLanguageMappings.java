@@ -74,11 +74,13 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
   }
 
   public static @NotNull List<Language> getTemplateableLanguages() {
-    return ContainerUtil.findAll(Language.getRegisteredLanguages(), new Condition<Language>() {
+    return ContainerUtil.findAll(Language.getRegisteredLanguages(), new Condition<>() {
       @Override
       public boolean value(final Language language) {
         if (language == Language.ANY) return false;
-        if (language instanceof TemplateLanguage || language instanceof DependentLanguage || language instanceof InjectableLanguage) return false;
+        if (language instanceof TemplateLanguage || language instanceof DependentLanguage || language instanceof InjectableLanguage) {
+          return false;
+        }
         if (language.getBaseLanguage() != null) return value(language.getBaseLanguage());
         return true;
       }

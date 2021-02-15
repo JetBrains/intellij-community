@@ -15,7 +15,6 @@ import com.jetbrains.python.buildout.config.lexer.BuildoutCfgFlexLexer;
 import com.jetbrains.python.buildout.config.psi.BuildoutCfgASTFactory;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class BuildoutCfgParserDefinition implements ParserDefinition, BuildoutCfgElementTypes, BuildoutCfgTokenTypes {
   private final BuildoutCfgASTFactory astFactory = new BuildoutCfgASTFactory();
@@ -27,13 +26,12 @@ public class BuildoutCfgParserDefinition implements ParserDefinition, BuildoutCf
   }
 
   @Override
-  @Nullable
-  public PsiParser createParser(final Project project) {
+  public @NotNull PsiParser createParser(final Project project) {
     return new BuildoutCfgParser();
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return FILE;
   }
 
@@ -62,12 +60,12 @@ public class BuildoutCfgParserDefinition implements ParserDefinition, BuildoutCf
   }
 
   @Override
-  public PsiFile createFile(final FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(final @NotNull FileViewProvider viewProvider) {
     return new BuildoutCfgFile(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

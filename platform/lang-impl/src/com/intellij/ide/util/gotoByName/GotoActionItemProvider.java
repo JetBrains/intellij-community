@@ -23,6 +23,8 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -37,7 +39,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.Matcher;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,15 +95,6 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   }
 
   @Override
-  public boolean filterElementsWithWeights(@NotNull ChooseByNameBase base,
-                                           @NotNull String pattern,
-                                           boolean everywhere,
-                                           @NotNull ProgressIndicator indicator,
-                                           @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
-    return filterElementsWithWeights((ChooseByNameViewModel)base, pattern, everywhere, indicator, consumer);
-  }
-
-  @Override
   public boolean filterElementsWithWeights(@NotNull ChooseByNameViewModel base,
                                            @NotNull String pattern,
                                            boolean everywhere,
@@ -117,24 +109,22 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   }
 
   public boolean filterElements(@NotNull String pattern, @NotNull Processor<? super MatchedValue> consumer) {
-    DataContext dataContext = DataManager.getInstance().getDataContext(myModel.getContextComponent());
-
-    if (!processAbbreviations(pattern, consumer, dataContext)) return false;
-    if (!processActions(pattern, consumer, dataContext)) return false;
-    if (!processTopHits(pattern, consumer, dataContext)) return false;
-    if (!processIntentions(pattern, consumer, dataContext)) return false;
-    if (!processOptions(pattern, consumer, dataContext)) return false;
+    if (!processAbbreviations(pattern, consumer)) return false;
+    if (!processActions(pattern, consumer)) return false;
+    if (!processTopHits(pattern, consumer)) return false;
+    if (!processIntentions(pattern, consumer)) return false;
+    if (!processOptions(pattern, consumer)) return false;
 
     return true;
   }
 
-  private boolean processAbbreviations(@NotNull String pattern, Processor<? super MatchedValue> consumer, DataContext context) {
+  private boolean processAbbreviations(@NotNull String pattern, Processor<? super MatchedValue> consumer) {
     MinusculeMatcher matcher = buildWeightMatcher(pattern);
     List<String> actionIds = AbbreviationManager.getInstance().findActions(pattern);
     JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
       .filterMap(myActionManager::getAction)
       .transform(action -> {
-        ActionWrapper wrapper = wrapAnAction(action, context);
+        ActionWrapper wrapper = wrapAnAction(action);
         int degree = matcher.matchingDegree(pattern);
         return new MatchedValue(wrapper, pattern, degree) {
           @NotNull
@@ -147,8 +137,8 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     return processItems(pattern, wrappers, consumer);
   }
 
-  private boolean processTopHits(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+  private boolean processTopHits(String pattern, Processor<? super MatchedValue> consumer) {
+    Project project = myModel.getProject();
     final CollectConsumer<Object> collector = new CollectConsumer<>();
     String commandAccelerator = SearchTopHitProvider.getTopHitAccelerator();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
@@ -168,24 +158,25 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     }
     Collection<Object> result = collector.getResult();
     JBIterable<?> wrappers = JBIterable.from(result)
-      .transform(object -> object instanceof AnAction ? wrapAnAction((AnAction)object, dataContext) : object);
+      .transform(object -> object instanceof AnAction ? wrapAnAction((AnAction)object) : object);
     return processItems(pattern, wrappers, consumer);
   }
 
-  private boolean processOptions(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
+  private boolean processOptions(String pattern, Processor<? super MatchedValue> consumer) {
     Map<@NonNls String, @NlsContexts.ConfigurableName String> map = myModel.getConfigurablesNames();
     SearchableOptionsRegistrarImpl registrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
 
     List<Object> options = new ArrayList<>();
     final Set<String> words = registrar.getProcessedWords(pattern);
     Set<OptionDescription> optionDescriptions = null;
-    String actionManagerName = myActionManager.getComponentName();
     boolean filterOutInspections = Registry.is("go.to.action.filter.out.inspections", true);
     for (String word : words) {
       final Set<OptionDescription> descriptions = registrar.getAcceptableDescriptions(word);
       if (descriptions != null) {
-        descriptions.removeIf(description -> actionManagerName.equals(description.getPath()) ||
-                                             filterOutInspections && "Inspections".equals(description.getGroupName()));
+        descriptions.removeIf(description -> {
+          return "ActionManager".equals(description.getPath()) ||
+                 filterOutInspections && "Inspections".equals(description.getGroupName());
+        });
         if (!descriptions.isEmpty()) {
           if (optionDescriptions == null) {
             optionDescriptions = descriptions;
@@ -200,9 +191,11 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         break;
       }
     }
-    if (!StringUtil.isEmptyOrSpaces(pattern)) {
+    if (!Strings.isEmptyOrSpaces(pattern)) {
       Matcher matcher = buildMatcher(pattern);
-      if (optionDescriptions == null) optionDescriptions = new THashSet<>();
+      if (optionDescriptions == null) {
+        optionDescriptions = new HashSet<>();
+      }
       for (Map.Entry<@NonNls String, @NlsContexts.ConfigurableName String> entry : map.entrySet()) {
         if (matcher.matches(entry.getValue())) {
           optionDescriptions.add(new OptionDescription(null, entry.getKey(), entry.getValue(), null, entry.getValue()));
@@ -221,7 +214,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       for (OptionDescription description : optionDescriptions) {
         for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
           AnAction action = converter.provide(description);
-          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext, myModel));
+          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, myModel));
         }
         options.add(description);
       }
@@ -229,12 +222,12 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     return processItems(pattern, JBIterable.from(options), consumer);
   }
 
-  private boolean processActions(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
+  private boolean processActions(String pattern, Processor<? super MatchedValue> consumer) {
     Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
     JBIterable<AnAction> actions = JBIterable.from(ids).filterMap(myActionManager::getAction);
     Matcher matcher = buildMatcher(pattern);
 
-    QuickActionProvider provider = dataContext.getData(QuickActionProvider.KEY);
+    QuickActionProvider provider = myModel.getDataContext().getData(QuickActionProvider.KEY);
     if (provider != null) {
       actions = actions.append(provider.getActions(true));
     }
@@ -245,7 +238,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       if (action instanceof ActionGroup && !((ActionGroup)action).isSearchable()) return null;
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
-      return new ActionWrapper(action, myModel.getGroupMapping(action), mode, dataContext, myModel);
+      return new ActionWrapper(action, myModel.getGroupMapping(action), mode, myModel);
     });
     if (Registry.is("actionSystem.gotoAction.all.toolwindows")) {
       List<ActionWrapper> toolWindowActions = collectToolWindowQuickActionProviders(pattern, matcher, seenActions);
@@ -302,7 +295,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       else {
         MatchMode mode = myModel.actionMatches(pattern, matcher, action);
         if (mode != MatchMode.NONE) {
-          result.add(new ActionWrapper(action, GroupMapping.createFromText(title, true), mode, dataContext, myModel));
+          result.add(new ActionWrapper(action, GroupMapping.createFromText(title, true), mode, myModel));
         }
       }
     }
@@ -317,7 +310,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     return pattern.contains(" ") ? new WordPrefixMatcher(pattern) : NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  private boolean processIntentions(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
+  private boolean processIntentions(String pattern, Processor<? super MatchedValue> consumer) {
     Matcher matcher = buildMatcher(pattern);
     Map<@ActionText String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
     JBIterable<ActionWrapper> intentions = JBIterable.from(intentionMap.keySet())
@@ -325,14 +318,14 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         ApplyIntentionAction intentionAction = intentionMap.get(intentionText);
         if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
         GroupMapping groupMapping = GroupMapping.createFromText(intentionText, false);
-        return new ActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, dataContext, myModel);
+        return new ActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, myModel);
       });
     return processItems(pattern, intentions, consumer);
   }
 
   @NotNull
-  private ActionWrapper wrapAnAction(@NotNull AnAction action, DataContext dataContext) {
-    return new ActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, dataContext, myModel);
+  private ActionWrapper wrapAnAction(@NotNull AnAction action) {
+    return new ActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, myModel);
   }
 
   private static final Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
@@ -417,6 +410,9 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     if (value == null) return null;
     Presentation presentation = value.getTemplatePresentation().clone();
     value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
-    return presentation.getTextWithPossibleMnemonic().get().getText();
+    TextWithMnemonic mnemonic = presentation.getTextWithPossibleMnemonic().get();
+    if (mnemonic == null) return null;
+
+    return mnemonic.getText();
   }
 }

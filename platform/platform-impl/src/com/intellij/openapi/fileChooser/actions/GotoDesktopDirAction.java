@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class GotoDesktopDirAction extends FileChooserAction implements LightEditCompatible {
-  private final NullableLazyValue<VirtualFile> myDesktopDirectory = new NullableLazyValue<VirtualFile>() {
+  private final NullableLazyValue<VirtualFile> myDesktopDirectory = new NullableLazyValue<>() {
     @Nullable
     @Override
     protected VirtualFile compute() {

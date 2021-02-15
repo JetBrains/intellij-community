@@ -206,7 +206,7 @@ public class EmptyClassInspection extends BaseInspection {
       if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations, 0)) {
         return;
       }
-      if (ignoreThrowables && InheritanceUtil.isInheritor(aClass, "java.lang.Throwable")) {
+      if (ignoreThrowables && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
         return;
       }
       registerClassError(aClass, aClass);

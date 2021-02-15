@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -22,7 +23,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.openapi.ListSelection;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +85,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     ChangeNodeDecorator decorator =
       ChangesBrowser.MyUseCase.LOCAL_CHANGES.equals(useCase) ? RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator() : null;
 
-    myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, decorator) {
+    myViewer = new ChangesTreeList<>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, decorator) {
       @Override
       protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
         return OldChangesBrowserBase.this.buildTreeModel(changes, changeNodeDecorator, isShowFlatten());
@@ -370,7 +371,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   private Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
       getAfterRevisionsFiles(getSelectedChanges().stream()),
-      getVirtualFiles(myViewer.getSelectionPaths(), null)
+      StreamEx.of(getVirtualFiles(myViewer.getSelectionPaths(), null).iterator())
     ).distinct();
   }
 
@@ -378,7 +379,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   private Stream<VirtualFile> getNavigatableFiles() {
     return Stream.concat(
       getFiles(getSelectedChanges().stream()),
-      getVirtualFiles(myViewer.getSelectionPaths(), null)
+      StreamEx.of(getVirtualFiles(myViewer.getSelectionPaths(), null).iterator())
     ).distinct();
   }
 

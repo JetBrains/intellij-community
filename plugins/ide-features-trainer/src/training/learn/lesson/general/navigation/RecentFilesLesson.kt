@@ -61,7 +61,7 @@ abstract class RecentFilesLesson(module: Module, lang: String)
           LessonsBundle.message("recent.files.dialog.message"),
           LessonsBundle.message("recent.files.dialog.title"),
           CommonBundle.message("button.ok"),
-          LearnBundle.message("learn.ui.button.stop.lesson"),
+          LearnBundle.message("learn.stop.lesson"),
           null
         )
         if(userDecision != Messages.OK) {

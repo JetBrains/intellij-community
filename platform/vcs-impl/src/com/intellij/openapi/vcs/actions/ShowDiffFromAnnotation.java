@@ -143,7 +143,7 @@ final class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLi
     if (contentsLines.length <= actualLine) return null;
 
     final int correctedLine = correctActualLineIfTextEmpty(fileAnnotation, contentsLines, actualLine);
-    return new DiffNavigationContext(new Iterable<String>() {
+    return new DiffNavigationContext(new Iterable<>() {
       @Override
       public Iterator<String> iterator() {
         return new CacheOneStepIterator<>(new ContextLineIterator(contentsLines, fileAnnotation, correctedLine));

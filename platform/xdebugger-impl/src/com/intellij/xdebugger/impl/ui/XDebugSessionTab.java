@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.execution.Executor;
 import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -69,9 +68,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         }
       }
     }
-    XDebugSessionTab tab = Registry.is("debugger.new.debug.tool.window.view") ?
-                           new XDebugSessionTab2(session, icon, environment) :
-                           new XDebugSessionTab(session, icon, environment, true);
+    XDebugSessionTab tab;
+    if (Registry.is("debugger.new.debug.tool.window.view")) {
+      tab = new XDebugSessionTab2(session, icon, environment);
+    }
+    else if (Registry.is("debugger.new.tool.window.layout")) {
+      tab = new XDebugSessionTab3(session, icon, environment);
+    }
+    else {
+      tab = new XDebugSessionTab(session, icon, environment, true);
+    }
 
     tab.init(session);
     tab.myRunContentDescriptor.setActivateToolWindowWhenAdded(contentToReuse == null || contentToReuse.isActivateToolWindowWhenAdded());
@@ -258,15 +264,19 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       return;
     }
 
+    consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
+    initToolbars(session);
+
+    if (myEnvironment != null) {
+      initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
+    }
+  }
+
+  protected void initToolbars(@NotNull XDebugSessionImpl session) {
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
-    final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
-    consoleContent.setHelpId(debugExecutor.getHelpId());
     if (myEnvironment != null) {
       leftToolbar.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
-      List<AnAction> additionalRestartActions = session.getRestartActions();
-      if (!additionalRestartActions.isEmpty()) {
-        leftToolbar.addAll(additionalRestartActions);
-      }
+      leftToolbar.addAll(session.getRestartActions());
       leftToolbar.add(new CreateAction());
       leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
@@ -298,10 +308,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
     myUi.getOptions().setTopLeftToolbar(topLeftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
-
-    if (myEnvironment != null) {
-      initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
-    }
   }
 
   protected void registerAdditionalActions(DefaultActionGroup leftToolbar, DefaultActionGroup topLeftToolbar, DefaultActionGroup settings) {

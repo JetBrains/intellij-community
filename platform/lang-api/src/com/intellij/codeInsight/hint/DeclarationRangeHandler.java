@@ -1,11 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.MixinEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +14,10 @@ import org.jetbrains.annotations.Nullable;
  * Used by "Context info" action.
  */
 public interface DeclarationRangeHandler<T extends PsiElement> {
-  ExtensionPointName<MixinEP<DeclarationRangeHandler>> EP_NAME = ExtensionPointName.create("com.intellij.declarationRangeHandler");
-
   /**
    * Returns the declaration range for the specified container or null if it doesn't contain one
    * @param container the container
    * @return the declaration range for it.
    */
-  @Nullable
-  TextRange getDeclarationRange(@NotNull T container);
+  @Nullable TextRange getDeclarationRange(@NotNull T container);
 }

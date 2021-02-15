@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -332,10 +333,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     final PsiClass[] declaredDefs = super.getClasses();
     if (!isScript()) return declaredDefs;
     final PsiClass scriptClass = getScriptClass();
-    PsiClass[] result = new PsiClass[declaredDefs.length + 1];
-    result[result.length - 1] = scriptClass;
-    System.arraycopy(declaredDefs, 0, result, 0, declaredDefs.length);
-    return result;
+    return ArrayUtil.append(declaredDefs, scriptClass);
   }
 
   @Override

@@ -53,7 +53,7 @@ public final class MicrodataUtil {
 
   private static Map<String, XmlTag> findScopesWithItemRef(@Nullable final PsiFile file) {
     if (!(file instanceof XmlFile)) return Collections.emptyMap();
-    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<Map<String, XmlTag>>() {
+    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<>() {
       @Override
       public @NotNull Result<Map<String, XmlTag>> compute() {
         final Map<String, XmlTag> result = new HashMap<>();

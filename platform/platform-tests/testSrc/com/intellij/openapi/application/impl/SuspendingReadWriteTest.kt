@@ -23,7 +23,7 @@ import kotlin.coroutines.Continuation
 class SuspendingReadWriteTest : LightPlatformTestCase() {
 
   private inline fun <reified T : Throwable> assertThrows(noinline action: () -> Unit) {
-    assertThrows<T>(T::class.java, action)
+    assertThrows(T::class.java, action)
   }
 
   private suspend fun Job.join(timeoutMs: Long) {

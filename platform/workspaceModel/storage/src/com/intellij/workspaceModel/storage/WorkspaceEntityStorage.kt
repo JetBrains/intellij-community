@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import kotlin.reflect.KClass
@@ -34,6 +35,8 @@ interface WorkspaceEntity {
    * internal IDs of the corresponding entities.
    */
   fun hasEqualProperties(e: WorkspaceEntity): Boolean
+
+  fun <E : WorkspaceEntity> createReference(): EntityReference<E>
 }
 
 /**
@@ -91,14 +94,16 @@ inline fun <E : ReferableWorkspaceEntity, reified R : WorkspaceEntity> E.referre
 }
 
 /**
- * Represents a reference to a entity inside a data class stored in [WorkspaceEntity]'s implementation. Such references are always valid (use [PersistentEntityId] for references which
- * may not be resolved), they are used to allow updating a entity without replacing all entities it refers to and also to get all referrers
- * via [WorkspaceEntityStorage.referrers].
+ * Represents a reference to an entity inside of [WorkspaceEntity].
  *
- * todo Do we really need this? May be it's enough to support references to other entities only as direct properties of [WorkspaceEntity]?
+ * The reference can be obtained via [WorkspaceEntityStorage.createReference].
+ *
+ * The reference will return the same entity for the same storage, but the changes in storages should be tracked if the client want to
+ *   use this reference between different storages. For example, if the referred entity was removed from the storage, this reference may
+ *   return null, but it can also return a different (newly added) entity.
  */
 abstract class EntityReference<out E : WorkspaceEntity> {
-  abstract fun resolve(storage: WorkspaceEntityStorage): E
+  abstract fun resolve(storage: WorkspaceEntityStorage): E?
 }
 
 /**
@@ -135,6 +140,7 @@ interface WorkspaceEntityStorage {
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
   fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
+  fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E>
 }
 
 /**
@@ -149,7 +155,6 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
   override fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
   override fun removeEntity(e: WorkspaceEntity)
-  fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E>
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage)
 
   /**
@@ -157,11 +162,6 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
    * and removed entities.
    */
   fun collectChanges(original: WorkspaceEntityStorage): Map<Class<*>, List<EntityChange<*>>>
-
-  // Reset all collected changes. TODO ugly!
-  // This method doesn't reset builder to it initial state, but just resets a changelog,
-  //   so next call to collectChanges will return empty list
-  fun resetChanges()
 
   fun toStorage(): WorkspaceEntityStorage
 
@@ -196,6 +196,9 @@ interface WorkspaceEntityStorageDiffBuilder {
   fun addDiff(diff: WorkspaceEntityStorageDiffBuilder)
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
   fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
+  fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
+  fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
+
 
   val modificationCount: Long
 

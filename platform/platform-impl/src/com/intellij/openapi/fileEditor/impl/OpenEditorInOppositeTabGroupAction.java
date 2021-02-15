@@ -15,13 +15,11 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
-
 /**
  * @author yole
  */
 public class OpenEditorInOppositeTabGroupAction extends MoveEditorToOppositeTabGroupAction {
-  @Override
-  protected void closeOldFile(VirtualFile vFile, EditorWindow window) {
+  public OpenEditorInOppositeTabGroupAction() {
+    super(false);
   }
 }

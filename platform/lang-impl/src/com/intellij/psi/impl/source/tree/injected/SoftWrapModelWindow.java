@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,11 +48,6 @@ class SoftWrapModelWindow implements SoftWrapModelEx {
 
   @Override
   public void forceAdditionalColumnsUsage() {
-  }
-
-  @Override
-  public EditorTextRepresentationHelper getEditorTextRepresentationHelper() {
-    throw new UnsupportedOperationException();
   }
 
   @Override

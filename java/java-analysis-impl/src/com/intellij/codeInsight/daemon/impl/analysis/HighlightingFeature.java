@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl.PreviewFeatureVisitor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -36,35 +37,54 @@ public enum HighlightingFeature {
   VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
   ENHANCED_SWITCH(LanguageLevel.JDK_14, "feature.enhanced.switch"),
   SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
-  RECORDS(LanguageLevel.JDK_14_PREVIEW, "feature.records"),
-  PATTERNS(LanguageLevel.JDK_14_PREVIEW, "feature.patterns.instanceof"),
-  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_14_PREVIEW, "feature.text.block.escape.sequences") {
+  RECORDS(LanguageLevel.JDK_15_PREVIEW, "feature.records") {
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_14_PREVIEW);
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
     }
 
     @Override
     LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_15;
+      return LanguageLevel.JDK_16;
     }
   },
-  TEXT_BLOCKS(LanguageLevel.JDK_14_PREVIEW, "feature.text.blocks") {
+  PATTERNS(LanguageLevel.JDK_15_PREVIEW, "feature.patterns.instanceof"){
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_14_PREVIEW);
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
     }
 
     @Override
     LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_15;
+      return LanguageLevel.JDK_16;
     }
   },
+  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
+  TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks") ,
   SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes"),
-  LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"),
-  LOCAL_ENUMS(LanguageLevel.JDK_15_PREVIEW, "feature.local.enums");
+  LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"){
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
+    }
 
-  public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
+    @Override
+    LanguageLevel getStandardLevel() {
+      return LanguageLevel.JDK_16;
+    }
+  },
+  LOCAL_ENUMS(LanguageLevel.JDK_15_PREVIEW, "feature.local.enums"){
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
+    }
+
+    @Override
+    LanguageLevel getStandardLevel() {
+      return LanguageLevel.JDK_16;
+    }
+  },
+  INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics");
 
   final LanguageLevel level;
   @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
@@ -102,7 +122,10 @@ public enum HighlightingFeature {
   @Contract(value = "null -> null", pure = true)
   public static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable final PsiAnnotation annotation) {
     if (annotation == null) return null;
-    if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE)) return null;
+    if (!annotation.hasQualifiedName(PreviewFeatureVisitor.JDK_INTERNAL_PREVIEW_FEATURE) &&
+        !annotation.hasQualifiedName(PreviewFeatureVisitor.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)) {
+      return null;
+    }
 
     final PsiNameValuePair feature = AnnotationUtil.findDeclaredAttribute(annotation, "feature");
     if (feature == null) return null;

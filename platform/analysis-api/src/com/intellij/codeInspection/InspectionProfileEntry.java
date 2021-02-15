@@ -101,7 +101,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     if (element == null) {
       return SuppressQuickFix.EMPTY_ARRAY;
     }
-    Set<SuppressQuickFix> fixes = new ObjectOpenCustomHashSet<>(new Hash.Strategy < SuppressQuickFix > () {
+    Set<SuppressQuickFix> fixes = new ObjectOpenCustomHashSet<>(new Hash.Strategy<>() {
       @Override
       public int hashCode(@Nullable SuppressQuickFix object) {
         if (object == null) {
@@ -428,7 +428,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return serialization filter.
    */
-  @SuppressWarnings({"DeprecatedIsStillUsed"})
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   protected @Nullable SerializationFilter getSerializationFilter() {
     return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();
@@ -471,7 +471,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       InputStream descriptionStream = null;
       final String fileName = getDescriptionFileName();
       if (fileName != null) {
-        descriptionStream = ResourceUtil.getResourceAsStream(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+        descriptionStream =
+          ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);
       }
       //noinspection HardCodedStringLiteral(IDEA-249976)
       return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;

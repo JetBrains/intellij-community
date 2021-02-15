@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -63,7 +64,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   public ExternalProjectPathField(@NotNull Project project,
                                   @NotNull ProjectSystemId externalSystemId,
                                   @NotNull FileChooserDescriptor descriptor,
-                                  @NotNull String fileChooserTitle)
+                                  @NotNull @DialogTitle String fileChooserTitle)
   {
     super(createPanel(project, externalSystemId), new MyBrowseListener(descriptor, fileChooserTitle, project));
     ActionListener[] listeners = getButton().getActionListeners();
@@ -237,7 +238,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     private EditorTextField myPathField;
 
     MyBrowseListener(@NotNull final FileChooserDescriptor descriptor,
-                     @NotNull final String fileChooserTitle,
+                     @NotNull @DialogTitle final String fileChooserTitle,
                      @NotNull final Project project)
     {
       descriptor.setTitle(fileChooserTitle);

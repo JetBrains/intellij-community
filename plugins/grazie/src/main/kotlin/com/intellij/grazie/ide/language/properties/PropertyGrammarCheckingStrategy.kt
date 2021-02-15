@@ -10,7 +10,7 @@ import com.intellij.lang.properties.parsing.PropertiesTokenTypes
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
 
-class PropertyGrammarCheckingStrategy : GrammarCheckingStrategy {
+private class PropertyGrammarCheckingStrategy : GrammarCheckingStrategy {
   override fun isMyContextRoot(element: PsiElement) = getContextRootTextDomain(element) != TextDomain.NON_TEXT
 
   override fun getContextRootTextDomain(root: PsiElement): TextDomain {

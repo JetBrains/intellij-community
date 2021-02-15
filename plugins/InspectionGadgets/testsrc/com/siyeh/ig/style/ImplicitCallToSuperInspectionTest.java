@@ -30,7 +30,7 @@ public class ImplicitCallToSuperInspectionTest extends LightJavaInspectionTestCa
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   @Override

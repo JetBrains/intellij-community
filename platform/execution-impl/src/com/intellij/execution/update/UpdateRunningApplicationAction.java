@@ -106,7 +106,7 @@ public class UpdateRunningApplicationAction extends AnAction {
 
     if (updaters.size() > 1) {
       final ListPopup popup =
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<RunningApplicationUpdater>(
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(
           ExecutionBundle.message("popup.title.select.process.to.update"), updaters) {
           @NotNull
           @Override

@@ -10,22 +10,15 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class AddCaretPerSelectedLineAction extends EditorAction {
   public AddCaretPerSelectedLineAction() {
     super(new Handler());
   }
 
-  private static final class Handler extends EditorActionHandler {
-    private Handler() {
-      super(true);
-    }
-
+  private static final class Handler extends EditorActionHandler.ForEachCaret {
     @Override
-    protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      assert caret != null;
-
+    protected void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       CaretModel caretModel = editor.getCaretModel();
       Document document = editor.getDocument();
       int selectionStart = caret.getSelectionStart();

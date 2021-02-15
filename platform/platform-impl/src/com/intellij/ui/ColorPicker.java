@@ -398,7 +398,15 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener) {
-    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor));
+    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), currentColor != null && currentColor.getAlpha() != 255);
+  }
+
+  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha) {
+    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha);
+  }
+
+  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha, boolean showAlphaAsPercent) {
+    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent);
   }
 
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener) {
@@ -410,9 +418,13 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
+    showColorPickerPopup(project, currentColor, listener, location, showAlpha, false);
+  }
+
+  public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha, boolean showAlphaAsPercent) {
     if(!isEnoughSpaceToShowPopup()) {
       Color color = showDialog(IdeFocusManager.getGlobalInstance().getFocusOwner(), IdeBundle.message("dialog.title.choose.color"),
-                               currentColor, showAlpha, null, false);
+                               currentColor, showAlpha, null, showAlphaAsPercent);
       if (color != null) {
         listener.colorChanged(color, null);
       }
@@ -435,7 +447,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       }
     };
 
-    LightCalloutPopup popup = new ColorPickerBuilder(showAlpha)
+    LightCalloutPopup popup = new ColorPickerBuilder(showAlpha, showAlphaAsPercent)
       .setOriginalColor(currentColor)
       .addSaturationBrightnessComponent()
       .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())

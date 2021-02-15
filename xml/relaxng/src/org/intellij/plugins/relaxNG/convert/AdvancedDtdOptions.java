@@ -226,7 +226,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
 
     @Override
     public String getColumnName(int column) {
-      return column == 0 ? "Prefix" : "URI";
+      return column == 0 ? RelaxngBundle.message("prefix") : "URI"; //NON-NLS
     }
 
     @Override

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditorConfigActionUtil {
+public final class EditorConfigActionUtil {
   public static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("EditorConfig", NotificationDisplayType.STICKY_BALLOON, true);
 

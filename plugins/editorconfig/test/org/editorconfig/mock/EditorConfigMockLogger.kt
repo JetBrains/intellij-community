@@ -65,5 +65,5 @@ class EditorConfigMockLogger : Logger() {
     lastMessage = message
   }
 
-  override fun setLevel(level: Level?) {}
+  override fun setLevel(level: Level) {}
 }

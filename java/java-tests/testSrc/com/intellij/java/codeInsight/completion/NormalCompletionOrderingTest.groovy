@@ -126,6 +126,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "Xxx", "XxxEx", "XxxImpl", "Xxy")
   }
 
+  @NeedsIndex.Full
   void testPreferOwnInnerClasses() throws Throwable {
     checkPreferredItems(0, "YyyXxx", "YyyZzz")
   }

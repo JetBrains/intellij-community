@@ -28,7 +28,8 @@ public class CleanupIntentionMenuContributor implements IntentionMenuContributor
         IntentionManager manager = IntentionManager.getInstance();
         actionDescriptors.add(new HighlightInfo.IntentionActionDescriptor(manager.createCleanupAllIntention(),
                                                                           manager.getCleanupIntentionOptions(),
-                                                                          InspectionsBundle.message("action.description.code.cleanup.options")));
+                                                                          InspectionsBundle.message("action.description.code.cleanup.options"),
+                                                                          null, null, null, null));
         return true;
       }
     }

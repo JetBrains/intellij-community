@@ -2,10 +2,11 @@
 package org.jetbrains.idea.maven.server;
 
 public class CannotStartServerException extends RuntimeException {
-  public CannotStartServerException(String s){
-    super(s);
-  }
   public CannotStartServerException(Throwable cause) {
+    super(cause);
+  }
+
+  public CannotStartServerException(String cause) {
     super(cause);
   }
 }

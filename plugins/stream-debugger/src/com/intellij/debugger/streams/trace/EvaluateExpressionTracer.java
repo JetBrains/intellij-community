@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.StreamDebuggerBundle;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -63,7 +64,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
               final ReferenceType type = ((ObjectReference)reference).referenceType();
               if (type instanceof ClassType) {
                 ClassType classType = (ClassType)type;
-                while (classType != null && !"java.lang.Throwable".equals(classType.name())) {
+                while (classType != null && !CommonClassNames.JAVA_LANG_THROWABLE.equals(classType.name())) {
                   classType = classType.superclass();
                 }
 

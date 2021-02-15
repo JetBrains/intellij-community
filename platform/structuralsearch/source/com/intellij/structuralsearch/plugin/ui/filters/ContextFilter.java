@@ -59,13 +59,14 @@ public class ContextFilter extends FilterAction {
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
       private final JLabel myLabel = new JLabel(SSRBundle.message("context.label"));
       private final TextFieldWithAutoCompletion<String> textField =
         TextFieldWithAutoCompletion.create(myTable.getProject(), Collections.emptyList(), false, "");
       private final String shortcut =
         KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("tooltip.preconfigured.search.patterns", shortcut));
+      private final ContextHelpLabel myHelpLabel =
+        ContextHelpLabel.create(SSRBundle.message("tooltip.preconfigured.search.patterns", shortcut));
 
       @Override
       protected void layoutComponents() {

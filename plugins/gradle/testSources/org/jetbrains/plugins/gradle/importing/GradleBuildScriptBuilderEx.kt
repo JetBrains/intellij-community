@@ -35,10 +35,10 @@ class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
     addPlugin("id 'org.jetbrains.gradle.plugin.idea-ext' version '$version'")
   }
 
-  fun withTask(name: String, vararg types: String, content: String = "") = apply {
+  fun withTask(name: String, type: String? = null, configure: GroovyBuilder.() -> Unit = {}) = apply {
     addPostfix("""
-      tasks.register("$name"${types.joinToString("") { ", $it" }}) {
-        $content
+      tasks.create("$name"${type?.let{", $it"} ?: ""}) {
+      ${GroovyBuilder.generate("  ", configure)}
       }
     """.trimIndent())
   }

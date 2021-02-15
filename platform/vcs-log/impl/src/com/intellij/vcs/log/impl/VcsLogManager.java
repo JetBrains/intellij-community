@@ -89,7 +89,7 @@ public class VcsLogManager implements Disposable {
   }
 
   @CalledInAny
-  public void scheduleInitialization() {
+  void scheduleInitialization() {
     myLogData.initialize();
   }
 

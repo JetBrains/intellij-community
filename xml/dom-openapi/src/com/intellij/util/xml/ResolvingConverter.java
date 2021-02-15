@@ -54,21 +54,10 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   /**
    * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
    * They will also appear in the completion dropdown.
-   * 
-   * @deprecated implement {@link #getAdditionalVariants(ConvertContext)}
-   */
-  @Deprecated
-  @NotNull
-  public Set<String> getAdditionalVariants() {
-    return Collections.emptySet();
-  }
-  /**
-   * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
-   * They will also appear in the completion dropdown.
    */
   @NotNull
   public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
-    return getAdditionalVariants();
+    return Collections.emptySet();
   }
 
   /**
@@ -229,7 +218,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @deprecated see {@link com.intellij.util.xml.converters.values.BooleanValueConverter}
    */
   @Deprecated
-  public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
+  public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<>() {
     @Override
     public Boolean fromString(final String s, final ConvertContext context) {
       if ("true".equalsIgnoreCase(s)) {
@@ -243,7 +232,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
 
     @Override
     public String toString(final Boolean t, final ConvertContext context) {
-      return t == null? null:t.toString();
+      return t == null ? null : t.toString();
     }
 
     @Override

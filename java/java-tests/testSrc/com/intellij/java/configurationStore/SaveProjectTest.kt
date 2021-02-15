@@ -10,7 +10,6 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.util.io.systemIndependentPath
-import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -41,14 +40,25 @@ class SaveProjectTest {
   @Test
   fun `save module with group`() {
     val module = projectModel.createModule("foo")
-    runWriteActionAndWait {
-      val model = projectModel.moduleManager.modifiableModel
-      model.setModuleGroupPath(module, arrayOf("group"))
-      model.commit()
+    fun setGroupPath(path: Array<String>?) {
+      runWriteActionAndWait {
+        val model = projectModel.moduleManager.modifiableModel
+        model.setModuleGroupPath(module, path)
+        model.commit()
+      }
     }
 
+    setGroupPath(arrayOf("group"))
     projectModel.saveProjectState()
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("module-in-group")))
+
+    setGroupPath(arrayOf("group", "subGroup"))
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("module-in-sub-group")))
+
+    setGroupPath(null)
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-module")))
   }
 
   @Test

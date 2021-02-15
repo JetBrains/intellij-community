@@ -29,6 +29,9 @@ public final class PySignatureHelpProvider implements SignatureHelpProvider {
     }
 
     List<Pair<PyCallExpression, PyCallableType>> signatures = PyParameterInfoUtils.findCallCandidates(argumentList);
+    if (signatures == null) {
+      return null;
+    }
 
     int currentParamOffset = PyParameterInfoUtils.findCurrentParameter(argumentList, offset, file);
 

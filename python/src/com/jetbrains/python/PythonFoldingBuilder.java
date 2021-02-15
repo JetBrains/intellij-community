@@ -207,15 +207,16 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
       PyStringLiteralExpression stringLiteralExpression = (PyStringLiteralExpression)node.getPsi();
+      String prefix = stringLiteralExpression.getStringElements().get(0).getPrefix();
       if (stringLiteralExpression.isDocString()) {
         final String stringValue = stringLiteralExpression.getStringValue().trim();
         final String[] lines = LineTokenizer.tokenize(stringValue, true);
         if (lines.length > 2 && lines[1].trim().length() == 0) {
-          return "\"\"\"" + lines[0].trim() + "...\"\"\"";
+          return prefix + "\"\"\"" + lines[0].trim() + "...\"\"\"";
         }
-        return "\"\"\"...\"\"\"";
+        return prefix + "\"\"\"...\"\"\"";
       } else {
-        return getLanguagePlaceholderForString(stringLiteralExpression);
+        return prefix + getLanguagePlaceholderForString(stringLiteralExpression);
       }
     }
     return "...";

@@ -28,7 +28,7 @@ import kotlin.system.measureTimeMillis
 
 
 /**
- * Based on [com.intellij.codeInsight.LargeProjectPerformanceTest]
+ * Based on `com.intellij.codeInsight.LargeProjectPerformanceTest`.
  */
 abstract class AbstractLargeProjectTest : UsefulTestCase() {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * Must be registered with {@code key} value matching {@code DataKey#getName()}.
  */
 public interface GetDataRule {
-  ExtensionPointName<KeyedLazyInstance<GetDataRule>> EP_NAME = ExtensionPointName.create("com.intellij.getDataRule");
+  ExtensionPointName<KeyedLazyInstance<GetDataRule>> EP_NAME = new ExtensionPointName<>("com.intellij.getDataRule");
 
   @Nullable
   Object getData(@NotNull DataProvider dataProvider);

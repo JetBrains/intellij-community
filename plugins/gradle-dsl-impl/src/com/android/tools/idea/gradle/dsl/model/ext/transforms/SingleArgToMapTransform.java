@@ -40,7 +40,7 @@ public class SingleArgToMapTransform extends PropertyTransform {
   }
 
   @Override
-  public boolean test(@Nullable GradleDslElement e) {
+  public boolean test(@Nullable GradleDslElement e, @NotNull GradleDslElement holder) {
     if (e instanceof GradleDslMethodCall) {
       GradleDslMethodCall methodCall = (GradleDslMethodCall)e;
       if (!methodCall.getArguments().isEmpty() && methodCall.getArguments().get(0) instanceof GradleDslSimpleExpression) {
@@ -73,9 +73,8 @@ public class SingleArgToMapTransform extends PropertyTransform {
   public GradleDslExpression bindList(@NotNull GradleDslElement holder,
                                       @Nullable GradleDslElement oldElement,
                                       @NotNull String name,
-                                      boolean isMethodCall,
-                                      boolean isSet) {
-    return new GradleDslExpressionList(holder, GradleNameElement.create(myFieldName), isMethodCall, isSet);
+                                      boolean isMethodCall) {
+    return new GradleDslExpressionList(holder, GradleNameElement.create(myFieldName), isMethodCall);
   }
 
   @Override

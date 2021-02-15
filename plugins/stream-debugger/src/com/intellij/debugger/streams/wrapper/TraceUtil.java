@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TraceUtil {
+public final class TraceUtil {
   private static final String THREE_DOTS = "...";
 
   public static List<TraceElement> sortedByTime(@NotNull Collection<? extends TraceElement> values) {

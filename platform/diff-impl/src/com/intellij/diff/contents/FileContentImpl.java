@@ -76,4 +76,9 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
   public void onAssigned(boolean isAssigned) {
     if (isAssigned && GeneralSettings.getInstance().isSyncOnFrameActivation()) DiffUtil.markDirtyAndRefresh(true, false, false, myFile);
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + ":" + myFile;
+  }
 }

@@ -30,15 +30,22 @@ import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
 final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, LightEditFrame {
+  private final Project myProject;
   private final BooleanSupplier myCloseHandler;
 
   private LightEditPanel myEditPanel;
 
   private boolean myFrameTitleUpdateEnabled = true;
 
-  LightEditFrameWrapper(@NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
+  LightEditFrameWrapper(@NotNull Project project, @NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
     super(frame, null);
+    myProject = project;
     myCloseHandler = closeHandler;
+  }
+
+  @Override
+  public @NotNull Project getProject() {
+    return myProject;
   }
 
   @NotNull
@@ -49,7 +56,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   @NotNull
   @Override
   protected IdeRootPane createIdeRootPane() {
-    return new LightEditRootPane(getFrame(), this, this);
+    return new LightEditRootPane(requireNotNullFrame(), this, this);
   }
 
   @Override
@@ -92,6 +99,17 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   @Override
   public void dispose() {
     Disposer.dispose(myEditPanel);
+  }
+
+  public void closeAndDispose(@NotNull LightEditServiceImpl lightEditServiceImpl) {
+    IdeFrameImpl frame = requireNotNullFrame();
+    FrameInfo frameInfo = ProjectFrameBounds.getInstance(myProject).getActualFrameInfoInDeviceSpace(
+      this, frame, (WindowManagerImpl)WindowManager.getInstance()
+    );
+    lightEditServiceImpl.setFrameInfo(frameInfo);
+
+    frame.setVisible(false);
+    Disposer.dispose(this);
   }
 
   private class LightEditRootPane extends IdeRootPane {
@@ -146,9 +164,11 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
   }
 
-  static @NotNull LightEditFrameWrapper allocate(@NotNull Project project, @NotNull BooleanSupplier closeHandler) {
+  static @NotNull LightEditFrameWrapper allocate(@NotNull Project project,
+                                                 @Nullable FrameInfo frameInfo,
+                                                 @NotNull BooleanSupplier closeHandler) {
     return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(project, () -> {
-      return new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false, null), closeHandler);
+      return new LightEditFrameWrapper(project, ProjectFrameAllocatorKt.createNewProjectFrame(false, frameInfo), closeHandler);
     });
   }
 

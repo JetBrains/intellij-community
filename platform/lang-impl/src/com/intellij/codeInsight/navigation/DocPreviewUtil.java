@@ -45,7 +45,7 @@ public final class DocPreviewUtil {
    * There is a possible situation then that we have two replacements where one key is a simple name and another one is a fully qualified
    * one. We want to apply {@code 'from fully qualified name'} replacement first then.
    */
-  private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<String>() {
+  private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<>() {
     @Override
     public int compare(@NotNull String o1, @NotNull String o2) {
       String shortName1 = extractShortName(o1);

@@ -96,9 +96,7 @@ final class ContiguousByteArrayKeyManager implements KeyManager<byte[]> {
 
   @Override
   public byte[] getKey(int index) {
-    byte[] bytes = new byte[keyLength];
-    System.arraycopy(data, index * keyLength, bytes, 0, keyLength);
-    return bytes;
+    return Arrays.copyOfRange(data, index * keyLength, index * keyLength + keyLength);
   }
 
   @SuppressWarnings("DuplicatedCode")
@@ -146,9 +144,7 @@ final class ContiguousByteArrayKeyManager implements KeyManager<byte[]> {
     int keyCount = count;
     byte[][] newKeys = new byte[keyCount + extraKeyCount][];
     for (int i = 0; i < keyCount; i++) {
-      byte[] itemData = new byte[keyLength];
-      newKeys[i] = itemData;
-      System.arraycopy(data, i * keyLength, itemData, 0, keyLength);
+      newKeys[i] = Arrays.copyOfRange(data, i * keyLength, i * keyLength + keyLength);
     }
     System.arraycopy(extraKeys, 0, newKeys, keyCount, extraKeyCount);
     return new ObjectKeyManager<>(newKeys, newKeys.length * keyLength);
@@ -159,9 +155,7 @@ final class ContiguousByteArrayKeyManager implements KeyManager<byte[]> {
     // copy creates mutable
     byte[][] copy = new byte[endIndex - startIndex][];
     for (int i = startIndex; i < endIndex; i++) {
-      byte[] itemData = new byte[keyLength];
-      copy[i] = itemData;
-      System.arraycopy(data, i * keyLength, itemData, 0, keyLength);
+      copy[i] = Arrays.copyOfRange(data, i * keyLength, i * keyLength + keyLength);
     }
     return new ObjectKeyManager<>(copy, copy.length * keyLength);
   }
@@ -171,9 +165,7 @@ final class ContiguousByteArrayKeyManager implements KeyManager<byte[]> {
     byte[][] copy = new byte[count + 1][];
     copy[index] = key;
     for (int i = 0; i < count; i++) {
-      byte[] itemData = new byte[keyLength];
-      System.arraycopy(data, i * keyLength, itemData, 0, keyLength);
-      copy[i >= index ? (i + 1) : i] = itemData;
+      copy[i >= index ? (i + 1) : i] = Arrays.copyOfRange(data, i * keyLength, i * keyLength + keyLength);
     }
     return new ObjectKeyManager<>(copy, copy.length * keyLength);
   }
@@ -183,9 +175,7 @@ final class ContiguousByteArrayKeyManager implements KeyManager<byte[]> {
     byte[][] copy = new byte[count - 1][];
     for (int i = 0; i < count; i++) {
       if (i != index) {
-        byte[] itemData = new byte[keyLength];
-        copy[i > index ? (i - 1) : i] = itemData;
-        System.arraycopy(data, i * keyLength, itemData, 0, keyLength);
+        copy[i > index ? (i - 1) : i] = Arrays.copyOfRange(data, i * keyLength, i * keyLength + keyLength);
       }
     }
     return new ObjectKeyManager<>(copy, copy.length * keyLength);

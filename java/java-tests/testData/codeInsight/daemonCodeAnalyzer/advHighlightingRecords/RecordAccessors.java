@@ -19,7 +19,7 @@ record RecThrows(int x) {
   public int y() throws Exception {return x;}
 }
 record CheckOverride(int x) {
-  <error descr="Method does not override method from its superclass">@Override</error> public int x() { return x; }
+  @Override public int x() { return x; }
   <error descr="Method does not override method from its superclass">@Override</error> public int y() { return x; }
 }
 record VarArg(int... x) {

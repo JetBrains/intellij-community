@@ -25,6 +25,8 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -39,6 +41,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
 
@@ -180,8 +183,8 @@ fun <T : JScrollPane> CellBuilder<T>.noGrowY(): CellBuilder<T> {
   return this
 }
 
-fun <T : JTextField> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
-  return withBinding(JTextField::getText, JTextField::setText, modelBinding)
+fun <T : JTextComponent> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
+  return withBinding(JTextComponent::getText, JTextComponent::setText, modelBinding)
 }
 
 fun <T : AbstractButton> CellBuilder<T>.withSelectedBinding(modelBinding: PropertyBinding<Boolean>): CellBuilder<T> {
@@ -224,6 +227,13 @@ abstract class Cell : BaseBuilder {
             fontColor: UIUtil.FontColor? = null,
             bold: Boolean = false): CellBuilder<JLabel> {
     val label = Label(text, style, fontColor, bold)
+    return component(label)
+  }
+
+  fun label(@Label text: String,
+            font: JBFont,
+            fontColor: UIUtil.FontColor? = null): CellBuilder<JLabel> {
+    val label = Label(text, fontColor = fontColor, font = font)
     return component(label)
   }
 
@@ -365,6 +375,21 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
+  fun textArea(prop: KMutableProperty0<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> = textArea(prop.toBinding(), rows, columns)
+
+  fun textArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null, columns: Int? = null) = textArea(PropertyBinding(getter, setter), rows, columns)
+
+  fun textArea(binding: PropertyBinding<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> {
+    return component(JBTextArea(binding.get(), rows ?: 0, columns ?: 0))
+      .withTextBinding(binding)
+  }
+
+  fun textArea(property: GraphProperty<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> {
+    return textArea(property::get, property::set, rows, columns)
+      .withGraphProperty(property)
+      .applyToComponent { bind(property) }
+  }
+
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
     return intTextField(prop.toBinding(), columns, range)
   }
@@ -458,6 +483,18 @@ abstract class Cell : BaseBuilder {
     return component(textField)
       .constraints(growX)
       .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, modelBinding)
+  }
+
+  fun textFieldWithBrowseButton(
+    property: GraphProperty<String>,
+    emptyTextProperty: GraphProperty<String>,
+    @DialogTitle browseDialogTitle: String? = null,
+    project: Project? = null,
+    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+  ): CellBuilder<TextFieldWithBrowseButton> {
+    return textFieldWithBrowseButton(property, browseDialogTitle, project, fileChooserDescriptor, fileChosen)
+      .applyToComponent { emptyText.bind(emptyTextProperty) }
   }
 
   fun textFieldWithBrowseButton(
@@ -614,11 +651,24 @@ private fun <T> ComboBox<T>.bind(property: GraphProperty<T>) {
   }
 }
 
+private val TextFieldWithBrowseButton.emptyText
+  get() = (textField as JBTextField).emptyText
+
+private fun StatusText.bind(property: GraphProperty<String>) {
+  text = property.get()
+  property.afterChange {
+    text = it
+  }
+  property.afterReset {
+    text = property.get()
+  }
+}
+
 private fun TextFieldWithBrowseButton.bind(property: GraphProperty<String>) {
   textField.bind(property)
 }
 
-private fun JTextField.bind(property: GraphProperty<String>) {
+private fun JTextComponent.bind(property: GraphProperty<String>) {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {

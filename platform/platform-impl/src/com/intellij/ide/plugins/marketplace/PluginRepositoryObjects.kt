@@ -35,6 +35,7 @@ data class IntellijUpdateMetadata(
   val description: String = "",
   val tags: List<String> = emptyList(),
   val vendor: String = "",
+  val organization: String = "",
   val version: String = "",
   val notes: String = "",
   val dependencies: Set<String> = emptySet(),
@@ -55,6 +56,7 @@ data class IntellijUpdateMetadata(
     pluginNode.untilBuild = until
     pluginNode.productCode = productCode
     pluginNode.version = version
+    pluginNode.organization = organization
     pluginNode.url = url
     for (dep in dependencies) {
       pluginNode.addDepends(dep, false)

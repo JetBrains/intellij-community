@@ -74,4 +74,9 @@ public class SimpleDiffRequest extends ContentDiffRequest {
       content.onAssigned(isAssigned);
     }
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + ":" + getContents();
+  }
 }

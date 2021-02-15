@@ -152,7 +152,7 @@ public class SearchEverywhereHeader {
 
     ElementsChooser.StatisticsCollector<String> filterStatisticsCollector = new ContributorFilterCollector();
     if (myProject != null && !projectContributors.isEmpty()) {
-      PersistentSearchEverywhereContributorFilter<String> projectContributorsFilter = createContributorsFilter(myProject, projectContributors);
+      PersistentSearchEverywhereContributorFilter<String> projectContributorsFilter = createContributorsFilter(projectContributors);
       List<AnAction> projectActions = Arrays.asList(
         new MyScopeChooserAction(myProject, projectContributors, myScopeChangedCallback),
         new SearchEverywhereFiltersAction<>(projectContributorsFilter, myScopeChangedCallback, filterStatisticsCollector)
@@ -163,7 +163,7 @@ public class SearchEverywhereHeader {
     }
 
     if (!ideContributors.isEmpty()) {
-      PersistentSearchEverywhereContributorFilter<String> ideContributorsFilter = createContributorsFilter(myProject, ideContributors);
+      PersistentSearchEverywhereContributorFilter<String> ideContributorsFilter = createContributorsFilter(ideContributors);
       List<AnAction> ideActions = Arrays.asList(
         new CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")) {
           private boolean everywhere;
@@ -201,7 +201,7 @@ public class SearchEverywhereHeader {
         myScopeChangedCallback.run();
       };
       String actionText = IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
-      PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(myProject, contributors);
+      PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(contributors);
       List<AnAction> actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
         final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
         @Override
@@ -239,13 +239,12 @@ public class SearchEverywhereHeader {
     return res;
   }
 
-  private static PersistentSearchEverywhereContributorFilter<String> createContributorsFilter(Project project,
-                                                                    List<? extends SearchEverywhereContributor<?>> contributors) {
+  private static PersistentSearchEverywhereContributorFilter<String> createContributorsFilter(List<? extends SearchEverywhereContributor<?>> contributors) {
     Map<String, @Nls String> namesMap = ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(),
                                                                                                c.getFullGroupName()));
     return new PersistentSearchEverywhereContributorFilter<>(
       ContainerUtil.map(contributors, c -> c.getSearchProviderId()),
-      SearchEverywhereConfiguration.getInstance(project),
+      SearchEverywhereConfiguration.getInstance(),
       namesMap::get, c -> null);
   }
 
@@ -349,8 +348,9 @@ public class SearchEverywhereHeader {
     private final @NotNull @NonNls String id;
     private final @NotNull List<SearchEverywhereContributor<?>> contributors;
     private final List<AnAction> actions;
-    private final SearchEverywhereToggleAction everywhereAction;
+    private final @Nullable SearchEverywhereToggleAction everywhereAction;
     private final @Nullable PersistentSearchEverywhereContributorFilter<String> myContributorsFilter;
+    private final @Nullable PersistentSearchEverywhereContributorFilter<?> myFilterToReset;
 
     private boolean isSelected = false;
 
@@ -368,7 +368,12 @@ public class SearchEverywhereHeader {
       this.id = id;
       this.contributors = new ArrayList<>(contributors);
       this.actions = actions;
+
       everywhereAction = (SearchEverywhereToggleAction)ContainerUtil.find(actions, o -> o instanceof SearchEverywhereToggleAction);
+      myFilterToReset = actions.stream()
+        .filter(a -> a instanceof SearchEverywhereFiltersAction)
+        .findAny().map(a -> ((SearchEverywhereFiltersAction) a).getFilter())
+        .orElse(null);
     }
 
     public void setSelected(boolean selected) {
@@ -394,6 +399,22 @@ public class SearchEverywhereHeader {
       if (myContributorsFilter == null) return contributors;
 
       return ContainerUtil.filter(contributors, contributor -> myContributorsFilter.isSelected(contributor.getSearchProviderId()));
+    }
+
+    public boolean canClearFilter() {
+      return myFilterToReset != null && canClearFilter(myFilterToReset);
+    }
+
+    private static <T> boolean canClearFilter(@NotNull PersistentSearchEverywhereContributorFilter<T> filter) {
+      return filter.getAllElements().stream().anyMatch(o -> !filter.isSelected(o));
+    }
+
+    public void clearFilter() {
+      if (myFilterToReset != null) doClearFilter(myFilterToReset);
+    }
+
+    private static <T> void doClearFilter(@NotNull PersistentSearchEverywhereContributorFilter<T> filter) {
+      filter.getAllElements().forEach(s -> filter.setSelected(s, true));
     }
 
     @Override

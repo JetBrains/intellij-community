@@ -1,11 +1,10 @@
 <component name="libraryTable">
-  <library name="jsr305">
+  <library name="jsr305" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.google.code.findbugs:jsr305:3.0.2" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jsr305.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/jsr305.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

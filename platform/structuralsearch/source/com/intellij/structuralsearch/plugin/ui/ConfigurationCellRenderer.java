@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -24,14 +25,16 @@ public class ConfigurationCellRenderer extends SimpleListCellRenderer<Configurat
                         boolean hasFocus) {
     final MatchOptions matchOptions = value.getMatchOptions();
     setIcon(matchOptions.getFileType().getIcon());
+    final String text;
     if (value instanceof ReplaceConfiguration) {
-      setText(shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 49, 0, true)
-              + " ⇒ "
-              + shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
+      text = SSRBundle.message("replace.configuration.display.text",
+                               shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 49, 0, true),
+                               shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
     }
     else {
-      setText(shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 100, 0, true));
+      text = shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 100, 0, true);
     }
+    setText(text);
     setEnabled(list.isEnabled());
   }
 }

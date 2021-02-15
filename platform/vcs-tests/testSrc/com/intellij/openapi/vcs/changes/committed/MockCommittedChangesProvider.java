@@ -26,7 +26,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   @NotNull
   @Override
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
-    return new StandardVersionFilterComponent<ChangeBrowserSettings>(showDateFilter) {
+    return new StandardVersionFilterComponent<>(showDateFilter) {
       @NotNull
       @Override
       public JComponent getComponent() {

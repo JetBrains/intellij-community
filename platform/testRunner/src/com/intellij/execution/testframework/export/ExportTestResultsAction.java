@@ -162,7 +162,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
           ApplicationManager.getApplication().invokeAndWait(new Runnable() {
             @Override
             public void run() {
-              result.set(ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+              result.set(ApplicationManager.getApplication().runWriteAction(new Computable<>() {
                 @Override
                 public VirtualFile compute() {
                   outputFile.getParentFile().mkdirs();

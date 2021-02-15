@@ -22,7 +22,7 @@ public final class SimpleTextAttributes {
   @MagicConstant(flags = {
     STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE,
     STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE,
-    STYLE_CLICKABLE, STYLE_HOVERED, STYLE_NO_BORDER})
+    STYLE_CLICKABLE, STYLE_HOVERED, STYLE_NO_BORDER, STYLE_BOLD_UNDERLINE, STYLE_USE_EFFECT_COLOR})
   public @interface StyleAttributeConstant { }
 
   public static final int STYLE_PLAIN = Font.PLAIN;
@@ -39,6 +39,8 @@ public final class SimpleTextAttributes {
   public static final int STYLE_CLICKABLE = STYLE_OPAQUE << 1;
   public static final int STYLE_HOVERED = STYLE_CLICKABLE << 1;
   public static final int STYLE_NO_BORDER = STYLE_HOVERED << 1;
+  public static final int STYLE_BOLD_UNDERLINE = STYLE_NO_BORDER << 1;
+  public static final int STYLE_USE_EFFECT_COLOR = STYLE_BOLD_UNDERLINE << 1;
 
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
@@ -99,7 +101,9 @@ public final class SimpleTextAttributes {
            STYLE_OPAQUE |
            STYLE_CLICKABLE |
            STYLE_HOVERED |
-           STYLE_NO_BORDER) & style) != 0) {
+           STYLE_NO_BORDER |
+           STYLE_BOLD_UNDERLINE |
+           STYLE_USE_EFFECT_COLOR) & style) != 0) {
       throw new IllegalArgumentException("Wrong style: " + style);
     }
 
@@ -185,6 +189,14 @@ public final class SimpleTextAttributes {
     return BitUtil.isSet(myStyle, STYLE_NO_BORDER);
   }
 
+  public boolean isBoldUnderline() {
+    return BitUtil.isSet(myStyle, STYLE_BOLD_UNDERLINE);
+  }
+
+  public boolean useEffectColor() {
+    return BitUtil.isSet(myStyle, STYLE_USE_EFFECT_COLOR);
+  }
+
   @NotNull
   public static SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
     if (attributes == null) return REGULAR_ATTRIBUTES;
@@ -202,10 +214,14 @@ public final class SimpleTextAttributes {
       else if (effectType == EffectType.WAVE_UNDERSCORE) {
         style |= STYLE_WAVED;
       }
-      else if (effectType == EffectType.LINE_UNDERSCORE ||
-               effectType == EffectType.BOLD_LINE_UNDERSCORE ||
-               effectType == EffectType.BOLD_DOTTED_LINE) {
+      else if (effectType == EffectType.LINE_UNDERSCORE) {
         style |= STYLE_UNDERLINE;
+      }
+      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
+        style |= STYLE_BOLD_DOTTED_LINE;
+      }
+      else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
+        style |= STYLE_BOLD_UNDERLINE;
       }
       else if (effectType == EffectType.SEARCH_MATCH) {
         style |= STYLE_SEARCH_MATCH;
@@ -241,6 +257,10 @@ public final class SimpleTextAttributes {
     else if (isBoldDottedLine()) {
       effectColor = myWaveColor;
       effectType = EffectType.BOLD_DOTTED_LINE;
+    }
+    else if (isBoldUnderline()) {
+      effectColor = myWaveColor;
+      effectType = EffectType.BOLD_LINE_UNDERSCORE;
     }
     else if (isSearchMatch()) {
       effectColor = myWaveColor;

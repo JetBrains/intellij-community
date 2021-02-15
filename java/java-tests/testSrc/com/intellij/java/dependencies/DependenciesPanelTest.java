@@ -80,9 +80,10 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
                                                          "      com/package1\n",
                             "-Root\n" +
                             " -External Dependencies\n" +
-                            "  -src.zip\n" +
-                            "   -java/lang\n" +
-                            "    String.java");
+                            "  -< java 1.7 >\n" +
+                            "   -src.zip\n" +
+                            "    -java/lang\n" +
+                            "     String.java");
   }
 
   private void doTestDependenciesTrees(AnalysisScope scope, String expectedLeftTree, String expectedRightTree) {

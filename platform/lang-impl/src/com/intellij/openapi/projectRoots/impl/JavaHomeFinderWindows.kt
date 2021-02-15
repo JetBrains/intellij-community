@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("ConvertSecondaryConstructorToPrimary", "UnnecessaryVariable")
-
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Bitness
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.util.io.exists
 import java.nio.file.FileSystems
@@ -25,8 +25,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     private val javaHomePattern = Regex("""^\s+JavaHome\s+REG_SZ\s+(\S.+\S)\s*$""", setOf(MULTILINE, IGNORE_CASE))
 
     /**
-     * Whether the OS is 64-bit. Don't mix with JRE.
-     * SIC! it's not the same as [SystemInfo.is64Bit].
+     * Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]).
      */
     private val os64bit: Boolean = !System.getenv("ProgramFiles(x86)").isNullOrBlank()
 
@@ -45,7 +44,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
   }
 
   constructor(forceEmbeddedJava: Boolean) : super(forceEmbeddedJava) {
-    if (os64bit && SystemInfo.isWin7OrNewer) {
+    if (os64bit && SystemInfoRt.isWindows) {
       registerFinder(this::readRegisteredLocationsOS64J64)
       registerFinder(this::readRegisteredLocationsOS64J32)
     }
@@ -53,6 +52,10 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       registerFinder(this::readRegisteredLocationsOS32J32)
     }
     registerFinder(this::guessPossibleLocations)
+    for (distro in WslDistributionManager.getInstance().installedDistributions) {
+      val wslFinder = JavaHomeFinderWsl(distro)
+      registerFinder { wslFinder.findExistingJdks() }
+    }
   }
 
   private fun readRegisteredLocationsOS64J64() = readRegisteredLocations(Bitness.x64)

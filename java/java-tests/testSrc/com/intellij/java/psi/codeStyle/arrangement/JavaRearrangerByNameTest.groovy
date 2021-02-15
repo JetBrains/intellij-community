@@ -2,7 +2,7 @@
 package com.intellij.java.psi.codeStyle.arrangement
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.formatting.fileSet.NamedScopeDescriptor
+import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import groovy.transform.CompileStatic
 

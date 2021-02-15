@@ -45,7 +45,7 @@ public class SearchTaskOptions implements Cloneable {
     return this;
   }
 
-  public SearchTaskOptions setCaseSensetive(boolean caseSensitive) {
+  public SearchTaskOptions setCaseSensitive(boolean caseSensitive) {
     this.caseSensitive = caseSensitive;
     return this;
   }

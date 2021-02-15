@@ -210,7 +210,7 @@ public class SwitchExpressionsJava12 {
         yield 3;
       case C:
         i = 3;
-        <error descr="Break outside of enclosing switch expression">break;</error>
+        <error descr="Break out of switch expression is not allowed">break;</error>
       default: {
         i = 10;
         yield 10;/* todo one two */

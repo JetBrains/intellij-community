@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution;
 
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ConfigurationUtil {
+public final class ConfigurationUtil {
   // return true if there is JUnit4 test
   public static boolean findAllTestClasses(@NotNull final TestClassFilter testClassFilter,
                                            @Nullable final Module module,
@@ -36,7 +36,7 @@ public class ConfigurationUtil {
 
     final PsiClass base = testClassFilter.getBase();
     if (base != null) {
-      ClassInheritorsSearch.search(base, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+      ClassInheritorsSearch.search(base, scope, true, true, false).forEach(new ReadActionProcessor<>() {
         @Override
         public boolean processInReadAction(PsiClass aClass) {
           if (testClassFilter.isAccepted(aClass)) found.add(aClass);
@@ -97,7 +97,7 @@ public class ConfigurationUtil {
           return true;
         });
         if (!success) return true;
-        ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+        ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<>() {
           @Override
           public boolean processInReadAction(PsiClass aClass) {
             if (testClassFilter.isAccepted(aClass)) {

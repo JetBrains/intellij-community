@@ -45,11 +45,4 @@ public interface ComponentAdapter {
    *                                     container.
    */
   Object getComponentInstance(PicoContainer container);
-
-  /**
-   * @deprecated Not used anymore.
-   */
-  @Deprecated
-  default void verify(@SuppressWarnings("unused") PicoContainer container) {
-  }
 }

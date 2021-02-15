@@ -20,8 +20,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
@@ -55,9 +56,9 @@ public final class DumpInspectionDescriptionsAction extends AnAction implements 
       if (names == null) groups.put(group, (names = new TreeSet<>()));
       names.add(toolWrapper.getShortName());
 
-      final InputStream stream = getDescriptionStream(toolWrapper);
+      InputStream stream = getDescriptionStream(toolWrapper);
       if (stream != null) {
-        doDump(new File(descDirectory, toolWrapper.getShortName() + ".html"), new Processor() {
+        doDump(descDirectory.toPath().resolve(toolWrapper.getShortName() + ".html"), new Processor() {
           @Override public void process(BufferedWriter writer) throws Exception {
             writer.write(ResourceUtil.loadText(stream));
           }
@@ -66,7 +67,7 @@ public final class DumpInspectionDescriptionsAction extends AnAction implements 
     }
     doNotify("Inspection descriptions dumped to\n" + descDirectory.getAbsolutePath());
 
-    File fqnListFile = new File(tempDirectory, "inspection_fqn_list.txt");
+    Path fqnListFile = Path.of(tempDirectory, "inspection_fqn_list.txt");
     boolean fqnOk = doDump(fqnListFile, new Processor() {
       @Override public void process(BufferedWriter writer) throws Exception {
         for (String name : classes) {
@@ -76,10 +77,10 @@ public final class DumpInspectionDescriptionsAction extends AnAction implements 
       }
     });
     if (fqnOk) {
-      doNotify("Inspection class names dumped to\n" + fqnListFile.getAbsolutePath());
+      doNotify("Inspection class names dumped to\n" + fqnListFile);
     }
 
-    final File groupsFile = new File(tempDirectory, "inspection_groups.txt");
+    Path groupsFile = Path.of(tempDirectory, "inspection_groups.txt");
     final boolean groupsOk = doDump(groupsFile, new Processor() {
       @Override public void process(BufferedWriter writer) throws Exception {
         for (Map.Entry<String, Collection<String>> entry : groups.entrySet()) {
@@ -95,30 +96,30 @@ public final class DumpInspectionDescriptionsAction extends AnAction implements 
       }
     });
     if (groupsOk) {
-      doNotify("Inspection groups dumped to\n" + fqnListFile.getAbsolutePath());
+      doNotify("Inspection groups dumped to\n" + fqnListFile);
     }
   }
 
-  private static Class getInspectionClass(final InspectionToolWrapper toolWrapper) {
+  private static Class<?> getInspectionClass(InspectionToolWrapper<?, ?> toolWrapper) {
     return toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool().getClass() : toolWrapper.getClass();
   }
 
-  private static String getGroupName(final InspectionToolWrapper toolWrapper) {
+  private static String getGroupName(InspectionToolWrapper<?, ?> toolWrapper) {
     final String name = toolWrapper.getGroupDisplayName();
     return StringUtil.isEmptyOrSpaces(name) ? "General" : name;
   }
 
-  private static InputStream getDescriptionStream(final InspectionToolWrapper toolWrapper) {
-    final Class aClass = getInspectionClass(toolWrapper);
-    return ResourceUtil.getResourceAsStream(aClass, "/inspectionDescriptions", toolWrapper.getShortName() + ".html");
+  private static InputStream getDescriptionStream(InspectionToolWrapper<?, ?> toolWrapper) {
+    Class<?> aClass = getInspectionClass(toolWrapper);
+    return ResourceUtil.getResourceAsStream(aClass.getClassLoader(), "inspectionDescriptions", toolWrapper.getShortName() + ".html");
   }
 
   private interface Processor {
     void process(BufferedWriter writer) throws Exception;
   }
 
-  private static boolean doDump(final File file, final Processor processor) {
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+  private static boolean doDump(Path file, Processor processor) {
+    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
       processor.process(writer);
       return true;
     }

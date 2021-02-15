@@ -82,7 +82,7 @@ public class CountFilter extends FilterAction {
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();
@@ -97,18 +97,18 @@ public class CountFilter extends FilterAction {
 
         layout.setHorizontalGroup(
           layout.createSequentialGroup()
-                .addComponent(myMinLabel)
-                .addComponent(myMinField)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, 20)
-                .addComponent(myMaxLabel)
-                .addComponent(myMaxField)
+            .addComponent(myMinLabel)
+            .addComponent(myMinField)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, 20)
+            .addComponent(myMaxLabel)
+            .addComponent(myMaxField)
         );
         layout.setVerticalGroup(
           layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(myMinLabel)
-                .addComponent(myMinField)
-                .addComponent(myMaxLabel)
-                .addComponent(myMaxField)
+            .addComponent(myMinLabel)
+            .addComponent(myMinField)
+            .addComponent(myMaxLabel)
+            .addComponent(myMaxField)
         );
         myMinField.getValueEditor().addListener(newValue -> {
           if (myMinField.getValueEditor().isValid(newValue) && myMaxField.getValue() < newValue) myMaxField.setValue(newValue);

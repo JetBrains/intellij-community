@@ -9,6 +9,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -33,6 +34,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = false;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT =
     !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion();
+  public String CODE_SMELLS_PROFILE = null;
   public boolean CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT = false;
   public boolean CHECK_NEW_TODO = true;
   public TodoPanelSettings myTodoPanelSettings = new TodoPanelSettings();
@@ -61,7 +63,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHOW_DIRTY_RECURSIVELY = false;
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
-  public String UPDATE_FILTER_SCOPE_NAME = null;
+  @NlsSafe public String UPDATE_FILTER_SCOPE_NAME = null;
   public boolean USE_COMMIT_MESSAGE_MARGIN = true;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;

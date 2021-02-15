@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.util.ui.JBEmptyBorder
@@ -59,7 +60,7 @@ sealed class PackagesSmartItem {
             val builder = StringBuffer("${meta.groupId}/${meta.artifactId}")
 
             if (meta.installationInformation.any()) {
-                builder.appendln()
+                builder.appendLine()
                 builder.append("  ${PackageSearchBundle.message("packagesearch.package.copiableInfo.installedVersions")} : ")
                 builder.append(meta.installationInformation.map { it.installedVersion }
                     .distinct()
@@ -70,14 +71,14 @@ sealed class PackagesSmartItem {
 
             meta.remoteInfo?.versions?.let { versions ->
                 if (versions.any()) {
-                    builder.appendln()
+                    builder.appendLine()
                     builder.append("  ${PackageSearchBundle.message("packagesearch.package.copiableInfo.availableVersions")} ")
                     builder.append(versions.joinToString("; ") { it.version })
                 }
             }
 
             meta.remoteInfo?.gitHub?.let { gitHub ->
-                builder.appendln()
+                builder.appendLine()
                 builder.append("  ")
                 builder.append(PackageSearchBundle.message("packagesearch.package.copiableInfo.githubStats"))
                 builder.append(" ")
@@ -88,7 +89,7 @@ sealed class PackagesSmartItem {
 
             meta.remoteInfo?.stackOverflowTags?.tags?.let { tags ->
                 if (tags.any()) {
-                    builder.appendln()
+                    builder.appendLine()
                     builder.append("  ${PackageSearchBundle.message("packagesearch.package.copiableInfo.stackOverflowTags")} ")
                     builder.append(tags.joinToString("; ") { "${it.tag} (${it.count})" })
                 }
@@ -98,7 +99,7 @@ sealed class PackagesSmartItem {
         }
     }
 
-    class Header(defaultTitle: String) : PackagesSmartItem() {
+    class Header(@Label defaultTitle: String) : PackagesSmartItem() {
 
         private val titleLabel = JLabel(defaultTitle).apply {
             foreground = RiderUI.GRAY_COLOR
@@ -146,8 +147,8 @@ sealed class PackagesSmartItem {
             }
 
         var title: String
-            get() = titleLabel.text
-            set(value) {
+            @Label get() = titleLabel.text
+            set(@Label value) {
                 titleLabel.text = value
             }
 

@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +42,7 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class ModuleBuilder extends AbstractModuleBuilder {
-
-  public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
+  private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = new ExtensionPointName<>("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance(ModuleBuilder.class);
   private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<>();
@@ -59,16 +57,21 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public static List<ModuleBuilder> getAllBuilders() {
+  public static @NotNull List<ModuleBuilder> getAllBuilders() {
     List<ModuleBuilder> result = new ArrayList<>();
-    for (final ModuleType<?> moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
-      result.add(moduleType.createModuleBuilder());
+    for (ModuleType<?> moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
+      ModuleBuilder builder = moduleType.createModuleBuilder();
+      if (builder.isAvailable()) {
+        result.add(builder);
+      }
     }
-    for (ModuleBuilderFactory factory : EP_NAME.getExtensions()) {
-      result.add(factory.createBuilder());
-    }
-    return ContainerUtil.filter(result, moduleBuilder -> moduleBuilder.isAvailable());
+    EP_NAME.forEachExtensionSafe(factory -> {
+      ModuleBuilder builder = factory.createBuilder();
+      if (builder.isAvailable()) {
+        result.add(builder);
+      }
+    });
+    return result;
   }
 
   public static void deleteModuleFile(String moduleFilePath) {

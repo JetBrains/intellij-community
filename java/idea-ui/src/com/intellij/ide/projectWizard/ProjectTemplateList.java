@@ -41,7 +41,7 @@ public class ProjectTemplateList extends JPanel {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
 
-    GroupedItemsListRenderer<ProjectTemplate> renderer = new GroupedItemsListRenderer<ProjectTemplate>(new ListItemDescriptorAdapter<>() {
+    GroupedItemsListRenderer<ProjectTemplate> renderer = new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<ProjectTemplate>() {
       @NotNull
       @Override
       public String getTextFor(ProjectTemplate value) {

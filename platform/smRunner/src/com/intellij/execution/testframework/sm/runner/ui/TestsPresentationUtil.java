@@ -7,6 +7,7 @@ import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
@@ -91,7 +92,7 @@ public final class TestsPresentationUtil {
     if (endTime != 0) {
       final long time = endTime - startTime;
       sb.append(DOUBLE_SPACE);
-      sb.append('(').append(StringUtil.formatDuration(time, "\u2009")).append(')');
+      sb.append('(').append(NlsMessages.formatDurationApproximateNarrow(time)).append(')');
     }
     sb.append(DOUBLE_SPACE);
 

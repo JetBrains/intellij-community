@@ -5,8 +5,6 @@ import org.jetbrains.annotations.NonNls
 
 class DefaultFloatingToolbarProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
 
-  override val priority = 0
-
   override val autoHideable = true
 
   companion object {

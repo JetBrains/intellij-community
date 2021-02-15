@@ -9,6 +9,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TooltipWithClickableLinks;
@@ -156,7 +157,16 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     myActionLink = new ActionLink(PyBundle.message("form.debugger.clear.caches.action"), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        PySignatureCacheManager.getInstance(myProject).clearCache();
+        boolean cleared = PySignatureCacheManager.getInstance(myProject).clearCache();
+        String message;
+        if (cleared) {
+          message = PyBundle.message("python.debugger.collection.signatures.deleted");
+        }
+        else {
+          message = PyBundle.message("python.debugger.nothing.to.delete");
+        }
+        Messages.showInfoMessage(myProject, message, PyBundle.message("debugger.delete.signature.cache"));
+
       }
     });
   }

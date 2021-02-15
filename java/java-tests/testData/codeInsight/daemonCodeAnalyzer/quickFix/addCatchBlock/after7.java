@@ -10,10 +10,10 @@ class Test {
 
     void m() {
         try (MyResource r = new MyResource()) {
-        } catch (E2 e2) {
-            <selection>e2.printStackTrace();</selection>
         } catch (E1 e1) {
             e1.printStackTrace();
+        } catch (E2 e2) {
+            e2.printStackTrace();
         }
     }
 }

@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.plugins.pipelines.services
 
-import circlet.pipelines.config.api.ScriptConfig
-import circlet.pipelines.config.api.parseProjectConfig
-import circlet.pipelines.config.api.printJson
+import circlet.automation.bootstrap.AutomationDslEvaluationBootstrap
+import circlet.pipelines.config.idea.api.IdeaScriptConfig
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.io.safeOutputStream
@@ -20,7 +19,7 @@ private val log = logger<ScriptKtsPersistentState>()
 class ScriptKtsPersistentState(val project: Project) {
 
   // not for load failure
-  fun load(): ScriptConfig? {
+  fun load(): IdeaScriptConfig? {
 
     val path = getCacheFile(project)
 
@@ -37,7 +36,12 @@ class ScriptKtsPersistentState(val project: Project) {
 
     return try {
       Files.newBufferedReader(path, Charsets.UTF_8).use { reader ->
-        reader.readLine().parseProjectConfig()
+        val evalService = AutomationDslEvaluationBootstrap(log, getAutomationConfigurationWithFallback()).loadEvaluatorForIdea()
+        if (evalService == null) {
+          log.error("DSL evaluation service not found, cannot deserialize automation DSL model")
+          return null
+        }
+        evalService.deserializeJsonConfig(reader.readLine())
       }
     }
     catch (e: NoSuchFileException) {
@@ -53,7 +57,7 @@ class ScriptKtsPersistentState(val project: Project) {
     return project.getProjectCachePath("space_automation").resolve(".space.kts.dat")
   }
 
-  fun save(config: ScriptConfig) {
+  fun save(config: IdeaScriptConfig) {
     val path = getCacheFile(project)
     path.safeOutputStream().use {
       it.write(config.printJson().toByteArray(Charsets.UTF_8))

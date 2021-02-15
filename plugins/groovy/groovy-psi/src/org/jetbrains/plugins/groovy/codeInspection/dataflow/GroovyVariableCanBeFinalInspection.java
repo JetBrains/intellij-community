@@ -7,8 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
@@ -27,8 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.Collection;
 import java.util.List;
 
-public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBase {
-
+public final class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBase {
   private static final Function<ProblemDescriptor, PsiModifierList> ID_MODIFIER_LIST_PROVIDER =
     descriptor -> {
       final PsiElement identifier = descriptor.getPsiElement();
@@ -81,22 +79,20 @@ public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBas
   @Override
   public void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
-    final DFAEngine<TObjectIntHashMap<GrVariable>> engine = new DFAEngine<>(
+    final DFAEngine<Object2IntMap<GrVariable>> engine = new DFAEngine<>(
       flow,
       new WritesCounterDFAInstance(),
       new WritesCounterSemilattice<>()
     );
-    final List<TObjectIntHashMap<GrVariable>> dfaResult = engine.performDFAWithTimeout();
-    if (dfaResult == null || dfaResult.isEmpty()) return;
+    List<Object2IntMap<GrVariable>> dfaResult = engine.performDFAWithTimeout();
+    if (dfaResult == null || dfaResult.isEmpty()) {
+      return;
+    }
 
-    dfaResult.get(dfaResult.size() - 1).forEachEntry(new TObjectIntProcedure<GrVariable>() {
-      @Override
-      public boolean execute(GrVariable variable, int writesCount) {
-        if (writesCount == 1) {
-          process(owner, variable, problemsHolder);
-        }
-        return true;
+    for (Object2IntMap.Entry<GrVariable> entry : dfaResult.get(dfaResult.size() - 1).object2IntEntrySet()) {
+      if (entry.getIntValue() == 1) {
+        process(owner, entry.getKey(), problemsHolder);
       }
-    });
+    }
   }
 }

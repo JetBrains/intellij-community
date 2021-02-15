@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.*;
 
-import static com.intellij.openapi.vcs.changes.patch.PatchWriter.shouldUseDefaultSeparator;
+import static com.intellij.openapi.vcs.changes.patch.PatchWriter.shouldForceUnixLineSeparator;
 
 public final class UnifiedDiffWriter {
   @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
@@ -45,16 +45,8 @@ public final class UnifiedDiffWriter {
   }
 
   /**
-   * Write patch in a unified diff format with specified lineSeparator.
-   * <p>
-   * For distributed version control (a.e. git, hg) '\n' lineSeparator should be used always;
-   * otherwise dvcs wouldn't accept this patch by default;
-   * <p>
-   * In other cases (a.e svn style) system line separator should be used to support the same format as native 'svn diff' produces.
-   * Moreover, svn keeps existing line separator inside content modification chunks, that's why we have to use another
-   * fileContent line separator; NO_NEWLINE_SIGNATURE for svn-like patch keeps system line separator
-   *
-   * @see <a href=https://youtrack.jetbrains.com/issue/IDEA-40539>IDEA-40539</a>
+   * @param lineSeparator Line separator to use for header lines,
+   *                      and for content lines if {@link TextFilePatch#getLineSeparator()} was not specified.
    */
   public static void write(@Nullable Project project,
                            @Nullable Path basePath,
@@ -63,6 +55,9 @@ public final class UnifiedDiffWriter {
                            @NotNull String lineSeparator,
                            @Nullable CommitContext commitContext,
                            @Nullable List<PatchEP> patchEpExtensions) throws IOException {
+    boolean forceUnixSeparators = shouldForceUnixLineSeparator(project);
+    String headerLineSeparator = forceUnixSeparators ? "\n" : lineSeparator;
+
     // write the patch files without content modifications strictly after the files with content modifications,
     // because GitPatchReader is not ready for mixed style patches
     List<FilePatch> noContentPatches = new ArrayList<>();
@@ -84,12 +79,16 @@ public final class UnifiedDiffWriter {
           }
         }
       }
-      String fileContentLineSeparator =
-        shouldUseDefaultSeparator(project) ? "\n" : ObjectUtils.coalesce(patch.getLineSeparator(), lineSeparator, "\n");
-      writeFileHeading(writer, basePath, patch, lineSeparator, additionalMap);
+
+      String fileContentLineSeparator = patch.getLineSeparator();
+      if (fileContentLineSeparator == null || forceUnixSeparators) {
+        fileContentLineSeparator = headerLineSeparator;
+      }
+
+      writeFileHeading(writer, basePath, patch, headerLineSeparator, additionalMap);
       for (PatchHunk hunk : patch.getHunks()) {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
-                       lineSeparator);
+                       headerLineSeparator);
         for (PatchLine line : hunk.getLines()) {
           char prefixChar = ' ';
           switch (line.getType()) {
@@ -108,7 +107,7 @@ public final class UnifiedDiffWriter {
           writeLine(writer, text, prefixChar);
           if (line.isSuppressNewLine()) {
             // do not use fileContentLineSeparator here, as this line has no own separator
-            writer.write(lineSeparator + NO_NEWLINE_SIGNATURE + lineSeparator);
+            writer.write(headerLineSeparator + NO_NEWLINE_SIGNATURE + headerLineSeparator);
           }
           else {
             writer.write(fileContentLineSeparator);
@@ -117,7 +116,7 @@ public final class UnifiedDiffWriter {
       }
     }
     for (FilePatch patch : noContentPatches) {
-      GitPatchWriter.writeGitHeader(writer, basePath, patch, lineSeparator);
+      GitPatchWriter.writeGitHeader(writer, basePath, patch, headerLineSeparator);
     }
   }
 

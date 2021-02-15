@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.ThreeState;
 import com.intellij.util.xmlb.annotations.*;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -125,23 +124,6 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     result.delegatedBuild = delegatedBuild;
     result.testRunner = testRunner;
     return result;
-  }
-
-  /**
-   * @deprecated use {@link GradleSettings#getStoreProjectFilesExternally}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public ThreeState getStoreProjectFilesExternally() {
-    return ThreeState.UNSURE;
-  }
-
-  /**
-   * @deprecated use {@link GradleSettings#setStoreProjectFilesExternally(boolean)}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public void setStoreProjectFilesExternally(@NotNull ThreeState value) {
   }
 
   /**

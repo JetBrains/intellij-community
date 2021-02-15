@@ -11,6 +11,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import git4idea.DialogManager
+import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_FAILED
+import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_SUCCESS
+import git4idea.GitNotificationIdsHolder.Companion.MERGE_ABORT_FAILED
+import git4idea.GitNotificationIdsHolder.Companion.MERGE_ABORT_SUCCESS
+import git4idea.GitNotificationIdsHolder.Companion.REVERT_ABORT_FAILED
+import git4idea.GitNotificationIdsHolder.Companion.REVERT_ABORT_SUCCESS
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.Git
@@ -32,18 +38,18 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
   protected abstract val notificationErrorDisplayId: String
 
   class Merge : GitAbortOperationAction(Repository.State.MERGING, GitBundle.message("abort.operation.merge.name"), GitCommand.MERGE) {
-    override val notificationSuccessDisplayId = "git.merge.abort.success"
-    override val notificationErrorDisplayId = "git.merge.abort.failed"
+    override val notificationSuccessDisplayId = MERGE_ABORT_SUCCESS
+    override val notificationErrorDisplayId = MERGE_ABORT_FAILED
   }
 
   class CherryPick : GitAbortOperationAction(Repository.State.GRAFTING, GitBundle.message("abort.operation.cherry.pick.name"), GitCommand.CHERRY_PICK) {
-    override val notificationSuccessDisplayId = "git.cherry.pick.abort.success"
-    override val notificationErrorDisplayId = "git.cherry.pick.abort.failed"
+    override val notificationSuccessDisplayId = CHERRY_PICK_ABORT_SUCCESS
+    override val notificationErrorDisplayId = CHERRY_PICK_ABORT_FAILED
   }
 
   class Revert : GitAbortOperationAction(Repository.State.REVERTING, GitBundle.message("abort.operation.revert.name"), GitCommand.REVERT) {
-    override val notificationSuccessDisplayId = "git.revert.abort.success"
-    override val notificationErrorDisplayId = "git.revert.abort.failed"
+    override val notificationSuccessDisplayId = REVERT_ABORT_SUCCESS
+    override val notificationErrorDisplayId = REVERT_ABORT_FAILED
   }
 
   override fun performInBackground(repository: GitRepository) {

@@ -2,7 +2,7 @@ android.defaultConfig {
     applicationId = "com.example.myapplication"
     setConsumerProguardFiles(listOf("proguard-android.txt", "proguard-rules.pro"))
     dimension = "abcd"
-    manifestPlaceholders = mapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
+    manifestPlaceholders = mutableMapOf("activityLabel1" to "defaultName1", "activityLabel2" to "defaultName2")
     maxSdkVersion = 23
     multiDexEnabled = true
     setProguardFiles(listOf("proguard-android.txt", "proguard-rules.pro"))

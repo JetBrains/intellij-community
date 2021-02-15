@@ -30,7 +30,7 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
                              info.myLightMethod);
 
         optimizer.searchWord(info.myName,
-                             info.myLightField.getUseScope(),
+                             ReadAction.compute(() -> info.myLightField.getUseScope()),
                              true,
                              info.myLightField);
 

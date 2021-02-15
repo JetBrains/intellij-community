@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 final class XmlReader {
   @SuppressWarnings("SSBasedInspection")
@@ -130,6 +127,51 @@ final class XmlReader {
     }
   }
 
+  static void readContent(@NotNull Element list, @NotNull IdeaPluginDescriptorImpl descriptor) {
+    List<Content> content = list.getContent();
+    List<PluginContentDescriptor.ModuleItem> items = new ArrayList<>();
+    for (Content item : content) {
+      if (!(item instanceof Element)) {
+        continue;
+      }
+
+      Element child = (Element)item;
+      if (child.getName().equals("module")) {
+        items.add(new PluginContentDescriptor.ModuleItem(Objects.requireNonNull(child.getAttributeValue("name")),
+                                                         child.getAttributeValue("package")));
+      }
+      else {
+        throw new RuntimeException("Unknown content item type: " + child.getName());
+      }
+    }
+    descriptor.contentDescriptor = new PluginContentDescriptor(items);
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  static void readNewDependencies(@NotNull Element list, @NotNull IdeaPluginDescriptorImpl descriptor) {
+    List<Content> content = list.getContent();
+    List<ModuleDependenciesDescriptor.ModuleItem> items = new ArrayList<>();
+    for (Content item : content) {
+      if (!(item instanceof Element)) {
+        continue;
+      }
+
+      Element child = (Element)item;
+      switch (child.getName()) {
+        case "module":
+          items.add(new ModuleDependenciesDescriptor.ModuleItem(Objects.requireNonNull(child.getAttributeValue("name")),
+                                                                child.getAttributeValue("package")));
+          break;
+        case "plugin":
+          // todo
+          break;
+        default:
+          throw new RuntimeException("Unknown content item type: " + child.getName());
+      }
+    }
+    descriptor.dependenciesDescriptor = new ModuleDependenciesDescriptor(items);
+  }
+
   static void readIdAndName(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
     String idString = descriptor.id == null ? element.getChildTextTrim("id") : descriptor.id.getIdString();
     String name = element.getChildTextTrim("name");
@@ -159,19 +201,23 @@ final class XmlReader {
           break;
 
         case "use-idea-classloader":
-          descriptor.myUseIdeaClassLoader = Boolean.parseBoolean(attribute.getValue());
+          descriptor.useIdeaClassLoader = Boolean.parseBoolean(attribute.getValue());
           break;
 
         case "allow-bundled-update":
-          descriptor.myAllowBundledUpdate = Boolean.parseBoolean(attribute.getValue());
+          descriptor.allowBundledUpdate = Boolean.parseBoolean(attribute.getValue());
           break;
 
         case "implementation-detail":
-          descriptor.myImplementationDetail = Boolean.parseBoolean(attribute.getValue());
+          descriptor.implementationDetail = Boolean.parseBoolean(attribute.getValue());
           break;
 
         case "require-restart":
-          descriptor.myRequireRestart = Boolean.parseBoolean(attribute.getValue());
+          descriptor.requireRestart = Boolean.parseBoolean(attribute.getValue());
+          break;
+
+        case "package":
+          descriptor.packagePrefix = Strings.nullize(attribute.getValue());
           break;
 
         case "version":
@@ -235,7 +281,7 @@ final class XmlReader {
 
       IdeaPluginDescriptorImpl subDescriptor = new IdeaPluginDescriptorImpl(descriptor.path, descriptor.basePath, descriptor.isBundled());
       subDescriptor.id = rootDescriptor.id;
-      subDescriptor.name = rootDescriptor.name;
+      subDescriptor.descriptorPath = dependency.configFile;
       visitedFiles.add(configFile);
       if (subDescriptor.readExternal(element, pathResolver, context, rootDescriptor)) {
         dependency.subDescriptor = subDescriptor;

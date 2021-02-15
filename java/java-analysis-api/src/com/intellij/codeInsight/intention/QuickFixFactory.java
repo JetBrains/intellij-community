@@ -497,4 +497,6 @@ public abstract class QuickFixFactory {
    */
   public abstract @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
                                                                             @NotNull PsiClass parentClass, @NotNull PsiClass subClass);
+
+  public abstract @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList);
 }

@@ -9,22 +9,24 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
 import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
 
 public class ContainerUtilTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(ContainerUtilTest.class);
-  public void testFindInstanceOf() {
+  public void testFindInstanceWorks() {
     Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList<>(), "1").iterator();
     String string = ContainerUtil.findInstance(iterator, String.class);
     assertEquals("1", string);
   }
 
-  public void testConcatTwo() {
+  public void testConcatTwoListsMustSupportListContracts() {
     Iterable<Object> concat = ContainerUtil.concat(Collections.emptySet(), Collections.emptySet());
     assertFalse(concat.iterator().hasNext());
     Iterable<Object> foo = ContainerUtil.concat(Collections.emptySet(), Collections.singletonList("foo"));
@@ -46,7 +48,7 @@ public class ContainerUtilTest extends TestCase {
     assertFalse(iterator.hasNext());
   }
 
-  public void testConcatMulti() {
+  public void testConcatMultipleListsWorks() {
     List<Integer> l = ContainerUtil.concat(Arrays.asList(1, 2), Collections.emptyList(), Arrays.asList(3, 4));
     assertEquals(4, l.size());
     assertEquals(1, (int)l.get(0));
@@ -69,7 +71,7 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
-  public void testConcatCME() {
+  public void testConcatedListsAfterModificationMustThrowCME() {
     List<Integer> a1 = new ArrayList<>(Arrays.asList(0, 1));
     List<Integer> l = ContainerUtil.concat(a1, Arrays.asList(2, 3), ContainerUtil.emptyList());
     assertEquals(4, l.size());
@@ -178,19 +180,19 @@ public class ContainerUtilTest extends TestCase {
           list.add(ints.get(i));
         }
       }
-    }).reattemptUntilJitSettlesDown().assertTiming();
+    }).assertTiming();
     for (int i = 0; i < list.size(); i++) {
       assertEquals(i, list.get(i));
     }
   }
 
-  private static void assertReallyEmpty(List<Object> my) {
+  private static void assertReallyEmpty(List<?> my) {
     assertEquals(0, my.size());
 
     Object[] objects = my.toArray();
     assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, objects);
 
-    Iterator<Object> iterator = my.iterator();
+    Iterator<?> iterator = my.iterator();
     assertSame(Collections.emptyIterator(), iterator);
   }
 
@@ -239,6 +241,22 @@ public class ContainerUtilTest extends TestCase {
     }
     catch (NoSuchElementException ignore) {
     }
+  }
+
+  public void testLockFreeListStreamMustNotCMEOnParallelModifications() throws Exception {
+    List<String> list = ContainerUtil.createLockFreeCopyOnWriteList();
+    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(
+      () -> {
+        for (int i = 0; i < 100_000_000; i++) {
+          list.add("");
+          list.remove("");
+        }
+      });
+    for (int i = 0; i < 100_000_000; i++) {
+      assertNotNull(list.stream().findFirst());
+    }
+    future.get();
+    assertReallyEmpty(list);
   }
 
   public void testImmutableListEquals() {
@@ -300,7 +318,7 @@ public class ContainerUtilTest extends TestCase {
     return new UnfairTextRange(start, end);
   }
 
-  private static List<Segment> mergeSegmentLists(List<Segment> list1, List<Segment> list2) {
+  private static List<Segment> mergeSegmentLists(List<? extends Segment> list1, List<? extends Segment> list2) {
     return ContainerUtil.mergeSortedLists(list1, list2, Segment.BY_START_OFFSET_THEN_END_OFFSET, true);
   }
 

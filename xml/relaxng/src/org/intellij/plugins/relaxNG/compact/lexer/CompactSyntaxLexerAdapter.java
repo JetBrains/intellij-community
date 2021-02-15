@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.parse.compact.*;
 
-import java.io.CharArrayReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -128,11 +126,6 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
     }
   }
 
-  @Deprecated
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myBuffer);
-  }
-
   @NotNull
   @Override
   public CharSequence getBufferSequence() {
@@ -171,14 +164,6 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
     } else {
       return myCurrentTokenType;
     }
-  }
-
-  @Deprecated
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myBuffer = new CharArrayCharSequence(buffer, startOffset, endOffset);
-
-    final CharArrayReader reader = new CharArrayReader(buffer, startOffset, endOffset - startOffset);
-    init(startOffset, endOffset, reader, initialState);
   }
 
   @Override

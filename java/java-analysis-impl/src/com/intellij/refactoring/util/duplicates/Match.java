@@ -205,14 +205,10 @@ public final class Match {
 
         return instanceExpression == null;
       }
-      else {
-        if (instanceExpression != null) {
-          return PsiEquivalenceUtil.areElementsEquivalent(instanceExpression, myInstanceExpression.get());
-        }
-        else {
-          return myInstanceExpression.get() == null || myInstanceExpression.get() instanceof PsiThisExpression;
-        }
+      if (instanceExpression != null) {
+        return PsiEquivalenceUtil.areElementsEquivalent(instanceExpression, myInstanceExpression.get());
       }
+      return myInstanceExpression.get() instanceof PsiThisExpression;
     }
   }
 

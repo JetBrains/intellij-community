@@ -4,12 +4,12 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -18,8 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * ChangeListManager updates scheduler.
@@ -151,31 +149,26 @@ public final class UpdateRequestsQueue {
 
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
-                                @Nullable String title,
-                                @Nullable ModalityState state) {
+                                @Nullable @Nls String title) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
-    final CallbackData data = CallbackData.create(myProject, mode, afterUpdate, title, state);
+    InvokeAfterUpdateCallback.Callback callback = InvokeAfterUpdateCallback.create(myProject, mode, afterUpdate, title);
 
     boolean stopped;
     synchronized (myLock) {
       stopped = myStopped;
       if (!stopped) {
-        myWaitingUpdateCompletionQueue.add(data.getCallback());
+        myWaitingUpdateCompletionQueue.add(callback::endProgress);
         schedule();
       }
     }
     if (stopped) {
       LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myProject.isDisposed()) {
-          afterUpdate.run();
-        }
-      }, notNull(state, ModalityState.defaultModalityState()));
-      return;
+      callback.handleStoppedQueue();
     }
-    // invoke progress if needed
-    data.getWrapperStarter().run();
-    LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
+    else {
+      callback.startProgress();
+      LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
+    }
   }
 
   // true = do not execute

@@ -10,6 +10,9 @@
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
+                    serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
+
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
@@ -36,7 +39,6 @@
     <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher" order="first"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
-    <referencesSearch implementation="com.jetbrains.python.psi.search.PyClassReferenceSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyKeywordArgumentSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
 
@@ -379,6 +381,9 @@
     </extensionPoint>
     <extensionPoint qualifiedName="Pythonid.pyReferenceCustomTargetChecker"
                     interface="com.jetbrains.python.psi.impl.references.PyReferenceCustomTargetChecker"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.typeCheckerExtension"
+                    interface="com.jetbrains.python.psi.types.PyTypeCheckerExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyDataclassParametersProvider"
                     interface="com.jetbrains.python.codeInsight.PyDataclassParametersProvider"

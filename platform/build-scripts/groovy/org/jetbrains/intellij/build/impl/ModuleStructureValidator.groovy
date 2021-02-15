@@ -12,29 +12,30 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 
 @CompileStatic
-class ModuleStructureValidator {
-
+final class ModuleStructureValidator {
   private static QName includeName = new QName("http://www.w3.org/2001/XInclude", "include")
   private static QName fallbackName = new QName("http://www.w3.org/2001/XInclude", "fallback")
 
-  private static HashSet<String> pathAttributes = new HashSet<String>([
+  private static Set<String> pathAttributes = Set.of(
     "interface", "implementation", "class", "topic", "instance", "provider",
     "implements", "headlessImplementation", "serviceInterface", "serviceImplementation",
     "interfaceClass", "implementationClass", "beanClass", "schemeClass", "factoryClass", "handlerClass", "hostElementClass", "targetClass",
     "forClass", "className", "predicateClassName", "displayNameSupplierClassName", "preloaderClassName",
-    "treeRenderer"])
+    "treeRenderer"
+  )
 
-  private static HashSet<String> nonPathAttributes = new HashSet<String>([
-    "id", "value", "key", "testServiceImplementation", "defaultExtensionNs", "qualifiedName", "childrenEPName"])
+  private static Set<String> nonPathAttributes = Set.of(
+    "id", "value", "key", "testServiceImplementation", "defaultExtensionNs", "qualifiedName", "childrenEPName"
+  )
 
-  private static HashSet<String> pathElements = new HashSet<String>(["interface-class", "implementation-class"])
-  private static HashSet<String> predefinedTypes = new HashSet<String>(["java.lang.Object"])
-  private static HashSet<String> ignoreModules = new HashSet<String>(["intellij.java.testFramework", "intellij.platform.uast.tests"])
+  private static Set<String> pathElements = Set.of("interface-class", "implementation-class")
+  private static Set<String> predefinedTypes = Set.of("java.lang.Object")
+  private static Set<String> ignoreModules = Set.of("intellij.java.testFramework", "intellij.platform.uast.tests")
 
   private BuildContext buildContext
   private MultiMap<String, String> moduleJars = new MultiMap<String, String>()
-  private HashSet<String> moduleNames = new HashSet<String>()
-  private ArrayList<GString> errors = new ArrayList<>()
+  private Set<String> moduleNames = new HashSet<String>()
+  private List<GString> errors = new ArrayList<>()
 
   ModuleStructureValidator(BuildContext buildContext, MultiMap<String, String> moduleJars) {
     this.buildContext = buildContext
@@ -53,7 +54,7 @@ class ModuleStructureValidator {
     validateJarModules()
 
     buildContext.messages.info("Validating modules...")
-    def visitedModules = new HashSet<JpsModule>()
+    Set<JpsModule> visitedModules = new HashSet<JpsModule>()
     for (moduleName in moduleNames) {
       if (ignoreModules.contains(moduleName)) {
         continue
@@ -185,7 +186,7 @@ class ModuleStructureValidator {
   }
 
   private void validateXmlRegistrations(HashSet<File> descriptors) {
-    def classes = new HashSet<String>(predefinedTypes.collect())
+    def classes = new HashSet<String>(predefinedTypes)
     for (moduleName in moduleNames) {
       def outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(buildContext.findModule(moduleName), false)
       outputDirectory.eachFileRecurse(FileType.FILES) {
@@ -229,19 +230,22 @@ class ModuleStructureValidator {
 
     for (child in xml.children()) {
       if (child instanceof Node) {
-        for (pathElement in pathElements) {
-          if (!(child.name() == pathElement)) continue
-          checkRegistration(source, child.text(), classes)
+        Node node = (Node)child
+        for (String pathElement in pathElements) {
+          if (node.name() == pathElement) {
+            checkRegistration(source, node.text(), classes)
+          }
         }
 
-        validateXmlRegistrationsRec(source, (Node)child, classes)
+        validateXmlRegistrationsRec(source, node, classes)
       }
     }
   }
 
   private void checkRegistration(String source, String value, HashSet<String> classes) {
-    if (value.isEmpty()) return
-    if (classes.contains(value)) return
+    if (value.isEmpty() || classes.contains(value)) {
+      return
+    }
     errors.add("Unresolved registration '$value' in $source")
   }
 }

@@ -505,10 +505,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final VirtualFile condaFolder = PythonSdkUtil.isConda(sdk) ? PythonSdkUtil.getCondaDirectory(sdk) : null;
     for (String path : paths) {
       if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
-        // Sometimes we can't restore capitalization of an existing and accessible root, e.g. for directories
-        // under "C:\Program Files\WindowsApps". In this case, rely on VFS judgment of the original path.
-        String normalizedPath = ObjectUtils.notNull(restorePathCapitalization(path), path);
-        final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(normalizedPath);
+        final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
         if (virtualFile != null && !virtualFile.equals(condaFolder)) {
           final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
           if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
@@ -520,16 +517,6 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       LOG.info("Bogus sys.path entry " + path);
     }
     return results;
-  }
-
-  @Nullable
-  private static String restorePathCapitalization(@NotNull String path) {
-    try {
-      return Paths.get(path).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
-    }
-    catch (IOException e) {
-      return null;
-    }
   }
 
   /**

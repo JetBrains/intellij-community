@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.PlatformUtils;
@@ -62,7 +61,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
   private String mySmallSvgEapIconUrl;
-  private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
+  private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.svg";
   private String myWelcomeScreenLogoUrl;
 
   private Calendar myBuildDate;
@@ -101,6 +100,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
   private final List<ProgressSlide> myProgressSlides = new ArrayList<>();
+
+  private String myDefaultLightLaf;
+  private String myDefaultDarkLaf;
 
   private static final @NonNls String ELEMENT_VERSION = "version";
   private static final @NonNls String ATTRIBUTE_MAJOR = "major";
@@ -176,6 +178,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
   private static final @NonNls String PROGRESS_SLIDE = "progressSlide";
   private static final @NonNls String PROGRESS_PERCENT = "progressPercent";
+
+  private static final @NonNls String ELEMENT_DEFAULT_LAF = "default-laf";
+  private static final @NonNls String ATTRIBUTE_LAF_LIGHT = "light";
+  private static final @NonNls String ATTRIBUTE_LAF_DARK = "dark";
 
   static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
@@ -399,6 +405,19 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       mySubscriptionTipsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY);
       mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
       mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
+    }
+
+    Element defaultLafElement = getChild(element, ELEMENT_DEFAULT_LAF);
+    if (defaultLafElement != null) {
+      String laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_LIGHT);
+      if (laf != null) {
+        myDefaultLightLaf = laf.trim();
+      }
+
+      laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_DARK);
+      if (laf != null) {
+        myDefaultDarkLaf = laf.trim();
+      }
     }
   }
 
@@ -827,7 +846,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   }
 
   @Override
-  public List<ProgressSlide> getProgressSlides() {
+  public @NotNull List<ProgressSlide> getProgressSlides() {
     return myProgressSlides;
   }
 
@@ -887,7 +906,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
       }
 
       String builtinPluginsUrl = element.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
-      if (StringUtil.isNotEmpty(builtinPluginsUrl)) {
+      if (builtinPluginsUrl != null && !builtinPluginsUrl.isEmpty()) {
         myBuiltinPluginsUrl = builtinPluginsUrl;
       }
     }
@@ -965,6 +984,16 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   @Override
   public @NotNull List<PluginId> getEssentialPluginsIds() {
     return myEssentialPluginsIds;
+  }
+
+  @Override
+  public @Nullable String getDefaultLightLaf() {
+    return myDefaultLightLaf;
+  }
+
+  @Override
+  public @Nullable String getDefaultDarkLaf() {
+    return myDefaultDarkLaf;
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
-import circlet.code.api.CodeReviewRecord
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollPaneFactory
@@ -15,8 +14,11 @@ import javax.swing.ScrollPaneConstants
 
 
 object SpaceReviewCommitListFactory {
-  internal fun createCommitList(reviewDetailsVm: CrDetailsVm<out CodeReviewRecord>): JComponent {
-    val listModel: CollectionListModel<ReviewCommitListItem> = CollectionListModel()
+  internal fun createCommitList(
+    commitListVm: SpaceReviewCommitListVm,
+    commitListController: SpaceReviewCommitListController
+  ): JComponent {
+    val listModel: CollectionListModel<SpaceReviewCommitListItem> = CollectionListModel()
 
     val commitList = JBList(listModel).apply {
       selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
@@ -32,15 +34,19 @@ object SpaceReviewCommitListFactory {
       ListSpeedSearch(it) { commit -> commit.commitWithGraph.commit.message }
     }
 
-    reviewDetailsVm.commits.forEach(reviewDetailsVm.lifetime) { commits ->
+    commitListVm.commits.forEach(commitListVm.lifetime) { commits ->
       listModel.removeAll()
-      if (commits != null) {
-        listModel.add(commits)
-      }
+      listModel.add(commits)
+      commitList.setSelectionInterval(0, commits.size - 1) // select all by default
     }
 
     commitList.addListSelectionListener {
-      reviewDetailsVm.selectedCommitIndices.value = commitList.selectedIndices.toList()
+      val selectedCommitIndices = if (commitList.selectedIndices.isNotEmpty()) {
+        commitList.selectedIndices.toList()
+      } else {
+        (0 until commitList.itemsCount).toList()
+      }
+      commitListController.setSelectedCommitsIndices(selectedCommitIndices)
     }
 
     return ScrollPaneFactory.createScrollPane(commitList, true).apply {

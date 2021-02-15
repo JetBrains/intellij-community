@@ -37,7 +37,7 @@ class JUnit5NavigationTest {
   void methodNavigation() throws Exception {
     UniqueId uniqueId = UniqueId.parse("[class:JUnit5NavigationTest]/[method:methodNavigation]");
     TestMethodTestDescriptor methodTestDescriptor =
-      new TestMethodTestDescriptor(uniqueId, JUnit5NavigationTest.class, JUnit5NavigationTest.class.getDeclaredMethod("methodNavigation"));
+      new TestMethodTestDescriptor(uniqueId, JUnit5NavigationTest.class, JUnit5NavigationTest.class.getDeclaredMethod("methodNavigation"), JUnit5EventsTest.createJupiterConfiguration());
     TestIdentifier testIdentifier = TestIdentifier.from(methodTestDescriptor);
     Assertions.assertEquals(JUnit5NavigationTest.class.getName(), JUnit5TestExecutionListener.getClassName(testIdentifier));
     Assertions.assertEquals("methodNavigation", JUnit5TestExecutionListener.getMethodName(testIdentifier));

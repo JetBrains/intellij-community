@@ -4,6 +4,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.util.Computable
+import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
@@ -55,8 +56,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
           // will throw PCE which will cancel the runBlocking Job and thrown further in the caller of runSuspendingAction
           indicator.checkCanceled()
         }
-        // timeout taken from ProgressIndicatorUtils#awaitWithCheckCanceled(Semaphore, ProgressIndicator)
-        delay(10)
+        delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
       }
     }
     val result = action()

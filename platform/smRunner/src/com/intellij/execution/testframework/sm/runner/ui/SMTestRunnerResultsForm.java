@@ -129,6 +129,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     //Create tests common suite root
     myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName(), console);
+    myTestsRootNode.setTestConsoleProperties(consoleProperties);
     //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
     // Fire selection changed and move focus on SHIFT+ENTER
@@ -798,7 +799,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       List<SMTestProxy> tests = myRoot.getAllTests();
       for (SMTestProxy proxy : tests) {
         String url = proxy.getLocationUrl();
-        if (url != null) {
+        if (url != null && proxy.getLocator() != null) {
           String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
           DumbService.getInstance(getProject()).runWhenSmart(() -> {
             Project project = getProject();

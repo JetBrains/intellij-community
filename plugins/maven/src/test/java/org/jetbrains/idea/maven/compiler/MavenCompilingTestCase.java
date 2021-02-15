@@ -18,12 +18,9 @@ import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenResourceCompilerConfigurationGenerator;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,9 +41,6 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   private void compile(final CompileScope scope) {
     try {
       CompilerTester tester = new CompilerTester(myProject, Arrays.asList(scope.getAffectedModules()), null);
-      UIUtil.invokeAndWaitIfNeeded(
-        (Runnable)() -> new MavenResourceCompilerConfigurationGenerator(myProject, MavenProjectsManager.getInstance(myProject).getProjectsTreeForTests())
-          .generateBuildConfiguration(false));
       try {
         List<CompilerMessage> messages = tester.make(scope);
         for (CompilerMessage message : messages) {

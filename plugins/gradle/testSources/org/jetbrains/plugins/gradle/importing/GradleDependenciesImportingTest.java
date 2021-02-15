@@ -1957,7 +1957,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                                                             Ref<Boolean> docFound) throws IOException {
     Path binaryFileParent = Paths.get(binaryPath).getParent();
     Path grandParentFile = binaryFileParent.getParent();
-    Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         if (binaryFileParent.equals(dir)) {

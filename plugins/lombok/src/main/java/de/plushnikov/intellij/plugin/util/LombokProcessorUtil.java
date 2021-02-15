@@ -1,9 +1,7 @@
 package de.plushnikov.intellij.plugin.util;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,34 +75,16 @@ public final class LombokProcessorUtil {
     return null != getLevelVisibility(psiAnnotation);
   }
 
-  public static Iterable<String> getOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
-    Collection<String> oldOnX = getOldOnX(psiAnnotation, parameterName);
-    Collection<String> newOnX = getNewOnX(psiAnnotation, parameterName + "_");
-    return ContainerUtil.concat(oldOnX, newOnX);
-  }
-
-  public static Collection<String> getOldOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
+  public static Collection<String> getOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
     PsiAnnotationMemberValue onXValue = psiAnnotation.hasAttribute(parameterName) ? psiAnnotation.findAttributeValue(parameterName) : null;
     if (!(onXValue instanceof PsiAnnotation)) {
       return Collections.emptyList();
     }
-    Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues((PsiAnnotation)onXValue, "value", PsiAnnotation.class);
-    return collectAnnotationStrings(annotations);
-  }
-
-  public static Collection<String> getNewOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
-    final Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class);
-    return collectAnnotationStrings(annotations);
-  }
-
-  private static Collection<String> collectAnnotationStrings(Collection<PsiAnnotation> annotations) {
+    Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues((PsiAnnotation) onXValue, "value", PsiAnnotation.class);
     Collection<String> annotationStrings = new ArrayList<>();
     for (PsiAnnotation annotation : annotations) {
-      final String annotationQualifiedName = annotation.getQualifiedName();
-      if (!StringUtil.isEmptyOrSpaces(annotationQualifiedName)) {
-        PsiAnnotationParameterList params = annotation.getParameterList();
-        annotationStrings.add(annotationQualifiedName + params.getText());
-      }
+      PsiAnnotationParameterList params = annotation.getParameterList();
+      annotationStrings.add(PsiAnnotationSearchUtil.getSimpleNameOf(annotation) + params.getText());
     }
     return annotationStrings;
   }

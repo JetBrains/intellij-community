@@ -80,6 +80,7 @@
     </action>
     <action id="CommentByLineComment">
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta c" />
+        <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta u" />
         <keyboard-shortcut first-keystroke="meta slash" />
     </action>
     <action id="CompareClipboardWithSelection">
@@ -661,7 +662,9 @@
         <keyboard-shortcut first-keystroke="ctrl T"/>
     </action>
 
-    <action id="SwitchHeaderSource"/>
+    <action id="SwitchHeaderSource">
+        <keyboard-shortcut first-keystroke="control meta O"/>
+    </action>
     <action id="BuildSolutionAction">
         <keyboard-shortcut first-keystroke="meta shift B"/>
     </action>

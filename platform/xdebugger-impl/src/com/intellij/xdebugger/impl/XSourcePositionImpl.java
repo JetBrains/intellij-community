@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.pom.Navigatable;
@@ -44,19 +44,15 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
     if (file == null) return null;
 
     return new XSourcePositionImpl(file) {
-      private final AtomicNotNullLazyValue<Integer> myLine = new AtomicNotNullLazyValue<Integer>() {
-        @NotNull
-        @Override
-        protected Integer compute() {
-          return ReadAction.compute(() -> {
-            Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document == null) {
-              return -1;
-            }
-            return DocumentUtil.isValidOffset(offset, document) ? document.getLineNumber(offset) : -1;
-          });
-        }
-      };
+      private final NotNullLazyValue<Integer> myLine = NotNullLazyValue.atomicLazy(() -> {
+        return ReadAction.compute(() -> {
+          Document document = FileDocumentManager.getInstance().getDocument(file);
+          if (document == null) {
+            return -1;
+          }
+          return DocumentUtil.isValidOffset(offset, document) ? document.getLineNumber(offset) : -1;
+        });
+      });
 
       @Override
       public int getLine() {
@@ -87,16 +83,12 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
       SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
 
     return new XSourcePositionImpl(file) {
-      private final AtomicNotNullLazyValue<XSourcePosition> myDelegate = new AtomicNotNullLazyValue<XSourcePosition>() {
-        @NotNull
-        @Override
-        protected XSourcePosition compute() {
-          return ReadAction.compute(() -> {
-            PsiElement elem = pointer.getElement();
-            return XSourcePositionImpl.createByOffset(pointer.getVirtualFile(), elem != null ? elem.getTextOffset() : -1);
-          });
-        }
-      };
+      private final NotNullLazyValue<XSourcePosition> myDelegate = NotNullLazyValue.atomicLazy(() -> {
+        return ReadAction.compute(() -> {
+          PsiElement elem = pointer.getElement();
+          return XSourcePositionImpl.createByOffset(pointer.getVirtualFile(), elem != null ? elem.getTextOffset() : -1);
+        });
+      });
 
       @Override
       public int getLine() {
@@ -142,33 +134,29 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
     }
 
     return new XSourcePositionImpl(file) {
-      private final AtomicNotNullLazyValue<Integer> myOffset = new AtomicNotNullLazyValue<Integer>() {
-        @NotNull
-        @Override
-        protected Integer compute() {
-          return ReadAction.compute(() -> {
-            int offset;
-            if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
+      private final NotNullLazyValue<Integer> myOffset = NotNullLazyValue.atomicLazy(() -> {
+        return ReadAction.compute(() -> {
+          int offset;
+          if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
+            return -1;
+          }
+          else {
+            Document document = FileDocumentManager.getInstance().getDocument(file);
+            if (document == null) {
               return -1;
             }
-            else {
-              Document document = FileDocumentManager.getInstance().getDocument(file);
-              if (document == null) {
-                return -1;
-              }
-              int l = Math.max(0, line);
-              int c = Math.max(0, column);
+            int l = Math.max(0, line);
+            int c = Math.max(0, column);
 
-              offset = l < document.getLineCount() ? document.getLineStartOffset(l) + c : -1;
+            offset = l < document.getLineCount() ? document.getLineStartOffset(l) + c : -1;
 
-              if (offset >= document.getTextLength()) {
-                offset = document.getTextLength() - 1;
-              }
+            if (offset >= document.getTextLength()) {
+              offset = document.getTextLength() - 1;
             }
-            return offset;
-          });
-        }
-      };
+          }
+          return offset;
+        });
+      });
 
       @Override
       public int getLine() {

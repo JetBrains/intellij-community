@@ -2,6 +2,7 @@
 package com.intellij.util.messages.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
@@ -21,6 +22,8 @@ class CwmMessageBusTest : LightPlatformTestCase() {
   @Test
   fun testMessageSetsCallerClientIdForHandler() {
     val bus = RootBus(MyMockMessageBusOwner())
+    Disposer.register(testRootDisposable, bus)
+
     val eventsLog: MutableList<String> = ArrayList()
 
     val topic1 = Topic(Runnable::class.java, Topic.BroadcastDirection.TO_CHILDREN)
@@ -48,13 +51,15 @@ class CwmMessageBusTest : LightPlatformTestCase() {
       Assert.assertEquals(clientId_m2, ClientId.current)
     }
 
-    bus.connect().subscribe(topic1, handler_m1_h1)
-    bus.connect().subscribe(topic1, handler_m1_h2)
-    bus.connect().subscribe(topic2, handler_m2_h1)
+    bus.connect(testRootDisposable).subscribe(topic1, handler_m1_h1)
+    bus.connect(testRootDisposable).subscribe(topic1, handler_m1_h2)
+    bus.connect(testRootDisposable).subscribe(topic2, handler_m2_h1)
 
     ClientId.withClientId(clientId_m1) {
       bus.syncPublisher(topic1).run()
     }
+
+    Disposer.dispose(bus)
 
     assertEventsOrder(eventsLog, MESSAGE_1_HANDLER_1, MESSAGE_1_HANDLER_2, MESSAGE_2_HANDLER_1)
   }

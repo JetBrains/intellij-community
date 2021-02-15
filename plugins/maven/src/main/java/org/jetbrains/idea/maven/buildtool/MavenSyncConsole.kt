@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.buildtool
 
-import com.intellij.build.*
+import com.intellij.build.BuildProgressListener
+import com.intellij.build.DefaultBuildDescriptor
+import com.intellij.build.FilePosition
+import com.intellij.build.SyncViewManager
 import com.intellij.build.events.EventResult
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.MessageEventResult
@@ -36,9 +39,9 @@ import org.jetbrains.idea.maven.server.CannotStartServerException
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import javax.swing.JComponent
 
 class MavenSyncConsole(private val myProject: Project) {
   @Volatile
@@ -50,8 +53,6 @@ class MavenSyncConsole(private val myProject: Project) {
   private var hasErrors = false
   private var hasUnresolved = false
   private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
-  private val delayedActions = ArrayList<() -> Unit>()
-  private val shownIssues = HashSet<String>()
 
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
@@ -78,16 +79,13 @@ class MavenSyncConsole(private val myProject: Project) {
     hasUnresolved = false
     wrapperProgressIndicator = WrapperProgressIndicator()
     mySyncView = syncView
-    shownIssues.clear()
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
-    val runDescr = BuildContentDescriptor(null, null, object : JComponent() {}, SyncBundle.message("maven.sync.title"))
-    runDescr.isActivateToolWindowWhenFailed = true
-    runDescr.isActivateToolWindowWhenAdded = false
 
     val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!,
                                             System.currentTimeMillis())
       .withRestartAction(restartAction)
-      .withContentDescriptor{runDescr}
+    descriptor.isActivateToolWindowWhenFailed = true
+    descriptor.isActivateToolWindowWhenAdded = false
 
     mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, SyncBundle.message("maven.sync.project.title", myProject.name)))
     debugLog("maven sync: started importing $myProject")
@@ -111,15 +109,8 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   fun addWarning(@Nls text: String, @Nls description: String) = addWarning(text, description, null)
 
-  fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcess {
-    if (!newIssue(issue.title + issue.description)) return;
-    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, issue, kind))
-    hasErrors = hasErrors || kind == MessageEvent.Kind.ERROR;
-  }
-
   @Synchronized
   fun addWarning(@Nls text: String, @Nls description: String, filePosition: FilePosition?) = doIfImportInProcess {
-    if (!newIssue(text + description + filePosition)) return;
     if (filePosition == null) {
       mySyncView.onEvent(mySyncId,
                          MessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, SyncBundle.message("maven.sync.group.compiler"), text,
@@ -130,11 +121,10 @@ class MavenSyncConsole(private val myProject: Project) {
                          FileMessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, SyncBundle.message("maven.sync.group.compiler"), text,
                                               description, filePosition))
     }
+
+
   }
 
-  private fun newIssue(s: String): Boolean {
-    return shownIssues.add(s)
-  }
 
   @Synchronized
   fun finishImport() {
@@ -210,7 +200,7 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   @ApiStatus.Internal
   fun addException(e: Throwable, progressListener: BuildProgressListener) {
-    if(started && !finished){
+    if (started && !finished) {
       MavenLog.LOG.warn(e)
       hasErrors = true
       @Suppress("HardCodedStringLiteral")
@@ -229,11 +219,11 @@ class MavenSyncConsole(private val myProject: Project) {
       val cause = ExceptionUtil.findCause(e, ExecutionException::class.java)
       if (cause != null) {
         return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
-                                cause.localizedMessage, ExceptionUtil.getThrowableText(cause))
+                                cause.localizedMessage.orEmpty(), ExceptionUtil.getThrowableText(cause))
       }
     }
     return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.error"),
-                            e.localizedMessage, ExceptionUtil.getThrowableText(e))
+                            e.localizedMessage ?: e.message ?: "Error", ExceptionUtil.getThrowableText(e))
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
@@ -324,7 +314,10 @@ class MavenSyncConsole(private val myProject: Project) {
 
 
   @Synchronized
-  private fun downloadEventFailed(keyPrefix: String, @NlsSafe dependency: String, @NlsSafe error: String, @NlsSafe stackTrace: String?) = doIfImportInProcess {
+  private fun downloadEventFailed(keyPrefix: String,
+                                  @NlsSafe dependency: String,
+                                  @NlsSafe error: String,
+                                  @NlsSafe stackTrace: String?) = doIfImportInProcess {
     val downloadString = SyncBundle.message("${keyPrefix}.download")
 
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)

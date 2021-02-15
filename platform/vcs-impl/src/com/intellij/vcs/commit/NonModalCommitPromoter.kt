@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_CHECKIN_PROJECT
 import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -29,7 +29,7 @@ import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.merge
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.commit.CommitWorkflowManager.Companion.setCommitFromLocalChanges
+import com.intellij.vcs.commit.CommitModeManager.Companion.setCommitFromLocalChanges
 import com.intellij.vcs.commit.NonModalCommitPromoter.Companion.getPromotionState
 import com.intellij.vcs.commit.NonModalCommitPromotionState.*
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logPromotionEvent
@@ -51,12 +51,12 @@ internal enum class NonModalCommitPromotionState {
 
 @Service
 internal class NonModalCommitPromoter(private val project: Project) {
-  private val commitWorkflowManager: CommitWorkflowManager get() = CommitWorkflowManager.getInstance(project)
+  private val commitModeManager: CommitModeManager get() = CommitModeManager.getInstance(project)
 
   fun getPromotionPanel(commitDialog: DefaultCommitChangeListDialog): JComponent? {
     if (!commitDialog.isDefaultCommitEnabled) return null
     if (isDontShowAgain()) return null
-    if (commitWorkflowManager.run { !canSetNonModal() || isNonModal() }) return null
+    if (commitModeManager.run { !canSetNonModal() || getCurrentCommitMode() != CommitMode.ModalCommitMode }) return null
 
     setPromotionState(SHOWN)
     return NonModalCommitPromotionPanel(commitDialog)
@@ -105,7 +105,7 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
         SwitchToCommitDialogHint.install(commitDialog.project)
 
         val commitAction = ActionManager.getInstance().getAction(ACTION_CHECKIN_PROJECT) ?: return@addHyperlinkListener
-        invokeAction(commitAction, getProjectContext(commitDialog.project), ActionPlaces.UNKNOWN, null, null)
+        invokeAction(commitAction, SimpleDataContext.getProjectContext(commitDialog.project), ActionPlaces.UNKNOWN, null, null)
       }
     }
 

@@ -25,7 +25,7 @@ import java.util.*;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenPluginParamInfo {
+public final class MavenPluginParamInfo {
 
   private static final Logger LOG = Logger.getInstance(MavenPluginParamInfo.class);
 

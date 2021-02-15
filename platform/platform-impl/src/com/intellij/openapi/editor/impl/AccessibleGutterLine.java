@@ -131,7 +131,7 @@ final class AccessibleGutterLine extends JPanel {
     if (focusOwner instanceof AccessibleGutterElement) {
       ((AccessibleGutterElement)focusOwner).myAccessible.performAction(convertAnActionEventToMouseAnActionEvent(e, focusOwner));
     }
-      }
+  }
 
   private void moveLeft() {
     IdeFocusManager.getGlobalInstance().requestFocus(getFocusTraversalPolicy().getComponentBefore(this, mySelectedElement), true);

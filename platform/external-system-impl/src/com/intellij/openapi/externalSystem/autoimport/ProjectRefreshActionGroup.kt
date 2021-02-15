@@ -13,13 +13,6 @@ import com.intellij.testFramework.LightVirtualFileBase
 class ProjectRefreshActionGroup : DefaultActionGroup() {
   override fun update(e: AnActionEvent) {
     ensureValidActionVisibility(e)
-    val project = e.project ?: return
-    val toolbarComponent = e.toolbarComponent ?: return
-    val notificationAware = ProjectNotificationAware.getInstance(project)
-    when (notificationAware.isNotificationVisible()) {
-      true -> toolbarComponent.scheduleShow()
-      else -> toolbarComponent.scheduleHide()
-    }
   }
 
   private fun ensureValidActionVisibility(e: AnActionEvent) {
@@ -36,7 +29,4 @@ class ProjectRefreshActionGroup : DefaultActionGroup() {
     if (virtualFile is LightVirtualFileBase) return false
     return virtualFile != null && virtualFile.isValid
   }
-
-  private val AnActionEvent.toolbarComponent: FloatingToolbarComponent?
-    get() = getData(FloatingToolbarComponent.KEY)
 }

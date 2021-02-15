@@ -6,13 +6,10 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ProductProperties
 
 @CompileStatic
-class VmOptionsGenerator {
+final class VmOptionsGenerator {
   static final List<String> COMMON_VM_OPTIONS =
     [
-/* Android Studio: removed by Change I4fd91d66
-      '-XX:+UseConcMarkSweepGC',
-Android Studio: removed by Change I4fd91d66 */
-      '-XX:+UseG1GC',  // Android Studio: added by Change I4fd91d66
+      '-XX:+UseG1GC',
       '-XX:SoftRefLRUPolicyMSPerMB=50',
       '-XX:CICompilerCount=2',
 /* Android Studio: removed by Change Ie7351d92
@@ -51,6 +48,8 @@ Android Studio: removed by Change Ie7351d92 */
       // Android Studio: modified by Change Ie7351d92
       case JvmArchitecture.x32: return ['-server', '-Xms256m', '-Xmx768m', '-XX:ReservedCodeCacheSize=384m']
       case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms256m', '-Xmx1280m', defaultCodeCacheSetting]
+      case JvmArchitecture.aarch64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
+      // todo review options for aarch64
     }
     throw new AssertionError(arch)
   }

@@ -76,6 +76,37 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
       }
     }
   }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ModuleEntityData) return false
+
+    if (name != other.name) return false
+    if (type != other.type) return false
+    if (dependencies != other.dependencies) return false
+
+    return true
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ModuleEntityData) return false
+
+    if (name != other.name) return false
+    if (type != other.type) return false
+    if (dependencies != other.dependencies) return false
+    if (entitySource != other.entitySource) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = name.hashCode()
+    result = 31 * result + (type?.hashCode() ?: 0)
+    result = 31 * result + dependencies.hashCode()
+    result = 31 * result + entitySource.hashCode()
+    return result
+  }
 }
 
 class ModuleEntity(
@@ -358,25 +389,57 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAsse
 
   override fun assertConsistency(storage: WorkspaceEntityStorage) {
     // Module can have a different entity source in case of OC
-    if (this.entitySource.toString() == "OCEntitySource") return
-
-    val thisEntity = this.createEntity(storage)
-    val attachedModule = thisEntity.module
 
     // The assertion is currently disabled because it fails
     // com.android.tools.idea.gradle.project.sync.GradleSyncProjectComparisonTest.GradleSyncProjectComparisonTestCase.testPsdSampleRenamingModule
 
-/*
-    assert(thisEntity.entitySource == attachedModule.entitySource) {
-      """
-      |Entity source of content root entity and it's module entity differs. 
-      |   Module entity source: ${attachedModule.entitySource}
-      |   Content root source: ${thisEntity.entitySource}
-      |   Module entity: $attachedModule
-      |   Content root entity: $thisEntity
-      """.trimMargin()
-    }
-*/
+    /*
+        if (this.entitySource.toString() == "OCEntitySource") return
+
+        val thisEntity = this.createEntity(storage)
+        val attachedModule = thisEntity.module
+
+        assert(thisEntity.entitySource == attachedModule.entitySource) {
+          """
+          |Entity source of content root entity and it's module entity differs.
+          |   Module entity source: ${attachedModule.entitySource}
+          |   Content root source: ${thisEntity.entitySource}
+          |   Module entity: $attachedModule
+          |   Content root entity: $thisEntity
+          """.trimMargin()
+        }
+    */
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ContentRootEntityData) return false
+
+    if (url != other.url) return false
+    if (excludedUrls != other.excludedUrls) return false
+    if (excludedPatterns != other.excludedPatterns) return false
+
+    return true
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ContentRootEntityData) return false
+
+    if (url != other.url) return false
+    if (excludedUrls != other.excludedUrls) return false
+    if (excludedPatterns != other.excludedPatterns) return false
+    if (entitySource != other.entitySource) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = url.hashCode()
+    result = 31 * result + excludedUrls.hashCode()
+    result = 31 * result + excludedPatterns.hashCode()
+    result = 31 * result + entitySource.hashCode()
+    return result
   }
 }
 
@@ -464,7 +527,7 @@ sealed class LibraryTableId : Serializable {
 }
 
 @Suppress("unused")
-class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<LibraryEntity>(), SoftLinkable, WithAssertableConsistency {
+class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<LibraryEntity>(), SoftLinkable {
   lateinit var tableId: LibraryTableId
   lateinit var name: String
   lateinit var roots: List<LibraryRoot>
@@ -490,18 +553,10 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
-
-  override fun assertConsistency(storage: WorkspaceEntityStorage) {
-    val thisTableId = tableId
-    if (thisTableId is LibraryTableId.ModuleLibraryTableId) {
-      val moduleId = thisTableId.moduleId
-      assert(storage.resolve(moduleId) != null) { "Module isn't found.\nPersistent id: $moduleId\nLibrary: $this" }
-    }
-  }
 }
 
-open class LibraryEntity(
-  open val tableId: LibraryTableId,
+class LibraryEntity(
+  val tableId: LibraryTableId,
   val name: String,
   val roots: List<LibraryRoot>,
   val excludedRoots: List<VirtualFileUrl>

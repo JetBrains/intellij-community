@@ -114,14 +114,13 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   public void markSuspiciousFilesDirty(@NotNull List<? extends VirtualFile> files) {
-    boolean markDirty = storeRefreshStatusToFiles();
+    storeRefreshStatusToFiles();
 
     if (myWatcher.isOperational()) {
       for (String root : myWatcher.getManualWatchRoots()) {
         VirtualFile suspiciousRoot = findFileByPathIfCached(root);
         if (suspiciousRoot != null) {
           ((NewVirtualFile)suspiciousRoot).markDirtyRecursively();
-          markDirty = true;
         }
       }
     }
@@ -129,12 +128,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
       for (VirtualFile file : files) {
         if (file.getFileSystem() == this) {
           ((NewVirtualFile)file).markDirtyRecursively();
-          markDirty = true;
         }
       }
-    }
-    if (markDirty && myAfterMarkDirtyCallback != null) {
-      myAfterMarkDirtyCallback.run();
     }
   }
 
@@ -224,7 +219,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     // check if it's circular - any symlink above resolves to my target too
     for (VirtualFileSystemEntry p = (VirtualFileSystemEntry)parent; p != null; p = p.getParent()) {
       // optimization: when the file has no symlinks up the hierarchy, it's not circular
-      if (!p.parentHasSymlink()) return false;
+      if (!p.thisOrParentHaveSymlink()) return false;
       if (p.is(VFileProperty.SYMLINK)) {
         String parentResolved = p.getCanonicalPath();
         if (symlinkTarget.equals(parentResolved)) {

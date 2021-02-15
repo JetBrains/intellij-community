@@ -9,9 +9,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -52,6 +52,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   @NonNls public static final String PLAY_SOUND_METHOD = "playSound";
   @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
   @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
+  public static final Key<String> CUSTOM_KEY_STROKE_TEXT = new Key<>("CUSTOM_KEY_STROKE_TEXT");
 
   private Border myAquaSelectedBackgroundPainter;
 
@@ -134,8 +135,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       else{
         g.setColor(jmenuitem.getForeground());
       }
-      if (useCheckAndArrow()){
-        icon2.paintIcon(comp, g, h.x, h.y);
+      if (useCheckAndArrow()) {
+        IconUtil.paintSelectionAwareIcon(icon2, jmenuitem, g, h.x, h.y, isSelected(jmenuitem));
       }
       g.setColor(color2);
       if (menuItem.isArmed()){
@@ -153,8 +154,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
             icon1 = jmenuitem.getIcon();
           }
         }
-      if (icon1 != null){
-        icon1.paintIcon(comp, g, l.x, l.y);
+      if (icon1 != null) {
+        IconUtil.paintSelectionAwareIcon(icon1, jmenuitem, g, l.x, l.y, isSelected(jmenuitem));
       }
     }
     if (s1 != null && s1.length() > 0){
@@ -222,9 +223,15 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   private static @NlsSafe String getKeyStrokeText(@NotNull JMenuItem item) {
-    return item instanceof ActionMenuItem
-           ? ((ActionMenuItem)item).getFirstShortcutText()
-           : getKeyStrokeText(item.getAccelerator());
+    if (item instanceof ActionMenuItem) {
+      AnAction action = ((ActionMenuItem)item).getAnAction();
+      if (action instanceof UserDataHolder) {
+        String customText = ((UserDataHolder)action).getUserData(CUSTOM_KEY_STROKE_TEXT);
+        if (!StringUtil.isEmptyOrSpaces(customText)) return customText;
+      }
+      return ((ActionMenuItem)item).getFirstShortcutText();
+    }
+    return getKeyStrokeText(item.getAccelerator());
   }
 
   @NlsSafe

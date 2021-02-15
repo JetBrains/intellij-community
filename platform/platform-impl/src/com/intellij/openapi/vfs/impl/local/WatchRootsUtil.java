@@ -57,7 +57,8 @@ final class WatchRootsUtil {
     consumer.test(path);
   }
 
-  static @NotNull NavigableSet<String> optimizeFlatRoots(@NotNull Collection<String> flatRoots, @NotNull NavigableSet<String> recursiveRoots,
+  static @NotNull NavigableSet<String> optimizeFlatRoots(@NotNull Collection<String> flatRoots,
+                                                         @NotNull NavigableSet<String> recursiveRoots,
                                                          boolean convertToForwardSlashes) {
     NavigableSet<String> result = createFileNavigableSet();
     if (convertToForwardSlashes) {

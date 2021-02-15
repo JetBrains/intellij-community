@@ -69,14 +69,6 @@ public final class RefactoringUtil {
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
   }
 
-  /**
-   * @deprecated use {@link PsiTypesUtil#hasUnresolvedComponents(PsiType)}
-   */
-  @Deprecated
-  public static boolean isResolvableType(PsiType type) {
-    return !PsiTypesUtil.hasUnresolvedComponents(type);
-  }
-
   public static PsiElement replaceOccurenceWithFieldRef(PsiExpression occurrence, PsiField newField, PsiClass destinationClass)
     throws IncorrectOperationException {
     final PsiManager manager = destinationClass.getManager();

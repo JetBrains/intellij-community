@@ -44,7 +44,7 @@ public class RunContentExecutor implements Disposable {
   private Runnable myStopAction;
   private Runnable myAfterCompletion;
   private Computable<Boolean> myStopEnabled;
-  private @NlsContexts.TabTitle String myTitle = "Output";
+  private @NlsContexts.TabTitle String myTitle = ExecutionBundle.message("output.tab.default.title");
   private String myHelpId = null;
   private boolean myActivateToolWindow = true;
   private boolean myFocusToolWindow = true;
@@ -63,7 +63,7 @@ public class RunContentExecutor implements Disposable {
     return this;
   }
 
-  public RunContentExecutor withTitle(String title) {
+  public RunContentExecutor withTitle(@NlsContexts.TabTitle String title) {
     myTitle = title;
     return this;
   }

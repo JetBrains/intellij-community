@@ -1,13 +1,14 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.right
 
+import com.intellij.openapi.util.NlsContexts.ListItem
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchToolWindowModel
+import net.miginfocom.swing.MigLayout
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
 import javax.swing.JPanel
-import net.miginfocom.swing.MigLayout
 
 class PackagesChosenVersionView(val viewModel: PackageSearchToolWindowModel) {
     private val panelHeight = 48
@@ -49,7 +50,7 @@ class PackagesChosenVersionView(val viewModel: PackageSearchToolWindowModel) {
 
     fun getSelectedVersion() = if (versionsComboBox.selectedIndex == -1) "" else ((versionsModel.selectedItem ?: "") as String)
 
-    fun refreshUI(versions: List<String>?, defaultVersion: String?) {
+    fun refreshUI(versions: List<String>?, @ListItem defaultVersion: String?) {
         if (versions == null || versions.isEmpty()) {
             versionsComboBox.isEnabled = false
             versionsModel.removeAllElements()

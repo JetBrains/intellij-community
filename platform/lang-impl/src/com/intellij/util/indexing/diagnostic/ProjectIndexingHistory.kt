@@ -7,6 +7,8 @@ import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 typealias TimeMillis = Long
 typealias TimeNano = Long
@@ -15,9 +17,7 @@ typealias BytesNumber = Long
 data class ProjectIndexingHistory(val project: Project) {
   private val biggestContributorsPerFileTypeLimit = 10
 
-  val times = IndexingTimes()
-
-  var numberOfIndexingThreads: Int = 0
+  val times = IndexingTimes(ZonedDateTime.now(ZoneOffset.UTC))
 
   val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
@@ -28,7 +28,6 @@ data class ProjectIndexingHistory(val project: Project) {
   val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexer>()
 
   var totalNumberOfTooLargeFiles: Int = 0
-  val totalTooLargeFiles = LimitedPriorityQueue<TooLargeForIndexingFile>(5, compareBy { it.fileSize })
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
@@ -40,7 +39,8 @@ data class ProjectIndexingHistory(val project: Project) {
 
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
-        StatsPerFileType(0, 0, 0, 0, LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.indexingTimeInAllThreads }))
+        StatsPerFileType(0, 0, 0, 0,
+                         LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.indexingTimeInAllThreads }))
       }
       totalStats.totalNumberOfFiles += fileTypeStats.numberOfFiles
       totalStats.totalBytes += fileTypeStats.totalBytes
@@ -65,7 +65,6 @@ data class ProjectIndexingHistory(val project: Project) {
     }
 
     totalNumberOfTooLargeFiles += statistics.numberOfTooLargeForIndexingFiles
-    statistics.tooLargeForIndexingFiles.biggestElements.forEach { totalTooLargeFiles.addElement(it) }
   }
 
   data class StatsPerFileType(
@@ -91,22 +90,13 @@ data class ProjectIndexingHistory(val project: Project) {
   )
 
   data class IndexingTimes(
-    var totalStart: Instant? = null,
-    var totalEnd: Instant? = null,
-    var indexingStart: Instant? = null,
-    var indexingEnd: Instant? = null,
-    var pushPropertiesStart: Instant? = null,
-    var pushPropertiesEnd: Instant? = null,
-    var indexExtensionsStart: Instant? = null,
-    var indexExtensionsEnd: Instant? = null,
-    var scanFilesStart: Instant? = null,
-    var scanFilesEnd: Instant? = null,
-    var suspendedDuration: Duration? = null,
+    val updatingStart: ZonedDateTime,
+    var updatingEnd: ZonedDateTime = updatingStart,
+    var indexingDuration: Duration = Duration.ZERO,
+    var pushPropertiesDuration: Duration = Duration.ZERO,
+    var indexExtensionsDuration: Duration = Duration.ZERO,
+    var scanFilesDuration: Duration = Duration.ZERO,
+    var suspendedDuration: Duration = Duration.ZERO,
     var wasInterrupted: Boolean = false
-  ) {
-    val indexingDuration: Duration?
-      get() = if (indexingStart != null && indexingEnd != null) {
-        Duration.between(indexingStart, indexingEnd)
-      } else null
-  }
+  )
 }

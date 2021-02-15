@@ -23,6 +23,11 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
+  public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
+
+  }
+
+  @Override
   public void registerFileType(@NotNull FileType fileType) {
   }
 

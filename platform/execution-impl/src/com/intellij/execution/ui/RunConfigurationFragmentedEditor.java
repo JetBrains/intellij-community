@@ -44,6 +44,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     return myDefaultSettings;
   }
 
+  @NotNull
   protected Project getProject() {
     return mySettings.getProject();
   }
@@ -145,7 +146,13 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
                                                 : null);
   }
 
-  public void targetChanged(String targetName) {}
+  public void targetChanged(String targetName) {
+    SettingsEditorFragment<Settings, ?> targetPathFragment =
+      ContainerUtil.find(getFragments(), fragment -> TargetPathFragment.ID.equals(fragment.getId()));
+    if (targetPathFragment != null) {
+      targetPathFragment.setSelected(targetName != null);
+    }
+  }
 
   @Override
   protected void initFragments(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
@@ -171,8 +178,8 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       fragment.applyEditorTo(clone);
       if (!fragment.isInitiallyVisible(clone)) {
         JComponent component = fragment.getEditorComponent();
-        String text = fragment.getName().replace("\u001B", "");
-        new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
+        new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()),
+                         fragment).
           withHeader(ExecutionBundle.message("gotIt.popup.title")).
           show(component, (c) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
       }

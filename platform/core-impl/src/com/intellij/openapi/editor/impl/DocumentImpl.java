@@ -653,7 +653,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       newText = (ImmutableCharSequence)s;
     }
     else {
-      newText = myText.delete(startOffset, endOffset).insert(startOffset, changedPart);
+      newText = myText.replace(startOffset, endOffset, changedPart);
       changedPart = newText.subtext(startOffset, startOffset + changedPart.length());
     }
     boolean wasOptimized = initialStartOffset != startOffset || endOffset - startOffset != initialOldLength;
@@ -746,7 +746,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   private void throwGuardedFragment(@NotNull RangeMarker guard, int offset, @NotNull CharSequence oldString, @NotNull CharSequence newString) {
     if (myCheckGuardedBlocks > 0 && !myGuardsSuppressed) {
-      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false);
+      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false, offset, oldString.length(),
+                                                  offset);
       throw new ReadOnlyFragmentModificationException(event, guard);
     }
   }
@@ -1172,7 +1173,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
-    TextRangeInterval interval = new TextRangeInterval(start, end);
+    TextRange interval = new ProperTextRange(start, end);
     MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl
       .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET);
     try {

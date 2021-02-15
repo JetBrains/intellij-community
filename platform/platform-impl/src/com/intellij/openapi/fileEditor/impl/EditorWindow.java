@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -33,6 +34,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
@@ -54,12 +56,14 @@ public final class EditorWindow {
   private static final Logger LOG = Logger.getInstance(EditorWindow.class);
 
   public static final DataKey<EditorWindow> DATA_KEY = DataKey.create("editorWindow");
+  public static final Key<Boolean> HIDE_TABS = Key.create("HIDE_TABS");
 
   JPanel myPanel;
   private final @NotNull EditorTabbedContainer myTabbedPane;
   @NotNull
   private final EditorsSplitters myOwner;
 
+  private boolean alwaysHideTabs;
   private boolean myIsDisposed;
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
   // Metadata to support editor tab drag&drop process: initial index
@@ -68,7 +72,7 @@ public final class EditorWindow {
   public static final Key<Integer> DRAG_START_LOCATION_HASH_KEY = KeyWithDefaultValue.create("drag start editor location hash", 0);
   // Metadata to support editor tab drag&drop process: initial 'pinned' state
   public static final Key<Boolean> DRAG_START_PINNED_KEY = Key.create("drag start editor pinned state");
-  private final Stack<Pair<String, FileEditorOpenOptions>> myRemovedTabs = new Stack<Pair<String, FileEditorOpenOptions>>() {
+  private final Stack<Pair<String, FileEditorOpenOptions>> myRemovedTabs = new Stack<>() {
     @Override
     public void push(Pair<String, FileEditorOpenOptions> pair) {
       if (size() >= getTabLimit()) {
@@ -99,11 +103,18 @@ public final class EditorWindow {
     if (myOwner.getCurrentWindow() == null) {
       myOwner.setCurrentWindow(this, false);
     }
+    updateTabsVisibility();
+  }
+
+  void updateTabsVisibility() {
     updateTabsVisibility(UISettings.getInstance());
   }
 
   void updateTabsVisibility(@NotNull UISettings settings) {
-    myTabbedPane.getTabs().getPresentation().setHideTabs(settings.getEditorTabPlacement() == UISettings.TABS_NONE || settings.getPresentationMode());
+    myTabbedPane.getTabs().getPresentation()
+      .setHideTabs(myOwner.isFloating() && alwaysHideTabs
+                   || settings.getEditorTabPlacement() == UISettings.TABS_NONE
+                   || settings.getPresentationMode());
   }
 
   public boolean isShowing() {
@@ -314,8 +325,8 @@ public final class EditorWindow {
     myTabbedPane.setStyleAt(index, style);
   }
 
-  void setWaveColor(int index, @Nullable Color color) {
-    myTabbedPane.setWaveColor(index, color);
+  void setTextAttributes(int index, @Nullable TextAttributes attributes) {
+    myTabbedPane.setTextAttributes(index, attributes);
   }
 
   private void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String text) {
@@ -560,8 +571,25 @@ public final class EditorWindow {
       }
       myOwner.updateFileStyle(editor.getFile());
       myOwner.setCurrentWindow(this, false);
+      hideTabsIfNeeded(editor);
     }
     myOwner.validate();
+  }
+
+  private void hideTabsIfNeeded(@NotNull EditorWithProviderComposite editor) {
+    alwaysHideTabs = false; //default state
+
+    if (myOwner.isFloating()) {
+      boolean hideTabs = needHideTabs(editor.getEditors());
+      if (hideTabs) {
+        alwaysHideTabs = true;
+        updateTabsVisibility();
+      }
+    }
+  }
+
+  private static boolean needHideTabs(@NotNull FileEditor @NotNull [] editors) {
+    return ContainerUtil.exists(editors, e -> HIDE_TABS.isIn(e) && HIDE_TABS.get(e).booleanValue());
   }
 
   private boolean splitAvailable() {
@@ -640,7 +668,12 @@ public final class EditorWindow {
       }
       if (!focusNew) {
         res.setSelectedEditor(selectedEditor, true);
-        getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(selectedEditor.getFocusComponent(), true));
+        getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          JComponent focusComponent = selectedEditor.getFocusComponent();
+          if (focusComponent != null) {
+            getGlobalInstance().requestFocus(focusComponent, true);
+          }
+        });
       }
       panel.revalidate();
       return res;
@@ -1029,8 +1062,9 @@ public final class EditorWindow {
     if (composite == null) return false;
     //Don't check focus in unit test mode
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
-      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
+      JComponent selectedEditorComponent = composite.getSelectedEditor().getComponent();
+      Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusTargetFor(selectedEditorComponent);
+      if (owner == null || !SwingUtilities.isDescendingFrom(owner, selectedEditorComponent)) return false;
     }
     return !myOwner.getManager().isChanged(composite);
   }

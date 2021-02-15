@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.idea.TestFor
@@ -40,6 +40,26 @@ class JdkRequirementTest : LightPlatformTestCase() {
                                                     jdkItem(Corretto, "12.0.5"),
                                                     jdkItem(Zulu, "11.0.4")
                                                   ))
+
+  @Test
+  fun test_corretto_jdk_11_0_4_wsl() = doTestJdkItems("corretto-11.0.4 (WSL)",
+                                                      matches = listOf(
+                                                        jdkItem(Corretto, "11.0.5")
+                                                      ),
+                                                      fails = listOf(
+                                                        jdkItem(Corretto, "12.0.5"),
+                                                        jdkItem(Zulu, "11.0.4")
+                                                      ))
+
+  @Test
+  fun test_corretto_jdk_11_0_4_duplicate() = doTestJdkItems("corretto-11.0.4 (11)",
+                                                      matches = listOf(
+                                                        jdkItem(Corretto, "11.0.5")
+                                                      ),
+                                                      fails = listOf(
+                                                        jdkItem(Corretto, "12.0.5"),
+                                                        jdkItem(Zulu, "11.0.4")
+                                                      ))
 
   @Test
   fun test_corretto_sp_jdk_11_0_4() = doTestJdkItems("corretto 11.0.4",

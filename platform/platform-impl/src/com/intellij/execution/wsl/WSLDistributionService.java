@@ -10,7 +10,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -79,9 +78,8 @@ final class WSLDistributionService implements PersistentStateComponent<WSLDistri
     return myDescriptors;
   }
 
-  @Nullable
   @Override
-  public WSLDistributionService getState() {
+  public @NotNull WSLDistributionService getState() {
     return this;
   }
 

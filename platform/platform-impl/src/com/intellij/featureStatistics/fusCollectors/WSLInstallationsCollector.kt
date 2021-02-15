@@ -3,8 +3,8 @@ package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.util.ExecUtil
+import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -27,9 +27,9 @@ class WSLInstallationsCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     if (!SystemInfo.isWin10OrNewer) return emptySet()
 
-    val wslExe = PathEnvironmentVariableUtil.findInPath("wsl.exe") ?: return emptySet()
+    val wslExe = WSLDistribution.findWslExe() ?: return emptySet()
     val output = try {
-      ExecUtil.execAndGetOutput(GeneralCommandLine(wslExe.absolutePath, "-l", "-v").withCharset(StandardCharsets.UTF_16LE), 10_000)
+      ExecUtil.execAndGetOutput(GeneralCommandLine(wslExe.toString(), "-l", "-v").withCharset(StandardCharsets.UTF_16LE), 10_000)
     }
     catch(e: ExecutionException) {
       LOG.info("Failed to run wsl: " + e.message)

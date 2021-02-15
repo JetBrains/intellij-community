@@ -2,7 +2,6 @@
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -36,14 +35,16 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
-    return new DataIndexer<String, Void, FileContent>() {
+    return new DataIndexer<>() {
       @Override
       @NotNull
       public Map<String, Void> map(@NotNull FileContent inputData) {
         final HashMap<String, Void> map = new HashMap<>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
-          if (CharArrayUtil.indexOf(inputDataContentAsText, RelaxNgMetaDataContributor.RNG_NAMESPACE, 0) == -1) return Collections.emptyMap();
+          if (CharArrayUtil.indexOf(inputDataContentAsText, RelaxNgMetaDataContributor.RNG_NAMESPACE, 0) == -1) {
+            return Collections.emptyMap();
+          }
           NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
             NanoXmlBuilder attributeHandler;
             int depth;
@@ -111,7 +112,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML, RncFileType.getInstance()) {
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, RncFileType.getInstance()) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
         return !(file.getFileSystem() instanceof JarFileSystem);

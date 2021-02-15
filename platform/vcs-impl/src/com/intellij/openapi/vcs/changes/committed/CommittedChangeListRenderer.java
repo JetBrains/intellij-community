@@ -61,14 +61,14 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   }
 
   public void customize(JComponent tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-    if (node.getUserObject() instanceof CommittedChangeList) {
-      CommittedChangeList changeList = (CommittedChangeList) node.getUserObject();
-
+    Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+    if (userObject instanceof CommittedChangeList) {
+      CommittedChangeList changeList = (CommittedChangeList)userObject;
       renderChangeList(tree, changeList);
     }
-    else if (node.getUserObject() != null) {
-      append(node.getUserObject().toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    else if (userObject instanceof String) {
+      append((String)userObject, //NON-NLS See CommittedChangesTreeBrowser.buildTreeModel
+             SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
 

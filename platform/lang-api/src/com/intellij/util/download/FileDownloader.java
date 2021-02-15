@@ -82,11 +82,4 @@ public interface FileDownloader {
    */
   @Deprecated
   VirtualFile @Nullable [] download();
-
-  /**
-   * @deprecated use {@link #downloadWithProgress} instead
-   */
-  @Deprecated
-  @Nullable
-  List<Pair<VirtualFile, DownloadableFileDescription>> downloadAndReturnWithDescriptions();
 }

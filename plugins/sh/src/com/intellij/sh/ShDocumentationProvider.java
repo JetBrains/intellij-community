@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -107,7 +107,7 @@ public class ShDocumentationProvider implements DocumentationProvider {
   private static String wrapIntoHtml(@Nullable String s) {
     if (s == null) return null;
 
-    @NonNls StringBuffer sb = new StringBuffer("<html><body><pre>");
+    @NonNls StringBuilder sb = new StringBuilder("<html><body><pre>");
     try {
       @NonNls Matcher m = URLUtil.URL_PATTERN.matcher(StringUtil.escapeXmlEntities(s));
       while (m.find()) {

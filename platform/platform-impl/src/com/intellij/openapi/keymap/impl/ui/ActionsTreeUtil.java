@@ -42,12 +42,6 @@ import java.util.function.Supplier;
 public final class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
-  /**
-   * @deprecated Use {@link #getMainMenuTitle()} instead
-   */
-  @Deprecated
-  public static final String MAIN_MENU_TITLE = "Main menu";
-
   @NonNls
   private static final String EDITOR_PREFIX = "Editor";
 
@@ -667,6 +661,10 @@ public final class ActionsTreeUtil {
   @Nls
   public static String getMainToolbar() {
     return KeyMapBundle.message("main.toolbar.title");
+  }
+
+  public static String getExperimentalToolbar(){
+    return KeyMapBundle.message("experimental.toolbar.title");
   }
 
   @Nls

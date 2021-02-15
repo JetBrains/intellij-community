@@ -9,10 +9,9 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.BlockingProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.progress.impl.BlockingProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -39,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
@@ -168,7 +168,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     // for each of them. Solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
     // if the task is already finished when the time comes.
     Timer timer =
-      TimerUtil.createNamedTimer("Progress window timer", myDelayInMillis, e -> ApplicationManager.getApplication().invokeLater(() -> {
+      TimerUtil.createNamedTimer("Progress window timer", myDelayInMillis, __ -> ApplicationManager.getApplication().invokeLater(() -> {
         if (isRunning()) {
           showDialog();
         }
@@ -196,13 +196,18 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  public void startBlocking() {
-    startBlocking(EmptyRunnable.getInstance());
+  /**
+   * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link com.intellij.openapi.progress.ProgressManager}
+   */
+  @Deprecated
+  public void startBlocking(@NotNull Runnable init) {
+    CompletableFuture<Object> future = new CompletableFuture<>();
+    Disposer.register(this, () -> future.complete(null));
+    startBlocking(init, future);
   }
 
   @Override
-  @RequiresEdt
-  public void startBlocking(@NotNull Runnable init) {
+  public void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
     EDT.assertIsEdt();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
@@ -214,53 +219,25 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     try {
       ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-        pumpEventsForHierarchy();
+        initializeOnEdtIfNeeded();
+        // guarantee AWT event after the future is done will be pumped and loop exited
+        stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
+        IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, stopCondition, event -> {
+          if (isCancellationEvent(event)) {
+            cancel();
+            return true;
+          }
+          return false;
+        });
         return null;
       });
-    } catch (Throwable t) {
-      if (isRunning()) {
-        LOG.warn("Exception while pumping messages in ProgressWindow#startBlocking. " +
-                 "The dialog modality state message processing is finished. " + t.getMessage(), new RuntimeException(t));
-      }
-      throw t;
     }
     finally {
       exitModality();
     }
   }
 
-  @Override
-  public void initStateFrom(@NotNull ProgressIndicator indicator) {
-    var wasRunning = isRunning();
-    super.initStateFrom(indicator);
-    var newIsRunning = isRunning();
-    if (wasRunning == newIsRunning) return;
-
-    String extra = "";
-    if (wasRunning) {
-      extra = "It may cause the messages processing with the dialog ModalityState " +
-              "to exit faster and provoke deadlocks, especially when invokeLaterAndWait() alike " +
-              "methods were used under the progress. ";
-    }
-
-    LOG.warn("Calling ProgressWindow#initStateFrom() changed the isRunning() from " +
-             wasRunning + " to " + newIsRunning + ". " + extra +
-             "this=" + this + ", " +
-             "indicator=" + indicator, new RuntimeException()
-    );
-  }
-
-  public void pumpEventsForHierarchy() {
-    initializeOnEdtIfNeeded();
-    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
-      if (isCancellationEvent(event)) {
-        cancel();
-      }
-      return wasStarted() && !isRunning();
-    });
-  }
-
-  final boolean isCancellationEvent(@Nullable AWTEvent event) {
+  final boolean isCancellationEvent(@NotNull AWTEvent event) {
     return myShouldShowCancel &&
            event instanceof KeyEvent &&
            event.getID() == KeyEvent.KEY_PRESSED &&
@@ -413,7 +390,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     return getTitle() + " " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
   }
 
-  private class MyDelegate extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
+  private final class MyDelegate extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
     private long myLastUpdatedButtonTimestamp;
     @Override
     public void cancel() {

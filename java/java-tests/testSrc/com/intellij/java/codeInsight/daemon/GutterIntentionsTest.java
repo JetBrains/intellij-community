@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.List;
@@ -49,6 +49,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
                                                "}");
     myFixture.doHighlighting();
     CachedIntentions intentions = IntentionsUI.getInstance(getProject()).getCachedIntentions(getEditor(), getFile());
+    intentions.wrapAndUpdateGutters();
     assertThat(intentions.getAllActions().get(0).getText()).startsWith("Run ");
   }
 
@@ -59,8 +60,8 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
     assertSize(1, myFixture.findGuttersAtCaret());
 
     ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile(), false);
-    List<HighlightInfo.IntentionActionDescriptor> descriptors = intentions.guttersToShow;
-    Set<String> names = descriptors.stream().map(descriptor -> descriptor.getDisplayName()).collect(Collectors.toSet());
+    List<AnAction> descriptors = intentions.guttersToShow;
+    Set<String> names = descriptors.stream().map(o -> o.getTemplatePresentation().getText()).collect(Collectors.toSet());
     assertEquals(descriptors.size(), names.size());
   }
 
@@ -80,7 +81,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
                                                "}");
     myFixture.enableInspections(new RedundantThrowsDeclarationLocalInspection());
     myFixture.doHighlighting();
-    CachedIntentions intentions = IntentionsUI.getInstance(getProject()).getCachedIntentions(getEditor(), getFile());
-    assertThat(intentions.getAllActions().get(0).getText()).startsWith("Remove ");
+    List<IntentionAction> actions = myFixture.getAvailableIntentions();
+    assertThat(actions.get(0).getText()).startsWith("Remove ");
   }
 }

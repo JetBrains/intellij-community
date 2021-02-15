@@ -52,12 +52,13 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
     myBarElementFile = createFile("b.xml", "<b/>").getVirtualFile();
 
-    getDomManager().registerFileDescription(new DomFileDescription<BarElement>(BarElement.class, "b") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(BarElement.class, "b") {
       @Override
       public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
         String text = LoadTextUtil.loadText(myFooElementFile).toString();
         return text.contains("239");
       }
+
       @Override
       public boolean isAutomaticHighlightingEnabled() {
         return false;
@@ -89,7 +90,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
   public void testIsDomValue() throws Throwable {
     final XmlFile file = (XmlFile)createFile("a.xml", "<b>42</b>");
-    getDomManager().registerFileDescription(new DomFileDescription<MyElement>(MyElement.class, "b") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyElement.class, "b") {
 
       @Override
       public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
@@ -135,7 +136,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
     getDomManager().registerFileDescription(new MockDomFileDescription<>(MyElement.class, "b", null), myDisposable);
     for (int i = 0; i < 239; i++) {
-      getDomManager().registerFileDescription(new MockDomFileDescription<AbstractElement>(AbstractElement.class, "b", null) {
+      getDomManager().registerFileDescription(new MockDomFileDescription<>(AbstractElement.class, "b", null) {
         @Override
         @NotNull
         public Set getDependencyItems(final XmlFile file) {
@@ -149,7 +150,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   }
 
   public void testCheckNamespace() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<NamespacedElement>(NamespacedElement.class, "xxx", "bar") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(NamespacedElement.class, "xxx", "bar") {
 
       @Override
       protected void initializeFileDescription() {
@@ -168,7 +169,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   }
 
   public void testCheckDtdPublicId() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<NamespacedElement>(NamespacedElement.class, "xxx", "bar") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(NamespacedElement.class, "xxx", "bar") {
 
       @Override
       protected void initializeFileDescription() {
@@ -189,7 +190,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   }
 
   public void testChangeCustomDomness() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<MyElement>(MyElement.class, "xxx") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyElement.class, "xxx") {
       @Override
       public boolean isMyFile(@NotNull final XmlFile file, @Nullable final Module module) {
         return file.getText().contains("foo");

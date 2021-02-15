@@ -364,13 +364,6 @@ public class MavenImportingSettings implements Cloneable {
 
   public interface Listener {
 
-    /**
-     * @deprecated see {@link MavenImportingSettings#setImportAutomatically(boolean)} for details
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-    default void autoImportChanged() {}
-
     void createModuleGroupsChanged();
 
     void createModuleForAggregatorsChanged();

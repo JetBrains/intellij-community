@@ -15,6 +15,7 @@ class EditorTabsOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationL
     , sortTabsAlphabetically
     , openTabsAtTheEnd
     , reuseNotModifiedTabs
+    , openTabsInMainWindow
     , scrollTabLayoutInEditor
     , openInPreviewTabIfPossible
     , useSmallFont).map(CheckboxDescriptor::asUiOptionDescriptor) + tabPlacementsOptionDescriptors + closeButtonPlacementOptionDescription()

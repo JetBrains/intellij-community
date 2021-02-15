@@ -10,8 +10,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -19,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.cef.JCefAppConfig;
+import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
 import org.cef.CefSettings;
 import org.cef.CefSettings.LogSeverity;
@@ -32,11 +31,10 @@ import org.jetbrains.annotations.ApiStatus;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -192,15 +190,27 @@ public final class JBCefApp {
   @NotNull
   public static JBCefApp getInstance() {
     if (Holder.INSTANCE == null) {
-      throw new IllegalStateException("JCEF is not supported in this env or failed to initialize");
+      synchronized (Holder.class) {
+        if (Holder.INSTANCE == null) {
+          if (RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled")) {
+            // Try again to initialize with probably different registry keys
+            Holder.INSTANCE = Holder.init();
+            if (Holder.INSTANCE != null) {
+              return Objects.requireNonNull(Holder.INSTANCE);
+            }
+          }
+          throw new IllegalStateException("JCEF is not supported in this env or failed to initialize");
+        }
+      }
     }
-    return Holder.INSTANCE;
+    return Objects.requireNonNull(Holder.INSTANCE);
   }
 
   private static final class Holder {
-    @Nullable static final JBCefApp INSTANCE;
+    @Nullable static volatile JBCefApp INSTANCE = init();
 
-    static {
+    @Nullable
+    static JBCefApp init() {
       ourInitialized.set(true);
       JCefAppConfig config = null;
       if (isSupported(true)) {
@@ -218,7 +228,7 @@ public final class JBCefApp {
         } catch (IllegalStateException ignore) {
         }
       }
-      INSTANCE = app;
+      return app;
     }
   }
 
@@ -240,11 +250,15 @@ public final class JBCefApp {
   }
 
   private static boolean isSupported(boolean logging) {
-    if (ourSupported != null) {
+    boolean testModeEnabled = RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled");
+    if (ourSupported != null && !testModeEnabled) {
       return ourSupported.get();
     }
     synchronized (ourSupportedLock) {
-      if (ourSupported != null) {
+      if (testModeEnabled) {
+        ourSupported = null;
+      }
+      else if (ourSupported != null) {
         return ourSupported.get();
       }
       Function<String, Boolean> unsupported = (msg) -> {
@@ -263,32 +277,22 @@ public final class JBCefApp {
       {
         return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
       }
-      String version;
+      JCefVersionDetails version;
       try {
-        version = JCefAppConfig.getVersion();
+        version = JCefAppConfig.getVersionDetails();
       }
-      catch (NoSuchMethodError e) {
+      catch (Throwable e) {
         return unsupported.apply("JCEF runtime version is not supported");
       }
-      if (version == null) {
-        return unsupported.apply("JCEF runtime version is not available");
+      if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
+        return unsupported.apply("JCEF minimum supported major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
+                                 ", current is " + version.cefVersion.major);
       }
-      String[] split = version.split("\\.");
-      if (split.length == 0) {
-        return unsupported.apply("JCEF runtime version has wrong format: " + version);
+      URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
+      if (url == null) {
+        return unsupported.apply("JCefAppConfig.class not found");
       }
-      try {
-        int majorVersion = Integer.parseInt(split[0]);
-        if (MIN_SUPPORTED_CEF_MAJOR_VERSION > majorVersion) {
-          return unsupported.apply("JCEF minimum supported major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
-                                   ", current is " + majorVersion);
-        }
-      }
-      catch (NumberFormatException e) {
-        return unsupported.apply("JCEF runtime version has wrong format: " + version);
-      }
-
-      String path = JCefAppConfig.class.getResource("JCefAppConfig.class").toString();
+      String path = url.toString();
       String name = JCefAppConfig.class.getName().replace('.', '/');
       boolean isJbrModule = path != null && path.contains("/jcef/" + name);
       if (!isJbrModule) {

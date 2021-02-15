@@ -499,6 +499,12 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
   }
 
+  @Override
+  public boolean isWorthShowingInAutoPopup() {
+    // We always have method parameters
+    return true;
+  }
+
   private static class AutoPopupCompletion extends Expression {
     @Nullable
     @Override

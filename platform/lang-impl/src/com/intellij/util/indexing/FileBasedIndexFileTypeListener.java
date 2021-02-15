@@ -1,19 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
-class FileBasedIndexFileTypeListener implements FileTypeListener {
+final class FileBasedIndexFileTypeListener implements FileTypeListener {
   @Override
   public void fileTypesChanged(@NotNull final FileTypeEvent event) {
-    Set<ID<?, ?>> indexesToRebuild = new THashSet<>();
+    Set<ID<?, ?>> indexesToRebuild = new HashSet<>();
     for (FileBasedIndexExtension<?, ?> extension : FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList()) {
-      if (IndexingStamp.versionDiffers(extension.getName(), FileBasedIndexImpl.getIndexExtensionVersion(extension)) != IndexingStamp.IndexVersionDiff.UP_TO_DATE) {
+      if (IndexVersion.versionDiffers(extension.getName(), FileBasedIndexImpl.getIndexExtensionVersion(extension)) != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
         indexesToRebuild.add(extension.getName());
       }
     }
@@ -22,6 +22,9 @@ class FileBasedIndexFileTypeListener implements FileTypeListener {
     String rebuiltIndexesLog = indexesToRebuild.isEmpty()
                                ? ""
                                : "; indexes " + indexesToRebuild + " will be rebuild completely due to version change";
-    fileBasedIndex.scheduleFullIndexesRescan(indexesToRebuild, "File type change" + rebuiltIndexesLog);
+    fileBasedIndex.scheduleFullIndexesRescan(indexesToRebuild, "File type change: " +
+                                                               "added - " + event.getAddedFileType() + ", " +
+                                                               "removed - " + event.getRemovedFileType() +
+                                                               rebuiltIndexesLog);
   }
 }

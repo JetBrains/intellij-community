@@ -13,6 +13,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -155,7 +157,7 @@ public final class PsiClassImplUtil {
     if (name == null) return Collections.emptyList();
 
     return checkBases
-           ? getMap(aClass).calcMembersByName(type, name)
+           ? getMap(aClass).calcMembersByName(type, name, null, null)
            : ContainerUtil.filter(type.getMembers(aClass), member -> name.equals(member.getName()));
   }
 
@@ -232,7 +234,7 @@ public final class PsiClassImplUtil {
     RowIcon baseIcon =
       IconManager.getInstance().createLayeredIcon(r.psiClass, symbolIcon, ElementPresentationUtil.getFlags(r.psiClass, isLocked));
     Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
-    Iconable.LastComputedIcon.put(r.psiClass, result, r.flags);
+    LastComputedIconCache.put(r.psiClass, result, r.flags);
     return result;
   };
 
@@ -241,7 +243,7 @@ public final class PsiClassImplUtil {
   }
 
   public static Icon getClassIcon(int flags, @NotNull PsiClass aClass, @Nullable Icon symbolIcon) {
-    Icon base = Iconable.LastComputedIcon.get(aClass, flags);
+    Icon base = LastComputedIconCache.get(aClass, flags);
     if (base == null) {
       if (symbolIcon == null) {
         symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
@@ -334,7 +336,7 @@ public final class PsiClassImplUtil {
         type -> StreamEx.of(myAllSupers).flatArray(type::getMembers).filter(e -> !skipInvalid(e)).toArray(PsiMember.EMPTY_ARRAY));
     }
 
-    @NotNull List<PsiMember> calcMembersByName(@NotNull MemberType type, @NotNull String name) {
+    @NotNull List<PsiMember> calcMembersByName(@NotNull MemberType type, @NotNull String name, PsiClass psiClass, PsiElement context) {
       List<PsiMember> result = null;
       for (PsiClass eachSuper : myAllSupers) {
         if (type == MemberType.METHOD) {
@@ -354,11 +356,18 @@ public final class PsiClassImplUtil {
           }
         }
       }
+      if (type == MemberType.METHOD && psiClass != null && context != null) {
+        List<PsiExtensionMethod> methods = PsiAugmentProvider.collectExtensionMethods(psiClass, name, context);
+        if (!methods.isEmpty()) {
+          if (result == null) result = new ArrayList<>();
+          result.addAll(methods);
+        }
+      }
       return result == null ? Collections.emptyList() : ContainerUtil.filter(result, e -> !skipInvalid(e));
     }
 
     PsiMember[] getAllMembers(@NotNull MemberType type, @Nullable String name) {
-      return name == null ? myAllMembers.get(type) : calcMembersByName(type, name).toArray(PsiMember.EMPTY_ARRAY);
+      return name == null ? myAllMembers.get(type) : calcMembersByName(type, name, null, null).toArray(PsiMember.EMPTY_ARRAY);
     }
   }
 
@@ -465,7 +474,7 @@ public final class PsiClassImplUtil {
         }
       }
       else {
-        List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.FIELD, name);
+        List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.FIELD, name, aClass, place);
         if (!list.isEmpty()) {
           boolean resolved = false;
           for (PsiMember candidateField : list) {
@@ -507,7 +516,7 @@ public final class PsiClassImplUtil {
           }
         }
         else {
-          List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.CLASS, name);
+          List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.CLASS, name, aClass, place);
           if (!list.isEmpty()) {
             boolean resolved = false;
             for (PsiMember inner : list) {
@@ -538,7 +547,7 @@ public final class PsiClassImplUtil {
           return true;
         }
       }
-      List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.METHOD, name);
+      List<PsiMember> list = getMap(aClass, resolveScope).calcMembersByName(MemberType.METHOD, name, aClass, place);
       if (!list.isEmpty()) {
         boolean resolved = false;
         for (PsiMember candidate : list) {
@@ -891,9 +900,7 @@ public final class PsiClassImplUtil {
     }
 
     if (resolvedCount < referenceCount) {
-      PsiClass[] shorter = new PsiClass[resolvedCount];
-      System.arraycopy(resolved, 0, shorter, 0, resolvedCount);
-      resolved = shorter;
+      resolved = ArrayUtil.realloc(resolved, resolvedCount,PsiClass.ARRAY_FACTORY);
     }
 
     return resolved;
@@ -911,7 +918,7 @@ public final class PsiClassImplUtil {
       }
       return ret;
     }
-    List<PsiMember> list = getMap(psiClass).calcMembersByName(MemberType.METHOD, name);
+    List<PsiMember> list = getMap(psiClass).calcMembersByName(MemberType.METHOD, name, null, null);
     if (list.isEmpty()) return Collections.emptyList();
     return withSubstitutors(psiClass, list.toArray(PsiMember.EMPTY_ARRAY));
   }

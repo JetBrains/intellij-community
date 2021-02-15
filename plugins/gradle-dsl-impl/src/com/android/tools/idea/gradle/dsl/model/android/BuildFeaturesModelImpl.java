@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class BuildFeaturesModelImpl extends GradleDslBlockModel implements BuildFeaturesModel {
   @NonNls public static final String COMPOSE = "mCompose";
+  @NonNls public static final String ML_MODEL_BINDING = "mMlModelBinding";
 
   public BuildFeaturesModelImpl(@NotNull BuildFeaturesDslElement dslElement) {
     super(dslElement);
@@ -33,5 +34,11 @@ public final class BuildFeaturesModelImpl extends GradleDslBlockModel implements
   @Override
   public ResolvedPropertyModel compose() {
     return getModelForProperty(COMPOSE);
+  }
+
+  @NotNull
+  @Override
+  public ResolvedPropertyModel mlModelBinding() {
+    return getModelForProperty(ML_MODEL_BINDING);
   }
 }

@@ -4,11 +4,9 @@ package com.intellij.build.progress;
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.FilePosition;
-import com.intellij.build.events.EventResult;
-import com.intellij.build.events.FinishEvent;
-import com.intellij.build.events.MessageEvent;
-import com.intellij.build.events.StartEvent;
+import com.intellij.build.events.*;
 import com.intellij.build.events.impl.*;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
@@ -188,6 +186,13 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
     FinishEventImpl event = new FinishEventImpl(getId(), myParentProgress.getId(), timeStamp, message, new SkippedResultImpl());
     myListener.onEvent(getBuildId(), event);
     return myParentProgress;
+  }
+
+  @Override
+  @NotNull
+  public  BuildProgress<BuildProgressDescriptor> buildIssue(@NotNull BuildIssue issue, @NotNull MessageEvent.Kind kind) {
+    myListener.onEvent(getBuildId(), new BuildIssueEventImpl(getId(), issue, kind));
+    return this;
   }
 
   protected void assertStarted() {

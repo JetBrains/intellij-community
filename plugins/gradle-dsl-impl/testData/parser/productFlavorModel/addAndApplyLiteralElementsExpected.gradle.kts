@@ -11,7 +11,7 @@ android {
     testHandleProfiling = false
     testInstrumentationRunner = "efgh"
     useJack = true
-    versionCode = "2"
+    versionCode = 2
     versionName = "2.0"
   }
 }

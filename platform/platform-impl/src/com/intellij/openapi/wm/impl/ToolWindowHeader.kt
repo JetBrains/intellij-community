@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ide.ui.UISettingsListener
@@ -50,7 +51,7 @@ abstract class ToolWindowHeader internal constructor(
 
   init {
     @Suppress("LeakingThis")
-    AccessibleContextUtil.setName(this, "Tool Window Header")
+    AccessibleContextUtil.setName(this, IdeBundle.message("toolwindow.header.accessible.name"))
     westPanel = JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fillY()))
     westPanel.isOpaque = false
     westPanel.add(contentUi.tabComponent, CC().growY())

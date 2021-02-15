@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
 
-public class ImportHelper{
+public final class ImportHelper{
   private static final Logger LOG = Logger.getInstance(ImportHelper.class);
 
   private final JavaCodeStyleSettings mySettings;
@@ -974,8 +974,8 @@ public class ImportHelper{
   private static void addUnresolvedImportNames(@NotNull final Set<? super Pair<String, Boolean>> namesToImport, @NotNull PsiJavaFile file) {
     final PsiImportList importList = file.getImportList();
     PsiImportStatementBase[] imports = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
-    final Map<String, Pair<String, Boolean>> unresolvedNames = new THashMap<>();
-    @NotNull Set<Pair<String, Boolean>> unresolvedOnDemand = new THashSet<>();
+    final Map<String, Pair<String, Boolean>> unresolvedNames = new HashMap<>();
+    @NotNull Set<Pair<String, Boolean>> unresolvedOnDemand = new HashSet<>();
     for (PsiImportStatementBase anImport : imports) {
       PsiJavaCodeReferenceElement ref = anImport.getImportReference();
       if (ref == null) continue;

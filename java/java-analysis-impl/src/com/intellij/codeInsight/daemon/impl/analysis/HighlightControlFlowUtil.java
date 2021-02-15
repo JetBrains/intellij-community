@@ -240,7 +240,7 @@ public final class HighlightControlFlowUtil {
     PsiMethod canonicalConstructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
     if (canonicalConstructor == null || canonicalConstructor instanceof LightRecordCanonicalConstructor) return null;
     boolean isCompact = JavaPsiRecordUtil.isCompactConstructor(canonicalConstructor);
-    if (isCompact && PsiUtil.getLanguageLevel(aClass) != LanguageLevel.JDK_14_PREVIEW) return null;
+    if (isCompact) return null;
     PsiCodeBlock body = canonicalConstructor.getBody();
     if (body == null) return null;
     PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
@@ -650,8 +650,7 @@ public final class HighlightControlFlowUtil {
       final PsiMember enclosingCtrOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
       return enclosingCtrOrInitializer != null &&
              !(enclosingCtrOrInitializer instanceof PsiMethod &&
-               JavaPsiRecordUtil.isCompactConstructor((PsiMethod)enclosingCtrOrInitializer) &&
-               PsiUtil.getLanguageLevel(enclosingCtrOrInitializer) != LanguageLevel.JDK_14_PREVIEW) &&
+               JavaPsiRecordUtil.isCompactConstructor((PsiMethod)enclosingCtrOrInitializer)) &&
              isSameField(enclosingCtrOrInitializer, field, reference, containingFile);
     }
     if (variable instanceof PsiLocalVariable) {

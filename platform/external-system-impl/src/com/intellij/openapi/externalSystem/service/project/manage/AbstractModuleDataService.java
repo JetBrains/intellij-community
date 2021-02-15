@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -136,7 +135,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via external system)
       final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(created);
 
-      RootPolicy<Object> visitor = new RootPolicy<Object>() {
+      RootPolicy<Object> visitor = new RootPolicy<>() {
         @Override
         public Object visitLibraryOrderEntry(@NotNull LibraryOrderEntry libraryOrderEntry, Object value) {
           modifiableRootModel.removeOrderEntry(libraryOrderEntry);
@@ -366,7 +365,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       @Override
       protected JComponent createCenterPanel() {
         orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        orphanModulesList.setItems(orphanModules, module -> FileUtilRt.getNameWithoutExtension(new File(module.getFirst()).getName()));
+        orphanModulesList.setItems(orphanModules, module -> FileUtilRt.getNameWithoutExtension(new File(module.getFirst()).getName())); //NON-NLS
         orphanModulesList.setBorder(JBUI.Borders.empty(5));
 
         JScrollPane myModulesScrollPane =
@@ -472,7 +471,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
     }
 
-    noOrderAwareItems.sort(new Comparator<OrderEntry>() {
+    noOrderAwareItems.sort(new Comparator<>() {
       @Override
       public int compare(OrderEntry o1, OrderEntry o2) {
         return o1.toString().compareTo(o2.toString());
@@ -490,24 +489,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
 
     if (LOG.isDebugEnabled()) {
-      final boolean changed = !ArrayUtil.equals(orderEntries, newOrder, Comparator.naturalOrder());
+      boolean changed = !Arrays.equals(orderEntries, newOrder);
       LOG.debug(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
     }
     modifiableRootModel.rearrangeOrderEntries(newOrder);
-  }
-
-  private static int findNewPlace(OrderEntry[] newOrder, int newIndex) {
-    int idx = newIndex;
-    while (idx < 0 || (idx < newOrder.length && newOrder[idx] != null)) {
-      idx++;
-    }
-    if (idx >= newOrder.length) {
-      idx = newIndex - 1;
-      while (idx >= 0 && (idx >= newOrder.length || newOrder[idx] != null)) {
-        idx--;
-      }
-    }
-    return idx;
   }
 
   private void importModuleSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {

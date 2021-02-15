@@ -8,10 +8,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyGotoDeclarationHandler
+import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
+import com.jetbrains.python.pyi.PyiUtil
 
 class PyNavigationTest : PyTestCase() {
 
@@ -75,6 +80,114 @@ class PyNavigationTest : PyTestCase() {
                                          "print(va<caret>r)")
   }
 
+  fun testGotoDeclarationOnInitialization() {
+    myFixture.configureByText(
+      "a.py",
+      "class MyClass:\n" +
+      "  pass\n" +
+      "MyCla<caret>ss()"
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertInstanceOf(target, PyClass::class.java)
+  }
+
+  fun testGotoDeclarationOnInitializationWithDunderInit() {
+    myFixture.configureByText(
+      "a.py",
+      "class MyClass:\n" +
+      "  def __init__(self):\n" +
+      "    pass\n" +
+      "MyCla<caret>ss()"
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertInstanceOf(target, PyFunction::class.java)
+  }
+
+  fun testGotoDeclarationOnInitializationWithMetaclassDunderCall() {
+    myFixture.configureByText(
+      "a.py",
+      "class MyMeta(type):\n" +
+      "  def __call__(self, p1, p2):\n" +
+      "    pass\n" +
+      "class MyClass(metaclass=MyMeta):\n" +
+      "  pass\n" +
+      "MyCla<caret>ss()"
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertInstanceOf(target, PyClass::class.java)
+  }
+
+  fun testGotoDeclarationOnInitializationWithDunderInitAndMetaclassDunderCall() {
+    myFixture.configureByText(
+      "a.py",
+      "class MyMeta(type):\n" +
+      "  def __call__(self, p1, p2):\n" +
+      "    pass\n" +
+      "class MyClass(metaclass=MyMeta):\n" +
+      "  def __init__(self, p3, p4):\n" +
+      "    pass\n" +
+      "MyCla<caret>ss()"
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertInstanceOf(target, PyClass::class.java)
+  }
+
+  fun testGotoDeclarationOnInitializationWithDunderInitOverloads() {
+    // go to the first overload
+
+    myFixture.configureByText(
+      "a.py",
+      "from typing import overload\n" +
+      "class A:\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: None) -> None:\n" +
+      "        pass\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: int) -> None:\n" +
+      "        pass\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: str) -> None:\n" +
+      "        pass\n" +
+      "<caret>A(\"abc\")"
+    )
+
+    val foo = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor) as PyFunction
+    assertEquals(PyNames.INIT, foo.name)
+
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, myFixture.file)
+    PyiUtil
+      .getOverloads(foo, context)
+      .forEach { if (it !== foo) assertTrue(PyPsiUtils.isBefore(foo, it)) }
+  }
+
+  fun testGotoDeclarationOnInitializationWithDunderInitOverloadsAndImplementation() {
+    // go to the implementation
+
+    myFixture.configureByText(
+      "a.py",
+      "from typing import overload\n" +
+      "class A:\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: None) -> None:\n" +
+      "        pass\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: int) -> None:\n" +
+      "        pass\n" +
+      "    @overload\n" +
+      "    def __init__(self, value: str) -> None:\n" +
+      "        pass\n" +
+      "    def __init__(self, value):\n" +
+      "        pass\n" +
+      "<caret>A(\"abc\")"
+    )
+
+    val foo = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor) as PyFunction
+    assertEquals(PyNames.INIT, foo.name)
+
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, myFixture.file)
+    assertFalse(PyiUtil.isOverload(foo, context))
+  }
+
   private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {
     myFixture.configureByText("a.py", text)
     val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcome(myFixture.editor, myFixture.file, myFixture.caretOffset)
@@ -97,6 +210,4 @@ class PyNavigationTest : PyTestCase() {
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor? = ourPy3Descriptor
-
-
 }

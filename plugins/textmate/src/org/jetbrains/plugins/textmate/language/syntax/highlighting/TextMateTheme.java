@@ -15,7 +15,7 @@ public final class TextMateTheme {
 
   private static final TextMateDefaultColorsProvider DEFAULT_COLORS_PROVIDER = new TextMateDefaultColorsProvider();
 
-  private static final Map<CharSequence, CharSequence> EXTENSIONS_MAPPING = new HashMap<CharSequence, CharSequence>() {{
+  private static final Map<CharSequence, CharSequence> EXTENSIONS_MAPPING = new HashMap<>() {{
     // XmlHighlighterColors
     put("entity.other.attribute-name.localname.xml", "XML_ATTRIBUTE_NAME");
     put("entity.name.tag.xml", "XML_TAG_NAME");

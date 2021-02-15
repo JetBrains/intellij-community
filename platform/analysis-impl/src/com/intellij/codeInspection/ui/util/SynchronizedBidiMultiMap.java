@@ -1,21 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui.util;
 
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class SynchronizedBidiMultiMap<K, V> {
-  private final Map<K, V[]> myKey2Values = new THashMap<>();
-  private final Map<V, K> myValue2Keys = new THashMap<>();
+  private final Map<K, V[]> myKey2Values = new HashMap<>();
+  private final Map<V, K> myValue2Keys = new HashMap<>();
 
   public synchronized Collection<K> keys() {
     return new ArrayList<>(myKey2Values.keySet());
@@ -42,12 +40,7 @@ public abstract class SynchronizedBidiMultiMap<K, V> {
   }
 
   public synchronized void put(K key, V... values) {
-    myKey2Values.merge(key, values, (/*@NotNull*/ arr1, arr2) -> {
-      V[] mergeResult = arrayFactory().create(arr1.length + arr2.length);
-      System.arraycopy(arr1, 0, mergeResult, 0, arr1.length);
-      System.arraycopy(arr2, 0, mergeResult, arr1.length, arr2.length);
-      return mergeResult;
-    });
+    myKey2Values.merge(key, values, (/*@NotNull*/ arr1, arr2) -> ArrayUtil.mergeArrays(arr1, arr2, arrayFactory()));
     for (V value : values) {
       myValue2Keys.put(value, key);
     }

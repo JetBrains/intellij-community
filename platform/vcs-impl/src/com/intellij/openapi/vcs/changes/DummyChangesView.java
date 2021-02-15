@@ -58,10 +58,6 @@ class DummyChangesView implements ChangesViewEx {
   public void refreshImmediately() {
   }
 
-  @Override
-  public void updateCommitWorkflow() {
-  }
-
   @Nullable
   @Override
   public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {

@@ -128,19 +128,22 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return getGroovyRtRoots(ClasspathBootstrap.getResourceFile(GroovyBuilder.class));
   }
 
-  @NotNull
   static List<String> getGroovyRtRoots(File jpsPluginRoot) {
-    return Arrays.asList(getGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar", "intellij.groovy.rt", "groovy-rt"),
-                         getGroovyRtJarPath(jpsPluginRoot, "groovy-constants-rt.jar", "intellij.groovy.constants.rt", "groovy-constants-rt"));
+    List<String> result = new ArrayList<>();
+    addGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar",
+                       Collections.singletonList("intellij.groovy.rt"), "groovy-rt", result);
+   addGroovyRtJarPath(jpsPluginRoot, "groovy-constants-rt.jar",
+                      Collections.singletonList("intellij.groovy.constants.rt"), "groovy-constants-rt", result);
+    return result;
   }
 
-  @NotNull
-  private static String getGroovyRtJarPath(File jpsPluginClassesRoot, String jarNameInDistribution,
-                                           String moduleName,
-                                           String mavenArtifactNamePrefix) {
-    String fileName;
+  private static void addGroovyRtJarPath(File jpsPluginClassesRoot, String jarNameInDistribution,
+                                         List<String> moduleNames,
+                                         String mavenArtifactNamePrefix,
+                                         @NotNull List<String> to) {
     File parentDir = jpsPluginClassesRoot.getParentFile();
     if (jpsPluginClassesRoot.isFile()) {
+      String fileName;
       if (jpsPluginClassesRoot.getName().equals("groovy-jps.jar")) {
         fileName = jarNameInDistribution;
       }
@@ -151,11 +154,13 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           parentDir = new File(parentDir.getParentFile().getParentFile(), mavenArtifactNamePrefix + "/" + version);
         }
       }
+      to.add(new File(parentDir, fileName).getPath());
     }
     else {
-      fileName = moduleName;
+      for (String moduleName : moduleNames) {
+        to.add(new File(parentDir, moduleName).getPath());
+      }
     }
-    return new File(parentDir, fileName).getPath();
   }
 
   public static boolean isGroovyFile(String path) {

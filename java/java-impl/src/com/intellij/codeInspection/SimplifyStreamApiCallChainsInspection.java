@@ -86,7 +86,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
   private static final CallMatcher STREAM_MATCH = anyOf(STREAM_ANY_MATCH, STREAM_NONE_MATCH, STREAM_ALL_MATCH);
 
-  private static final CallMatcher COLLECTORS_TO_LIST = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList").parameterCount(0);
+  private static final CallMatcher COLLECTORS_TO_LIST = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList", "toUnmodifiableList")
+    .parameterCount(0);
   private static final CallMatcher MAP_ENTRY_SET = instanceCall(JAVA_UTIL_MAP, "entrySet").parameterCount(0);
   private static final CallMatcher STREAM_TAKE_WHILE =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "takeWhile").parameterCount(1).withLanguageLevelAtLeast(
@@ -531,7 +532,9 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       handler("reducing", 3, "map({1}).reduce({0}, {2})", false),
       handler("summingInt", 1, "mapToInt({0}).sum()", false),
       handler("summingLong", 1, "mapToLong({0}).sum()", false),
-      handler("summingDouble", 1, "mapToDouble({0}).sum()", false));
+      handler("summingDouble", 1, "mapToDouble({0}).sum()", false),
+      CallHandler.of(collectorMatcher("toUnmodifiableList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16),
+                     call -> new ReplaceCollectorFix("toUnmodifiableList", "toList()", false)));
 
     private final String myCollector;
     private final String myStreamSequence;
@@ -1409,7 +1412,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       String adapted = ParenthesesUtils.getText(expression, ParenthesesUtils.POSTFIX_PRECEDENCE) + "::apply";
       PsiClassType type = tryCast(expression.getType(), PsiClassType.class);
       if (type == null) return null;
-      if (type.rawType().equalsToText(JAVA_UTIL_FUNCTION_FUNCTION)) return adapted;
+      if (PsiTypesUtil.classNameEquals(type, JAVA_UTIL_FUNCTION_FUNCTION)) return adapted;
       PsiClass typeClass = type.resolve();
       // Disable inspection if type of expression is some subtype which defines its own 'apply' methods
       // to avoid possible resolution clashes

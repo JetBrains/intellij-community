@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -96,6 +97,9 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
     }
 
     private static boolean isValid(PsiJavaFile file) {
+      if (PsiUtil.isModuleFile(file)) {
+        return false;
+      }
       final PsiImportList importList = file.getImportList();
       if (importList == null) { // module-info.java always has import list even if empty
         return false;

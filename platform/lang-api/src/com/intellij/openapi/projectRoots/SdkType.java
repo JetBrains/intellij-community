@@ -294,13 +294,7 @@ public abstract class SdkType implements SdkTypeId {
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
-    showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
   }
-
-  /** @deprecated use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<? super Sdk> sdkCreatedCallback) { }
 
   /**
    * Checks if the home directory of the specified SDK is valid. By default, checks that the directory points to a valid local

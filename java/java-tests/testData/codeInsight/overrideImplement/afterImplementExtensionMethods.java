@@ -5,6 +5,6 @@ interface A<T> {
 class MyClass<T> implements A<T> {
     @Override
     public void m(T t) {
-        <caret>
+        <caret><selection>A.super.m(t);</selection>
     }
 }

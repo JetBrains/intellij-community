@@ -35,12 +35,12 @@ public class ExcludedDependencyModelImpl implements ExcludedDependencyModel {
   @Override
   @NotNull
   public ResolvedPropertyModel group() {
-    return GradlePropertyModelBuilder.create(myExcludeMap, GROUP).asMethod(true).buildResolved();
+    return GradlePropertyModelBuilder.create(myExcludeMap, GROUP).buildResolved();
   }
 
   @Override
   @NotNull
   public ResolvedPropertyModel module() {
-    return GradlePropertyModelBuilder.create(myExcludeMap, MODULE).asMethod(true).buildResolved();
+    return GradlePropertyModelBuilder.create(myExcludeMap, MODULE).buildResolved();
   }
 }

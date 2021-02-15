@@ -26,11 +26,6 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
   }
 
   @Override
-  public boolean isValid() {
-    return myHighlighter.isValid() && super.isValid();
-  }
-
-  @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     if (myHighlighter.isPersistent()) {
       myLine = persistentHighlighterUpdate(e, myLine, myHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE);

@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -178,8 +179,8 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
             return LastRevision.create(list.get(0));
           }
         }
-        catch (VcsException ignored) {
-          LOG.warn(ignored);
+        catch (VcsException e) {
+          LOG.warn(e);
           return null;
         }
       }
@@ -225,6 +226,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     }
 
     @NotNull
+    @NlsSafe
     public String getAuthor() {
       return myAuthor;
     }

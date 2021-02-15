@@ -36,18 +36,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class BackspaceHandler extends EditorWriteActionHandler {
+public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
   private static final Logger LOGGER = Logger.getInstance(BackspaceHandler.class);
 
   protected final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (!handleBackspace(editor, caret, dataContext, false)) {
       myOriginalHandler.execute(editor, caret, dataContext);
     }

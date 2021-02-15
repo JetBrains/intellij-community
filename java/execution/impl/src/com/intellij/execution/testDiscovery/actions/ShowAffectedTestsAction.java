@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.codeInsight.actions.VcsFacadeImpl;
@@ -303,7 +303,6 @@ public class ShowAffectedTestsAction extends AnAction {
     Runnable pinActionListener = () -> {
       UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), param -> param, initTitle, p -> {
         p.setCodeUsages(false); // don't show r/w, imports filtering actions
-        p.setUsagesWord(JavaCompilerBundle.message("affected.tests.test.usage.word"));
         p.setMergeDupLinesAvailable(false);
         p.setUsageTypeFilteringAvailable(false);
         p.setExcludeAvailable(false);

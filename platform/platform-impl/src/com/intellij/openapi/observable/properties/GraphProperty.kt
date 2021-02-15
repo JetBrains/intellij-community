@@ -2,6 +2,8 @@
 package com.intellij.openapi.observable.properties
 
 interface GraphProperty<T> : ObservableClearableProperty<T> {
+  fun dependsOn(parent: ObservableClearableProperty<*>)
+
   fun dependsOn(parent: ObservableClearableProperty<*>, default: () -> T)
 
   fun afterPropagation(listener: () -> Unit)

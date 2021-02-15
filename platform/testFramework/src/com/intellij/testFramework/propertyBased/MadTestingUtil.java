@@ -223,7 +223,7 @@ public final class MadTestingUtil {
     Function<GenerationEnvironment, File> generator =
       useRouletteWheel ? new RouletteWheelFileGenerator(root, interestingIdeaFiles) : new FileGenerator(root, interestingIdeaFiles);
     return Generator.from(generator)
-      .suchThat(new Predicate<File>() {
+      .suchThat(new Predicate<>() {
         @Override
         public boolean test(File file) {
           return file != null;
@@ -257,12 +257,12 @@ public final class MadTestingUtil {
    */
   @NotNull
   public static Supplier<MadTestingAction> performOnFileContents(CodeInsightTestFixture fixture,
-                                                                  String rootPath,
-                                                                  FileFilter fileFilter,
-                                                                  BiConsumer<ImperativeCommand.Environment, VirtualFile> action) {
+                                                                 String rootPath,
+                                                                 FileFilter fileFilter,
+                                                                 BiConsumer<? super ImperativeCommand.Environment, ? super VirtualFile> action) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
-    return () -> env -> new RunAll()
-      .append(() -> {
+    return () -> env -> new RunAll(
+      () -> {
         File ioFile = env.generateValue(randomFiles, "Working with %s");
         VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
         PsiFile psiFile = fixture.getPsiManager().findFile(vFile);
@@ -272,15 +272,15 @@ public final class MadTestingUtil {
           return;
         }
         action.accept(env, vFile);
-      })
-      .append(() -> WriteAction.run(() -> {
+      },
+      () -> WriteAction.run(() -> {
         for (VirtualFile file : Objects.requireNonNull(fixture.getTempDirFixture().getFile("")).getChildren()) {
           file.delete(fixture);
         }
-      }))
-      .append(() -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments())
-      .append(() -> UIUtil.dispatchAllInvocationEvents())
-      .run();
+      }),
+      () -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments(),
+      () -> UIUtil.dispatchAllInvocationEvents()
+    ).run();
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {
@@ -520,7 +520,7 @@ public final class MadTestingUtil {
     private final File myRoot;
     private final FileFilter myFilter;
     private static final File[] EMPTY_DIRECTORY = new File[0];
-    private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<File, File[]>() {
+    private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<>() {
       @Override
       protected File[] create(File f) {
         File[] files = f.listFiles(child -> myFilter.accept(child) && (child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child)));

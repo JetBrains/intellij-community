@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author anna
@@ -30,6 +31,8 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   private final Set<PluginId> mySkippedPlugins = new HashSet<>();
 
   private final PluginManagerMain.PluginEnabler.HEADLESS pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
+
+  private Function<Boolean, Void> myFinishFunction;
 
   PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<? extends IdeaPluginDescriptor> customPlugins) {
     super(project);
@@ -65,6 +68,10 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     }
   }
 
+  public void setFinishFunction(@NotNull Function<Boolean, Void> finishFunction) {
+    myFinishFunction = finishFunction;
+  }
+
   public boolean doInstallPlugins() {
     Set<PluginDescriptor> pluginsToEnable = new HashSet<>();
     List<PluginNode> nodes = new ArrayList<>();
@@ -92,7 +99,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     DisabledPluginsState.enablePlugins(pluginsToEnable, true);
     if (!nodes.isEmpty()) {
       try {
-        PluginManagerMain.downloadPlugins(nodes, myCustomPlugins, true, notifyRunnable, pluginHelper, null);
+        PluginManagerMain.downloadPlugins(nodes, myCustomPlugins, true, notifyRunnable, pluginHelper, myFinishFunction);
       }
       catch (IOException e) {
         LOG.error(e);

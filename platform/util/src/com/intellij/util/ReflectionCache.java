@@ -11,20 +11,12 @@ import org.jetbrains.annotations.NotNull;
  */
 @Deprecated
 public final class ReflectionCache {
-
   /**
    * @deprecated doesn't cache
    */
   @Deprecated
   public static boolean isAssignable(@NotNull Class ancestor, Class descendant) {
+    DeprecatedMethodException.report("Use 'ancestor.isAssignableFrom(descendant)' instead");
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
-  }
-
-  /**
-   * @deprecated doesn't cache
-   */
-  @Deprecated
-  public static boolean isInstance(Object instance, @NotNull Class clazz) {
-    return clazz.isInstance(instance);
   }
 }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -32,7 +30,7 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
   private String myPresentableName;
 
   static {
-    TextAttributes groupKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
+    TextAttributes groupKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PropertiesComponent.PROPERTY_KEY.getTextAttributesKey()).clone();
     groupKeyTextAttributes.setFontType(Font.ITALIC);
     GROUP_KEY = TextAttributesKey.createTextAttributesKey("GROUP_KEY", groupKeyTextAttributes);
   }
@@ -53,15 +51,13 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
     return element.isValid() ? element : null;
   }
 
-  @NotNull
   @Override
-  public IProperty[] getProperties() {
+  public IProperty @NotNull [] getProperties() {
     return new IProperty[] {myProperty};
   }
 
-  @Nullable
   @Override
-  public PsiFile[] getFiles() {
+  public PsiFile @Nullable [] getFiles() {
     return null;
   }
 
@@ -111,19 +107,15 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
       }
 
       @Override
-      public String getLocationString() {
-        return null;
-      }
-
-      @Override
       public Icon getIcon(boolean open) {
         return myProperty.getIcon(0);
       }
 
       @Override
       public TextAttributes getTextAttributes(EditorColorsScheme colorsScheme) {
-        final TextAttributesKey baseAttrKey =
-          (getPresentableName() != null && getPresentableName().isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
+        final TextAttributesKey baseAttrKey = (getPresentableName() != null && getPresentableName().isEmpty())
+          ? GROUP_KEY
+          : PropertiesHighlighter.PropertiesComponent.PROPERTY_KEY.getTextAttributesKey();
         final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
         if (getPsiElement() != null) {
           TextAttributes highlightingAttributes = getErrorTextAttributes(colorsScheme);

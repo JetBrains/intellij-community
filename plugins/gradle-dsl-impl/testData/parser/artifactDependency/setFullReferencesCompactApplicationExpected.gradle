@@ -1,0 +1,7 @@
+ext {
+  service = 'org.gradle.test.classifiers:service:1.0'
+  guavaPart = 'google.guava:guava:+'
+}
+dependencies {
+  testCompile service, "com.${guavaPart}"
+}

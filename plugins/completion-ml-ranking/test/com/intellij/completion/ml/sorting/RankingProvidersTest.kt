@@ -54,12 +54,12 @@ class RankingProvidersTest : LightPlatformTestCase() {
 
   fun `test too many experiment providers`() {
     registerProviders(experiment(0), experiment(0))
-    assertThrows<IllegalStateException>(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
+    assertThrows(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
   }
 
   fun `test too many default providers`() {
     registerProviders(default(), default())
-    assertThrows<IllegalStateException>(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
+    assertThrows(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
   }
 
   private fun checkActiveProvider(expectedProvider: RankingModelProvider?, groupNumber: Int) {

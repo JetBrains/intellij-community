@@ -26,7 +26,6 @@
     <httpRequestHandler implementation="org.jetbrains.plugins.github.authentication.GHOAuthCallbackHandler"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
@@ -34,8 +33,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubImageResizer"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
@@ -47,8 +45,6 @@
                          instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
       implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
-    <statistics.projectUsagesCollector
-      implementation="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$ProjectState"/>
     <statistics.counterUsagesCollector
       implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$Counters"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.github.util.GithubNotificationIdsHolder"/>
@@ -64,7 +60,7 @@
     <fileEditorProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPREditorProvider"/>
 
     <toolWindow id="Pull Requests" icon="GithubIcons.PullRequestsToolWindow"
-                anchor="left" canCloseContents="true" doNotActivateOnStart="true"
+                anchor="left" doNotActivateOnStart="true"
                 factoryClass="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowFactory"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
@@ -86,10 +82,6 @@
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"/>
-
-    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforeProjectCloseListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 
   <projectListeners>
@@ -104,10 +96,6 @@
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
               topic="git4idea.repo.GitRepositoryChangeListener"/>
-
-    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$BeforePluginUnloadListener"
-              topic="com.intellij.ide.plugins.DynamicPluginListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -148,7 +136,7 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
-    <group id="GitHub.MainMenu" popup="true" text="GitHub">
+    <group id="GitHub.MainMenu" popup="true">
       <reference ref="Github.Share"/>
       <reference ref="Github.Create.Pull.Request"/>
       <reference ref="Github.View.Pull.Request"/>

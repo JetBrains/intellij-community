@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.JavaVersion;
@@ -225,7 +224,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
         "    }",
         "}",
       };
-      final String script = StringUtil.join(lines, SystemProperties.getLineSeparator());
+      final String script = StringUtil.join(lines, System.lineSeparator());
       initScriptConsumer.consume(script);
     }
 

@@ -2,7 +2,6 @@
 package com.intellij.remoteServer;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
@@ -24,7 +23,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class ServerType<C extends ServerConfiguration> {
-  public static final ExtensionPointName<ServerType<?>> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.type");
+  public static final ExtensionPointName<ServerType> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.type");
   private final String myId;
 
   protected ServerType(String id) {
@@ -81,15 +80,6 @@ public abstract class ServerType<C extends ServerConfiguration> {
   @NotNull
   public RemoteServerConfigurable createServerConfigurable(@NotNull C configuration) {
     throw new UnsupportedOperationException();
-  }
-
-  /**
-   * @deprecated override {@link #createServerConfigurable(ServerConfiguration)} instead
-   */
-  @Deprecated
-  @NotNull
-  public UnnamedConfigurable createConfigurable(@NotNull C configuration) {
-    return createServerConfigurable(configuration);
   }
 
   @NotNull

@@ -3,10 +3,11 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
+import java.nio.charset.StandardCharsets;
 
 public class ConvertToBasicLatinTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -24,7 +25,7 @@ public class ConvertToBasicLatinTest extends LightJavaCodeInsightFixtureTestCase
   public void testUnclosedDocComment() { doTest(); }
 
   private void doTest() {
-    doEncodingTest(getProject(), "UTF-8", null, () -> {
+    EditorTestUtil.saveEncodingsIn(getProject(), StandardCharsets.UTF_8, null, () -> {
       String name = getTestName(false);
       String intention = JavaBundle.message("intention.convert.to.basic.latin");
       CodeInsightTestUtil.doIntentionTest(myFixture, intention, name + ".java", name + "_after.java");

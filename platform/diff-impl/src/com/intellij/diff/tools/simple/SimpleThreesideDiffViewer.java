@@ -453,7 +453,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
         if (!diffChange.isChange(mySide)) continue;
         if (!handler.process(diffChange.getStartLine(left), diffChange.getEndLine(left),
                              diffChange.getStartLine(right), diffChange.getEndLine(right),
-                             diffChange.getDiffType().getColor(getEditor(ThreeSide.BASE)))) {
+                             diffChange.getDiffType())) {
           return;
         }
       }

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenDisposable;
+import org.jetbrains.idea.maven.importing.MavenModuleImporter;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 /**
@@ -45,7 +46,7 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
       }
 
       // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
-      configuration.setBytecodeTargetLevel(module, ObjectUtils.notNull(targetLevel, "1.5"));
+      configuration.setBytecodeTargetLevel(module, ObjectUtils.notNull(targetLevel, MavenModuleImporter.getDefaultLevel(mavenProject).toJavaVersion().toString()));
     }
     module.putUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY, Boolean.FALSE);
 

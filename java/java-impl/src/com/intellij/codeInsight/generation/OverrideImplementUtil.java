@@ -310,6 +310,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (prependReturn && !superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
+    PsiClass aClass = superMethod.getContainingClass();
+    if (aClass != null && aClass.isInterface()) {
+      buffer.append(aClass.getName()).append(".");
+    }
     buffer.append("super");
     PsiParameter[] parameters = overriding.getParameterList().getParameters();
     if (!superMethod.isConstructor()) {
@@ -327,7 +331,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   public static void setupMethodBody(@NotNull PsiMethod result, @NotNull PsiMethod originalMethod, @NotNull PsiClass targetClass) throws IncorrectOperationException {
-    boolean isAbstract = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) || originalMethod.hasModifierProperty(PsiModifier.DEFAULT);
+    boolean isAbstract = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT);
     String templateName = isAbstract ? JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
     FileTemplate template = FileTemplateManager.getInstance(originalMethod.getProject()).getCodeTemplate(templateName);
     setupMethodBody(result, originalMethod, targetClass, template);

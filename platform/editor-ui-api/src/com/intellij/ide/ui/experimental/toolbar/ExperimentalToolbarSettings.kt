@@ -3,32 +3,60 @@ package com.intellij.ide.ui.experimental.toolbar
 
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 
 @State(name = "ToolbarSettingsService", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
 class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
                                                           PersistentStateComponent<ExperimentalToolbarStateWrapper> {
-
   val newToolbarEnabled: Boolean
     get() = Registry.`is`("ide.new.navbar", false)
 
-  val showNewNavbarVcsGroup: Boolean
-    get() = Registry.`is`("ide.new.navbar.vcs.group", false)
-
-  val showNewNavbarRunGroup: Boolean
-    get() = Registry.`is`("ide.new.navbar.run.debug", false)
-
   private var toolbarState = ExperimentalToolbarStateWrapper()
 
+  private val disposable = Disposer.newDisposable()
+
+  inner class ToolbarRegistryListener : RegistryValueListener {
+    override fun afterValueChanged(value: RegistryValue) {
+      val v = value.asBoolean()
+      toolbarState.state =
+        getToolbarStateByVisibilityFlags(v, if(v) false else isToolbarVisible(), v,
+                                         if(v) false else isNavBarVisible())
+      updateSettingsState()
+      UISettings.instance.fireUISettingsChanged()
+    }
+  }
+
+  init {
+    if (!newToolbarEnabled) {
+      toolbarState.state = getToolbarStateByVisibilityFlags(false, UISettings.instance.state.showMainToolbar, false,
+                                                            UISettings.instance.state.showNavigationBar)
+    }
+    Disposer.register(ApplicationManager.getApplication(), disposable)
+    Registry.get("ide.new.navbar").addListener(ToolbarRegistryListener(), disposable)
+  }
 
   override fun getState(): ExperimentalToolbarStateWrapper {
     return toolbarState
   }
 
   override fun loadState(state: ExperimentalToolbarStateWrapper) {
-    toolbarState = state
-    updateSettingsState()
+    if (!newToolbarEnabled) {
+      val oldState = UISettings.instance.state
+      toolbarState.state =
+        getToolbarStateByVisibilityFlags(false, oldState.showMainToolbar, false,
+                                         oldState.showNavigationBar)
+    }
+    else {
+      toolbarState = state
+      updateSettingsState()
+    }
   }
 
   fun getToolbarStateByVisibilityFlags(newToolbarEnabled: Boolean, oldToolbarVisible: Boolean,
@@ -97,7 +125,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   }
 
   override fun getShowToolbarInNavigationBar(): Boolean {
-    return toolbarState.equals(ExperimentalToolbarStateEnum.OLD_NAVBAR)
+    return toolbarState.state == ExperimentalToolbarStateEnum.OLD_NAVBAR
   }
 
   var showNewToolbar: Boolean

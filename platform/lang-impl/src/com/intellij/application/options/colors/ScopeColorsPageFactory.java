@@ -27,7 +27,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactoryEx {
     final JPanel scopePanel = createChooseScopePanel();
     return NewColorAndFontPanel.create(new PreviewPanel.Empty(){
       @Override
-      public Component getPanel() {
+      public JComponent getPanel() {
         return scopePanel;
       }
 

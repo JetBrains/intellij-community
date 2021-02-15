@@ -16,13 +16,6 @@ public abstract class GraphAlgorithms {
     return ApplicationManager.getApplication().getService(GraphAlgorithms.class);
   }
 
-  /**
-   * @deprecated use more generic {@link #findShortestPath(InboundSemiGraph, Object, Object)} instead
-   */
-  @Deprecated
-  @Nullable
-  public abstract <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish);
-
   @Nullable
   public abstract <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
 

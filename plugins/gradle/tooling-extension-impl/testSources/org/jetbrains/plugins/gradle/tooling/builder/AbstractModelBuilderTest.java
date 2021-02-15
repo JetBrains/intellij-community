@@ -142,7 +142,7 @@ public abstract class AbstractModelBuilderTest {
 
     try {
       boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
-      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported, false);
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported);
       projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
                                                                                         ContainerUtil.<Class<?>>set(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);

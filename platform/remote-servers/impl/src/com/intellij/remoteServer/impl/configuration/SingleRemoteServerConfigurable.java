@@ -91,12 +91,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
   }
 
   private static <C extends ServerConfiguration> RemoteServerConfigurable createConfigurable(RemoteServer<C> server, C configuration) {
-    try {
-      return server.getType().createServerConfigurable(configuration);
-    }
-    catch (UnsupportedOperationException e) {
-      return new DelegatingRemoteServerConfigurable(server.getType().createConfigurable(configuration));
-    }
+    return server.getType().createServerConfigurable(configuration);
   }
 
   private void setConnectionStatus(boolean error, boolean connected, @NlsContexts.Label String text) {

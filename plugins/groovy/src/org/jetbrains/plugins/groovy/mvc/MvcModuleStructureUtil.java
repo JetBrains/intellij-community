@@ -35,7 +35,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -316,8 +315,8 @@ public final class MvcModuleStructureUtil {
   }
 
   private static void removeInvalidSourceRoots(Collection<Consumer<ModifiableRootModel>> actions, MvcProjectStructure structure) {
-    final Set<SourceFolder> toRemove = new THashSet<>();
-    final Set<String> toRemoveContent = new THashSet<>();
+    final Set<SourceFolder> toRemove = new HashSet<>();
+    final Set<String> toRemoveContent = new HashSet<>();
     for (ContentEntry entry : ModuleRootManager.getInstance(structure.myModule).getContentEntries()) {
       final VirtualFile file = entry.getFile();
       if (file == null || !structure.isValidContentRoot(file)) {
@@ -875,7 +874,7 @@ public final class MvcModuleStructureUtil {
   }
 
   public static Library findUserLibrary(@NotNull Module module, @NotNull final String name) {
-    CommonProcessors.FindProcessor<Library> processor = new CommonProcessors.FindProcessor<Library>() {
+    CommonProcessors.FindProcessor<Library> processor = new CommonProcessors.FindProcessor<>() {
       @Override
       protected boolean accept(Library library) {
         String libraryName = library.getName();

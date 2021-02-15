@@ -48,7 +48,7 @@ public class PyBlockEvaluator {
    * @see PyEvaluationContext
    */
   public PyBlockEvaluator(@NotNull final PyEvaluationContext evaluationContext) {
-    this(new HashSet<PyFile>(), evaluationContext);
+    this(new HashSet<>(), evaluationContext);
   }
 
   /**

@@ -19,7 +19,7 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiType
 
-internal val LINE_SEPARATOR = System.getProperty("line.separator") ?: "\n"
+internal val LINE_SEPARATOR = System.lineSeparator() ?: "\n"
 
 val String.withMargin: String
   get() = lines().joinToString(LINE_SEPARATOR) { "    " + it }

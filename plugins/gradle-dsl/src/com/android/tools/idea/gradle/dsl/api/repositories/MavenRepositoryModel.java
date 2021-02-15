@@ -15,5 +15,9 @@
  */
 package com.android.tools.idea.gradle.dsl.api.repositories;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface MavenRepositoryModel extends UrlBasedRepositoryModel {
+  @NotNull
+  MavenCredentialsModel credentials();
 }

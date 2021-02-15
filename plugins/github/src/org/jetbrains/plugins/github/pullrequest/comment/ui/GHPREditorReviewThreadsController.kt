@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.codereview.diff.EditorComponentInlaysManager
 
 class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
                                         private val componentFactory: GHPRDiffEditorReviewComponentsFactory,

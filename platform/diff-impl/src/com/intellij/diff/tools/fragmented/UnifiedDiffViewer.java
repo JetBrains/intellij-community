@@ -68,13 +68,13 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
@@ -82,6 +82,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
   @NotNull private final UnifiedDiffPanel myPanel;
+  @NotNull private final OnesideContentPanel myContentPanel;
 
   @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
@@ -123,13 +124,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
 
-    OnesideContentPanel contentPanel = new OnesideContentPanel(myEditor.getComponent());
-    contentPanel.setTitle(createTitles());
+    myContentPanel = new OnesideContentPanel(myEditor.getComponent());
     if (getProject() != null) {
-      contentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
+      myContentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
     }
 
-    myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
+    myPanel = new UnifiedDiffPanel(myProject, myContentPanel, this, myContext);
 
     myFoldingModel = new MyFoldingModel(getProject(), myEditor, this);
     myMarkupUpdater = new MarkupUpdater(getContents());
@@ -154,7 +154,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     installEditorListeners();
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
-    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
+    myContentPanel.setTitle(createTitles());
 
     new UiNotifyConnector(getComponent(), new Activatable() {
       @Override
@@ -193,7 +194,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @Nullable
   protected JComponent createTitles() {
-    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, Arrays.asList(myEditor, myEditor));
+    List<JComponent> titles = DiffUtil.createTextTitles(this, myRequest, Arrays.asList(myEditor, myEditor));
     assert titles.size() == 2;
 
     titles = ContainerUtil.skipNulls(titles);
@@ -424,17 +425,18 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       clearDiffPresentation();
 
 
-      if (isContentsEqual) {
+      if (isContentsEqual &&
+          !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
         boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
         boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
 
-      TIntFunction foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
-      TIntFunction contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
-      TIntFunction contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
-      TIntFunction merged1 = mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor);
-      TIntFunction merged2 = mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor);
+      IntUnaryOperator foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
+      IntUnaryOperator contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
+      IntUnaryOperator contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
+      IntUnaryOperator merged1 = mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor);
+      IntUnaryOperator merged2 = mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor);
       myEditor.getGutter().setLineNumberConverter(merged1 == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged1),
                                                   merged2 == null ? null : new LineNumberConverterAdapter(merged2));
 
@@ -491,9 +493,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return block;
   }
 
-  private static TIntFunction mergeLineConverters(@Nullable TIntFunction contentConvertor,
-                                                  @NotNull TIntFunction unifiedConvertor,
-                                                  @NotNull TIntFunction foldingConvertor) {
+  private static IntUnaryOperator mergeLineConverters(@Nullable IntUnaryOperator contentConvertor,
+                                                  @NotNull IntUnaryOperator unifiedConvertor,
+                                                  @NotNull IntUnaryOperator foldingConvertor) {
     return DiffUtil.mergeLineConverters(DiffUtil.mergeLineConverters(contentConvertor, unifiedConvertor), foldingConvertor);
   }
 
@@ -1236,7 +1238,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @NotNull
-    public TIntFunction getLineNumberConvertor() {
+    public IntUnaryOperator getLineNumberConvertor() {
       return getLineConvertor(0);
     }
 

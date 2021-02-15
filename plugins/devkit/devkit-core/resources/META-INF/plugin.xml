@@ -163,6 +163,11 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.FileEqualsUsageInspection"
                      key="inspection.file.equals.usage.display.name"/>
+    <localInspection language="UAST" shortName="MissingAccessibleContext"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.MissingAccessibleContextInspection"
+                     key="inspection.missing.accessible.context.display.name"/>
     <localInspection language="JAVA" shortName="UnsafeVfsRecursion"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
@@ -351,9 +356,9 @@
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdater"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdater"/>
     <postStartupActivity
-        implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdateStartupActivity"/>
+        implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider
         implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
     <projectService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.LibrariesWithIntellijClassesSetting"/>
@@ -366,14 +371,11 @@
     <psi.fileReferenceHelper
         order="first"
         implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
+    <daemon.externalAnnotatorsFilter
+      implementation="org.jetbrains.idea.devkit.inspections.PluginXmlExternalAnnotatorsFilter"/>
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
-    <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
-
-    <!--cached value profiler-->
-    <fileType extensions="cvp" name="CVP"
-              implementationClass="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileType" fieldName="INSTANCE"/>
-    <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
+    <console.folding order="first" implementation="org.jetbrains.idea.devkit.FailedTestDebugLogConsoleFolding"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
 
@@ -431,9 +433,6 @@
     <group id="DevkitNewActions" icon="AllIcons.Nodes.Plugin" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
       <action class="org.jetbrains.idea.devkit.actions.NewActionAction" id="NewAction"/>
       <separator/>
-      <action id="NewApplicationService" class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
-      <action id="NewProjectService" class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
-      <action id="NewModuleService" class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
       <action id="DevKit.NewMessageBundle" class="org.jetbrains.idea.devkit.actions.NewMessageBundleAction"/>
       <separator/>
       <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>

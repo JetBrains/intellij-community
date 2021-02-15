@@ -17,6 +17,7 @@ package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,11 @@ import static com.intellij.openapi.actionSystem.LangDataKeys.*;
  * we need the DataContext from the action.
  *
  * @author Konstantin Bulenkov
+ *
+ * @deprecated use {@link ToolAction#getToolDataContext(DataContext)}
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class HackyDataContext implements DataContext {
   private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
   private final Map<String, Object> values = new HashMap<>();

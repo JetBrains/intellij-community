@@ -7,10 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.util.xmlb.annotations.Attribute
@@ -19,6 +16,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
 
 @State(name = "ActionsLocalSummary", storages = [Storage("actionSummary.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
+@Service
 class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, SimpleModificationTracker() {
   @Volatile
   private var state = ActionsLocalSummaryState()

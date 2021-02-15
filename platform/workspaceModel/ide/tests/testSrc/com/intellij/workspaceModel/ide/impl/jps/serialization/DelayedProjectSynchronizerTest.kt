@@ -97,7 +97,7 @@ class DelayedProjectSynchronizerTest {
   }
 
   private fun loadProject(projectDir: File): Project {
-    val project = PlatformTestUtil.loadAndOpenProject(projectDir.toPath())
+    val project = PlatformTestUtil.loadAndOpenProject(projectDir.toPath(), disposableRule.disposable)
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })

@@ -131,7 +131,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
       ProgressManager.checkCanceled();
 
       try {
-        Files.walkFileTree(Paths.get(path), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(Paths.get(path), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
           @Override
           public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
             String fileName = path.getFileName().toString();

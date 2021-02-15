@@ -27,10 +27,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -61,7 +62,9 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return !PsiUtil.isModuleFile(file);
+    PsiElement element = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiElement.class, false);
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    return psiClass != null && RefactoringActionContextUtil.isClassWithExtendsOrImplements(psiClass) && RefactoringActionContextUtil.isJavaClassHeader(element);
   }
 
   @Override

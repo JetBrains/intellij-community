@@ -37,6 +37,6 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
   }
 
   private void afterPluginSetChanged() {
-    mySwitcher.turnOn();
+    mySwitcher.turnOn(null);
   }
 }

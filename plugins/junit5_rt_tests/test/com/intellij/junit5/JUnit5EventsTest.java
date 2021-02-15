@@ -4,11 +4,12 @@ package com.intellij.junit5;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.engine.config.DefaultJupiterConfiguration;
 import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
 import org.junit.jupiter.engine.descriptor.TestFactoryTestDescriptor;
 import org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor;
+import org.junit.platform.engine.ConfigurationParameters;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
@@ -24,6 +25,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 class JUnit5EventsTest {
@@ -61,10 +63,12 @@ class JUnit5EventsTest {
   void multipleFailures() throws Exception {
 
     EngineDescriptor engineDescriptor = new EngineDescriptor(UniqueId.forEngine("engine"), "e");
-    ClassTestDescriptor c = new ClassTestDescriptor(UniqueId.forEngine("testClass"), TestClass.class);
+    DefaultJupiterConfiguration jupiterConfiguration = createJupiterConfiguration();
+    ClassTestDescriptor c = new ClassTestDescriptor(UniqueId.forEngine("testClass"), TestClass.class, jupiterConfiguration);
     engineDescriptor.addChild(c);
     TestDescriptor testDescriptor = new TestMethodTestDescriptor(UniqueId.forEngine("testMethod"), TestClass.class,
-                                                                 TestClass.class.getDeclaredMethod("test1"));
+                                                                 TestClass.class.getDeclaredMethod("test1"),
+                                                                 jupiterConfiguration);
     c.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
     final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor));
@@ -78,23 +82,45 @@ class JUnit5EventsTest {
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(multipleFailuresError));
 
 
-    String lineSeparator = MapSerializerUtil.escapeStr(System.getProperty("line.separator"), MapSerializerUtil.STD_ESCAPER);
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
                             "##teamcity[testStarted id='|[engine:testMethod|]' name='test1()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/test1' metainfo='']\n" +
-                            "##teamcity[testStdOut id='|[engine:testMethod|]' name='test1()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' out = 'timestamp = " + reportEntry.getTimestamp() + ", key1 = value1, stdout = out1']\n" +
+                            "##teamcity[testStdOut id='|[engine:testMethod|]' name='test1()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' out = 'timestamp = " + reportEntry.getTimestamp() + ", key1 = value1, stdout = out1|n']\n" +
                             "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='message1|nComparison Failure: ' expected='expected1' actual='actual1' details='']\n" +
                             "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='message2|nComparison Failure: ' expected='expected2' actual='actual2' details='']\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='2 errors (2 failures)|r|n\tmessage1|r|n\tmessage2' details='TRACE']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='2 errors (2 failures)|n\torg.opentest4j.AssertionFailedError: message1|n\torg.opentest4j.AssertionFailedError: message2' details='TRACE']\n" +
                             "##teamcity[testFinished id='|[engine:testMethod|]' name='test1()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]']\n", StringUtil.convertLineSeparators(myBuf.toString()));
+  }
+
+  public static DefaultJupiterConfiguration createJupiterConfiguration() {
+    return new DefaultJupiterConfiguration(
+      new ConfigurationParameters() {
+        @Override
+        public Optional<String> get(String key) {
+          return Optional.empty();
+        }
+
+        @Override
+        public Optional<Boolean> getBoolean(String key) {
+          return Optional.empty();
+        }
+
+        @Override
+        public int size() {
+          return 0;
+        }
+      });
   }
 
   @Test
   void containerFailure() throws Exception {
     EngineDescriptor engineDescriptor = new EngineDescriptor(UniqueId.forEngine("engine"), "e");
-    ClassTestDescriptor classTestDescriptor = new ClassTestDescriptor(UniqueId.forEngine("testClass"), TestClass.class);
+    DefaultJupiterConfiguration jupiterConfiguration = createJupiterConfiguration();
+    ClassTestDescriptor classTestDescriptor = new ClassTestDescriptor(UniqueId.forEngine("testClass"), TestClass.class,
+                                                                      jupiterConfiguration);
     engineDescriptor.addChild(classTestDescriptor);
     TestDescriptor testDescriptor = new TestFactoryTestDescriptor(UniqueId.forEngine("testMethod"), TestClass.class,
-                                                                  TestClass.class.getDeclaredMethod("brokenStream"));
+                                                                  TestClass.class.getDeclaredMethod("brokenStream"), 
+                                                                  jupiterConfiguration);
     classTestDescriptor.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
     final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor));

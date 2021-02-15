@@ -147,6 +147,7 @@ public class PinActiveTabAction extends DumbAwareAction {
     return null;
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
   public static class TW extends PinActiveTabAction {
     @Nullable
     @Override

@@ -19,7 +19,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FIL
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getChanges;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getFilePaths;
-import static java.util.stream.Collectors.toList;
 
 public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
   @NotNull private final Project myProject;
@@ -37,9 +36,9 @@ public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
   @Override
   protected DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
     if (info.isMove()) {
-      Change[] changes = getChanges(myProject, myTree.getSelectionPaths()).toArray(Change[]::new);
-      List<FilePath> unversionedFiles = getFilePaths(myTree.getSelectionPaths(), UNVERSIONED_FILES_TAG).collect(toList());
-      List<FilePath> ignoredFiles = getFilePaths(myTree.getSelectionPaths(), IGNORED_FILES_TAG).collect(toList());
+      Change[] changes = getChanges(myProject, myTree.getSelectionPaths()).toList().toArray(Change[]::new);
+      List<FilePath> unversionedFiles = getFilePaths(myTree.getSelectionPaths(), UNVERSIONED_FILES_TAG).toList();
+      List<FilePath> ignoredFiles = getFilePaths(myTree.getSelectionPaths(), IGNORED_FILES_TAG).toList();
 
       if (changes.length > 0 || !unversionedFiles.isEmpty() || !ignoredFiles.isEmpty()) {
         return new DnDDragStartBean(new ChangeListDragBean(myTree, changes, unversionedFiles, ignoredFiles));

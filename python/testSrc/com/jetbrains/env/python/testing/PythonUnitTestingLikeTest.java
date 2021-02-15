@@ -49,7 +49,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
    */
   @Test
   public void testEscaping() throws Exception {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit", "test_escaping.py", this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test_escaping.py", this::createTestRunner) {
 
 
       @Override
@@ -72,7 +72,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   @EnvTestTagsRequired(tags = {}, skipOnFlavors = {IronPythonSdkFlavor.class})
   public void testSysPath() throws Exception {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<T>("testRunner/env/unit/sysPath", "test_sample.py", this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("testRunner/env/unit/sysPath", "test_sample.py", this::createTestRunner) {
 
       @NotNull
       @Override
@@ -98,7 +98,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
 
   @Test
   public void testUTRunner() {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit", "test1.py", this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test1.py", this::createTestRunner) {
 
 
       @Override
@@ -120,7 +120,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   public void testWithDocString() throws Exception {
 
     runPythonTest(
-      new PyUnitTestLikeProcessWithConsoleTestTask<T>("testRunner/env/unit/withDocString", "test_test.py", this::createTestRunner) {
+      new PyUnitTestLikeProcessWithConsoleTestTask<>("testRunner/env/unit/withDocString", "test_test.py", this::createTestRunner) {
 
         @NotNull
         @Override
@@ -155,8 +155,8 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
 
   @Test
   public void testClass() {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit",
-                                                                  TEST_TARGET_PREFIX + "test_file.GoodTest", this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit",
+                                                                 TEST_TARGET_PREFIX + "test_file.GoodTest", this::createTestRunner) {
 
       @Override
       protected void checkTestResults(@NotNull final T runner,
@@ -171,7 +171,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
 
   @Test
   public void testUTRunner2() {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit", "test2.py", this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test2.py", this::createTestRunner) {
 
       @Override
       protected void checkTestResults(@NotNull final T runner,
@@ -192,7 +192,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   public void testUnitTestFileReferences() {
     final String fileName = "reference_tests.py";
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit", fileName, this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", fileName, this::createTestRunner) {
 
       @Override
       protected void checkTestResults(@NotNull final T runner,
@@ -216,7 +216,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   public void testUTSkippedAndIgnored() {
     runPythonTest(
-      new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit", "test_with_skips_and_errors.py", this::createTestRunner) {
+      new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test_with_skips_and_errors.py", this::createTestRunner) {
 
         @Override
         public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
@@ -241,7 +241,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   public void testDependent() {
     runPythonTest(
-      new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit", "dependentTests/test_my_class.py", this::createTestRunner) {
+      new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "dependentTests/test_my_class.py", this::createTestRunner) {
 
         @Override
         protected void checkTestResults(@NotNull final T runner,
@@ -274,7 +274,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
    */
   @Test
   public void testRerunDerivedClass() throws Exception {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit", "rerun_derived.py", this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "rerun_derived.py", this::createTestRunner) {
       @Override
       protected void checkTestResults(@NotNull final T runner,
                                       @NotNull final String stdout,
@@ -318,7 +318,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
 
   @Test
   public void testFolder() {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<T>("/testRunner/env/unit", "test_folder/", this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test_folder/", this::createTestRunner) {
 
       @Override
       protected void checkTestResults(@NotNull final T runner,
@@ -334,8 +334,8 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   public void testMultipleCases() {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPythonsUnittestName(),
-                                                                        PyUnitTestConfiguration.class) {
+      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(),
+                                                 PyUnitTestConfiguration.class) {
         @Override
         protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
           // test_functions.py and test_foo do not contain any TestCase and can't be launched with unittest

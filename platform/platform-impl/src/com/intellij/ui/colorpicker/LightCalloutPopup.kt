@@ -34,6 +34,8 @@ import javax.swing.JComponent
  * A popup balloon that appears on above a given location with an arrow pointing this location.
  *
  * The popup is automatically dismissed when the user clicks outside.
+ * 
+ * @param content The content in Popup Window
  */
 class LightCalloutPopup(val content: JComponent,
   val closedCallback: (() -> Unit)? = null,
@@ -46,7 +48,6 @@ class LightCalloutPopup(val content: JComponent,
   fun getBalloon(): Balloon? = balloon
 
   /**
-   * @param content The content in Popup Window
    * @param parentComponent The anchor component. Can be null.
    * @param location The position relates to [parentComponent]. If [parentComponent] is null, position will relate to
    *                 the top-left point of screen.
@@ -108,6 +109,9 @@ class LightCalloutPopup(val content: JComponent,
   fun getPointerColor(showingPoint: RelativePoint, component: JComponent): Color? {
     val saturationBrightnessComponent = UIUtil.findComponentOfType(component, SaturationBrightnessComponent::class.java)
     if (saturationBrightnessComponent != null) {
+      if (Registry.`is`("ide.color.picker.new.pipette") && saturationBrightnessComponent.pipetteMode) {
+        return saturationBrightnessComponent.parent.background
+      }
       val point = showingPoint.getPoint(saturationBrightnessComponent)
       val size = saturationBrightnessComponent.size
       val location = saturationBrightnessComponent.location

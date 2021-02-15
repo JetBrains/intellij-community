@@ -15,18 +15,28 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android;
 
-import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.DEBUGGABLE;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.EMBED_MICRO_APP;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.JNI_DEBUGGABLE;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.MINIFY_ENABLED;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.PSEUDO_LOCALES_ENABLED;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.RENDERSCRIPT_DEBUGGABLE;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.RENDERSCRIPT_OPTIM_LEVEL;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.SHRINK_RESOURCES;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.TEST_COVERAGE_ENABLED;
+import static com.android.tools.idea.gradle.dsl.model.android.BuildTypeModelImpl.ZIP_ALIGN_ENABLED;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslNamedDomainElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -38,9 +48,9 @@ public final class BuildTypeDslElement extends AbstractFlavorTypeDslElement impl
     new PropertiesElementDescription<>(null, BuildTypeDslElement.class, BuildTypeDslElement::new);
 
   @NotNull
-  private static final ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.concat(
+  private static final ImmutableMap<Pair<String, Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.concat(
     AbstractFlavorTypeDslElement.ktsToModelNameMap.entrySet().stream().map(data -> new Object[]{
-      data.getKey().getFirst(), data.getKey().getSecond(), data.getValue().getFirst(), data.getValue().getSecond()
+      data.getKey().getFirst(), data.getKey().getSecond(), data.getValue().property, data.getValue().semantics
     }),
     Stream.of(new Object[][]{
       {"isDebuggable", property, DEBUGGABLE, VAR},
@@ -62,9 +72,9 @@ public final class BuildTypeDslElement extends AbstractFlavorTypeDslElement impl
     .collect(toModelMap());
 
   @NotNull
-  private static final ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> groovyToModelNameMap = Stream.concat(
+  private static final ImmutableMap<Pair<String, Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.concat(
     AbstractFlavorTypeDslElement.groovyToModelNameMap.entrySet().stream().map(data -> new Object[]{
-      data.getKey().getFirst(), data.getKey().getSecond(), data.getValue().getFirst(), data.getValue().getSecond()
+      data.getKey().getFirst(), data.getKey().getSecond(), data.getValue().property, data.getValue().semantics
     }),
     Stream.of(new Object[][]{
       {"debuggable", property, DEBUGGABLE, VAR},
@@ -95,7 +105,7 @@ public final class BuildTypeDslElement extends AbstractFlavorTypeDslElement impl
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
@@ -114,7 +124,7 @@ public final class BuildTypeDslElement extends AbstractFlavorTypeDslElement impl
   @Override
   public boolean isInsignificantIfEmpty() {
     // "release" and "debug" Build Type blocks can be deleted if empty
-    return myName.name().equals("release") || myName.name().equals("debug");
+    return getName().equals("release") || getName().equals("debug");
   }
 
   @Override

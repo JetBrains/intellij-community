@@ -587,7 +587,7 @@ class RetypeSession(
   """.trimIndent()
 
   companion object {
-    val LOG = Logger.getInstance("#com.intellij.internal.retype.RetypeSession")
+    val LOG = Logger.getInstance(RetypeSession::class.java)
     const val INTERFERE_FILE_NAME = "IdeaRetypeBackgroundChanges.java"
     const val LARGE_INDEX_DIR_NAME = "_indexDir_"
   }

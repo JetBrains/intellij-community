@@ -11,6 +11,9 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
@@ -30,6 +33,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +51,6 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -335,7 +339,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     WriteAction.runAndWait(() -> getVirtualFile(file).rename(this, "f2"));
     assertTrue(pointer.isValid());
-    assertEquals("[]", listener.log.toString());
+    assertEquals("[before:true, after:true]", listener.log.toString());
   }
 
   @Test
@@ -367,7 +371,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
     assertTrue(pointer1.isValid());
     assertTrue(pointer2.isValid());
-    assertEquals("[]", listener1.log.toString());
+    assertEquals("[before:true, after:true]", listener1.log.toString());
     assertEquals("[before:false, after:true]", listener2.log.toString());
   }
 
@@ -557,7 +561,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<?>> reads = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    Collection<Job<?>> reads = ContainerUtil.newConcurrentSet();
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -1105,5 +1109,57 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(newJarParent.mkdir());
     doMove(jarParent, newJarParent);
     assertTrue(jarPointer.getFile() != null && jarPointer.getFile().isValid());
+  }
+
+  @Test
+  public void pointerCreatedWithURLAndThenTheDirectoryCreatedWithDifferentCaseSensitivityThenItMustNotFreakOutButSortItsChildrenAccordingToNewCaseSensitivity() throws IOException {
+    IoTestUtil.assumeWindows();
+    IoTestUtil.assumeWslPresence();
+    assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
+
+    myVirtualFilePointerManager.assertConsistency();
+    File dir = new File(tempDir.getRoot(), "dir");
+    File file = new File(dir, "child.txt");
+    assertFalse(file.exists());
+    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRoot()));
+
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file.getPath()), disposable, null);
+    myVirtualFilePointerManager.assertConsistency();
+    assertTrue(dir.mkdirs());
+    assertTrue(file.createNewFile());
+
+    IoTestUtil.setCaseSensitivity(dir, true);
+    File file2 = new File(dir, "CHILD.TXT");
+    assertTrue(file2.createNewFile());
+    VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file2);
+    assertNotNull(vFile2);
+    assertEquals("CHILD.TXT", vFile2.getName());
+    VirtualFilePointer pointer2 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file2.getPath()), disposable, null);
+    assertNotSame(pointer2, pointer);
+    myVirtualFilePointerManager.assertConsistency();
+
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    assertTrue(vFile.isCaseSensitive());
+    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
+    myVirtualFilePointerManager.assertConsistency();
+  }
+
+  @Test
+  public void testCreateFilePointerFrom83AbbreviationAbominationUnderWindowsDoesntCrash() throws IOException {
+    IoTestUtil.assumeWindows();
+    myVirtualFilePointerManager.assertConsistency();
+
+    File file = new File(tempDir.getRoot(), "Documents And Settings/Absolutely All Users/x.txt");
+    assertFalse(file.exists());
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+    assertTrue(file.exists());
+    File _83Abomination = new File(tempDir.getRoot(), "Docume~1/Absolu~1/x.txt");
+    assumeTrue("This version of Windows doesn't support 8.3. abbreviated file names: " + SystemInfo.OS_NAME, _83Abomination.exists());
+    VirtualFilePointer p1 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file.getPath()), disposable, null);
+    assertEquals(VfsUtilCore.pathToUrl(file.getPath()), p1.getUrl());
+    VirtualFilePointer p2 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(_83Abomination.getPath()), disposable, null);
+    assertEquals(VfsUtilCore.pathToUrl(file.getPath()), p2.getUrl());
   }
 }

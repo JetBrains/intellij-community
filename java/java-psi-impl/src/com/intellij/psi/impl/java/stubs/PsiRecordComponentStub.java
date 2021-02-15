@@ -10,7 +10,7 @@ public interface PsiRecordComponentStub extends PsiMemberStub<PsiRecordComponent
   @NotNull
   String getName();
 
-  TypeInfo getType(boolean doResolve);
+  TypeInfo getType();
 
   boolean isVararg();
 }

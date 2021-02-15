@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
@@ -19,7 +19,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -245,15 +245,18 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     ArrayList<String> conflicts = new ArrayList<>();
     PsiClass owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
-    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<PsiMethod>() {
+    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new Hash.Strategy<>() {
       @Override
-      public int computeHashCode(PsiMethod method) {
-        return method.getSignature(PsiSubstitutor.EMPTY).hashCode();
+      public int hashCode(@Nullable PsiMethod method) {
+        return method == null ? 0 : method.getSignature(PsiSubstitutor.EMPTY).hashCode();
       }
 
       @Override
-      public boolean equals(PsiMethod method1, PsiMethod method2) {
-        return method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY));
+      public boolean equals(@Nullable PsiMethod method1, @Nullable PsiMethod method2) {
+        return method1 == method2 ||
+               (method1 != null &&
+                method2 != null &&
+                method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY)));
       }
     });
 

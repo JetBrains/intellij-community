@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
@@ -41,7 +41,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   public void testNestedConditional() { doTest(); }
   public void testInsideSwitchExpression() { doTest(); }
   public void testInsideThrow() {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     doTest();

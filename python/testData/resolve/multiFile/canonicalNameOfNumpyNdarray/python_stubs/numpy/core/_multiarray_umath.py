@@ -1,0 +1,2 @@
+class ndarray:
+    pass

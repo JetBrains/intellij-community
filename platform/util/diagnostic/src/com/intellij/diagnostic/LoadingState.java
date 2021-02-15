@@ -1,12 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -23,22 +21,14 @@ public enum LoadingState {
 
   final String displayName;
 
-  private static BiConsumer<? super String, ? super Throwable> errorHandler;
+  @SuppressWarnings("StaticNonFinalField")
+  public static BiConsumer<String, Throwable> errorHandler;
+
   private static boolean CHECK_LOADING_PHASE;
-  private static Set<Throwable> stackTraces;
+  private static Set<ThrowableWrapper> stackTraces;
 
   LoadingState(@NotNull String displayName) {
     this.displayName = displayName;
-  }
-
-  @Nullable
-  static BiConsumer<? super String, ? super Throwable> getErrorHandler() {
-    return errorHandler;
-  }
-
-  @ApiStatus.Internal
-  public static void setErrorHandler(@NotNull BiConsumer<? super String, ? super Throwable> errorHandler) {
-    LoadingState.errorHandler = errorHandler;
   }
 
   @ApiStatus.Internal
@@ -63,36 +53,54 @@ public enum LoadingState {
     Throwable t = new Throwable();
     if (stackTraces == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      stackTraces = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Throwable>() {
-        @Override
-        public int hashCode(Throwable throwable) {
-          return fingerprint(throwable).hashCode();
-        }
-
-        @Override
-        public boolean equals(Throwable o1, Throwable o2) {
-          return o1 == o2 || o1 != null && o2 != null && fingerprint(o1).equals(fingerprint(o2));
-        }
-
-        private String fingerprint(Throwable throwable) {
-          StringBuilder sb = new StringBuilder();
-          for (StackTraceElement traceElement : throwable.getStackTrace()) {
-            sb.append(traceElement.getClassName()).append(traceElement.getMethodName());
-          }
-          return sb.toString();
-        }
-      });
+      stackTraces = new HashSet<>();
     }
 
-    if (!stackTraces.add(t)) {
+    if (!stackTraces.add(new ThrowableWrapper(t))) {
       return;
     }
 
-    BiConsumer<? super String, ? super Throwable> errorHandler = getErrorHandler();
+    BiConsumer<String, Throwable> errorHandler = LoadingState.errorHandler;
     if (errorHandler != null) {
       errorHandler.accept("Should be called at least in the state " + this + ", the current state is: " + currentState + "\n" +
                           "Current violators count: " + stackTraces.size() + "\n\n",
                           t);
+    }
+  }
+
+  private static final class ThrowableWrapper {
+    final Throwable throwable;
+
+    private ThrowableWrapper(Throwable throwable) {
+      this.throwable = throwable;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+
+      if (obj instanceof ThrowableWrapper) {
+        Throwable throwable = ((ThrowableWrapper)obj).throwable;
+        if (this.throwable == throwable || fingerprint(this.throwable).equals(fingerprint(throwable))) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return fingerprint(throwable).hashCode();
+    }
+
+    private static String fingerprint(Throwable throwable) {
+      StringBuilder sb = new StringBuilder();
+      for (StackTraceElement traceElement : throwable.getStackTrace()) {
+        sb.append(traceElement.getClassName()).append(traceElement.getMethodName());
+      }
+      return sb.toString();
     }
   }
 

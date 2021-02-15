@@ -90,7 +90,8 @@ public abstract class MavenResolveToWorkspaceTest extends MavenImportingTestCase
     JavaParameters parameters = MavenExternalParameters.createJavaParameters(myProject,
                                                                              runnerParameters,
                                                                              MavenProjectsManager.getInstance(myProject).getGeneralSettings(),
-                                                                             runnerSettings);
+                                                                             runnerSettings,
+                                                                             null);
 
     String resolveMapFile = null;
 

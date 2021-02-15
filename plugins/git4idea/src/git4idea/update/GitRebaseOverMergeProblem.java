@@ -21,7 +21,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.List;
 import java.util.Objects;
 
-public class GitRebaseOverMergeProblem {
+public final class GitRebaseOverMergeProblem {
   private static final Logger LOG = Logger.getInstance(GitRebaseOverMergeProblem.class);
 
   public enum Decision {

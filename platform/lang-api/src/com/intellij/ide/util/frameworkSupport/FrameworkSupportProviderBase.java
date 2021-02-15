@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.frameworkSupport;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -42,7 +43,7 @@ public abstract class FrameworkSupportProviderBase extends FrameworkSupportProvi
   }
 
   public @NlsContexts.Label String getVersionLabelText() {
-    return "Version:";
+    return LangBundle.message("label.framework.version");
   }
 
   @Override

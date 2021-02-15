@@ -7,6 +7,7 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.list.IconListPopupRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +38,7 @@ public class PopupListElementRendererWithIcon extends PopupListElementRenderer<O
     super.customizeComponent(list, value, isSelected);
     myTextLabel.setIcon(null);
     myTextLabel.setDisabledIcon(null);
-    myIconLabel.setIcon(isSelected ? myDescriptor.getSelectedIconFor(value) : myDescriptor.getIconFor(value));
+    myIconLabel.setIcon(isSelected ? IconUtil.wrapToSelectionAwareIcon(myDescriptor.getSelectedIconFor(value)) : myDescriptor.getIconFor(value));
   }
 
   @Override

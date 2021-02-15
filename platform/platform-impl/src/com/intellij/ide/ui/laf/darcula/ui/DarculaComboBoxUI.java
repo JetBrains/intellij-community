@@ -114,7 +114,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected ComboPopup createPopup() {
     if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
       //noinspection unchecked
-      return new DarculaJBPopupComboPopup<Object>(comboBox);
+      return new DarculaJBPopupComboPopup<>(comboBox);
     }
     return new CustomComboPopup(comboBox);
   }
@@ -235,7 +235,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @Override
   public void paint(Graphics g, JComponent c) {
     Container parent = c.getParent();
-    if (parent != null) {
+    if (parent != null && c.isOpaque()) {
       g.setColor(DarculaUIUtil.isTableCellEditor(c) && editor != null ? editor.getBackground() : parent.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }

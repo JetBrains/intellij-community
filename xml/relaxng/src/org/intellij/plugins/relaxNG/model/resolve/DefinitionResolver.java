@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.openapi.util.Factory;
@@ -29,7 +28,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.model.*;
@@ -106,7 +104,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
 
   @Override
   public Set<Define> create() {
-    return new THashSet<>();
+    return new HashSet<>();
   }
 
   @Override

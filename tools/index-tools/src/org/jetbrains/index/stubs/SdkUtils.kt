@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.index.stubs
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -16,10 +17,11 @@ import java.nio.file.Paths
 
 fun openProjectWithSdk(projectPath: String,
                        moduleTypeId: String,
-                       sdkProducer: (Project, Module) -> Sdk?): Pair<Project, Sdk?> {
+                       sdkProducer: (Project, Module) -> Sdk?,
+                       testRootDisposable: Disposable): Pair<Project, Sdk?> {
   println("Opening project at $projectPath")
 
-  val project = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath))
+  val project = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath), testRootDisposable)
   try {
     val module = getOrCreateModule(project, projectPath, moduleTypeId)
 

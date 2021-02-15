@@ -3,7 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.util.ui.TestScaleHelper;
+import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -16,7 +16,8 @@ import org.junit.Test;
 import javax.swing.*;
 import java.util.concurrent.CountDownLatch;
 
-import static com.intellij.ui.jcef.JBCefTestHelper.*;
+import static com.intellij.ui.jcef.JBCefTestHelper.loadAndWait;
+import static com.intellij.ui.jcef.JBCefTestHelper.await;
 
 /**
  * Tests https://youtrack.jetbrains.com/issue/IDEA-259472
@@ -78,7 +79,7 @@ public class IDEA259472Test {
       }
     }, jbCefBrowser.getCefBrowser());
 
-    invokeAndWaitForLoad(jbCefBrowser, () -> {
+    loadAndWait(jbCefBrowser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);

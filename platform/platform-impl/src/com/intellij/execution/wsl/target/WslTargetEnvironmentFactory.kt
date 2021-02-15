@@ -2,8 +2,11 @@
 package com.intellij.execution.wsl.target
 
 import com.intellij.execution.Platform
-import com.intellij.execution.target.*
+import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
+import com.intellij.execution.target.TargetEnvironmentFactory
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetPlatform
 import com.intellij.ide.IdeBundle
 
 class WslTargetEnvironmentFactory(private val myConfig: WslTargetEnvironmentConfiguration) : TargetEnvironmentFactory {
@@ -12,7 +15,7 @@ class WslTargetEnvironmentFactory(private val myConfig: WslTargetEnvironmentConf
   }
 
   override fun getTargetPlatform(): TargetPlatform {
-    return TargetPlatform(Platform.UNIX, TargetPlatform.CURRENT.arch)
+    return TargetPlatform(Platform.UNIX)
   }
 
   override fun createRequest(): TargetEnvironmentRequest {

@@ -7,10 +7,13 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetEnvironmentUtil;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -60,11 +63,12 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment remoteEnvironment) throws ExecutionException {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Module module = getConfiguration().getConfigurationModule().getModule();
     final TestClassFilter classFilter = computeFilter(data);
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
+      private boolean myShouldExecuteFinishMethod = true;
       private final Set<Location<?>> myClasses = new LinkedHashSet<>();
       @Override
       protected void search() {
@@ -89,13 +93,26 @@ public class TestPackage extends TestObject {
           String packageName = getPackageName(data);
           String filters = getFilters(myClasses, packageName);
           if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && module != null && filterOutputByDirectoryForJunit5(myClasses)) {
-            JUnitStarter.printClassesList(composeDirectoryFilter(module), packageName, "", filters, myTempFile);
+            JUnitStarter.printClassesList(composeDirectoryFilter(getModuleWithTestsToFilter(module)), packageName, "", filters, myTempFile);
           }
           else {
             addClassesListToJavaParameters(myClasses, CLASS_NAME_FUNCTION, packageName, createTempFiles(), getJavaParameters(), filters);
           }
         }
-        catch (Exception ignored) {}
+        catch (Exception ignored) {
+        }
+
+        myShouldExecuteFinishMethod = !TargetEnvironmentUtil.reuploadRootFile(myTempFile, getTargetEnvironmentRequest(),
+                                                                              remoteEnvironment, getTargetProgressIndicator(),
+                                                                              () -> ApplicationManager.getApplication()
+                                                                            .invokeLater(super::finish, myProject.getDisposed()));
+      }
+
+      @Override
+      public void finish() {
+        if (myShouldExecuteFinishMethod) {
+          super.finish();
+        }
       }
 
       @Override
@@ -103,6 +120,10 @@ public class TestPackage extends TestObject {
         return TestPackage.this.requiresSmartMode();
       }
     };
+  }
+
+  protected Module getModuleWithTestsToFilter(Module module) {
+    return module;
   }
 
   @Nullable

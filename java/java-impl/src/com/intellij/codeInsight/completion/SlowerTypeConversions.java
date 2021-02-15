@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,8 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
  * @author peter
  */
 final class SlowerTypeConversions {
+  private static final CallMatcher CLONE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "clone").parameterCount(0);
+  
   static void addChainedSuggestions(CompletionParameters parameters,
                                     CompletionResultSet result,
                                     Set<ExpectedTypeInfo> expectedInfos,
@@ -54,7 +57,9 @@ final class SlowerTypeConversions {
   }
 
   private static boolean isChainable(Object object) {
-    return object instanceof PsiVariable || object instanceof PsiMethod || object instanceof PsiExpression;
+    return object instanceof PsiVariable || object instanceof PsiExpression ||
+           // clone() is excluded to avoid weird chains suggestions like arr.stream<caret> -> Arrays.stream(arr.clone())
+           (object instanceof PsiMethod && !CLONE.methodMatches((PsiMethod)object));
   }
 
   private static void addSecondCompletionVariants(PsiElement element, PsiReference reference, LookupElement baseItem,

@@ -9,8 +9,8 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 
 public class CodeStylePyImportCollector extends PyImportCollector {
-  public CodeStylePyImportCollector(PyElement node, PsiReference reference, String refText, String alias) {
-    super(node, reference, refText, alias);
+  public CodeStylePyImportCollector(PyElement node, PsiReference reference, String refText) {
+    super(node, reference, refText);
   }
 
   @Override

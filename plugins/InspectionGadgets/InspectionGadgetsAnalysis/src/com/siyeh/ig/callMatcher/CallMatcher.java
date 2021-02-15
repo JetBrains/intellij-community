@@ -4,6 +4,7 @@ package com.siyeh.ig.callMatcher;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -284,8 +285,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     private static boolean parameterTypeMatches(String type, PsiParameter parameter) {
       if (type == null) return true;
       PsiType psiType = parameter.getType();
-      return psiType.equalsToText(type) ||
-             psiType instanceof PsiClassType && ((PsiClassType)psiType).rawType().equalsToText(type);
+      return psiType.equalsToText(type) || PsiTypesUtil.classNameEquals(psiType, type);
     }
 
     @Contract(pure = true)

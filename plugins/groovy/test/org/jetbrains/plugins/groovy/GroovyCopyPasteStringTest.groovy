@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.openapi.actionSystem.IdeActions
@@ -60,7 +60,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
     ]
     TestUtils.runAll(data) { text, expectedCopy ->
       doCopyTest(text, expectedCopy)
-    }.run()
+    }
   }
 
   @Test
@@ -174,7 +174,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
       def selectionEnd = selectionModel.selectionEnd
       def kind = GroovyLiteralCopyPasteProcessor.findStringKind(file, selectionStart, selectionEnd)
       Assert.assertEquals(text, expectedKind, kind)
-    }.run()
+    }
   }
 
   @Test
@@ -187,7 +187,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
     ]
     TestUtils.runAll(data) { List<String> entry ->
       doCopyPasteTest(entry[0], entry[1], entry[2])
-    }.run()
+    }
   }
 
   @Test
@@ -203,7 +203,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
     ]
     TestUtils.runAll(data) { to, expected ->
       doCopyPasteTest(from, to, expected)
-    }.run()
+    }
   }
 
   @Test
@@ -219,7 +219,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
     ]
     TestUtils.runAll(data) { to, expected ->
       doCopyPasteTest(from, to, expected)
-    }.run()
+    }
   }
 
   @Test
@@ -235,7 +235,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
     ]
     TestUtils.runAll(data) { to, expected ->
       doCopyPasteTest(from, to, expected)
-    }.run()
+    }
   }
 
   @Test
@@ -248,7 +248,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
     ]
     TestUtils.runAll(data) { List<String> entry ->
       doCopyPasteTest(entry[0], entry[1], entry[2])
-    }.run()
+    }
   }
 
   private void doCopyTest(String text, String expectedCopy) {

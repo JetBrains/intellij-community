@@ -1,41 +1,28 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.cacheBuilder;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class CacheBuilderEP extends AbstractExtensionPointBean {
+final class CacheBuilderEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance(CacheBuilderEP.class);
 
-  public static final ExtensionPointName<CacheBuilderEP> EP_NAME = new ExtensionPointName<>("com.intellij.cacheBuilder");
+  private CacheBuilderEP() {
+  }
 
   @Attribute("fileType")
   public String fileType;
   @Attribute("wordsScannerClass")
   public String wordsScannerClass;
 
-  private Class<WordsScanner> myCachedClass;
+  private transient Class<WordsScanner> cachedClass;
+  private transient PluginDescriptor pluginDescriptor;
 
   String getFileType() {
     return fileType;
@@ -43,15 +30,26 @@ public class CacheBuilderEP extends AbstractExtensionPointBean {
 
   WordsScanner getWordsScanner() {
     try {
-      Class<WordsScanner> aClass = myCachedClass;
+      Class<WordsScanner> aClass = cachedClass;
+      Application app = ApplicationManager.getApplication();
       if (aClass == null) {
-        myCachedClass = aClass = findExtensionClass(wordsScannerClass);
+        aClass = app.loadClass(wordsScannerClass, pluginDescriptor);
+        cachedClass = aClass;
       }
-      return aClass.newInstance();
+      return app.instantiateClass(aClass, pluginDescriptor.getPluginId());
     }
-    catch (Exception e) {
-      LOG.error(new PluginException(e, getPluginId()));
+    catch (PluginException e) {
+      LOG.error(e);
       return null;
     }
+    catch (Exception e) {
+      LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
+      return null;
+    }
+  }
+
+  @Override
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder.createCommentComponen
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
@@ -38,7 +39,8 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
-import com.intellij.util.ui.PaintIcon
+import com.intellij.util.ui.RegionPaintIcon
+import com.intellij.util.ui.RegionPainter
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
@@ -83,7 +85,7 @@ class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScrol
 
   private val useInProjectView = object : CheckBoxConfigurable() {
     override fun createCheckBox(): JCheckBox {
-      val checkBox = JCheckBox(message("settings.file.colors.use.in.project.vew"))
+      val checkBox = JCheckBox(message("settings.file.colors.use.in.project.view"))
       checkBox.isEnabled = false
       return checkBox
     }
@@ -394,10 +396,19 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
 
 // renderers
 
+private class ColorPainter(val color: Color) : RegionPainter<Component?> {
+  fun asIcon(): Icon = RegionPaintIcon(36, 12, this).withIconPreScaled(false)
+
+  override fun paint(g: Graphics2D, x: Int, y: Int, width: Int, height: Int, c: Component?) {
+    g.color = color
+    g.fillRect(x, y, width, height)
+  }
+}
+
 private fun updateColorRenderer(renderer: JLabel, selected: Boolean, background: Color?): JLabel {
   if (!selected) renderer.background = background
   renderer.horizontalTextPosition = SwingConstants.LEFT
-  renderer.icon = background?.let { if (selected) PaintIcon(36, 12, it).withIconPreScaled(false) else null }
+  renderer.icon = background?.let { if (selected) ColorPainter(it).asIcon() else null }
   return renderer
 }
 
@@ -442,10 +453,11 @@ private class TableScopeRenderer(val manager: FileColorManagerImpl) : DefaultTab
   override fun getTableCellRendererComponent(table: JTable?, value: Any?,
                                              selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
     val component = super.getTableCellRendererComponent(table, value, selected, focused, row, column)
-    val namedScope = value?.toString()?.let { findScope(it, manager.project) }
+    @NlsSafe val name = value?.toString()
+    val namedScope = name?.let { findScope(it, manager.project) }
     toolTipText = if (namedScope == null) message("settings.file.colors.scope.unknown") else null
     icon = if (namedScope == null) AllIcons.General.Error else null
-    text = if (namedScope != null) namedScope.presentableName else value?.toString()
+    text = if (namedScope != null) namedScope.presentableName else name
     return component
   }
 }

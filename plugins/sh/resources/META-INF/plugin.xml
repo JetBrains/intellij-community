@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.sh">
   <id>com.jetbrains.sh</id>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.lang</depends>
@@ -16,10 +16,6 @@ Adds support for working with shell script files
 <li>Dedicated run/debug configuration for shell scripts</li>
 <li>Integration with external tools (<a href="https://github.com/koalaman/shellcheck">ShellCheck</a>, <a href="https://github.com/mvdan/sh">Shfmt</a>, <a href="https://explainshell.com/">Explainshell</a>)
 </li></ul>]]></description>
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.sh.shSupport" interface="com.intellij.sh.ShSupport" dynamic="true"/>
-  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileType language="Shell Script" extensions="sh;bash;zsh" hashBangs="sh;bash;zsh" fieldName="INSTANCE" name="Shell Script"
@@ -69,6 +65,7 @@ Adds support for working with shell script files
     <lineIndentProvider implementation="com.intellij.sh.formatter.ShLineIndentProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
 
+    <fileDocumentManagerListener implementation="com.intellij.sh.formatter.ShLineEndingsAdapter"/>
     <externalFormatProcessor implementation="com.intellij.sh.formatter.ShExternalFormatter"/>
     <lang.formatter language="Shell Script" implementationClass="com.intellij.sh.formatter.ShFormatterModelBuilder"/>
     <postFormatProcessor implementation="com.intellij.sh.formatter.ShPostFormatProcessor"/>

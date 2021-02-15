@@ -391,7 +391,7 @@ public final class PsiLiteralUtil {
    * @param expression  a text block expression
    * @return the lines of the expression, or null if the expression is not a text block.
    */
-  public static String @Nullable [] getTextBlockLines(PsiLiteralExpression expression) {
+  public static String @Nullable [] getTextBlockLines(@NotNull PsiLiteralExpression expression) {
     if (!expression.isTextBlock()) return null;
     String rawText = expression.getText();
     if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
@@ -412,7 +412,7 @@ public final class PsiLiteralUtil {
    * @param expression a text block literal expression
    * @return the indent of the text block counted in characters, where a tab is also counted as 1.
    */
-  public static int getTextBlockIndent(PsiLiteralExpression expression) {
+  public static int getTextBlockIndent(@NotNull PsiLiteralExpression expression) {
     String[] lines = getTextBlockLines(expression);
     if (lines == null) return -1;
     return getTextBlockIndent(lines);
@@ -427,6 +427,7 @@ public final class PsiLiteralUtil {
 
   /**
    * @see #getTextBlockIndent(PsiLiteralExpression)
+   * Note that this method might change some of the given lines.
    */
   public static int getTextBlockIndent(String @NotNull [] lines, boolean preserveContent, boolean ignoreLastLine) {
     int prefix = Integer.MAX_VALUE;

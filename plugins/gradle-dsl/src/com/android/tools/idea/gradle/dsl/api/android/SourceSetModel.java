@@ -67,6 +67,11 @@ public interface SourceSetModel extends GradleDslModel {
   void removeManifest();
 
   @NotNull
+  SourceDirectoryModel mlModels();
+
+  void removeMlModels();
+
+  @NotNull
   SourceDirectoryModel renderscript();
 
   void removeRenderscript();
@@ -80,4 +85,9 @@ public interface SourceSetModel extends GradleDslModel {
   SourceDirectoryModel resources();
 
   void removeResources();
+
+  @NotNull
+  SourceDirectoryModel shaders();
+
+  void removeShaders();
 }

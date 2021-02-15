@@ -40,33 +40,35 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * Provides several default notification dialogs ("OK|Cancel") as well as simple input dialogs.
  */
 @ApiStatus.NonExtendable
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class Messages {
   public static final int OK = 0;
   public static final int YES = 0;
   public static final int NO = 1;
   public static final int CANCEL = 2;
 
-  /**
-   * @deprecated Use {@link #getOkButton()} instead
-   */
+  @MagicConstant(intValues = {YES, NO})
+  public @interface YesNoResult { }
+
+  @MagicConstant(intValues = {OK, CANCEL})
+  public @interface OkCancelResult { }
+
+  @MagicConstant(intValues = {YES, NO, CANCEL})
+  public @interface YesNoCancelResult { }
+
+  /** @deprecated Use {@link #getOkButton()} instead */
   @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String OK_BUTTON = "OK";
 
-  /**
-   * @deprecated Use {@link #getYesButton()} instead
-   */
+  /** @deprecated Use {@link #getYesButton()} instead */
   @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String YES_BUTTON = "&Yes";
 
-  /**
-   * @deprecated Use {@link #getNoButton()} instead
-   */
+  /** @deprecated Use {@link #getNoButton()} instead */
   @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String NO_BUTTON = "&No";
 
-  /**
-   * @deprecated Use {@link #getCancelButton()} instead
-   */
+  /** @deprecated Use {@link #getCancelButton()} instead */
   @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String CANCEL_BUTTON = "Cancel";
 
@@ -77,23 +79,19 @@ public class Messages {
 
   private static final Logger LOG = Logger.getInstance(Messages.class);
 
-  @NotNull
-  public static Icon getErrorIcon() {
+  public static @NotNull Icon getErrorIcon() {
     return UIUtil.getErrorIcon();
   }
 
-  @NotNull
-  public static Icon getInformationIcon() {
+  public static @NotNull Icon getInformationIcon() {
     return UIUtil.getInformationIcon();
   }
 
-  @NotNull
-  public static Icon getWarningIcon() {
+  public static @NotNull Icon getWarningIcon() {
     return UIUtil.getWarningIcon();
   }
 
-  @NotNull
-  public static Icon getQuestionIcon() {
+  public static @NotNull Icon getQuestionIcon() {
     return UIUtil.getQuestionIcon();
   }
 
@@ -101,8 +99,7 @@ public class Messages {
     configureMessagePaneUi(messageComponent, "<html></html>");
   }
 
-  @NotNull
-  public static JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int lines) {
+  public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int lines) {
     float fontSize = comp.getFont().getSize2D();
     Dimension maxDim = new Dimension((int)(fontSize * columns), (int)(fontSize * lines));
     Dimension prefDim = comp.getPreferredSize();
@@ -123,8 +120,7 @@ public class Messages {
     return scrollPane;
   }
 
-  @NotNull
-  public static JTextPane configureMessagePaneUi(JTextPane messageComponent, @DialogMessage String message) {
+  public static @NotNull JTextPane configureMessagePaneUi(JTextPane messageComponent, @DialogMessage String message) {
     JTextPane pane = configureMessagePaneUi(messageComponent, message, null);
     if (UIUtil.HTML_MIME.equals(pane.getContentType())) {
       pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
@@ -132,10 +128,9 @@ public class Messages {
     return pane;
   }
 
-  @NotNull
-  public static JTextPane configureMessagePaneUi(@NotNull JTextPane messageComponent,
-                                                 @Nullable @DialogMessage String message,
-                                                 @Nullable UIUtil.FontSize fontSize) {
+  public static @NotNull JTextPane configureMessagePaneUi(@NotNull JTextPane messageComponent,
+                                                          @Nullable @DialogMessage String message,
+                                                          @Nullable UIUtil.FontSize fontSize) {
     UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
     messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
     if (BasicHTML.isHTMLString(message)) {
@@ -171,10 +166,8 @@ public class Messages {
     return application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment());
   }
 
-  @NotNull
-  public static Runnable createMessageDialogRemover(@Nullable Project project) {
+  public static @NotNull Runnable createMessageDialogRemover(@Nullable Project project) {
     Window projectWindow = project == null ? null : WindowManager.getInstance().suggestParentWindow(project);
-    //noinspection SSBasedInspection
     return () -> SwingUtilities.invokeLater(() -> {
       makeCurrentMessageDialogGoAway(projectWindow == null ? Window.getWindows() : projectWindow.getOwnedWindows());
     });
@@ -196,9 +189,8 @@ public class Messages {
     }
   }
 
-
   /**
-   * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!
+   * Please use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!
    *
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
@@ -232,9 +224,7 @@ public class Messages {
   }
 
   public static boolean isMacSheetEmulation() {
-    return SystemInfoRt.isMac
-           && Registry.is("ide.mac.message.dialogs.as.sheets", true)
-           && Registry.is("ide.mac.message.sheets.java.emulation", false);
+    return SystemInfoRt.isMac && Registry.is("ide.mac.message.dialogs.as.sheets", true) && Registry.is("ide.mac.message.sheets.java.emulation", false);
   }
 
   /**
@@ -251,7 +241,6 @@ public class Messages {
     return MessagesService.getInstance()
       .showMoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
   }
-
 
   /**
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
@@ -376,13 +365,7 @@ public class Messages {
     showDialog(message, title, new String[]{getOkButton()}, 0, icon);
   }
 
-  @MagicConstant(intValues = {YES, NO})
-  public @interface YesNoResult {
-  }
-
-  /**
-   * @deprecated Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
   @Deprecated
   public static int showConfirmationDialog(@NotNull JComponent parent,
                                            @NotNull @DialogMessage String message,
@@ -395,9 +378,7 @@ public class Messages {
       .ask(parent) ? YES : NO;
   }
 
-  /**
-   * Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** Use {@link MessageDialogBuilder#yesNo} */
   @YesNoResult
   public static int showYesNoDialog(@Nullable Project project,
                                     @NotNull @DialogMessage String message,
@@ -412,9 +393,7 @@ public class Messages {
       .ask(project) ? YES : NO;
   }
 
-  /**
-   * @deprecated Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
   @Deprecated
   public static int showYesNoDialog(@Nullable Project project,
                                     @DialogMessage String message,
@@ -431,9 +410,7 @@ public class Messages {
       .ask(project) ? YES : NO;
   }
 
-  /**
-   * Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** Use {@link MessageDialogBuilder#yesNo} */
   @YesNoResult
   public static int showYesNoDialog(@Nullable Project project,
                                     @DialogMessage String message,
@@ -442,9 +419,7 @@ public class Messages {
     return MessageDialogBuilder.yesNo(title, message).icon(icon).ask(project) ? YES : NO;
   }
 
-  /**
-   * @deprecated Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
   @Deprecated
   public static int showYesNoDialog(@Nullable Project project,
                                     @DialogMessage String message,
@@ -457,10 +432,7 @@ public class Messages {
       .ask(project) ? YES : NO;
   }
 
-
-  /**
-   * @return Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** Use {@link MessageDialogBuilder#yesNo} */
   @YesNoResult
   public static int showYesNoDialog(@NotNull Component parent,
                                     @DialogMessage String message,
@@ -469,9 +441,7 @@ public class Messages {
     return MessageDialogBuilder.yesNo(title, message).icon(icon).ask(parent) ? YES : NO;
   }
 
-  /**
-   * @deprecated Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
   @Deprecated
   public static int showYesNoDialog(@DialogMessage String message,
                                     @NotNull @DialogTitle String title,
@@ -487,9 +457,7 @@ public class Messages {
       .guessWindowAndAsk() ? YES : NO;
   }
 
-  /**
-   * Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** Use {@link MessageDialogBuilder#yesNo} */
   @YesNoResult
   public static int showYesNoDialog(@DialogMessage String message,
                                     @DialogTitle String title,
@@ -503,9 +471,7 @@ public class Messages {
       .guessWindowAndAsk() ? YES : NO;
   }
 
-  /**
-   * Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** Use {@link MessageDialogBuilder#yesNo} */
   @YesNoResult
   public static int showYesNoDialog(@DialogMessage String message,
                                     @NotNull @DialogTitle String title,
@@ -513,13 +479,7 @@ public class Messages {
     return MessageDialogBuilder.yesNo(title, message).icon(icon).guessWindowAndAsk() ? YES : NO;
   }
 
-  @MagicConstant(intValues = {OK, CANCEL})
-  public @interface OkCancelResult {
-  }
-
-  /**
-   * Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** Use {@link MessageDialogBuilder#yesNo} */
   @OkCancelResult
   public static int showOkCancelDialog(@Nullable Project project,
                                        @NotNull @DialogMessage String message,
@@ -536,9 +496,7 @@ public class Messages {
       .ask(project) ? OK : CANCEL;
   }
 
-  /**
-   * Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** Use {@link MessageDialogBuilder#yesNo} */
   @OkCancelResult
   public static int showOkCancelDialog(Project project,
                                        @DialogMessage String message,
@@ -553,10 +511,7 @@ public class Messages {
       .ask(project) ? OK : CANCEL;
   }
 
-  /**
-   * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
-   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Project, String, String, String, String, Icon)} instead
-   */
+  /** @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Project, String, String, String, String, Icon)} instead */
   @OkCancelResult
   @Deprecated
   public static int showOkCancelDialog(Project project,
@@ -566,9 +521,7 @@ public class Messages {
     return MessageDialogBuilder.okCancel(title, message).icon(icon).ask(project) ? OK : CANCEL;
   }
 
-  /**
-   * Use {@link MessageDialogBuilder#yesNo}.
-   */
+  /** Use {@link MessageDialogBuilder#yesNo} */
   @OkCancelResult
   public static int showOkCancelDialog(@NotNull Component parent,
                                        @DialogMessage String message,
@@ -583,10 +536,7 @@ public class Messages {
       .ask(parent) ? OK : CANCEL;
   }
 
-  /**
-   * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
-   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Component, String, String, String, String, Icon)} instead
-   */
+  /** @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Component, String, String, String, String, Icon)} instead */
   @OkCancelResult
   @Deprecated
   public static int showOkCancelDialog(@NotNull Component parent,
@@ -596,12 +546,7 @@ public class Messages {
     return MessageDialogBuilder.okCancel(title, message).icon(icon).ask(parent) ? OK : CANCEL;
   }
 
-  /**
-   * Use this method only if you do not know project or component
-   *
-   * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
-   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(String, String, String, String, Icon)} instead
-   */
+  /** @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(String, String, String, String, Icon)} instead */
   @OkCancelResult
   @Deprecated
   public static int showOkCancelDialog(@DialogMessage String message, @DialogTitle String title, Icon icon) {
@@ -666,12 +611,11 @@ public class Messages {
                                               final int defaultOptionIndex,
                                               final int focusedOptionIndex,
                                               Icon icon,
-                                              @Nullable final PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
+                                              final @Nullable PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
     return MessagesService.getInstance()
       .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
                                      exitFunc);
   }
-
 
   public static int showTwoStepConfirmationDialog(@DialogMessage String message,
                                                   @DialogTitle String title,
@@ -700,9 +644,7 @@ public class Messages {
   public static void showErrorDialog(@Nullable Component component,
                                      @DialogMessage String message,
                                      @NotNull @DialogTitle String title) {
-    MessagesService.getInstance().showMessageDialog(null, component, message, title,
-      /* options = */ new String[]{getOkButton()},
-      /* defaultOptionIndex = */ 0, /* focusedOptionIndex = */ 0, getErrorIcon(), null, false);
+    MessagesService.getInstance().showMessageDialog(null, component, message, title, new String[]{getOkButton()}, 0, 0, getErrorIcon(), null, false);
   }
 
   public static void showErrorDialog(@NotNull Component component, @DialogMessage String message) {
@@ -786,11 +728,6 @@ public class Messages {
 
     showDialog(message, title, new String[]{getOkButton()}, 0, getWarningIcon());
   }
-
-  @MagicConstant(intValues = {YES, NO, CANCEL})
-  public @interface YesNoCancelResult {
-  }
-
 
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
@@ -907,16 +844,14 @@ public class Messages {
   /**
    * @return trimmed input string or {@code null} if user cancelled dialog.
    */
-  @Nullable
-  public static String showPasswordDialog(@DialogMessage String message, @DialogTitle String title) {
+  public static @Nullable String showPasswordDialog(@DialogMessage String message, @DialogTitle String title) {
     return showPasswordDialog(null, message, title, null, null);
   }
 
   /**
    * @return trimmed input string or {@code null} if user cancelled dialog.
    */
-  @Nullable
-  public static String showPasswordDialog(Project project,
+  public static @Nullable String showPasswordDialog(Project project,
                                           @DialogMessage String message,
                                           @DialogTitle String title,
                                           @Nullable Icon icon) {
@@ -926,8 +861,7 @@ public class Messages {
   /**
    * @return trimmed input string or {@code null} if user cancelled dialog.
    */
-  @Nullable
-  public static String showPasswordDialog(@Nullable Project project,
+  public static @Nullable String showPasswordDialog(@Nullable Project project,
                                           @DialogMessage String message,
                                           @DialogTitle String title,
                                           @Nullable Icon icon,
@@ -938,8 +872,7 @@ public class Messages {
   /**
    * @return trimmed input string or {@code null} if user cancelled dialog.
    */
-  @Nullable
-  public static @NlsSafe String showInputDialog(@Nullable Project project,
+  public static @Nullable @NlsSafe String showInputDialog(@Nullable Project project,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon) {
@@ -949,8 +882,7 @@ public class Messages {
   /**
    * @return trimmed input string or {@code null} if user cancelled dialog.
    */
-  @Nullable
-  public static @NlsSafe String showInputDialog(@NotNull Component parent,
+  public static @Nullable @NlsSafe String showInputDialog(@NotNull Component parent,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon) {
@@ -963,54 +895,49 @@ public class Messages {
    * @see #showInputDialog(Project, String, String, Icon)
    * @see #showInputDialog(Component, String, String, Icon)
    */
-  @Nullable
-  public static @NlsSafe String showInputDialog(@DialogMessage String message,
+  public static @Nullable @NlsSafe String showInputDialog(@DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon) {
     return showInputDialog(message, title, icon, null, null);
   }
 
-  @Nullable
-  public static @NlsSafe String showInputDialog(@Nullable Project project,
-                                       @DialogMessage String message,
-                                       @DialogTitle String title,
-                                       @Nullable Icon icon,
-                                       @Nullable @NonNls String initialValue,
-                                       @Nullable InputValidator validator) {
+  public static @Nullable @NlsSafe String showInputDialog(@Nullable Project project,
+                                                          @DialogMessage String message,
+                                                          @DialogTitle String title,
+                                                          @Nullable Icon icon,
+                                                          @Nullable @NonNls String initialValue,
+                                                          @Nullable InputValidator validator) {
     return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, null, null);
   }
 
-  @Nullable
-  public static @NlsSafe String showInputDialog(Project project,
-                                       @DialogMessage String message,
-                                       @DialogTitle String title,
-                                       @Nullable Icon icon,
-                                       @Nullable @NonNls String initialValue,
-                                       @Nullable InputValidator validator,
-                                       @Nullable TextRange selection) {
+  public static @Nullable @NlsSafe String showInputDialog(Project project,
+                                                          @DialogMessage String message,
+                                                          @DialogTitle String title,
+                                                          @Nullable Icon icon,
+                                                          @Nullable @NonNls String initialValue,
+                                                          @Nullable InputValidator validator,
+                                                          @Nullable TextRange selection) {
     return showInputDialog(project, message, title, icon, initialValue, validator, selection, null);
 
   }
 
-  @Nullable
-  public static @NlsSafe String showInputDialog(Project project,
-                                       @DialogMessage String message,
-                                       @DialogTitle String title,
-                                       @Nullable Icon icon,
-                                       @Nullable @NonNls String initialValue,
-                                       @Nullable InputValidator validator,
-                                       @Nullable TextRange selection,
-                                       @Nullable @DetailedDescription String comment) {
+  public static @Nullable @NlsSafe String showInputDialog(Project project,
+                                                          @DialogMessage String message,
+                                                          @DialogTitle String title,
+                                                          @Nullable Icon icon,
+                                                          @Nullable @NonNls String initialValue,
+                                                          @Nullable InputValidator validator,
+                                                          @Nullable TextRange selection,
+                                                          @Nullable @DetailedDescription String comment) {
     return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
   }
 
-  @Nullable
-  public static @NlsSafe String showInputDialog(@NotNull Component parent,
-                                       @DialogMessage String message,
-                                       @DialogTitle String title,
-                                       @Nullable Icon icon,
-                                       @Nullable @NonNls String initialValue,
-                                       @Nullable InputValidator validator) {
+  public static @Nullable @NlsSafe String showInputDialog(@NotNull Component parent,
+                                                          @DialogMessage String message,
+                                                          @DialogTitle String title,
+                                                          @Nullable Icon icon,
+                                                          @Nullable @NonNls String initialValue,
+                                                          @Nullable InputValidator validator) {
     return MessagesService.getInstance().showInputDialog(null, parent, message, title, icon, initialValue, validator, null, null);
   }
 
@@ -1020,8 +947,7 @@ public class Messages {
    * @see #showInputDialog(Project, String, String, Icon, String, InputValidator)
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
    */
-  @Nullable
-  public static @NlsSafe String showInputDialog(@DialogMessage String message,
+  public static @Nullable @NlsSafe String showInputDialog(@DialogMessage String message,
                                                 @DialogTitle String title,
                                                 @Nullable Icon icon,
                                                 @Nullable @NonNls String initialValue,
@@ -1029,36 +955,33 @@ public class Messages {
     return MessagesService.getInstance().showInputDialog(null, null, message, title, icon, initialValue, validator, null, null);
   }
 
-  @Nullable
-  public static @NlsSafe String showMultilineInputDialog(Project project,
-                                                @DialogMessage String message,
-                                                @DialogTitle String title,
-                                                @Nullable @NonNls String initialValue,
-                                                @Nullable Icon icon,
-                                                @Nullable InputValidator validator) {
+  public static @Nullable @NlsSafe String showMultilineInputDialog(Project project,
+                                                                   @DialogMessage String message,
+                                                                   @DialogTitle String title,
+                                                                   @Nullable @NonNls String initialValue,
+                                                                   @Nullable Icon icon,
+                                                                   @Nullable InputValidator validator) {
     return MessagesService.getInstance().showMultilineInputDialog(project, message, title, initialValue, icon, validator);
   }
 
-  @NotNull
-  public static Pair<String, Boolean> showInputDialogWithCheckBox(@DialogMessage String message,
-                                                                  @DialogTitle String title,
-                                                                  @NlsContexts.Checkbox String checkboxText,
-                                                                  boolean checked,
-                                                                  boolean checkboxEnabled,
-                                                                  @Nullable Icon icon,
-                                                                  @Nullable @NonNls String initialValue,
-                                                                  @Nullable InputValidator validator) {
+  public static @NotNull Pair<String, Boolean> showInputDialogWithCheckBox(@DialogMessage String message,
+                                                                           @DialogTitle String title,
+                                                                           @NlsContexts.Checkbox String checkboxText,
+                                                                           boolean checked,
+                                                                           boolean checkboxEnabled,
+                                                                           @Nullable Icon icon,
+                                                                           @Nullable @NonNls String initialValue,
+                                                                           @Nullable InputValidator validator) {
     return MessagesService.getInstance()
       .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
   }
 
-  @Nullable
-  public static String showEditableChooseDialog(@DialogMessage String message,
-                                                @DialogTitle String title,
-                                                @Nullable Icon icon,
-                                                String[] values,
-                                                String initialValue,
-                                                @Nullable InputValidator validator) {
+  public static @Nullable String showEditableChooseDialog(@DialogMessage String message,
+                                                          @DialogTitle String title,
+                                                          @Nullable Icon icon,
+                                                          String[] values,
+                                                          String initialValue,
+                                                          @Nullable InputValidator validator) {
     return MessagesService.getInstance().showEditableChooseDialog(message, title, icon, values, initialValue, validator);
   }
 
@@ -1075,7 +998,6 @@ public class Messages {
   }
 
   /**
-   * @see DialogWrapper#DialogWrapper(Project, boolean)
    * @deprecated It looks awful!
    */
   @Deprecated
@@ -1156,8 +1078,8 @@ public class Messages {
    * Shows dialog with text area to edit long strings that don't fit in text field.
    */
   public static void showTextAreaDialog(final JTextField textField,
-                                        @DialogTitle final String title,
-                                        @NonNls final String dimensionServiceKey,
+                                        final @DialogTitle String title,
+                                        final @NonNls String dimensionServiceKey,
                                         final Function<? super String, ? extends List<String>> parser,
                                         final Function<? super List<String>, String> lineJoiner) {
     MessagesService.getInstance().showTextAreaDialog(textField, title, dimensionServiceKey, parser, lineJoiner);
@@ -1165,7 +1087,7 @@ public class Messages {
 
   public static void showTextAreaDialog(final JTextField textField,
                                         final @DialogTitle String title,
-                                        @NonNls final String dimensionServiceKey) {
+                                        final @NonNls String dimensionServiceKey) {
     showTextAreaDialog(textField, title, dimensionServiceKey, ParametersListUtil.DEFAULT_LINE_PARSER,
                        ParametersListUtil.DEFAULT_LINE_JOINER);
   }
@@ -1304,8 +1226,7 @@ public class Messages {
     }
 
     @Override
-    @NotNull
-    protected JPanel createMessagePanel() {
+    protected @NotNull JPanel createMessagePanel() {
       JPanel messagePanel = new JPanel(new BorderLayout());
       if (myMessage != null) {
         JComponent textComponent = createTextComponent();
@@ -1351,12 +1272,8 @@ public class Messages {
       return myField;
     }
 
-    @Nullable
-    public @NlsSafe String getInputString() {
-      if (getExitCode() == 0) {
-        return myField.getText().trim();
-      }
-      return null;
+    public @Nullable @NlsSafe String getInputString() {
+      return getExitCode() == 0 ? myField.getText().trim() : null;
     }
   }
 

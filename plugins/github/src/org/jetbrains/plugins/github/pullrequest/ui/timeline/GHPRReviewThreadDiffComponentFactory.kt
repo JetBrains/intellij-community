@@ -19,10 +19,10 @@ import javax.swing.JComponent
 class GHPRReviewThreadDiffComponentFactory(project: Project, editorFactory: EditorFactory) {
   private val timelineDiffComponentFactory = TimelineDiffComponentFactory(project, editorFactory)
 
-  fun createComponent(diffHunk: String): JComponent {
+  fun createComponent(diffHunk: String, startLine: Int?): JComponent {
     try {
       val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk("_", diffHunk))
-      val patchHunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull()?.let { truncateHunk(it) }
+      val patchHunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull()?.let { truncateHunk(it, startLine != null) }
                       ?: throw IllegalStateException("Could not parse diff hunk")
 
       if (patchHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
@@ -66,13 +66,15 @@ class GHPRReviewThreadDiffComponentFactory(project: Project, editorFactory: Edit
     }
   }
 
-  private fun truncateHunk(hunk: PatchHunk): PatchHunk {
-    if (hunk.lines.size <= DIFF_SIZE) return hunk
+  private fun truncateHunk(hunk: PatchHunk, isMultiline: Boolean): PatchHunk {
+    val maxDiffSize = if (isMultiline) MULTILINE_DIFF_SIZE else SINGLE_LINE_DIFF_SIZE
+
+    if (hunk.lines.size <= maxDiffSize) return hunk
 
     var startLineBefore: Int = hunk.startLineBefore
     var startLineAfter: Int = hunk.startLineAfter
 
-    val toRemoveIdx = hunk.lines.lastIndex - DIFF_SIZE
+    val toRemoveIdx = hunk.lines.lastIndex - maxDiffSize
     for (i in 0..toRemoveIdx) {
       val line = hunk.lines[i]
       when (line.type) {
@@ -93,6 +95,7 @@ class GHPRReviewThreadDiffComponentFactory(project: Project, editorFactory: Edit
   }
 
   companion object {
-    private const val DIFF_SIZE = 3
+    private const val SINGLE_LINE_DIFF_SIZE = 3
+    private const val MULTILINE_DIFF_SIZE = 10
   }
 }

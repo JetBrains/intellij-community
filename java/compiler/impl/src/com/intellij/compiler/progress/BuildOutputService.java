@@ -3,6 +3,7 @@ package com.intellij.compiler.progress;
 
 import com.intellij.build.*;
 import com.intellij.build.events.MessageEvent;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.build.progress.BuildProgress;
 import com.intellij.build.progress.BuildProgressDescriptor;
 import com.intellij.compiler.impl.CompilerPropertiesAction;
@@ -16,6 +17,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -38,6 +40,9 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 @ApiStatus.Internal
 public class BuildOutputService implements BuildViewService {
+  private static final ExtensionPointName<BuildIssueContributor> BUILD_ISSUE_EP =
+    ExtensionPointName.create("com.intellij.compiler.buildIssueContributor");
+
   private static final @NonNls String ANSI_RESET = "\u001B[0m";
   private static final @NonNls String ANSI_RED = "\u001B[31m";
   private static final @NonNls String ANSI_YELLOW = "\u001B[33m";
@@ -146,7 +151,12 @@ public class BuildOutputService implements BuildViewService {
     MessageEvent.Kind kind = convertCategory(compilerMessage.getCategory());
     VirtualFile virtualFile = compilerMessage.getVirtualFile();
     Navigatable navigatable = compilerMessage.getNavigatable();
-    if (virtualFile != null) {
+    String title = getMessageTitle(compilerMessage);
+    BuildIssue issue = buildIssue(compilerMessage.getModuleNames(), title, compilerMessage.getMessage(), kind, virtualFile, navigatable);
+    if (issue != null) {
+      myBuildProgress.buildIssue(issue, kind);
+    }
+    else if (virtualFile != null) {
       File file = virtualToIoFile(virtualFile);
       FilePosition filePosition;
       if (navigatable instanceof OpenFileDescriptor) {
@@ -158,16 +168,27 @@ public class BuildOutputService implements BuildViewService {
       else {
         filePosition = new FilePosition(file, 0, 0);
       }
-      String title = getMessageTitle(compilerMessage);
+
       myBuildProgress.fileMessage(title, compilerMessage.getMessage(), kind, filePosition);
     }
     else {
       if (kind == MessageEvent.Kind.ERROR || kind == MessageEvent.Kind.WARNING) {
-        String title = getMessageTitle(compilerMessage);
         myBuildProgress.message(title, compilerMessage.getMessage(), kind, navigatable);
       }
       myConsolePrinter.print(compilerMessage.getMessage(), kind);
     }
+  }
+
+  @Nullable
+  private BuildIssue buildIssue(@NotNull Collection<String> moduleNames,
+                                @NotNull String title,
+                                @NotNull String message,
+                                @NotNull MessageEvent.Kind kind,
+                                @Nullable VirtualFile virtualFile,
+                                @Nullable Navigatable navigatable) {
+    return BUILD_ISSUE_EP.computeSafeIfAny(contributor -> {
+      return contributor.createBuildIssue(myProject, moduleNames, title, message, kind, virtualFile, navigatable);
+    });
   }
 
   @NotNull
@@ -319,7 +340,7 @@ public class BuildOutputService implements BuildViewService {
 
     private ConsolePrinter(@NotNull BuildProgress<BuildProgressDescriptor> progress) {this.progress = progress;}
 
-    private void print(@NotNull @Nls String message, @NotNull MessageEvent.Kind kind){
+    private void print(@NotNull @Nls String message, @NotNull MessageEvent.Kind kind) {
       String text = wrapWithAnsiColor(kind, message);
       if (!isNewLinePosition && !startsWithChar(message, '\r')) {
         text = '\n' + text;
@@ -342,8 +363,7 @@ public class BuildOutputService implements BuildViewService {
       else {
         color = ANSI_BOLD;
       }
-      @NlsSafe
-      final String ansiReset = ANSI_RESET;
+      @NlsSafe final String ansiReset = ANSI_RESET;
       return color + message + ansiReset;
     }
   }

@@ -89,7 +89,8 @@ public final class FavoritesTreeStructure extends ProjectTreeStructure {
       }
       return ArrayUtil.toObjectArray(result);
     }
-    catch (ProcessCanceledException ignored) {
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOGGER.error(e);

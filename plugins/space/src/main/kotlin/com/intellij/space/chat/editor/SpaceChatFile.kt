@@ -12,21 +12,41 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.space.chat.model.api.SpaceChatHeaderDetails
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.testFramework.LightVirtualFile
 import icons.SpaceIcons
+import libraries.coroutines.extra.Lifetime
 import javax.swing.Icon
 
+/**
+ * @param id is used only for equals and hashcode to avoid multiple editor tabs the same [SpaceChatFile]
+ */
 internal class SpaceChatFile(
+  @NlsSafe val id: String,
   @NlsSafe path: String,
   @NlsContexts.TabTitle val displayName: String,
   val channelsVm: ChannelsVm,
-  val chatRecord: Ref<M2ChannelRecord>
+  val chatRecord: Ref<M2ChannelRecord>,
+  val headerDetailsBuilder: (Lifetime) -> SpaceChatHeaderDetails
 ) : LightVirtualFile(path, SpaceChatFileType.instance, "") {
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
     isWritable = false
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as SpaceChatFile
+
+    if (id != other.id) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = id.hashCode()
 }
 
 internal class SpaceChatFileTabTitleProvider : EditorTabTitleProvider {
@@ -55,13 +75,11 @@ private class SpaceChatFileType private constructor(): FileType {
 
   override fun getDefaultExtension(): String = ""
 
-  override fun getIcon(): Icon? = SpaceIcons.Main
+  override fun getIcon(): Icon = SpaceIcons.Main
 
   override fun isBinary(): Boolean = true
 
   override fun isReadOnly(): Boolean = true
-
-  override fun getCharset(file: VirtualFile, content: ByteArray): String? = null
 
   companion object {
     val instance = SpaceChatFileType()

@@ -3,6 +3,9 @@ package com.intellij.internal.statistic.collectors.fus.os;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,27 +14,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newMetric;
-
 /**
  * @author Konstantin Bulenkov
  */
 public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
-  @NotNull
-  @Override
-  public Set<MetricEvent> getMetrics() {
-    if (SystemInfo.isLinux) {
-      Set<MetricEvent> result = new HashSet<>();
-      result.add(newMetric("xdg.current.desktop", toReportedName(System.getenv("XDG_CURRENT_DESKTOP"))));
-      return result;
-    }
-    return Collections.emptySet();
-  }
-
-  static class Lazy {
+  private static class Lazy {
     private static final Map<String, String> GNOME_WINDOW_MANAGERS = new LinkedHashMap<>();
-
     private static final Map<String, String> WINDOW_MANAGERS = new LinkedHashMap<>();
+    private static final List<String> ALL_NAMES = new ArrayList<>();
+
     static {
       GNOME_WINDOW_MANAGERS.put("shell", "Gnome Shell");
       GNOME_WINDOW_MANAGERS.put("ubuntu", "Ubuntu Gnome");
@@ -64,7 +55,30 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
       WINDOW_MANAGERS.put("lg3d", "LG3D");
       WINDOW_MANAGERS.put("enlightenment", "Enlightenment");
       WINDOW_MANAGERS.put("default.desktop", "default.desktop");
+
+      ALL_NAMES.addAll(GNOME_WINDOW_MANAGERS.values());
+      ALL_NAMES.addAll(WINDOW_MANAGERS.values());
     }
+
+    private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 3);
+    private static final EventId1<String> CURRENT_DESKTOP =
+      GROUP.registerEvent("xdg.current.desktop", EventFields.String("value", ALL_NAMES));
+  }
+
+  @Override
+  public EventLogGroup getGroup() {
+    return Lazy.GROUP;
+  }
+
+  @NotNull
+  @Override
+  public Set<MetricEvent> getMetrics() {
+    if (SystemInfo.isLinux) {
+      Set<MetricEvent> result = new HashSet<>();
+      result.add(Lazy.CURRENT_DESKTOP.metric(toReportedName(System.getenv("XDG_CURRENT_DESKTOP"))));
+      return result;
+    }
+    return Collections.emptySet();
   }
 
   @VisibleForTesting
@@ -87,14 +101,5 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
       }
     }
     return original;
-  }
-
-  @NotNull
-  @Override
-  public String getGroupId() { return "os.linux.wm"; }
-
-  @Override
-  public int getVersion() {
-    return 3;
   }
 }

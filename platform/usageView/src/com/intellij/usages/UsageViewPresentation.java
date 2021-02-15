@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.IntFunction;
 import java.util.regex.Pattern;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
@@ -24,17 +23,16 @@ public class UsageViewPresentation {
   private String myScopeText = ""; // Default value. to be overwritten in most cases.
   private @NlsSafe String myUsagesString;
   private @NlsSafe String mySearchString;
-  private @NlsContexts.ListItem String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
+  private @NlsContexts.ListItem String myTargetsNodeText = UsageViewBundle.message("node.targets");
+    // Default value. to be overwritten in most cases.
   private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
   private @NlsContexts.ListItem String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
-  private @NlsContexts.ListItem String myUsagesInGeneratedCodeString = UsageViewBundle.message("node.usages.in.generated.code");
   private boolean myShowReadOnlyStatusAsRed = false;
   private boolean myShowCancelButton = false;
   private boolean myOpenInNewTab = true;
   private int myRerunHash = 0;//this value shouldn't be copied and doesn't affect equals/hashcode methods
   private boolean myCodeUsages = true;
   private boolean myUsageTypeFilteringAvailable;
-  private IntFunction<@Nls String> myUsagesWordSupplier = count -> UsageViewBundle.message("usage.name", count);
 
   private @NlsContexts.TabTitle String myTabName;
   private @NlsContexts.TabTitle String myToolwindowTitle;
@@ -166,32 +164,20 @@ public class UsageViewPresentation {
   }
 
   /**
-   * @param count number of usages
-   * @return localized string that displays a message like "2 usages"
-   */
-  public @Nls String formatUsageCount(int count) {
-    return UsageViewBundle.message("x.usages", count, myUsagesWordSupplier.apply(count));
-  }
-
-  /**
-   * Please avoid using this method in string concatenations that are shown in UI
-   */
-  @NotNull
-  public @Nls String getUsagesWord() {
-    return myUsagesWordSupplier.apply(1);
-  }
-
-  /**
-   * Use {@link #setUsagesWord(IntFunction)} instead
+   * @deprecated please avoid using this method, because it leads to string concatenations that are shown in UI
    */
   @Deprecated
-  public void setUsagesWord(@NotNull @Nls String usagesWord) {
-    myUsagesWordSupplier = count -> usagesWord;
+  @NotNull
+  public @Nls String getUsagesWord() {
+    return UsageViewBundle.message("usage.name", 1);
   }
 
-  public void setUsagesWord(@NotNull IntFunction<@Nls String> usagesWordSupplier) {
-    myUsagesWordSupplier = usagesWordSupplier;
-  }
+  /**
+   * @deprecated no-op
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
+  public void setUsagesWord(@NotNull @Nls String usagesWord) {}
 
   public @NlsContexts.TabTitle String getTabName() {
     return myTabName;
@@ -223,15 +209,6 @@ public class UsageViewPresentation {
 
   public @NlsContexts.ListItem String getDynamicCodeUsagesString() {
     return myDynamicCodeUsagesString;
-  }
-
-  @NotNull
-  public @NlsContexts.ListItem String getUsagesInGeneratedCodeString() {
-    return myUsagesInGeneratedCodeString;
-  }
-
-  public void setUsagesInGeneratedCodeString(@NotNull @NlsContexts.ListItem String usagesInGeneratedCodeString) {
-    myUsagesInGeneratedCodeString = usagesInGeneratedCodeString;
   }
 
   public boolean isMergeDupLinesAvailable() {
@@ -304,11 +281,8 @@ public class UsageViewPresentation {
            && Objects.equals(myTabText, that.myTabText)
            && Objects.equals(myTargetsNodeText, that.myTargetsNodeText)
            && Objects.equals(myToolwindowTitle, that.myToolwindowTitle)
-           && Objects.equals(myUsagesInGeneratedCodeString, that.myUsagesInGeneratedCodeString)
            && Objects.equals(myUsagesString, that.myUsagesString)
            && Objects.equals(mySearchString, that.mySearchString)
-           && Objects.equals(myUsagesWordSupplier.apply(1), that.myUsagesWordSupplier.apply(1))
-           && Objects.equals(myUsagesWordSupplier.apply(2), that.myUsagesWordSupplier.apply(2))
            && arePatternsEqual(mySearchPattern, that.mySearchPattern)
            && arePatternsEqual(myReplacePattern, that.myReplacePattern);
   }
@@ -335,15 +309,12 @@ public class UsageViewPresentation {
       myTargetsNodeText,
       myNonCodeUsagesString,
       myCodeUsagesString,
-      myUsagesInGeneratedCodeString,
       myShowReadOnlyStatusAsRed,
       myShowCancelButton,
       myOpenInNewTab,
       myCodeUsages,
       myUsageTypeFilteringAvailable,
       myExcludeAvailable,
-      myUsagesWordSupplier.apply(1),
-      myUsagesWordSupplier.apply(2),
       myTabName,
       myToolwindowTitle,
       myDetachedMode,
@@ -365,13 +336,11 @@ public class UsageViewPresentation {
     copyInstance.myTargetsNodeText = myTargetsNodeText;
     copyInstance.myNonCodeUsagesString = myNonCodeUsagesString;
     copyInstance.myCodeUsagesString = myCodeUsagesString;
-    copyInstance.myUsagesInGeneratedCodeString = myUsagesInGeneratedCodeString;
     copyInstance.myShowReadOnlyStatusAsRed = myShowReadOnlyStatusAsRed;
     copyInstance.myShowCancelButton = myShowCancelButton;
     copyInstance.myOpenInNewTab = myOpenInNewTab;
     copyInstance.myCodeUsages = myCodeUsages;
     copyInstance.myUsageTypeFilteringAvailable = myUsageTypeFilteringAvailable;
-    copyInstance.myUsagesWordSupplier = myUsagesWordSupplier;
     copyInstance.myTabName = myTabName;
     copyInstance.myToolwindowTitle = myToolwindowTitle;
     copyInstance.myDetachedMode = myDetachedMode;

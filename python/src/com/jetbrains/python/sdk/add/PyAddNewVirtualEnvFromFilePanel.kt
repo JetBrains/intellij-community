@@ -82,7 +82,7 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
     initialRequirementsTxtOrSetupPy = requirementsTxtOrSetupPyField.text
   }
 
-  fun validateAll(defaultButtonName: @NlsContexts.Button String): List<ValidationInfo> =
+  fun validateAll(@NlsContexts.Button defaultButtonName: String): List<ValidationInfo> =
     listOfNotNull(PyAddSdkPanel.validateEnvironmentDirectoryLocation(pathField),
                   PyAddSdkPanel.validateSdkComboBox(baseSdkField, defaultButtonName))
 

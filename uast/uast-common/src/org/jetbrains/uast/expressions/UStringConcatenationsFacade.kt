@@ -19,7 +19,7 @@ import org.jetbrains.uast.*
 class UStringConcatenationsFacade private constructor(private val uContext: UExpression, val uastOperands: Sequence<UExpression>) {
 
   @Deprecated("use factory method `UStringConcatenationsFacade.createFromUExpression`",
-              ReplaceWith("UStringConcatenationsFacade.createFromUExpression"))
+              ReplaceWith("UStringConcatenationsFacade.createFromUExpression(uContext)"))
   @ApiStatus.Experimental
   constructor(uContext: UExpression) : this(uContext, buildLazyUastOperands(uContext, false) ?: emptySequence())
 

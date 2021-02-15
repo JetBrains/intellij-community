@@ -1,6 +1,32 @@
 <html>
 <body>
-Reports <code>switch</code> statements containing the same code in different branches.
+Reports <code>switch</code> statements or expressions containing the same code in different branches
+and suggests to merge the duplicate branches.
+<p>
+For example:
+<pre><code>
+  <b>switch</b> (n) {
+    <b>case</b> 1:
+      System.out.println(n);
+      <b>break</b>;
+    <b>case</b> 2:
+      System.out.println(n);
+      <b>break</b>;
+    <b>default</b>:
+      System.out.println("default");
+  }
+</code></pre>
+Can be replaced with:
+<pre><code>
+  <b>switch</b> (n) {
+    <b>case</b> 1:
+    <b>case</b> 2:
+      System.out.println(n);
+      <b>break</b>;
+    <b>default</b>:
+      System.out.println("default");
+  }
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2019.1</small></p>
 </body>

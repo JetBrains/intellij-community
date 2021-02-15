@@ -43,11 +43,6 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
       return null
     }
 
-    // JDK compatibility issues should be handled by org.jetbrains.plugins.gradle.issue.IncompatibleGradleJdkIssueChecker
-    if(rootCauseText.contains("FAILURE: Build failed with an exception.")) {
-      return null
-    }
-
     val quickFixDescription = StringBuilder()
     val quickFixes = ArrayList<BuildIssueQuickFix>()
     val projectGradleProperties = Paths.get(issueData.projectPath, "gradle.properties")
@@ -61,7 +56,7 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
     val commonGradleProperties = Paths.get(gradleUserHomeDir.path, "gradle.properties")
     if (commonGradleProperties.isFile()) {
       val openFileQuickFix = OpenFileQuickFix(commonGradleProperties, "org.gradle.jvmargs")
-      quickFixDescription.append(" - <a href=\"${openFileQuickFix.id}\">gradle.properties</a> in in GRADLE_USER_HOME directory\n")
+      quickFixDescription.append(" - <a href=\"${openFileQuickFix.id}\">gradle.properties</a> in GRADLE_USER_HOME directory\n")
       quickFixes.add(openFileQuickFix)
     }
 

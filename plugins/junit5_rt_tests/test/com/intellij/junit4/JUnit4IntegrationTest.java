@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.PlatformTestUtil;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.junit.After;
 import org.junit.Before;
@@ -105,7 +106,12 @@ public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest 
     switch (myJUnitVersion) {
       case "4.4": case "4.5": break; //shouldn't work for old versions
       default:
+      {
         assertTrue(testOutput, testOutput.contains("Test1"));
+        for (ServiceMessage message : processOutput.messages) {
+          assertFalse(message.toString().contains("Ignored"));
+        }
+      }
     }
   }
 

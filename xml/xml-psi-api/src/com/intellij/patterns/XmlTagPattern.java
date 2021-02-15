@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 */
 public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedElementPattern<XmlTag, Self> {
   protected XmlTagPattern() {
-    super(new InitialPatternCondition<XmlTag>(XmlTag.class) {
+    super(new InitialPatternCondition<>(XmlTag.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof XmlTag;
@@ -39,7 +39,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
   }
 
   public Self withAttributeValue(@NotNull @NonNls final String attributeName, @NotNull final String attributeValue) {
-    return with(new PatternCondition<XmlTag>("withAttributeValue") {
+    return with(new PatternCondition<>("withAttributeValue") {
       @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         return Objects.equals(xmlTag.getAttributeValue(attributeName), attributeValue);
@@ -48,7 +48,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
   }
 
   public Self withAnyAttribute(@NonNls final String @NotNull ... attributeNames) {
-    return with(new PatternCondition<XmlTag>("withAnyAttribute") {
+    return with(new PatternCondition<>("withAnyAttribute") {
       @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         for (String attributeName : attributeNames) {
@@ -62,7 +62,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
   }
 
   public Self withDescriptor(@NotNull final ElementPattern<? extends PsiMetaData> metaDataPattern) {
-    return with(new PatternCondition<XmlTag>("withDescriptor") {
+    return with(new PatternCondition<>("withDescriptor") {
       @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         return metaDataPattern.accepts(xmlTag.getDescriptor());
@@ -71,7 +71,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
   }
 
   public Self isFirstSubtag(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<XmlTag>("isFirstSubtag") {
+    return with(new PatternCondition<>("isFirstSubtag") {
       @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         final XmlTag parent = xmlTag.getParentTag();
@@ -86,7 +86,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
   }
 
   public Self withSubTags(@NotNull final ElementPattern<? extends Collection<XmlTag>> pattern) {
-    return with(new PatternCondition<XmlTag>("withSubTags") {
+    return with(new PatternCondition<>("withSubTags") {
       @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         return pattern.accepts(Arrays.asList(xmlTag.getSubTags()), context);

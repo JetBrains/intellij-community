@@ -39,7 +39,6 @@ import javax.swing.*;
  * @author Mikhail Golubev
  */
 public class JsonStandardComplianceInspection extends LocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance(JsonStandardComplianceInspection.class);
 
   public boolean myWarnAboutComments = true;
   public boolean myWarnAboutNanInfinity = true;
@@ -103,7 +102,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         CodeStyleManager.getInstance(project).performActionWithFormatterDisabled((Runnable)() -> element.replace(replacement));
       }
       else {
-        LOG.error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
+        Logger.getInstance(JsonStandardComplianceInspection.class)
+          .error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
       }
     }
 

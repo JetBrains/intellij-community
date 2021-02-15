@@ -126,7 +126,8 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
             }
             prevClass.extendsList != curClass.extendsList || prevClass.implementsList != curClass.implementsList -> {
               // maybe some parent members were referenced instead of current class overrides
-              publicApi(psiMember).filter { it is PsiMethod && it.isOverride() }.forEach { changes.putIfAbsent(it, prevChanges[it]) }
+              // also maybe this overrides now reference something else in current class (e.g. private method)
+              MemberCollector.collectMembers(psiMember) { it is PsiMethod }.forEach { changes.putIfAbsent(it, prevChanges[it]) }
             }
           }
         }
@@ -134,8 +135,6 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
     }
 
     private fun publicApi(psiElement: PsiElement) = MemberCollector.collectMembers(psiElement) { !it.hasModifier(PsiModifier.PRIVATE) }
-
-    private fun PsiMethod.isOverride() = hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)
 
     private fun PsiMember.hasModifier(modifier: String) = modifierList?.hasModifierProperty(modifier) ?: false
   }

@@ -9,6 +9,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiDirectory;
@@ -37,11 +38,13 @@ public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<
   }
 
   @Nullable
+  @NlsSafe
   public String getLocation() {
     return getLocation(myElement, myProject);
   }
 
   @Nullable
+  @NlsSafe
   public static String getLocation(@NotNull AbstractTreeNode<?> element, @NotNull Project project) {
     Object nodeElement = element.getValue();
     if (nodeElement instanceof SmartPsiElementPointer) {

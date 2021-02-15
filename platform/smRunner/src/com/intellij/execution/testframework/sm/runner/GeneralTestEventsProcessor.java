@@ -118,9 +118,9 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
       if (myLocator != null) {
         testProxy.setLocator(myLocator);
       }
-      myEventPublisher.onSuiteTreeNodeAdded(testProxy, id, parentNodeId);
+      myEventPublisher.onSuiteTreeNodeAdded(testProxy, isSuite, id, parentNodeId);
       for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-        adapter.onSuiteTreeNodeAdded(testProxy, id, parentNodeId);
+        adapter.onSuiteTreeNodeAdded(testProxy, isSuite, id, parentNodeId);
       }
       //ensure root node gets the flag when merged with a single child
       testProxy.getParent().setTreeBuildBeforeStart();
@@ -154,6 +154,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
     myBuildTreeRunnables.clear();
     processTreeBuildEvents(runnables);
+    myEventPublisher.onBuildTreeEnded(myTestsRootProxy);
   }
 
   public final void onDurationStrategyChanged(@NotNull final TestDurationStrategy durationStrategy) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.parser;
 
 import com.intellij.lang.ASTNode;
@@ -26,12 +26,12 @@ public class ShParserDefinition implements ParserDefinition, ShTokenTypes {
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new ShParser();
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return ShFileElementType.INSTANCE;
   }
 
@@ -60,12 +60,12 @@ public class ShParserDefinition implements ParserDefinition, ShTokenTypes {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider fileViewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider fileViewProvider) {
     return new ShFile(fileViewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

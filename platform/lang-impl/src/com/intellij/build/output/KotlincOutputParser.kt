@@ -179,7 +179,7 @@ class KotlincOutputParser : BuildOutputParser {
                             messageKind: MessageEvent.Kind,
                             text: @BuildEventsNls.Message String,
                             detail: @BuildEventsNls.Description String): MessageEvent {
-    return MessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail)
+    return MessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail) //NON-NLS
   }
 
   private fun createMessageWithLocation(
@@ -191,7 +191,7 @@ class KotlincOutputParser : BuildOutputParser {
     columnIndex: Int,
     detail: @BuildEventsNls.Description String
   ): FileMessageEventImpl {
-    return FileMessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail,
+    return FileMessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail, //NON-NLS
                                 FilePosition(File(file), lineNumber - 1, columnIndex - 1))
   }
 

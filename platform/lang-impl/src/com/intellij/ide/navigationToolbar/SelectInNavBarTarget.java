@@ -88,6 +88,6 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
   }
 
   public String toString() {
-    return IdeBundle.message("select.in.nav.bar");
+    return IdeBundle.message("navigation.bar");
   }
 }

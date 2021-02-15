@@ -31,14 +31,17 @@ public final class MavenActionUtil {
 
   public static boolean isMavenizedProject(DataContext context) {
     Project project = CommonDataKeys.PROJECT.getData(context);
-    return project != null && MavenProjectsManager.getInstance(project).isMavenizedProject();
+    if (project == null) return false;
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstanceIfCreated(project);
+    if (mavenProjectsManager == null) return false;
+    return mavenProjectsManager.isMavenizedProject();
   }
 
   @Nullable
   public static MavenProject getMavenProject(DataContext context) {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
-    if(manager == null) return null;
+    if (manager == null) return null;
 
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file != null) {
@@ -58,8 +61,8 @@ public final class MavenActionUtil {
   @Nullable
   public static MavenProjectsManager getProjectsManager(DataContext context) {
     final Project project = getProject(context);
-    if(project == null) return null;
-    return MavenProjectsManager.getInstance(project);
+    if (project == null) return null;
+    return MavenProjectsManager.getInstanceIfCreated(project);
   }
 
   public static boolean isMavenProjectFile(VirtualFile file) {
@@ -75,8 +78,8 @@ public final class MavenActionUtil {
     VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
     if (virtualFiles == null || virtualFiles.length == 0) return Collections.emptyList();
 
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    if (!projectsManager.isMavenizedProject()) return Collections.emptyList();
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstanceIfCreated(project);
+    if (projectsManager == null || !projectsManager.isMavenizedProject()) return Collections.emptyList();
 
     Set<MavenProject> res = new LinkedHashSet<>();
 

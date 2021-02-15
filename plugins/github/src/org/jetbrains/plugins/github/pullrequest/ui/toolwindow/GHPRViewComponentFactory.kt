@@ -47,8 +47,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitsBrowserComponent.COMMITS_LIST_KEY
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeEvent
@@ -69,7 +69,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
 
   private val diffHelper = GHPRChangesDiffHelperImpl(project, dataProvider,
-                                                     dataContext.avatarIconsProviderFactory,
+                                                     dataContext.avatarIconsProvider,
                                                      dataContext.securityService.currentUser)
 
   private val detailsLoadingModel = GHCompletableFutureLoadingModel<GHPullRequest>(disposable)
@@ -180,13 +180,13 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
           break
         }
       }
-      GithubUIUtil.focusPanel(list)
+      GHUIUtil.focusPanel(list)
     }
 
     override fun selectChange(oid: String?, filePath: String) {
       tabs.select(infoTab, false)
       val tree = ComponentUtil.getClientProperty(infoTab.component, CHANGES_TREE_KEY) ?: return
-      GithubUIUtil.focusPanel(tree)
+      GHUIUtil.focusPanel(tree)
 
       if (oid == null || !changesLoadingModel.resultAvailable) {
         tree.selectFile(VcsUtil.getFilePath(filePath, false))
@@ -246,7 +246,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                 dataProvider.detailsData,
                                                 dataContext.gitRemoteCoordinates.repository,
                                                 disposable)
-      GHPRDetailsComponent.create(detailsModel, branchesModel, dataContext.avatarIconsProviderFactory)
+      GHPRDetailsComponent.create(detailsModel, branchesModel, dataContext.avatarIconsProvider)
     }.also {
       reloadDetailsAction.registerCustomShortcutSet(it, uiDisposable)
     }

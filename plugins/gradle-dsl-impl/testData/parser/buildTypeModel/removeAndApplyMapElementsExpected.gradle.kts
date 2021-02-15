@@ -1,7 +1,7 @@
 android {
   buildTypes {
     create("xyz") {
-      manifestPlaceholders = mapOf("activityLabel2" to "defaultName2")
+      manifestPlaceholders = mutableMapOf("activityLabel2" to "defaultName2")
     }
   }
 }

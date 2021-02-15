@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -221,6 +222,23 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     @Override
     public AnAction getDelegate() {
       return myAction;
+    }
+  }
+
+  @SuppressWarnings("ComponentNotRegistered")
+  public static class GroupPopupWrapper extends AnActionButtonWrapper {
+    public GroupPopupWrapper(@NotNull ActionGroup group) {
+      super(group.getTemplatePresentation(), group);
+      setShortcut(group.getShortcutSet());
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      RelativePoint relativePoint = getPreferredPopupPoint();
+      if (relativePoint != null) {
+        JBPopupMenu.showAt(relativePoint, ActionManager.getInstance().createActionPopupMenu(
+          e.getPlace(), (ActionGroup)getDelegate()).getComponent());
+      }
     }
   }
 

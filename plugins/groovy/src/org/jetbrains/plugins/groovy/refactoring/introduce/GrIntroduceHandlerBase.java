@@ -270,7 +270,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
         selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
       }
       else {
-        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<GrExpression>() {
+        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
           @Override
           public void pass(final GrExpression selectedValue) {
             invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
@@ -305,7 +305,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
                                   @Nullable final StringPartInfo stringPart) {
     final Scope[] scopes = findPossibleScopes(expression, variable, stringPart, editor);
 
-    Pass<Scope> callback = new Pass<Scope>() {
+    Pass<Scope> callback = new Pass<>() {
       @Override
       public void pass(Scope scope) {
         GrIntroduceContext context = getContext(project, editor, expression, variable, stringPart, scope);
@@ -446,7 +446,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
       if (isInplace(context.getEditor(), context.getPlace())) {
         Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = getOccurrenceOptions(context);
-        new IntroduceOccurrencesChooser(editor).showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
+        new IntroduceOccurrencesChooser(editor).showChooser(new Pass<>() {
           @Override
           public void pass(final OccurrencesChooser.ReplaceChoice choice) {
             getIntroducer(context, choice).startInplaceIntroduceTemplate();

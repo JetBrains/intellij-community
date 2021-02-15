@@ -1,20 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class UserDataHolderBase implements UserDataHolderEx {
+import java.util.concurrent.atomic.AtomicReference;
+
+public class UserDataHolderBase extends AtomicReference<KeyFMap> implements UserDataHolderEx {
   private static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
-  /**
-   * Concurrent writes to this field are via CASes only, using the {@link #updater}
-   */
-  @NotNull
-  private volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
+  public UserDataHolderBase() {
+    set(KeyFMap.EMPTY_MAP);
+  }
 
   @Override
   protected Object clone() {
@@ -51,7 +50,7 @@ public class UserDataHolderBase implements UserDataHolderEx {
 
   @NotNull
   protected KeyFMap getUserMap() {
-    return myUserMap;
+    return get();
   }
 
   @Override
@@ -66,7 +65,7 @@ public class UserDataHolderBase implements UserDataHolderEx {
   }
 
   protected boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
-    return updater.compareAndSet(this, oldMap, newMap);
+    return compareAndSet(oldMap, newMap);
   }
 
   public <T> T getCopyableUserData(@NotNull Key<T> key) {
@@ -128,12 +127,10 @@ public class UserDataHolderBase implements UserDataHolderEx {
   }
 
   protected void setUserMap(@NotNull KeyFMap map) {
-    myUserMap = map;
+    set(map);
   }
 
   public boolean isUserDataEmpty() {
     return getUserMap().isEmpty();
   }
-
-  private static final AtomicFieldUpdater<UserDataHolderBase, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(UserDataHolderBase.class, KeyFMap.class);
 }

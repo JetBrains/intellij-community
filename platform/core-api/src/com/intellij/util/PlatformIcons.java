@@ -46,11 +46,6 @@ public interface PlatformIcons {
   Icon NEW_PARAMETER = AllIcons.Hierarchy.Supertypes;
   Icon ASPECT_ICON = AllIcons.Nodes.Aspect;
 
-  /**
-   * @deprecated use {@link AllIcons.Nodes#Tag}
-   */
-  @Deprecated
-  Icon ADVICE_ICON = AllIcons.Nodes.Tag;
   Icon ERROR_INTRODUCTION_ICON = AllIcons.Nodes.ErrorIntroduction;
   Icon WARNING_INTRODUCTION_ICON = AllIcons.Nodes.WarningIntroduction;
   Icon JAVA_OUTSIDE_SOURCE_ICON = AllIcons.FileTypes.JavaOutsideSource;

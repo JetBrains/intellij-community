@@ -11,13 +11,15 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class PsiTypesUtil {
   @NonNls private static final Map<String, String> ourUnboxedTypes = new HashMap<>();
@@ -190,7 +192,7 @@ public final class PsiTypesUtil {
       }
       else {
         PsiElement parent = call.getContext();
-        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parent).getElementType()
+        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)parent).getElementType()
                                                                                        : parent.getNode().getElementType())) {
           parent = parent.getContext();
         }
@@ -310,14 +312,6 @@ public final class PsiTypesUtil {
   }
 
   /**
-   * @deprecated not compliant to specification, use {@link PsiTypesUtil#isDenotableType(PsiType, PsiElement)} instead
-   */
-  @Deprecated
-  public static boolean isDenotableType(@Nullable PsiType type) {
-    return !(type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType);
-  }
-
-    /**
      * @param context in which type should be checked
      * @return false if type is null or has no explicit canonical type representation (e. g. intersection type)
      */
@@ -345,8 +339,16 @@ public final class PsiTypesUtil {
 
       @Override
       public Boolean visitClassType(@NotNull PsiClassType classType) {
-        return super.visitClassType(classType) ||
-               ContainerUtil.exists(classType.getParameters(), t -> t.accept(this));
+        if (super.visitClassType(classType)) {
+          return true;
+        }
+
+        for (PsiType t1 : classType.getParameters()) {
+          if (t1.accept(this)) {
+            return true;
+          }
+        }
+        return false;
       }
 
       @Override
@@ -361,12 +363,22 @@ public final class PsiTypesUtil {
 
       @Override
       public Boolean visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
-        return ContainerUtil.exists(intersectionType.getConjuncts(), t -> t.accept(this));
+        for (PsiType t1 : intersectionType.getConjuncts()) {
+          if (t1.accept(this)) {
+            return true;
+          }
+        }
+        return false;
       }
 
       @Override
       public Boolean visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
-        return ContainerUtil.exists(disjunctionType.getDisjunctions(), t -> t.accept(this));
+        for (PsiType t1 : disjunctionType.getDisjunctions()) {
+          if (t1.accept(this)) {
+            return true;
+          }
+        }
+        return false;
       }
     });
   }
@@ -511,7 +523,7 @@ public final class PsiTypesUtil {
    * Implicit type arguments of types based on inner classes of generic outer classes are explicitly checked
    */
   public static boolean mentionsTypeParameters(@Nullable PsiType type, Set<PsiTypeParameter> typeParameters) {
-    return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters, false);
+    return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters);
   }
 
   /**
@@ -523,18 +535,24 @@ public final class PsiTypesUtil {
       PsiMethod method = (PsiMethod)element;
       PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       if (PsiUtil.isRawSubstitutor(method, substitutor)) {
-        Set<PsiTypeParameter> typeParameters = new HashSet<>(substitutor.getSubstitutionMap().keySet());
-        Arrays.stream(method.getTypeParameters()).forEach(typeParameters::remove);
-        return Arrays.stream(method.getParameterList().getParameters())
-          .anyMatch(parameter -> mentionsTypeParametersOrUnboundedWildcard(parameter.getType(), typeParameters, true));
+        for (PsiParameter t : method.getParameterList().getParameters()) {
+          PsiType type = t.getType().getDeepComponentType();
+          if (type instanceof PsiClassType) {
+            PsiClass aClass = ((PsiClassType)type).resolveGenerics().getElement();
+            if (aClass instanceof PsiTypeParameter || 
+                aClass != null && PsiUtil.typeParametersIterator(aClass).hasNext()) {
+              return true;
+            }
+          }
+        }
+        return false;
       }
     }
     return false;
   }
 
   private static boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
-                                                                   Set<PsiTypeParameter> typeParameters,
-                                                                   boolean acceptUnboundedWildcard) {
+                                                                   Set<PsiTypeParameter> typeParameters) {
     if (type == null) return false;
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Override
@@ -545,10 +563,8 @@ public final class PsiTypesUtil {
       @Override
       public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
-        if (bound != null) {
-          return bound.accept(this);
-        }
-        return acceptUnboundedWildcard;
+        return bound != null ? bound.accept(this) 
+                             : Boolean.valueOf(false);
       }
 
       @Override
@@ -588,6 +604,22 @@ public final class PsiTypesUtil {
         return arrayType.getComponentType().accept(this);
       }
     });
+  }
+
+  /**
+   * @param type type to test
+   * @param qualifiedClassName desired fully-qualified class name
+   * @return true if given type is a class type that resolves to the specified class
+   */
+  @Contract("null, _ -> false")
+  public static boolean classNameEquals(@Nullable PsiType type, @NotNull String qualifiedClassName) {
+    if (!(type instanceof PsiClassType)) return false;
+    PsiClassType classType = (PsiClassType)type;
+    String className = classType.getClassName();
+    if (className == null || !qualifiedClassName.endsWith(className)) return false;
+    PsiClass psiClass = classType.resolve();
+    if (psiClass == null) return false;
+    return qualifiedClassName.equals(psiClass.getQualifiedName());
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

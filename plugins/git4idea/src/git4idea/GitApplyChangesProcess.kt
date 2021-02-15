@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -61,14 +63,13 @@ class GitApplyChangesProcess(private val project: Project,
                              private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
                              private val preserveCommitMetadata: Boolean,
                              private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
-  private val LOG = logger<GitApplyChangesProcess>()
   private val repositoryManager = GitRepositoryManager.getInstance(project)
   private val vcsNotifier = VcsNotifier.getInstance(project)
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
 
   fun execute() {
-    val commitsInRoots = DvcsUtil.groupCommitsByRoots<GitRepository>(repositoryManager, commits)
+    val commitsInRoots = DvcsUtil.groupCommitsByRoots(repositoryManager, commits)
     LOG.info("${operationName}ing commits: " + toString(commitsInRoots))
 
     val successfulCommits = mutableListOf<VcsFullCommitDetails>()
@@ -384,7 +385,7 @@ class GitApplyChangesProcess(private val project: Project,
     override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == RESOLVE) {
-          ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceed()
+          ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceedInBackground()
         }
       }
     }
@@ -403,6 +404,7 @@ class GitApplyChangesProcess(private val project: Project,
   }
 
   companion object {
+    private val LOG = logger<GitApplyChangesProcess>()
     private const val RESOLVE = "resolve"
   }
 }

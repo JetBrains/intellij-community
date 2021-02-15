@@ -116,7 +116,17 @@ public interface DiffUserDataKeys {
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
   Key<ThreeSide> PREFERRED_FOCUS_THREESIDE = Key.create("Diff.PreferredFocusThreeSide");
 
+  /**
+   * @deprecated Use {@link DiffUtil#addNotification}
+   */
+  @Deprecated
   Key<List<JComponent>> NOTIFICATIONS = Key.create("Diff.Notifications");
+
+  /**
+   * Use {@link DiffUtil#addNotification}
+   */
+  Key<List<DiffNotificationProvider>> NOTIFICATION_PROVIDERS = Key.create("Diff.NotificationProviders");
+
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
   Key<Boolean> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");

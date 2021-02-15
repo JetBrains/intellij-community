@@ -46,7 +46,7 @@ public class GroovyTraitFieldsFileIndex
     }
   };
 
-  private static final SingleEntryIndexer<Collection<TraitFieldDescriptor>> INDEXER = new SingleEntryIndexer<Collection<TraitFieldDescriptor>>(true) {
+  private static final SingleEntryIndexer<Collection<TraitFieldDescriptor>> INDEXER = new SingleEntryIndexer<>(true) {
     @Override
     protected Collection<TraitFieldDescriptor> computeValue(@NotNull FileContent inputData) {
       return index(inputData);

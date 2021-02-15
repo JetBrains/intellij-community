@@ -17,6 +17,7 @@ package com.jetbrains.commandInterface.command;
 
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public final class SimpleCommand implements Command {
   @NotNull
-  private final String myName;
+  private final @NlsSafe String myName;
   @Nullable
   private final Help myHelp;
   @NotNull
@@ -52,7 +53,7 @@ public final class SimpleCommand implements Command {
    * @param executor engine to execute command
    * @param options command options
    */
-  public SimpleCommand(@NotNull final String name,
+  public SimpleCommand(@NotNull final @NlsSafe String name,
                        @Nullable final Help help,
                        @NotNull final ArgumentsInfo argumentsInfo,
                        @NotNull final CommandExecutor executor,
@@ -66,7 +67,7 @@ public final class SimpleCommand implements Command {
 
   @NotNull
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -77,7 +78,7 @@ public final class SimpleCommand implements Command {
       return myHelp;
     }
     // Cut out arguments like [] and <> from text
-    final String newHelpString = myHelp.getHelpString().replaceAll("(\\[[^\\]]+\\]|<[^>]+>|\\.{3,}|^" + myName + ')', "").trim();
+    final @NlsSafe String newHelpString = myHelp.getHelpString().replaceAll("(\\[[^\\]]+\\]|<[^>]+>|\\.{3,}|^" + myName + ')', "").trim();
     return new Help(newHelpString, myHelp.getExternalHelpUrl());
   }
 

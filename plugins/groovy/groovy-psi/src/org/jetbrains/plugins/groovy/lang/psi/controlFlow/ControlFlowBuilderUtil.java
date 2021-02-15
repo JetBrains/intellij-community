@@ -8,8 +8,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ObjectIntHashMap;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -40,9 +40,9 @@ public final class ControlFlowBuilderUtil {
   private ControlFlowBuilderUtil() {
   }
 
-  private static @NotNull Pair<@Nullable ReadBeforeWriteState, @NotNull TObjectIntHashMap<VariableDescriptor>>
+  private static @NotNull Pair<@Nullable ReadBeforeWriteState, @NotNull Object2IntMap<VariableDescriptor>>
   getLastReadBeforeWriteState(Instruction[] flow, boolean onlyFirstRead) {
-    TObjectIntHashMap<VariableDescriptor> index = buildVariablesIndex(flow);
+    Object2IntMap<VariableDescriptor> index = buildVariablesIndex(flow);
     DFAEngine<ReadBeforeWriteState> engine = new DFAEngine<>(
       flow,
       new ReadBeforeWriteInstance(index, onlyFirstRead),
@@ -68,7 +68,7 @@ public final class ControlFlowBuilderUtil {
   }
 
   public static @NotNull Set<@NotNull VariableDescriptor> getDescriptorsWithoutWrites(Instruction @NotNull [] flow) {
-    Pair<ReadBeforeWriteState, TObjectIntHashMap<VariableDescriptor>> dfaResult = getLastReadBeforeWriteState(flow, true);
+    Pair<ReadBeforeWriteState, Object2IntMap<VariableDescriptor>> dfaResult = getLastReadBeforeWriteState(flow, true);
     ReadBeforeWriteState lastState = dfaResult.first;
     if (lastState == null) {
       return Collections.emptySet();
@@ -80,23 +80,23 @@ public final class ControlFlowBuilderUtil {
       if (i == Integer.MAX_VALUE) break;
       result.add(((ReadWriteVariableInstruction)flow[i]).getDescriptor());
     }
-    TObjectIntHashMap<VariableDescriptor> index = dfaResult.second;
-    index.forEachEntry((descriptor, id) -> {
-      if (!writes.get(id)) {
-        result.add(descriptor);
+    Object2IntMap<VariableDescriptor> index = dfaResult.second;
+    for (Object2IntMap.Entry<VariableDescriptor> entry : index.object2IntEntrySet()) {
+      if (!writes.get(entry.getIntValue())) {
+        result.add(entry.getKey());
       }
-      return true;
-    });
+    }
     return result;
   }
 
-  private static TObjectIntHashMap<VariableDescriptor> buildVariablesIndex(Instruction[] flow) {
-    TObjectIntHashMap<VariableDescriptor> variablesIndex = new ObjectIntHashMap<>();
+  private static Object2IntMap<VariableDescriptor> buildVariablesIndex(Instruction[] flow) {
+    Object2IntMap<VariableDescriptor> variablesIndex = new Object2IntOpenHashMap<>();
+    variablesIndex.defaultReturnValue(-1);
     int idx = 0;
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction) {
         VariableDescriptor descriptor = ((ReadWriteVariableInstruction)instruction).getDescriptor();
-        if (!variablesIndex.contains(descriptor)) {
+        if (!variablesIndex.containsKey(descriptor)) {
           variablesIndex.put(descriptor, idx++);
         }
       }

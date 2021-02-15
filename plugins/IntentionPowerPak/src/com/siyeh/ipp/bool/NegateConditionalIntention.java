@@ -27,7 +27,7 @@ public class NegateConditionalIntention extends Intention {
     final String newExpression = tracker.text(condition) + '?' +
                                  BoolUtils.getNegatedExpressionText(thenExpression, tracker) + ':' +
                                  BoolUtils.getNegatedExpressionText(elseExpression, tracker);
-    PsiReplacementUtil.replaceExpressionWithNegatedExpression(newExpression, conditionalExpression, tracker);
+    PsiReplacementUtil.replaceExpressionWithNegatedExpression(conditionalExpression, newExpression, tracker);
   }
 
   @NotNull

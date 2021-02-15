@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl.INIT_INSPECTIONS
 import com.intellij.configurationStore.SerializableScheme
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.options.SchemeState
@@ -25,7 +24,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   @JvmField
   protected var initialized: Boolean = false
   @JvmField
-  protected val myLock: Any = Any()
+  protected val lock: Any = Any()
 
   private var isProjectLevel: Boolean = false
 
@@ -107,7 +106,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
       return
     }
 
-    synchronized(myLock) {
+    synchronized(lock) {
       if (!initialized) {
         initialize(project)
       }

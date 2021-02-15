@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
@@ -94,8 +95,11 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
   JComponent fileLevelComponent;
-  @Nullable("null means it the same as highlighter") RangeMarker fixMarker;
+  @Nullable("null means it the same as highlighter")
+  RangeMarker fixMarker;
+  @Nullable
   volatile RangeHighlighterEx highlighter; // modified in EDT only
+  @Nullable
   PsiElement psiElement;
 
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
@@ -224,6 +228,7 @@ public class HighlightInfo implements Segment {
     return severity;
   }
 
+  @Nullable
   public RangeHighlighterEx getHighlighter() {
     return highlighter;
   }
@@ -767,21 +772,6 @@ public class HighlightInfo implements Segment {
     private final Icon myIcon;
     private Boolean myCanCleanup;
 
-    IntentionActionDescriptor(@NotNull IntentionAction action, List<IntentionAction> options, @Nls String displayName) {
-      this(action, options, displayName, null);
-    }
-
-    public IntentionActionDescriptor(@NotNull IntentionAction action, Icon icon) {
-      this(action, null, null, icon);
-    }
-
-    IntentionActionDescriptor(@NotNull IntentionAction action,
-                              @Nullable List<IntentionAction> options,
-                              @Nullable @Nls String displayName,
-                              @Nullable Icon icon) {
-      this(action, options, displayName, icon, null, null, null);
-    }
-
     public IntentionActionDescriptor(@NotNull IntentionAction action,
                                      @Nullable List<IntentionAction> options,
                                      @Nullable @Nls String displayName,
@@ -796,6 +786,18 @@ public class HighlightInfo implements Segment {
       myKey = key;
       myProblemGroup = problemGroup;
       mySeverity = severity;
+    }
+
+    @Nullable IntentionActionDescriptor copyWithEmptyAction() {
+      String displayName = HighlightDisplayKey.getDisplayNameByKey(myKey);
+      if (displayName == null) return null;
+      return new IntentionActionDescriptor(new EmptyIntentionAction(displayName),
+                                           myOptions,
+                                           myDisplayName,
+                                           myIcon,
+                                           myKey,
+                                           myProblemGroup,
+                                           mySeverity);
     }
 
     @NotNull

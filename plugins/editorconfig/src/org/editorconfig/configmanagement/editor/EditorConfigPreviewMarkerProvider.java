@@ -75,7 +75,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
     @Nullable
     @Override
     public GutterIconRenderer createGutterRenderer() {
-      return new LineMarkerGutterIconRenderer<PsiElement>(this) {
+      return new LineMarkerGutterIconRenderer<>(this) {
         @Override
         public AnAction getClickAction() {
           return null;

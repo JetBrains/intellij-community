@@ -91,21 +91,13 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
                        @NotNull SvnRepositoryLocation location,
                        @NotNull LogEntry logEntry,
                        @NotNull Url repositoryRoot) {
-    this(vcs, location, logEntry, repositoryRoot.toDecodedString());
-  }
-
-  @Deprecated // Required for compatibility with external plugins.
-  public SvnChangeList(@NotNull SvnVcs vcs,
-                       @NotNull SvnRepositoryLocation location,
-                       @NotNull LogEntry logEntry,
-                       @NotNull String repositoryRoot) {
     myVcs = vcs;
     myLocation = location;
     setRevision(logEntry.getRevision());
     myAuthor = StringUtil.notNullize(logEntry.getAuthor());
     myDate = logEntry.getDate();
     myMessage = StringUtil.notNullize(logEntry.getMessage());
-    myRepositoryRoot = UriUtil.trimTrailingSlashes(repositoryRoot);
+    myRepositoryRoot = UriUtil.trimTrailingSlashes(repositoryRoot.toDecodedString());
 
     myCommonPathSearcher = new CommonPathSearcher();
 

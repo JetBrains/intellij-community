@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -39,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -157,10 +157,12 @@ public class SMTestProxy extends AbstractTestProxy {
     if (myStacktrace == null) myStacktrace = stacktrace;
   }
 
+  @Override
   public @Nullable @NlsSafe String getStacktrace() {
     return myStacktrace;
   }
 
+  @Override
   public @Nullable @NlsSafe String getErrorMessage() {
     return myErrorMessage;
   }
@@ -276,7 +278,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
     if (myLocationMapCachedValue == null) {
       myLocationMapCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
-        Map<GlobalSearchScope, Ref<Location>> value = ContainerUtil.newConcurrentMap(1);
+        Map<GlobalSearchScope, Ref<Location>> value = new ConcurrentHashMap<>(1);
         // In some implementations calling `SMTestLocator.getLocation` might update the `ModificationTracker` from
         // `SMTestLocator.getLocationCacheModificationTracker` call.
         // Thus, calculate the first result in advance to cache with the updated modification tracker.
@@ -416,7 +418,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private String getDurationString() {
     final Long duration = getDuration();
-    return duration != null ? StringUtil.formatDuration(duration.longValue(), "\u2009") : null;
+    return duration != null ? NlsMessages.formatDurationApproximateNarrow(duration.longValue()) : null;
   }
   private String getDurationPaddedString() {
     final Long duration = getDuration();
@@ -671,14 +673,6 @@ public class SMTestProxy extends AbstractTestProxy {
       //Tests State, that provide and formats additional output
       oldState.printOn(rightPrinter);
     });
-  }
-
-  /**
-   * @deprecated use {@link #addOutput(String, Key)}
-   */
-  @Deprecated
-  public void addStdOutput(final String output, final Key outputType) {
-    addOutput(output, outputType);
   }
 
   public final void addStdOutput(@NotNull String output) {
@@ -959,6 +953,7 @@ public class SMTestProxy extends AbstractTestProxy {
     private long myExecutionId = -1;
     @NotNull
     private TestDurationStrategy myDurationStrategy = TestDurationStrategy.AUTOMATIC;
+    private TestConsoleProperties myTestConsoleProperties;
 
     public SMRootTestProxy() {
       this(false, null);
@@ -1081,6 +1076,14 @@ public class SMTestProxy extends AbstractTestProxy {
       else {
         super.printOn(printer);
       }
+    }
+
+    public void setTestConsoleProperties(TestConsoleProperties properties) {
+      myTestConsoleProperties = properties;
+    }
+
+    public TestConsoleProperties getTestConsoleProperties() {
+      return myTestConsoleProperties;
     }
   }
 }

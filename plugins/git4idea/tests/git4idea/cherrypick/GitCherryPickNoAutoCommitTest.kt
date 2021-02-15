@@ -2,6 +2,7 @@
 package git4idea.cherrypick
 
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import git4idea.i18n.GitBundle
 import git4idea.test.*
 
 class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
@@ -109,10 +110,10 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit1, commit2)
 
     assertLastMessage("fix #1")
-    assertWarningNotification("Cherry-pick cancelled", """
+    assertWarningNotification(GitBundle.message("apply.changes.operation.canceled", "Cherry-pick"), """
       ${shortHash(commit2)} fix #2
-      However cherry-pick succeeded for the following commit:
-      ${shortHash(commit1)} fix #1""".trimIndent())
+      """ + GitBundle.message("apply.changes.operation.successful.for.commits", "cherry-pick", 1) + """
+      ${shortHash(commit1)} fix #1""")
     val list = changeListManager.assertChangeListExists("fix #2")
     assertChanges(list, "2.txt")
   }

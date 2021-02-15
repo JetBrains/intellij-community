@@ -541,7 +541,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
       text.setCaret(new TextCaret(layoutData));
 
-      expandAction = new LinkLabel<>(null, AllIcons.Ide.Notification.Expand, new LinkListener<Void>() {
+      expandAction = new LinkLabel<>(null, AllIcons.Ide.Notification.Expand, new LinkListener<>() {
         @Override
         public void linkSelected(LinkLabel<Void> link, Void ignored) {
           layoutData.showMinSize = !layoutData.showMinSize;
@@ -847,7 +847,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   private static void addDropDownAction(@NotNull Notification notification,
                                         NotificationActionPanel actionPanel) {
-    DropDownAction action = new DropDownAction(notification.getDropDownText(), new LinkListener<Void>() {
+    DropDownAction action = new DropDownAction(notification.getDropDownText(), new LinkListener<>() {
       @Override
       public void linkSelected(LinkLabel<Void> link, Void ignored) {
         NotificationActionPanel parent = (NotificationActionPanel)link.getParent();

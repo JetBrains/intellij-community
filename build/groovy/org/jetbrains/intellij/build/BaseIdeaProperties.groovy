@@ -1,13 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
+import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.function.Consumer
 
 /**
  * Base class for all editions of IntelliJ IDEA
  */
+@CompileStatic
 abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   public static final List<String> JAVA_IDE_API_MODULES = [
     "intellij.xml.dom",
@@ -77,12 +83,14 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.xslt.debugger",
     */
   ]
+
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     ""                                                          : "11",
     "lib/idea_rt.jar"                                           : "1.6",
     "lib/forms_rt.jar"                                          : "1.6",
     "lib/annotations.jar"                                       : "1.6",
-    "lib/util.jar"                                              : "1.8",
+    // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
+    "lib/util.jar!/com/intellij/serialization/"                  : "1.8",
     "lib/external-system-rt.jar"                                : "1.6",
     "lib/jshell-frontend.jar"                                   : "9",
     "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
@@ -107,7 +115,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.6",
     "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
-    "plugins/android/lib/layoutlib-jre11-27.0.0.0.jar"          : "9",
+    "plugins/android/lib/jb-layoutlib-jdk11-27.1.0.0.jar"       : "9",
     "plugins/android/lib/android-rt.jar"                        : "1.8",
   ]
 
@@ -149,9 +157,12 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
+
+    isAntRequired = true
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
       fileset(dir: "$context.paths.communityHome/java/jdkAnnotations")
@@ -162,20 +173,22 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
       fileset(file: "$context.paths.communityHome/lib/src/trove4j_src.jar")
     }
 
-    context.ant.copy(todir: "$targetDirectory/lib/ant") {
-      fileset(dir: "$context.paths.communityHome/lib/ant") {
-        exclude(name: "**/src/**")
-        exclude(name: "**/BUILD")
+    if (isAntRequired) {
+      context.ant.copy(todir: "$targetDirectory/lib/ant") {
+        fileset(dir: "$context.paths.communityHome/lib/ant") {
+          exclude(name: "**/src/**")
+        }
       }
     }
-    context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
-      fileset(dir: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/Kotlin")
-    }
+
+    Path targetDir = Paths.get(targetDirectory).toAbsolutePath().normalize()
+    BuildHelper.copyDir(Paths.get(context.paths.kotlinHome).toAbsolutePath().normalize(), targetDir.resolve("plugins/Kotlin"), context)
 
     /* Disabled in Android Studio:
-    context.ant.move(file: "$targetDirectory/lib/annotations.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")
-    //for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
-    context.ant.move(file: "$targetDirectory/lib/annotations-java5.jar", tofile: "$targetDirectory/lib/annotations.jar")
+    Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
+    BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))
+    // for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
+    BuildHelper.moveFile(targetDir.resolve("lib/annotations-java5.jar"), java8AnnotationsJar)
     */
   }
 }

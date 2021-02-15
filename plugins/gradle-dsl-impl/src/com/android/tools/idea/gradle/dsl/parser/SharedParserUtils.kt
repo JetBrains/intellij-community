@@ -15,23 +15,23 @@
  */
 package com.android.tools.idea.gradle.dsl.parser
 
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement
 import com.android.tools.idea.gradle.dsl.parser.apply.ApplyDslElement.APPLY_BLOCK_NAME
-import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT
 import com.android.tools.idea.gradle.dsl.parser.build.SubProjectsDslElement
 import com.android.tools.idea.gradle.dsl.parser.configurations.ConfigurationDslElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslClosure
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement
+import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement.EXT
 import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile
 import com.android.tools.idea.gradle.dsl.parser.repositories.FlatDirRepositoryDslElement
 import com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement
 import com.android.tools.idea.gradle.dsl.parser.settings.ProjectPropertiesDslElement
-import com.google.common.base.Splitter
 import com.google.common.collect.Lists
 import com.intellij.psi.PsiElement
-import java.util.ArrayList
+import java.util.*
 
 /**
  * Set of classes whose properties should not be merged into each other.
@@ -41,14 +41,14 @@ private val makeDistinctClassSet = setOf(MavenRepositoryDslElement::class.java, 
 /**
  * Get the block element that is given be repeat
  */
-fun GradleDslFile.getBlockElement(
+fun GradleDslFile.getPropertiesElement(
   nameParts: List<String>,
   converter: GradleDslNameConverter,
   parentElement: GradlePropertiesDslElement,
   nameElement: GradleNameElement? = null
 ): GradlePropertiesDslElement? {
   return nameParts.map { namePart -> namePart.trim { it <= ' ' } }.fold(parentElement) { resultElement, nestedElementName ->
-    val canonicalNestedElementName = converter.modelNameForParent(nestedElementName, resultElement)
+    val canonicalNestedElementName = converter.modelDescriptionForParent(nestedElementName, resultElement)?.name ?: nestedElementName
     val elementName = nameElement ?: GradleNameElement.fake(canonicalNestedElementName)
     var element = resultElement.getElement(canonicalNestedElementName)
 
@@ -156,22 +156,27 @@ fun findLastPsiElementIn(startElement: GradleDslElement): PsiElement? {
 }
 
 /**
- * Get the external name of a dsl element by trimming the parent's name parts and converting the name from model to external, if necessary,
- * returning a pair of the name and whether this is a method call an assignment or unknown (see
+ * Get the external name of a dsl element by trimming its parent's name parts and converting the name from model to external, if necessary,
+ * returning an instance containing the name and whether this is a method call an assignment or unknown (see
  * [GradleDslNameConverter.externalNameForParent])
  */
-fun maybeTrimForParent(name: GradleNameElement,
-                                parent: GradleDslElement?,
-                                converter: GradleDslNameConverter): Pair<String, Boolean?> {
+fun maybeTrimForParent(element: GradleDslElement, converter: GradleDslNameConverter): ExternalNameInfo {
+  val name = element.nameElement
+  // TODO(b/151607418): this is only an approximation to the scope in which this element is being written: a proper calculation should have
+  //  separate understanding of lexical scope from the position the element holds in the model hierarchy, and compute trimming relative
+  //  to those (possibly nested) scopes rather than the model.
+  val parent = element.parent
+  val parts = ArrayList(name.fullNameParts());
   // FIXME(xof): this case needs fixing too
-  if (parent == null) return name.fullName() to null
+  if (parent == null || parts.isEmpty()) return ExternalNameInfo(parts, null, name.isFake)
 
-  val parts = ArrayList(name.fullNameParts())
-  if (parts.isEmpty()) {
-    return name.fullName() to null
+  val effect = element.modelEffect
+  val part = parts.removeAt(parts.size - 1)
+  val lastNamePart = when (effect) {
+    null -> part
+    else -> effect.property.name
   }
-  var lastNamePart = parts.removeAt(parts.size - 1)
-  val parentParts = Splitter.on(".").splitToList(parent.qualifiedName)
+  val parentParts = GradleNameElementUtil.split(parent.qualifiedName)
   var i = 0
   while (i < parentParts.size && !parts.isEmpty() && parentParts[i] == parts[0]) {
     parts.removeAt(0)
@@ -179,8 +184,6 @@ fun maybeTrimForParent(name: GradleNameElement,
   }
 
   val externalNameInfo = converter.externalNameForParent(lastNamePart, parent)
-
-  lastNamePart = externalNameInfo.first
-  parts.add(lastNamePart)
-  return GradleNameElement.createNameFromParts(parts) to externalNameInfo.second
+  parts.addAll(externalNameInfo.externalNameParts)
+  return ExternalNameInfo(parts, externalNameInfo.asMethod, name.isFake)
 }

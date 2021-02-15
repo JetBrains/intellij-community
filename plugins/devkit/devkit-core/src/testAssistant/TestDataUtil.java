@@ -137,7 +137,7 @@ public final class TestDataUtil {
   }
 
   static void createFileAndNavigate(final Project project, final String path) {
-    VirtualFile file = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    VirtualFile file = ApplicationManager.getApplication().runWriteAction(new Computable<>() {
       @Override
       public VirtualFile compute() {
         try {

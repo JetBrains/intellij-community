@@ -18,8 +18,6 @@ package com.android.tools.idea.gradle.dsl.model.repositories;
 import com.android.tools.idea.gradle.dsl.api.ext.ResolvedPropertyModel;
 import com.android.tools.idea.gradle.dsl.api.repositories.RepositoryModel;
 import com.android.tools.idea.gradle.dsl.model.ext.GradlePropertyModelBuilder;
-import com.android.tools.idea.gradle.dsl.model.ext.transforms.RepositoryClosureTransform;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,15 +26,18 @@ import org.jetbrains.annotations.NotNull;
  * Base class for all the repository models.
  */
 public abstract class RepositoryModelImpl implements RepositoryModel {
-  @NonNls private static final String NAME = "name";
+  // TODO(xof): most other models have renamed properties, having the model-internal name being essentially arbitrary rather than a
+  //  reflection of the external syntax.  However, because of the multiple ways of spelling some repositories, in particular map forms of
+  //  `flatDir` and `mavenCentral`, we must for now preserve this as being exactly "name" rather than e.g. "mName"
+  @NonNls public static final String NAME = "name";
 
   @NotNull private final String myDefaultRepoName;
 
   @NotNull protected final GradlePropertiesDslElement myHolder;
-  @NotNull protected final GradleDslElement myDslElement;
+  @NotNull protected final GradlePropertiesDslElement myDslElement;
 
   protected RepositoryModelImpl(@NotNull GradlePropertiesDslElement holder,
-                                @NotNull GradleDslElement dslElement,
+                                @NotNull GradlePropertiesDslElement dslElement,
                                 @NotNull String defaultRepoName) {
     myHolder = holder;
     myDslElement = dslElement;
@@ -46,7 +47,6 @@ public abstract class RepositoryModelImpl implements RepositoryModel {
   @NotNull
   @Override
   public ResolvedPropertyModel name() {
-    return GradlePropertyModelBuilder.create(myDslElement).asMethod(true).withDefault(myDefaultRepoName)
-      .addTransform(new RepositoryClosureTransform(NAME)).buildResolved();
+    return GradlePropertyModelBuilder.create(myDslElement, NAME).withDefault(myDefaultRepoName).buildResolved();
   }
 }

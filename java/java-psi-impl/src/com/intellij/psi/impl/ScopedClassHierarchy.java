@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -12,8 +12,8 @@ import com.intellij.psi.util.*;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,17 +23,25 @@ import java.util.*;
  * @author peter
  */
 class ScopedClassHierarchy {
-  private static final TObjectHashingStrategy<PsiClass> CLASS_HASHING_STRATEGY = new TObjectHashingStrategy<PsiClass>() {
+  private static final Hash.Strategy<PsiClass> CLASS_HASHING_STRATEGY = new Hash.Strategy<PsiClass>() {
     @Override
-    public int computeHashCode(PsiClass object) {
-      return StringUtil.notNullize(object.getQualifiedName()).hashCode();
+    public int hashCode(PsiClass object) {
+      return object == null ? 0 : Strings.notNullize(object.getQualifiedName()).hashCode();
     }
 
     @Override
     public boolean equals(PsiClass o1, PsiClass o2) {
-      final String qname1 = o1.getQualifiedName();
-      if (qname1 != null) return qname1.equals(o2.getQualifiedName());
+      if (o1 == o2) {
+        return true;
+      }
+      if (o1 == null || o2 == null) {
+        return false;
+      }
 
+      String qname1 = o1.getQualifiedName();
+      if (qname1 != null) {
+        return qname1.equals(o2.getQualifiedName());
+      }
       return o1.getManager().areElementsEquivalent(o1, o2);
     }
   };
@@ -90,7 +98,7 @@ class ScopedClassHierarchy {
     ScopedClassHierarchy hierarchy = getHierarchy(derivedClass, scope);
     Map<PsiClass, PsiClassType.ClassResolveResult> map = hierarchy.mySupersWithSubstitutors;
     if (map == null) {
-      map = new THashMap<>(CLASS_HASHING_STRATEGY);
+      map = new Object2ObjectOpenCustomHashMap<>(CLASS_HASHING_STRATEGY);
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       hierarchy.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), map);
       if (stamp.mayCacheNow()) {
@@ -162,7 +170,7 @@ class ScopedClassHierarchy {
 
   @NotNull
   private Map<PsiClass, PsiSubstitutor> calcAllMemberSupers(final LanguageLevel level) {
-    final Map<PsiClass, PsiSubstitutor> map = new THashMap<>();
+    final Map<PsiClass, PsiSubstitutor> map = new HashMap<>();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myPlaceClass.getProject());
     new PairProcessor<PsiClass, PsiSubstitutor>() {
       @Override

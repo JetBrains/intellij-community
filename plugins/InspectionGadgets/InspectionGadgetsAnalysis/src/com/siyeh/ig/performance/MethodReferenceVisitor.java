@@ -16,7 +16,10 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -41,63 +44,40 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitReferenceElement(
-    PsiJavaCodeReferenceElement reference) {
+  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
-    final PsiElement resolvedElement = reference.resolve();
-    if (!(resolvedElement instanceof PsiClass)) {
-      return;
+    final PsiClass aClass = ObjectUtils.tryCast(reference.resolve(), PsiClass.class);
+    if (aClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC) && aClass.getScope() instanceof PsiClass) {
+      m_referencesStaticallyAccessible = false;
     }
-    final PsiClass aClass = (PsiClass)resolvedElement;
-    final PsiElement scope = aClass.getScope();
-    if (!(scope instanceof PsiClass)) {
-      return;
-    }
-    if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
-      return;
-    }
-    m_referencesStaticallyAccessible = false;
   }
 
   @Override
-  public void visitReferenceExpression(
-    @NotNull PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     final PsiElement qualifier = expression.getQualifierExpression();
-    if (qualifier != null && !(qualifier instanceof PsiThisExpression) &&
-        !(qualifier instanceof PsiSuperExpression)) {
-      return;
-    }
-    final PsiElement element = expression.resolve();
-    if (element instanceof PsiMember) {
-      final PsiMember member = (PsiMember)element;
-      if (isMemberStaticallyAccessible(member)) {
-        return;
+    if (qualifier == null || qualifier instanceof PsiQualifiedExpression) {
+      final PsiElement element = expression.resolve();
+      if (element != null) {
+        if (!(element instanceof PsiMember)) return;
+        PsiMember member = (PsiMember)element;
+        if (member == m_method || member.hasModifierProperty(PsiModifier.STATIC) ||
+            member instanceof PsiClass && member.getContainingClass() == null) {
+          return;
+        }
+        PsiExpression effectiveQualifier = ExpressionUtils.getEffectiveQualifier(expression);
+        if (effectiveQualifier != null) {
+          PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(effectiveQualifier.getType());
+          if (aClass != null && PsiTreeUtil.isAncestor(m_method, aClass, false)) return;
+        }
       }
+      m_referencesStaticallyAccessible = false;
     }
-    else if (element != null) {
-      return;
-    }
-    m_referencesStaticallyAccessible = false;
   }
 
   @Override
-  public void visitThisExpression(
-    @NotNull PsiThisExpression expression) {
+  public void visitThisExpression(@NotNull PsiThisExpression expression) {
     super.visitThisExpression(expression);
     m_referencesStaticallyAccessible = false;
-  }
-
-  private boolean isMemberStaticallyAccessible(PsiMember member) {
-    if (m_method.equals(member)) {
-      return true;
-    }
-    if (member.hasModifierProperty(PsiModifier.STATIC)) {
-      return true;
-    }
-    final PsiClass referenceContainingClass = m_method.getContainingClass();
-    final PsiClass containingClass = member.getContainingClass();
-    return !InheritanceUtil.isInheritorOrSelf(referenceContainingClass,
-                                              containingClass, true);
   }
 }

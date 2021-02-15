@@ -6,13 +6,13 @@ import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.VirtualFileFilteringListener
-import com.intellij.util.containers.ContainerUtil
 import git4idea.i18n.GitBundle
+import java.util.concurrent.ConcurrentHashMap
 
 private const val PROTOCOL = "gitIndexFs"
 
 class GitIndexFileSystem : VirtualFileSystem() {
-  private val listenerWrappers: MutableMap<VirtualFileListener, VirtualFileListener> = ContainerUtil.newConcurrentMap()
+  private val listenerWrappers: MutableMap<VirtualFileListener, VirtualFileListener> = ConcurrentHashMap()
 
   override fun getProtocol(): String = PROTOCOL
   override fun isReadOnly(): Boolean = false

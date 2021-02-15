@@ -36,19 +36,23 @@ import static com.intellij.sh.ShBundle.message;
 
 public class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
   @NonNls private static final String TAG_PREFIX = "INDEPENDENT_";
+  @NonNls private static final String SCRIPT_TEXT_TAG = "SCRIPT_TEXT";
   @NonNls private static final String SCRIPT_PATH_TAG = "SCRIPT_PATH";
   @NonNls private static final String SCRIPT_OPTIONS_TAG = "SCRIPT_OPTIONS";
   @NonNls private static final String SCRIPT_WORKING_DIRECTORY_TAG = "SCRIPT_WORKING_DIRECTORY";
   @NonNls private static final String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
   @NonNls private static final String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
   @NonNls private static final String EXECUTE_IN_TERMINAL_TAG = "EXECUTE_IN_TERMINAL";
+  @NonNls private static final String EXECUTE_SCRIPT_FILE_TAG = "EXECUTE_SCRIPT_FILE";
 
+  private String myScriptText = "";
   private String myScriptPath = "";
   private String myScriptOptions = "";
   private String myInterpreterPath = "";
   private String myInterpreterOptions = "";
   private String myScriptWorkingDirectory = "";
   private boolean myExecuteInTerminal = true;
+  private boolean myExecuteScriptFile = true;
   private EnvironmentVariablesData myEnvData = EnvironmentVariablesData.DEFAULT;
 
   ShRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull String name) {
@@ -63,21 +67,23 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (!FileUtil.exists(myScriptPath)) {
-      throw new RuntimeConfigurationError(message("sh.run.script.not.found"));
+    if (myExecuteScriptFile) {
+      if (!FileUtil.exists(myScriptPath)) {
+        throw new RuntimeConfigurationError(message("sh.run.script.not.found"));
+      }
+      if (StringUtil.isNotEmpty(myInterpreterPath) || !new File(myScriptPath).canExecute()) {
+        // WSL can be used as an interpreter
+        if (myInterpreterPath.endsWith("sh") && getWSLDistributionIfNeeded() != null) return;
+        if (!FileUtil.exists(myInterpreterPath)) {
+          throw new RuntimeConfigurationError(message("sh.run.interpreter.not.found"));
+        }
+        if (!new File(myInterpreterPath).canExecute()) {
+          throw new RuntimeConfigurationError(message("sh.run.interpreter.should.be.executable"));
+        }
+      }
     }
     if (!FileUtil.exists(myScriptWorkingDirectory)) {
       throw new RuntimeConfigurationError(message("sh.run.working.dir.not.found"));
-    }
-    if (StringUtil.isNotEmpty(myInterpreterPath) || !new File(myScriptPath).canExecute()) {
-      // WSL can be used as an interpreter
-      if (myInterpreterPath.endsWith("sh") && getWSLDistributionIfNeeded() != null) return;
-      if (!FileUtil.exists(myInterpreterPath)) {
-        throw new RuntimeConfigurationError(message("sh.run.interpreter.not.found"));
-      }
-      if (!new File(myInterpreterPath).canExecute()) {
-        throw new RuntimeConfigurationError(message("sh.run.interpreter.should.be.executable"));
-      }
     }
   }
 
@@ -90,26 +96,28 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   @Override
   public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
-
+    JDOMExternalizerUtil.writeField(element, SCRIPT_TEXT_TAG, myScriptText);
     writePathWithMetadata(element, myScriptPath, SCRIPT_PATH_TAG);
     JDOMExternalizerUtil.writeField(element, SCRIPT_OPTIONS_TAG, myScriptOptions);
     writePathWithMetadata(element, myScriptWorkingDirectory, SCRIPT_WORKING_DIRECTORY_TAG);
     writePathWithMetadata(element, myInterpreterPath, INTERPRETER_PATH_TAG);
     JDOMExternalizerUtil.writeField(element, INTERPRETER_OPTIONS_TAG, myInterpreterOptions);
     JDOMExternalizerUtil.writeField(element, EXECUTE_IN_TERMINAL_TAG, String.valueOf(myExecuteInTerminal));
+    JDOMExternalizerUtil.writeField(element, EXECUTE_SCRIPT_FILE_TAG, String.valueOf(myExecuteScriptFile));
     myEnvData.writeExternal(element);
   }
 
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-
+    myScriptText = readStringTagValue(element, SCRIPT_TEXT_TAG);
     myScriptPath = readPathWithMetadata(element, SCRIPT_PATH_TAG);
     myScriptOptions = readStringTagValue(element, SCRIPT_OPTIONS_TAG);
     myScriptWorkingDirectory = readPathWithMetadata(element, SCRIPT_WORKING_DIRECTORY_TAG);
     myInterpreterPath = readPathWithMetadata(element, INTERPRETER_PATH_TAG);
     myInterpreterOptions = readStringTagValue(element, INTERPRETER_OPTIONS_TAG);
     myExecuteInTerminal = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXECUTE_IN_TERMINAL_TAG, Boolean.TRUE.toString()));
+    myExecuteScriptFile = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXECUTE_SCRIPT_FILE_TAG, Boolean.TRUE.toString()));
     myEnvData = EnvironmentVariablesData.readExternal(element);
   }
 
@@ -157,6 +165,14 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     return notNullize(JDOMExternalizerUtil.readField(element, tagName), "");
   }
 
+  public String getScriptText() {
+    return myScriptText;
+  }
+
+  public void setScriptText(String scriptText) {
+    myScriptText = scriptText;
+  }
+
   public String getScriptPath() {
     return myScriptPath;
   }
@@ -187,6 +203,14 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
 
   public void setExecuteInTerminal(boolean executeInTerminal) {
     myExecuteInTerminal = executeInTerminal;
+  }
+
+  public boolean isExecuteScriptFile() {
+    return myExecuteScriptFile;
+  }
+
+  public void setExecuteScriptFile(boolean executeScriptFile) {
+    myExecuteScriptFile = executeScriptFile;
   }
 
   public EnvironmentVariablesData getEnvData() {

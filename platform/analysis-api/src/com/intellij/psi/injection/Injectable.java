@@ -35,7 +35,7 @@ public abstract class Injectable implements Comparable<Injectable> {
   public abstract String getId();
 
   @NotNull
-  @NlsContexts.Label
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getDisplayName();
 
   @Nullable

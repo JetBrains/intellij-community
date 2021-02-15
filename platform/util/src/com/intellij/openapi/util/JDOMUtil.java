@@ -296,16 +296,6 @@ public final class JDOMUtil {
     }
   }
 
-  /**
-   * @deprecated Use {@link #load(CharSequence)}
-   * <p>
-   * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
-   */
-  @Deprecated
-  public static @NotNull Document loadDocument(@NotNull CharSequence seq) throws IOException, JDOMException {
-    return loadDocument(new CharSequenceReader(seq));
-  }
-
   public static @NotNull Element load(@NotNull CharSequence seq) throws IOException, JDOMException {
     return load(new CharSequenceReader(seq));
   }
@@ -403,16 +393,6 @@ public final class JDOMUtil {
 
   public static @NotNull Element load(@NotNull URL url) throws JDOMException, IOException {
     return load(URLUtil.openStream(url));
-  }
-
-  /**
-   * @deprecated Use {@link #load(URL)}
-   * <p>
-   * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
-   */
-  @Deprecated
-  public static @NotNull Document loadResourceDocument(@NotNull URL url) throws JDOMException, IOException {
-    return loadDocument(URLUtil.openResourceStream(url));
   }
 
   public static @NotNull Element loadResource(@NotNull URL url) throws JDOMException, IOException {

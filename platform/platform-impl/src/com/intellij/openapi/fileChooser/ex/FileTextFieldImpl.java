@@ -144,7 +144,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myCancelAction = new CancelAction();
 
 
-    new LazyUiDisposable<FileTextFieldImpl>(parent, field, this) {
+    new LazyUiDisposable<>(parent, field, this) {
       @Override
       protected void initialize(@NotNull Disposable parent, @NotNull FileTextFieldImpl child, @Nullable Project project) {
         Disposer.register(child, myUiUpdater);
@@ -323,7 +323,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       return;
     }
 
-    myList.setModel(new AbstractListModel<LookupFile>() {
+    myList.setModel(new AbstractListModel<>() {
       @Override
       public int getSize() {
         return myCurrentCompletion.myToComplete.size();

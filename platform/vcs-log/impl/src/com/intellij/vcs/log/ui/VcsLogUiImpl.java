@@ -138,7 +138,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
                                                   runnables.toArray(new NamedRunnable[0]));
   }
 
-  @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
     VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(id);
     return myUiProperties.exists(property) && myUiProperties.get(property);

@@ -1,0 +1,4 @@
+ext {
+  prop2 = "\"\"\"Hello \"\"\""
+  prop1 = "\"Come and see!\" I looked"
+}

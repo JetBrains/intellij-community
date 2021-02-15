@@ -140,7 +140,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
         putUserData(IMPLICITLY_READ, true);
       }
 
-      refUtil.addTypeReference((UElement)uField, uField.getType(), getRefManager(), this);
+      refUtil.addTypeReference(uField, uField.getType(), getRefManager(), this);
       getRefManager().fireBuildReferences(this);
     }
   }

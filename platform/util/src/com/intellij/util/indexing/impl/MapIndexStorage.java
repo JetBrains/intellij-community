@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -79,25 +65,14 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   }
 
   protected void initMapAndCache() throws IOException {
-    final ValueContainerMap<Key, Value> map;
-    PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(
-      new PersistentHashMapValueStorage.ExceptionalIOCancellationCallback() {
-        @Override
-        public void checkCancellation() {
-          checkCanceled();
-        }
-      });
+    ValueContainerMap<Key, Value> map;
+    PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(() -> checkCanceled());
     PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
     if (myKeyIsUniqueForIndexedFile) {
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
     }
     try {
-      map = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myInputRemapping) {
-        @Override
-        protected boolean isReadOnly() {
-          return myReadOnly;
-        }
-      };
+      map = new ValueContainerMap<>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myInputRemapping, myReadOnly, compactOnClose());
     } finally {
       PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
@@ -109,28 +84,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
       @Override
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
-        return new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
-          @Override
-          public @NotNull Object getLock() {
-            return map.getDataAccessLock();
-          }
-
-          @NotNull
-          @Override
-          public ValueContainer<Value> compute() {
-            ValueContainer<Value> value;
-            try {
-              value = map.get(key);
-              if (value == null) {
-                value = new ValueContainerImpl<>();
-              }
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-            return value;
-          }
-        });
+        return map.createChangeTrackingValueContainer(key);
       }
 
       @Override
@@ -156,7 +110,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
       }
     };
 
-    myMap = map;
+    myMap = new PersistentHashMap<>(map);
   }
 
   @Override
@@ -237,6 +191,10 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
         if (myMap.isDirty()) myMap.force();
       }
     });
+  }
+
+  protected boolean compactOnClose() {
+    return false;
   }
 
   @Override

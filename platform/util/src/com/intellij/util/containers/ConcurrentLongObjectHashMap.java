@@ -2,7 +2,7 @@
 
 package com.intellij.util.containers;
 
-import com.intellij.util.concurrency.AtomicFieldUpdater;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
@@ -20,8 +20,9 @@ import java.util.concurrent.locks.LockSupport;
  * - Null values are NOT allowed
  * @author Doug Lea
  * @param <V> the type of mapped values
- * Use {@link ContainerUtil#createConcurrentLongObjectMap()} to create this map
+ * @deprecated  Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} instead
  */
+@Deprecated
 final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
     /* ---------------- Constants -------------- */
@@ -247,8 +248,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
     }
   }
 
-  static <V> boolean casTabAt(Node<V>[] tab, int i,
-                                 Node<V> c, Node<V> v) {
+  static <V> boolean casTabAt(Node<V> @NotNull [] tab, int i, Node<V> c, @NotNull Node<V> v) {
     try {
       return (boolean)compareAndSwapObjectHandle.invokeExact((Object)tab, ((long)i << ASHIFT) + ABASE, (Object)c, (Object)v);
     }
@@ -382,7 +382,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    *                                  nonpositive
    */
   ConcurrentLongObjectHashMap(int initialCapacity,
-                                     float loadFactor, int concurrencyLevel) {
+                              float loadFactor, int concurrencyLevel) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
     }
@@ -915,7 +915,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    * Legacy method testing if some key maps into the specified value
    * in this table.  This method is identical in functionality to
    * {@link #containsValue(Object)}, and exists solely to ensure
-   * full compatibility with class {@link java.util.Hashtable},
+   * full compatibility with class {@link Hashtable},
    * which supported this method prior to introduction of the
    * Java Collections framework.
    *
@@ -2167,7 +2167,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
     static {
       try {
-        Object unsafe = AtomicFieldUpdater.getUnsafe();
+        Object unsafe = ReflectionUtil.getUnsafe();
         MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
         MethodHandle objectFieldOffset =
           publicLookup.findVirtual(unsafe.getClass(), "objectFieldOffset", MethodType.methodType(long.class, Field.class));
@@ -2759,7 +2759,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
   static {
     try {
       MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
-      Object unsafe = AtomicFieldUpdater.getUnsafe();
+      Object unsafe = ReflectionUtil.getUnsafe();
       MethodHandle objectFieldOffset = publicLookup.findVirtual(unsafe.getClass(), "objectFieldOffset", MethodType.methodType(long.class, Field.class));
       Class<?> k = ConcurrentLongObjectHashMap.class;
       SIZECTL = (long) objectFieldOffset.invoke(unsafe, k.getDeclaredField("sizeCtl"));
@@ -2779,28 +2779,34 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       putObjectVolatileHandle = publicLookup
         .findVirtual(unsafe.getClass(), "putObjectVolatile", MethodType.methodType(void.class, Object.class, long.class, Object.class))
         .bindTo(unsafe);
+      assert putObjectVolatileHandle != null;
       getObjectVolatileHandle = publicLookup
         .findVirtual(unsafe.getClass(), "getObjectVolatile", MethodType.methodType(Object.class, Object.class, long.class))
         .bindTo(unsafe);
+      assert getObjectVolatileHandle != null;
       compareAndSwapObjectHandle = publicLookup
         .findVirtual(unsafe.getClass(), "compareAndSwapObject", MethodType.methodType(boolean.class, Object.class, long.class, Object.class, Object.class))
         .bindTo(unsafe);
+      assert compareAndSwapObjectHandle != null;
       compareAndSwapIntHandle = publicLookup
         .findVirtual(unsafe.getClass(), "compareAndSwapInt", MethodType.methodType(boolean.class, Object.class, long.class, int.class, int.class))
         .bindTo(unsafe);
+      assert compareAndSwapIntHandle != null;
       compareAndSwapLongHandle = publicLookup
         .findVirtual(unsafe.getClass(), "compareAndSwapLong", MethodType.methodType(boolean.class, Object.class, long.class, long.class, long.class))
         .bindTo(unsafe);
+      assert compareAndSwapLongHandle != null;
       getAndAddIntHandle = publicLookup
         .findVirtual(unsafe.getClass(), "getAndAddInt", MethodType.methodType(int.class, Object.class, long.class, int.class))
         .bindTo(unsafe);
+      assert getAndAddIntHandle != null;
     }
     catch (Throwable t) {
       throw new Error(t);
     }
   }
 
-  private static boolean compareAndSwapInt(Object object, long offset, int expected, int value) {
+  private static boolean compareAndSwapInt(@NotNull Object object, long offset, int expected, int value) {
     try {
       return (boolean)compareAndSwapIntHandle.invokeExact(object, offset, expected, value);
     }
@@ -2809,7 +2815,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
     }
   }
 
-  private static boolean compareAndSwapLong(Object object, long offset, long expected, long value) {
+  private static boolean compareAndSwapLong(@NotNull Object object, long offset, long expected, long value) {
     try {
       return (boolean)compareAndSwapLongHandle.invokeExact(object, offset, expected, value);
     }

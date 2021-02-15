@@ -27,18 +27,24 @@ class TargetEnvironmentPathsJoinFunctionTest(private val basePath: String,
       arrayOf("/foo/", "bar/", '/', "/foo/bar"),
 
       arrayOf("/", ".", '/', "/"),
-      arrayOf("/", "..", '/', "/"),
 
       arrayOf("C:\\", ".", '\\', "C:\\"),
       arrayOf("C:\\\\", ".", '\\', "C:\\"),
-      arrayOf("C:\\", "..", '\\', "C:\\"),
-      arrayOf("C:\\\\", "..", '\\', "C:\\"),
       arrayOf("C:\\", "foo", '\\', "C:\\foo"),
       arrayOf("C:\\", "foo\\", '\\', "C:\\foo"),
 
+      arrayOf("C:/", ".", '\\', "C:\\"),
+      arrayOf("C://", ".", '\\', "C:\\"),
+      arrayOf("C:/", "foo", '\\', "C:\\foo"),
+      arrayOf("C:", "foo/", '\\', "C:\\foo"),
+
       arrayOf("C:\\", "Directory With Spaces\\", '\\', "C:\\Directory With Spaces"),
       arrayOf("C:\\Directory With Spaces", "File With Spaces.txt", '\\', "C:\\Directory With Spaces\\File With Spaces.txt"),
-      arrayOf("C:\\Directory With Spaces", "Subdirectory With Spaces\\", '\\', "C:\\Directory With Spaces\\Subdirectory With Spaces")
+      arrayOf("C:\\Directory With Spaces", "Subdirectory With Spaces\\", '\\', "C:\\Directory With Spaces\\Subdirectory With Spaces"),
+
+      arrayOf("C:/", "Directory With Spaces/", '\\', "C:\\Directory With Spaces"),
+      arrayOf("C:/Directory With Spaces", "File With Spaces.txt", '\\', "C:\\Directory With Spaces\\File With Spaces.txt"),
+      arrayOf("C:/Directory With Spaces", "Subdirectory With Spaces/", '\\', "C:\\Directory With Spaces\\Subdirectory With Spaces"),
     )
   }
 }

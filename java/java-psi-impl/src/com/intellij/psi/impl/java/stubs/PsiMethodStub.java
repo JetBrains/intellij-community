@@ -13,7 +13,7 @@ public interface PsiMethodStub extends PsiMemberStub<PsiMethod> {
   boolean isAnnotationMethod();
 
   @Nullable String getDefaultValueText();
-  @NotNull TypeInfo getReturnTypeText(boolean doResolve);
+  @NotNull TypeInfo getReturnTypeText();
 
   PsiParameterStub findParameter(int idx);
 }

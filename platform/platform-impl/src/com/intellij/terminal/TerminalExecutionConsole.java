@@ -268,15 +268,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return false;
   }
 
-  /**
-   * @deprecated already handled by {@link com.intellij.execution.runners.RunContentBuilder#createDescriptor()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public AnAction @NotNull [] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
-    return AnAction.EMPTY_ARRAY;
-  }
-
   @Override
   public AnAction @NotNull [] createConsoleActions() {
     return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
@@ -319,14 +310,13 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
                                                   @NotNull TerminalTextBuffer textBuffer) {
       JBTerminalPanel panel = new JBTerminalPanel((JBTerminalSystemSettingsProviderBase)settingsProvider, textBuffer, styleState) {
         @Override
-        public Dimension requestResize(Dimension newSize,
-                                       RequestOrigin origin,
-                                       int cursorX,
-                                       int cursorY,
-                                       JediTerminal.ResizeHandler resizeHandler) {
-          Dimension dimension = super.requestResize(newSize, origin, cursorX, cursorY, resizeHandler);
+        public void requestResize(@NotNull Dimension newSize,
+                                  RequestOrigin origin,
+                                  int cursorX,
+                                  int cursorY,
+                                  JediTerminal.ResizeHandler resizeHandler) {
+          super.requestResize(newSize, origin, cursorX, cursorY, resizeHandler);
           myOnResizedRunner.setReady();
-          return dimension;
         }
 
         @Override

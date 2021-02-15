@@ -57,20 +57,8 @@ public class JpsPathVariablesConfigurationImpl extends JpsElementBase<JpsPathVar
 
   @Nullable
   @Override
-  public String getPathVariable(@NotNull String name) {
-    return getUserVariableValue(name);
-  }
-
-  @Nullable
-  @Override
   public String getUserVariableValue(@NotNull String name) {
     return myPathVariables.get(name);
-  }
-
-  @NotNull
-  @Override
-  public Map<String, String> getAllVariables() {
-    return getAllUserVariables();
   }
 
   @NotNull

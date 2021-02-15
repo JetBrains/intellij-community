@@ -2,15 +2,18 @@
 package com.intellij.workspaceModel.storage.entities
 
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlListProperty
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlNullableProperty
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlProperty
 import com.intellij.workspaceModel.storage.impl.references.ManyToOne
 import com.intellij.workspaceModel.storage.impl.references.MutableManyToOne
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 
 internal data class SampleEntitySource(val name: String) : EntitySource
 
@@ -33,9 +36,10 @@ internal class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   lateinit var stringProperty: String
   lateinit var stringListProperty: List<String>
   lateinit var fileProperty: VirtualFileUrl
+  lateinit var myData: MyConcreteImpl
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): SampleEntity {
-    return SampleEntity(booleanProperty, stringProperty, stringListProperty, fileProperty).also { addMetaData(it, snapshot) }
+    return SampleEntity(booleanProperty, stringProperty, stringListProperty, fileProperty, myData).also { addMetaData(it, snapshot) }
   }
 }
 
@@ -43,7 +47,8 @@ internal class SampleEntity(
   val booleanProperty: Boolean,
   val stringProperty: String,
   val stringListProperty: List<String>,
-  val fileProperty: VirtualFileUrl
+  val fileProperty: VirtualFileUrl,
+  val myData: MyConcreteImpl,
 ) : WorkspaceEntityBase()
 
 internal class ModifiableSampleEntity : ModifiableWorkspaceEntityBase<SampleEntity>() {
@@ -51,19 +56,39 @@ internal class ModifiableSampleEntity : ModifiableWorkspaceEntityBase<SampleEnti
   var stringProperty: String by EntityDataDelegation()
   var stringListProperty: List<String> by EntityDataDelegation()
   var fileProperty: VirtualFileUrl by EntityDataDelegation()
+  var myData: MyConcreteImpl by EntityDataDelegation()
 }
+
+abstract class MyData(val myData: MyContainer)
+
+class MyConcreteImpl(myData: MyContainer) : MyData(myData) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is MyConcreteImpl) return false
+    return this.myData == other.myData
+  }
+
+  override fun hashCode(): Int {
+    return this.myData.hashCode()
+  }
+}
+
+data class MyContainer(val info: String)
 
 internal fun WorkspaceEntityStorageDiffBuilder.addSampleEntity(stringProperty: String,
                                                                source: EntitySource = SampleEntitySource("test"),
                                                                booleanProperty: Boolean = false,
                                                                stringListProperty: MutableList<String> = ArrayList(),
                                                                virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
-                                                               fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp")): SampleEntity {
+                                                               fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp"),
+                                                               info: String = ""
+): SampleEntity {
   return addEntity(ModifiableSampleEntity::class.java, source) {
     this.booleanProperty = booleanProperty
     this.stringProperty = stringProperty
     this.stringListProperty = stringListProperty
     this.fileProperty = fileProperty
+    this.myData = MyConcreteImpl(MyContainer(info))
   }
 }
 

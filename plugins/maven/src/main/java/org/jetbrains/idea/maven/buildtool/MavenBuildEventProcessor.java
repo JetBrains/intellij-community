@@ -54,7 +54,7 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     myStartBuildEventSupplier = startBuildEventSupplier != null ? startBuildEventSupplier : ctx -> new StartBuildEventImpl(myDescriptor, "")
       .withExecutionFilters(MavenConsoleImpl.getMavenConsoleFilters(myProject));
 
-    myParser = MavenOutputParserProvider.createMavenOutputParser(myTaskId, targetFileMapper);
+    myParser = MavenOutputParserProvider.createMavenOutputParser(project, myTaskId, targetFileMapper);
 
     myInstantReader = new BuildOutputInstantReaderImpl(
       myTaskId, myTaskId,

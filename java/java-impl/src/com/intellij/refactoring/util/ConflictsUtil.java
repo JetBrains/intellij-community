@@ -8,10 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -106,8 +103,8 @@ public final class ConflictsUtil {
   private static String getMethodPrototypeString(final PsiMethod prototype) {
     return PsiFormatUtil.formatMethod(
       prototype,
-      PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-      PsiFormatUtil.SHOW_TYPE
+      PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+      PsiFormatUtilBase.SHOW_TYPE
     );
   }
 
@@ -124,7 +121,9 @@ public final class ConflictsUtil {
       }
       else { // method somewhere in base class
         if (!existingField.hasModifierProperty(PsiModifier.PRIVATE)) {
-          String fieldInfo = PsiFormatUtil.formatVariable(existingField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER, PsiSubstitutor.EMPTY);
+          String fieldInfo = PsiFormatUtil.formatVariable(existingField, PsiFormatUtilBase.SHOW_NAME |
+                                                                         PsiFormatUtilBase.SHOW_TYPE |
+                                                                         PsiFormatUtilBase.TYPE_AFTER, PsiSubstitutor.EMPTY);
           String className = RefactoringUIUtil.getDescription(existingField.getContainingClass(), false);
           final String descr = JavaRefactoringBundle.message("field.0.will.hide.field.1.of.the.base.class",
                                                          newName, fieldInfo, className);

@@ -417,8 +417,8 @@ public class UndoManagerImpl extends UndoManager {
     return getDocumentReferences(editor);
   }
 
-  static @NotNull Set<DocumentReference> getDocumentReferences(@NotNull FileEditor editor) {
-    Set<DocumentReference> result = new HashSet<>();
+  static @NotNull Collection<DocumentReference> getDocumentReferences(@NotNull FileEditor editor) {
+    ArrayList<DocumentReference> result = new ArrayList<>();
 
     if (editor instanceof DocumentReferenceProvider) {
       result.addAll(((DocumentReferenceProvider)editor).getDocumentReferences());

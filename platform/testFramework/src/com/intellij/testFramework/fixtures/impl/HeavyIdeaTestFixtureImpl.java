@@ -38,6 +38,7 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -97,29 +98,26 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   @Override
   public void tearDown() {
-    RunAll runAll = new RunAll();
+    List<ThrowableRunnable<?>> actions = new ArrayList<>();
 
     if (myProject != null) {
       Project project = myProject;
-      runAll = runAll
-        .append(
-          () -> {
-            TestApplicationManagerKt.tearDownProjectAndApp(myProject);
-            myProject = null;
-          },
-          () -> {
-            for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
-              moduleFixtureBuilder.getFixture().tearDown();
-            }
-          },
-          () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project)
-        );
+      actions.add(() -> {
+        TestApplicationManagerKt.tearDownProjectAndApp(myProject);
+        myProject = null;
+      });
+
+      for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
+        actions.add(() -> moduleFixtureBuilder.getFixture().tearDown());
+      }
+
+      actions.add(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project));
     }
 
     JarFileSystemImpl.cleanupForNextTest();
 
     for (Path fileToDelete : myFilesToDelete) {
-      runAll = runAll.append(() -> {
+      actions.add(() -> {
         List<IOException> errors;
         try (Stream<Path> stream = Files.walk(fileToDelete)) {
           errors = stream
@@ -140,39 +138,37 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
           errors = Collections.emptyList();
         }
         CompoundRuntimeException.throwIfNotEmpty(errors);
-     });
+      });
     }
 
-    runAll
-      .append(
-        () -> {
-          AccessToken projectTracker = this.projectTracker;
-          if (projectTracker != null) {
-            this.projectTracker = null;
-            projectTracker.finish();
-          }
-        },
-        () -> super.tearDown(),
-        () -> {
-          if (myEditorListenerTracker != null) {
-            myEditorListenerTracker.checkListenersLeak();
-          }
-        },
-        () -> {
-          if (myThreadTracker != null) {
-            myThreadTracker.checkLeak();
-          }
-        },
-        () -> LightPlatformTestCase.checkEditorsReleased(),
-        () -> {
-          if (myOldSdks != null) {
-            myOldSdks.checkForJdkTableLeaks();
-          }
-        },
-        // project is disposed by now, no point in passing it
-        () -> HeavyPlatformTestCase.cleanupApplicationCaches(null)
-      )
-      .run();
+    actions.add(() -> {
+      AccessToken projectTracker = this.projectTracker;
+      if (projectTracker != null) {
+        this.projectTracker = null;
+        projectTracker.finish();
+      }
+    });
+    actions.add(() -> super.tearDown());
+    actions.add(() -> {
+      if (myEditorListenerTracker != null) {
+        myEditorListenerTracker.checkListenersLeak();
+      }
+    });
+    actions.add(() -> {
+      if (myThreadTracker != null) {
+        myThreadTracker.checkLeak();
+      }
+    });
+    actions.add(() -> LightPlatformTestCase.checkEditorsReleased());
+    actions.add(() -> {
+      if (myOldSdks != null) {
+        myOldSdks.checkForJdkTableLeaks();
+      }
+    });
+    // project is disposed by now, no point in passing it
+    actions.add(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null));
+
+    new RunAll(actions).run();
   }
 
   private void setUpProject() throws Exception {

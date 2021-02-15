@@ -19,11 +19,12 @@ import static com.android.tools.idea.gradle.dsl.model.repositories.FlatDirReposi
 import static com.android.tools.idea.gradle.dsl.model.repositories.GoogleDefaultRepositoryModelImpl.GOOGLE_DEFAULT_REPO_URL;
 import static com.android.tools.idea.gradle.dsl.model.repositories.GoogleDefaultRepositoryModelImpl.GOOGLE_METHOD_NAME;
 import static com.android.tools.idea.gradle.dsl.model.repositories.GoogleDefaultRepositoryModelImpl.URL;
-import static com.android.tools.idea.gradle.dsl.model.repositories.JCenterDefaultRepositoryModel.JCENTER_METHOD_NAME;
 import static com.android.tools.idea.gradle.dsl.model.repositories.MavenCentralRepositoryModel.MAVEN_CENTRAL_METHOD_NAME;
 import static com.android.tools.idea.gradle.dsl.parser.repositories.FlatDirRepositoryDslElement.FLAT_DIR;
+import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement.GOOGLE;
 import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement.JCENTER;
 import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement.MAVEN;
+import static com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement.MAVEN_CENTRAL;
 
 import com.android.tools.idea.gradle.dsl.api.repositories.RepositoriesModel;
 import com.android.tools.idea.gradle.dsl.api.repositories.RepositoryModel;
@@ -36,8 +37,10 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElem
 import com.android.tools.idea.gradle.dsl.parser.repositories.FlatDirRepositoryDslElement;
 import com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement;
 import com.android.tools.idea.gradle.dsl.parser.repositories.RepositoriesDslElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
 import com.intellij.psi.PsiElement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,15 +58,7 @@ public class RepositoriesModelImpl extends GradleDslBlockModel implements Reposi
     for (GradleDslElement element : myDslElement.getAllPropertyElements()) {
       if (element instanceof GradleDslMethodCall) {
         String methodName = ((GradleDslMethodCall)element).getMethodName();
-        if (MAVEN_CENTRAL_METHOD_NAME.equals(methodName)) {
-          result.add(new MavenCentralRepositoryModel(myDslElement, element));
-        }
-        else if (JCENTER_METHOD_NAME.equals(methodName)) {
-          result.add(new JCenterDefaultRepositoryModel(myDslElement, element));
-        }
-        else if (GOOGLE_METHOD_NAME.equals(methodName)) {
-          result.add(new GoogleDefaultRepositoryModelImpl(myDslElement, element));
-        }
+        assert !Arrays.asList(MAVEN_CENTRAL_METHOD_NAME, JCENTER.name, GOOGLE_METHOD_NAME).contains(methodName);
       }
       else if (element instanceof MavenRepositoryDslElement) {
         if (MAVEN.name.equals(element.getName())) {
@@ -72,16 +67,22 @@ public class RepositoriesModelImpl extends GradleDslBlockModel implements Reposi
         else if (JCENTER.name.equals(element.getName())) {
           result.add(new JCenterRepositoryModel(myDslElement, (MavenRepositoryDslElement)element));
         }
+        else if (GOOGLE.name.equals(element.getName())) {
+          result.add(new GoogleDefaultRepositoryModelImpl(myDslElement, (MavenRepositoryDslElement)element));
+        }
+        else if (MAVEN_CENTRAL.name.equals(element.getName())) {
+          result.add(new MavenCentralRepositoryModel(myDslElement, (MavenRepositoryDslElement)element));
+        }
       }
       else if (element instanceof FlatDirRepositoryDslElement) {
         result.add(new FlatDirRepositoryModel(myDslElement, (FlatDirRepositoryDslElement)element));
       }
       else if (element instanceof GradleDslExpressionMap) {
         if (MAVEN_CENTRAL_METHOD_NAME.equals(element.getName())) {
-          result.add(new MavenCentralRepositoryModel(myDslElement, element));
+          result.add(new MavenCentralRepositoryModel(myDslElement, (GradleDslExpressionMap)element));
         }
         else if (FLAT_DIR_ATTRIBUTE_NAME.equals(element.getName())) {
-          result.add(new FlatDirRepositoryModel(myDslElement, (GradlePropertiesDslElement)element));
+          result.add(new FlatDirRepositoryModel(myDslElement, (GradleDslExpressionMap)element));
         }
       }
     }
@@ -99,7 +100,10 @@ public class RepositoriesModelImpl extends GradleDslBlockModel implements Reposi
     if (containsMethodCall(methodName)) {
       return;
     }
-    myDslElement.setNewElement(new GradleDslMethodCall(myDslElement, GradleNameElement.empty(), methodName));
+    PropertiesElementDescription description = myDslElement.getChildPropertiesElementDescription(methodName);
+    if (description != null) {
+      myDslElement.setNewElement(description.constructor.construct(myDslElement, GradleNameElement.fake(methodName)));
+    }
   }
 
   /**
@@ -130,8 +134,8 @@ public class RepositoriesModelImpl extends GradleDslBlockModel implements Reposi
    */
   @Override
   public boolean containsMethodCall(@NotNull String methodName) {
-    List<GradleDslMethodCall> elements = myDslElement.getPropertyElements(GradleDslMethodCall.class);
-    for (GradleDslMethodCall element : elements) {
+    List<MavenRepositoryDslElement> elements = myDslElement.getPropertyElements(MavenRepositoryDslElement.class);
+    for (MavenRepositoryDslElement element : elements) {
       if (methodName.equals(element.getName())) {
         return true;
       }
@@ -152,11 +156,10 @@ public class RepositoriesModelImpl extends GradleDslBlockModel implements Reposi
     }
     GradleNameElement nameElement = GradleNameElement.fake(MAVEN.name);
     MavenRepositoryDslElement newElement = new MavenRepositoryDslElement(myDslElement, nameElement);
-    newElement.setNewLiteral("url", url);
-    if (name != null) {
-      newElement.setNewLiteral("name", name);
-    }
     myDslElement.setNewElement(newElement);
+    MavenRepositoryModelImpl model = new MavenRepositoryModelImpl(myDslElement, newElement);
+    model.url().setValue(url);
+    model.name().setValue(name);
   }
 
   /**

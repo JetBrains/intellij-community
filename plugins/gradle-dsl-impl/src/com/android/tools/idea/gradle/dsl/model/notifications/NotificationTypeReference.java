@@ -35,6 +35,8 @@ public class NotificationTypeReference<T extends BuildModelNotification> {
     new NotificationTypeReference<>(PropertyPlacementNotification.class, PropertyPlacementNotification::new);
   public static final NotificationTypeReference<InvalidExpressionNotification> INVALID_EXPRESSION =
     new NotificationTypeReference<>(InvalidExpressionNotification.class, InvalidExpressionNotification::new);
+  public static final NotificationTypeReference<CircularApplication> CIRCULAR_APPLICATION =
+    new NotificationTypeReference<>(CircularApplication.class, CircularApplication::new);
 
   @NotNull private final Class<T> myClazz;
   @NotNull private final Producer<T> myConstructor;

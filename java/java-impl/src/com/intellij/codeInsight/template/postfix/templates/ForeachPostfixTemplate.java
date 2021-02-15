@@ -12,7 +12,7 @@ import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixT
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +39,7 @@ public class ForeachPostfixTemplate extends JavaEditablePostfixTemplate {
     MacroCallNode name = new MacroCallNode(new SuggestVariableNameMacro());
     template.addVariable("NAME", name, name, true);
 
-    String finalPart = JavaCodeStyleSettingsFacade.getInstance(element.getProject()).isGenerateFinalLocals() ? "final " : null;
+    String finalPart = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isGenerateFinalLocals() ? "final " : null;
     if (finalPart != null) {
       template.addVariable("FINAL", new TextExpression(finalPart), false);
     }

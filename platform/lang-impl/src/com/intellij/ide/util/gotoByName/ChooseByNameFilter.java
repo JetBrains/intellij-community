@@ -118,7 +118,7 @@ public abstract class ChooseByNameFilter<T> {
   protected ElementsChooser<T> createChooser(@NotNull final FilteringGotoByModel<T> model,
                                              @NotNull final ChooseByNameFilterConfiguration<? super T> filterConfiguration) {
     List<T> elements = new ArrayList<>(getAllFilterValues());
-    final ElementsChooser<T> chooser = new ElementsChooser<T>(elements, true) {
+    final ElementsChooser<T> chooser = new ElementsChooser<>(elements, true) {
       @Override
       protected String getItemText(@NotNull final T value) {
         return textForFilterValue(value);

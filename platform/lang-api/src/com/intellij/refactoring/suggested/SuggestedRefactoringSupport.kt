@@ -3,6 +3,7 @@ package com.intellij.refactoring.suggested
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -177,7 +178,7 @@ interface SuggestedRefactoringSupport {
    */
   data class Parameter(
     val id: Any,
-    val name: String,
+    @NlsSafe val name: String,
     val type: String,
     val additionalData: ParameterAdditionalData? = null
   )

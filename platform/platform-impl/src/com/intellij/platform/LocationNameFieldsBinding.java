@@ -50,7 +50,7 @@ public class LocationNameFieldsBinding {
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     BrowseFolderActionListener<JTextField> listener =
-      new BrowseFolderActionListener<JTextField>(title, "", locationField, project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+      new BrowseFolderActionListener<>(title, "", locationField, project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
         @Override
         protected void onFileChosen(@NotNull VirtualFile chosenFile) {
           myBaseDir = chosenFile.getPath();

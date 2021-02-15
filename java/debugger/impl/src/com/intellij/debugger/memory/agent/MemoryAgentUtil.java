@@ -41,6 +41,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.CpuArch;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -178,7 +179,9 @@ public final class MemoryAgentUtil {
   }
 
   public static boolean isPlatformSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMacIntel64 || SystemInfo.isLinux;
+    return SystemInfo.isWindows && (CpuArch.isIntel32() || CpuArch.isIntel64()) ||
+           SystemInfo.isMac && CpuArch.isIntel64() ||
+           SystemInfo.isLinux && CpuArch.isIntel64();
   }
 
   private static boolean isIbmJdk(@NotNull JavaParameters parameters) {

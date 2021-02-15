@@ -57,7 +57,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   protected void setUp() throws Exception {
     super.setUp();
 
-    myComparator = new NodeDescriptor.NodeComparator.Delegate<>(new NodeDescriptor.NodeComparator<NodeDescriptor<?>>() {
+    myComparator = new NodeDescriptor.NodeComparator.Delegate<>(new NodeDescriptor.NodeComparator<>() {
       @Override
       public int compare(NodeDescriptor<?> o1, NodeDescriptor<?> o2) {
         return AlphaComparator.INSTANCE.compare(o1, o2);

@@ -11,8 +11,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class ModelDiff {
+
   @Nullable
-  public static List<Cmd> createDiffCmds(@NotNull Model<Object> listModel, Object @NotNull [] oldElements, Object @NotNull [] newElements) {
+  public static <T> List<Cmd> createDiffCmds(@NotNull Model<T> listModel, T @NotNull [] oldElements, T @NotNull [] newElements) {
     Diff.Change change = null;
     try {
       change = Diff.buildChanges(oldElements, newElements);
@@ -35,7 +36,7 @@ public final class ModelDiff {
       }
 
       if (change.inserted > 0) {
-        List<Object> elements = new ArrayList<>(Arrays.asList(newElements).subList(change.line1, change.line1 + change.inserted));
+        List<T> elements = new ArrayList<>(Arrays.asList(newElements).subList(change.line1, change.line1 + change.inserted));
         commands.add(new InsertCmd<>(listModel, change.line0 + inserted - deleted, elements));
       }
 

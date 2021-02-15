@@ -39,7 +39,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
@@ -279,6 +279,7 @@ public class FoldingModelSupport {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null) return null;
     VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return null;
 
     if (document.getLineCount() <= lineNumber) return null;
     int offset = document.getLineStartOffset(lineNumber);
@@ -449,7 +450,7 @@ public class FoldingModelSupport {
   }
 
   @NotNull
-  public TIntFunction getLineConvertor(final int index) {
+  public IntUnaryOperator getLineConvertor(final int index) {
     return value -> {
       updateLineNumbers(false);
       for (FoldedBlock folding : getFoldedBlocks()) { // TODO: avoid full scan - it could slowdown painting
@@ -797,7 +798,7 @@ public class FoldingModelSupport {
 
   @NotNull
   private Iterable<FoldedBlock> getFoldedBlocks() {
-    return () -> new Iterator<FoldedBlock>() {
+    return () -> new Iterator<>() {
       private int myGroupIndex = 0;
       private int myBlockIndex = 0;
 
@@ -1045,7 +1046,7 @@ public class FoldingModelSupport {
   protected static <T, V> Iterator<V> map(@Nullable final List<T> list, @NotNull final Function<? super T, ? extends V> mapping) {
     if (list == null) return null;
     final Iterator<T> it = list.iterator();
-    return new Iterator<V>() {
+    return new Iterator<>() {
       @Override
       public boolean hasNext() {
         return it.hasNext();

@@ -3,9 +3,15 @@ Entry point module (keep at root):
 
 This module starts the debugger.
 '''
+import os
 import sys
 from contextlib import contextmanager
 import weakref
+
+# allow the debugger to work in isolated mode Python
+here = os.path.dirname(os.path.abspath(__file__))
+if here not in sys.path:
+    sys.path.insert(0, here)
 
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_return_info
 

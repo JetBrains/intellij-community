@@ -25,6 +25,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Objects.requireNonNull;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATED;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATION_ERROR;
 
 /**
  * Action for initializing a Mercurial repository.
@@ -95,14 +97,14 @@ public class HgInit extends DumbAwareAction {
     HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.getPath());
     if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
       VcsNotifier.getInstance(project)
-        .notifySuccess("hg.repository.created",
+        .notifySuccess(REPO_CREATED,
                        HgBundle.message("hg4idea.init.created.notification.title"),
                        HgBundle.message("hg4idea.init.created.notification.description", selectedRoot.getPresentableUrl()));
       return true;
     }
     else {
       new HgCommandResultNotifier(project.isDefault() ? null : project)
-        .notifyError("hg.repo.creation.error",
+        .notifyError(REPO_CREATION_ERROR,
                      result,
                      HgBundle.message("hg4idea.init.error.title"),
                      HgBundle.message("hg4idea.init.error.description", selectedRoot.getPresentableUrl()));

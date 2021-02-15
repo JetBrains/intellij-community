@@ -6,6 +6,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +38,18 @@ public interface IntroduceParameterData {
   @NotNull
   PsiType getForcedType();
 
+  /**
+   * @deprecated Implement {@link #getParameterListToRemove()}
+   */
   @NotNull
-  TIntArrayList getParametersToRemove();
+  @Deprecated
+  default TIntArrayList getParametersToRemove() {
+    throw new AbstractMethodError("Implement getParameterListToRemove");
+  }
+
+  default IntList getParameterListToRemove() {
+    return new IntArrayList(getParametersToRemove().toNativeArray());
+  }
 
   interface ExpressionWrapper<RealExpression extends PsiElement> {
     @NotNull

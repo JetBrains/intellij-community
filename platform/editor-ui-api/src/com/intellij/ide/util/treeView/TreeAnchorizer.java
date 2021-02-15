@@ -17,14 +17,15 @@ import java.util.List;
  * @author peter
  */
 public class TreeAnchorizer {
-  private static final TreeAnchorizer ourInstance;
-  static {
-    TreeAnchorizer implementation = ApplicationManager.getApplication().getService(TreeAnchorizer.class);
-    ourInstance = implementation == null ? new TreeAnchorizer() : implementation;
-  }
+  private static TreeAnchorizer ourInstance;
 
   public static TreeAnchorizer getService() {
-    return ourInstance;
+    TreeAnchorizer result = ourInstance;
+    if (result == null) {
+      result = ApplicationManager.getApplication().getService(TreeAnchorizer.class);
+      ourInstance = result == null ? new TreeAnchorizer() : result;
+    }
+    return result;
   }
 
   @NotNull

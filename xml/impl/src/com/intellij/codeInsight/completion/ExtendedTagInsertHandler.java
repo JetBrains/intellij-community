@@ -69,7 +69,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     caretMarker.setGreedyToRight(true);
 
     final XmlNamespaceHelper.Runner<String, IncorrectOperationException> runAfter =
-      new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
+      new XmlNamespaceHelper.Runner<>() {
 
         @Override
         public void run(final String namespacePrefix) {

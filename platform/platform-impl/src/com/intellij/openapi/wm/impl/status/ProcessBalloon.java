@@ -84,7 +84,7 @@ class ProcessBalloon {
       if (indicator.myPresentationModeShowBalloon) {
         indicator.myPresentationModeShowBalloon = false;
 
-        indicator.myPresentationModeBalloon.show(new PositionTracker<Balloon>(getAnchor(pane)) {
+        indicator.myPresentationModeBalloon.show(new PositionTracker<>(getAnchor(pane)) {
           @Override
           public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
             Component c = getAnchor(pane);

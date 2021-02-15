@@ -160,7 +160,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
   private void createUIComponents() {
-    myTable = new ChangesTrackingTableView<Item>() {
+    myTable = new ChangesTrackingTableView<>() {
       @Override
       protected void onCellValueChanged(int row, int column, Object value) {
         final Item original = getItems().get(row);

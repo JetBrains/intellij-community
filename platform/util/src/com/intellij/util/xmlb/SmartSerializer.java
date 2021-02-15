@@ -2,18 +2,20 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.objects.Object2FloatMap;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public final class SmartSerializer {
-  private ObjectLinkedOpenHashSet<String> mySerializedAccessorNameTracker;
+  private Set<String> mySerializedAccessorNameTracker;
   private Object2FloatMap<String> myOrderedBindings;
   private final SerializationFilter mySerializationFilter;
 
   private SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
-    mySerializedAccessorNameTracker = trackSerializedNames ? new ObjectLinkedOpenHashSet<>() : null;
+    mySerializedAccessorNameTracker = trackSerializedNames ? CollectionFactory.createSmallMemoryFootprintLinkedSet() : null;
 
     mySerializationFilter = useSkipEmptySerializationFilter ?
                             new SkipEmptySerializationFilter() {
@@ -69,7 +71,7 @@ public final class SmartSerializer {
       binding.serializeInto(bean, element, mySerializationFilter);
     }
     else {
-      ObjectLinkedOpenHashSet<String> oldTracker = mySerializedAccessorNameTracker;
+      Set<String> oldTracker = mySerializedAccessorNameTracker;
       try {
         mySerializedAccessorNameTracker = null;
         binding.serializeInto(bean, element, mySerializationFilter);

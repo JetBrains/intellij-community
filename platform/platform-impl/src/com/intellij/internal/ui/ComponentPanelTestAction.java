@@ -3,6 +3,7 @@ package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI;
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
@@ -107,7 +109,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       "<br style=\"font-size:8;\"/><p>Please note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"#sometag\">JetBrains Privacy Policy</a></p>";
 
     private static final String GOT_IT_HEADER = "IDE features trainer";
-    private static final String GOT_IT_TEXT = "Learn the most useful shortcuts and essential IDE features interactively";
+    private static final String GOT_IT_TEXT = "Learn the most useful shortcuts <icon src=\"AllIcons.Actions.More\"/> and essential IDE features interactively." +
+      " Use <icon src=\"AllIcons.Actions.Diff\" valign=\"1.0f\"/> for details.";
     private static final String GOT_IT_TEXT2 = "Some textfield that actually means nothing";
 
     private final Alarm myAlarm = new Alarm(getDisposable());
@@ -117,7 +120,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private final Project project;
 
     private JButton abracadabraButton;
-    private GotItTooltip gotItTooltip;
 
     private ComponentPanelTest(Project project) {
       super(project);
@@ -170,6 +172,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       southPanel.add(placementCombo);
       southPanel.add(new Box.Filler(JBUI.size(0), JBUI.size(0), JBUI.size(Integer.MAX_VALUE, 0)));
 
+      ActionLink externalLink = new ActionLink("External link", event -> {
+        BrowserUtil.browse("http://google.com");
+      });
+      externalLink.setExternalLinkIcon();
+      southPanel.add(externalLink);
       panel.addToBottom(southPanel);
 
       return panel;
@@ -268,15 +275,15 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       topPanel.add(UI.PanelFactory.panel(abracadabraButton).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
       try {
-        gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
+        new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
           andShowCloseShortcut().
           withShowCount(3).
           withHeader(GOT_IT_HEADER).
           withIcon(AllIcons.General.BalloonInformation).
-          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/"));
+          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
+          show(abracadabraButton, GotItTooltip.BOTTOM_MIDDLE);
 
-        new GotItTooltip("textfield", GOT_IT_TEXT2, project).
-          withShowCount(5).showAfter(gotItTooltip, text1, GotItTooltip.BOTTOM_MIDDLE);
+        new GotItTooltip("textfield", GOT_IT_TEXT2, project).withShowCount(5).show(text1, GotItTooltip.BOTTOM_MIDDLE);
 
       } catch (MalformedURLException ex) {}
 
@@ -834,7 +841,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         {
           GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
           actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
-          gotItTooltip.showAfter(actionGotIt, abracadabraButton, GotItTooltip.BOTTOM_MIDDLE);
         }
       }.withShortCut("control K"));
       toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
@@ -942,7 +948,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       ComboBox<Item> comboBox = new ComboBox<>(new Model(builder1.build()));
       comboBox.setSwingPopup(false);
-      ColoredListCellRenderer<Item> renderer = new ColoredListCellRenderer<Item>() {
+      ColoredListCellRenderer<Item> renderer = new ColoredListCellRenderer<>() {
         @Override
         protected void customizeCellRenderer(@NotNull JList<? extends Item> list,
                                              Item value,

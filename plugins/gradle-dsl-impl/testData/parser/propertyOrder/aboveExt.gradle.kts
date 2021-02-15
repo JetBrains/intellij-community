@@ -1,7 +1,7 @@
 android {
   defaultConfig {
-    minSdkVersion(extra["minSdk"])
-    maxSdkVersion(extra["maxSdk"])
+    minSdkVersion(extra["minSdk"] as Int)
+    maxSdkVersion(extra["maxSdk"] as Int)
   }
 }
 

@@ -35,7 +35,7 @@ public class JavaRecordComponentElementType extends JavaStubElementType<PsiRecor
   @Override
   public void serialize(@NotNull PsiRecordComponentStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
-    TypeInfo.writeTYPE(dataStream, stub.getType(false));
+    TypeInfo.writeTYPE(dataStream, stub.getType());
     dataStream.writeByte(((PsiRecordComponentStubImpl)stub).getFlags());
   }
 

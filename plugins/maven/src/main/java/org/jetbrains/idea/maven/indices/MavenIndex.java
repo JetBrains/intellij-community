@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.jarRepository.services.bintray.BintrayModel;
@@ -556,7 +556,7 @@ public class MavenIndex implements MavenSearchIndex {
   @TestOnly
   public synchronized void printInfo() {
     doIndexTask(() -> {
-      MavenLog.LOG.debug("BaseFile: " + myData.groupToArtifactMap.getBaseFile());
+      MavenLog.LOG.debug("BaseFile: " + myData.groupToArtifactMap);
       MavenLog.LOG.debug("All data objects: " + getGroupIdsRaw());
       return null;
     }, null);

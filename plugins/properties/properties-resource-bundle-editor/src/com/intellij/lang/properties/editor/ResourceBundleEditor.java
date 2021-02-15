@@ -66,8 +66,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +82,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
+public final class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
   private static final Logger LOG =
     Logger.getInstance(ResourceBundleEditor.class);
   @NonNls private static final String VALUES               = "values";
@@ -101,7 +99,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private final DataProviderPanel myDataProviderPanel;
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
-  private final Set<VirtualFile> myBackSlashPressed     = new THashSet<>();
+  private final Set<VirtualFile> myBackSlashPressed     = new HashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final JPanel              myValuesPanel;
@@ -186,7 +184,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     });
 
     myEditors = new ConcurrentHashMap<>();
-    myTitledPanels = new THashMap<>();
+    myTitledPanels = new HashMap<>();
     recreateEditorsPanel();
 
     TreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
@@ -609,7 +607,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       .filterMap(AbstractTreeNode::getValue)
       .toList();
   }
-  
+
   @Nullable
   public Object getSelectedElementIfOnlyOne() {
     final Collection<Object> selectedElements = getSelectedObjects();

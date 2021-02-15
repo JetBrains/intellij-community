@@ -247,20 +247,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   /**
-   * Patches the command line parameters applying patchers from first to last, and then runs it.
-   *
-   * @param patchers any number of patchers; any patcher may be null, and the whole argument may be null.
-   * @return handler of the started process
-   * @throws ExecutionException
-   * @deprecated use {@link #startProcess(PythonProcessStarter, CommandLinePatcher...)} instead
-   */
-  @Deprecated
-  @NotNull
-  protected ProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
-    return startProcess(getDefaultPythonProcessStarter(), patchers);
-  }
-
-  /**
    * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
    * <p>
    * Patches the command line parameters applying patchers from first to last, and then runs it.

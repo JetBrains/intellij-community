@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.impl.*;
@@ -40,7 +39,6 @@ import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver implements Disposable {
   private final Map<VirtualFile, ProblemFileInfo> myProblems = new ConcurrentHashMap<>();
   private final Map<VirtualFile, Set<Object>> myProblemsFromExternalSources = new ConcurrentHashMap<>();
-  private final Collection<VirtualFile> myCheckingQueue = new THashSet<>(10); // guarded by myCheckingQueue
+  private final Collection<VirtualFile> myCheckingQueue = new HashSet<>(10); // guarded by myCheckingQueue
 
   private final Project myProject;
 
@@ -95,7 +93,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         boolean dirChanged = false;
-        Set<VirtualFile> toRemove = new THashSet<>();
+        Set<VirtualFile> toRemove = new HashSet<>();
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
             VirtualFile file = event.getFile();
@@ -164,7 +162,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   private static class ProblemFileInfo {
-    private final Collection<Problem> problems = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Collection<Problem> problems = ContainerUtil.newConcurrentSet();
     private volatile boolean hasSyntaxErrors;
 
     @Override
@@ -455,7 +453,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   public void reportProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
     if (!isToBeHighlighted(file)) return;
 
-    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> ContainerUtil.newConcurrentSet());
     boolean isNewFileForExternalSource = problems.isEmpty();
     problems.add(source);
 
@@ -486,6 +484,12 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     else {
       fireProblemsChanged(file);
     }
+  }
+
+  public List<VirtualFile> getProblemFiles() {
+    ArrayList<VirtualFile> problemFiles = new ArrayList<>(myProblems.keySet());
+    problemFiles.addAll(myProblemsFromExternalSources.keySet());
+    return problemFiles;
   }
 
   @NotNull

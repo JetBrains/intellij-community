@@ -13,12 +13,12 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 public final class CodeInsightUtilBase extends CodeInsightUtilCore {
@@ -58,7 +58,7 @@ public final class CodeInsightUtilBase extends CodeInsightUtilCore {
   @Override
   public boolean preparePsiElementsForWrite(@NotNull Collection<? extends PsiElement> elements) {
     if (elements.isEmpty()) return true;
-    Set<VirtualFile> files = new THashSet<>();
+    Set<VirtualFile> files = new HashSet<>();
     Project project = null;
     for (PsiElement element : elements) {
       if (element == null) continue;

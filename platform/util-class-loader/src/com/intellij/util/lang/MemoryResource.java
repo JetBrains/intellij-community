@@ -1,72 +1,52 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-final class MemoryResource extends Resource {
-  private final URL myUrl;
-  private final byte[] myContent;
-  private final Map<Resource.Attribute, String> myAttributes;
+public final class MemoryResource implements Resource {
+  private URL url;
+  private final byte[] content;
+  private final String name;
+  private final String baseUrl;
 
-  private MemoryResource(@NotNull URL url, @NotNull byte[] content, @Nullable Map<Resource.Attribute, String> attributes) {
-    myUrl = url;
-    myContent = content;
-    myAttributes = attributes;
-  }
-
-  @NotNull
-  @Override
-  public URL getURL() {
-    return myUrl;
-  }
-
-  @NotNull
-  @Override
-  public InputStream getInputStream() {
-    return new UnsyncByteArrayInputStream(myContent);
-  }
-
-  @NotNull
-  @Override
-  public byte[] getBytes() {
-    return myContent;
+  public MemoryResource(@NotNull String baseUrl, byte[] content, @NotNull String name) {
+    this.baseUrl = baseUrl;
+    this.content = content;
+    this.name = name;
   }
 
   @Override
-  public String getValue(@NotNull Attribute key) {
-    return myAttributes != null ? myAttributes.get(key) : null;
+  public String toString() {
+    return baseUrl + "/" + name;
   }
 
-  @NotNull
-  static MemoryResource load(@NotNull URL baseUrl,
-                             @NotNull ZipFile zipFile,
-                             @NotNull ZipEntry entry,
-                             @Nullable Map<Attribute, String> attributes) throws IOException {
-    String name = entry.getName();
-    URL url = new URL(baseUrl, name);
-
-    byte[] content = ArrayUtilRt.EMPTY_BYTE_ARRAY;
-    InputStream stream = zipFile.getInputStream(entry);
-    if (stream != null) {
+  @Override
+  public @NotNull URL getURL() {
+    URL result = url;
+    if (result == null) {
       try {
-        content = FileUtilRt.loadBytes(stream, (int)entry.getSize());
+        result = new URL("jar", "", -1, baseUrl + "!/" + name);
       }
-      finally {
-        stream.close();
+      catch (MalformedURLException e) {
+        throw new RuntimeException(e);
       }
+      url = result;
     }
+    return result;
+  }
 
-    return new MemoryResource(url, content, attributes);
+  @Override
+  public @NotNull InputStream getInputStream() {
+    return new UnsyncByteArrayInputStream(content);
+  }
+
+  @Override
+  public byte @NotNull [] getBytes() {
+    return content;
   }
 }

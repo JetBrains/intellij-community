@@ -189,7 +189,7 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
 
     private static Iterable<@Nls(capitalization = Sentence) String> getPropertyNames(final CodeStyleSettings settings) {
       List<String> result = new ArrayList<>(PROPERTIES.keySet());
-      result.sort(new Comparator<String>() {
+      result.sort(new Comparator<>() {
         @Override
         public int compare(String o1, String o2) {
           int weight1 = getWeight(o1);

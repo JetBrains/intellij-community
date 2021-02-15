@@ -2,7 +2,7 @@
 import java.util.*;
 
 public class Test {
-    public static void main() {
+    public void main() {
         Collection c = new Test.MyCollection(1);
     }
 

@@ -15,15 +15,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
   private static final Logger LOG = Logger.getInstance(StackFrameProxyImpl.class);
@@ -307,7 +303,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     }
     throw new EvaluateException(error.getMessage(), error);
   }
-  
+
   @Override
   public Value getVariableValue(@NotNull LocalVariableProxy localVariable) throws EvaluateException {
     if (localVariable instanceof LocalVariableProxyImpl) {
@@ -380,7 +376,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     if (myAllValues == null) {
       try {
         StackFrame stackFrame = getStackFrame();
-        myAllValues = new THashMap<>(stackFrame.getValues(stackFrame.visibleVariables()));
+        myAllValues = new HashMap<>(stackFrame.getValues(stackFrame.visibleVariables()));
       }
       catch (AbsentInformationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -389,14 +385,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
         // extra logging for IDEA-141270
         if (e.errorCode() == JvmtiError.INVALID_SLOT || e.errorCode() == JvmtiError.ABSENT_INFORMATION) {
           LOG.info(e);
-          myAllValues = new THashMap<>();
+          myAllValues = new HashMap<>();
         }
         else throw e;
       }
       catch (Exception e) {
         if (!getVirtualMachine().canBeModified()) { // do not care in read only vms
           LOG.debug(e);
-          myAllValues = new THashMap<>();
+          myAllValues = new HashMap<>();
         }
         else {
           throw e;

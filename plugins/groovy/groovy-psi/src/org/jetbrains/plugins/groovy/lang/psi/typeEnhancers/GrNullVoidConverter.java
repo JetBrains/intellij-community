@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiClassType;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.*;
 
@@ -35,7 +35,7 @@ public class GrNullVoidConverter extends GrTypeConverter {
                                         @NotNull GroovyPsiElement context) {
 
     final PsiClassType objectType = TypesUtil.getJavaLangObject(context);
-    boolean isCompileStatic = PsiUtil.isCompileStatic(context);
+    boolean isCompileStatic = CompileStaticUtil.isCompileStatic(context);
     if (position == Position.RETURN_VALUE) {
       if (targetType.equals(objectType) && PsiType.VOID.equals(actualType)) {
         return OK;

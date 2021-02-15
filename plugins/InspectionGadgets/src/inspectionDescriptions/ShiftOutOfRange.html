@@ -2,11 +2,15 @@
 <body>
 Reports shift operations
 where the value shifted by is constant and outside of the reasonable range. Integer
-shift operations outside of the range <b>0..31</b> and long shift operations outside of the
-range <b>0..63</b> are reported. Shifting by negative or overly large values is almost certainly
+shift operations outside of the range <code>0..31</code> and long shift operations outside of the
+range <code>0..63</code> are reported. Shifting by negative or overly large values is almost certainly
 a coding error.
+<p>Example:</p>
+<pre>
+  int shiftSize = 32;
+  // Warning: shift by 32 bits is equivalent to shift by 0 bits, so there's no shift at all. 
+  int mask = (1 << shiftSize) - 1;
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

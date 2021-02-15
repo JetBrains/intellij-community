@@ -31,14 +31,14 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { clm.waitUntilRefreshed() })
-      .append(ThrowableRunnable { UIUtil.dispatchAllInvocationEvents() })
-      .append(ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() })
-      .append(ThrowableRunnable { lstm.releaseAllTrackers() })
-      .append(ThrowableRunnable { DiffIterableUtil.setVerifyEnabled(false) })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { clm.waitUntilRefreshed() },
+      ThrowableRunnable { UIUtil.dispatchAllInvocationEvents() },
+      ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() },
+      ThrowableRunnable { lstm.releaseAllTrackers() },
+      ThrowableRunnable { DiffIterableUtil.setVerifyEnabled(false) },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   override fun resetSettings() {

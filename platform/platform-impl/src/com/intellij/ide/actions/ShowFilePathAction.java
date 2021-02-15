@@ -111,7 +111,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   private static ListPopup createPopup(List<? extends VirtualFile> files, List<? extends Icon> icons) {
-    BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<VirtualFile>(RevealFileAction.getActionName(), files, icons) {
+    BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<>(RevealFileAction.getActionName(), files, icons) {
       @NotNull
       @Override
       public String getTextFor(VirtualFile value) {

@@ -9,7 +9,7 @@ import org.jetbrains.settingsRepository.SyncType
 import org.junit.Test
 
 // empty means "no files, no HEAD, no commits"
-internal class OverwriteRemote : GitTestCase() {
+internal class OverwriteRemote : SettingsRepositoryGitTestBase() {
   @Test
   fun `not empty local and not empty remote`() {
     addLocalToFs()

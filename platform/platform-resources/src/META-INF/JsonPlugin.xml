@@ -8,6 +8,15 @@
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CopyReference"/>
     </action>
+
+    <action id="JsonPathEvaluateAction" class="com.intellij.jsonpath.ui.JsonPathEvaluateAction" icon="AllIcons.FileTypes.Json">
+      <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchActions" />
+    </action>
+
+    <action id="JsonPathExportEvaluateResultAction" class="com.intellij.jsonpath.ui.JsonPathExportEvaluateResultAction"
+            use-shortcut-of="ExportToTextFile" icon="AllIcons.Actions.MenuSaveall">
+      <add-to-group group-id="EditorContextBarMenu"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -30,6 +39,7 @@
     <preFormatProcessor implementation="com.intellij.json.formatter.JsonTrailingCommaRemover"/>
     <lang.braceMatcher language="JSON" implementationClass="com.intellij.json.JsonBraceMatcher"/>
     <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
+    <quoteHandler fileType="JSON5" className="com.intellij.json.JsonQuoteHandler"/>
     <enterBetweenBracesDelegate language="JSON"  implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
     <enterHandlerDelegate implementation="com.intellij.json.editor.JsonEnterHandler" id="JsonEnterHandler"/>
     <typedHandler implementation="com.intellij.json.editor.JsonTypedHandler" id="JsonTypedHandler"/>
@@ -105,6 +115,7 @@
     <completion.contributor order="last, before JsonCompletionContributor" language="JSON"
                             implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="JSON"
+                                id="JsonSchemaDocumentationProvider"
                                 implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
     <statistics.counterUsagesCollector groupId="json.schema" version="1"/>
@@ -121,7 +132,34 @@
       <category>JSON</category>
     </intentionAction>
     <notificationGroup id="JSON Schema" displayType="NONE"/>
+
+    <lang.parserDefinition language="JSONPath" implementationClass="com.intellij.jsonpath.psi.JsonPathParserDefinition"/>
+    <lang.braceMatcher language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathPairedBraceMatcher"/>
+    <lang.quoteHandler language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathQuoteHandler"/>
+    <lang.syntaxHighlighterFactory language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathSyntaxHighlighterFactory"/>
+    <annotator language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathFunctionCallAnnotator"/>
+    <colorSettingsPage implementation="com.intellij.jsonpath.JsonPathColorSettingsPage"/>
+    <completion.contributor language="JSONPath" order="last" implementationClass="com.intellij.jsonpath.JsonPathCompletionContributor"/>
+
+    <localInspection language="JSONPath" shortName="JsonPathUnknownFunction"
+                     implementationClass="com.intellij.jsonpath.inspections.JsonPathUnknownFunctionInspection"
+                     bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.function"
+                     groupBundle="messages.JsonBundle" groupKey="json.inspection.group"
+                     level="WARNING" enabledByDefault="true"/>
+    <localInspection language="JSONPath" shortName="JsonPathEvaluateUnknownKeyInspection"
+                     implementationClass="com.intellij.jsonpath.inspections.JsonPathEvaluateUnknownKeyInspection"
+                     bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.key"
+                     groupBundle="messages.JsonBundle" groupKey="json.inspection.group"
+                     level="WARNING" enabledByDefault="true"/>
+
+    <toolWindowAllowlist id="JSONPathEvaluate"/>
+
+    <intentionAction>
+      <className>com.intellij.jsonpath.ui.JsonPathEvaluateIntentionAction</className>
+      <category>JSON</category>
+    </intentionAction>
   </extensions>
+
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>

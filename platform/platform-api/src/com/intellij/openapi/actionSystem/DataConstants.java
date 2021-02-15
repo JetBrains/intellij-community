@@ -50,11 +50,4 @@ public interface DataConstants {
    * @deprecated use {@link PlatformDataKeys#EDITOR} instead
    */
   @Deprecated String EDITOR = CommonDataKeys.EDITOR.getName();
-
-  /**
-   * Returns {@link com.intellij.openapi.fileEditor.FileEditor}
-   *
-   * @deprecated use {@link PlatformDataKeys#FILE_EDITOR} instead
-   */
-  @Deprecated String FILE_EDITOR = PlatformDataKeys.FILE_EDITOR.getName();
 }

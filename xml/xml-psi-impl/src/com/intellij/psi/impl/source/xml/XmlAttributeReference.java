@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlAttributeReference implements PsiPolyVariantReference {
-  private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<XmlAttributeDescriptor>() {
+  private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<>() {
     @Override
     protected XmlAttributeDescriptor compute() {
       return myAttribute.getDescriptor();

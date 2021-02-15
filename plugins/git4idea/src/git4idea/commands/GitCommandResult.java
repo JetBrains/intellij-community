@@ -11,7 +11,6 @@ import git4idea.GitUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -150,16 +149,6 @@ public class GitCommandResult {
    */
   public void throwOnError(int... ignoredErrorCodes) throws VcsException {
     if (!success(ignoredErrorCodes)) throw new VcsException(getErrorOutputAsJoinedString());
-  }
-
-  /**
-   * @return null
-   * @deprecated use {@link #getErrorOutput()}
-   */
-  @Deprecated
-  @Nullable
-  public Throwable getException() {
-    return null;
   }
 
   @NotNull

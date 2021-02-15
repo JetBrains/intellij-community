@@ -3,6 +3,7 @@ package git4idea.config;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -33,17 +34,6 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 7, 1, 1));
-    }
-  },
-
-  /**
-   * @deprecated on Windows, quotes are now added automatically whenever necessary on the GeneralCommandLine level
-   */
-  @Deprecated
-  NEEDS_QUOTES_IN_STASH_NAME {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.getType().equals(GitVersion.Type.CYGWIN);
     }
   },
 
@@ -275,6 +265,14 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn (@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 18, 0, 0));
+    }
+  },
+
+  RESTORE_SUPPORTED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return Registry.is("git.can.use.restore.command") &&
+             version.isLaterOrEqual(new GitVersion(2, 25, 1, 0));
     }
   },
 

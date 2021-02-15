@@ -25,8 +25,6 @@ import com.intellij.usages.UsageViewPresentation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal val LOG: Logger = Logger.getInstance("#com.intellij.find.actions")
-
 fun findUsages(showDialog: Boolean, project: Project, selectedScope: SearchScope, target: SearchTarget) {
   findUsages(showDialog, project, target, target.usageHandler, selectedScope)
 }

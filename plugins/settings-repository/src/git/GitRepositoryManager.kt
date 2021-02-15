@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
@@ -26,7 +28,14 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.concurrent.write
 
-class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>, dir: Path) : BaseRepositoryManager(dir), GitRepositoryClient {
+class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>,
+                           dir: Path,
+                           parentDisposable: Disposable) : BaseRepositoryManager(dir), GitRepositoryClient, Disposable {
+
+  init {
+    Disposer.register(parentDisposable, this)
+  }
+
   override val repository: Repository
     get() {
       var r = _repository
@@ -45,6 +54,10 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
 
   override val credentialsProvider: CredentialsProvider by lazy {
     JGitCredentialsProvider(credentialsStore, repository)
+  }
+
+  override fun dispose() {
+    _repository?.close()
   }
 
   private var ignoreRules: IgnoreNode? = null

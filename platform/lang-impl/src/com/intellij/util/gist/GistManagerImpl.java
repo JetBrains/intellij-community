@@ -80,15 +80,15 @@ public final class GistManagerImpl extends GistManager {
 
   @Override
   public void invalidateData(@NotNull VirtualFile file) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Invalidating gist " + file);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Invalidating gist " + file);
     }
     invalidateData(); // should be more granular in future
   }
 
   private void invalidateGists() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Invalidating gists", new Throwable());
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("Invalidating gists"));
     }
     // Clear all cache at once to simplify and speedup this operation.
     // It can be made per-file if cache recalculation ever becomes an issue.

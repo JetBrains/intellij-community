@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LayoutTask extends Task {
-    private final List<Content> containers = new ArrayList<Content>();
+    private final List<Content> containers = new ArrayList<>();
     private File destDir;
 
     public void addDir(DirContainer container) {

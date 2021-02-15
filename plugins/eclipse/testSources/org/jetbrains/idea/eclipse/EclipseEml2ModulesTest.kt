@@ -4,8 +4,6 @@ package org.jetbrains.idea.eclipse
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.io.div
-import org.junit.Assume
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
@@ -34,8 +32,8 @@ class EclipseEml2ModulesTest {
   private fun doTest(secondRootName: String) {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val testName = testName.methodName.removePrefix("test").decapitalize()
-    val testRoot = eclipseTestDataRoot / "eml" / testName
-    val commonRoot = eclipseTestDataRoot / "common" / "twoModulesWithClasspathStorage"
+    val testRoot = eclipseTestDataRoot.resolve("eml").resolve(testName)
+    val commonRoot = eclipseTestDataRoot.resolve("common").resolve("twoModulesWithClasspathStorage")
     checkEmlFileGeneration(listOf(testRoot, commonRoot), tempDirectory, listOf(
       "test" to "srcPath/sourceRootPaths/sourceRootPaths",
       "ws-internals" to "srcPath/$secondRootName/ws-internals"

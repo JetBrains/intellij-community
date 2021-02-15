@@ -36,11 +36,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.engine.Suggestion;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.util.text.EditDistance;
 import com.intellij.util.xmlb.annotations.XCollection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.lang.manifest.ManifestBundle;
 import org.jetbrains.lang.manifest.header.HeaderParserRepository;
@@ -55,13 +54,13 @@ import java.util.*;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class MisspelledHeaderInspection extends LocalInspectionTool {
+public final class MisspelledHeaderInspection extends LocalInspectionTool {
   private static final int MAX_SUGGESTIONS = 5;
   private static final int MAX_DISTANCE = 4;
   private static final int TYPO_DISTANCE = 2;
 
   @XCollection(elementName = "header")
-  public final Set<String> CUSTOM_HEADERS = new THashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+  public final Set<String> CUSTOM_HEADERS = CollectionFactory.createCaseInsensitiveStringSet();
 
   private final HeaderParserRepository myRepository;
 

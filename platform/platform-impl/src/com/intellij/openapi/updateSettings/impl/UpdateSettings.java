@@ -3,16 +3,17 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,30 +61,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
 
   public void setShowWhatsNewEditor(boolean value) {
     myState.setShowWhatsNewEditor(value);
-  }
-
-  /** @deprecated obsolete */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public List<String> getEnabledExternalUpdateSources() {
-    return myState.getEnabledExternalComponentSources();
-  }
-
-  /** @deprecated obsolete */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public List<String> getKnownExternalUpdateSources() {
-    return myState.getKnownExternalComponentSources();
-  }
-
-  /** @deprecated obsolete */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public Map<String, String> getExternalUpdateChannels() {
-    return myState.getExternalUpdateChannels();
   }
 
   public long getLastTimeChecked() {
@@ -134,8 +111,8 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   }
 
   public void saveLastCheckedInfo() {
-    myState.setLastTimeChecked(System.currentTimeMillis());
     myState.setLastBuildChecked(ApplicationInfo.getInstance().getBuild().asString());
+    myState.setLastTimeChecked(System.currentTimeMillis());
   }
 
   public boolean isThirdPartyPluginsAllowed() {

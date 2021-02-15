@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath;
 
 import com.intellij.lang.ASTNode;
@@ -22,12 +22,12 @@ public class XPath2ParserDefinition extends XPathParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return XPath2ElementTypes.FILE;
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new XPath2Parser();
   }
 
@@ -76,7 +76,7 @@ public class XPath2ParserDefinition extends XPathParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new XPathFile(viewProvider, XPathFileType.XPATH2);
   }
 }

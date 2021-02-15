@@ -28,6 +28,7 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.UUID;
 
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
@@ -98,13 +99,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
-    addMessage(category, message, url, lineNum, columnNum, null);
-  }
-
-  @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable) {
-    final CompilerMessage msg = myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
+  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable, final Collection<String> moduleNames) {
+    final CompilerMessage msg = myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
     if (msg != null) {
       addToProblemsView(msg);
     }

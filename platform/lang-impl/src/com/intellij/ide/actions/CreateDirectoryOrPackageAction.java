@@ -413,7 +413,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     private void setupRenderers() {
       ColoredListCellRenderer<CompletionItem> itemRenderer =
-        new ColoredListCellRenderer<CompletionItem>() {
+        new ColoredListCellRenderer<>() {
           @Override
           protected void customizeCellRenderer(@NotNull JList<? extends CompletionItem> list,
                                                @Nullable CompletionItem value,

@@ -8,16 +8,9 @@ import java.util.concurrent.CompletableFuture
 /**
  * An entry point class to record in event log an information about feature usages.
  *
- * There are two types of events:
- * 1) Regular events, recorded when they occur, e.g. open project, invoked action;
- * 2) State events, should be recorded regularly by scheduler, e.g. configured libraries/frameworks;
+ * DO NOT use this class directly, implement collectors according to "fus-collectors.md" dev guide.
  *
- * Each event might be recorded together with an additional (context) information, e.g. source and shortcut for action.
- *
- * Note: FeatureUsageCollector API use this class under the hood.
- * Therefore, if you record statistic with FeatureUsageCollector API there's no need to record events in event log manually.
- *
- * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+ * @see com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
  * @see com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
  * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
  */
@@ -34,8 +27,8 @@ object FeatureUsageLogger {
   /**
    * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    */
-  fun log(group: EventLogGroup, action: String) {
-    loggerProvider.logger.logAsync(group, action, false)
+  fun log(group: EventLogGroup, action: String): CompletableFuture<Void> {
+    return loggerProvider.logger.logAsync(group, action, false)
   }
 
   /**

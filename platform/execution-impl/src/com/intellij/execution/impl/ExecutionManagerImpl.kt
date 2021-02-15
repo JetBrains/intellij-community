@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.TextConsoleBuilderFactory
+import com.intellij.execution.impl.ExecutionManagerImpl.Companion.DELEGATED_RUN_PROFILE_KEY
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
 import com.intellij.execution.process.*
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -27,8 +28,8 @@ import com.intellij.internal.statistic.IdeActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
@@ -39,7 +40,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.UIBundle
@@ -47,17 +50,17 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.util.Alarm
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.BorderLayout
 import java.io.OutputStream
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Function
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -66,6 +69,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   companion object {
     val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
+
+    internal val DELEGATED_RUN_PROFILE_KEY = Key.create<RunProfile>("DELEGATED_RUN_PROFILE_KEY")
 
     @JvmField
     val EXECUTION_SESSION_ID_KEY = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
@@ -115,6 +120,14 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     @JvmStatic
     fun getAllDescriptors(project: Project): List<RunContentDescriptor> {
       return project.serviceIfCreated<RunContentManager>()?.allDescriptors ?: emptyList()
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun setDelegatedRunProfile(runProfile: RunProfile, runProfileToDelegate: RunProfile) {
+      if (runProfile !== runProfileToDelegate && runProfile is UserDataHolder) {
+        DELEGATED_RUN_PROFILE_KEY[runProfile] = runProfileToDelegate
+      }
     }
   }
 
@@ -450,7 +463,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     val contentToReuse = environment.contentToReuse
     val runningOfTheSameType = if (configuration != null && !configuration.configuration.isAllowRunningInParallel) {
-      getRunningDescriptors(Condition { configuration === it })
+      getRunningDescriptors(Condition { it.isOfSameType(configuration) })
     }
     else if (isProcessRunning(contentToReuse)) {
       listOf(contentToReuse!!)
@@ -537,13 +550,12 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   }
 
   override fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?> {
-    if (!(environment.runProfile is TargetEnvironmentAwareRunProfile &&
-          Experiments.getInstance().isFeatureEnabled("run.targets"))) {
+    if (!(environment.runProfile is TargetEnvironmentAwareRunProfile)) {
       return resolvedPromise()
     }
 
-    val targetName = (environment.runProfile as TargetEnvironmentAwareRunProfile).defaultTargetName
-    if (targetName == null) {
+    val targetEnvironmentAwareRunProfile = environment.runProfile as TargetEnvironmentAwareRunProfile
+    if (!targetEnvironmentAwareRunProfile.needPrepareTarget()) {
       return resolvedPromise()
     }
 
@@ -554,7 +566,9 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     val component = TargetPrepareComponent(consoleView)
     val buildContentManager = BuildContentManager.getInstance(environment.project)
-    val contentName = ExecutionBundle.message("tab.title.prepare.environment", targetName, environment.runProfile.name)
+    val contentName = targetEnvironmentAwareRunProfile.defaultTargetName?.let {
+      ExecutionBundle.message("tab.title.prepare.environment", it, environment.runProfile.name)
+    } ?: ExecutionBundle.message("tab.title.prepare.target.environment", environment.runProfile.name)
     val toolWindow = buildContentManager.orCreateToolWindow
     val contentManager: ContentManager = toolWindow.contentManager
     val contentImpl = ContentImpl(component, contentName, true)
@@ -586,7 +600,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           @Volatile
           var stopped = false
 
-          override fun addText(text: String, key: Key<*>) {
+          override fun addText(text: @Nls String, key: Key<*>) {
             processHandler.notifyTextAvailable(text, key)
           }
 
@@ -605,7 +619,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       catch (t: Throwable) {
         LOG.warn(t)
         promise.setError(ExecutionBundle.message("message.error.happened.0", t.localizedMessage))
-        processHandler.notifyTextAvailable(t.localizedMessage, ProcessOutputType.STDERR)
+        processHandler.notifyTextAvailable(StringUtil.notNullize(t.localizedMessage), ProcessOutputType.STDERR)
         processHandler.notifyTextAvailable("\n", ProcessOutputType.STDERR)
       }
       finally {
@@ -629,28 +643,71 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         return
       }
 
-      if (((showSettings && runnerAndConfigurationSettings.isEditBeforeRun) || !RunManagerImpl.canRunConfiguration(environment)) && !DumbService.isDumb(project)) {
-        if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
-          return
-        }
-
-        while (!RunManagerImpl.canRunConfiguration(environment)) {
-          val message = ExecutionBundle.message("dialog.message.configuration.still.incorrect.do.you.want.to.edit.it.again")
-          val title = ExecutionBundle.message("dialog.title.change.configuration.settings")
-          if (Messages.showYesNoDialog(project, message, title, CommonBundle.message("button.edit"), ExecutionBundle.message("run.continue.anyway"), Messages.getErrorIcon()) != Messages.YES) {
-            break
-          }
+      if (!DumbService.isDumb(project)) {
+        if (showSettings && runnerAndConfigurationSettings.isEditBeforeRun) {
           if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
             return
           }
+          editConfigurationUntilSuccess(environment, assignNewId)
         }
+        else {
+          ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
+            .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+              if (canRun) {
+                executeConfiguration(environment, environment.runner, assignNewId, this.project, environment.runnerAndConfigurationSettings)
+                return@finishOnUiThread
+              }
 
-        // corresponding runner can be changed after configuration edit
-        runner = ProgramRunner.getRunner(environment.executor.id, runnerAndConfigurationSettings.configuration)
-                 ?: throw ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner.for", environment.runProfile.name))
+              if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+                return@finishOnUiThread
+              }
+              editConfigurationUntilSuccess(environment, assignNewId)
+            }
+            .expireWith(this)
+            .submit(AppExecutorUtil.getAppExecutorService())
+        }
+        return
       }
     }
 
+    executeConfiguration(environment, runner, assignNewId, project, runnerAndConfigurationSettings)
+  }
+
+  private fun editConfigurationUntilSuccess(environment: ExecutionEnvironment, assignNewId: Boolean) {
+    ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
+      .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+        val runAnyway = if (!canRun) {
+          val message = ExecutionBundle.message("dialog.message.configuration.still.incorrect.do.you.want.to.edit.it.again")
+          val title = ExecutionBundle.message("dialog.title.change.configuration.settings")
+          Messages.showYesNoDialog(project, message, title, CommonBundle.message("button.edit"), ExecutionBundle.message("run.continue.anyway"), Messages.getErrorIcon()) != Messages.YES
+        } else true
+        if (canRun || runAnyway) {
+          val runner = ProgramRunner.getRunner(environment.executor.id, environment.runnerAndConfigurationSettings!!.configuration)
+          if (runner == null) {
+            ExecutionUtil.handleExecutionError(environment,
+                                               ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner.for",
+                                                                                          environment.runProfile.name)))
+          }
+          else {
+            executeConfiguration(environment, runner, assignNewId, project, environment.runnerAndConfigurationSettings)
+          }
+          return@finishOnUiThread
+        }
+        if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+          return@finishOnUiThread
+        }
+
+        editConfigurationUntilSuccess(environment, assignNewId)
+      }
+      .expireWith(this)
+      .submit(AppExecutorUtil.getAppExecutorService())
+  }
+
+  private fun executeConfiguration(environment: ExecutionEnvironment,
+                                   runner: @NotNull ProgramRunner<*>,
+                                   assignNewId: Boolean,
+                                   project: @NotNull Project,
+                                   runnerAndConfigurationSettings: @Nullable RunnerAndConfigurationSettings?) {
     try {
       var effectiveEnvironment = environment
       if (runner != effectiveEnvironment.runner) {
@@ -691,20 +748,6 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         false
       }
     })
-  }
-
-  fun getRunning(executorIds: List<String>): Map<String, List<RunnerAndConfigurationSettings>> {
-    val result = HashMap<String, MutableList<RunnerAndConfigurationSettings>>()
-    for (entry in runningConfigurations) {
-      val id = entry.executor.id
-      if (executorIds.contains(id)) {
-        val processHandler = entry.descriptor.processHandler
-        if (processHandler != null && !processHandler.isProcessTerminated && entry.settings != null) {
-          result.computeIfAbsent(id, Function { SmartList() }).add(entry.settings)
-        }
-      }
-    }
-    return result
   }
 
   fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor> {
@@ -749,6 +792,21 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     }
     return result
   }
+}
+
+@ApiStatus.Internal
+fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: RunnerAndConfigurationSettings): Boolean {
+  if (this === runnerAndConfigurationSettings) return true
+  val thisConfiguration = configuration
+  val thatConfiguration = runnerAndConfigurationSettings.configuration
+  if (thisConfiguration === thatConfiguration) return true
+
+  if (thisConfiguration is UserDataHolder) {
+    val originalRunProfile = DELEGATED_RUN_PROFILE_KEY[thisConfiguration] ?: return false
+    if (originalRunProfile === thatConfiguration) return true
+    if (thatConfiguration is UserDataHolder) return originalRunProfile === DELEGATED_RUN_PROFILE_KEY[thatConfiguration]
+  }
+  return false
 }
 
 private fun triggerUsage(environment: ExecutionEnvironment): IdeActivity? {

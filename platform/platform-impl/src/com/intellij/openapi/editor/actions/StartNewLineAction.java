@@ -18,18 +18,14 @@ public class StartNewLineAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return getEnterHandler().isEnabled(editor, caret, dataContext);
     }
 
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       CopyPasteManager.getInstance().stopKillRings();
       if (editor.getDocument().getLineCount() != 0) {
         editor.getSelectionModel().removeSelection();

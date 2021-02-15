@@ -29,42 +29,6 @@ import java.util.Collection;
 public interface Function<Param, Result> {
   Result fun(Param param);
 
-  /**
-   * @deprecated Use {@link Functions#identity()} instead
-   */
-  @Deprecated
-  Function<?,?> ID = new Function.Mono<Object>() {
-    public Object fun(Object o) {
-      return o;
-    }
-
-    @Override
-    public String toString() {
-      return "Function.ID";
-    }
-  };
-
-  /**
-   * @deprecated use {@link FunctionUtil#nullConstant()} instead
-   */
-  @Deprecated
-  Function<?,?> NULL = NullableFunction.NULL;
-
-  /**
-   * @deprecated use {@link Functions#TO_STRING()} instead
-   */
-  @Deprecated
-  Function<?,String> TO_STRING = new Function<Object, String>() {
-    public String fun(Object o) {
-      return String.valueOf(o);
-    }
-
-    @Override
-    public String toString() {
-      return "Function.TO_STRING";
-    }
-  };
-
   interface Mono<T> extends Function<T, T> {}
 
   final class InstanceOf<P, R extends P> implements NullableFunction<P, R> {

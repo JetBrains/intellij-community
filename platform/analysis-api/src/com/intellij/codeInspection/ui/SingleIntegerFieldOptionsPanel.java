@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +54,7 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
         constraints.weightx = 0.0;
         constraints.anchor = GridBagConstraints.BASELINE_LEADING;
         constraints.fill = GridBagConstraints.NONE;
+        label.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
         add(label, constraints);
         constraints.gridx = 1;
         constraints.gridy = 0;

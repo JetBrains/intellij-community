@@ -16,11 +16,13 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.impl.dataRules.GetDataRule;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.ListSelection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public class VcsChangesSelectionRule implements GetDataRule {
   @Nullable
@@ -31,21 +33,16 @@ public class VcsChangesSelectionRule implements GetDataRule {
 
   @Nullable
   public ListSelection<Change> getChangesSelection(@NotNull DataProvider dataProvider) {
-    Change currentChange = VcsDataKeys.CURRENT_CHANGE.getData(dataProvider);
-
     Change[] selectedChanges = VcsDataKeys.SELECTED_CHANGES.getData(dataProvider);
     if (selectedChanges != null) {
-      return ListSelection.create(selectedChanges, currentChange);
+      return ListSelection.createAt(Arrays.asList(selectedChanges), 0);
     }
 
     Change[] changes = VcsDataKeys.CHANGES.getData(dataProvider);
     if (changes != null) {
-      return ListSelection.create(changes, currentChange);
+      return ListSelection.createAt(Arrays.asList(changes), 0);
     }
 
-    if (currentChange != null) {
-      return ListSelection.createSingleton(currentChange);
-    }
     return null;
   }
 }

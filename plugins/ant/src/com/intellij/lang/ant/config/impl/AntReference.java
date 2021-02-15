@@ -20,7 +20,7 @@ public abstract class AntReference {
   @NonNls private static final String NAME_ATTR = "name";
   @NonNls private static final String BUNDLED_ANT_ATTR = "bundledAnt";
 
-  public static final Externalizer<AntReference> EXTERNALIZER = new Externalizer<AntReference>() {
+  public static final Externalizer<AntReference> EXTERNALIZER = new Externalizer<>() {
     @Override
     public AntReference readValue(Element dataElement) {
       if (Boolean.valueOf(dataElement.getAttributeValue(PROJECT_DEFAULT_ATTR)).booleanValue()) return PROJECT_DEFAULT;
@@ -37,7 +37,7 @@ public abstract class AntReference {
       antReference.writeExternal(dataElement);
     }
   };
-  public static final Comparator<AntReference> COMPARATOR = new Comparator<AntReference>() {
+  public static final Comparator<AntReference> COMPARATOR = new Comparator<>() {
     @Override
     public int compare(AntReference reference, AntReference reference1) {
       if (reference.equals(reference1)) return 0;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -14,14 +14,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class ControlFlowAnalyzer extends JavaElementVisitor {
+final class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance(ControlFlowAnalyzer.class);
 
   private final PsiElement myCodeFragment;
@@ -47,11 +46,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private final @NotNull ControlFlowOptions myOptions;
   private final boolean myAssignmentTargetsAreElements;
 
-  private final Stack<TIntArrayList> intArrayPool = new Stack<>();
+  private final Stack<IntArrayList> intArrayPool = new Stack<>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getStartOffset(element)
-  private final Map<PsiElement, TIntArrayList> offsetsAddElementStart = new THashMap<>();
+  private final Map<PsiElement, IntArrayList> offsetsAddElementStart = new HashMap<>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getEndOffset(element)
-  private final Map<PsiElement, TIntArrayList> offsetsAddElementEnd = new THashMap<>();
+  private final Map<PsiElement, IntArrayList> offsetsAddElementEnd = new HashMap<>();
   private final ControlFlowFactory myControlFlowFactory;
   private final List<SubRangeInfo> mySubRanges = new ArrayList<>();
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
@@ -121,10 +120,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private static class StatementStack {
     private final Stack<PsiElement> myStatements = new Stack<>();
-    private final TIntArrayList myAtStart = new TIntArrayList();
+    private final IntArrayList myAtStart = new IntArrayList();
 
     private void popStatement() {
-      myAtStart.remove(myAtStart.size() - 1);
+      myAtStart.removeInt(myAtStart.size() - 1);
       myStatements.pop();
     }
 
@@ -134,7 +133,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     private boolean peekAtStart() {
-      return myAtStart.get(myAtStart.size() - 1) == 1;
+      return myAtStart.getInt(myAtStart.size() - 1) == 1;
     }
 
     private void pushStatement(@NotNull PsiElement statement, boolean atStart) {
@@ -144,24 +143,24 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @NotNull
-  private TIntArrayList getEmptyIntArray() {
+  private IntArrayList getEmptyIntArray() {
     if (intArrayPool.isEmpty()) {
-      return new TIntArrayList(1);
+      return new IntArrayList(1);
     }
-    TIntArrayList list = intArrayPool.pop();
+    IntArrayList list = intArrayPool.pop();
     list.clear();
     return list;
   }
 
-  private void poolIntArray(@NotNull TIntArrayList list) {
+  private void poolIntArray(@NotNull IntArrayList list) {
     intArrayPool.add(list);
   }
 
   // patch instruction currently added to control flow so that its jump offset corrected on getStartOffset(element) or getEndOffset(element)
   //  when corresponding element offset become available
   private void addElementOffsetLater(@NotNull PsiElement element, boolean atStart) {
-    Map<PsiElement, TIntArrayList> offsetsAddElement = atStart ? offsetsAddElementStart : offsetsAddElementEnd;
-    TIntArrayList offsets = offsetsAddElement.get(element);
+    Map<PsiElement, IntArrayList> offsetsAddElement = atStart ? offsetsAddElementStart : offsetsAddElementEnd;
+    IntArrayList offsets = offsetsAddElement.get(element);
     if (offsets == null) {
       offsets = getEmptyIntArray();
       offsetsAddElement.put(element, offsets);
@@ -181,10 +180,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     offsetsAddElementEnd.put(element, null);
   }
 
-  private void patchInstructionOffsets(@Nullable TIntArrayList offsets, int add) {
+  private void patchInstructionOffsets(@Nullable IntArrayList offsets, int add) {
     if (offsets == null) return;
     for (int i = 0; i < offsets.size(); i++) {
-      int offset = offsets.get(i);
+      int offset = offsets.getInt(i);
       BranchingInstruction instruction = (BranchingInstruction)myCurrentFlow.getInstructions().get(offset);
       instruction.offset += add;
       LOG.assertTrue(instruction.offset >= 0);
@@ -194,10 +193,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private ControlFlow cleanup() {
     // make all non patched goto instructions jump to the end of control flow
-    for (TIntArrayList offsets : offsetsAddElementStart.values()) {
+    for (IntArrayList offsets : offsetsAddElementStart.values()) {
       patchInstructionOffsets(offsets, myCurrentFlow.getEndOffset(myCodeFragment));
     }
-    for (TIntArrayList offsets : offsetsAddElementEnd.values()) {
+    for (IntArrayList offsets : offsetsAddElementEnd.values()) {
       patchInstructionOffsets(offsets, myCurrentFlow.getEndOffset(myCodeFragment));
     }
 
@@ -235,8 +234,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           return;
         }
       }
-      if (element instanceof PsiCodeBlock || 
-          element instanceof PsiExpressionStatement && 
+      if (element instanceof PsiCodeBlock ||
+          element instanceof PsiExpressionStatement &&
           ((PsiExpressionStatement)element).getExpression() instanceof PsiAssignmentExpression) {
         return;
       }

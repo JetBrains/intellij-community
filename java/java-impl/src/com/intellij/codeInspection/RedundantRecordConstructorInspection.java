@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -110,7 +109,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
       return new RemoveRedundantCtorSimplifier();
     }
     if (PsiUtil.findReturnStatements(body).length > 0) return null;
-    if (PsiUtil.getLanguageLevel(ctor) != LanguageLevel.JDK_14_PREVIEW && assignedCount != components.length) {
+    if (assignedCount != components.length) {
       return null;
     }
     return new MakeCtorCompactSimplifier();

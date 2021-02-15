@@ -6,21 +6,13 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider;
 import org.editorconfig.Utils;
-import org.editorconfig.core.EditorConfig;
-import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 final class EditorConfigUtf8BomOptionProvider implements Utf8BomOptionProvider {
   @Override
   public boolean shouldAddBOMForNewUtf8File(@NotNull VirtualFile file) {
+    if (!Utils.isApplicableTo(file)) return false;
     Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-    if (project != null) {
-      List<EditorConfig.OutPair> optionsList = SettingsProviderComponent.getInstance().getOutPairs(project, file);
-      String encoding = Utils.configValueForKey(optionsList, ConfigEncodingManager.charsetKey);
-      return ConfigEncodingManager.UTF8_BOM_ENCODING.equals(encoding);
-    }
-    return false;
+    return EditorConfigEncodingCache.getInstance().getUseUtf8Bom(project, file);
   }
 }

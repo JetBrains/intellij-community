@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -9,7 +8,6 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.project.ProjectStoreOwner
@@ -192,9 +190,7 @@ class AutomaticModuleUnloaderTest {
     }
     JDOMUtil.write(rootElement, modulesXmlFile)
     beforeReload()
-    val reloaded = PlatformTestUtil.loadAndOpenProject(Paths.get(project.basePath!!))
-    Disposer.register(disposableRule.disposable, Disposable { ProjectManagerEx.getInstanceEx().forceCloseProject(reloaded) })
-    return reloaded
+    return PlatformTestUtil.loadAndOpenProject(Paths.get(project.basePath!!), disposableRule.disposable)
   }
 
   companion object {

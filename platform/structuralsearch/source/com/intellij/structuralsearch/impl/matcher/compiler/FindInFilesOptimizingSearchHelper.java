@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.project.Project;
@@ -6,10 +6,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.psi.search.UsageSearchContext.*;
@@ -33,8 +33,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     myProject = project;
 
     if (scope instanceof GlobalSearchScope) {
-      filesToScan = new THashSet<>();
-      filesToScan2 = new THashSet<>();
+      filesToScan = new HashSet<>();
+      filesToScan2 = new HashSet<>();
     }
   }
 

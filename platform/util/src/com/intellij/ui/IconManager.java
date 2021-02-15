@@ -32,6 +32,8 @@ public interface IconManager {
     IconManagerHelper.deactivate();
   }
 
+  @NotNull Icon getStubIcon();
+
   @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
 
   /**
@@ -85,8 +87,6 @@ public interface IconManager {
 
   void registerIconLayer(int flagMask, @NotNull Icon icon);
 
-  @NotNull Icon createOverlayIcon(Icon @NotNull ... icons);
-
   @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon);
 }
 
@@ -118,6 +118,11 @@ final class DummyIconManager implements IconManager {
   private DummyIconManager() {
   }
 
+  @Override
+  public @NotNull Icon getStubIcon() {
+    return DummyIcon.INSTANCE;
+  }
+
   @NotNull
   @Override
   public Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
@@ -137,11 +142,6 @@ final class DummyIconManager implements IconManager {
 
   @Override
   public void registerIconLayer(int flagMask, @NotNull Icon icon) {
-  }
-
-  @Override
-  public @NotNull Icon createOverlayIcon(Icon @NotNull ... icons) {
-    return new DummyIcon();
   }
 
   @Override

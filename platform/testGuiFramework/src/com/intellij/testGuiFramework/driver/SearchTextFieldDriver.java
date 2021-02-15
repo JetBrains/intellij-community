@@ -50,7 +50,7 @@ public class SearchTextFieldDriver extends JComponentDriver implements TextDispl
   @RunsInEDT
   @Nullable
   public String textOf(final @NotNull SearchTextField component) {
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected
       @Nullable

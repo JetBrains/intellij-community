@@ -18,6 +18,7 @@ package com.android.tools.idea.gradle.dsl.parser.elements;
 import com.android.tools.idea.gradle.dsl.api.GradleSettingsModel;
 import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel;
 import com.android.tools.idea.gradle.dsl.api.ext.ReferenceTo;
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil;
 import com.android.tools.idea.gradle.dsl.model.CachedValue;
 import com.android.tools.idea.gradle.dsl.model.GradleSettingsModelImpl;
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
@@ -27,8 +28,8 @@ import com.android.tools.idea.gradle.dsl.parser.build.BuildScriptDslElement;
 import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement;
 import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile;
 import com.android.tools.idea.gradle.dsl.parser.files.GradleSettingsFile;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
@@ -43,7 +44,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
-import static com.android.tools.idea.gradle.dsl.GradleUtil.getBaseDirPath;
 import static com.android.tools.idea.gradle.dsl.model.ext.PropertyUtil.followElement;
 import static com.android.tools.idea.gradle.dsl.model.ext.PropertyUtil.isPropertiesElementOrMap;
 import static com.android.tools.idea.gradle.dsl.parser.build.BuildScriptDslElement.BUILDSCRIPT;
@@ -203,12 +203,30 @@ public abstract class GradleDslSimpleExpression extends GradleDslElementImpl imp
   }
 
   @Nullable
-  public GradleDslElement resolveReference(@NotNull String referenceText, boolean resolveWithOrder) {
+  public GradleDslElement resolveExternalSyntaxReference(@NotNull String referenceText, boolean resolveWithOrder) {
     GradleDslElement searchStartElement = this;
     GradleDslParser parser = getDslFile().getParser();
     referenceText = parser.convertReferenceText(searchStartElement, referenceText);
 
-    List<String> referenceTextSegments = Splitter.on('.').trimResults().omitEmptyStrings().splitToList(referenceText);
+    return resolveInternalSyntaxReference(referenceText, resolveWithOrder);
+  }
+
+  @Nullable
+  public GradleDslElement resolveInternalSyntaxReference(@NotNull String referenceText, boolean resolveWithOrder) {
+    GradleDslElement searchStartElement = this;
+    GradleDslParser parser = getDslFile().getParser();
+
+    boolean withinBuildscript = false;
+    GradleDslElement element = this;
+    while (element != null) {
+      element = element.getParent();
+      if (element instanceof BuildScriptDslElement) {
+        withinBuildscript = true;
+        break;
+      }
+    }
+
+    List<String> referenceTextSegments = GradleNameElementUtil.split(referenceText);
     int index = 0;
     int segmentCount = referenceTextSegments.size();
     for (; index < segmentCount; index++) {
@@ -217,7 +235,7 @@ public abstract class GradleDslSimpleExpression extends GradleDslElementImpl imp
       if (dslFile == null) {
         break;
       }
-      // Now lets search in that project build.gradle file.
+      // start the search for our element at the top-level of the Dsl file (but see below for buildscript handling)
       searchStartElement = dslFile;
     }
 
@@ -250,7 +268,8 @@ public abstract class GradleDslSimpleExpression extends GradleDslElementImpl imp
       9. RootProject/build.gradle
     */
 
-    GradleDslElement resolvedElement;
+    GradleDslElement resolvedElement = null;
+    GradleDslFile dslFile = searchStartElement.getDslFile();
     if (index >= segmentCount) {
       // the reference text is fully resolved by now. ex: if the while text itself is "rootProject" etc.
       resolvedElement = searchStartElement;
@@ -258,22 +277,19 @@ public abstract class GradleDslSimpleExpression extends GradleDslElementImpl imp
     else {
       // Search in the file that searchStartElement belongs to.
       referenceTextSegments = referenceTextSegments.subList(index, segmentCount);
-      resolvedElement = resolveReferenceInSameModule(searchStartElement, referenceTextSegments, parser, resolveWithOrder);
+      // if we are resolving in the general context of buildscript { } within the same module, then build code external to the
+      // buildscript block will not yet have run: restrict search to the buildscript element (which should exist)
+      if (dslFile == searchStartElement  && withinBuildscript) {
+        searchStartElement = dslFile.getPropertyElement(BUILDSCRIPT);
+      }
+      if (searchStartElement != null) {
+        resolvedElement = resolveReferenceInSameModule(searchStartElement, referenceTextSegments, parser, resolveWithOrder);
+      }
     }
 
-    GradleDslFile dslFile = searchStartElement.getDslFile();
     if (resolvedElement == null) {
       // Now look in the parent projects ext blocks.
       resolvedElement = resolveReferenceInParentModules(dslFile, referenceTextSegments, parser);
-    }
-
-
-    String fullTextReference = String.join(".", referenceTextSegments);
-    if ("rootDir".equals(fullTextReference)) { // resolve the rootDir reference to project root directory.
-      return new GradleDslGlobalValue(dslFile, getBaseDirPath(dslFile.getProject()).getPath());
-    }
-    if ("projectDir".equals(fullTextReference)) { // resolve the projectDir reference to module directory.
-      return new GradleDslGlobalValue(dslFile, dslFile.getDirectoryPath().getPath());
     }
 
     return resolvedElement;
@@ -403,7 +419,9 @@ public abstract class GradleDslSimpleExpression extends GradleDslElementImpl imp
 
     // If the index matcher doesn't give us anything, just attempt to find the property on the element;
     if (!indexMatcher.find()) {
-      String modelName = converter.modelNameForParent(name, properties);
+      ModelPropertyDescription property = converter.modelDescriptionForParent(name, properties);
+      String modelName = property == null ? name : property.name;
+
       return sameScope
              ? properties.getElementBefore(childElement, modelName, includeSelf)
              : properties.getPropertyElementBefore(childElement, modelName, includeSelf);
@@ -419,7 +437,8 @@ public abstract class GradleDslSimpleExpression extends GradleDslElementImpl imp
     if (elementName == null) {
       return null;
     }
-    String modelName = converter.modelNameForParent(elementName, properties);
+    ModelPropertyDescription property = converter.modelDescriptionForParent(elementName, properties);
+    String modelName = property == null ? elementName : property.name;
 
     GradleDslElement element =
       sameScope
@@ -494,7 +513,7 @@ public abstract class GradleDslSimpleExpression extends GradleDslElementImpl imp
       elementTrace.push(element);
     }
     // Make sure we don't check any nested scope for the element.
-    while (ignoreParentNumber-- > 0 && element != null && !(element instanceof GradleDslFile)) {
+    while (ignoreParentNumber-- > 0 && element != null && !(element instanceof GradleDslFile) && !(element instanceof BuildScriptDslElement)) {
       element = element.getParent();
     }
     while (element != null) {
@@ -552,7 +571,7 @@ public abstract class GradleDslSimpleExpression extends GradleDslElementImpl imp
                                                                @NotNull List<String> referenceText,
                                                                GradleDslNameConverter converter,
                                                                boolean resolveWithOrder) {
-    // Try to resolve in the build.gradle file the startElement is belongs to.
+    // Try to resolve in the build.gradle file the startElement belongs to.
     GradleDslElement element =
       resolveReferenceOnElement(startElement, referenceText, converter, resolveWithOrder, true, startElement.getNameElement().fullNameParts().size());
     if (element != null) {

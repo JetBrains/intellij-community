@@ -121,7 +121,7 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
 
       EditorColorsScheme colorsScheme = editor.getColorsScheme();
       ColoredListCellRenderer<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> renderer =
-        new ColoredListCellRenderer<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>>() {
+        new ColoredListCellRenderer<>() {
           @Override
           protected void customizeCellRenderer(@NotNull JList<? extends Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> list,
                                                Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> value,
@@ -141,8 +141,12 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
               saCur = !last ? REGULAR_ATTRIBUTES : selected ? saSelected : saOpaque;
               if (last) append(" ", saCur);
               append(split.get(i), saCur);
-              if (last) append(" ", saCur);
-              else append(" > ", GRAYED_ATTRIBUTES);
+              if (last) {
+                append(" ", saCur);
+              }
+              else {
+                append(" > ", GRAYED_ATTRIBUTES);
+              }
             }
             Color stripeColor = ta.getErrorStripeColor();
             boolean addStripe = stripeColor != null && stripeColor != saCur.getBgColor();

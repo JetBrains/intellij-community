@@ -41,7 +41,7 @@ internal class RecentProjectIconHelper {
 
   private val projectIcons = HashMap<String, MyIcon>()
 
-  fun getProjectIcon(path: @SystemIndependent String, isDark: Boolean): Icon {
+  fun getProjectIcon(path: @SystemIndependent String, isDark: Boolean, generateFromName: Boolean = false): Icon {
     val icon = projectIcons.get(path)
     if (icon != null) {
       return icon.icon
@@ -50,7 +50,12 @@ internal class RecentProjectIconHelper {
       return EmptyIcon.ICON_16
     }
     return IconDeferrer.getInstance().defer(EmptyIcon.ICON_16, Pair(path, isDark)) {
-      calculateIcon(it.first, it.second)
+      val calculateIcon = calculateIcon(it.first, it.second)
+      if (calculateIcon == null && generateFromName) {
+        val name = RecentProjectsManagerBase.instanceEx.getProjectName(path)
+        AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name), 20)
+      }
+      else calculateIcon
     }
   }
 

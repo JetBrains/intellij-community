@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
@@ -26,7 +27,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -45,7 +45,7 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   @Override
@@ -66,12 +66,12 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
   public void testSubstitution() { doTest(true); }
 
   public void testImmediatelyAfterRBrace() {    // IDEADEV-28811
-    CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
   }
 
   public void testBoundCommentsKeepsBlankLine() {
-    CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCommonSettings(JavaLanguage.INSTANCE).BLANK_LINES_AFTER_CLASS_HEADER = 1;
+    CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).BLANK_LINES_AFTER_CLASS_HEADER = 1;
     doTest();
   }
 

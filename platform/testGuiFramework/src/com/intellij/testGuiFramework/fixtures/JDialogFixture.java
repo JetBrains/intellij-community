@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -26,7 +12,6 @@ import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.util.Collection;
 
@@ -71,7 +56,7 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
 
   @NotNull
   public static JDialogFixture findByPartOfTitle(@NotNull Robot robot, String partTitle, Timeout timeout) {
-    GenericTypeMatcher<JDialog> matcher = new GenericTypeMatcher<JDialog>(JDialog.class) {
+    GenericTypeMatcher<JDialog> matcher = new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return dialog.getTitle().contains(partTitle) && dialog.isShowing();
@@ -92,9 +77,9 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
 
   public EditorFixture getEditor() {
     EditorComponentImpl editor = GuiTestUtil.INSTANCE
-      .waitUntilFound(robot(), this.target(), new GenericTypeMatcher<EditorComponentImpl>(EditorComponentImpl.class, true) {
+      .waitUntilFound(robot(), this.target(), new GenericTypeMatcher<>(EditorComponentImpl.class, true) {
         @Override
-        protected boolean isMatching(@Nonnull EditorComponentImpl component) {
+        protected boolean isMatching(@NotNull EditorComponentImpl component) {
           return true;
         }
       });
@@ -102,7 +87,7 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
   }
 
   private static GenericTypeMatcher<JDialog> getMatcher(String title) {
-    return new GenericTypeMatcher<JDialog>(JDialog.class) {
+    return new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return title.equals(dialog.getTitle()) && dialog.isShowing();

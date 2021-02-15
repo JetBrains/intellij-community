@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.JavaCompilingVisitor;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.FormalArgTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
@@ -41,7 +42,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +53,7 @@ import java.util.stream.Collectors;
 /**
  * @author Eugene.Kudelevsky
  */
-public class JavaStructuralSearchProfile extends StructuralSearchProfile {
-
+public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static final Key<Map<String, ParameterInfo>> PARAMETER_CONTEXT = new Key<>("PARAMETER_CONTEXT");
   private static final Key<Integer> PARAMETER_LENGTH = new Key<>("PARAMETER_LENGTH");
 
@@ -355,7 +354,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     else if (context == PatternTreeContext.Expression) {
       final PsiExpressionCodeFragment fragment =
         JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, null, null, physical);
-      return new PsiElement[] {fragment.getExpression()};
+      final PsiExpression expression = fragment.getExpression();
+      return (expression == null) ? PsiElement.EMPTY_ARRAY : new PsiElement[] {expression};
     }
     else {
       return new PsiElement[] {PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", JavaFileType.INSTANCE, text)};
@@ -534,6 +534,19 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         }
       }
     }
+    else if (parent instanceof PsiReferenceParameterList && grandParent instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement greatGrandParent = grandParent.getParent();
+      if (greatGrandParent instanceof PsiTypeElement) {
+        final PsiElement greatGreatGrandParent = greatGrandParent.getParent();
+        if (greatGreatGrandParent instanceof PsiDeclarationStatement &&
+            PsiTreeUtil.skipWhitespacesAndCommentsBackward(greatGreatGrandParent) == null &&
+            PsiTreeUtil.skipWhitespacesAndCommentsForward(greatGreatGrandParent) == null &&
+            JavaPsiBundle.message("expected.gt.or.comma").equals(description)) {
+          // probably less-than expression, not unfinished generic variable declaration e.g. List<String
+          return false;
+        }
+      }
+    }
     return true;
   }
 
@@ -554,36 +567,36 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final LanguageFileType fileType = matchOptions.getFileType();
     final Language dialect = matchOptions.getDialect();
     final PatternContext patternContext = matchOptions.getPatternContext();
-    final PsiElement[] statements =
-      createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.Block, fileType, dialect, patternContext.getId(), project, false);
-    final boolean searchIsExpression = statements.length == 1 && statements[0].getLastChild() instanceof PsiErrorElement;
+    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, false);
+    final PsiElement targetNode = compiledPattern.getTargetNode();
+    final boolean searchIsExpression = targetNode != null
+                                       ? getPresentableElement(targetNode) instanceof PsiExpression
+                                       : isExpressionTemplate(compiledPattern.getVariableNodes(Configuration.CONTEXT_VAR_NAME));
 
-    final PsiElement[] statements2 =
+    final PsiElement[] statements =
       createPatternTree(options.getReplacement(), PatternTreeContext.Block, fileType, dialect, patternContext.getId(), project, false);
-    final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
+    final boolean replaceIsExpression = isExpressionTemplate(Arrays.asList(statements));
 
     final ValidatingVisitor visitor = new ValidatingVisitor();
-    for (PsiElement statement : statements2) {
+    for (PsiElement statement : statements) {
       statement.accept(visitor);
     }
 
-    if (searchIsExpression && statements[0].getFirstChild() instanceof PsiModifierList && statements2.length == 0) {
-      return;
-    }
-    boolean targetFound = false;
-    for (final String name : matchOptions.getVariableConstraintNames()) {
-      final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
-      if (constraint.isPartOfSearchResults() && !Configuration.CONTEXT_VAR_NAME.equals(constraint.getName())) {
-        targetFound = true;
-        break;
-      }
-    }
-    if (!targetFound && searchIsExpression != replaceIsExpression) {
+    if (searchIsExpression != replaceIsExpression) {
       throw new UnsupportedPatternException(
         searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
         SSRBundle.message("search.template.is.not.expression.error.message")
       );
     }
+  }
+
+  private static boolean isExpressionTemplate(List<PsiElement> elements) {
+    if (elements.size() != 1) {
+      return false;
+    }
+    final PsiElement element = elements.get(0);
+    return element instanceof PsiExpression ||
+           element instanceof PsiExpressionStatement && element.getLastChild() instanceof PsiErrorElement;
   }
 
   class ValidatingVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -659,7 +672,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         final ParameterInfo nameInfo = builder.findParameterization(nameIdentifier);
         if (nameInfo == null) return;
         nameInfo.setArgumentContext(false);
-        final THashMap<String, ParameterInfo> infos = new THashMap<>();
+        final Map<String, ParameterInfo> infos = new HashMap<>();
         infos.put(nameInfo.getName(), nameInfo);
         nameInfo.putUserData(PARAMETER_CONTEXT, infos);
         nameInfo.setElement(element);

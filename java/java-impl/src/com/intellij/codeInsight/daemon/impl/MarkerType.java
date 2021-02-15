@@ -29,7 +29,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,14 +42,6 @@ public class MarkerType {
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
   @NotNull private final String myDebugName;
-
-  /**
-   * @deprecated use {@link #MarkerType(String, Function, LineMarkerNavigator)} instead
-   */
-  @Deprecated
-  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
-    this("Unknown", tooltip, navigator);
-  }
 
   public MarkerType(@NotNull String debugName, @NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
@@ -147,7 +138,7 @@ public class MarkerType {
 
   @NotNull
   private static <E extends PsiElement> PsiElementProcessor.CollectElementsWithLimit<E> getProcessor(int limit, boolean set) {
-    return set ? new PsiElementProcessor.CollectElementsWithLimit<>(limit, new THashSet<>())
+    return set ? new PsiElementProcessor.CollectElementsWithLimit<>(limit, new HashSet<>())
                : new PsiElementProcessor.CollectElementsWithLimit<>(limit);
   }
 

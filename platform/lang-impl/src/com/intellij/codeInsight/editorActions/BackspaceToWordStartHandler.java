@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -29,7 +30,7 @@ public class BackspaceToWordStartHandler extends BackspaceHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (!handleBackspace(editor, caret, dataContext, true)) {
       myOriginalHandler.execute(editor, caret, dataContext);
     }

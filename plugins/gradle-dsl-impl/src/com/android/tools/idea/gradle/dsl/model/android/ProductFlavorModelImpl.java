@@ -34,6 +34,8 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpressionList;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpressionMap;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +47,7 @@ import static com.android.tools.idea.gradle.dsl.api.ext.PropertyType.REGULAR;
 import static com.android.tools.idea.gradle.dsl.parser.android.productFlavors.ExternalNativeBuildOptionsDslElement.EXTERNAL_NATIVE_BUILD_OPTIONS;
 import static com.android.tools.idea.gradle.dsl.parser.android.productFlavors.NdkOptionsDslElement.NDK_OPTIONS;
 import static com.android.tools.idea.gradle.dsl.parser.android.productFlavors.VectorDrawablesOptionsDslElement.VECTOR_DRAWABLES_OPTIONS;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.OTHER;
 
 public final class ProductFlavorModelImpl extends FlavorTypeModelImpl implements ProductFlavorModel {
   /**
@@ -127,9 +130,10 @@ public final class ProductFlavorModelImpl extends FlavorTypeModelImpl implements
   @NotNull
   @Override
   public ResolvedPropertyModel addMissingDimensionStrategy(@NotNull String dimension, @NotNull Object... fallbacks) {
-    GradleDslExpressionList list = new GradleDslExpressionList(myDslElement, GradleNameElement.create(MISSING_DIMENSION_STRATEGY), false);
+    GradleDslExpressionList list = new GradleDslExpressionList(myDslElement, GradleNameElement.create("missingDimensionStrategy"), false);
     myDslElement.setNewElement(list);
     list.setElementType(REGULAR);
+    list.setModelEffect(new ModelEffectDescription(new ModelPropertyDescription(MISSING_DIMENSION_STRATEGY), OTHER));
     ResolvedPropertyModel model = GradlePropertyModelBuilder.create(list).buildResolved();
     model.addListValue().setValue(dimension);
     for (Object fallback : fallbacks) {

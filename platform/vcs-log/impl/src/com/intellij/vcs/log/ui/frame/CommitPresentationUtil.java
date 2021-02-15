@@ -94,7 +94,7 @@ public final class CommitPresentationUtil {
   @NlsSafe
   private static String replaceHashes(@NotNull @NlsSafe String s, @NotNull Set<@NlsSafe String> resolvedHashes) {
     Matcher matcher = HASH_PATTERN.matcher(s);
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
     while (matcher.find()) {
       //noinspection HardCodedStringLiteral

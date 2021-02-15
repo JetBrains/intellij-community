@@ -102,7 +102,7 @@ public final class TempFiles {
 
   @NotNull
   public VirtualFile createVFile(@NotNull VirtualFile parentDir, @NotNull String name, @NotNull String text) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<>() {
       @Override
       public VirtualFile compute() {
         try {

@@ -1,20 +1,22 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.tokenizer.*;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 
-public class SpellCheckingInspection extends LocalInspectionTool {
+public final class SpellCheckingInspection extends LocalInspectionTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
 
   @Override
@@ -101,6 +103,11 @@ public class SpellCheckingInspection extends LocalInspectionTool {
           }
         }
 
+        PsiFile containingFile = element.getContainingFile();
+        if (containingFile != null && Boolean.TRUE.equals(containingFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION))) {
+          return;
+        }
+
         tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)));
       }
     };
@@ -149,7 +156,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
                                      false, textRange, onTheFly, onTheFly);
   }
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean processCode = true;
   public boolean processLiterals = true;
   public boolean processComments = true;
@@ -165,8 +172,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return panel;
   }
 
-  private static class MyTokenConsumer extends TokenConsumer implements Consumer<TextRange> {
-    private final Set<String> myAlreadyChecked = new THashSet<>();
+  private static final class MyTokenConsumer extends TokenConsumer implements Consumer<TextRange> {
+    private final Set<String> myAlreadyChecked = CollectionFactory.createSmallMemoryFootprintSet();
     private final SpellCheckerManager myManager;
     private final ProblemsHolder myHolder;
     private final NamesValidator myNamesValidator;

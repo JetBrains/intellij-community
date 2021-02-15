@@ -6,7 +6,6 @@ import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LocalTimeCounter;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * In-memory implementation of {@link VirtualFile}.
@@ -62,7 +62,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     super(name, null, LocalTimeCounter.currentTime());
     myContent = text;
     setLanguage(language);
-    setCharset(CharsetToolkit.UTF8_CHARSET);
+    setCharset(StandardCharsets.UTF_8);
   }
 
   public Language getLanguage() {
@@ -79,13 +79,12 @@ public class LightVirtualFile extends LightVirtualFileBase {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     return VfsUtilCore.byteStreamSkippingBOM(contentsToByteArray(), this);
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     assertWritable();
     return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
       @Override
@@ -107,7 +106,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
   public byte @NotNull [] contentsToByteArray() throws IOException {
     final Charset charset = getCharset();
     final String s = getContent().toString();
-    return s.getBytes(charset.name());
+    return s.getBytes(charset);
   }
 
   public void setContent(Object requestor, @NotNull CharSequence content, boolean fireEvent) {
@@ -116,8 +115,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     setModificationStamp(LocalTimeCounter.currentTime());
   }
 
-  @NotNull
-  public CharSequence getContent() {
+  public @NotNull CharSequence getContent() {
     return myContent;
   }
 

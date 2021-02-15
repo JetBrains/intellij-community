@@ -3,24 +3,19 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promises;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 final class TrackedEdtActivityService {
-  private final Project myProject;
-  private volatile ModalityState myDumbStartModality;
-
   private final BlockingQueue<TrackedEdtActivity> myTrackedEdtActivities = new LinkedBlockingQueue<>();
+  private final @NotNull Project myProject;
+
+  private volatile ModalityState myDumbStartModality;
 
   TrackedEdtActivityService(@NotNull Project project) {
     myProject = project;
@@ -33,43 +28,22 @@ final class TrackedEdtActivityService {
     }
   }
 
-  private void invokeLater(@NotNull Runnable action) {
-    new TrackedEdtActivity(action).invokeLater();
+  void invokeLaterIfProjectNotDisposed(@NotNull Runnable runnable) {
+    new TrackedEdtActivity(runnable).invokeLaterWithModality(ModalityState.defaultModalityState());
   }
 
-  void invokeLaterIfProjectNotDisposed(@NotNull Runnable action) {
-    new TrackedEdtActivity(action).invokeLaterIfProjectNotDisposed();
+  void invokeLaterAfterProjectInitialized(@NotNull Runnable runnable) {
+    TrackedEdtActivity activity = new TrackedEdtActivity(runnable);
+    StartupManager.getInstance(myProject)
+      .runAfterOpened(() -> activity.invokeLaterWithModality(myDumbStartModality));
   }
 
-  void invokeLaterAfterProjectInitialized(@NotNull Runnable action) {
-    new TrackedEdtActivity(action).invokeLaterAfterProjectInitialized();
+  void submitTransaction(@NotNull Runnable runnable) {
+    new TrackedEdtActivity(runnable).invokeLaterWithModality(ModalityState.NON_MODAL);
   }
 
-  public void setDumbStartModality(@NotNull ModalityState modality) {
+  void setDumbStartModality(@NotNull ModalityState modality) {
     myDumbStartModality = modality;
-  }
-
-  public <T> T computeInEdt(@NotNull Producer<T> task) {
-    AsyncPromise<T> promise = new AsyncPromise<>();
-
-    invokeLater(() -> {
-      if (myProject.isDisposed()) {
-        promise.setError(new ProcessCanceledException());
-        return;
-      }
-      Promises.compute(promise, task::produce);
-    });
-
-    try {
-      return promise.get();
-    }
-    catch (Throwable e) {
-      Throwable cause = e.getCause();
-      if (!(cause instanceof ProcessCanceledException)) {
-        ExceptionUtil.rethrowAllAsUnchecked(cause);
-      }
-      return null;
-    }
   }
 
   private class TrackedEdtActivity implements Runnable {
@@ -80,18 +54,10 @@ final class TrackedEdtActivityService {
       myTrackedEdtActivities.add(this);
     }
 
-    void invokeLater() {
-      ApplicationManager.getApplication().invokeLater(this, getActivityExpirationCondition());
-    }
-
-    void invokeLaterIfProjectNotDisposed() {
-      ApplicationManager.getApplication().invokeLater(this, getProjectActivityExpirationCondition());
-    }
-
-    void invokeLaterAfterProjectInitialized() {
-      StartupManager.getInstance(myProject).runAfterOpened(() -> {
-        ApplicationManager.getApplication().invokeLater(this, myDumbStartModality, getProjectActivityExpirationCondition());
-      });
+    void invokeLaterWithModality(@NotNull ModalityState modalityState) {
+      ApplicationManager.getApplication().invokeLater(this,
+                                                      modalityState,
+                                                      getProjectActivityExpirationCondition());
     }
 
     @Override
@@ -100,14 +66,9 @@ final class TrackedEdtActivityService {
       myRunnable.run();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private @NotNull Condition getProjectActivityExpirationCondition() {
-      return Conditions.or((Condition)myProject.getDisposed(), (Condition)getActivityExpirationCondition());
-    }
-
-    @NotNull
-    Condition<?> getActivityExpirationCondition() {
-      return __ -> !myTrackedEdtActivities.contains(this);
+    private @NotNull Condition<?> getProjectActivityExpirationCondition() {
+      return Conditions.or(myProject.getDisposed(),
+                           __ -> !myTrackedEdtActivities.contains(this));
     }
   }
 }

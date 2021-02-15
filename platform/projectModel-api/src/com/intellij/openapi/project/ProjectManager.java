@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.messages.Topic;
 import org.jdom.JDOMException;
@@ -18,7 +17,7 @@ import java.nio.file.Path;
 @ApiStatus.NonExtendable
 public abstract class ProjectManager {
   @Topic.AppLevel
-  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class);
+  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**
    * @return {@code ProjectManager} instance
@@ -38,12 +37,6 @@ public abstract class ProjectManager {
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
 
   public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
-
-  /**
-   * @deprecated Use {@link #TOPIC} instead
-   */
-  @Deprecated
-  public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * @deprecated Use {@link #TOPIC} instead

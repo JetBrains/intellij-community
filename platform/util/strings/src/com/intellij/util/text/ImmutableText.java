@@ -29,7 +29,6 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -63,12 +62,13 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   /**
    * Holds the mask used to ensure a block boundary cesures.
    */
-  private static final int BLOCK_MASK = ~(BLOCK_SIZE - 1);
+  private static final int BLOCK_MASK = -BLOCK_SIZE;
 
   // visible for tests
-  final Node myNode;
+  // Here (String | CompositeNode | ByteArrayCharSequence) is stored
+  final CharSequence myNode;
 
-  private ImmutableText(Node node) {
+  private ImmutableText(CharSequence node) {
     myNode = node;
   }
 
@@ -80,22 +80,18 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    */
   static ImmutableText valueOf(@NotNull Object obj) {
     if (obj instanceof ImmutableText) return (ImmutableText)obj;
-    if (obj instanceof CharSequence) return ((CharSequence)obj).length() == 0 ? EMPTY : valueOf((CharSequence)obj);
+    if (obj instanceof CharSequence) return valueOf((CharSequence)obj);
     return valueOf(String.valueOf(obj));
   }
 
   private static ImmutableText valueOf(@NotNull CharSequence str) {
-    return new ImmutableText(createLeafNode(str));
-  }
-
-  private static LeafNode createLeafNode(@NotNull CharSequence str) {
-    byte[] bytes = ByteArrayCharSequence.toBytesIfPossible(str);
-    if (bytes != null) {
-      return new Leaf8BitNode(bytes);
+    if (str instanceof ByteArrayCharSequence) {
+      return new ImmutableText(str);
     }
-    char[] chars = new char[str.length()];
-    CharArrayUtil.getChars(str, chars, 0, 0, str.length());
-    return new WideLeafNode(chars);
+    if (str.length() == 0) {
+      return EMPTY;
+    }
+    return new ImmutableText(str.toString());
   }
 
   /**
@@ -103,26 +99,26 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    * modification-friendly as it disallows slightly changed texts to retain most of the internal structure of the
    * original document. Whoever retains old non-chunked version will use more memory than really needed.
    *
-   * @return a copy of this text better prepared for small modifications to fully enable structure-sharing capabilities
+   * @return a copy of the myNode better prepared for small modifications to fully enable structure-sharing capabilities
    */
-  private ImmutableText ensureChunked() {
-    if (length() > BLOCK_SIZE && myNode instanceof LeafNode) {
-      return new ImmutableText(nodeOf((LeafNode)myNode, 0, length()));
+  private CharSequence ensureChunked() {
+    if (length() > BLOCK_SIZE && !(myNode instanceof CompositeNode)) {
+      return nodeOf(myNode, 0, length());
     }
-    return this;
+    return myNode;
   }
 
-  private static Node nodeOf(@NotNull LeafNode node, int offset, int length) {
+  private static CharSequence nodeOf(@NotNull CharSequence node, int offset, int length) {
     if (length <= BLOCK_SIZE) {
-      return node.subNode(offset, offset+length);
+      // Use toString to avoid referencing the original byte[] array in case if node is ByteArrayCharSequence
+      return node.subSequence(offset, offset + length).toString();
     }
     // Splits on a block boundary.
     int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;
     return new CompositeNode(nodeOf(node, offset, half), nodeOf(node, offset + half, length - half));
   }
 
-  private static final LeafNode EMPTY_NODE = new Leaf8BitNode(ArrayUtilRt.EMPTY_BYTE_ARRAY);
-  private static final ImmutableText EMPTY = new ImmutableText(EMPTY_NODE);
+  private static final ImmutableText EMPTY = new ImmutableText("");
 
   /**
    * Returns the length of this text.
@@ -144,7 +140,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    * @return {@code this + that}
    */
   private ImmutableText concat(ImmutableText that) {
-    return that.length() == 0 ? this : length() == 0 ? that : new ImmutableText(concatNodes(ensureChunked().myNode, that.ensureChunked().myNode));
+    return that.length() == 0 ? this : length() == 0 ? that : new ImmutableText(concatNodes(ensureChunked(), that.ensureChunked()));
   }
 
   @Override
@@ -162,6 +158,16 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    */
   private ImmutableText subtext(int start) {
     return subtext(start, length());
+  }
+
+  @Override
+  public ImmutableCharSequence replace(int start, int end, @NotNull CharSequence seq) {
+    if (start == end) return insert(start, seq);
+    if (seq.length() == 0) return delete(start, end);
+    if (start > end) {
+      throw new IndexOutOfBoundsException();
+    }
+    return subtext(0, start).concat(valueOf(seq)).concat(subtext(end));
   }
 
   @Override
@@ -233,7 +239,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   private InnerLeaf findLeaf(int index) {
     if (index < 0) throw outOfRange(index);
 
-    Node node = myNode;
+    CharSequence node = myNode;
     int nodeLength = node.length();
 
     int offset = 0;
@@ -241,8 +247,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
       if (index >= nodeLength) {
         throw outOfRange(index);
       }
-      if (node instanceof LeafNode) {
-        return new InnerLeaf((LeafNode)node, offset, offset + nodeLength);
+      if (!(node instanceof CompositeNode)) {
+        return new InnerLeaf(node, offset, offset + nodeLength);
       }
       CompositeNode composite = (CompositeNode)node;
       int headLength = composite.head.length();
@@ -264,11 +270,11 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   }
 
   private static final class InnerLeaf {
-    final LeafNode leafNode;
+    final CharSequence leafNode;
     final int start;
     final int end;
 
-    private InnerLeaf(@NotNull LeafNode leafNode, int start, int end) {
+    private InnerLeaf(@NotNull CharSequence leafNode, int start, int end) {
       this.leafNode = leafNode;
       this.start = start;
       this.end = end;
@@ -296,11 +302,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     if (start == end) {
       return EMPTY;
     }
-    if (end - start > BLOCK_SIZE) {
-      ensureChunked();
-    }
 
-    return new ImmutableText(myNode.subNode(start, end));
+    return new ImmutableText(myNode.subSequence(start, end));
   }
 
   /**
@@ -316,7 +319,19 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    */
   @Override
   public void getChars(int start, int end, char @NotNull [] dest, int destPos) {
-    myNode.getChars(start, end, dest, destPos);
+    getChars(myNode, start, end, dest, destPos);
+  }
+
+  private static void getChars(CharSequence cs, int start, int end, char @NotNull [] dest, int destPos) {
+    if (cs instanceof String) {
+      ((String)cs).getChars(start, end, dest, destPos);
+    }
+    else if (cs instanceof ByteArrayCharSequence) {
+      ((ByteArrayCharSequence)cs).getChars(start, end, dest, destPos);
+    }
+    else {
+      ((CompositeNode)cs).getChars(start, end, dest, destPos);
+    }
   }
 
   /**
@@ -330,37 +345,20 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     return myNode.toString();
   }
 
-  abstract static class Node implements CharSequence {
-    abstract void getChars(int start, int end, char @NotNull [] dest, int destPos);
-    abstract Node subNode(int start, int end);
-    @NotNull
-    @Override
-    public String toString() {
-      int len = length();
-      char[] data = new char[len];
-      getChars(0, len, data, 0);
-      return StringFactory.createShared(data);
-    }
-    @Override
-    public CharSequence subSequence(int start, int end) {
-      return subNode(start, end);
-    }
-  }
-  private abstract static class LeafNode extends Node {
-  }
-
   @NotNull
-  private static Node concatNodes(@NotNull Node node1, @NotNull Node node2) {
+  private static CharSequence concatNodes(@NotNull CharSequence node1, @NotNull CharSequence node2) {
     // All Text instances are maintained balanced:
     //   (head < tail * 2) & (tail < head * 2)
     final int length = node1.length() + node2.length();
     if (length <= BLOCK_SIZE) { // Merges to primitive.
-      return createLeafNode(new MergingCharSequence(node1, node2));
+      // module is still targeted to Java 8, so plus-concatenation is compiled via StringBuilder
+      // here concat() looks preferred
+      return node1.toString().concat(node2.toString());
     }
 
     // Returns a composite.
-    Node head = node1;
-    Node tail = node2;
+    CharSequence head = node1;
+    CharSequence tail = node2;
 
     if (shouldRebalance(head, tail)) {
       // head too small, returns (head + tail/2) + (tail/2)
@@ -389,98 +387,16 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     return new CompositeNode(head, tail);
   }
 
-  private static boolean shouldRebalance(Node shorter, Node longer) {
+  private static boolean shouldRebalance(CharSequence shorter, CharSequence longer) {
     return (shorter.length() << 1) < longer.length() && longer instanceof CompositeNode;
   }
 
-  private static class WideLeafNode extends LeafNode {
-    private final char[] data;
-
-    WideLeafNode(char @NotNull [] data) {
-      this.data = data;
-    }
-
-    @Override
-    public int length() {
-      return data.length;
-    }
-
-    @Override
-    void getChars(int start, int end, char @NotNull [] dest, int destPos) {
-      if (start < 0 || end > length() || start > end) {
-        throw new IndexOutOfBoundsException();
-      }
-      System.arraycopy(data, start, dest, destPos, end - start);
-    }
-
-    @Override
-    Node subNode(int start, int end) {
-      if (start == 0 && end == length()) {
-        return this;
-      }
-      return createLeafNode(new CharArrayCharSequence(data, start, end));
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-      return StringFactory.createShared(data);
-    }
-
-    @Override
-    public char charAt(int index) {
-      return data[index];
-    }
-  }
-
-  private static class Leaf8BitNode extends LeafNode {
-    private final byte[] data;
-    Leaf8BitNode(byte @NotNull [] data) {
-      this.data = data;
-    }
-
-    @Override
-    public int length() {
-      return data.length;
-    }
-
-    @Override
-    void getChars(int start, int end, char @NotNull [] dest, int destPos) {
-      if (start < 0 || end > length() || start > end) {
-        throw new IndexOutOfBoundsException();
-      }
-      for (int i=start;i<end;i++) {
-        dest[destPos++] = byteToChar(data[i]);
-      }
-    }
-
-    @Override
-    LeafNode subNode(int start, int end) {
-      if (start == 0 && end == length()) {
-        return this;
-      }
-      int length = end - start;
-      byte[] chars = new byte[length];
-      System.arraycopy(data, start, chars, 0, length);
-      return new Leaf8BitNode(chars);
-    }
-
-    @Override
-    public char charAt(int index) {
-      return byteToChar(data[index]);
-    }
-
-    private static char byteToChar(byte b) {
-      return (char)(b & 0xff);
-    }
-  }
-
-  static class CompositeNode extends Node {
+  static final class CompositeNode implements CharSequence {
     final int count;
-    final Node head;
-    final Node tail;
+    final CharSequence head;
+    final CharSequence tail;
 
-    CompositeNode(Node head, Node tail) {
+    CompositeNode(CharSequence head, CharSequence tail) {
       count = head.length() + tail.length();
       this.head = head;
       this.tail = tail;
@@ -497,59 +413,75 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
       return index < headLength ? head.charAt(index) : tail.charAt(index - headLength);
     }
 
-    Node rightRotation() {
+    CompositeNode rightRotation() {
       // See: http://en.wikipedia.org/wiki/Tree_rotation
-      Node P = this.head;
+      CharSequence P = this.head;
       if (!(P instanceof CompositeNode)) {
         return this; // Head not a composite, cannot rotate.
       }
-      Node A = ((CompositeNode)P).head;
-      Node B = ((CompositeNode)P).tail;
-      Node C = this.tail;
+      CharSequence A = ((CompositeNode)P).head;
+      CharSequence B = ((CompositeNode)P).tail;
+      //noinspection UnnecessaryLocalVariable
+      CharSequence C = this.tail;
       return new CompositeNode(A, new CompositeNode(B, C));
     }
 
-    Node leftRotation() {
+    CompositeNode leftRotation() {
       // See: http://en.wikipedia.org/wiki/Tree_rotation
-      Node Q = this.tail;
+      CharSequence Q = this.tail;
       if (!(Q instanceof CompositeNode)) {
         return this; // Tail not a composite, cannot rotate.
       }
-      Node B = ((CompositeNode)Q).head;
-      Node C = ((CompositeNode)Q).tail;
-      Node A = this.head;
+      CharSequence B = ((CompositeNode)Q).head;
+      CharSequence C = ((CompositeNode)Q).tail;
+      //noinspection UnnecessaryLocalVariable
+      CharSequence A = this.head;
       return new CompositeNode(new CompositeNode(A, B), C);
     }
 
-    @Override
     void getChars(int start, int end, char @NotNull [] dest, int destPos) {
       final int cesure = head.length();
       if (end <= cesure) {
-        head.getChars(start, end, dest, destPos);
+        ImmutableText.getChars(head, start, end, dest, destPos);
       }
       else if (start >= cesure) {
-        tail.getChars(start - cesure, end - cesure, dest, destPos);
+        ImmutableText.getChars(tail, start - cesure, end - cesure, dest, destPos);
       }
       else { // Overlaps head and tail.
-        head.getChars(start, cesure, dest, destPos);
-        tail.getChars(0, end - cesure, dest, destPos + cesure - start);
+        ImmutableText.getChars(head, start, cesure, dest, destPos);
+        ImmutableText.getChars(tail, 0, end - cesure, dest, destPos + cesure - start);
       }
     }
 
     @Override
-    Node subNode(int start, int end) {
+    public CharSequence subSequence(int start, int end) {
       final int cesure = head.length();
       if (end <= cesure) {
-        return head.subNode(start, end);
+        return head.subSequence(start, end);
       }
       if (start >= cesure) {
-        return tail.subNode(start - cesure, end - cesure);
+        return tail.subSequence(start - cesure, end - cesure);
       }
       if (start == 0 && end == count) {
         return this;
       }
       // Overlaps head and tail.
-      return concatNodes(head.subNode(start, cesure), tail.subNode(0, end - cesure));
+      if (end - start < BLOCK_SIZE) {
+        char[] data = new char[end - start];
+        ImmutableText.getChars(head, start, cesure, data, 0);
+        ImmutableText.getChars(tail, 0, end - cesure, data, cesure - start);
+        return new String(data);
+      }
+      return concatNodes(head.subSequence(start, cesure), tail.subSequence(0, end - cesure));
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+      int len = length();
+      char[] data = new char[len];
+      getChars(0, len, data, 0);
+      return new String(data);
     }
   }
 }

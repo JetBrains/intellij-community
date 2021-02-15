@@ -17,7 +17,7 @@ internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings
 }
 
 internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
-  private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) IcsManager(PathManager.getConfigDir().resolve("settingsRepository")) else org.jetbrains.settingsRepository.icsManager
+  private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) IcsManager(PathManager.getConfigDir().resolve("settingsRepository"), this) else org.jetbrains.settingsRepository.icsManager
 
   private val repositoryListEditor = createRepositoryListEditor(icsManager)
   private val editors = listOf(repositoryListEditor, createReadOnlySourcesEditor())

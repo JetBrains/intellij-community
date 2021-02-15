@@ -25,6 +25,8 @@ public class StatementParser {
 
   private static final TokenSet TRY_CLOSERS_SET = TokenSet.create(JavaTokenType.CATCH_KEYWORD, JavaTokenType.FINALLY_KEYWORD);
 
+  // Indicator tokens that may be used only with expression when yield considered as reference
+  // not all of them - LPARENTH also may indicate expression, but with condition
   private static final TokenSet YIELD_EXPR_INDICATOR_TOKENS = TokenSet.create(
     JavaTokenType.DOT, JavaTokenType.DOUBLE_COLON,
     JavaTokenType.EQ, JavaTokenType.NE,
@@ -262,7 +264,6 @@ public class StatementParser {
     return null;
   }
 
-
   private static boolean isStmtYieldToken(@NotNull PsiBuilder builder, IElementType tokenType) {
     if (!(tokenType == JavaTokenType.IDENTIFIER &&
         PsiKeyword.YIELD.equals(builder.getTokenText()) &&
@@ -271,8 +272,40 @@ public class StatementParser {
     }
     IElementType next = builder.lookAhead(1);
     if (YIELD_EXPR_INDICATOR_TOKENS.contains(next)) return false;
+    // yield () -> 10; is valid
+    // yield(); is not
+    if (isSemiAfterBalancedParensNext(builder)) return false;
     return !JavaTokenType.PLUSPLUS.equals(next) && !JavaTokenType.MINUSMINUS.equals(next) ||
            !JavaTokenType.SEMICOLON.equals(builder.lookAhead(2));
+  }
+
+  private static boolean isSemiAfterBalancedParensNext(@NotNull PsiBuilder builder) {
+    PsiBuilder.Marker maybeYieldCall = builder.mark();
+    boolean result = isSemiAfterBalancedParensNextInternal(builder);
+    maybeYieldCall.rollbackTo();
+    return result;
+  }
+
+  private static boolean isSemiAfterBalancedParensNextInternal(@NotNull PsiBuilder builder) {
+    builder.advanceLexer(); // skip yield ref
+    if (!expect(builder, JavaTokenType.LPARENTH)) return false;
+    int unbalancedLpars = 1;
+    while (true) {
+      final IElementType token = builder.getTokenType();
+      if (token == null) return false;
+      if (token == JavaTokenType.RPARENTH) {
+        unbalancedLpars--;
+      }
+      if (token == JavaTokenType.LPARENTH) {
+        unbalancedLpars++;
+      }
+      if (unbalancedLpars == 0) {
+        break;
+      }
+      builder.advanceLexer();
+    }
+    builder.advanceLexer();
+    return builder.getTokenType() == JavaTokenType.SEMICOLON;
   }
 
   private static void skipQualifiedName(PsiBuilder builder) {

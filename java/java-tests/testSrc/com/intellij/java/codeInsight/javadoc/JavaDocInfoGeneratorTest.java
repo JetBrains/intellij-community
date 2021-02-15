@@ -57,7 +57,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
   @Override
   protected @NotNull LanguageLevel getProjectLanguageLevel() {
-    return LanguageLevel.JDK_14_PREVIEW;
+    return LanguageLevel.JDK_15_PREVIEW;
   }
 
   public void testSimpleField() { doTestField(); }

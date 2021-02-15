@@ -15,20 +15,23 @@
  */
 package com.android.tools.idea.gradle.dsl.model.android.productFlavors.externalNativeBuild;
 
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyType.MUTABLE_SET;
+
 import com.android.tools.idea.gradle.dsl.api.android.productFlavors.externalNativeBuild.AbstractBuildOptionsModel;
 import com.android.tools.idea.gradle.dsl.api.ext.ResolvedPropertyModel;
 import com.android.tools.idea.gradle.dsl.model.GradleDslBlockModel;
 import com.android.tools.idea.gradle.dsl.model.ext.GradlePropertyModelBuilder;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractBuildOptionsModelImpl extends GradleDslBlockModel implements AbstractBuildOptionsModel {
-  @NonNls public static final String ABI_FILTERS = "mAbiFilters";
+  @NonNls public static final ModelPropertyDescription ABI_FILTERS = new ModelPropertyDescription("mAbiFilters", MUTABLE_SET);
   @NonNls public static final String ARGUMENTS = "mArguments";
   @NonNls public static final String C_FLAGS = "mcFlags";
   @NonNls public static final String CPP_FLAGS = "mCppFlags";
-  @NonNls public static final String TARGETS = "mTargets";
+  @NonNls public static final ModelPropertyDescription TARGETS = new ModelPropertyDescription("mTargets", MUTABLE_SET);
 
   protected AbstractBuildOptionsModelImpl(@NotNull GradlePropertiesDslElement dslElement) {
     super(dslElement);
@@ -37,7 +40,7 @@ public abstract class AbstractBuildOptionsModelImpl extends GradleDslBlockModel 
   @Override
   @NotNull
   public ResolvedPropertyModel abiFilters() {
-    return GradlePropertyModelBuilder.create(myDslElement, ABI_FILTERS).asSet(true).buildResolved();
+    return getModelForProperty(ABI_FILTERS);
   }
 
   @Override
@@ -61,6 +64,6 @@ public abstract class AbstractBuildOptionsModelImpl extends GradleDslBlockModel 
   @Override
   @NotNull
   public ResolvedPropertyModel targets() {
-    return GradlePropertyModelBuilder.create(myDslElement, TARGETS).asSet(true).buildResolved();
+    return getModelForProperty(TARGETS);
   }
 }

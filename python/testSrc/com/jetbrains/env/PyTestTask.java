@@ -86,7 +86,7 @@ public abstract class PyTestTask {
    */
   @NotNull
   public Set<String> getTags() {
-    return new HashSet<String>();
+    return new HashSet<>();
   }
 
   /**

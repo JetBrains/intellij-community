@@ -37,7 +37,6 @@ import com.intellij.ui.content.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -681,9 +680,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   static class State {
-    public final Set<String> configurationTypes = new THashSet<>();
-    public final Set<String> excludedTypes = new THashSet<>();
-    public final Map<String, Set<String>> hiddenConfigurations = new THashMap<>();
+    public final Set<String> configurationTypes = new HashSet<>();
+    public final Set<String> excludedTypes = new HashSet<>();
+    public final Map<String, Set<String>> hiddenConfigurations = new HashMap<>();
     public boolean openRunningConfigInTab = false;
   }
 

@@ -67,14 +67,6 @@ public abstract class DependenciesBuilder {
     return myScope;
   }
 
-  /**
-   * @deprecated use {@link BackwardDependenciesBuilder#getScopeOfInterest()} instead
-   */
-  @Deprecated
-  public AnalysisScope getScopeOfInterest() {
-    return null;
-  }
-
   @NotNull
   public Project getProject() {
     return myProject;
@@ -140,22 +132,6 @@ public abstract class DependenciesBuilder {
       }
     }
     return result;
-  }
-
-  /**
-   * @deprecated use {@link ForwardDependenciesBuilder#isTransitive()} instead
-   */
-  @Deprecated
-  public boolean isTransitive() {
-    return false;
-  }
-
-  /**
-   * @deprecated use {@link ForwardDependenciesBuilder#getTransitiveBorder()} instead
-   */
-  @Deprecated
-  public int getTransitiveBorder() {
-    return 0;
   }
 
   @NlsSafe String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {

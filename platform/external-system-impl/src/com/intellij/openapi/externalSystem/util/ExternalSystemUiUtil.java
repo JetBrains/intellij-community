@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ public final class ExternalSystemUiUtil {
    * @param messageType  balloon message type
    * @param message      message to show
    */
-  public static void showBalloon(@NotNull JComponent component, @NotNull MessageType messageType, @NotNull String message) {
+  public static void showBalloon(@NotNull JComponent component, @NotNull MessageType messageType, @NotNull @Nls String message) {
     final BalloonBuilder builder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, messageType, null)
       .setDisposable(ApplicationManager.getApplication())
       .setFadeoutTime(BALLOON_FADEOUT_TIME);

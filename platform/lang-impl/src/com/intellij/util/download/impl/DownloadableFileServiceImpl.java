@@ -24,7 +24,7 @@ class DownloadableFileServiceImpl extends DownloadableFileService {
   @Override
   public DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
                                                                                            URL @NotNull ... localUrls) {
-    return new FileSetVersionsFetcherBase<DownloadableFileSetDescription, DownloadableFileDescription>(groupId, localUrls) {
+    return new FileSetVersionsFetcherBase<>(groupId, localUrls) {
       @Override
       protected DownloadableFileSetDescription createVersion(Artifact version, List<DownloadableFileDescription> files) {
         return new DownloadableFileSetDescriptionImpl<>(version.getName(), version.getVersion(), files);
@@ -48,14 +48,6 @@ class DownloadableFileServiceImpl extends DownloadableFileService {
   public FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
                                          @NotNull String presentableDownloadName) {
     return new FileDownloaderImpl(fileDescriptions, null, null, presentableDownloadName);
-  }
-
-  @NotNull
-  @Override
-  public FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description,
-                                         @Nullable Project project,
-                                         JComponent parent) {
-    return createDownloader(description.getFiles(), project, parent, description.getName());
   }
 
   @Override

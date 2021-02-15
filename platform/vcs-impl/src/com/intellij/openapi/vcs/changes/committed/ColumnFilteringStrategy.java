@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,19 +28,19 @@ import java.util.*;
  */
 public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   private final JScrollPane myScrollPane;
-  private final JList myValueList;
+  private final JList<@Nls String> myValueList;
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ChangeListColumn myColumn;
   private final Class<? extends CommittedChangesProvider> myProviderClass;
   private final MyListModel myModel;
   private final CommittedChangeListToStringConvertor ourConvertorInstance = new CommittedChangeListToStringConvertor();
 
-  private Object[] myPreferredSelection;
+  private List<String> myPreferredSelection;
 
   public ColumnFilteringStrategy(final ChangeListColumn column,
                                  final Class<? extends CommittedChangesProvider> providerClass) {
     myModel = new MyListModel();
-    myValueList = new JBList();
+    myValueList = new JBList<>();
     myScrollPane = ScrollPaneFactory.createScrollPane(myValueList);
     myValueList.setModel(myModel);
     myValueList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -50,17 +51,17 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
         }
       }
     });
-    myValueList.setCellRenderer(new ColoredListCellRenderer() {
+    myValueList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, @Nls String value, int index, boolean selected, boolean hasFocus) {
         if (index == 0) {
-          append(value.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          append(value, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
-        else if (value.toString().length() == 0) {
+        else if (value.length() == 0) {
           append(VcsBundle.message("committed.changes.filter.none"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
-          append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     });
@@ -102,7 +103,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
 
   @Override
   public void resetFilterBase() {
-    myPreferredSelection = myValueList.getSelectedValues();
+    myPreferredSelection = myValueList.getSelectedValuesList();
     myValueList.clearSelection();
     myModel.clear();
     myValueList.revalidate();
@@ -111,11 +112,11 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
 
   @Override
   public void appendFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
-    final Object[] oldSelection = myModel.isEmpty() ? myPreferredSelection : myValueList.getSelectedValues();
+    final List<String> oldSelection = myModel.isEmpty() ? myPreferredSelection : myValueList.getSelectedValuesList();
 
     myModel.addNext(changeLists, ourConvertorInstance);
     if (oldSelection != null) {
-      for (Object o : oldSelection) {
+      for (@Nls String o : oldSelection) {
         myValueList.setSelectedValue(o, false);
       }
     }
@@ -136,16 +137,16 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   @Override
   @NotNull
   public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
-    final Object[] selection = myValueList.getSelectedValues();
-    if (myValueList.getSelectedIndex() == 0 || selection.length == 0) {
+    final List<String> selection = myValueList.getSelectedValuesList();
+    if (myValueList.getSelectedIndex() == 0 || selection.isEmpty()) {
       return new ArrayList<>(changeLists);
     }
     List<CommittedChangeList> result = new ArrayList<>();
     for (CommittedChangeList changeList : changeLists) {
       if (myProviderClass == null || myProviderClass.isInstance(changeList.getVcs().getCommittedChangesProvider())) {
-        for (Object value : selection) {
+        for (String value : selection) {
           //noinspection unchecked
-          if (value.toString().equals(myColumn.getValue(ReceivedChangeList.unwrap(changeList)).toString())) {
+          if (value.equals(myColumn.getValue(ReceivedChangeList.unwrap(changeList)).toString())) {
             result.add(changeList);
             break;
           }
@@ -155,14 +156,14 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     return result;
   }
 
-  private static final class MyListModel extends AbstractListModel {
+  private static final class MyListModel extends AbstractListModel<@Nls String> {
     private volatile String[] myValues;
 
     private MyListModel() {
       myValues = ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
-    public <T> void addNext(final Collection<? extends T> values, final Convertor<? super T, String> convertor) {
+    public <T> void addNext(final Collection<? extends T> values, final Convertor<? super T, @Nls String> convertor) {
       final TreeSet<String> set = new TreeSet<>(Arrays.asList(myValues));
       for (T value : values) {
         final String converted = convertor.convert(value);
@@ -185,7 +186,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     }
 
     @Override
-    public Object getElementAt(int index) {
+    public String getElementAt(int index) {
       if (index == 0) {
         return VcsBundle.message("committed.changes.filter.all");
       }

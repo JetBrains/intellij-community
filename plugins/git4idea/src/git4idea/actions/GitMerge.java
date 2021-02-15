@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import static git4idea.GitNotificationIdsHolder.MERGE_FAILED;
+
 public class GitMerge extends GitMergeAction {
 
   @Override
@@ -59,7 +61,7 @@ public class GitMerge extends GitMergeAction {
 
   @Override
   protected String getNotificationErrorDisplayId() {
-    return "git.merge.failed";
+    return MERGE_FAILED;
   }
 
   @NotNull

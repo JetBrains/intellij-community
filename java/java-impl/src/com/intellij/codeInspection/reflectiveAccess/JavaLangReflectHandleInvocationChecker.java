@@ -164,7 +164,7 @@ final class JavaLangReflectHandleInvocationChecker {
     final PsiExpressionList argumentList = invokeCall.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     final JavaReflectionInvocationInspection.Arguments actualArguments =
-      JavaReflectionInvocationInspection.getActualMethodArguments(arguments, argumentOffset, false);
+      JavaReflectionInvocationInspection.getActualMethodArguments(arguments, argumentOffset, true);
     if (actualArguments == null) return true;
 
     final int requiredArgumentCount = lazyMethodSignature.size() - 1; // -1 excludes the return type

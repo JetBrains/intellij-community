@@ -58,9 +58,9 @@ public class IndexCacheManagerImpl implements CacheManager {
 
     List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
       collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
-    }, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
+    });
     return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
@@ -74,6 +74,10 @@ public class IndexCacheManagerImpl implements CacheManager {
       return true;
     }
     PsiSearchHelperImpl.TextIndexQuery query = PsiSearchHelperImpl.TextIndexQuery.fromWords(words, caseSensitively, false, occurenceMask);
+
+    if (PsiSearchHelperImpl.LOG.isTraceEnabled()) {
+      PsiSearchHelperImpl.LOG.trace("searching for words " + words + " in " + scope);
+    }
 
     try {
       return FileBasedIndex.getInstance().processFilesContainingAllKeys(query.toFileBasedIndexQueries(), scope, processor);
@@ -103,7 +107,7 @@ public class IndexCacheManagerImpl implements CacheManager {
     if (result.isEmpty()) return true;
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<VirtualFile>() {
+    Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(VirtualFile virtualFile) {
         if (virtualFile.isValid()) {

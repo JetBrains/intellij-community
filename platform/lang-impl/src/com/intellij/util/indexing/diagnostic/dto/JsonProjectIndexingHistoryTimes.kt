@@ -6,14 +6,14 @@ import com.fasterxml.jackson.annotation.JsonInclude
 @Suppress("unused", "used for JSON")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class JsonProjectIndexingHistoryTimes(
-  val totalUpdatingTime: JsonDuration?,
-  val indexingTime: JsonDuration?,
-  val scanFilesTime: JsonDuration?,
-  val pushPropertiesTime: JsonDuration?,
-  val indexExtensionsTime: JsonDuration?,
+  val totalUpdatingTime: JsonDuration,
+  val indexingTime: JsonDuration,
+  val scanFilesTime: JsonDuration,
+  val pushPropertiesTime: JsonDuration,
+  val indexExtensionsTime: JsonDuration,
 
   val updatingStart: JsonDateTime,
   val updatingEnd: JsonDateTime,
-  val totalSuspendedTime: JsonDuration?,
+  val totalSuspendedTime: JsonDuration,
   val wasInterrupted: Boolean
 )

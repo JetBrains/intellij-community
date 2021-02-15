@@ -14,7 +14,7 @@
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" exported="" name="org.apache.maven:maven-resolver-provider" level="project" />
+    <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-file" type="repository">
         <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-file:1.3.3">
@@ -70,5 +70,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="library" name="plexus-utils" level="project" />
   </component>
 </module>

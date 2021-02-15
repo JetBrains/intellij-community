@@ -274,6 +274,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     myPainter.repaintCarets();
   }
 
+  @NotNull
   public Dimension getPreferredSize() {
     assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
@@ -352,7 +353,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     mySizeManager.reset();
   }
   
-  public void invalidateRange(int startOffset, int endOffset) {
+  public void invalidateRange(int startOffset, int endOffset, boolean invalidateSize) {
     assertIsDispatchThread();
     int textLength = myDocument.getTextLength();
     if (startOffset > endOffset || startOffset >= textLength || endOffset < 0) {
@@ -361,7 +362,9 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     int startLine = myDocument.getLineNumber(Math.max(0, startOffset));
     int endLine = myDocument.getLineNumber(Math.min(textLength, endOffset));
     myTextLayoutCache.invalidateLines(startLine, endLine);
-    mySizeManager.invalidateRange(startOffset, endOffset);
+    if (invalidateSize) {
+      mySizeManager.invalidateRange(startOffset, endOffset);
+    }
   }
 
   /**
@@ -695,7 +698,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   @Override
-  public void drawChars(@NotNull Graphics g, char @NotNull [] data, int start, int end, int x, int y, Color color, FontInfo fontInfo) {
+  public void drawChars(@NotNull Graphics g, char @NotNull [] data, int start, int end, int x, int y, @NotNull Color color, @NotNull FontInfo fontInfo) {
     myPainter.drawChars(g, data, start, end, x, y, color, fontInfo);
   }
 

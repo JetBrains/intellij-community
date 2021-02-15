@@ -1,13 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,56 +14,34 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class MessageCounter {
-
-  private final Map<ProjectSystemId, Map<String/* group */, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>>>
+public final class MessageCounter {
+  private final Map<ProjectSystemId, Map<String/* group */, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>>>
     map = new HashMap<>();
 
   public synchronized void increment(@NotNull String groupName,
                                      @NotNull NotificationSource source,
                                      @NotNull NotificationCategory category,
                                      @NotNull ProjectSystemId projectSystemId) {
-
-    final TObjectIntHashMap<NotificationCategory> counter =
-      ContainerUtil.getOrCreate(
-        ContainerUtil.getOrCreate(
-          ContainerUtil.getOrCreate(
-            map,
-            projectSystemId,
-            new HashMap<>()),
-          groupName,
-          new HashMap<>()
-        ),
-        source,
-        new MyTObjectIntHashMap<>()
-      );
-    if (!counter.increment(category)) counter.put(category, 1);
+    Object2IntOpenHashMap<NotificationCategory> counter = map.computeIfAbsent(projectSystemId, __ -> new HashMap<>())
+      .computeIfAbsent(groupName, __ -> new HashMap<>())
+      .computeIfAbsent(source, __ -> new Object2IntOpenHashMap<>());
+    counter.addTo(category, 1);
   }
 
-  public synchronized void remove(@Nullable final String groupName,
-                                  @NotNull final NotificationSource notificationSource,
-                                  @NotNull final ProjectSystemId projectSystemId) {
-    final Map<String, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>> groupMap =
-      ContainerUtil.getOrCreate(
-        map,
-        projectSystemId,
-        new HashMap<>());
-    if (groupName != null) {
-      final TObjectIntHashMap<NotificationCategory> counter = ContainerUtil.getOrCreate(
-        ContainerUtil.getOrCreate(
-          groupMap,
-          groupName,
-          new HashMap<>()
-        ),
-        notificationSource,
-        new MyTObjectIntHashMap<>()
-      );
-      counter.clear();
-    }
-    else {
-      for (Map<NotificationSource, TObjectIntHashMap<NotificationCategory>> sourceMap : groupMap.values()) {
+  public synchronized void remove(@Nullable String groupName,
+                                  @NotNull NotificationSource notificationSource,
+                                  @NotNull ProjectSystemId projectSystemId) {
+    Map<String, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>> groupMap =
+      map.computeIfAbsent(projectSystemId, __ -> new HashMap<>());
+    if (groupName == null) {
+      for (Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>> sourceMap : groupMap.values()) {
         sourceMap.remove(notificationSource);
       }
+    }
+    else {
+      Object2IntOpenHashMap<NotificationCategory> counter = groupMap.computeIfAbsent(groupName, __ -> new HashMap<>())
+        .computeIfAbsent(notificationSource, __ -> new Object2IntOpenHashMap<>());
+      counter.clear();
     }
   }
 
@@ -73,23 +50,21 @@ public class MessageCounter {
                                    @Nullable final NotificationCategory notificationCategory,
                                    @NotNull final ProjectSystemId projectSystemId) {
     int count = 0;
-    final Map<String, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>> groupMap = ContainerUtil.getOrElse(
-      map,
-      projectSystemId,
-      Collections.emptyMap());
-
-    for (Map.Entry<String, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>> entry : groupMap.entrySet()) {
+    Map<String, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>> value = map.get(projectSystemId);
+    Map<String, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>> groupMap = value == null ? Collections.emptyMap() : value;
+    for (Map.Entry<String, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>> entry : groupMap.entrySet()) {
       if (groupName == null || groupName.equals(entry.getKey())) {
-        final TObjectIntHashMap<NotificationCategory> counter = entry.getValue().get(notificationSource);
-        if (counter == null) continue;
-
+        Object2IntOpenHashMap<NotificationCategory> counter = entry.getValue().get(notificationSource);
+        if (counter == null) {
+          continue;
+        }
         if (notificationCategory == null) {
-          for (int aCount : counter.getValues()) {
-            count += aCount;
+          for (IntIterator iterator = counter.values().iterator(); iterator.hasNext(); ) {
+            count += iterator.nextInt();
           }
         }
         else {
-          count += counter.get(notificationCategory);
+          count += counter.getInt(notificationCategory);
         }
       }
     }
@@ -102,13 +77,6 @@ public class MessageCounter {
     return "MessageCounter{" +
            "map=" + map +
            '}';
-  }
-
-  private static class MyTObjectIntHashMap<K> extends TObjectIntHashMap<K> {
-    @Override
-    public String toString() {
-      return Arrays.toString(_set);
-    }
   }
 }
 

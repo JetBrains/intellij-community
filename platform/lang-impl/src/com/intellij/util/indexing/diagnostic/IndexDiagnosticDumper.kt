@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.application.ApplicationManager
@@ -11,17 +12,20 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
+import com.intellij.util.indexing.diagnostic.presentation.generateHtml
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
+import com.intellij.util.io.exists
+import com.intellij.util.io.write
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 import kotlin.streams.asSequence
 
 object IndexDiagnosticDumper {
@@ -49,8 +53,8 @@ object IndexDiagnosticDumper {
 
   private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
-  private val jacksonMapper by lazy {
-    jacksonObjectMapper().registerKotlinModule().writerWithDefaultPrettyPrinter()
+  val jacksonMapper: ObjectMapper by lazy {
+    jacksonObjectMapper().registerKotlinModule()
   }
 
   private val diagnosticDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
@@ -93,34 +97,45 @@ object IndexDiagnosticDumper {
 
       val timestamp = nowTime.format(diagnosticDateTimeFormatter)
       val diagnosticJson = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.json")
+      val diagnosticHtml = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.html")
 
       val jsonIndexDiagnostic = JsonIndexDiagnostic.generateForHistory(projectIndexingHistory)
-      jacksonMapper.writeValue(diagnosticJson.toFile(), jsonIndexDiagnostic)
+      jacksonMapper.writerWithDefaultPrettyPrinter().writeValue(diagnosticJson.toFile(), jsonIndexDiagnostic)
+      diagnosticHtml.write(jsonIndexDiagnostic.generateHtml())
 
-      val limitOfHistories = indexingDiagnosticsLimitOfFiles
-      val survivedHistories = Files.list(indexDiagnosticDirectory).use { files ->
+      data class ExistingDiagnostic(val timestamp: LocalDateTime, val jsonFile: Path, val htmlFile: Path)
+
+      val existingDiagnostics = Files.list(indexDiagnosticDirectory).use { files ->
         files.asSequence()
-          .filter { it.fileName.toString().startsWith(fileNamePrefix) && it.fileName.toString().endsWith(".json") }
-          .sortedByDescending { file ->
-            val timeStamp = file.fileName.toString().substringAfter(fileNamePrefix).substringBefore(".json")
-            try {
-              LocalDateTime.parse(timeStamp, diagnosticDateTimeFormatter)
+          .filter { file -> file.fileName.toString().startsWith(fileNamePrefix) && file.extension == "json" }
+          .mapNotNull { jsonFile ->
+            val timeStampString = jsonFile.fileName.toString().substringAfter(fileNamePrefix).substringBefore(".json")
+            val timeStamp = try {
+              LocalDateTime.parse(timeStampString, diagnosticDateTimeFormatter)
             }
-            catch (e: DateTimeParseException) {
-              LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC)
+            catch (e: Exception) {
+              return@mapNotNull null
             }
+            val htmlFile = jsonFile.resolveSibling(jsonFile.nameWithoutExtension + ".html")
+            if (!htmlFile.exists()) {
+              return@mapNotNull null
+            }
+            ExistingDiagnostic(timeStamp, jsonFile, htmlFile)
           }
-          .take(limitOfHistories)
-          .toSet()
+          .toList()
       }
+
+      val survivedDiagnostics = existingDiagnostics
+        .sortedByDescending { it.timestamp }
+        .take(indexingDiagnosticsLimitOfFiles)
 
       Files
         .list(indexDiagnosticDirectory)
         .use { files ->
           files
             .asSequence()
-            .filterNot { it in survivedHistories }
-            .filter { it.toString().endsWith(".json") }
+            .filter { it.extension == "json" || it.extension == "html" }
+            .filter { file -> survivedDiagnostics.none { diagnostic -> file == diagnostic.htmlFile || file == diagnostic.jsonFile } }
             .forEach { it.delete() }
         }
     }

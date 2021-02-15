@@ -20,14 +20,6 @@ public class VagrantBasedCredentialsHolder {
     myVagrantFolder = "";
   }
 
-  /**
-   * @deprecated use constructor supporting multiple machines configuration
-   */
-  @Deprecated
-  public VagrantBasedCredentialsHolder(@NotNull String folder) {
-    myVagrantFolder = folder;
-  }
-
   public VagrantBasedCredentialsHolder(@NotNull String vagrantFolder, @Nullable String machineName) {
     myVagrantFolder = vagrantFolder;
     myMachineName = machineName;

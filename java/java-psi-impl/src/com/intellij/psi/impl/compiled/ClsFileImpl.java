@@ -256,12 +256,6 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     throw ClsElementImpl.cannotModifyException(this);
   }
 
-  /** @deprecated Shouldn't be called from outside or overridden */
-  @Deprecated
-  public void appendMirrorText(@SuppressWarnings({"unused", "RedundantSuppression"}) int indentLevel, @NotNull StringBuilder buffer) {
-    appendMirrorText(buffer);
-  }
-
   private void appendMirrorText(@NotNull StringBuilder buffer) {
     buffer.append(BANNER);
 
@@ -277,12 +271,6 @@ public class ClsFileImpl extends PsiBinaryFileImpl
         ClsElementImpl.appendText(classes[0], 0, buffer);
       }
     }
-  }
-
-  /** @deprecated Shouldn't be called from outside or overridden */
-  @Deprecated
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
-    setFileMirror(element);
   }
 
   private void setFileMirror(@NotNull TreeElement element) {

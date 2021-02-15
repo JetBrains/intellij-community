@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
@@ -17,6 +17,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.progress.ProgressManager;
@@ -160,40 +161,64 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   @Override
   protected void restoreSelection() {
     if (mySelectedRange != null) {
-      Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-      TextRange selectedRange;
-      if (myEditor instanceof EditorWindow) {
-        PsiFile injected = ((EditorWindow)myEditor).getInjectedFile();
-        selectedRange = InjectedLanguageManager.getInstance(editor.getProject()).injectedToHost(injected, mySelectedRange);
-      } else {
-        selectedRange = mySelectedRange;
-      }
-      TemplateState state = TemplateManagerImpl.getTemplateState(editor);
-
-      if (state != null) {
-        for (int i = 0; i < state.getSegmentsCount(); i++) {
-          final TextRange segmentRange = state.getSegmentRange(i);
-          TextRange intersection = segmentRange.intersection(selectedRange);
-          if (intersection != null) {
-            editor.getSelectionModel().setSelection(intersection.getStartOffset(), intersection.getEndOffset());
-            return;
-          }
-        }
-      }
-      myEditor.getSelectionModel().setSelection(mySelectedRange.getStartOffset(), mySelectedRange.getEndOffset());
+      restoreSelection(myEditor, mySelectedRange);
     }
     else if (!shouldSelectAll()) {
       myEditor.getSelectionModel().removeSelection();
     }
   }
 
+  /**
+   * @param selectedRange range which is relative to the {@code editor}
+   */
+  static void restoreSelection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+    if (handleSelectionIntersection(editor, selectedRange)) {
+      return;
+    }
+    editor.getSelectionModel().setSelection(selectedRange.getStartOffset(), selectedRange.getEndOffset());
+  }
+
+  private static boolean handleSelectionIntersection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+    if (editor instanceof EditorWindow) {
+      EditorWindow editorWindow = (EditorWindow)editor;
+      Editor hostEditor = editorWindow.getDelegate();
+      PsiFile injected = editorWindow.getInjectedFile();
+      TextRange hostSelectedRange = InjectedLanguageManager.getInstance(hostEditor.getProject()).injectedToHost(injected, selectedRange);
+      return doHandleSelectionIntersection(hostEditor, hostSelectedRange);
+    }
+    else {
+      return doHandleSelectionIntersection(editor, selectedRange);
+    }
+  }
+
+  private static boolean doHandleSelectionIntersection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+    TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+    if (state == null) {
+      return false;
+    }
+    for (int i = 0; i < state.getSegmentsCount(); i++) {
+      final TextRange segmentRange = state.getSegmentRange(i);
+      TextRange intersection = segmentRange.intersection(selectedRange);
+      if (intersection == null) {
+        continue;
+      }
+      editor.getSelectionModel().setSelection(intersection.getStartOffset(), intersection.getEndOffset());
+      return true;
+    }
+    return false;
+  }
+
   @Override
   protected int restoreCaretOffset(int offset) {
-    if (myCaretRangeMarker.isValid()) {
-      if (myCaretRangeMarker.getStartOffset() <= offset && myCaretRangeMarker.getEndOffset() >= offset) {
+    return restoreCaretOffset(myCaretRangeMarker, offset);
+  }
+
+  static int restoreCaretOffset(@NotNull RangeMarker caretRangeMarker, int offset) {
+    if (caretRangeMarker.isValid()) {
+      if (caretRangeMarker.getStartOffset() <= offset && caretRangeMarker.getEndOffset() >= offset) {
         return offset;
       }
-      return myCaretRangeMarker.getEndOffset();
+      return caretRangeMarker.getEndOffset();
     }
     return offset;
   }

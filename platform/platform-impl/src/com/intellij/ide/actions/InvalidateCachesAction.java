@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class InvalidateCachesAction extends AnAction implements DumbAware {
-  public InvalidateCachesAction() {
-    String text = ApplicationManager.getApplication().isRestartCapable() ? ActionsBundle.message("action.InvalidateCachesRestart.text") 
+final class InvalidateCachesAction extends AnAction implements DumbAware {
+  InvalidateCachesAction() {
+    String text = ApplicationManager.getApplication().isRestartCapable() ? ActionsBundle.message("action.InvalidateCachesRestart.text")
                                                                          : ActionsBundle.message("action.InvalidateCaches.text");
     getTemplatePresentation().setText(text);
   }
@@ -47,7 +47,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
 
     if (invalidateCachesInvalidatesVfs) descriptions.add("Local History");
 
-    for (CachesInvalidator invalidator : CachesInvalidator.EP_NAME.getExtensions()) {
+    for (CachesInvalidator invalidator : CachesInvalidator.EP_NAME.getExtensionList()) {
       ContainerUtil.addIfNotNull(descriptions, invalidator.getDescription());
     }
     Collections.sort(descriptions);
@@ -85,10 +85,10 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
       GistManager.getInstance().invalidateData();
     }
 
-    for (CachesInvalidator invalidater : CachesInvalidator.EP_NAME.getExtensions()) {
-      invalidater.invalidateCaches();
-    }
+    CachesInvalidator.EP_NAME.forEachExtensionSafe(CachesInvalidator::invalidateCaches);
 
-    if (result == 0) app.restart(true);
+    if (result == 0) {
+      app.restart(true);
+    }
   }
 }

@@ -36,7 +36,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   private volatile Map<String, String> myCachedExternalProperties;
   private final Object myOptionsLock = new Object();
 
-  public static final AbstractProperty<AntInstallation> ANT_INSTALLATION = new AbstractProperty<AntInstallation>() {
+  public static final AbstractProperty<AntInstallation> ANT_INSTALLATION = new AbstractProperty<>() {
     @Override
     public String getName() {
       return "$antInstallation";
@@ -61,7 +61,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
     }
   };
 
-  public static final AbstractProperty<List<File>> ALL_CLASS_PATH = new AbstractProperty<List<File>>() {
+  public static final AbstractProperty<List<File>> ALL_CLASS_PATH = new AbstractProperty<>() {
     @Override
     public String getName() {
       return "$allClasspath";
@@ -121,7 +121,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   public static final AbstractProperty<AntReference> ANT_REFERENCE =
     new ValueProperty<>("antReference", AntReference.PROJECT_DEFAULT);
   public static final ListProperty<AntClasspathEntry> ADDITIONAL_CLASSPATH = ListProperty.create("additionalClassPath");
-  public static final AbstractProperty<AntInstallation> RUN_WITH_ANT = new AbstractProperty<AntInstallation>() {
+  public static final AbstractProperty<AntInstallation> RUN_WITH_ANT = new AbstractProperty<>() {
     @Override
     public String getName() {
       return "$runWithAnt";
@@ -146,6 +146,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   };
 
   private final VirtualFile myVFile;
+  @NotNull
   private final Project myProject;
   private final AntConfigurationBase myAntConfiguration;
   private final ExternalizablePropertyContainer myWorkspaceOptions;
@@ -154,7 +155,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   private final ClassLoaderHolder myClassloaderHolder;
   private boolean myShouldExpand = true;
 
-  public AntBuildFileImpl(PsiFile antFile, final AntConfigurationBase configuration) {
+  public AntBuildFileImpl(@NotNull PsiFile antFile, final AntConfigurationBase configuration) {
     myVFile = antFile.getOriginalFile().getVirtualFile();
     myProject = antFile.getProject();
     myAntConfiguration = configuration;

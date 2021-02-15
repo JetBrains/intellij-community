@@ -18,17 +18,23 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserSpecificFilePathsNode<Object> {
+public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserSpecificFilePathsNode<ChangesBrowserNode.Tag> {
 
   public ChangesBrowserUnversionedFilesNode(@NotNull Project project,
                                             @NotNull List<FilePath> files) {
     super(UNVERSIONED_FILES_TAG, files, () -> {
       if (!project.isDisposed()) new UnversionedViewDialog(project).show();
     });
+  }
+
+  @Override
+  public @Nls String getTextPresentation() {
+    return getUserObject().toString();
   }
 
   @Override

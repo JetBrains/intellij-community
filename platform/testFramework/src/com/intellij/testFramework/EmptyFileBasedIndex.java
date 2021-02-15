@@ -22,6 +22,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 
 public class EmptyFileBasedIndex extends FileBasedIndexEx {
+  @Override
+  public void registerProjectFileSets(@NotNull Project project) {
+  }
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
@@ -30,16 +33,6 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
   @Override
   public @Nullable VirtualFile getFileBeingCurrentlyIndexed() {
     return null;
-  }
-
-  @Override
-  public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
-
-  }
-
-  @Override
-  public void removeIndexableSet(@NotNull IndexableFileSet set) {
-
   }
 
   @Override
@@ -174,6 +167,7 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
     return true;
   }
 
+  @NotNull
   @Override
   public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
     return EmptyIndex.getInstance();
@@ -261,11 +255,6 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
 
     @Override
     public void cleanupForNextTest() {
-    }
-
-    @Override
-    public void dumpStatistics() {
-
     }
 
     @Override

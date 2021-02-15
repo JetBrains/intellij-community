@@ -46,13 +46,6 @@ public final class StdLanguages {
   @Deprecated public static final Language HTML = StdFileTypes.HTML.getLanguage();
 
   /**
-   * The definition for the XHTML language.
-   *
-   * @deprecated use {@linkplain com.intellij.lang.xhtml.XHTMLLanguage#INSTANCE} instead.
-   */
-  @Deprecated public static final Language XHTML = StdFileTypes.XHTML.getLanguage();
-
-  /**
    * The definition for the JSPX language (JSP with XML syntax).
    *
    * @deprecated use {@linkplain com.intellij.lang.jspx.JSPXLanguage#INSTANCE} instead.

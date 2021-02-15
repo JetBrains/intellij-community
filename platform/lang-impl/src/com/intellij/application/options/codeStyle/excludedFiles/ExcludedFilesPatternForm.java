@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
-import com.intellij.formatting.fileSet.PatternDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
@@ -49,7 +48,7 @@ public abstract class ExcludedFilesPatternForm {
     private final ValueEditor<String> myValueEditor;
 
     private PatternField() {
-      myValueEditor = new TextFieldValueEditor<String>(this, "Pattern", "") {
+      myValueEditor = new TextFieldValueEditor<>(this, "Pattern", "") {
         @NotNull
         @Override
         public String parseValue(@Nullable String text) throws InvalidDataException {
@@ -78,7 +77,7 @@ public abstract class ExcludedFilesPatternForm {
           return err;
         }
       };
-      myValueEditor.addListener(new ValueEditor.Listener<String>() {
+      myValueEditor.addListener(new ValueEditor.Listener<>() {
         @Override
         public void valueChanged(@NotNull String newValue) {
           updateOnValue(newValue);

@@ -84,16 +84,4 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
-
-  /**
-   * @deprecated use {@link #search(PsiClass, SearchScope, boolean)} instead
-   */
-  @NotNull
-  @Deprecated
-  public static Query<PsiClass> search(@NotNull PsiClass aClass,
-                                       @NotNull SearchScope scope,
-                                       boolean includeAnonymous,
-                                       final boolean checkInheritance) {
-    return search(aClass, scope, includeAnonymous);
-  }
 }

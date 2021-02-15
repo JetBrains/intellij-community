@@ -55,7 +55,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
   private void initializeDialog(final List<? extends T> items, @NlsContexts.DialogTitle String title, boolean sort) {
     setTitle(title);
-    myChooser = new ElementsChooser<T>(canElementsBeMarked()) {
+    myChooser = new ElementsChooser<>(canElementsBeMarked()) {
       @Override
       protected String getItemText(@NotNull final T item) {
         return ChooseElementsDialog.this.getItemText(item);

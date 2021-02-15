@@ -14,8 +14,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
-public class EventLogApplicationLifecycleListener implements AppLifecycleListener {
-
+final class EventLogApplicationLifecycleListener implements AppLifecycleListener {
   @Override
   public void appWillBeClosed(boolean isRestart) {
     if (!isRestart && !PluginManagerCore.isRunningFromSources() && isSendingOnExitEnabled()) {
@@ -24,7 +23,8 @@ public class EventLogApplicationLifecycleListener implements AppLifecycleListene
         ProgressManager.getInstance().run(new Task.Modal(null, "Starting External Log Uploader", false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            EventLogExternalUploader.INSTANCE.startExternalUpload(config.getRecorderId(), false);
+            boolean isPerformanceScript = System.getProperty("testscript.filename") != null;
+            EventLogExternalUploader.INSTANCE.startExternalUpload(config.getRecorderId(), isPerformanceScript);
           }
         });
       }
@@ -32,7 +32,7 @@ public class EventLogApplicationLifecycleListener implements AppLifecycleListene
   }
 
   private static boolean isSendingOnExitEnabled() {
-    return Registry.get("feature.usage.event.log.send.on.ide.close").asBoolean();
+    return Registry.is("feature.usage.event.log.send.on.ide.close");
   }
 
   private static boolean isUpdateInProgress() {

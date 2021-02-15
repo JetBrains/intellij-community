@@ -40,19 +40,16 @@ import java.util.List;
 
 import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
 
-public class JoinLinesHandler extends EditorActionHandler {
+public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
   private static final Logger LOG = Logger.getInstance(JoinLinesHandler.class);
   private final EditorActionHandler myOriginalHandler;
 
   public JoinLinesHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, final DataContext dataContext) {
-    assert caret != null;
-
+  public void doExecute(@NotNull final Editor editor, @NotNull Caret caret, final DataContext dataContext) {
     if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
 
     if (!(editor.getDocument() instanceof DocumentEx)) {

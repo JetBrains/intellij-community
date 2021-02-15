@@ -12,7 +12,7 @@ import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-class SpaceCommitRenderer : ListCellRenderer<ReviewCommitListItem> {
+internal class SpaceCommitRenderer : ListCellRenderer<SpaceReviewCommitListItem> {
 
   private val nodeComponent: CommitNodeComponent = CommitNodeComponent().apply {
     foreground = DefaultColorGenerator().getColor(1)
@@ -27,8 +27,8 @@ class SpaceCommitRenderer : ListCellRenderer<ReviewCommitListItem> {
   var panel: BorderLayoutPanel = BorderLayoutPanel().addToLeft(nodeComponent).addToCenter(messageComponent)
 
 
-  override fun getListCellRendererComponent(list: JList<out ReviewCommitListItem>,
-                                            value: ReviewCommitListItem,
+  override fun getListCellRendererComponent(list: JList<out SpaceReviewCommitListItem>,
+                                            value: SpaceReviewCommitListItem,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
@@ -43,12 +43,12 @@ class SpaceCommitRenderer : ListCellRenderer<ReviewCommitListItem> {
         if (value.inCurrentProject) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
         else SimpleTextAttributes.GRAYED_ATTRIBUTES
 
-      repositorySeparator.append(value.repositoryInReview.name, attr)
+      repositorySeparator.append(value.repositoryInReview.name, attr) // NON-NLS
       panel.addToTop(repositorySeparator)
     }
 
     messageComponent.clear()
-    messageComponent.append(value.commitWithGraph.commit.message,
+    messageComponent.append(value.commitWithGraph.commit.message, // NON-NLS
                             SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getListForeground(isSelected, true)))
     SpeedSearchUtil.applySpeedSearchHighlighting(list, messageComponent, true, isSelected)
 

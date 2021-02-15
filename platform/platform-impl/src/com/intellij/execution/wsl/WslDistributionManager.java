@@ -1,76 +1,152 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-public class WslDistributionManager {
+public abstract class WslDistributionManager implements Disposable {
 
-  private static final Logger LOG = Logger.getInstance(WslDistributionManager.class);
-  private static final WslDistributionManager INSTANCE = new WslDistributionManager();
+  static final Logger LOG = Logger.getInstance(WslDistributionManager.class);
+  private static final Object LOCK = new Object();
 
   public static @NotNull WslDistributionManager getInstance() {
-    return INSTANCE;
+    return ApplicationManager.getApplication().getService(WslDistributionManager.class);
   }
 
+  private volatile CachedDistributions myInstalledDistributions;
+  private final Map<String, WSLDistribution> myMsIdToDistributionCache = ContainerUtil.createConcurrentWeakMap(
+    CaseInsensitiveStringHashingStrategy.INSTANCE);
+
+  @Override
+  public void dispose() {
+    myMsIdToDistributionCache.clear();
+    myInstalledDistributions = null;
+  }
+
+  /**
+   * @return list of installed WSL distributions by parsing output of `wsl.exe -l`. Please call it
+   * on a pooled thread and outside of the read action as it runs a process under the hood.
+   * @see #getInstalledDistributionsFuture
+   */
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
-    List<WSLDistribution> parsedFromWslList;
-    try {
-      long startNano = System.nanoTime();
-      parsedFromWslList = parseFromWslList();
-      LOG.info("Installed WSL distributions parsed in " + TimeoutUtil.getDurationMillis(startNano) + "ms");
+    CachedDistributions cachedDistributions = myInstalledDistributions;
+    if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
+      return cachedDistributions.myInstalledDistributions;
     }
-    catch (ExecutionException e) {
-      LOG.info("Cannot parse WSL distributions", e);
-      parsedFromWslList = Collections.emptyList();
-    }
-    List<WSLDistribution> withExecutable = WSLUtil.getAvailableDistributions();
-    List<WSLDistribution> result = new ArrayList<>(withExecutable);
-    for (WSLDistribution parsedDistribution : parsedFromWslList) {
-      if (withExecutable.stream().noneMatch((d) -> d.getMsId().equals(parsedDistribution.getMsId()))) {
-        result.add(parsedDistribution);
+    myInstalledDistributions = null;
+    synchronized (LOCK) {
+      cachedDistributions = myInstalledDistributions;
+      if (cachedDistributions == null) {
+        cachedDistributions = new CachedDistributions(loadInstalledDistributions());
+        myInstalledDistributions = cachedDistributions;
       }
     }
-    return result;
+    return cachedDistributions.myInstalledDistributions;
   }
 
-  private static @NotNull List<WSLDistribution> parseFromWslList() throws ExecutionException {
-    GeneralCommandLine commandLine = createCommandLine();
-    commandLine.setCharset(StandardCharsets.UTF_16LE);
-    ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, 5000);
-    if (output.isTimeout()) {
-      throw new ExecutionException(commandLine.getCommandLineString() + " is timed out"); //NON-NLS
+  public @NotNull CompletableFuture<List<WSLDistribution>> getInstalledDistributionsFuture() {
+    CachedDistributions cachedDistributions = myInstalledDistributions;
+    if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
+      return CompletableFuture.completedFuture(cachedDistributions.myInstalledDistributions);
     }
-    if (output.getExitCode() != 0) {
-      throw new ExecutionException(commandLine.getCommandLineString() + " has terminated with exit code " + output.getExitCode()); //NON-NLS
-    }
-    if (!output.getStderr().isEmpty()) {
-      throw new ExecutionException(commandLine.getCommandLineString() + " failed with " + output.getStderr()); //NON-NLS
-    }
-    List<@NlsSafe String> lines = output.getStdoutLines();
-    return ContainerUtil.map(lines, WSLDistribution::new);
+    return CompletableFuture.supplyAsync(this::getInstalledDistributions, AppExecutorUtil.getAppExecutorService());
   }
 
-  private static @NotNull GeneralCommandLine createCommandLine() throws ExecutionException {
-    File wslExe = PathEnvironmentVariableUtil.findInPath("wsl.exe");
-    if (wslExe == null) {
-      throw new ExecutionException("No wsl.exe found in %PATH%"); //NON-NLS
-    }
-    return new GeneralCommandLine(wslExe.getAbsolutePath(), "--list", "--quiet");
+  /**
+   * @return {@link WSLDistribution} instance by WSL distribution name. Please note that
+   * the returned distribution is not guaranteed to be installed (for that, check if the distribution is contained in
+   * {@link #getInstalledDistributions}).
+   * @param msId WSL distribution name, same as produced by `wsl.exe -l`
+   */
+  public @NotNull WSLDistribution getOrCreateDistributionByMsId(@NonNls @NotNull String msId) {
+    return getOrCreateDistributionByMsId(msId, false);
   }
 
+  private @NotNull WSLDistribution getOrCreateDistributionByMsId(@NonNls @NotNull String msId, boolean overrideCaseInsensitively) {
+    if (msId.isEmpty()) {
+      throw new IllegalStateException("WSL msId is empty");
+    }
+    // reuse previously created WSLDistribution instances to avoid re-calculating Host IP / WSL IP
+    WSLDistribution d = myMsIdToDistributionCache.get(msId);
+    if (d == null || (overrideCaseInsensitively && !d.getMsId().equals(msId))) {
+      synchronized (myMsIdToDistributionCache) {
+        d = myMsIdToDistributionCache.get(msId);
+        if (d == null || (overrideCaseInsensitively && !d.getMsId().equals(msId))) {
+          d = new WSLDistribution(msId);
+          myMsIdToDistributionCache.put(msId, d);
+        }
+      }
+    }
+    return d;
+  }
+
+  @Nullable
+  public Pair<String, @Nullable WSLDistribution> parseWslPath(@NotNull String path) {
+    if (!WSLUtil.isSystemCompatible()) return null;
+    path = FileUtil.toSystemDependentName(path);
+    if (!path.startsWith(WSLDistribution.UNC_PREFIX)) return null;
+
+    path = StringUtil.trimStart(path, WSLDistribution.UNC_PREFIX);
+    int index = path.indexOf('\\');
+    if (index == -1) return null;
+
+    String distName = path.substring(0, index);
+    String wslPath = FileUtil.toSystemIndependentName(path.substring(index));
+
+    return Pair.create(wslPath, getOrCreateDistributionByMsId(distName, false));
+  }
+
+  @Nullable
+  public WSLDistribution distributionFromPath(@NotNull String path) {
+    Pair<String, @Nullable WSLDistribution> pair = parseWslPath(path);
+    if (pair != null && pair.second != null) {
+      return pair.second;
+    }
+    return null;
+  }
+
+  public static boolean isWslPath(@NotNull String path) {
+    return FileUtil.toSystemDependentName(path).startsWith(WSLDistribution.UNC_PREFIX);
+  }
+
+  private @NotNull List<WSLDistribution> loadInstalledDistributions() {
+    return ContainerUtil.map(loadInstalledDistributionMsIds(), (msId) -> {
+      return getOrCreateDistributionByMsId(msId, true);
+    });
+  }
+
+  protected abstract @NotNull List<String> loadInstalledDistributionMsIds();
+
+  private static class CachedDistributions {
+    private final @NotNull List<WSLDistribution> myInstalledDistributions;
+    private final long myExternalChangesCount;
+
+    private CachedDistributions(@NotNull List<WSLDistribution> installedDistributions) {
+      myInstalledDistributions = installedDistributions;
+      myExternalChangesCount = getCurrentExternalChangesCount();
+    }
+
+    public boolean isUpToDate() {
+      return getCurrentExternalChangesCount() == myExternalChangesCount;
+    }
+
+    private static long getCurrentExternalChangesCount() {
+      return SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
+    }
+  }
 }

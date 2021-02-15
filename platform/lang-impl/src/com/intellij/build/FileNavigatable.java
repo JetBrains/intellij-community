@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -17,10 +18,10 @@ public class FileNavigatable implements Navigatable {
   private final NullableLazyValue<OpenFileDescriptor> myValue;
   private final FilePosition myFilePosition;
 
-  public FileNavigatable(Project project, FilePosition filePosition) {
+  public FileNavigatable(@NotNull Project project, @NotNull FilePosition filePosition) {
     myProject = project;
     myFilePosition = filePosition;
-    myValue = new NullableLazyValue<OpenFileDescriptor>() {
+    myValue = new NullableLazyValue<>() {
       @Nullable
       @Override
       protected OpenFileDescriptor compute() {
@@ -58,6 +59,11 @@ public class FileNavigatable implements Navigatable {
   @Nullable
   public OpenFileDescriptor getFileDescriptor() {
     return myValue.getValue();
+  }
+
+  @NotNull
+  public FilePosition getFilePosition() {
+    return myFilePosition;
   }
 
   @Nullable

@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,16 +35,12 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     if (isToReformat != template.isToReformat) return false;
     if (isToShortenLongNames != template.isToShortenLongNames) return false;
     if (myShortcutChar != template.myShortcutChar) return false;
-    if (myDescription != null ? !myDescription.equals(template.myDescription) : template.myDescription != null) return false;
-    if (myGroupName != null ? !myGroupName.equals(template.myGroupName) : template.myGroupName != null) return false;
-    if (myKey != null ? !myKey.equals(template.myKey) : template.myKey != null) return false;
-    if (!string().equals(template.string())) return false;
-    if (templateText() != null ? !templateText().equals(template.templateText()) : template.templateText() != null) return false;
-
-    if (!new THashSet<>(myVariables).equals(new THashSet<>(template.myVariables))) return false;
-    if (isDeactivated != template.isDeactivated) return false;
-
-    return true;
+    return Objects.equals(myDescription, template.myDescription) &&
+           Objects.equals(myGroupName, template.myGroupName) &&
+           Objects.equals(myKey, template.myKey) &&
+           string().equals(template.string()) &&
+           (templateText() != null ? templateText().equals(template.templateText()) : template.templateText() == null) &&
+           new HashSet<>(myVariables).equals(new HashSet<>(template.myVariables)) && isDeactivated == template.isDeactivated;
   }
 
   @Override

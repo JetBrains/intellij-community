@@ -6,10 +6,9 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.util.IncorrectOperationException;
-import icons.LombokIcons;
+import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -27,7 +26,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     myName = name;
     myNameIdentifier = new LombokLightIdentifier(manager, name);
     myModifierList = new LombokLightModifierList(manager);
-    setBaseIcon(LombokIcons.Nodes.LombokField);
+    setBaseIcon(LombokIcons.FIELD_ICON);
   }
 
   @Override
@@ -52,13 +51,6 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
   @Override
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return myModifierList.hasModifierProperty(name);
-  }
-
-  @Nullable
-  @Override
-  public PsiFile getContainingFile() {
-    PsiClass containingClass = getContainingClass();
-    return containingClass != null ? containingClass.getContainingFile() : null;
   }
 
   public LombokLightFieldBuilder withContainingClass(PsiClass psiClass) {

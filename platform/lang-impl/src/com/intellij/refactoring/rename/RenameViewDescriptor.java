@@ -2,7 +2,7 @@
 
 package com.intellij.refactoring.rename;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -20,8 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 
 public class RenameViewDescriptor implements UsageViewDescriptor{
-  private static final Logger LOG = Logger.getInstance(RenameViewDescriptor.class);
-  private final String myProcessedElementsHeader;
+  private final @NlsContexts.ListItem String myProcessedElementsHeader;
   private final @Nls String myCodeReferencesText;
   private final PsiElement[] myElements;
 

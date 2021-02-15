@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
@@ -167,12 +168,15 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   @Override
-  public void processSingleEvent(@NotNull VFileEvent event) {
-    new RefreshSessionImpl(Collections.singletonList(event)).launch();
+  public void processSingleEvent(boolean async, @NotNull VFileEvent event) {
+    new RefreshSessionImpl(async, Collections.singletonList(event)).launch();
   }
 
   public static boolean isRefreshInProgress() {
     RefreshQueueImpl refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
+    if (!((BoundedTaskExecutor)refreshQueue.myQueue).isEmpty()) {
+      return true;
+    }
     synchronized (refreshQueue.mySessions) {
       return !refreshQueue.mySessions.isEmpty();
     }

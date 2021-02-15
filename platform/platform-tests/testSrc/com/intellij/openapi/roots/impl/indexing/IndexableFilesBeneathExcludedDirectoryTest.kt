@@ -129,17 +129,15 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
     lateinit var additionalRoots: DirectorySpec
     lateinit var additionalProjectRoots: DirectorySpec
 
-    lateinit var projectFile: FileSpec
-    lateinit var appFile: FileSpec
     projectModelRule.createJavaModule("moduleName") {
       // Must not be indexed despite being provided by IndexableSetContributor.
       content("contentRoot") {
         excluded("excluded") {
           additionalProjectRoots = dir("additionalProjectRoots") {
-            projectFile = file("ExcludedFile.java", "class ExcludedFile {}")
+            file("ExcludedFile.java", "class ExcludedFile {}")
           }
           additionalRoots = dir("additionalRoots") {
-            appFile = file("ExcludedFile.java", "class ExcludedFile {}")
+            file("ExcludedFile.java", "class ExcludedFile {}")
           }
         }
       }
@@ -153,7 +151,7 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
         setOf(additionalRoots.file)
     }
     maskIndexableSetContributors(contributor)
-    assertIndexableFiles(projectFile.file, appFile.file)
+    assertIndexableFiles()
   }
 
 }

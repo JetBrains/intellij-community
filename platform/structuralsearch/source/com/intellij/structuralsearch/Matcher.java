@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.dupLocator.iterators.SingleNodeIterator;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
@@ -37,8 +37,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
 
 /**
  * This class makes program structure tree matching:
@@ -155,7 +153,7 @@ public class Matcher {
       return false;
     }
     matchContext.setShouldRecursivelyMatch(false);
-    visitor.matchContext(newSingleNodeIterator(element));
+    visitor.matchContext(SingleNodeIterator.create(element));
     return !sink.getMatches().isEmpty();
   }
 
@@ -179,7 +177,7 @@ public class Matcher {
 
       final PsiElement parent = elements[0].getParent();
       if (matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
-        visitor.matchContext(new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
+        visitor.matchContext(SsrFilteringNodeIterator.create(elements));
       }
       else {
         for (PsiElement element : elements) {
@@ -390,18 +388,21 @@ public class Matcher {
    * @param element the current search tree element
    */
   private void match(@NotNull PsiElement element) {
-    final MatchingStrategy strategy = getMatchContext().getPattern().getStrategy();
+    final MatchContext context = getMatchContext();
+    final MatchingStrategy strategy = context.getPattern().getStrategy();
 
     if (strategy.continueMatching(element)) {
-      visitor.matchContext(newSingleNodeIterator(element));
+      visitor.matchContext(SingleNodeIterator.create(element));
       return;
     }
-    for(PsiElement el = element.getFirstChild(); el != null; el = el.getNextSibling()) {
-      match(el);
-    }
-    if (element instanceof PsiLanguageInjectionHost) {
-      InjectedLanguageManager.getInstance(project).enumerateEx(element, element.getContainingFile(), false,
-                                                               (injectedPsi, places) -> match(injectedPsi));
+    if (context.getOptions().isSearchInjectedCode()) {
+      for (PsiElement el = element.getFirstChild(); el != null; el = el.getNextSibling()) {
+        match(el);
+      }
+      if (element instanceof PsiLanguageInjectionHost) {
+        InjectedLanguageManager.getInstance(project).enumerateEx(element, element.getContainingFile(), false,
+                                                                 (injectedPsi, places) -> match(injectedPsi));
+      }
     }
   }
 
@@ -468,7 +469,7 @@ public class Matcher {
 
     assert targetNode != null : "Could not match down up when no target node";
 
-    visitor.matchContext(newSingleNodeIterator(elementToStartMatching));
+    visitor.matchContext(SingleNodeIterator.create(elementToStartMatching));
     matchContext.getSink().matchingFinished();
     return sink.getMatches();
   }

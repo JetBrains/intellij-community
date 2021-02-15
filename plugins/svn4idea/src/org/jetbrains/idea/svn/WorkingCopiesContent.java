@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.CopiesPanel;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public class WorkingCopiesContent implements ChangesViewContentProvider {
   @NotNull private final Project myProject;
@@ -52,6 +53,14 @@ public class WorkingCopiesContent implements ChangesViewContentProvider {
     @Override
     public Boolean fun(@NotNull Project project) {
       return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(SvnVcs.VCS_NAME);
+    }
+  }
+
+  public static class DisplayNameSupplier implements Supplier<String> {
+
+    @Override
+    public String get() {
+      return SvnBundle.message("toolwindow.working.copies.info.title");
     }
   }
 

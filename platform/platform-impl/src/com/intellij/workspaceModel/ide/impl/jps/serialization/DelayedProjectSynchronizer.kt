@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import kotlin.system.measureTimeMillis
@@ -21,6 +22,7 @@ class DelayedProjectSynchronizer : StartupActivity {
       if (projectModelSynchronizer != null && (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
         val loadingTime = measureTimeMillis {
           projectModelSynchronizer.loadRealProject(project)
+          project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
         }
         log.info("Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}")
       }

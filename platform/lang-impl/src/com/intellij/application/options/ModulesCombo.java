@@ -4,15 +4,16 @@ package com.intellij.application.options;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public interface ModulesCombo {
   Module getSelectedModule();
   void setSelectedModule(Module module);
-  void setModules(Collection<? extends Module> modules);
-  void allowEmptySelection(@NlsContexts.ListItem String noModuleText);
+  void setModules(@NotNull Collection<? extends Module> modules);
+  void allowEmptySelection(@NlsContexts.ListItem @NotNull String noModuleText);
 
   String getSelectedModuleName();
-  void setSelectedModule(Project project, String name);
+  void setSelectedModule(@NotNull Project project, @NotNull String name);
 }

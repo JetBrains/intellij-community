@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -21,26 +24,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
-public class TabbedShowHistoryAction extends AbstractVcsAction implements UpdateInBackground {
-  private static final long MANY_CHANGES_THRESHOLD = 1000;
+public class TabbedShowHistoryAction extends DumbAwareAction implements UpdateInBackground {
+  private static final int MANY_CHANGES_THRESHOLD = 1000;
 
   @Override
-  protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
-    Project project = context.getProject();
-
-    presentation.setEnabled(isEnabled(context));
-    presentation.setVisible(project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss());
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    boolean isVisible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
+    e.getPresentation().setEnabled(isEnabled(e.getDataContext()));
+    e.getPresentation().setVisible(isVisible);
   }
 
-  protected boolean isEnabled(@NotNull VcsContext context) {
-    Project project = context.getProject();
+  protected boolean isEnabled(@NotNull DataContext context) {
+    Project project = context.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;
 
-    List<FilePath> selectedFiles = context.getSelectedFilePathsStream().limit(MANY_CHANGES_THRESHOLD)
-      .collect(Collectors.toList());
+    List<FilePath> selectedFiles = VcsContextUtil.selectedFilePathsIterable(context)
+      .take(MANY_CHANGES_THRESHOLD)
+      .toList();
 
     if (selectedFiles.isEmpty()) return false;
 
@@ -83,9 +86,9 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
   }
 
   @Override
-  protected void actionPerformed(@NotNull VcsContext context) {
-    Project project = Objects.requireNonNull(context.getProject());
-    List<FilePath> selectedFiles = context.getSelectedFilePathsStream().collect(Collectors.toList());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = Objects.requireNonNull(e.getProject());
+    List<FilePath> selectedFiles = VcsContextUtil.selectedFilePaths(e.getDataContext());
     if (canShowNewFileHistory(project, selectedFiles)) {
       showNewFileHistory(project, selectedFiles);
     }

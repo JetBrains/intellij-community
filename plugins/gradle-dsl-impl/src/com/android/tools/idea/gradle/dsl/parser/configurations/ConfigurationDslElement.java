@@ -15,19 +15,21 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.configurations;
 
-import static com.android.tools.idea.gradle.dsl.model.configurations.ConfigurationModelImpl.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.*;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.model.configurations.ConfigurationModelImpl.TRANSITIVE;
+import static com.android.tools.idea.gradle.dsl.model.configurations.ConfigurationModelImpl.VISIBLE;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.MethodSemanticsDescription.SET;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelMapCollector.toModelMap;
-import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.*;
+import static com.android.tools.idea.gradle.dsl.parser.semantics.PropertySemanticsDescription.VAR;
 
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslNamedDomainElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiElement;
 import java.util.stream.Stream;
@@ -40,13 +42,13 @@ public class ConfigurationDslElement extends GradleDslBlockElement implements Gr
     new PropertiesElementDescription<>(null, ConfigurationDslElement.class, ConfigurationDslElement::new);
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"isTransitive", property, TRANSITIVE, VAR},
     {"isVisible", property, VISIBLE, VAR}
   }).collect(toModelMap());
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> groovyToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.of(new Object[][]{
     {"transitive", property, TRANSITIVE, VAR},
     {"transitive", exactly(1), TRANSITIVE, SET},
     {"visible", property, VISIBLE, VAR},
@@ -55,7 +57,7 @@ public class ConfigurationDslElement extends GradleDslBlockElement implements Gr
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }
@@ -67,17 +69,14 @@ public class ConfigurationDslElement extends GradleDslBlockElement implements Gr
     }
   }
 
-  private final boolean myHasBraces;
-
   public ConfigurationDslElement(@NotNull GradleDslElement parent, @NotNull GradleNameElement name) {
     super(parent, name);
-    myHasBraces = true;
   }
 
   public ConfigurationDslElement(@NotNull GradleDslElement parent, @NotNull PsiElement element, @NotNull GradleNameElement name, boolean hasBraces) {
     super(parent, name);
     setPsiElement(element);
-    myHasBraces = hasBraces;
+    setHasBraces(hasBraces);
   }
 
   private String methodName;
@@ -91,16 +90,6 @@ public class ConfigurationDslElement extends GradleDslBlockElement implements Gr
   @Override
   public void setMethodName(@Nullable String value) {
     methodName = value;
-  }
-
-  @Nullable
-  @Override
-  public PsiElement create() {
-    // Delete and re-create
-    if (!myHasBraces) {
-      delete();
-    }
-    return super.create();
   }
 
   @Override

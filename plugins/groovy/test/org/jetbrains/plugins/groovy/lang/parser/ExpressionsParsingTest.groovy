@@ -375,6 +375,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$method$method9() throws Throwable { doTest() }
 
   void testpath$method$method14() { doTest() }
+  
+  void testpath$method$method15() { doTest() }
 
   void testpath$path1() throws Throwable { doTest() }
 

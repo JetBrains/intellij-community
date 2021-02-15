@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -179,8 +178,22 @@ final class FilePartNodeRoot extends FilePartNode {
       else {
         currentFile = currentFile == null ? null : findChildThroughJar(currentFile, name, currentFS);
       }
+
+      // check that found child name is the same as the one we were looking for
+      // otherwise it may be the 8.3 abbreviation, which we should expand and look again
+      //noinspection UseVirtualFileEquals
+      if (currentFile != null && currentFile != NEVER_TRIED_TO_FIND && !currentFile.getName().equals(name)) {
+        name = currentFile.getName();
+        index = currentNode.binarySearchChildByName(name);
+        if (index >= 0) {
+          parentNode = currentNode;
+          currentNode = currentNode.children[index];
+          continue;
+        }
+      }
+
       FilePartNode child = currentFile == null ? new UrlPartNode(name, myUrl(currentNode.myFileOrUrl), currentFS)
-                                               : new FilePartNode(name.equals(JarFileSystem.JAR_SEPARATOR) ? JAR_SEPARATOR_NAME_ID : getNameId(currentFile), currentFile, currentFS);
+             : new FilePartNode(name.equals(JarFileSystem.JAR_SEPARATOR) ? JAR_SEPARATOR_NAME_ID : getNameId(currentFile), currentFile, currentFS);
 
       currentNode.children = ArrayUtil.insert(currentNode.children, -index - 1, child);
       parentNode = currentNode;
@@ -264,7 +277,7 @@ final class FilePartNodeRoot extends FilePartNode {
   }
 
   void checkConsistency() {
-    if (VirtualFilePointerManagerImpl.IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
+    if (VirtualFilePointerManagerImpl.shouldCheckConsistency()) {
       doCheckConsistency(null, "", myFS.getProtocol() + URLUtil.SCHEME_SEPARATOR);
     }
   }

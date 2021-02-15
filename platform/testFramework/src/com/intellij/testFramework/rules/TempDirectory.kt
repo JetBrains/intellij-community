@@ -53,7 +53,7 @@ class TempDirectory : ExternalResource() {
     }
 
   override fun apply(base: Statement, description: Description): Statement {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName, false), true)
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName.take(30), true), true)
     return super.apply(base, description)
   }
 

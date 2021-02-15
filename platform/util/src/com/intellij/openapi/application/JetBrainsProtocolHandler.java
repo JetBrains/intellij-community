@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.util.io.URLUtil;
@@ -70,15 +70,13 @@ public final class JetBrainsProtocolHandler {
     }
   }
 
-  @Nullable
-  public static @NonNls String getCommand() {
+  public static @Nullable @NonNls String getCommand() {
     init();
     return ourCommand;
   }
 
   private static void init() {
-    if (initialized) return;
-    String property = System.getProperty(JetBrainsProtocolHandler.class.getName());
+    String property = initialized ? null : System.getProperty(JetBrainsProtocolHandler.class.getName());
     if (property != null && property.startsWith(PROTOCOL)) {
       processJetBrainsLauncherParameters(property);
     }
@@ -98,8 +96,7 @@ public final class JetBrainsProtocolHandler {
     ourCommand = null;
   }
 
-  @NotNull
-  public static Map<String, String> getParameters() {
+  public static @NotNull Map<String, String> getParameters() {
     init();
     return ourParameters;
   }

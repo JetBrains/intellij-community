@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
+import com.intellij.navigation.ChooseByNameContributorEx2;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,8 +29,8 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
-import gnu.trove.THashSet;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,9 +61,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return ContainerUtil.find(getContributorList(), o -> DumbService.isDumbAware(o)) != null;
   }
 
-  @NotNull
   @Override
-  public ListCellRenderer getListCellRenderer() {
+  public @NotNull ListCellRenderer<?> getListCellRenderer() {
     return new NavigationItemListCellRenderer();
   }
 
@@ -70,14 +70,14 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return false;
   }
 
-  private final ConcurrentMap<ChooseByNameContributor, TIntHashSet> myContributorToItsSymbolsMap = ContainerUtil.createConcurrentWeakMap();
+  private final ConcurrentMap<ChooseByNameContributor, IntSet> myContributorToItsSymbolsMap = ContainerUtil.createConcurrentWeakMap();
 
   @Override
   public void processNames(@NotNull Processor<? super String> nameProcessor, @NotNull FindSymbolParameters parameters) {
     long start = System.currentTimeMillis();
     List<ChooseByNameContributor> contributors = filterDumb(getContributorList());
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    Processor<ChooseByNameContributor> processor = new ReadActionProcessor<ChooseByNameContributor>() {
+    Processor<ChooseByNameContributor> processor = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(@NotNull ChooseByNameContributor contributor) {
         try {
@@ -114,8 +114,16 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public void processContributorNames(@NotNull ChooseByNameContributor contributor,
                                       @NotNull FindSymbolParameters parameters,
                                       @NotNull Processor<? super String> nameProcessor) {
-    TIntHashSet filter = new TIntHashSet(1000);
-    if (contributor instanceof ChooseByNameContributorEx) {
+    IntSet filter = new IntOpenHashSet(1000);
+    if (contributor instanceof ChooseByNameContributorEx2) {
+      ((ChooseByNameContributorEx2)contributor).processNames(s -> {
+        if (nameProcessor.process(s)) {
+          filter.add(s.hashCode());
+        }
+        return true;
+      }, parameters);
+    }
+    else if (contributor instanceof ChooseByNameContributorEx) {
       ((ChooseByNameContributorEx)contributor).processNames(s -> {
         if (nameProcessor.process(s)) {
           filter.add(s.hashCode());
@@ -140,7 +148,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
   @Override
   public String @NotNull [] getNames(final boolean checkBoxState) {
-    final THashSet<String> allNames = new THashSet<>();
+    Set<String> allNames = new HashSet<>();
 
     Collection<String> result = Collections.synchronizedCollection(allNames);
     processNames(Processors.cancelableCollectProcessor(result),
@@ -167,7 +175,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
                                               @NotNull final FindSymbolParameters parameters,
                                               @NotNull final ProgressIndicator canceled) {
     List<ChooseByNameContributor> applicable = ContainerUtil.filter(filterDumb(getContributorList()), contributor -> {
-      TIntHashSet filter = myContributorToItsSymbolsMap.get(contributor);
+      IntSet filter = myContributorToItsSymbolsMap.get(contributor);
       return filter == null || filter.contains(name.hashCode());
     });
     if (applicable.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;

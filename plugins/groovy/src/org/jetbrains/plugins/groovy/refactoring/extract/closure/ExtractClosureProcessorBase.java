@@ -35,7 +35,7 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
 
       @Override
       public String getProcessedElementsHeader() {
-        return "Extract closure";
+        return GroovyBundle.message("header.extract.closure");
       }
     };
   }

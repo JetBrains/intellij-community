@@ -29,7 +29,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
   private static final String DICT_NAME = "dict";
 
   private static final PatternCondition<PyReferenceExpression> FORMAT_CALL_PATTERN_CONDITION =
-    new PatternCondition<PyReferenceExpression>("isFormatFunction") {
+    new PatternCondition<>("isFormatFunction") {
 
       @Override
       public boolean accepts(@NotNull PyReferenceExpression expression, ProcessingContext context) {
@@ -39,7 +39,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
     };
 
   private static final PatternCondition<PyReferenceExpression> DICT_CALL_PATTERN_CONDITION =
-    new PatternCondition<PyReferenceExpression>("isDictCall") {
+    new PatternCondition<>("isDictCall") {
 
       @Override
       public boolean accepts(@NotNull PyReferenceExpression expression, ProcessingContext context) {
@@ -58,7 +58,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
 
 
   @Nullable private static final PatternCondition<PyBinaryExpression> PERCENT_BINARY_EXPRESSION_PATTERN =
-    new PatternCondition<PyBinaryExpression>("isBinaryFormatExpression") {
+    new PatternCondition<>("isBinaryFormatExpression") {
       @Override
       public boolean accepts(@NotNull PyBinaryExpression expression, ProcessingContext context) {
         return expression.isOperator("%");

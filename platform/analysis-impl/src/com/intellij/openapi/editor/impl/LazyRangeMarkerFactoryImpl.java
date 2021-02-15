@@ -1,12 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +30,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
     return ReadAction.compute(() -> {
       final Document document = file.getFileType().isBinary() ? null : FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
-        int myTabSize = CodeStyleFacade.getInstance(myProject).getTabSize(file.getFileType());
+        int myTabSize = CodeStyle.getFacade(myProject, document, file.getFileType()).getTabSize();
         final int offset = calculateOffset(document, line, column, myTabSize);
         return DocumentImpl.createRangeMarkerForVirtualFile(file, offset, offset, line, column, line, column, persistent);
       }

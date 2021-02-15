@@ -49,7 +49,7 @@ public final class InspectionTreeHtmlWriter {
     HTMLExportUtil.writeFile(myOutputDir, "index.html", myTree.getContext().getProject(), w -> {
       appendHeader(w);
       w.append("<div style=\"width:100%;\"><div style=\"float:left; width:50%;\"><h4>Inspection tree:</h4>");
-      InspectionTreeTailRenderer<IOException> tailRenderer = new InspectionTreeTailRenderer<IOException>(myTree.getContext()) {
+      InspectionTreeTailRenderer<IOException> tailRenderer = new InspectionTreeTailRenderer<>(myTree.getContext()) {
         @Override
         protected void appendText(String text, SimpleTextAttributes attributes) throws IOException {
           w.append(escapeNonBreakingSymbols(text));

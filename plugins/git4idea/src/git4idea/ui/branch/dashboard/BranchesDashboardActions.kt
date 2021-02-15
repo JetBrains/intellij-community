@@ -365,7 +365,7 @@ internal object BranchesDashboardActions {
       super.update(e)
       with(e.presentation) {
         text = message("action.Git.Fetch.title")
-        icon = AllIcons.Actions.Refresh
+        icon = AllIcons.Vcs.Fetch
         description = ""
         val project = e.project ?: return@with
         if (GitFetchSupport.fetchSupport(project).isFetchRunning) {

@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -30,15 +29,6 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   public CallerMethodsTreeStructure(@NotNull Project project, @NotNull PsiMember member, final String scopeType) {
     super(project, new CallHierarchyNodeDescriptor(project, null, member, true, false));
     myScopeType = scopeType;
-  } 
-  
-  /**
-   * @deprecated use CallerMethodsTreeStructure#CallerMethodsTreeStructure(Project, PsiMember, String)
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public CallerMethodsTreeStructure(@NotNull Project project, @NotNull PsiMethod method, final String scopeType) {
-    this(project, ((PsiMember)method), scopeType);
   }
 
   @Override

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import junit.framework.TestCase;
@@ -466,5 +467,106 @@ public class DisposerTest extends TestCase {
 
       LeakHunter.checkLeak(Disposer.getTree(), MyDisposable.class);
     }
+  }
+
+  public void testDisposerMustHaveIdentitySemanticsForChildren() {
+    List<Disposable> run = new ArrayList<>();
+    Disposable disposable0 = new Disposable() {
+      @Override
+      public void dispose() {
+        run.add(this);
+      }
+
+      @Override
+      public int hashCode() {
+        return 0;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return true;
+      }
+    };
+    Disposable disposable1 = new Disposable() {
+      @Override
+      public void dispose() {
+        run.add(this);
+      }
+
+      @Override
+      public int hashCode() {
+        return 0;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return true;
+      }
+    };
+    assertEquals(disposable0, disposable1);
+
+    // for children
+    Disposable parent = newDisposable();
+    Disposer.register(parent, disposable0);
+    Disposer.register(parent, disposable1);
+    Disposer.dispose(parent);
+    assertEquals(2, run.size());
+    assertSame(disposable1, run.get(0));
+    assertSame(disposable0, run.get(1));
+  }
+
+  public void testDisposerMustHaveIdentitySemanticsForParent() {
+    List<Disposable> run = new ArrayList<>();
+    Disposable disposable0 = new Disposable() {
+      @Override
+      public void dispose() {
+      }
+
+      @Override
+      public int hashCode() {
+        return 0;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return true;
+      }
+    };
+    Disposable disposable1 = new Disposable() {
+      @Override
+      public void dispose() {
+      }
+
+      @Override
+      public int hashCode() {
+        return 0;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return true;
+      }
+    };
+    assertEquals(disposable0, disposable1);
+
+    Disposable child0 = new Disposable() {
+      @Override
+      public void dispose() {
+        run.add(this);
+      }
+    };
+    Disposable child1 = new Disposable() {
+      @Override
+      public void dispose() {
+        run.add(this);
+      }
+    };
+    Disposer.register(disposable0, child0);
+    Disposer.register(disposable1, child1);
+    Disposer.dispose(disposable0);
+    assertSame(child0, UsefulTestCase.assertOneElement(run));
+    run.clear();
+    Disposer.dispose(disposable1);
+    assertSame(child1, UsefulTestCase.assertOneElement(run));
   }
 }

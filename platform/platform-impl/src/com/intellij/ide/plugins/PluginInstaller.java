@@ -107,7 +107,8 @@ public final class PluginInstaller {
   }
 
   private static void uninstallAfterRestart(IdeaPluginDescriptor pluginDescriptor) throws IOException {
-    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath()));
+    StartupActionScriptManager
+      .addActionCommands(Collections.singletonList(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath())));
   }
 
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent,
@@ -351,7 +352,10 @@ public final class PluginInstaller {
                                                     IdeaPluginDescriptorImpl pluginDescriptor) {
     Path targetFile = installWithoutRestart(file, pluginDescriptor, parent);
     if (targetFile != null) {
-      IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
+      IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile,
+                                                                               DisabledPluginsState.disabledPlugins(),
+                                                                               false,
+                                                                               PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
       if (targetDescriptor != null) {
         return DynamicPlugins.loadPlugin(targetDescriptor);
       }

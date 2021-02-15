@@ -21,6 +21,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * Describes a single compiler message that is shown in compiler message view.
  *
@@ -75,4 +78,11 @@ public interface CompilerMessage {
    * @return location prefix prepended to message while rendering compilation results in UI.
    */
   String getRenderTextPrefix();
+
+  /**
+   * @return module name (or names of modules in a module dependency cycle) where this message occurred
+   */
+  default Collection<String> getModuleNames() {
+    return Collections.emptyList();
+  }
 }

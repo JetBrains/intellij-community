@@ -11,13 +11,17 @@ public class ExternalUploadSendEvent extends ExternalSystemEvent {
   private final int myFailed;
   private final int myTotal;
   @NotNull private final List<String> mySuccessfullySentFiles;
+  @NotNull private final List<Integer> myErrors;
 
-  public ExternalUploadSendEvent(long timestamp, int succeed, int failed, int total, @NotNull List<String> successfullySentFiles) {
+  public ExternalUploadSendEvent(long timestamp, int succeed, int failed, int total,
+                                 @NotNull List<String> successfullySentFiles,
+                                 @NotNull List<Integer> errors) {
     super(ExternalSystemEventType.SEND, timestamp);
     mySucceed = succeed;
     myFailed = failed;
     myTotal = total;
     mySuccessfullySentFiles = successfullySentFiles;
+    myErrors = errors;
   }
 
   public int getSucceed() {
@@ -36,6 +40,10 @@ public class ExternalUploadSendEvent extends ExternalSystemEvent {
     return mySuccessfullySentFiles;
   }
 
+  public @NotNull List<Integer> getErrors() {
+    return myErrors;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -45,11 +53,12 @@ public class ExternalUploadSendEvent extends ExternalSystemEvent {
     return mySucceed == event.mySucceed &&
            myFailed == event.myFailed &&
            myTotal == event.myTotal &&
-           Objects.equals(mySuccessfullySentFiles, event.mySuccessfullySentFiles);
+           Objects.equals(mySuccessfullySentFiles, event.mySuccessfullySentFiles) &&
+           Objects.equals(myErrors, event.myErrors);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), mySucceed, myFailed, myTotal, mySuccessfullySentFiles);
+    return Objects.hash(super.hashCode(), mySucceed, myFailed, myTotal, mySuccessfullySentFiles, myErrors);
   }
 }

@@ -3,7 +3,7 @@ package com.intellij.util.messages;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
 
 /**
  * Defines contract for generic messages subscriber processor.
@@ -16,5 +16,5 @@ public interface MessageHandler {
    * @param event   information about target method called by the publisher
    * @param params  called method arguments
    */
-  void handle(@NotNull Method event, Object... params);
+  void handle(@NotNull MethodHandle event, Object... params);
 }

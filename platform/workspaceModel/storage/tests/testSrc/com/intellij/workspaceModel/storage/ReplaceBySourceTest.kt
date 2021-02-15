@@ -130,7 +130,7 @@ class ReplaceBySourceTest {
   fun `replace with empty storage`() {
     builder.addSampleEntity("data1")
     builder.addSampleEntity("data2")
-    builder.resetChanges()
+    resetChanges()
     val originalStorage = builder.toStorage()
 
     builder.replaceBySource({ true }, WorkspaceEntityStorageBuilderImpl.create())
@@ -145,7 +145,7 @@ class ReplaceBySourceTest {
   @Test
   fun `add entity with false source`() {
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
-    builder.resetChanges()
+    resetChanges()
     val replacement = WorkspaceEntityStorageBuilderImpl.create()
     replacement.addSampleEntity("hello1", SampleEntitySource("1"))
     builder.replaceBySource({ false }, replacement)
@@ -377,7 +377,7 @@ class ReplaceBySourceTest {
   fun `entity with soft reference`() {
     val named = builder.addNamedEntity("MyName")
     val linked = builder.addWithSoftLinkEntity(named.persistentId())
-    builder.resetChanges()
+    resetChanges()
     builder.assertConsistency()
 
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
@@ -398,7 +398,7 @@ class ReplaceBySourceTest {
   fun `entity with soft reference remove reference`() {
     val named = builder.addNamedEntity("MyName")
     val linked = builder.addWithListSoftLinksEntity("name", listOf(named.persistentId()))
-    builder.resetChanges()
+    resetChanges()
     builder.assertConsistency()
 
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
@@ -436,7 +436,7 @@ class ReplaceBySourceTest {
       val builder = PEntityStorageBuilder.create()
       val named = builder.addNamedEntity("MyName")
       val linked = builder.addWithSoftLinkEntity(named.persistentId(), AnotherSource)
-      builder.resetChanges()
+      resetChanges()
       builder.assertConsistency()
 
       val replacement = PEntityStorageBuilder.from(builder)
@@ -540,5 +540,9 @@ class ReplaceBySourceTest {
     val child = builder.entities(NamedChildEntity::class.java).single()
     assertEquals("barChild", child.childProperty)
     assertEquals("foo", child.parent.additionalProperty)
+  }
+
+  private fun resetChanges() {
+    builder = builder.toStorage().toBuilder() as WorkspaceEntityStorageBuilderImpl
   }
 }

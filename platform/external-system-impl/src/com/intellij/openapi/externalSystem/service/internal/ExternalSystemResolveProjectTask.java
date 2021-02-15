@@ -141,6 +141,10 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId().getReadableName(), text);
   }
 
+  public boolean isPreviewMode() {
+    return myIsPreviewMode;
+  }
+
   public @Nullable ProjectResolverPolicy getResolverPolicy() {
     return myResolverPolicy;
   }

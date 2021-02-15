@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
+import com.ibm.icu.text.MessagePattern;
 import com.intellij.codeInspection.*;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -13,7 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -21,10 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
-import java.text.ChoiceFormat;
-import java.text.Format;
-import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -153,32 +151,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
   private static Property getPropertyArgument(UCallExpression arg) {
     List<UExpression> args = arg.getValueArguments();
     if (!args.isEmpty()) {
-      PsiElement psi = args.get(0).getSourcePsi();
-      if (psi != null) {
-        if (args.get(0).equals(UastContextKt.toUElement(psi.getParent()))) {
-          // In Kotlin, we should go one level up (from KtLiteralStringTemplateEntry to KtStringTemplateExpression) 
-          // to find the property reference
-          psi = psi.getParent();
-        }
-        return getProperty(psi);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Property getProperty(PsiElement psi) {
-    PsiReference[] references = psi.getReferences();
-    for (PsiReference reference : references) {
-      if (reference instanceof PropertyReference) {
-        ResolveResult[] resolveResults = ((PropertyReference)reference).multiResolve(false);
-        if (resolveResults.length == 1 && resolveResults[0].isValidResult()) {
-          PsiElement element = resolveResults[0].getElement();
-          if (element instanceof Property) {
-            return (Property)element;
-          }
-        }
-      }
+      return JavaI18nUtil.resolveProperty(args.get(0));
     }
     return null;
   }
@@ -243,7 +216,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     private static Property getPropertyArgument(PsiMethodCallExpression arg) {
       PsiExpression[] args = arg.getArgumentList().getExpressions();
       if (args.length > 0) {
-        return getProperty(args[0]);
+        return JavaI18nUtil.resolveProperty(args[0]);
       }
       return null;
     }
@@ -274,8 +247,9 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       if (value == null) return null;
       if (useFormat) {
         try {
-          MessageFormat format = new MessageFormat(value);
-          return new PropertyValue(value, format);
+          MessagePattern pattern = new MessagePattern(MessagePattern.ApostropheMode.DOUBLE_REQUIRED);
+          pattern.parse(value);
+          return new PropertyValue(value, pattern);
         }
         catch (IllegalArgumentException ignore) {
         }
@@ -345,44 +319,91 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
 
   static class PropertyValue implements Value {
     private final String myPresentation;
-    private final MessageFormat myFormat;
+    private final MessagePattern myPattern;
 
-    PropertyValue(String presentation, MessageFormat format) {
+    PropertyValue(String presentation, MessagePattern pattern) {
       myPresentation = presentation;
-      myFormat = format;
+      myPattern = pattern;
     }
 
     @NotNull @Override
     public String toString() {
       return myPresentation;
     }
+    
+    private int getMessagesForPart(int index) {
+      MessagePattern.Part part = myPattern.getPart(index);
+      if (part.getType() != MessagePattern.Part.Type.ARG_START) return 0;
+      int limitPart = myPattern.getLimitPartIndex(index);
+      int msgCount = 0;
+      int nesting = -1;
+      for (int i = index + 1; i < limitPart; i++) {
+        part = myPattern.getPart(i);
+        if (part.getType() == MessagePattern.Part.Type.MSG_START) {
+          if (nesting == -1) {
+            nesting = part.getValue();
+          }
+          else if (nesting != part.getValue()) {
+            continue;
+          }
+          msgCount++;
+        }
+      }
+      return msgCount;
+    }
 
     @Override
     public boolean isSatisfied(@NotNull Nls.Capitalization capitalization) {
       if (capitalization == Nls.Capitalization.NotSpecified) return true;
-      Format[] formats = myFormat.getFormats();
-      MessageFormat clone = (MessageFormat)myFormat.clone();
-      clone.setFormats(new Format[formats.length]);
-      if (!NlsCapitalizationUtil.isCapitalizationSatisfied(StringUtil.stripHtml(clone.toPattern(), true), capitalization)) return false;
-      boolean startsWithFormat = myFormat.toPattern().startsWith("{");
-      for (int i = 0; i < formats.length; i++) {
-        Format format = formats[i];
-        if (format instanceof ChoiceFormat) {
-          for (Object subValue : ((ChoiceFormat)format).getFormats()) {
-            String str = subValue.toString();
-            if (capitalization == Nls.Capitalization.Sentence && (i > 0 || !startsWithFormat)) {
-              str = "The " + str;
+      int parts = myPattern.countParts();
+      int maxMsgCount = IntStreamEx.range(parts).map(i -> getMessagesForPart(i)).append(1).max().orElse(1);
+      String string = myPattern.getPatternString();
+      // The idea is to replace ordinary parameters with _ (which is not reported in any case) 
+      // and choice/plural with one of the possible options in a loop till maximal option number is reached. 
+      // If all the artificial strings satisfy the capitalization, we assume that it's satisfied for the pattern as well.
+      for (int curIndex = 0; curIndex < maxMsgCount; curIndex++) {
+        StringBuilder sample = new StringBuilder();
+        int msgIndex = 0;
+        int nestingLevel = 0;
+        int curMsgCount = 0;
+        boolean inMsg = false;
+        for (int i = 1; i < parts; i++) {
+          MessagePattern.Part part = myPattern.getPart(i);
+          boolean shouldCopyPart = nestingLevel == 0 || inMsg && msgIndex == curIndex % curMsgCount + 1;
+          if (shouldCopyPart) {
+            sample.append(string, myPattern.getPart(i - 1).getLimit(), myPattern.getPatternIndex(i));
+          }
+          if (part.getType() == MessagePattern.Part.Type.ARG_START) {
+            nestingLevel++;
+            MessagePattern.ArgType argType = part.getArgType();
+            if ((argType == MessagePattern.ArgType.SIMPLE || argType == MessagePattern.ArgType.NONE) && shouldCopyPart) {
+              sample.append("_");
             }
-            if (!NlsCapitalizationUtil.isCapitalizationSatisfied(str, capitalization)) return false;
+            msgIndex = 0;
+            curMsgCount = Math.max(1, getMessagesForPart(i));
+          }
+          else if (part.getType() == MessagePattern.Part.Type.MSG_START) {
+            msgIndex++;
+            inMsg = true;
+          }
+          else if (part.getType() == MessagePattern.Part.Type.MSG_LIMIT) {
+            inMsg = false;
+          }
+          else if (part.getType() == MessagePattern.Part.Type.ARG_LIMIT) {
+            nestingLevel--;
           }
         }
+        if (!NlsCapitalizationUtil.isCapitalizationSatisfied(sample.toString(), capitalization)) return false;
       }
       return true;
     }
 
     @Override
     public boolean canFix() {
-      return ContainerUtil.findInstance(myFormat.getFormats(), ChoiceFormat.class) == null;
+      return IntStream.range(0, myPattern.countParts()).anyMatch(idx -> {
+        MessagePattern.ArgType type = myPattern.getPart(idx).getArgType();
+        return type == MessagePattern.ArgType.NONE || type == MessagePattern.ArgType.SIMPLE;
+      });
     }
   }
 

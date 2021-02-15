@@ -307,11 +307,11 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       }
 
       String namePrefix = ContainerUtil.getLastItem(names);
-      return new Iterable<String>() {
+      return new Iterable<>() {
         @NotNull
         @Override
         public Iterator<String> iterator() {
-          return ContainerUtil.concatIterators(names.iterator(), new Iterator<String>() {
+          return ContainerUtil.concatIterators(names.iterator(), new Iterator<>() {
             int current = 0;
 
             @Override

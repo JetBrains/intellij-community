@@ -17,10 +17,10 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
@@ -367,7 +367,7 @@ public final class ImportUtils {
       return false;
     }
     final List<PsiImportStaticStatement> imports = getMatchingImports(importList, qualifiedName);
-    final int onDemandCount = JavaCodeStyleSettingsFacade.getInstance(project).getNamesCountToUseImportOnDemand();
+    final int onDemandCount = JavaFileCodeStyleFacade.forContext(contextFile).getNamesCountToUseImportOnDemand();
     final PsiElementFactory elementFactory = psiFacade.getElementFactory();
     if (imports.size() + 1 < onDemandCount) {
       importList.add(elementFactory.createImportStaticStatement(aClass, memberName));

@@ -9,12 +9,13 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitorBase;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TypeChecker extends GroovyStaticTypeCheckVisitor {
+public class TypeChecker extends GroovyStaticTypeCheckVisitorBase {
+
   List<ProblemFix> toApply = new ArrayList<>();
 
   @Override

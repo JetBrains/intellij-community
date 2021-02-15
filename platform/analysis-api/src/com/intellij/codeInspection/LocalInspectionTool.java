@@ -179,15 +179,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {}
 
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
-    inspectionFinished(session);
   }
 
-  /**
-   * @deprecated Use {@link #inspectionFinished(LocalInspectionToolSession, ProblemsHolder)} instead
-   */
-  @Deprecated
-  public void inspectionFinished(@NotNull LocalInspectionToolSession session) {}
-  
   @NotNull
   public List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     final ProblemsHolder holder = new ProblemsHolder(manager, file, false);

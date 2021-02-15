@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.SystemProperties;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Utility class which holds collection of font families and theirs sizes.
@@ -25,9 +27,12 @@ import java.util.List;
  * @author Denis Zhdanov
  */
 public class FontPreferencesImpl extends ModifiableFontPreferences {
+  private static final boolean NEW_FONT_SELECTION_LOGIC = SystemProperties.is("new.editor.font.selector");
   @NotNull private final Object2IntMap<String> myFontSizes = new Object2IntOpenHashMap<>();
   @NotNull private final List<String> myEffectiveFontFamilies = new ArrayList<>();
   @NotNull private final List<String> myRealFontFamilies = new ArrayList<>();
+  @Nullable private String myRegularSubFamily;
+  @Nullable private String myBoldSubFamily;
 
   private boolean myUseLigatures;
   private float myLineSpacing = DEFAULT_LINE_SPACING;
@@ -59,6 +64,8 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     myEffectiveFontFamilies.clear();
     myRealFontFamilies.clear();
     myUseLigatures = false;
+    myRegularSubFamily = null;
+    myBoldSubFamily = null;
     if (myChangeListener != null) {
       myChangeListener.run();
     }
@@ -124,7 +131,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void register(@NotNull @NonNls String fontFamily, int size) {
-    String fallbackFontFamily = FontPreferences.getFallbackName(fontFamily, size, null);
+    String fallbackFontFamily = NEW_FONT_SELECTION_LOGIC ? null : FontPreferences.getFallbackName(fontFamily, size, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }
@@ -148,7 +155,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void addFontFamily(@NotNull String fontFamily) {
-    String fallbackFontFamily = FontPreferences.getFallbackName(fontFamily, DEFAULT_FONT_SIZE, null);
+    String fallbackFontFamily = NEW_FONT_SELECTION_LOGIC ? null : FontPreferences.getFallbackName(fontFamily, DEFAULT_FONT_SIZE, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }
@@ -176,6 +183,8 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
       }
       modifiablePreferences.setUseLigatures(myUseLigatures);
       modifiablePreferences.setLineSpacing(myLineSpacing);
+      modifiablePreferences.setRegularSubFamily(myRegularSubFamily);
+      modifiablePreferences.setBoldSubFamily(myBoldSubFamily);
     }
   }
 
@@ -227,6 +236,8 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
     if (myUseLigatures != that.myUseLigatures) return false;
     if (myLineSpacing != that.myLineSpacing) return false;
+    if (!Objects.equals(myRegularSubFamily, that.myRegularSubFamily)) return false;
+    if (!Objects.equals(myBoldSubFamily, that.myBoldSubFamily)) return false;
 
     return true;
   }
@@ -240,6 +251,36 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   public void setUseLigatures(boolean useLigatures) {
     if (useLigatures != myUseLigatures) {
       myUseLigatures = useLigatures;
+      if (myChangeListener != null) {
+        myChangeListener.run();
+      }
+    }
+  }
+
+  @Override
+  public @Nullable String getRegularSubFamily() {
+    return myRegularSubFamily;
+  }
+
+  @Override
+  public @Nullable String getBoldSubFamily() {
+    return myBoldSubFamily;
+  }
+
+  @Override
+  public void setRegularSubFamily(String subFamily) {
+    if (!Objects.equals(myRegularSubFamily, subFamily)) {
+      myRegularSubFamily = subFamily;
+      if (myChangeListener != null) {
+        myChangeListener.run();
+      }
+    }
+  }
+
+  @Override
+  public void setBoldSubFamily(String subFamily) {
+    if (!Objects.equals(myBoldSubFamily, subFamily)) {
+      myBoldSubFamily = subFamily;
       if (myChangeListener != null) {
         myChangeListener.run();
       }

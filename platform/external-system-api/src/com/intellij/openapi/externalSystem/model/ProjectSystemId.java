@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.Nls;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
  * The general idea of 'external system' integration is to provide management facilities for the project structure defined in
@@ -25,14 +28,14 @@ public final class ProjectSystemId implements Serializable {
   public static final @NotNull ProjectSystemId IDE = new ProjectSystemId("IDE");
 
   private final @NotNull @NonNls String id;
-  private final @NotNull @Nls String readableName;
+  private final @NotNull @Nls(capitalization = Title) String readableName;
 
-  public ProjectSystemId(@NotNull String id) {
+  public ProjectSystemId(@NotNull @NlsSafe String id) {
     this(id, StringUtil.capitalize(StringUtil.toLowerCase(id)));
   }
 
   @PropertyMapping({"id", "readableName"})
-  public ProjectSystemId(@NotNull @NonNls String id, @NotNull @Nls String readableName) {
+  public ProjectSystemId(@NotNull @NonNls String id, @NotNull @Nls(capitalization = Title) String readableName) {
     this.id = id;
     this.readableName = readableName;
     ourExistingIds.putIfAbsent(id, this);
@@ -57,7 +60,7 @@ public final class ProjectSystemId implements Serializable {
     return id;
   }
 
-  public @NotNull @Nls String getReadableName() {
+  public @NotNull @Nls(capitalization = Title) String getReadableName() {
     return readableName;
   }
 

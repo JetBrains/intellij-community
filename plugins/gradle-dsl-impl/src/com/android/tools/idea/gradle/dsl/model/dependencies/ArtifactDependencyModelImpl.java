@@ -73,7 +73,8 @@ public abstract class ArtifactDependencyModelImpl extends DependencyModelImpl im
   }
 
   @NotNull
-  protected ArtifactDependencySpec getSpec() {
+  @Override
+  public ArtifactDependencySpec getSpec() {
     String name = name().toString();
     assert name != null;
     return new ArtifactDependencySpecImpl(name,
@@ -222,37 +223,37 @@ public abstract class ArtifactDependencyModelImpl extends DependencyModelImpl im
     @Override
     @NotNull
     public ResolvedPropertyModel name() {
-      return GradlePropertyModelBuilder.create(myDslElement, "name").asMethod(true).buildResolved();
+      return GradlePropertyModelBuilder.create(myDslElement, "name").buildResolved();
     }
 
     @Override
     @NotNull
     public ResolvedPropertyModel group() {
-      return GradlePropertyModelBuilder.create(myDslElement, "group").asMethod(true).buildResolved();
+      return GradlePropertyModelBuilder.create(myDslElement, "group").buildResolved();
     }
 
     @Override
     @NotNull
     public ResolvedPropertyModel version() {
-      return GradlePropertyModelBuilder.create(myDslElement, "version").asMethod(true).buildResolved();
+      return GradlePropertyModelBuilder.create(myDslElement, "version").buildResolved();
     }
 
     @Override
     @NotNull
     public ResolvedPropertyModel classifier() {
-      return GradlePropertyModelBuilder.create(myDslElement, "classifier").asMethod(true).buildResolved();
+      return GradlePropertyModelBuilder.create(myDslElement, "classifier").buildResolved();
     }
 
     @Override
     @NotNull
     public ResolvedPropertyModel extension() {
-      return GradlePropertyModelBuilder.create(myDslElement, "ext").asMethod(true).buildResolved();
+      return GradlePropertyModelBuilder.create(myDslElement, "ext").buildResolved();
     }
 
     @NotNull
     @Override
     public ResolvedPropertyModel completeModel() {
-      return GradlePropertyModelBuilder.create(myDslElement).asMethod(true).buildResolved();
+      return GradlePropertyModelBuilder.create(myDslElement).buildResolved();
     }
 
     @Override
@@ -295,48 +296,48 @@ public abstract class ArtifactDependencyModelImpl extends DependencyModelImpl im
     @NotNull
     public ResolvedPropertyModel createModelFor(@NotNull String name,
                                                 @NotNull Function<ArtifactDependencySpec, String> getFunc,
-                                                @NotNull BiConsumer<ArtifactDependencySpec, String> setFunc,
+                                                @NotNull BiConsumer<ArtifactDependencySpecImpl, String> setFunc,
                                                 boolean canDelete) {
       GradleDslSimpleExpression element = mySetThrough ? resolveElement(myDslExpression) : myDslExpression;
       FakeElement fakeElement =
         new FakeArtifactElement(element.getParent(), GradleNameElement.fake(name), element, getFunc, setFunc, canDelete);
-      return GradlePropertyModelBuilder.create(fakeElement).addTransform(new FakeElementTransform()).asMethod(true).buildResolved();
+      return GradlePropertyModelBuilder.create(fakeElement).addTransform(new FakeElementTransform()).buildResolved();
     }
 
     @Override
     @NotNull
     public ResolvedPropertyModel name() {
-      return createModelFor("name", ArtifactDependencySpec::getName, ArtifactDependencySpec::setName, false);
+      return createModelFor("name", ArtifactDependencySpec::getName, ArtifactDependencySpecImpl::setName, false);
     }
 
     @Override
     @NotNull
     public ResolvedPropertyModel group() {
-      return createModelFor("group", ArtifactDependencySpec::getGroup, ArtifactDependencySpec::setGroup, true);
+      return createModelFor("group", ArtifactDependencySpec::getGroup, ArtifactDependencySpecImpl::setGroup, true);
     }
 
     @Override
     @NotNull
     public ResolvedPropertyModel version() {
-      return createModelFor("version", ArtifactDependencySpec::getVersion, ArtifactDependencySpec::setVersion, true);
+      return createModelFor("version", ArtifactDependencySpec::getVersion, ArtifactDependencySpecImpl::setVersion, true);
     }
 
     @Override
     @NotNull
     public ResolvedPropertyModel classifier() {
-      return createModelFor("classifier", ArtifactDependencySpec::getClassifier, ArtifactDependencySpec::setClassifier, true);
+      return createModelFor("classifier", ArtifactDependencySpec::getClassifier, ArtifactDependencySpecImpl::setClassifier, true);
     }
 
     @Override
     @NotNull
     public ResolvedPropertyModel extension() {
-      return createModelFor("extension", ArtifactDependencySpec::getExtension, ArtifactDependencySpec::setExtension, true);
+      return createModelFor("extension", ArtifactDependencySpec::getExtension, ArtifactDependencySpecImpl::setExtension, true);
     }
 
     @NotNull
     @Override
     public ResolvedPropertyModel completeModel() {
-      return GradlePropertyModelBuilder.create(myDslExpression).asMethod(true).buildResolved();
+      return GradlePropertyModelBuilder.create(myDslExpression).buildResolved();
     }
 
     @Override

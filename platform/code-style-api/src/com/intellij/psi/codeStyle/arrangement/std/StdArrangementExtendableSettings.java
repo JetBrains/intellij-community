@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementExtendableSettings;
@@ -14,8 +14,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -23,8 +21,8 @@ import java.util.*;
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class StdArrangementExtendableSettings extends StdArrangementSettings implements ArrangementExtendableSettings {
-  @NotNull private final Set<StdArrangementRuleAliasToken> myRulesAliases = new THashSet<>();
+public final class StdArrangementExtendableSettings extends StdArrangementSettings implements ArrangementExtendableSettings {
+  @NotNull private final Set<StdArrangementRuleAliasToken> myRulesAliases = new HashSet<>();
 
   // cached values
   @NotNull private final List<ArrangementSectionRule> myExtendedSectionRules = Collections.synchronizedList(new ArrayList<>());
@@ -34,7 +32,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   }
 
   public StdArrangementExtendableSettings(@NotNull List<? extends ArrangementGroupingRule> groupingRules,
-                                          @NotNull List<? extends ArrangementSectionRule> sectionRules,
+                                          @NotNull List<ArrangementSectionRule> sectionRules,
                                           @NotNull Collection<? extends StdArrangementRuleAliasToken> rulesAliases) {
     super(groupingRules, sectionRules);
     myRulesAliases.addAll(rulesAliases);
@@ -56,7 +54,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   }
 
   private Set<StdArrangementRuleAliasToken> cloneTokenDefinitions() {
-    final Set<StdArrangementRuleAliasToken> definitions = new THashSet<>();
+    final Set<StdArrangementRuleAliasToken> definitions = new HashSet<>();
     for (StdArrangementRuleAliasToken definition : myRulesAliases) {
       definitions.add(definition.clone());
     }
@@ -67,7 +65,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   public List<ArrangementSectionRule> getExtendedSectionRules() {
     synchronized (myExtendedSectionRules) {
       if (myExtendedSectionRules.isEmpty()) {
-        final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition = new THashMap<>(myRulesAliases.size());
+        final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition = new HashMap<>(myRulesAliases.size());
         for (StdArrangementRuleAliasToken alias : myRulesAliases) {
           final String id = alias.getId();
           tokenIdToDefinition.put(id, alias);

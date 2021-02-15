@@ -12,9 +12,7 @@ import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
-import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.Keymap
@@ -50,7 +48,6 @@ import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
 private val settings get() = UISettings.instance
-private val fontOptions get() = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
 private val defaultProject get() = ProjectManager.getInstance().defaultProject
 
 private val laf get() = LafManager.getInstance()
@@ -62,7 +59,6 @@ class CustomizeTabFactory : WelcomeTabFactory {
 }
 
 private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size
-private fun getEditorFont() = fontOptions.getSize(fontOptions.fontFamily)
 
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
                                                                            WelcomeScreenEventCollector.TabType.TabNavCustomize) {
@@ -71,7 +67,6 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val lafProperty = propertyGraph.graphProperty { laf.lookAndFeelReference }
   private val syncThemeProperty = propertyGraph.graphProperty { laf.autodetect }
   private val ideFontProperty = propertyGraph.graphProperty { getIdeFont() }
-  private val editorFontProperty = propertyGraph.graphProperty { getEditorFont() }
   private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }
   private val colorBlindnessProperty = propertyGraph.graphProperty { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
   private val adjustColorsProperty = propertyGraph.graphProperty { settings.colorBlindness != null }
@@ -98,13 +93,6 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
                                   settings.fontSize = it
                                   updateFontSettingsLater()
                                 }, parentDisposable)
-    editorFontProperty.afterChange({
-                                     val oldSize = fontOptions.getSize(fontOptions.fontFamily)
-                                     if (oldSize == it) return@afterChange
-                                     WelcomeScreenEventCollector.logEditorFontChanged(oldSize, it)
-                                     fontOptions.setSize(fontOptions.fontFamily, it)
-                                     updateFontSettingsLater()
-                                   }, parentDisposable)
     keymapProperty.afterChange({
                                  if (keymapManager.activeKeymap == it) return@afterChange
                                  WelcomeScreenEventCollector.logKeymapChanged(it)
@@ -163,7 +151,6 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   }
 
   private fun updateAccessibilityProperties() {
-    updateProperty(editorFontProperty) { getEditorFont() }
     val adjustColorSetting = settings.colorBlindness != null
     updateProperty(adjustColorsProperty) { adjustColorSetting }
     if (adjustColorSetting) {
@@ -177,6 +164,8 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         fullRow {
           val themeBuilder = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+          colorThemeComboBox = themeBuilder.component
+          colorThemeComboBox!!.accessibleContext.accessibleName = IdeBundle.message("welcome.screen.color.theme.header")
           val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"),
                                       syncThemeProperty).withLargeLeftGap().apply {
             component.isOpaque = false
@@ -184,7 +173,6 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
           }
 
           themeBuilder.enableIf(syncCheckBox.selected.not())
-          colorThemeComboBox = themeBuilder.component
           component(laf.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
         }
       }.largeGapAfter()
@@ -194,10 +182,6 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         row(IdeBundle.message("welcome.screen.ide.font.size.label"))
         {
           fontComboBox(ideFontProperty)
-        }
-        row(IdeBundle.message("welcome.screen.editor.font.size.label"))
-        {
-          fontComboBox(editorFontProperty)
         }.largeGapAfter()
 
         createColorBlindnessSettingBlock()
@@ -206,6 +190,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         header(KeyMapBundle.message("keymap.display.name"))
         fullRow {
           keymapComboBox = comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty).component
+          keymapComboBox!!.accessibleContext.accessibleName = KeyMapBundle.message("keymap.display.name")
           component(focusableLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
             ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject, KeyMapBundle.message("keymap.display.name"))
           }).withLargeLeftGap()

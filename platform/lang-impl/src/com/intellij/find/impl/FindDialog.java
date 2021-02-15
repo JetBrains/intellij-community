@@ -5,16 +5,7 @@ package com.intellij.find.impl;
 import com.intellij.find.FindModel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public final class FindDialog {
-  /**
-   * @deprecated use {@link FindInProjectUtil#initFileFilter(JComboBox, JCheckBox)}
-   */
-  @Deprecated
-  public static void initFileFilter(@NotNull final JComboBox<? super String> fileFilter, @NotNull final JCheckBox useFileFilter) {
-    FindInProjectUtil.initFileFilter(fileFilter, useFileFilter);
-  }
 
   /**
    * @deprecated use {@link FindInProjectUtil#getPresentableName(FindModel.SearchContext)}

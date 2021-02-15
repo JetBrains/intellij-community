@@ -9,10 +9,12 @@ class RenameInplacePopupUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("rename.inplace.popup", 1)
+    private val GROUP = EventLogGroup("rename.inplace.popup", 2)
 
     @JvmField val changedOnHide = EventFields.Boolean("changedOnHide")
     @JvmField val linkUsed = EventFields.Boolean("linkUsed")
+    @JvmField val searchInCommentsOnHide = EventFields.Boolean("search_in_comments_on_hide")
+    @JvmField val searchInTextOccurrencesOnHide = EventFields.Boolean("search_in_text_occurrences_on_hide")
     
 
     @JvmField val show = registerInplacePopupEventEvent("show");
@@ -21,6 +23,6 @@ class RenameInplacePopupUsagesCollector : CounterUsagesCollector() {
     @JvmField val settingsChanged = registerInplacePopupEventEvent("settingsChanged");
 
     private fun registerInplacePopupEventEvent(eventId: String) =
-      GROUP.registerVarargEvent(eventId, EventFields.InputEvent, RenameUsagesCollector.searchInComments, RenameUsagesCollector.searchInTextOccurrences, changedOnHide, linkUsed)
+      GROUP.registerVarargEvent(eventId, EventFields.InputEvent, searchInCommentsOnHide, searchInTextOccurrencesOnHide, changedOnHide, linkUsed)
   }
 }

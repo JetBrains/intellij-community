@@ -7,6 +7,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.GridBagLayout
 import javax.accessibility.AccessibleContext
@@ -48,7 +49,7 @@ open class VcsCloneDialogExtensionListItem : JPanel(GridBagLayout()) {
     add(additionalLinesPanel, gbc)
   }
 
-  fun setTitle(title: String) {
+  fun setTitle(title: @Nls String) {
     titleLabel.text = title
   }
 

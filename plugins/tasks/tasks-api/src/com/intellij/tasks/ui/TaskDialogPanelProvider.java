@@ -4,7 +4,6 @@ package com.intellij.tasks.ui;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.Task;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,18 +28,8 @@ public abstract class TaskDialogPanelProvider {
                                     (NullableFunction<TaskDialogPanelProvider, TaskDialogPanel>)provider -> provider.getCloseTaskPanel(project, task));
   }
 
-  /**
-   * @deprecated use {@link #getOpenTaskPanel(Project, LocalTask)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
   @Nullable
-  public abstract TaskDialogPanel getOpenTaskPanel(@NotNull Project project, @NotNull Task task);
-
-  @Nullable
-  public TaskDialogPanel getOpenTaskPanel(@NotNull Project project, @NotNull LocalTask task) {
-    return getOpenTaskPanel(project, (Task)task);
-  }
+  public abstract TaskDialogPanel getOpenTaskPanel(@NotNull Project project, @NotNull LocalTask task);
 
   @Nullable
   public abstract TaskDialogPanel getCloseTaskPanel(@NotNull Project project, @NotNull LocalTask task);

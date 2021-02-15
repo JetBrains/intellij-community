@@ -111,7 +111,7 @@ final class PluginLoadingResult {
 
   void reportCannotLoad(@NotNull Path file, Exception e) {
     DescriptorListLoadingContext.LOG.warn("Cannot load " + file, e);
-    globalErrors.add(CoreBundle.messagePointer("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
+    globalErrors.add(() -> CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
                                                FileUtil.getLocationRelativeToUserHome(file.toString(), false)));
   }
 
@@ -130,8 +130,8 @@ final class PluginLoadingResult {
     if (!descriptor.isBundled()) {
       if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
         PluginLoadingError.create(descriptor,
-                                  CoreBundle.messagePointer("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.getName()),
-                                  CoreBundle.messagePointer("plugin.loading.error.short.compatible.with.intellij.idea.only")).register(pluginErrors);
+                                  () -> CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.getName()),
+                                  () -> CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only")).register(pluginErrors);
         return false;
       }
     }

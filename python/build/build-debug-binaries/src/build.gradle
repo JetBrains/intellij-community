@@ -157,6 +157,6 @@ Integer extractVersion(File file, Pattern versionPattern) {
   }
 }
 
-task wrapper(type: Wrapper) doLast {
-  gradleVersion = '4.2'
+tasks.named('wrapper') {
+  gradleVersion = '6.7.1'
 }

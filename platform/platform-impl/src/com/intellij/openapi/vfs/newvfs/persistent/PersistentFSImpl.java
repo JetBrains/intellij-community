@@ -18,6 +18,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -31,8 +32,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
+import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,23 +45,25 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Queue;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFS.class);
 
-  private final Map<String, VirtualFileSystemEntry> myRoots =
-    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
+  private final Map<String, VirtualFileSystemEntry> myRoots;
 
   // FS roots must be in this map too. findFileById() relies on this.
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
-  private final Object myInputLock = new Object();
+  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache =
+    ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap();
+  private final ReadWriteLock myInputLock = new ReentrantReadWriteLock();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
@@ -66,6 +71,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final VfsData myVfsData = new VfsData();
 
   public PersistentFSImpl() {
+    if (SystemInfoRt.isFileSystemCaseSensitive) {
+      myRoots = new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
+    }
+    else {
+      myRoots = ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), HashingStrategy.caseInsensitive());
+    }
+
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
 
@@ -211,7 +223,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static void setChildrenCached(int id) {
     int flags = FSRecords.getFlags(id);
-    FSRecords.setFlags(id, flags | Flags.CHILDREN_CACHED, true);
+    FSRecords.setFlags(id, flags | Flags.CHILDREN_CACHED);
   }
 
   @Override
@@ -251,7 +263,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return FSRecords.writeContent(getFileId(file), readOnly);
   }
 
-  private static void writeContent(@NotNull VirtualFile file, ByteArraySequence content, boolean readOnly) {
+  private static void writeContent(@NotNull VirtualFile file, @NotNull ByteArraySequence content, boolean readOnly) {
     FSRecords.writeContent(getFileId(file), content, readOnly);
   }
 
@@ -281,7 +293,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public int getFilesystemModificationCount() {
-    return FSRecords.getModCount();
+    return FSRecords.getPersistentModCount();
   }
 
   // return nameId>0 if write successful, -1 if not
@@ -383,7 +395,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         result.set(child);
         return children;
       }
-      Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
+      Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null); // todo: use BatchingFileSystem
       if (childData == null) {
         return children;
       }
@@ -393,7 +405,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       else {
         canonicalName = fs.getCanonicallyCasedName(new FakeVirtualFile(parent, childName));
-        if (StringUtil.isEmptyOrSpaces(canonicalName)) return children;
+        if (Strings.isEmptyOrSpaces(canonicalName)) {
+          return children;
+        }
 
         if (!childName.equals(canonicalName)) {
           child = findExistingChildInfo(parent, canonicalName, children.children, fs);
@@ -421,19 +435,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                  @NotNull String childName,
                                                  @NotNull List<? extends ChildInfo> children,
                                                  @NotNull NewVirtualFileSystem fs) {
-    if (!children.isEmpty()) {
-      // fast path, check that some child has same nameId as given name to avoid overhead on retrieving names for non-cached children
-      int nameId = FSRecords.getNameId(childName);
+    if (children.isEmpty()) {
+      return null;
+    }
+    // fast path, check that some child has same nameId as given name to avoid overhead on retrieving names for non-cached children
+    int nameId = FSRecords.getNameId(childName);
+    for (ChildInfo info : children) {
+      if (nameId == info.getNameId()) {
+        return info;
+      }
+    }
+    // for case sensitive system the above check is exhaustive in consistent state of vfs
+    if (!parent.isCaseSensitive()) {
       for (ChildInfo info : children) {
-        if (nameId == info.getNameId()) {
+        if (namesEqual(fs, parent, childName, FSRecords.getNameByNameId(info.getNameId()))) {
           return info;
         }
-      }
-      // for case sensitive system the above check is exhaustive in consistent state of vfs
-    }
-    for (ChildInfo info : children) {
-      if (namesEqual(fs, parent, childName, FSRecords.getNameByNameId(info.getNameId()))) {
-        return info;
       }
     }
     return null;
@@ -468,7 +485,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     getDelegate(parent).createChildDirectory(requestor, parent, dir);
 
     processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, false, ChildInfo.EMPTY_ARRAY));
-    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, dir);
+    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(parent, dir);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
@@ -481,17 +498,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
-    getDelegate(parent).createChildFile(requestor, parent, file);
-    processEvent(new VFileCreateEvent(requestor, parent, file, false, null, null, false, null));
-    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, file);
+  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
+    getDelegate(parent).createChildFile(requestor, parent, name);
+    processEvent(new VFileCreateEvent(requestor, parent, name, false, null, null, false, null));
+    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(parent, name);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
 
-    final VirtualFile child = parent.findChild(file);
+    final VirtualFile child = parent.findChild(name);
     if (child == null) {
-      throw new IOException("Cannot create child file '" + file + "' at " + parent.getPath());
+      throw new IOException("Cannot create child file '" + name + "' at " + parent.getPath());
     }
     if (child.getCharset().equals(StandardCharsets.UTF_8) &&
         !(child.getFileType() instanceof InternalFileType) &&
@@ -544,11 +561,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int fileId;
     long length;
 
-    synchronized (myInputLock) {
+    myInputLock.readLock().lock();
+    try {
       fileId = getFileId(file);
       length = getLengthIfUpToDate(file);
       outdated = length == -1 || mustReloadContent(file);
       reloadFromDelegate = outdated || (contentStream = readContent(file)) == null;
+    }
+    finally {
+      myInputLock.readLock().unlock();
     }
 
     if (reloadFromDelegate) {
@@ -575,9 +596,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
            // do not cache archive content unless asked
            cacheContent && !application.isInternal() && !application.isUnitTestMode()) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
-        synchronized (myInputLock) {
-          writeContent(file, new ByteArraySequence(content), delegate.isReadOnly());
+
+        myInputLock.writeLock().lock();
+        try {
+          writeContent(file, ByteArraySequence.create(content), delegate.isReadOnly());
           setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
+        }
+        finally {
+          myInputLock.writeLock().unlock();
         }
       }
 
@@ -585,7 +611,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     try {
       assert length >= 0 : file;
-      return FileUtil.loadBytes(contentStream, (int)length);
+      return contentStream.readNBytes((int)length);
     }
     catch (IOException e) {
       FSRecords.handleError(e);
@@ -595,27 +621,41 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public byte @NotNull [] contentsToByteArray(int contentId) throws IOException {
-    final DataInputStream stream = readContentById(contentId);
-    return FileUtil.loadBytes(stream);
+    return readContentById(contentId).readAllBytes();
   }
 
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    synchronized (myInputLock) {
-      InputStream contentStream;
+    InputStream contentStream;
+    boolean useReplicator = false;
+    long len = 0L;
+    boolean readOnly = false;
+
+    myInputLock.readLock().lock();
+    try {
       long storedLength = getLengthIfUpToDate(file);
       boolean mustReloadLength = storedLength == -1;
 
       if (mustReloadLength || mustReloadContent(file) || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
         NewVirtualFileSystem delegate = getDelegate(file);
-        long len = mustReloadLength ? reloadLengthFromDelegate(file, delegate) : storedLength;
-        InputStream nativeStream = delegate.getInputStream(file);
+        len = mustReloadLength ? reloadLengthFromDelegate(file, delegate) : storedLength;
+        contentStream = delegate.getInputStream(file);
 
-        if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
-        return createReplicatorAndStoreContent(file, nativeStream, len, delegate.isReadOnly());
+        if (len <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
+          useReplicator = true;
+          readOnly = delegate.isReadOnly();
+        }
       }
-      return contentStream;
     }
+    finally {
+      myInputLock.readLock().unlock();
+    }
+
+    if (useReplicator) {
+      contentStream = createReplicatorAndStoreContent(file, contentStream, len, readOnly);
+    }
+
+    return contentStream;
   }
 
   private static boolean mustReloadContent(@NotNull VirtualFile file) {
@@ -676,7 +716,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void storeContentToStorage(long fileLength,
                                      @NotNull VirtualFile file,
                                      boolean readOnly, byte @NotNull [] bytes, int bytesLength) {
-    synchronized (myInputLock) {
+    myInputLock.writeLock().lock();
+    try {
       if (bytesLength == fileLength) {
         writeContent(file, new ByteArraySequence(bytes, 0, bytesLength), readOnly);
         setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
@@ -686,8 +727,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         doCleanPersistedContent(getFileId(file));
       }
     }
+    finally {
+      myInputLock.writeLock().unlock();
+    }
   }
 
+  @TestOnly
   public static byte @Nullable [] getContentHashIfStored(@NotNull VirtualFile file) {
     return FSRecords.getContentHash(getFileId(file));
   }
@@ -801,32 +846,52 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                  int startIndex,
                                  @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
                                  @NotNull Set<? super String> middleDirsInvolved,
-                                 @NotNull Set<? super String> deletedPaths,
-                                 @NotNull Set<? super String> createdPaths,
+                                 @NotNull Set<? super VirtualFile> deleted,
+                                 @NotNull Map<VirtualDirectoryImpl, Object> toCreate, // dir -> VFileCreateEvent or Collection<VFileCreateEvent> in this dir
                                  @NotNull Set<? super VFileEvent> eventsToRemove) {
     // store all paths from all events (including all parents)
     // check the each new event's path against this set and if it's there, this event is conflicting
-
     int i;
     for (i = startIndex; i < events.size(); i++) {
       VFileEvent event = events.get(i);
       String path = event.getPath();
-      if (event instanceof VFileDeleteEvent && removeNestedDelete(path, deletedPaths)) {
+      if (event instanceof VFileDeleteEvent && removeNestedDelete(((VFileDeleteEvent)event).getFile(), deleted)) {
         eventsToRemove.add(event);
         continue;
       }
-      if (event instanceof VFileCreateEvent && !createdPaths.add(path)) {
-        eventsToRemove.add(event);
-        continue;
+      if (event instanceof VFileCreateEvent) {
+        VFileCreateEvent createEvent = (VFileCreateEvent)event;
+        VirtualDirectoryImpl parent = (VirtualDirectoryImpl)createEvent.getParent();
+        Object createEvents = toCreate.get(parent);
+        if (createEvents == null) {
+          toCreate.put(parent, createEvent);
+        }
+        else {
+          if (createEvents instanceof VFileCreateEvent) {
+            VFileCreateEvent prevEvent = (VFileCreateEvent)createEvents;
+            Set<VFileCreateEvent> children = parent.isCaseSensitive() ? new LinkedHashSet<>() :
+                                             new ObjectLinkedOpenCustomHashSet<>(CASE_INSENSITIVE_STRATEGY);
+            children.add(prevEvent);
+            toCreate.put(parent, children);
+            createEvents = children;
+          }
+          Collection<VFileCreateEvent> children = (Collection<VFileCreateEvent>)createEvents;
+          if (!children.add(createEvent)) {
+            eventsToRemove.add(createEvent);
+            continue;
+          }
+        }
       }
 
-      if (checkIfConflictingPaths(event, path, filesInvolved, middleDirsInvolved)) {
+      if (eventConflictsWithPrevious(event, path, filesInvolved, middleDirsInvolved)) {
         break;
       }
       // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent,
       // so both paths should be checked for conflicts
       String path2 = getAlternativePath(event);
-      if (path2 != null && !FileUtil.PATH_HASHING_STRATEGY.equals(path2, path) && checkIfConflictingPaths(event, path2, filesInvolved, middleDirsInvolved)) {
+      if (path2 != null &&
+          !(SystemInfoRt.isFileSystemCaseSensitive ? path2.equals(path) : path2.equalsIgnoreCase(path)) &&
+          eventConflictsWithPrevious(event, path2, filesInvolved, middleDirsInvolved)) {
         break;
       }
     }
@@ -852,17 +917,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return null;
   }
 
-  private static boolean removeNestedDelete(@NotNull String path, @NotNull Set<? super String> deletedPaths) {
-    if (!deletedPaths.add(path)) {
+  // return true if the file or the ancestor of the file is going to be deleted
+  private static boolean removeNestedDelete(@NotNull VirtualFile file, @NotNull Set<? super VirtualFile> deleted) {
+    if (!deleted.add(file)) {
       return true;
     }
-    int li = path.length();
     while (true) {
-      int liPrev = path.lastIndexOf('/', li - 1);
-      if (liPrev == -1) break;
-      path = path.substring(0, liPrev);
-      li = liPrev;
-      if (deletedPaths.contains(path)) {
+      file = file.getParent();
+      if (file == null) break;
+      if (deleted.contains(file)) {
         return true;
       }
     }
@@ -870,13 +933,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return false;
   }
 
-  private static boolean checkIfConflictingPaths(@NotNull VFileEvent event,
-                                                 @NotNull String path,
-                                                 @NotNull MostlySingularMultiMap<String, VFileEvent> files,
-                                                 @NotNull Set<? super String> middleDirs) {
+  private static boolean eventConflictsWithPrevious(@NotNull VFileEvent event,
+                                                    @NotNull String path,
+                                                    @NotNull MostlySingularMultiMap<String, VFileEvent> files,
+                                                    @NotNull Set<? super String> middleDirs) {
     boolean canReconcileEvents = true;
-    for (VFileEvent t : files.get(path)) {
-      if (!(isContentChangeLikeHarmlessEvent(event) && isContentChangeLikeHarmlessEvent(t))) {
+    for (VFileEvent prev : files.get(path)) {
+      if (!(isContentChangeLikeHarmlessEvent(event) && isContentChangeLikeHarmlessEvent(prev))) {
         canReconcileEvents = false;
         break;
       }
@@ -926,13 +989,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                @NotNull List<? super Runnable> outApplyActions,
                                @NotNull List<? super VFileEvent> outValidatedEvents,
                                @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
-                               @NotNull Set<? super String> middleDirsInvolved) {
-    Set<VFileEvent> toIgnore = new ReferenceOpenHashSet<>(); // VFileEvents override equals()
-    int endIndex = groupByPath(events, startIndex, filesInvolved, middleDirsInvolved, CollectionFactory.createFilePathSet(),
-                               CollectionFactory.createFilePathSet(), toIgnore);
+                               @NotNull Set<? super String> middleDirsInvolved,
+                               @NotNull Map<VirtualDirectoryImpl, Object> toCreate,
+                               @NotNull Set<VFileEvent> toIgnore,
+                               @NotNull Set<? super VirtualFile> toDelete) {
+    int endIndex = groupByPath(events, startIndex, filesInvolved, middleDirsInvolved, toDelete, toCreate, toIgnore);
     assert endIndex > startIndex : events.get(startIndex) +"; files: "+filesInvolved+"; middleDirs: "+middleDirsInvolved;
     // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
-    groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyActions, toIgnore);
+    groupCreations(outValidatedEvents, outApplyActions, toCreate);
     groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyActions, toIgnore);
     groupOthers(events, startIndex, endIndex, outValidatedEvents, outApplyActions);
 
@@ -944,44 +1008,30 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         outValidatedEvents.add(jarDeleteEvent);
       }
     }
-
     return endIndex;
   }
 
   // find all VFileCreateEvent events in [start..end)
   // group them by parent directory, validate in bulk for each directory, and return "applyCreations()" runnable
-  private void groupCreations(@NotNull List<? extends VFileEvent> events,
-                              int start,
-                              int end,
-                              @NotNull List<? super VFileEvent> outValidated,
+  private void groupCreations(@NotNull List<? super VFileEvent> outValidated,
                               @NotNull List<? super Runnable> outApplyActions,
-                              @NotNull Set<? extends VFileEvent> toIgnore) {
-    MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = null;
-
-    for (int i = start; i < end; i++) {
-      VFileEvent e = events.get(i);
-      if (!(e instanceof VFileCreateEvent) || toIgnore.contains(e)) continue;
-      VFileCreateEvent event = (VFileCreateEvent)e;
-      VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getParent();
-      if (grouped == null) {
-        grouped = new MultiMap<>(end - start);
-      }
-      grouped.putValue(parent, event);
-    }
-    if (grouped != null) {
+                              @NotNull Map<VirtualDirectoryImpl, Object> created) {
+    if (!created.isEmpty()) {
       // since the VCreateEvent.isValid() is extremely expensive, combine all creation events for the directory together
       // and use VirtualDirectoryImpl.validateChildrenToCreate() optimised for bulk validation
       boolean hasValidEvents = false;
-      for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : grouped.entrySet()) {
+      for (Map.Entry<VirtualDirectoryImpl, Object> entry : created.entrySet()) {
         VirtualDirectoryImpl directory = entry.getKey();
-        List<VFileCreateEvent> createEvents = (List<VFileCreateEvent>)entry.getValue();
+        Object value = entry.getValue();
+        Set<VFileCreateEvent> createEvents = value instanceof VFileCreateEvent ? new HashSet<>(Collections.singletonList((VFileCreateEvent)value)) : (Set<VFileCreateEvent>)value;
         directory.validateChildrenToCreate(createEvents);
         hasValidEvents |= !createEvents.isEmpty();
         outValidated.addAll(createEvents);
+        entry.setValue(createEvents);
       }
 
       if (hasValidEvents) {
-        MultiMap<VirtualDirectoryImpl, VFileCreateEvent> finalGrouped = grouped;
+        Map<VirtualDirectoryImpl, Set<VFileCreateEvent>> finalGrouped = (Map)created;
         outApplyActions.add((Runnable)() -> {
           applyCreations(finalGrouped);
           incStructuralModificationCount();
@@ -1004,7 +1054,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       VFileEvent event = events.get(i);
       if (!(event instanceof VFileDeleteEvent) || toIgnore.contains(event) || !event.isValid()) continue;
       VFileDeleteEvent de = (VFileDeleteEvent)event;
-      @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)de.getFile().getParent();
+      VirtualDirectoryImpl parent = (VirtualDirectoryImpl)de.getFile().getParent();
       if (grouped == null) {
         grouped = new MultiMap<>(end - start);
       }
@@ -1046,10 +1096,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int startIndex = 0;
     int cappedInitialSize = Math.min(events.size(), INNER_ARRAYS_THRESHOLD);
     List<Runnable> applyActions = new ArrayList<>(cappedInitialSize);
+    // even in the unlikely case when case-insensitive maps falsely detect conflicts of case-sensitive paths,
+    // the worst outcome will be one extra event batch, which is acceptable
     MostlySingularMultiMap<String, VFileEvent> files = new MostlySingularMultiMap<>(CollectionFactory.createFilePathMap(cappedInitialSize));
     Set<String> middleDirs = CollectionFactory.createFilePathSet(cappedInitialSize);
+
     List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
     BulkFileListener publisher = getPublisher();
+    Map<VirtualDirectoryImpl, Object> toCreate = new LinkedHashMap<>();
+    Set<VFileEvent> toIgnore = new ReferenceOpenHashSet<>(); // VFileEvent overrides equals(), hence identity-based
+    Set<VirtualFile> toDelete = CollectionFactory.createSmallMemoryFootprintSet();
     while (startIndex != events.size()) {
       PingProgress.interactWithEdtProgress();
 
@@ -1057,7 +1113,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       files.clear();
       middleDirs.clear();
       validated.clear();
-      startIndex = groupAndValidate(events, startIndex, applyActions, validated, files, middleDirs);
+      toCreate.clear();
+      toIgnore.clear();
+      toDelete.clear();
+      startIndex = groupAndValidate(events, startIndex, applyActions, validated, files, middleDirs, toCreate, toIgnore, toDelete);
 
       if (!validated.isEmpty()) {
         applyMultipleEvents(publisher, applyActions, validated);
@@ -1122,8 +1181,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   // add children to specified directories using VirtualDirectoryImpl.createAndAddChildren() optimised for bulk additions
-  private void applyCreations(@NotNull MultiMap<VirtualDirectoryImpl, VFileCreateEvent> creations) {
-    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : creations.entrySet()) {
+  private void applyCreations(@NotNull Map<VirtualDirectoryImpl, Set<VFileCreateEvent>> creations) {
+    for (Map.Entry<VirtualDirectoryImpl, Set<VFileCreateEvent>> entry : creations.entrySet()) {
       VirtualDirectoryImpl parent = entry.getKey();
       Collection<VFileCreateEvent> createEvents = entry.getValue();
       applyCreateEventsInDirectory(parent, createEvents);
@@ -1165,7 +1224,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       VirtualFile createdDir = createEvent.getFile();
       if (createdDir instanceof VirtualDirectoryImpl) {
         Queue<Pair<VirtualDirectoryImpl, ChildInfo[]>> queue = new ArrayDeque<>();
-        queue.add(pair((VirtualDirectoryImpl)createdDir, children));
+        queue.add(new Pair<>((VirtualDirectoryImpl)createdDir, children));
         while (!queue.isEmpty()) {
           Pair<VirtualDirectoryImpl, ChildInfo[]> queued = queue.remove();
           VirtualDirectoryImpl directory = queued.first;
@@ -1189,7 +1248,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           directory.createAndAddChildren(added, true, (childCreated, childInfo) -> {
             // enqueue recursive children
             if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {
-              queue.add(pair((VirtualDirectoryImpl)childCreated, childInfo.getChildren()));
+              queue.add(new Pair<>((VirtualDirectoryImpl)childCreated, childInfo.getChildren()));
             }
           });
         }
@@ -1404,7 +1463,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  public static void executeChangeCaseSensitivity(@NotNull VirtualFile file, FileAttributes.CaseSensitivity newCaseSensitivity) {
+  public static void executeChangeCaseSensitivity(@NotNull VirtualFile file, @NotNull FileAttributes.CaseSensitivity newCaseSensitivity) {
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
     setFlag(directory, Flags.CHILDREN_CASE_SENSITIVE, newCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE);
     setFlag(directory, Flags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
@@ -1474,7 +1533,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       attributes = fs.getAttributes(virtualFile);
       symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(virtualFile) : null;
     }
-    return attributes == null ? null : pair(attributes, symlinkTarget);
+    return attributes == null ? null : new Pair<>(attributes, symlinkTarget);
   }
 
   private void executeDelete(@NotNull VFileDeleteEvent event) {
@@ -1564,7 +1623,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int flags = value ? oldFlags | mask : oldFlags & ~mask;
 
     if (oldFlags != flags) {
-      FSRecords.setFlags(id, flags, true);
+      FSRecords.setFlags(id, flags);
     }
   }
 
@@ -1668,4 +1727,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
            (isChildrenCaseSensitivityCached ? Flags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
            (areChildrenCaseSensitive ? Flags.CHILDREN_CASE_SENSITIVE : 0);
   }
+  private static final Hash.Strategy<VFileCreateEvent> CASE_INSENSITIVE_STRATEGY = new Hash.Strategy<>() {
+    @Override
+    public int hashCode(@Nullable VFileCreateEvent object) {
+      return StringUtil.stringHashCodeInsensitive(object.getChildName());
+    }
+
+    @Override
+    public boolean equals(VFileCreateEvent o1, VFileCreateEvent o2) {
+      return o2 != null && o1.getChildName().equalsIgnoreCase(o2.getChildName());
+    }
+  };
 }

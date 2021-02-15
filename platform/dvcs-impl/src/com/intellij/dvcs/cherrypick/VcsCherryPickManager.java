@@ -24,12 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.CHERRY_PICK_ERROR;
 
 public final class VcsCherryPickManager {
   private static final Logger LOG = Logger.getInstance(VcsCherryPickManager.class);
   @NotNull private final Project myProject;
-  @NotNull private final Set<CommitId> myIdsInProgress = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  @NotNull private final Set<CommitId> myIdsInProgress = ContainerUtil.newConcurrentSet();
   @NotNull private final BackgroundTaskQueue myTaskQueue;
 
   public VcsCherryPickManager(@NotNull Project project) {
@@ -97,7 +98,7 @@ public final class VcsCherryPickManager {
     }
 
     public void showError(@Nls @NotNull String message) {
-      VcsNotifier.getInstance(myProject).notifyWeakError("vcs.cherry.pick.error", message);
+      VcsNotifier.getInstance(myProject).notifyWeakError(CHERRY_PICK_ERROR, message);
       LOG.warn(message);
     }
 
@@ -133,7 +134,7 @@ public final class VcsCherryPickManager {
 
     @NotNull
     public MultiMap<VcsCherryPicker, VcsFullCommitDetails> createArrayMultiMap() {
-      return new MultiMap<VcsCherryPicker, VcsFullCommitDetails>() {
+      return new MultiMap<>() {
         @NotNull
         @Override
         protected Collection<VcsFullCommitDetails> createCollection() {

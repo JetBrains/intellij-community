@@ -28,14 +28,8 @@ fun processAllImplementationClasses(container: PicoContainer, processor: (compon
     var aClass: Class<*>
     if (o is ServiceComponentAdapter) {
       val pluginDescriptor = o.pluginDescriptor
-      // avoid delegation creation & class initialization
       aClass = try {
-        if (o.isImplementationClassResolved()) {
-          o.getImplementationClass()
-        }
-        else {
-          Class.forName(o.descriptor.implementation, false, pluginDescriptor.pluginClassLoader)
-        }
+        o.getImplementationClass()
       }
       catch (e: Throwable) {
         // well, component registered, but required jar is not added to classpath (community edition or junior IDE)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -25,14 +11,10 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -83,15 +65,14 @@ public abstract class ArgumentFixerActionFactory {
       for (int i = 0; i < expressions.length; i++) {
         PsiExpression expression = expressions[i];
         PsiType exprType = expression.getType();
-        Set<String> suggestedCasts = new THashSet<>();
+        Set<String> suggestedCasts = new HashSet<>();
         // find to which type we can cast this param to get valid method call
         for (CandidateInfo candidate : methodCandidates) {
           PsiMethod method = (PsiMethod)candidate.getElement();
           PsiSubstitutor substitutor = candidate.getSubstitutor();
           PsiType originalParameterType = PsiTypesUtil.getParameterType(method.getParameterList().getParameters(), i, true);
           PsiType parameterType = substitutor.substitute(originalParameterType);
-          if (parameterType instanceof PsiWildcardType) continue;
-          if (!GenericsUtil.isFromExternalTypeLanguage(parameterType)) continue;
+          if (!PsiTypesUtil.isDenotableType(parameterType, call)) continue;
           if (suggestedCasts.contains(parameterType.getCanonicalText())) continue;
           if (TypeConversionUtil.isPrimitiveAndNotNull(exprType) && parameterType instanceof PsiClassType) {
             PsiType unboxedParameterType = PsiPrimitiveType.getUnboxedType(parameterType);

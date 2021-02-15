@@ -64,12 +64,6 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
 
   @Override
   @NotNull
-  public FilePath createFilePathOnDeleted(@NotNull final File file, final boolean isDirectory) {
-    return createFilePathOn(file, isDirectory);
-  }
-
-  @Override
-  @NotNull
   public FilePath createFilePathOn(@NotNull final VirtualFile parent, @NotNull final String name) {
     return createFilePath(parent, name, false);
   }

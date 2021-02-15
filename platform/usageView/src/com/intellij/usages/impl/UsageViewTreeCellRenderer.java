@@ -123,7 +123,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         GroupNode node = (GroupNode)treeNode;
 
         if (node.isRoot()) {
-          append(StringUtil.capitalize(myPresentation.getUsagesWord()), patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
+          append("<root>", patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)); //NON-NLS root is invisible
         }
         else {
           append(node.getGroup().getText(myView),
@@ -133,7 +133,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
 
         int count = node.getRecursiveUsageCount();
         SimpleTextAttributes attributes = patchAttrs(node, ourNumberOfUsagesAttribute);
-        append(FontUtil.spaceAndThinSpace() + myPresentation.formatUsageCount(count),
+        append(FontUtil.spaceAndThinSpace() + UsageViewBundle.message("usage.view.counter", count),
                SimpleTextAttributes.GRAYED_ATTRIBUTES.derive(attributes.getStyle(), null, null, null));
       }
       else if (treeNode instanceof UsageNode) {
@@ -169,10 +169,12 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         append((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
       else {
+        //noinspection HardCodedStringLiteral
         append(userObject == null ? "" : userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
     else {
+      //noinspection HardCodedStringLiteral
       append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, mySelected);
@@ -216,14 +218,13 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         GroupNode node = (GroupNode)treeNode;
 
         if (node.isRoot()) {
-          result.append(StringUtil.capitalize(myPresentation.getUsagesWord()));
+          result.append("<root>");
         }
         else {
           result.append(node.getGroup().getText(myView));
         }
 
-        int count = node.getRecursiveUsageCount();
-        result.append(" (").append(myPresentation.formatUsageCount(count)).append(")");
+        result.append(" (").append(node.getRecursiveUsageCount()).append(")");
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;

@@ -105,12 +105,6 @@ public interface ExtensionPoint<@NotNull T> {
    */
   boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
 
-  /**
-   * @deprecated use {@link #addExtensionPointListener(ExtensionPointListener, boolean, Disposable)}
-   */
-  @Deprecated
-  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
-
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   /**

@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class RegisteredIndexes {
-  private static final Logger LOG = Logger.getInstance(RegisteredIndexes.class);
-
+public final class RegisteredIndexes {
   @NotNull
   private final FileDocumentManager myFileDocumentManager;
   @NotNull
@@ -48,10 +48,12 @@ final class RegisteredIndexes {
                     @NotNull FileBasedIndexImpl fileBasedIndex) {
     myFileDocumentManager = fileDocumentManager;
     myFileBasedIndex = fileBasedIndex;
-    myStateFuture = IndexInfrastructure.submitGenesisTask(new FileBasedIndexDataInitialization(fileBasedIndex, this));
+    myStateFuture = IndexDataInitializer.submitGenesisTask(new FileBasedIndexDataInitialization(fileBasedIndex, this));
 
-    if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
-      waitUntilIndicesAreInitialized();
+    if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        waitUntilIndicesAreInitialized();
+      });
     }
   }
 
@@ -83,17 +85,12 @@ final class RegisteredIndexes {
   void waitUntilAllIndicesAreInitialized() {
     try {
       waitUntilIndicesAreInitialized();
-      myAllIndicesInitializedFuture.get();
+      ProgressIndicatorUtils.awaitWithCheckCanceled(myAllIndicesInitializedFuture);
     } catch (Throwable ignore) {}
   }
 
   void waitUntilIndicesAreInitialized() {
-    try {
-      myStateFuture.get();
-    }
-    catch (Throwable t) {
-      LOG.error(t);
-    }
+    ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
   }
 
   void extensionsDataWasLoaded() {
@@ -105,7 +102,7 @@ final class RegisteredIndexes {
   }
 
   void ensureLoadedIndexesUpToDate() {
-    myAllIndicesInitializedFuture = IndexInfrastructure.submitGenesisTask(() -> {
+    myAllIndicesInitializedFuture = IndexDataInitializer.submitGenesisTask(() -> {
       if (!myShutdownPerformed.get()) {
         myFileBasedIndex.getChangedFilesCollector().ensureUpToDateAsync();
       }
@@ -143,7 +140,7 @@ final class RegisteredIndexes {
     return myExtensionsRelatedDataWasLoaded;
   }
 
-  boolean isInitialized() {
+  public boolean isInitialized() {
     return myInitialized;
   }
 
@@ -161,7 +158,7 @@ final class RegisteredIndexes {
     return myIndicesForDirectories;
   }
 
-  boolean isContentDependentIndex(@NotNull ID<?, ?> indexId) {
+  public boolean isContentDependentIndex(@NotNull ID<?, ?> indexId) {
     return myRequiringContentIndices.contains(indexId);
   }
 

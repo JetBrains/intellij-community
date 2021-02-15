@@ -45,7 +45,7 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
 
 
     ViewPresenterUtils
-      .linkViewWithPresenterAndLaunch(PyPullUpPresenter.class, PyPullUpView.class, new Creator<PyPullUpView, PyPullUpPresenter>() {
+      .linkViewWithPresenterAndLaunch(PyPullUpPresenter.class, PyPullUpView.class, new Creator<>() {
                                         @NotNull
                                         @Override
                                         public PyPullUpPresenter createPresenter(@NotNull final PyPullUpView view) {

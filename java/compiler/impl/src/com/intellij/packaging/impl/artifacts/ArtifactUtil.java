@@ -541,6 +541,11 @@ public final class ArtifactUtil {
     element.removeChildren(toRemove);
   }
 
+  public static boolean shouldClearArtifactOutputBeforeRebuild(Artifact artifact) {
+    final String outputPath = artifact.getOutputPath();
+    return !StringUtil.isEmpty(outputPath) && artifact.getRootElement() instanceof ArtifactRootElement<?>;
+  }
+
   public static Set<Module> getModulesIncludedInArtifacts(final @NotNull Collection<? extends Artifact> artifacts, final @NotNull Project project) {
     final Set<Module> modules = new HashSet<>();
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(project).getResolvingContext();

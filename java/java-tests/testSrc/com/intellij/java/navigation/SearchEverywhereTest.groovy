@@ -214,30 +214,38 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     mixingResultsFlag.set(true)
     twoTabsFlag.set(false)
 
-    def file1 = myFixture.addFileToProject("ApplicationFile.txt", "")
-    def file2 = myFixture.addFileToProject("AppFile.txt", "")
-    def file3 = myFixture.addFileToProject("ActionPerformerPreviewFile.txt", "")
-    def file4 = myFixture.addFileToProject("AppInfoFile.txt", "")
-    def file5 = myFixture.addFileToProject("SecondAppInfoFile.txt", "")
-    def file6 = myFixture.addFileToProject("SecondAppFile.txt", "")
-    def wrongFile = myFixture.addFileToProject("wrong.txt", "")
+    def registryValue = Registry.get("search.everywhere.recent.at.top")
+    def savedFlag = registryValue.asBoolean()
+    registryValue.setValue(true)
+    try {
+      def file1 = myFixture.addFileToProject("ApplicationFile.txt", "")
+      def file2 = myFixture.addFileToProject("AppFile.txt", "")
+      def file3 = myFixture.addFileToProject("ActionPerformerPreviewFile.txt", "")
+      def file4 = myFixture.addFileToProject("AppInfoFile.txt", "")
+      def file5 = myFixture.addFileToProject("SecondAppInfoFile.txt", "")
+      def file6 = myFixture.addFileToProject("SecondAppFile.txt", "")
+      def wrongFile = myFixture.addFileToProject("wrong.txt", "")
 
-    def recentFilesContributor = new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
-    Disposer.register(testRootDisposable, recentFilesContributor)
-    def ui = createTestUI([
-            ChooseByNameTest.createFileContributor(project, testRootDisposable),
-            recentFilesContributor
-    ])
+      def recentFilesContributor = new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
+      Disposer.register(testRootDisposable, recentFilesContributor)
+      def ui = createTestUI([
+        ChooseByNameTest.createFileContributor(project, testRootDisposable),
+        recentFilesContributor
+      ])
 
-    def future = ui.findElementsForPattern("appfile")
-    assert waitForFuture(future, SEARCH_TIMEOUT) == [file2, file1, file4, file3, file6, file5]
+      def future = ui.findElementsForPattern("appfile")
+      assert waitForFuture(future, SEARCH_TIMEOUT) == [file2, file1, file4, file3, file6, file5]
 
-    myFixture.openFileInEditor(file4.getOriginalFile().getVirtualFile())
-    myFixture.openFileInEditor(file3.getOriginalFile().getVirtualFile())
-    myFixture.openFileInEditor(file5.getOriginalFile().getVirtualFile())
-    myFixture.openFileInEditor(wrongFile.getOriginalFile().getVirtualFile())
-    future = ui.findElementsForPattern("appfile")
-    assert waitForFuture(future, SEARCH_TIMEOUT) == [file4, file3, file5, file2, file1, file6]
+      myFixture.openFileInEditor(file4.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(file3.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(file5.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(wrongFile.getOriginalFile().getVirtualFile())
+      future = ui.findElementsForPattern("appfile")
+      assert waitForFuture(future, SEARCH_TIMEOUT) == [file4, file3, file5, file2, file1, file6]
+    }
+    finally {
+      registryValue.setValue(savedFlag)
+    }
   }
 
   private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributors) {

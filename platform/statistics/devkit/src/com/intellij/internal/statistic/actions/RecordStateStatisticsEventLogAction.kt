@@ -28,9 +28,9 @@ import com.intellij.openapi.vfs.LocalFileSystem
 /**
  * Collects the data from all state collectors and record it in event log.
  *
- * @see ApplicationUsagesCollector
+ * @see com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
  *
- * @see ProjectUsagesCollector
+ * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
  */
 internal class RecordStateStatisticsEventLogAction(private val recorderId: String = DEFAULT_RECORDER,
                                                    private val myShowNotification: Boolean = true) : DumbAwareAction(

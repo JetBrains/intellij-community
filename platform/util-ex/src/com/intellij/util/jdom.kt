@@ -41,10 +41,6 @@ fun Parent.write(output: OutputStream, lineSeparator: String = "\n") {
 }
 
 @Throws(IOException::class, JDOMException::class)
-@Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(chars)", "com.intellij.openapi.util.JDOMUtil"))
-fun loadElement(chars: CharSequence): Element = JDOMUtil.load(chars)
-
-@Throws(IOException::class, JDOMException::class)
 @Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(reader)", "com.intellij.openapi.util.JDOMUtil"))
 fun loadElement(reader: Reader): Element = JDOMUtil.load(reader)
 
@@ -66,9 +62,6 @@ fun Element.getOrCreate(@NonNls name: String): Element {
   }
   return element
 }
-
-@Deprecated(message = "Use setAttribute", replaceWith = ReplaceWith("setAttribute(name, value)"))
-fun Element.attribute(name: String, value: String?): Element = setAttribute(name, value)
 
 fun Element.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(1024)

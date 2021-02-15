@@ -60,7 +60,7 @@ class TestIndexInfrastructureExtension : FileBasedIndexInfrastructureExtension {
   override fun initialize(): FileBasedIndexInfrastructureExtension.InitializationResult
   = FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED
 
-  override fun clearPersistentData() = Unit
+  override fun resetPersistentState() = Unit
 
   override fun shutdown() = Unit
 

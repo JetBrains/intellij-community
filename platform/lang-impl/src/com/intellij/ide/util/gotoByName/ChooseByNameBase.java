@@ -915,9 +915,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
     final String pattern = patternToLowerCase(transformPattern(text));
     final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern : pattern);
-    if (cellRenderer instanceof MatcherHolder) {
-      ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
-    }
     MatcherHolder.associateMatcher(myList, matcher);
 
     scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, pos, elements -> {
@@ -1353,7 +1350,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       scheduleIncrementalListUpdate(elements, 0);
 
       boolean scopeExpanded =
-        FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> populateElements(elements));
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> populateElements(elements));
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
       AnchoredSet resultSet = new AnchoredSet(filter(elements));
@@ -1544,7 +1541,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       final String text = getTrimmedText();
       final String prefixPattern = myFindUsagesTitle + " '" + text + "'";
       presentation.setCodeUsagesString(prefixPattern);
-      presentation.setUsagesInGeneratedCodeString(LangBundle.message("list.item.in.generated.code", prefixPattern));
       presentation.setTabName(prefixPattern);
       presentation.setTabText(prefixPattern);
       presentation.setTargetsNodeText(LangBundle.message("list.item.unsorted", StringUtil.toLowerCase(patternToLowerCase(prefixPattern))));

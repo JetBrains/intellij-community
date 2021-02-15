@@ -5,6 +5,7 @@ import com.intellij.configurationStore.StreamProvider
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -17,6 +18,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
 import kotlinx.coroutines.runBlocking
@@ -34,16 +36,20 @@ internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
   ApplicationLoadListener.EP_NAME.findExtensionOrFail(IcsApplicationLoadListener::class.java).icsManager
 }
 
-class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) {
+class IcsManager @JvmOverloads constructor(dir: Path,
+                                           parentDisposable: Disposable,
+                                           val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) : Disposable {
   val credentialsStore = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")
 
   val settings: IcsSettings
-  val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
+  val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"), this)
   val readOnlySourcesManager = ReadOnlySourceManager(this, dir)
 
   init {
+    Disposer.register(parentDisposable, this)
+
     settings = try {
       loadSettings(settingsFile)
     }
@@ -51,6 +57,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
       LOG.error(e)
       IcsSettings()
     }
+  }
+
+  override fun dispose() {
   }
 
   val repositoryService: RepositoryService = GitRepositoryService()
@@ -219,7 +228,8 @@ internal class IcsApplicationLoadListener : ApplicationLoadListener {
 
     val customPath = System.getProperty("ics.settingsRepository")
     val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
-    icsManager = IcsManager(pluginSystemDir)
+    @Suppress("IncorrectParentDisposable") // this plugin is special and can't be dynamic anyway
+    icsManager = IcsManager(pluginSystemDir, application)
 
     val repositoryManager = icsManager.repositoryManager
     if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {

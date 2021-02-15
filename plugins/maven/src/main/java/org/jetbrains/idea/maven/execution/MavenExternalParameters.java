@@ -31,10 +31,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.Compressor;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM31RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM3RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
@@ -54,24 +56,13 @@ import java.util.*;
 
 import static org.jetbrains.idea.maven.server.MavenServerManager.verifyMavenSdkRequirements;
 
-public class MavenExternalParameters {
+public final class MavenExternalParameters {
 
   private static final Logger LOG = Logger.getInstance(MavenExternalParameters.class);
 
   public static final String MAVEN_LAUNCHER_CLASS = "org.codehaus.classworlds.Launcher";
 
   @NonNls public static final String MAVEN_OPTS = "MAVEN_OPTS";
-
-  /**
-   * @deprecated use other overloads
-   */
-  @Deprecated
-  public static JavaParameters createJavaParameters(@Nullable final Project project,
-                                                    @NotNull final MavenRunnerParameters parameters,
-                                                    @Nullable MavenGeneralSettings coreSettings,
-                                                    @Nullable MavenRunnerSettings runnerSettings) throws ExecutionException {
-    return createJavaParameters(project, parameters, coreSettings, runnerSettings, null);
-  }
 
   public static JavaParameters createJavaParameters(@Nullable final Project project,
                                                     @NotNull final MavenRunnerParameters parameters) throws ExecutionException {

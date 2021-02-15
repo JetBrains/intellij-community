@@ -9,11 +9,9 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.io.div
 import com.intellij.util.io.write
-import junit.framework.TestCase
 import org.junit.Assert.assertArrayEquals
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
 
 class FileContentImplTest : HeavyPlatformTestCase() {
@@ -28,7 +26,7 @@ class FileContentImplTest : HeavyPlatformTestCase() {
     val bytes = byteArrayOf(3, 5, 7, 11)
     val content = createFileContent(bytes, binary = true)
     assertArrayEquals(bytes, content.content)
-    assertThrows(UnsupportedOperationException::class.java, ThrowableRunnable { content.contentAsText })
+    assertThrows(UnsupportedOperationException::class.java, { content.contentAsText })
   }
 
   fun `test conversion of line separators for text file`() {
@@ -79,9 +77,9 @@ class FileContentImplTest : HeavyPlatformTestCase() {
   fun `test bom is truncated from getContent()`() {
     val text = "哇你居然翻译了这篇中文文本"
     for (charset in listOf(
-      CharsetToolkit.UTF8_CHARSET,
-      CharsetToolkit.UTF_16LE_CHARSET,
-      CharsetToolkit.UTF_16BE_CHARSET,
+      StandardCharsets.UTF_8,
+      StandardCharsets.UTF_16LE,
+      StandardCharsets.UTF_16BE,
       CharsetToolkit.UTF_32LE_CHARSET,
       CharsetToolkit.UTF_32BE_CHARSET
     )) {
@@ -102,7 +100,7 @@ class FileContentImplTest : HeavyPlatformTestCase() {
   private fun createInputFile(content: ByteArray, binary: Boolean = false): VirtualFile {
     val home = createTempDir("hashing-test").toPath()
 
-    val path = if (binary) home / "file.jpg" else home / "test-file.txt"
+    val path = home.resolve(if (binary) "file.jpg" else "test-file.txt")
 
     //we create the file via low-level code to make sure IntelliJ Utils would not alter the newlines in it
     path.write(content)

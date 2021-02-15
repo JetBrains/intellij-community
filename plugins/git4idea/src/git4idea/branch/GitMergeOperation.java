@@ -33,6 +33,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static git4idea.GitNotificationIdsHolder.DELETE_BRANCH_ON_MERGE;
+import static git4idea.GitNotificationIdsHolder.MERGE_ROLLBACK_ERROR;
 import static git4idea.GitUtil.getHead;
 import static git4idea.GitUtil.updateAndRefreshChangedVfs;
 import static git4idea.util.GitUIUtil.bold;
@@ -158,7 +160,7 @@ class GitMergeOperation extends GitBranchOperation {
       case PROPOSE:
         String deleteBranch = GitBundle.message("merge.operation.delete.branch", myBranchToMerge);
         String description = new HtmlBuilder().appendRaw(message).br().appendLink(DELETE_HREF_ATTRIBUTE, deleteBranch).toString();
-        VcsNotifier.getInstance(myProject).notifySuccess("git.delete.branch.on.merge",
+        VcsNotifier.getInstance(myProject).notifySuccess(DELETE_BRANCH_ON_MERGE,
                                                          "",
                                                          description,
                                                          new DeleteMergedLocalBranchNotificationListener());
@@ -284,7 +286,7 @@ class GitMergeOperation extends GitBranchOperation {
     myConflictedRepositories.clear();
 
     if (!result.totalSuccess()) {
-      VcsNotifier.getInstance(myProject).notifyError("git.merge.rollback.error",
+      VcsNotifier.getInstance(myProject).notifyError(MERGE_ROLLBACK_ERROR,
                                                      GitBundle.message("merge.operation.error.during.rollback"),
                                                      result.getErrorOutputWithReposIndication(),
                                                      true);

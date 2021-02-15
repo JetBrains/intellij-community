@@ -3,9 +3,7 @@ package com.intellij.ui.mac.foundation;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ImageLoader;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
@@ -16,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 
@@ -62,7 +61,7 @@ public final class Foundation {
     return invokArgs;
   }
 
-  public static ID invoke(final ID id, final Pointer selector, Object... args) {
+  public static @NotNull ID invoke(final ID id, final Pointer selector, Object... args) {
     // objc_msgSend is called with the calling convention of the target method
     // on x86_64 this does not make a difference, but arm64 uses a different calling convention for varargs
     // it is therefore important to not call objc_msgSend as a vararg function
@@ -95,13 +94,11 @@ public final class Foundation {
     return invoke(cls, selector, args);
   }
 
-  public static ID invoke(final ID id, final String selector, Object... args) {
+  public static @NotNull ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
   }
 
   public static double invoke_fpret(ID receiver, Pointer selector, Object... args) {
-    // calling objc_msgSend_fpret is exclusively needed on 32bit for double return values
-    if (SystemInfo.is32Bit) return myFoundationLibrary.objc_msgSend_fpret(receiver, selector, args);
     return myObjcMsgSend.invokeDouble(prepInvoke(receiver, selector, args));
   }
 
@@ -214,7 +211,7 @@ public final class Foundation {
         return invoke(nsStringCls, stringSel);
       }
 
-      byte[] utf16Bytes = s.getBytes(CharsetToolkit.UTF_16LE_CHARSET);
+      byte[] utf16Bytes = s.getBytes(StandardCharsets.UTF_16LE);
       return invoke(invoke(invoke(nsStringCls, allocSel),
                            initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
                     autoreleaseSel);
@@ -476,8 +473,7 @@ public final class Foundation {
       return data.getByteArray(0, length());
     }
 
-    @NotNull
-    public Image createImageFromBytes() {
+    public @NotNull Image createImageFromBytes() {
       return ImageLoader.loadFromBytes(bytes());
     }
   }

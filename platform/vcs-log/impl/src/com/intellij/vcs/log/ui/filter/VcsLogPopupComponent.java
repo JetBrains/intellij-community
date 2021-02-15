@@ -157,7 +157,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
     myValueLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getTextFieldForeground());
   }
 
-  private void showPopupMenu() {
+  void showPopupMenu() {
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     ListPopup popup = createPopupMenu();
     myPopupState.prepareToShow(popup);

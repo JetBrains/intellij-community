@@ -35,7 +35,7 @@ public class MemoryPasswordSafe implements PasswordStorage {
   /**
    * The password database
    */
-  private final transient PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>> database = new PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>>() {
+  private final transient PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>> database = new PasswordSafeTimed<>() {
     @Override
     protected Map<ByteArrayWrapper, byte[]> compute() {
       return Collections.synchronizedMap(new HashMap<>());

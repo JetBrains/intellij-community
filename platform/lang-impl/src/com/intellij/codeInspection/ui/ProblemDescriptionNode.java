@@ -18,7 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Interner;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,9 +136,9 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+  protected void visitProblemSeverities(@NotNull Object2IntOpenHashMap<HighlightDisplayLevel> counter) {
     if (isValid() && !isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
-      counter.put(myLevel, counter.get(myLevel) + 1);
+      counter.put(myLevel, counter.getInt(myLevel) + 1);
     }
   }
 

@@ -28,7 +28,7 @@ import java.util.Objects;
 
 public class GenerateDependencyAction extends GenerateDomElementAction {
   public GenerateDependencyAction() {
-    super(new MavenGenerateProvider<MavenDomDependency>(MavenDomBundle.message("generate.dependency.title"), MavenDomDependency.class) {
+    super(new MavenGenerateProvider<>(MavenDomBundle.message("generate.dependency.title"), MavenDomDependency.class) {
       @Nullable
       @Override
       protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
@@ -40,12 +40,12 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
         final List<MavenId> ids = MavenArtifactSearchDialog.searchForArtifact(project, managedDependencies.values());
         if (ids.isEmpty()) return null;
 
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-          XmlFile psiFile = DomUtil.getFile(mavenModel);
-          return createDependencyInWriteAction(mavenModel, editor, managedDependencies, ids, psiFile);
-        }
-      }, AllIcons.Nodes.PpLib);
+        XmlFile psiFile = DomUtil.getFile(mavenModel);
+        return createDependencyInWriteAction(mavenModel, editor, managedDependencies, ids, psiFile);
+      }
+    }, AllIcons.Nodes.PpLib);
   }
 
   public static MavenDomDependency createDependencyInWriteAction(@NotNull MavenDomProjectModel mavenModel,

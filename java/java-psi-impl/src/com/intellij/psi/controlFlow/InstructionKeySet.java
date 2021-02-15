@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -18,7 +18,7 @@ import java.util.Arrays;
  *
  * @author Pavel.Dolgov
  */
-class InstructionKeySet {
+final class InstructionKeySet {
   private final @NotNull Node myRoot;
 
   InstructionKeySet(int initialCapacity) {
@@ -42,7 +42,7 @@ class InstructionKeySet {
    * If the instruction key N is in the set it's represented as N->null.
    * If the instruction key N[A,B,C] is in the set it's represented as N->A->B->C->null.
    */
-  private static final class Node extends TIntObjectHashMap<Node> {
+  private static final class Node extends Int2ObjectOpenHashMap<Node> {
     private Node(int initialCapacity) {
       super(Math.max(initialCapacity, 2));
     }
@@ -76,7 +76,7 @@ class InstructionKeySet {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("{");
-      int[] offsets = keys();
+      int[] offsets = keySet().toIntArray();
       Arrays.sort(offsets);
       for (int offset : offsets) {
         if (sb.length() > 1) sb.append(", ");

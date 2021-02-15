@@ -10,6 +10,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestApplicationManager
 import java.io.File
@@ -44,8 +45,8 @@ abstract class ProjectSdkStubsGenerator {
   }
 
   private fun indexSdkAndStoreSerializedStubs(projectPath: String, sdkPath: String, stubsFilePath: String) {
-    val pair = openProjectWithSdk(projectPath, moduleTypeId, createSdkProducer(sdkPath))
-    val project = pair.first
+    val testRootDisposable = Disposer.newDisposable()
+    val pair = openProjectWithSdk(projectPath, moduleTypeId, createSdkProducer(sdkPath), testRootDisposable)
     val sdk = pair.second
 
     try {
@@ -55,7 +56,7 @@ abstract class ProjectSdkStubsGenerator {
     }
     finally {
       ApplicationManager.getApplication().invokeAndWait(Runnable {
-        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+        Disposer.dispose(testRootDisposable)
         WriteAction.run<Throwable> {
           SdkConfigurationUtil.removeSdk(sdk!!)
         }

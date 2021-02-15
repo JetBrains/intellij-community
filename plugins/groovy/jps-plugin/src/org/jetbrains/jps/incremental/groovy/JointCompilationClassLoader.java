@@ -1,56 +1,55 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
-import com.intellij.util.lang.ClassPath;
+import com.intellij.util.lang.Loader;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.nio.ByteBuffer;
+import java.security.ProtectionDomain;
 
 /**
  * @author peter
  */
-class JointCompilationClassLoader extends UrlClassLoader {
-  @NotNull private final Builder myBuilder;
-  @NotNull private ClassPath myClassPath;
+final class JointCompilationClassLoader extends UrlClassLoader {
+  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
 
-  JointCompilationClassLoader(@NotNull Builder builder) {
-    super(builder);
-    myBuilder = builder;
-    myClassPath = super.getClassPath();
+  JointCompilationClassLoader(@NotNull UrlClassLoader.Builder builder) {
+    super(builder, isParallelCapable);
   }
 
   @Override
-  protected Class _defineClass(String name, byte[] b) {
+  public Class<?> consumeClassData(@NotNull String name,
+                                   byte[] data,
+                                   Loader loader,
+                                   @Nullable ProtectionDomain protectionDomain) {
     try {
-      return super._defineClass(name, b);
+      return super.consumeClassData(name, data, loader, protectionDomain);
     }
-    catch (NoClassDefFoundError e) {
+    catch (Exception e) {
       NoClassDefFoundError wrap = new NoClassDefFoundError(e.getMessage() + " needed for " + name);
       wrap.initCause(e);
       throw wrap;
     }
   }
 
-  @NotNull
   @Override
-  protected ClassPath getClassPath() {
-    return myClassPath;
+  public Class<?> consumeClassData(@NotNull String name,
+                                   ByteBuffer data,
+                                   Loader loader,
+                                   @Nullable ProtectionDomain protectionDomain) {
+    try {
+      return super.consumeClassData(name, data, loader, protectionDomain);
+    }
+    catch (Exception e) {
+      NoClassDefFoundError wrap = new NoClassDefFoundError(e.getMessage() + " needed for " + name);
+      wrap.initCause(e);
+      throw wrap;
+    }
   }
 
   void resetCache() {
-    myClassPath = createClassPath(myBuilder);
+    getClassPath().reset(getFiles());
   }
 }

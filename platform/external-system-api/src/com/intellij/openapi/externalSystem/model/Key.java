@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +85,7 @@ public final class Key<T> implements Comparable<Key<?>>, Serializable {
   }
 
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     int i = dataClass.lastIndexOf('.');
     return i > 0 ? dataClass.substring(i + 1) : dataClass;
   }

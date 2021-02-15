@@ -17,13 +17,16 @@ package com.android.tools.idea.gradle.dsl.model.repositories;
 
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
 import com.android.tools.idea.gradle.dsl.parser.repositories.MavenRepositoryDslElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a repository defined with jcenter {}.
  */
 public class JCenterRepositoryModel extends MavenRepositoryModelImpl {
+  @NonNls public static final String JCENTER_DEFAULT_REPO_URL = "https://jcenter.bintray.com/";
+
   public JCenterRepositoryModel(@NotNull GradlePropertiesDslElement holder, @NotNull MavenRepositoryDslElement dslElement) {
-    super(holder, dslElement, "BintrayJCenter2", "https://jcenter.bintray.com/");
+    super(holder, dslElement, "BintrayJCenter2", JCENTER_DEFAULT_REPO_URL);
   }
 }

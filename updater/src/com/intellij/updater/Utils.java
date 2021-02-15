@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -14,9 +14,14 @@ public class Utils {
   public static final boolean IS_WINDOWS = OS_NAME.startsWith("windows");
   public static final boolean IS_MAC = OS_NAME.startsWith("mac");
 
-  private static final long REQUIRED_FREE_SPACE = 2_000_000_000L;
+  private static final long REQUIRED_FREE_SPACE = Long.getLong("idea.required.space", 2_000_000_000L);
 
   private static final int BUFFER_SIZE = 8192;  // to minimize native memory allocations for I/O operations
+
+  private static final CopyOption[] COPY_STANDARD = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
+  private static final CopyOption[] COPY_REPLACE = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING};
+
+  private static final boolean WIN_UNPRIVILEGED = IS_WINDOWS && Boolean.getBoolean("idea.unprivileged.process");
 
   private static File myTempDir;
 
@@ -24,25 +29,23 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  public static String findDirectory(long requiredFreeSpace) {
-    String dir = System.getProperty("idea.updater.log");
-    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
-      dir = System.getProperty("java.io.tmpdir");
-      if (!isValidDir(dir, requiredFreeSpace)) {
-        dir = System.getProperty("user.home");
-      }
-    }
-    return dir;
-  }
-
-  private static boolean isValidDir(String path, long space) {
-    File dir = new File(path);
-    return dir.isDirectory() && dir.canWrite() && dir.getUsableSpace() >= space;
-  }
-
-  public static File getTempFile(String name) throws IOException {
+  public synchronized static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
-      myTempDir = Files.createTempDirectory(Paths.get(findDirectory(REQUIRED_FREE_SPACE)), "idea.updater.files.").toFile();
+      String path = System.getProperty("java.io.tmpdir");
+      if (path == null) throw new IllegalArgumentException("System property `java.io.tmpdir` is not defined");
+
+      Path dir = Paths.get(path);
+      if (!Files.isDirectory(dir)) throw new IOException("Not a directory: " + dir);
+      if (!Files.isWritable(dir)) throw new IOException("Not writable: " + dir);
+
+      if (REQUIRED_FREE_SPACE > 0) {
+        FileStore fs = Files.getFileStore(dir);
+        if (fs.getUsableSpace() < REQUIRED_FREE_SPACE) {
+          throw new IOException("Not enough free space on '" + fs + "' (" + (REQUIRED_FREE_SPACE / 1_000_000) + " MB required");
+        }
+      }
+
+      myTempDir = Files.createTempDirectory(dir, "idea.updater.files.").toFile();
       Runner.logger().info("created a working directory: " + myTempDir);
     }
 
@@ -55,7 +58,7 @@ public class Utils {
     return myTempFile;
   }
 
-  public static void cleanup() throws IOException {
+  public synchronized static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
     Runner.logger().info("deleted a working directory: " + myTempDir.getPath());
@@ -147,22 +150,25 @@ public class Utils {
   public static void copy(File from, File to, boolean overwrite) throws IOException {
     Runner.logger().info(from + (overwrite ? " over " : " into ") + to);
 
-    if (Files.isDirectory(from.toPath(), LinkOption.NOFOLLOW_LINKS)) {
-      Files.createDirectories(to.toPath());
+    Path src = from.toPath(), dst = to.toPath();
+    BasicFileAttributes attrs = Files.readAttributes(src, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+    if (attrs.isDirectory()) {
+      Files.createDirectories(dst);
+    }
+    else if (WIN_UNPRIVILEGED && attrs.isSymbolicLink()) {
+      if (overwrite) Files.deleteIfExists(dst);
+      Files.createDirectories(dst.getParent());
+      Files.createSymbolicLink(dst, Files.readSymbolicLink(src));
     }
     else {
-      Files.createDirectories(to.toPath().getParent());
-      CopyOption[] options =
-        overwrite ? new CopyOption[]{LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING} :
-                    new CopyOption[]{LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
-      Files.copy(from.toPath(), to.toPath(), options);
+      Files.createDirectories(dst.getParent());
+      Files.copy(src, dst, overwrite ? COPY_REPLACE : COPY_STANDARD);
     }
   }
 
   public static void copyDirectory(Path from, Path to) throws IOException {
     Runner.logger().info(from + " into " + to);
 
-    CopyOption[] options = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
     Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -178,7 +184,12 @@ public class Utils {
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         Path copy = to.resolve(from.relativize(file));
         Runner.logger().info("  " + file + " into " + copy);
-        Files.copy(file, copy, options);
+        if (WIN_UNPRIVILEGED && attrs.isSymbolicLink()) {
+          Files.createSymbolicLink(copy, Files.readSymbolicLink(file));
+        }
+        else {
+          Files.copy(file, copy, COPY_STANDARD);
+        }
         return FileVisitResult.CONTINUE;
       }
     });

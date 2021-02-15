@@ -45,8 +45,10 @@ public class VcsShelveChangesSaver {
     String oldProgressTitle = myProgressIndicator.getText();
     myProgressIndicator.setText(VcsBundle.getString("vcs.shelving.changes"));
 
-    Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    Collection<Change> allChanges = changeListManager.getAllChanges();
+
+    Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     if (changeListManager.areChangeListsEnabled()) {
       for (LocalChangeList list : changeListManager.getChangeLists()) {
         Collection<Change> changes = filterChangesByRoots(list.getChanges(), rootsSet);
@@ -58,14 +60,14 @@ public class VcsShelveChangesSaver {
       }
     }
     else {
-      Collection<Change> changes = filterChangesByRoots(changeListManager.getAllChanges(), rootsSet);
+      Collection<Change> changes = filterChangesByRoots(allChanges, rootsSet);
       if (!changes.isEmpty()) {
         ShelvedChangeList shelved = VcsShelveUtils.shelveChanges(project, changes, myStashMessage, false, true);
         myShelvedLists.put(null, shelved);
       }
     }
 
-    doRollback(rootsToSave);
+    doRollback(rootsToSave, allChanges);
 
     myProgressIndicator.setText(oldProgressTitle);
   }
@@ -84,7 +86,8 @@ public class VcsShelveChangesSaver {
     myProgressIndicator.setText(oldProgressTitle);
   }
 
-  protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {
+  protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave,
+                            @NotNull Collection<Change> shelvedChanges) {
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     List<Change> changes4Rollback = filterChangesByRoots(ChangeListManager.getInstance(project).getAllChanges(), rootsSet);
     new RollbackWorker(project, myStashMessage, true).doRollback(changes4Rollback, true);

@@ -19,7 +19,7 @@ public interface AppLifecycleListener {
 
   /** @deprecated use {@link #appFrameCreated(List)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   default void appFrameCreated(@NotNull List<String> commandLineArgs, @SuppressWarnings("unused") @NotNull Ref<? super Boolean> willOpenProject) {
     appFrameCreated(commandLineArgs);
   }
@@ -69,6 +69,6 @@ public interface AppLifecycleListener {
 
   /** @deprecated please use {@link AppLifecycleListener} directly */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   abstract class Adapter implements AppLifecycleListener { }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -14,7 +14,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -25,10 +24,7 @@ import java.util.Collections;
 /**
  * @author yole
  */
-public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
-  public static final String TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME = TestDataPath.class.getCanonicalName();
-  public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
-  public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
+public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
 
   @Override
   public Info getInfo(@NotNull PsiElement e) {
@@ -51,7 +47,7 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
     if (uElement instanceof UMethod) {
       return new Info(ActionManager.getInstance().getAction("TestData.Navigate"));
     }
-    
+
     final PsiClass psiClass = ((UClass)uElement).getJavaPsi();
     final String testDataBasePath = getTestDataBasePath(psiClass);
     if (testDataBasePath == null) {
@@ -66,7 +62,7 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
 
     final UAnnotation annotation =
       UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(psiClass,
-                                                                        Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME)),
+                                                                        Collections.singleton(TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME)),
                                UAnnotation.class);
     if (annotation != null) {
       UExpression value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
@@ -75,7 +71,7 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
         final Object constantValue = value.evaluate();
         if (constantValue instanceof String) {
           String path = (String)constantValue;
-          if (path.contains(CONTENT_ROOT_VARIABLE)) {
+          if (path.contains(TestFrameworkConstants.CONTENT_ROOT_VARIABLE)) {
             final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             final VirtualFile file = psiClass.getContainingFile().getVirtualFile();
             if (file == null) {
@@ -83,14 +79,14 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
             }
             final VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
             if (contentRoot == null) return null;
-            path = path.replace(CONTENT_ROOT_VARIABLE, contentRoot.getPath());
+            path = path.replace(TestFrameworkConstants.CONTENT_ROOT_VARIABLE, contentRoot.getPath());
           }
-          if (path.contains(PROJECT_ROOT_VARIABLE)) {
+          if (path.contains(TestFrameworkConstants.PROJECT_ROOT_VARIABLE)) {
             String baseDir = project.getBasePath();
             if (baseDir == null) {
               return null;
             }
-            path = path.replace(PROJECT_ROOT_VARIABLE, baseDir);
+            path = path.replace(TestFrameworkConstants.PROJECT_ROOT_VARIABLE, baseDir);
           }
           return path;
         }

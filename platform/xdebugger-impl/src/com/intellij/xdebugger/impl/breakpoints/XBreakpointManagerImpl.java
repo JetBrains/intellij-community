@@ -84,7 +84,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       }
     });
 
-    XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<XBreakpointType>() {
+    XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull XBreakpointType type, @NotNull PluginDescriptor pluginDescriptor) {
         //noinspection unchecked
@@ -370,11 +370,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   public <B extends XBreakpoint<P>, P extends XBreakpointProperties> void addBreakpointListener(@NotNull final XBreakpointType<B,P> type, @NotNull final XBreakpointListener<B> listener,
                                                                                                 final Disposable parentDisposable) {
     getOrCreateDispatcher(type).addListener(listener, parentDisposable);
-  }
-
-  @Override
-  public void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener, @NotNull Disposable parentDisposable) {
-    myProject.getMessageBus().connect(parentDisposable).subscribe(XBreakpointListener.TOPIC, listener);
   }
 
   @Override

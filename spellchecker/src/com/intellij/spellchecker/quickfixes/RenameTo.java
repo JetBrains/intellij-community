@@ -18,6 +18,7 @@ import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import icons.SpellcheckerIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,6 +90,7 @@ public class RenameTo extends LazySuggestions implements SpellCheckerQuickFix {
     }
   }
 
+  @Nls
   public static String getFixName() {
     return SpellCheckerBundle.message("rename.to");
   }

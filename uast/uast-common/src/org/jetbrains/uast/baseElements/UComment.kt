@@ -21,6 +21,7 @@ import org.jetbrains.uast.internal.log
 open class UComment(override val sourcePsi: PsiComment, private val givenParent: UElement?) : UElement {
 
   @Suppress("OverridingDeprecatedMember")
+  @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi get() = sourcePsi
 
   override val uastParent: UElement? by lazy {

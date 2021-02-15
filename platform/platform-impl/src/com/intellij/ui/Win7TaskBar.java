@@ -4,7 +4,8 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.User32Ex;
-import com.intellij.util.io.jna.DisposableMemory;
+import com.intellij.jna.DisposableMemory;
+import com.intellij.util.ui.EDT;
 import com.sun.jna.Function;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
@@ -18,6 +19,8 @@ import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Method;
 
 /**
+ * This class is not thread safe, and must be accessed from EDT only.
+ *
  * @author Alexander Lobas
  */
 final class Win7TaskBar {
@@ -56,14 +59,15 @@ final class Win7TaskBar {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return false;
     }
+    EDT.assertIsEdt();
 
     Ole32 ole32 = Ole32.INSTANCE;
-    ole32.CoInitializeEx(Pointer.NULL, 0);
+    ole32.CoInitializeEx(Pointer.NULL, Ole32.COINIT_APARTMENTTHREADED);
 
     Guid.GUID CLSID_TaskBarList = Ole32Util.getGUIDFromString("{56FDF344-FD6D-11d0-958A-006097C9A090}");
     Guid.GUID IID_ITaskBarList3 = Ole32Util.getGUIDFromString("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}");
     PointerByReference p = new PointerByReference();
-    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskBarList, Pointer.NULL, ObjBase.CLSCTX_ALL, IID_ITaskBarList3, p);
+    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskBarList, Pointer.NULL, ObjBase.CLSCTX_INPROC, IID_ITaskBarList3, p);
     if (!WinError.S_OK.equals(hr)) {
       LOG.error("Win7TaskBar CoCreateInstance(IID_ITaskBarList3) hResult: " + hr);
       return false;
@@ -116,9 +120,7 @@ final class Win7TaskBar {
       return null;
     }
 
-    DisposableMemory memory = new DisposableMemory(ico.length);
-
-    try {
+    try (DisposableMemory memory = new DisposableMemory(ico.length)) {
       memory.write(0, ico, 0, ico.length);
 
       int nSize = 100;
@@ -128,9 +130,6 @@ final class Win7TaskBar {
       }
 
       return null;
-    }
-    finally {
-      memory.dispose();
     }
   }
 

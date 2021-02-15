@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -76,11 +75,6 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
 
   @Override
   public FileStatus getStatus(@NotNull VirtualFile file) {
-    return null;
-  }
-
-  @Override
-  public FileStatus getStatus(@NotNull File file) {
     return null;
   }
 

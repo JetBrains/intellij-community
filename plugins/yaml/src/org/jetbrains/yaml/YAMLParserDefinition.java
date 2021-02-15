@@ -13,7 +13,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.lexer.YAMLFlexLexer;
 import org.jetbrains.yaml.parser.YAMLParser;
 import org.jetbrains.yaml.psi.impl.*;
@@ -28,13 +27,12 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
   }
 
   @Override
-  @Nullable
-  public PsiParser createParser(final Project project) {
+  public @NotNull PsiParser createParser(final Project project) {
     return new YAMLParser();
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return FILE;
   }
 
@@ -106,12 +104,12 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
   }
 
   @Override
-  public PsiFile createFile(final FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(final @NotNull FileViewProvider viewProvider) {
     return new YAMLFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

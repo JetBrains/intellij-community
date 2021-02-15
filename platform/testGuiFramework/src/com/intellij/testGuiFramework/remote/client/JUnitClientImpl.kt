@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit
  */
 class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHandler>? = null) : JUnitClient {
 
-  private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.client.JUnitClientImpl")
+  private val LOG = Logger.getInstance(JUnitClientImpl::class.java)
   private val RECEIVE_THREAD = "JUnit Client Receive Thread"
   private val SEND_THREAD = "JUnit Client Send Thread"
 

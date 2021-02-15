@@ -83,6 +83,7 @@
     <predefinedMigrationMapProvider implementation="org.jetbrains.plugins.javaFX.refactoring.migration.JavaFx9Migration"/>
     <postStartupActivity implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil$JavaFxDetectionStartupActivity"/>
     <createFromTemplateHandler implementation="org.jetbrains.plugins.javaFX.actions.JavaFxCreateFromTemplateHandler" order="before java"/>
+    <projectTemplateParameterFactory implementation="org.jetbrains.plugins.javaFX.JavaFXVersionFactory"/>
   </extensions>
 
   <projectListeners>

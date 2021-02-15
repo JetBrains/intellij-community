@@ -41,10 +41,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -172,7 +169,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
         String message = GradleBundle.message("compiler.build.messages.gradle.configuration.not.found", module.getName());
-        context.addMessage(CompilerMessageCategory.WARNING, message, null, -1, -1);
+        context.addMessage(CompilerMessageCategory.WARNING, message, null, -1, -1, null, Collections.singleton(module.getName()));
         continue;
       }
 

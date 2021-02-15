@@ -70,9 +70,11 @@ class ShredManager {
   }
 
   private int calculateElementOffset(@NotNull String text) {
-    String cutText = text.substring(0, myPsiElement.getTextOffset());
+    int offset = myPsiElement.getTextOffset();
+    if (offset > text.length()) return -1;
+    String cutText = text.substring(0, offset);
     String cutTextWithoutBogusWords = cutText.replaceAll(PSI_EXPR_MASK, "").replaceAll(PSI_CONDITIONAL_EXPR_MASK, "");
-    return myPsiElement.getTextOffset() - (cutText.length() - cutTextWithoutBogusWords.length());
+    return offset - (cutText.length() - cutTextWithoutBogusWords.length());
   }
 
   @Nullable

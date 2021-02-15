@@ -32,7 +32,7 @@ import java.util.Map;
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
 
-  private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<IdIndexEntry>() {
+  private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<>() {
     @Override
     public IdIndexEntry fromInt(int n) {
       return new IdIndexEntry(n);
@@ -97,7 +97,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NotNull
   @Override
   public DataExternalizer<Integer> getValueExternalizer() {
-    return new DataExternalizer<Integer>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull final DataOutput out, final Integer value) throws IOException {
         out.write(value.intValue() & UsageSearchContext.ANY);

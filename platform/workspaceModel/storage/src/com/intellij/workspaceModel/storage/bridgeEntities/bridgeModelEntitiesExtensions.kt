@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import java.util.*
 
 /**
  * All the [equalsAsOrderEntry] methods work similar to [compareTo] methods of corresponding order entries in the
@@ -24,12 +25,21 @@ fun SourceRootEntity.equalsAsOrderEntry(other: SourceRootEntity): Boolean {
   return true
 }
 
+fun SourceRootEntity.hashCodeAsOrderEntry(): Int {
+  val packagePrefix = this.asJavaSourceRoot()?.packagePrefix ?: this.asJavaResourceRoot()?.relativeOutputPath
+  val generated = this.asJavaSourceRoot()?.generated ?: this.asJavaResourceRoot()?.generated
+
+  return Objects.hash(packagePrefix, tests, generated, url)
+}
+
 fun ContentRootEntity.equalsAsOrderEntry(other: ContentRootEntity): Boolean {
   if (this.url != other.url) return false
   if (this.excludedUrls != other.excludedUrls) return false
   if (this.excludedPatterns != other.excludedPatterns) return false
   return true
 }
+
+fun ContentRootEntity.hashCodeAsOrderEntry(): Int = Objects.hash(url, excludedUrls, excludedPatterns)
 
 fun ModuleDependencyItem.equalsAsOrderEntry(other: ModuleDependencyItem,
                                             thisStore: WorkspaceEntityStorage, otherStore: WorkspaceEntityStorage): Boolean {

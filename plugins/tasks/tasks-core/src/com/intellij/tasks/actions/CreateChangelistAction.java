@@ -18,7 +18,9 @@ package com.intellij.tasks.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
@@ -35,10 +37,14 @@ public class CreateChangelistAction extends BaseTaskAction {
   public void update(@NotNull AnActionEvent event) {
     super.update(event);
     if (event.getPresentation().isEnabled()) {
+      Project project = getProject(event);
       TaskManager manager = getTaskManager(event);
       Presentation presentation = event.getPresentation();
 
-      if (manager == null || !manager.isVcsEnabled()) {
+      if (project == null ||
+          manager == null ||
+          !manager.isVcsEnabled() ||
+          !ChangeListManager.getInstance(project).areChangeListsEnabled()) {
         presentation.setText(getTemplatePresentation().getText());
         presentation.setEnabled(false);
       }

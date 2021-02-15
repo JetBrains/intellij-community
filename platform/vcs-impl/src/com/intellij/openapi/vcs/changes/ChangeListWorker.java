@@ -236,8 +236,8 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  public List<LocalChangeList> getChangeLists() {
-    List<LocalChangeList> lists = ContainerUtil.map(myLists, this::toChangeList);
+  public List<LocalChangeListImpl> getChangeLists() {
+    List<LocalChangeListImpl> lists = ContainerUtil.map(myLists, this::toChangeList);
     ContainerUtil.sort(lists, ChangesUtil.CHANGELIST_COMPARATOR);
     return lists;
   }
@@ -1153,9 +1153,12 @@ public class ChangeListWorker {
     }
 
 
-    @NotNull
-    public ChangeListWorker finish() {
+    public void finish() {
       checkForMultipleCopiesNotMove();
+    }
+
+    @NotNull
+    public ChangeListWorker getUpdatedWorker() {
       return myWorker;
     }
 
@@ -1288,7 +1291,7 @@ public class ChangeListWorker {
     @NotNull
     @Override
     public List<LocalChangeList> getListsCopy() {
-      return myWorker.getChangeLists();
+      return Collections.unmodifiableList(myWorker.getChangeLists());
     }
 
     @Nullable
@@ -1329,12 +1332,6 @@ public class ChangeListWorker {
     @Override
     public FileStatus getStatus(@NotNull VirtualFile file) {
       return myWorker.getStatus(file);
-    }
-
-    @Deprecated
-    @Override
-    public FileStatus getStatus(@NotNull File file) {
-      return myWorker.getStatus(VcsUtil.getFilePath(file));
     }
 
     @Override

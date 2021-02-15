@@ -10,25 +10,23 @@ import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.lang.reflect.Field;
 
-import static com.intellij.util.ReflectionUtil.findAssignableField;
-import static com.intellij.util.ReflectionUtil.getFieldValue;
-
 @ApiStatus.Internal
 public final class InvocationUtil {
-
-  public static final @NotNull Class<? extends Runnable> FLUSH_NOW_CLASS =
-    FlushQueue.FlushNow.class;
-  public static final @NotNull Class<? extends Runnable> REPAINT_PROCESSING_CLASS =
-    findProcessingClass();
-  private static final @NotNull Field INVOCATION_EVENT_RUNNABLE_FIELD =
-    findRunnableField();
+  public static final @NotNull Class<? extends Runnable> FLUSH_NOW_CLASS = FlushQueue.FlushNow.class;
+  public static final @NotNull Class<? extends Runnable> REPAINT_PROCESSING_CLASS = findProcessingClass();
+  private static final @NotNull Field INVOCATION_EVENT_RUNNABLE_FIELD = findRunnableField();
 
   private InvocationUtil() {}
 
   public static @Nullable Runnable extractRunnable(@NotNull AWTEvent event) {
-    return event instanceof InvocationEvent ?
-           getFieldValue(INVOCATION_EVENT_RUNNABLE_FIELD, event) :
-           null;
+    if (event instanceof InvocationEvent) {
+      try {
+        return (Runnable)INVOCATION_EVENT_RUNNABLE_FIELD.get(event);
+      }
+      catch (IllegalAccessException ignore) {
+      }
+    }
+    return null;
   }
 
   private static @NotNull Class<? extends Runnable> findProcessingClass() {
@@ -45,20 +43,21 @@ public final class InvocationUtil {
   }
 
   private static @NotNull Field findRunnableField() {
-    try {
-      return findAssignableField(
-        InvocationEvent.class,
-        Runnable.class,
-        "runnable"
-      );
+    for (Class<?> aClass = InvocationEvent.class; aClass != null; aClass = aClass.getSuperclass()) {
+      try {
+        Field result = aClass.getDeclaredField("runnable");
+        result.setAccessible(true);
+        return result;
+      }
+      catch (NoSuchFieldException ignore) {
+      }
     }
-    catch (NoSuchFieldException e) {
-      throw new InternalAPIChangedException(InvocationEvent.class, e);
-    }
+
+    throw new InternalAPIChangedException(InvocationEvent.class, new NoSuchFieldException(
+      "Class: " + InvocationEvent.class + " fieldName: " + "runnable" + " fieldType: " + Runnable.class));
   }
 
   private static final class InternalAPIChangedException extends RuntimeException {
-
     InternalAPIChangedException(@NotNull Class<?> targetClass,
                                 @Nullable ReflectiveOperationException cause) {
       super(targetClass + " class internal API has been changed", cause);

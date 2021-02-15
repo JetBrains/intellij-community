@@ -9,7 +9,6 @@ import java.io.File
 
 internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
 
-  private val LOG = logger<AddDiffOperation>()
   private val replaceMap = HashBiMap.create<EntityId, EntityId>()
   private val diffLog = diff.changeLog.changeLog
 
@@ -81,10 +80,15 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         }
       }
     }
-    target.indexes.applyExternalMappingChanges(diff, replaceMap, target)
+    target.indexes.applyExternalMappingChanges(diff, replaceMap)
 
     // Assert consistency
-    target.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, target)
+    if (!target.brokenConsistency && !diff.brokenConsistency) {
+      target.assertConsistencyInStrictMode("Check after add Diff", null, initialStorage, diff)
+    }
+    else {
+      target.brokenConsistency = true
+    }
   }
 
   private fun replaceSourceOperation(data: WorkspaceEntityData<out WorkspaceEntity>) {
@@ -292,7 +296,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         val newParent = modifiedParentsMap.getValue(connectionId)
         if (newParent == null) {
           // target child doesn't have a parent anymore
-          if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannrt restore some dependencies; $connectionId",
+          if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
                                                                        initialStorage,
                                                                        diff, target)
           else target.refs.removeParentToChildRef(connectionId, existingParent, newEntityId)
@@ -362,5 +366,18 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         }
       }
     }
+  }
+
+  // For serializing current model during the debug process
+  @Suppress("unused")
+  private fun serialize(path: String) {
+    val folder = File(path)
+    target.serializeTo(folder.resolve("Instant_Save_Target").outputStream())
+    diff.serializeTo(folder.resolve("Instant_Save_Source").outputStream())
+    diff.serializeDiff(folder.resolve("Instant_Save_Diff").outputStream())
+  }
+
+  companion object {
+    private val LOG = logger<AddDiffOperation>()
   }
 }

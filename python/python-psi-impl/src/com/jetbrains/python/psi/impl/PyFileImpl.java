@@ -17,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -227,7 +228,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   public LanguageLevel getLanguageLevel() {
     if (myOriginalFile != null) {
-      return ((PyFileImpl)myOriginalFile).getLanguageLevel();
+      PsiFile originalPythonFile = myOriginalFile;
+      // myOriginalFile could be an instance of base language
+      // see PostfixLiveTemplate#copyFile
+      if (myOriginalFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
+        originalPythonFile = myOriginalFile.getViewProvider().getPsi(PythonLanguage.getInstance());
+      }
+      if (originalPythonFile instanceof PyFile) {
+        return ((PyFile)originalPythonFile).getLanguageLevel();
+      }
     }
     VirtualFile virtualFile = getVirtualFile();
 

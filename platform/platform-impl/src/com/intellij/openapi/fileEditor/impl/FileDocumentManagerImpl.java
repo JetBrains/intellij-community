@@ -6,6 +6,8 @@ import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.model.ModelBranch;
+import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -72,7 +74,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 public class FileDocumentManagerImpl extends FileDocumentManagerBase implements SafeWriteRequestor {
@@ -83,7 +84,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
-  private final Set<Document> myUnsavedDocuments = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
 
   private final FileDocumentManagerListener myMultiCaster;
   private final TrailingSpacesStripper myTrailingSpacesStripper = new TrailingSpacesStripper();
@@ -524,6 +525,10 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public boolean isFileModified(@NotNull VirtualFile file) {
+    ModelBranch branch = ModelBranch.getFileBranch(file);
+    if (branch != null && ((ModelBranchImpl)branch).hasModifications(file)) {
+      return true;
+    }
     Document doc = getCachedDocument(file);
     return doc != null && isDocumentUnsaved(doc) && doc.getModificationStamp() != file.getModificationStamp();
   }

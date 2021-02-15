@@ -22,7 +22,7 @@ import java.util.Map;
 public interface TestDiscoveryProducer {
   ExtensionPointName<TestDiscoveryProducer> EP = new ExtensionPointName<>("com.intellij.testDiscoveryProducer");
 
-  Logger LOG = Logger.getInstance(LocalTestDiscoveryProducer.class);
+  Logger LOG = Logger.getInstance(TestDiscoveryProducer.class);
 
   @NotNull
   MultiMap<String, String> getDiscoveredTests(@NotNull Project project,

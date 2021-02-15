@@ -14,15 +14,9 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import static com.intellij.openapi.wm.ToolWindowId.DATABASE_VIEW;
-import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 final class OpenFilesActivity implements StartupActivity {
   @Override
@@ -48,11 +42,9 @@ final class OpenFilesActivity implements StartupActivity {
       manager.initDockableContentFactory();
       EditorsSplitters.stopOpenFilesActivity(project);
       if (!manager.hasOpenFiles() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true);
         if (Registry.is("ide.open.readme.md.on.startup")) {
           RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart", () -> findAndOpenReadme(project, manager));
-        }
-        if (Registry.is("ide.open.project.view.on.startup")) {
-          RunOnceUtil.runOnceForProject(project, "OpenProjectViewOnStart", () -> openProjectView(project));
         }
       }
     }, project.getDisposed());
@@ -67,19 +59,5 @@ final class OpenFilesActivity implements StartupActivity {
         ApplicationManager.getApplication().invokeLater(() -> manager.openFile(readme, true), project.getDisposed());
       }
     }
-  }
-
-  private static void openProjectView(@NotNull Project project) {
-    ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    manager.invokeLater(() -> {
-      if (null == manager.getActiveToolWindowId()) {
-        ToolWindow window = manager.getToolWindow(PROJECT_VIEW);
-        if (window != null) window.activate(null);
-        if (PlatformUtils.isDataGrip()) {
-          ToolWindow databaseView = manager.getToolWindow(DATABASE_VIEW);
-          if (databaseView != null) databaseView.activate(null);
-        }
-      }
-    });
   }
 }

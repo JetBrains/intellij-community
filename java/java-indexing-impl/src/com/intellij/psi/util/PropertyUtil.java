@@ -28,7 +28,7 @@ public final class PropertyUtil extends PropertyUtilBase {
   @Nullable
   public static PsiField getFieldOfGetter(PsiMethod method, PsiExpression returnExpr, boolean useIndex) {
     PsiField field = useIndex && method instanceof PsiMethodImpl && method.isPhysical()
-                     ? JavaSimplePropertyGistKt.getFieldOfGetter((PsiMethodImpl)method)
+                     ? JavaSimplePropertyGistKt.getFieldOfGetter(method)
                      : getSimplyReturnedField(returnExpr);
     if (field == null || !checkFieldLocation(method, field)) return null;
     final PsiType returnType = method.getReturnType();
@@ -37,6 +37,7 @@ public final class PropertyUtil extends PropertyUtilBase {
 
   @Nullable
   public static PsiField getSimplyReturnedField(@Nullable PsiExpression value) {
+    value = PsiUtil.skipParenthesizedExprDown(value);
     if (!(value instanceof PsiReferenceExpression)) {
       return null;
     }
@@ -55,7 +56,7 @@ public final class PropertyUtil extends PropertyUtilBase {
   }
 
   private static boolean hasSubstantialQualifier(PsiReferenceExpression reference) {
-    final PsiExpression qualifier = reference.getQualifierExpression();
+    final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
     if (qualifier == null) return false;
 
     if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
@@ -95,7 +96,7 @@ public final class PropertyUtil extends PropertyUtilBase {
 
     PsiField field;
     if (useIndex && method instanceof PsiMethodImpl && method.isPhysical()) {
-      field = JavaSimplePropertyGistKt.getFieldOfSetter((PsiMethodImpl)method);
+      field = JavaSimplePropertyGistKt.getFieldOfSetter(method);
     }
     else {
       @NonNls final String name = method.getName();
@@ -123,12 +124,12 @@ public final class PropertyUtil extends PropertyUtilBase {
       if (!JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
         return null;
       }
-      final PsiExpression lhs = assignment.getLExpression();
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
       if (!(lhs instanceof PsiReferenceExpression)) {
         return null;
       }
       final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;
-      final PsiExpression qualifier = reference.getQualifierExpression();
+      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
       if (qualifier instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
         final PsiElement target = referenceExpression.resolve();
@@ -140,15 +141,12 @@ public final class PropertyUtil extends PropertyUtilBase {
         return null;
       }
       final PsiElement referent = reference.resolve();
-      if (referent == null) {
-        return null;
-      }
       if (!(referent instanceof PsiField)) {
         return null;
       }
       field = (PsiField)referent;
 
-      final PsiExpression rhs = assignment.getRExpression();
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
       if (!(rhs instanceof PsiReferenceExpression)) {
         return null;
       }

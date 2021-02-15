@@ -164,7 +164,7 @@ public final class DownloadUtil {
     }
     HttpRequests.request(location)
       .productNameAsUserAgent()
-      .connect(new HttpRequests.RequestProcessor<Object>() {
+      .connect(new HttpRequests.RequestProcessor<>() {
         @Override
         public Object process(@NotNull HttpRequests.Request request) throws IOException {
           try {

@@ -16,6 +16,7 @@
 package com.android.tools.idea.gradle.dsl.parser.ext;
 
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
+import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslSimpleExpression;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,12 +80,14 @@ public final class ElementSort {
   private List<GradleDslElement> gatherDependencies(@NotNull GradleDslElement element) {
     return element.getDependencies().stream().map(e -> {
       GradleDslElement newElement = e.getToBeInjected();
-      if (newElement == null && myElement.getNameElement().containsPropertyReference(e.getName())) {
+      GradleDslSimpleExpression originElement = e.getOriginElement();
+      String internalSyntaxReference = originElement.getDslFile().getParser().convertReferenceText(originElement, e.getName());
+      if (newElement == null && myElement.getNameElement().isReferencedIn(internalSyntaxReference)) {
         return myElement;
       }
 
       if (newElement == null) {
-        newElement = e.getOriginElement().resolveReference(e.getName(), false);
+        newElement = originElement.resolveInternalSyntaxReference(internalSyntaxReference, false);
       }
 
       while (newElement != null && newElement.getParent() != myParent) {

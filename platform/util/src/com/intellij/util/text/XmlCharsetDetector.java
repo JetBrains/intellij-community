@@ -8,13 +8,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
+
 public final class XmlCharsetDetector {
   @NonNls private static final String XML_PROLOG_START = "<?xml";
-  @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_START);
+  @NonNls private static final byte[] XML_PROLOG_START_BYTES = XML_PROLOG_START.getBytes(StandardCharsets.UTF_8);
   @NonNls private static final String ENCODING = "encoding";
-  @NonNls private static final byte[] ENCODING_BYTES = CharsetToolkit.getUtf8Bytes(ENCODING);
+  @NonNls private static final byte[] ENCODING_BYTES = ENCODING.getBytes(StandardCharsets.UTF_8);
   @NonNls private static final String XML_PROLOG_END = "?>";
-  @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_END);
+  @NonNls private static final byte[] XML_PROLOG_END_BYTES = XML_PROLOG_END.getBytes(StandardCharsets.UTF_8);
 
   @Nullable
   public static String extractXmlEncodingFromProlog(byte @NotNull [] bytes) {

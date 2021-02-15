@@ -24,9 +24,11 @@ public class ViewNewToolbarAction extends ToggleAction implements DumbAware {
 
   @Override
   public void setSelected(@NotNull AnActionEvent event, boolean state) {
-    UISettings uiSettings = UISettings.getInstance();
     var toolbarService = ToolbarSettings.Companion.getInstance();
-    ((ExperimentalToolbarSettings)toolbarService).setShowNewToolbar(state);
-    uiSettings.fireUISettingsChanged();
+    if(toolbarService instanceof ExperimentalToolbarSettings) {
+      UISettings uiSettings = UISettings.getInstance();
+      ((ExperimentalToolbarSettings)toolbarService).setShowNewToolbar(state);
+      uiSettings.fireUISettingsChanged();
+    }
   }
 }

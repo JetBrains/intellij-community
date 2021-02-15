@@ -143,7 +143,9 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actionSystem.EditorActionHandler"/>
     </extensionPoint>
 
-    <extensionPoint name="editorFloatingToolbarProvider" interface="com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider" dynamic="true"/>
+    <extensionPoint name="editorFloatingToolbarProvider"
+                    interface="com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter" dynamic="true"/>
 
@@ -209,6 +211,8 @@
 
     <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
 
+    <extensionPoint name="toolWindowExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor" dynamic="true"/>
+
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate" dynamic="true"/>
 
     <extensionPoint name="statistics.applicationUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector" dynamic="true"/>
@@ -227,8 +231,6 @@
     </extensionPoint>
     <extensionPoint name="fileDocumentManagerListener" interface="com.intellij.openapi.fileEditor.FileDocumentManagerListener" dynamic="true"/>
     <extensionPoint name="fileDocumentSynchronizationVetoer" interface="com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer"/>
-
-    <extensionPoint name="documentWriteAccessGuard" interface="com.intellij.openapi.editor.impl.DocumentWriteAccessGuard" dynamic="true"/>
 
     <extensionPoint name="itemPresentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.navigation.ItemPresentationProvider"/>
@@ -293,6 +295,7 @@
     <extensionPoint name="diff.DiffExtension" interface="com.intellij.diff.DiffExtension" dynamic="true"/>
     <extensionPoint name="diff.lang.DiffIgnoredRangeProvider" interface="com.intellij.diff.lang.DiffIgnoredRangeProvider" dynamic="true"/>
     <extensionPoint name="diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor" dynamic="true"/>
+    <extensionPoint name="diff.editor.diffRequestProcessorEditorCustomizer" interface="com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer" dynamic="true"/>
     <extensionPoint name="diff.merge.external.AutomaticExternalMergeTool" interface="com.intellij.diff.merge.external.AutomaticExternalMergeTool" dynamic="true"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
@@ -397,11 +400,11 @@
     <extensionPoint name="iconDescriptionBundle" beanClass="com.intellij.ui.IconDescriptionBundleEP" dynamic="true"/>
 
     <extensionPoint name="utf8BomOptionProvider" interface="com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider" dynamic="true"/>
+    <extensionPoint name="fileEncodingProvider" interface="com.intellij.openapi.vfs.encoding.FileEncodingProvider" dynamic="true"/>
     <extensionPoint name="iw.actionProvider" interface="com.intellij.openapi.editor.markup.InspectionWidgetActionProvider" dynamic="true"/>
     <extensionPoint name="textEditorCustomizer" interface="com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer" dynamic="true"/>
 
     <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider"/>
     <extensionPoint name="documentationActionProvider" interface="com.intellij.codeInsight.documentation.DocumentationActionProvider" dynamic="true"/>
-    <extensionPoint name="projectOriginInfoProvider" interface="com.intellij.ide.impl.ProjectOriginInfoProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

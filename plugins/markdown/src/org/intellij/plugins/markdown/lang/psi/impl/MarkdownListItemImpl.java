@@ -5,7 +5,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation;
@@ -66,7 +68,7 @@ public class MarkdownListItemImpl extends MarkdownCompositePsiElementBase {
       if (markerElement == null) {
         return null;
       }
-      return markerElement.getText();
+      return markerElement.getText().trim();
     }
 
     @Nullable
@@ -76,10 +78,10 @@ public class MarkdownListItemImpl extends MarkdownCompositePsiElementBase {
         return null;
       }
 
-      if (hasTrivialChildren()) {
+      if (ContainerUtil.getFirstItem(getCompositeChildren()) instanceof MarkdownParagraphImpl) {
         final MarkdownCompositePsiElementBase element = findChildByClass(MarkdownCompositePsiElementBase.class);
         assert element != null;
-        return element.shrinkTextTo(PRESENTABLE_TEXT_LENGTH);
+        return StringUtil.shortenTextWithEllipsis(element.getText(), PRESENTABLE_TEXT_LENGTH, 0);
       }
       else {
         return null;

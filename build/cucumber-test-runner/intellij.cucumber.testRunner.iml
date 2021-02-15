@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="library" scope="PROVIDED" name="cucumber-core" level="project" />
     <orderEntry type="module" module-name="intellij.cucumber.jvmFormatter" scope="RUNTIME" />

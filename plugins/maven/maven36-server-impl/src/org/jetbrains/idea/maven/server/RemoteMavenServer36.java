@@ -20,6 +20,6 @@ import com.intellij.execution.rmi.RemoteServer;
 public class RemoteMavenServer36 extends RemoteServer {
   public static void main(String[] args) throws Exception {
     MavenServerUtil.readToken();
-    start(new Maven36ServerImpl());
+    start(new Maven36ServerImpl(), RemoteServerUtil.isKnownPortRequired(), !RemoteServerUtil.isWSL());
   }
 }

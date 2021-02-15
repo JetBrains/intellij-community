@@ -6,28 +6,29 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.ListSelection;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
-import static java.util.stream.Collectors.toList;
 
 public class ShowDiffFromLocalChangesActionProvider implements AnActionExtensionProvider {
   @Override
@@ -40,11 +41,11 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     Project project = e.getData(CommonDataKeys.PROJECT);
     ChangesListView view = e.getRequiredData(ChangesListView.DATA_KEY);
 
-    Stream<Change> changes = view.getSelectedChanges();
-    Stream<FilePath> unversionedFiles = view.getSelectedUnversionedFiles();
+    JBIterable<Change> changes = view.getSelectedChanges();
+    JBIterable<FilePath> unversionedFiles = view.getSelectedUnversionedFiles();
 
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(project != null && (changes.findAny().isPresent() || unversionedFiles.findAny().isPresent()));
+      e.getPresentation().setEnabled(project != null && (changes.isNotEmpty() || unversionedFiles.isNotEmpty()));
     }
     else {
       e.getPresentation().setEnabled(project != null && canShowDiff(project, changes, unversionedFiles));
@@ -52,10 +53,10 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   private static boolean canShowDiff(@Nullable Project project,
-                                     @NotNull Stream<? extends Change> changes,
-                                     @NotNull Stream<? extends FilePath> paths) {
-    return paths.findAny().isPresent() ||
-           changes.anyMatch(it -> ChangeDiffRequestProducer.canCreate(project, it));
+                                     @NotNull JBIterable<? extends Change> changes,
+                                     @NotNull JBIterable<? extends FilePath> paths) {
+    return paths.isNotEmpty() ||
+           changes.filter(it -> ChangeDiffRequestProducer.canCreate(project, it)).isNotEmpty();
   }
 
   @Override
@@ -64,8 +65,8 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     ChangesListView view = e.getRequiredData(ChangesListView.DATA_KEY);
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-    List<Change> changes = view.getSelectedChanges().collect(toList());
-    List<FilePath> unversioned = view.getSelectedUnversionedFiles().collect(toList());
+    List<Change> changes = view.getSelectedChanges().toList();
+    List<FilePath> unversioned = view.getSelectedUnversionedFiles().toList();
 
     final boolean needsConversion = checkIfThereAreFakeRevisions(project, changes);
 
@@ -74,20 +75,16 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       FutureResult<ListSelection<Producer>> resultRef = new FutureResult<>();
       // this trick is essential since we are under some conditions to refresh changes;
       // but we can only rely on callback after refresh
-      ChangeListManager.getInstance(project).invokeAfterUpdate(
-        () -> {
-          try {
-            ChangesViewManager.getInstanceEx(project).refreshImmediately();
-            List<Change> actualChanges = loadFakeRevisions(project, changes);
-            resultRef.set(collectRequestProducers(project, actualChanges, unversioned, view));
-          }
-          catch (Throwable err) {
-            resultRef.setException(err);
-          }
-        },
-        InvokeAfterUpdateMode.SILENT,
-        ActionsBundle.actionText(IdeActions.ACTION_SHOW_DIFF_COMMON),
-        ModalityState.current());
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true, () -> {
+        try {
+          ChangesViewManager.getInstanceEx(project).refreshImmediately();
+          List<Change> actualChanges = loadFakeRevisions(project, changes);
+          resultRef.set(collectRequestProducers(project, actualChanges, unversioned, view));
+        }
+        catch (Throwable err) {
+          resultRef.setException(err);
+        }
+      });
 
       chain = new ChangeDiffRequestChain.Async() {
         @Override
@@ -156,7 +153,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     if (unversioned.size() == 1 && changes.isEmpty()) { // show all unversioned changes
       FilePath selectedFile = unversioned.get(0);
-      List<FilePath> allUnversioned = changesView.getUnversionedFiles().collect(toList());
+      List<FilePath> allUnversioned = changesView.getUnversionedFiles().collect(Collectors.toList());
       int selectedIndex = allUnversioned.indexOf(selectedFile);
       return createUnversionedProducers(project, allUnversioned, selectedIndex);
     }

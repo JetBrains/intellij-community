@@ -43,7 +43,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -263,7 +262,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull List<HighlightInfo> insideResult,
                                     @NotNull List<? super HighlightInfo> outsideResult,
                                     boolean forceHighlightParents) {
-    Set<PsiElement> skipParentsSet = new THashSet<>();
+    Set<PsiElement> skipParentsSet = new HashSet<>();
 
     HighlightInfoHolder holder = createInfoHolder(getFile());
 

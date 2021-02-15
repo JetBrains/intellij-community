@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,7 +8,6 @@ import com.intellij.psi.codeStyle.arrangement.match.*;
 import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -145,7 +145,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       return ((ArrangementExtendableSettings)myDefaultSettings).getRuleAliases();
     }
 
-    final Set<StdArrangementRuleAliasToken> tokenDefinitions = new THashSet<>();
+    final Set<StdArrangementRuleAliasToken> tokenDefinitions = new HashSet<>();
     final List<Element> tokens = tokensRoot.getChildren(TOKEN_ELEMENT_NAME);
     for (Element token : tokens) {
       final Attribute id = token.getAttribute(TOKEN_ID);

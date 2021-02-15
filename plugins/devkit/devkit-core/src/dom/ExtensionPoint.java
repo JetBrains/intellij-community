@@ -98,9 +98,17 @@ public interface ExtensionPoint extends DomElement {
    *   <li>first {@code <with> "implements"} class where attribute name matching common naming rules ({@code "implementationClass"} etc.)</li>
    *   <li>{@code null} if none of above rules apply</li>
    * </ol>
+   * @see #getExtensionPointClassName()
    */
   @Nullable
   PsiClass getExtensionPointClass();
+
+  /**
+   * <em>NOTE</em> Inner class is separated via {@code '$'}
+   * @see #getExtensionPointClass()
+   */
+  @Nullable
+  String getExtensionPointClassName();
 
   /**
    * Returns EP name prefix (Plugin ID).

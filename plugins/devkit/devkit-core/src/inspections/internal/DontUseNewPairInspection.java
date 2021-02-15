@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -26,9 +27,7 @@ public class DontUseNewPairInspection extends DevKitInspectionBase {
       public void visitNewExpression(PsiNewExpression expression) {
         final PsiType type = expression.getType();
         final PsiExpressionList params = expression.getArgumentList();
-        if (type instanceof PsiClassType
-            && ((PsiClassType)type).rawType().equalsToText(PAIR_FQN)
-            && params != null
+        if (PsiTypesUtil.classNameEquals(type, PAIR_FQN) && params != null
             && !PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7) //diamonds
         ) {
           final PsiType[] types = ((PsiClassType)type).getParameters();

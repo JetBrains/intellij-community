@@ -109,7 +109,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
 
   protected VirtualFile setModuleOutput(final Module module, final boolean test) throws IOException {
     final VirtualFile output = getVirtualFile(createTempDir(module.getName() + (test ? "Test" : "Prod") + "Output"));
-    PsiTestUtil.setCompilerOutputPath(module, output != null ? output.getUrl() : null, test);
+    PsiTestUtil.setCompilerOutputPath(module, output.getUrl(), test);
     return output;
   }
 

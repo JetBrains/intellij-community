@@ -39,14 +39,14 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final Map<GlobalSearchScope, Map<String, Collection<PsiJavaModule>>> myModuleCache = ContainerUtil.createConcurrentSoftKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
-  private final AtomicNotNullLazyValue<JvmFacadeImpl> myJvmFacade;
+  private final NotNullLazyValue<JvmFacadeImpl> myJvmFacade;
   private final JvmPsiConversionHelper myConversionHelper;
 
   public JavaPsiFacadeImpl(@NotNull Project project) {
     myProject = project;
     myFileManager = JavaFileManager.getInstance(myProject);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
-    myJvmFacade = AtomicNotNullLazyValue.createValue(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
+    myJvmFacade = NotNullLazyValue.atomicLazy(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
     myConversionHelper = JvmPsiConversionHelper.getInstance(myProject);
 
     project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, () -> {

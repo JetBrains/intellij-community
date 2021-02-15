@@ -17,9 +17,15 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
@@ -29,8 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
+import java.util.Set;
+
 /**
- *  @author dsl
+ * @author dsl
  */
 public class MovePackageMultirootTest extends MultiFileTestCase {
 
@@ -68,6 +76,27 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
     });
   }
 
+  public void testMoveFilesToEmptyPkg1() {
+    doMovementTest(Set.of("pack1.S1"), "pack1.pack2");
+  }
+
+  public void testMoveFilesToEmptyPkg2() {
+    doMovementTest(Set.of("pack1.S1", "pack1.S2"), "pack1.pack2");
+  }
+
+  public void testMoveFilesToNonEmptyPkg1() {
+    doMovementTestWithConflicts(Set.of("pack1.S1"), "pack1.pack2",
+                                "Changing exports/opens statements of package <b><code>pack1.pack2</code></b> grants access to other types and its members in the same package");
+  }
+
+  public void testMoveFilesToNonEmptyPkg2() {
+    doMovementTest(Set.of("pack1.S1"), "pack1.pack2");
+  }
+
+  public void testMoveFilesToNonEmptyPkg3() {
+    doMovementTest(Set.of("pack1.S1", "pack3.S4", "pack4.S6", "pack5.S7"), "pack1.pack2");
+  }
+
   @Override
   protected void prepareProject(VirtualFile rootDir) {
     PsiTestUtil.addContentRoot(myModule, rootDir);
@@ -82,5 +111,40 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
                                   JpsJavaExtensionService.getInstance().createSourceRootProperties(prefix, false));
       }
     }
+  }
+
+  private void doMovementTest(@NotNull Set<String> sourceClassNames, @NotNull String targetPackageName) {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> {
+      doTest((rootDir, rootAfter) -> {
+        JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(getProject());
+        PsiClass[] sourceClasses = sourceClassNames.stream().map(name -> facade.findClass(name, GlobalSearchScope.allScope(myProject)))
+          .toArray(PsiClass[]::new);
+        PsiPackage targetPackage = facade.findPackage(targetPackageName);
+        new MoveClassesOrPackagesProcessor(myProject, sourceClasses, new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
+                                           true, false, null).run();
+        FileDocumentManager.getInstance().saveAllDocuments();
+      });
+    });
+  }
+
+  private void doMovementTestWithConflicts(@NotNull Set<String> sourceClassNames,
+                                           @NotNull String targetPackageName,
+                                           @NotNull String message) {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
+    doTest((rootDir, rootAfter) -> {
+      JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(getProject());
+      PsiClass[] sourceClasses = sourceClassNames.stream().map(name -> facade.findClass(name)).toArray(PsiClass[]::new);
+      PsiPackage targetPackage = facade.findPackage(targetPackageName);
+      try {
+        new MoveClassesOrPackagesProcessor(myProject, sourceClasses, new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
+                                           true, false, null).run();
+      }
+      catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+        assertEquals(message, e.getMessage());
+        return;
+      }
+      fail("Unreachable statement");
+    });
   }
 }

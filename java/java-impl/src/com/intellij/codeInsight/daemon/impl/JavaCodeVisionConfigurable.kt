@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
+import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.createReaderModeComment
 import com.intellij.codeInsight.daemon.impl.analysis.JavaCodeVisionSettings
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
@@ -8,7 +9,11 @@ import com.intellij.java.JavaBundle
 
 class JavaCodeVisionConfigurable(val settings: JavaCodeVisionSettings) : ImmediateConfigurable {
   override fun createComponent(listener: ChangeListener): javax.swing.JPanel {
-    return com.intellij.ui.layout.panel {}
+    return com.intellij.ui.layout.panel {
+      row {
+        component(createReaderModeComment())
+      }
+    }
   }
 
   override val cases: List<ImmediateConfigurable.Case>

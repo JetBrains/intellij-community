@@ -51,7 +51,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.jediterm.terminal.ProcessTtyConnector;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -234,7 +236,7 @@ public final class TerminalView {
     if (terminalWidget == null) {
       VirtualFile currentWorkingDir = getCurrentWorkingDir(tabState);
       terminalWidget = terminalRunner.createTerminalWidget(content, currentWorkingDir);
-      TerminalArrangementManager.getInstance(myProject).register(terminalWidget, tabState);
+      TerminalArrangementManager.getInstance(myProject).assignCommandHistoryFile(terminalWidget, tabState);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {
@@ -295,7 +297,7 @@ public final class TerminalView {
 
       @Override
       public void onSessionClosed() {
-        terminalWidget.terminateProcess();
+        getContainer(terminalWidget).closeAndHide();
       }
 
       @Override
@@ -361,12 +363,12 @@ public final class TerminalView {
   }
 
   public boolean isSplitTerminal(@NotNull JBTerminalWidget widget) {
-    TerminalContainer container = Objects.requireNonNull(myContainerByWidgetMap.get(widget));
+    TerminalContainer container = getContainer(widget);
     return container.isSplitTerminal();
   }
 
   public void gotoNextSplitTerminal(@NotNull JBTerminalWidget widget, boolean forward) {
-    TerminalContainer container = Objects.requireNonNull(myContainerByWidgetMap.get(widget));
+    TerminalContainer container = getContainer(widget);
     JBTerminalWidget next = container.getNextSplitTerminal(forward);
     if (next != null) {
       container.requestFocus(next);
@@ -374,7 +376,7 @@ public final class TerminalView {
   }
 
   public void split(@NotNull JBTerminalWidget widget, boolean vertically) {
-    TerminalContainer container = Objects.requireNonNull(myContainerByWidgetMap.get(widget));
+    TerminalContainer container = getContainer(widget);
     JBTerminalWidget newWidget = myTerminalRunner.createTerminalWidget(container.getContent(), null);
     setupTerminalWidget(myToolWindow, newWidget, null, container.getContent(), false);
     container.split(!vertically, newWidget);
@@ -471,11 +473,6 @@ public final class TerminalView {
       contentManager.removeContent(content, true);
       return Unit.INSTANCE;
     });
-    Collection<TerminalContainer> containers = ContainerUtil.filter(myContainerByWidgetMap.values(),
-                                                                    (container -> container.getContent().equals(content)));
-    for (TerminalContainer container : containers) {
-      container.detachWidget();
-    }
     content.putUserData(TERMINAL_WIDGET_KEY, null);
   }
 

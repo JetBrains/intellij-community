@@ -23,7 +23,7 @@ public final class ArtifactModelImpl extends ArtifactModelBase implements Modifi
   public ArtifactModelImpl(ArtifactManagerImpl artifactManager, List<? extends ArtifactImpl> originalArtifacts) {
     myArtifactManager = artifactManager;
     myOriginalArtifacts = new ArrayList<>(originalArtifacts);
-    addListener(new ArtifactAdapter() {
+    addListener(new ArtifactListener() {
       @Override
       public void artifactChanged(@NotNull Artifact artifact, @NotNull String oldName) {
         artifactsChanged();

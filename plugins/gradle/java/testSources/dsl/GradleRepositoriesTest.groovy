@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.testFramework.RunAll
@@ -15,21 +15,15 @@ class GradleRepositoriesTest extends GradleHighlightingBaseTest implements Resol
   @Test
   void repositoriesTest() {
     importProject("")
-    new RunAll().append {
-      'repositories closure delegate'()
-    } append {
-      'maven repository closure delegate'()
-    } append {
-      'ivy repository closure delegate'()
-    } append {
-      'flat repository closure delegate'()
-    } append {
-      'maven repository method setter'()
-    } append {
-      'ivy repository method setter'()
-    } append {
-      'flat repository method setter'()
-    } run()
+    new RunAll(
+      { 'repositories closure delegate'() },
+      { 'maven repository closure delegate'() },
+      { 'ivy repository closure delegate'() },
+      { 'flat repository closure delegate'() },
+      { 'maven repository method setter'() },
+      { 'ivy repository method setter'() },
+      { 'flat repository method setter'() }
+    ).run()
   }
 
   @Override

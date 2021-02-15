@@ -38,7 +38,7 @@ public class CannotUndoReportDialog extends DialogWrapper implements DataProvide
     for (DocumentReference file : files) {
       model.addElement(file);
     }
-    myProblemFilesList.setCellRenderer(new SimpleListCellRenderer<DocumentReference>() {
+    myProblemFilesList.setCellRenderer(new SimpleListCellRenderer<>() {
       @Override
       public void customize(@NotNull JList<? extends DocumentReference> list,
                             DocumentReference file,

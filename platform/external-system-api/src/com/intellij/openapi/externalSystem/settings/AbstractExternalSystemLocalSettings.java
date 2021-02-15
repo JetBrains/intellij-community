@@ -5,7 +5,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.module.Module;
@@ -14,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,16 +103,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
 
   public void setAvailableProjects(@NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> projects) {
     state.availableProjects = projects;
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil#findProjectTasks(Project, ProjectSystemId, String)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  @NotNull
-  public Map<String, Collection<ExternalTaskPojo>> getAvailableTasks() {
-    return Collections.emptyMap();
   }
 
   @NotNull

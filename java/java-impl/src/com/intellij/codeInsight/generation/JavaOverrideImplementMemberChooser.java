@@ -38,7 +38,6 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  * @author Dmitry Batkovich
  */
 public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodMember> {
-
   @NonNls public static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
   @NonNls public static final String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
 
@@ -65,16 +64,12 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     final LinkedHashSet<CandidateInfo> allCandidates = new LinkedHashSet<>(candidates);
     allCandidates.addAll(secondary);
     final PsiMethodMember[] all = convertToMethodMembers(allCandidates);
-    final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent =
-      new NotNullLazyValue<>() {
-        @Override
-        protected PsiMethodWithOverridingPercentMember @NotNull [] compute() {
-          final PsiMethodWithOverridingPercentMember[] elements =
-            PsiMethodWithOverridingPercentMember.calculateOverridingPercents(candidates);
-          Arrays.sort(elements, PsiMethodWithOverridingPercentMember.COMPARATOR);
-          return elements;
-        }
-      };
+    final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent = NotNullLazyValue.lazy(() -> {
+      final PsiMethodWithOverridingPercentMember[] elements =
+        PsiMethodWithOverridingPercentMember.calculateOverridingPercents(candidates);
+      Arrays.sort(elements, PsiMethodWithOverridingPercentMember.COMPARATOR);
+      return elements;
+    });
     final boolean merge = PropertiesComponent.getInstance(project).getBoolean(PROP_COMBINED_OVERRIDE_IMPLEMENT, true);
 
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(aClass);

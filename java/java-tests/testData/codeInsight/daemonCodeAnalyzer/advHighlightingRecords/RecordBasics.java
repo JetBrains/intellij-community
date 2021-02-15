@@ -55,7 +55,7 @@ record AnnotatedComponents(
 class Outer {
   record NestedRecord() {}
   class Inner {
-    <error descr="Inner classes cannot have static declarations">record InnerRecord()</error> {}
+    <error descr="Static declarations in inner classes are not supported at language level '15'">record InnerRecord()</error> {}
   }
 }
 
@@ -71,4 +71,7 @@ record StaticFieldCollides(int i) {
   static int <error descr="Variable 'i' is already defined in the scope">i</error>;
 }
 record Incomplete(@<error descr="Class reference expected">i</error>nt a) {}
-record CStyle(int a[]) {}
+record CStyle(int a<error descr="C-style record component declaration is not allowed">[]</error>) {}
+record CStyle2(int[] a<error descr="C-style record component declaration is not allowed">[] []</error> ) {}
+record JavaStyle(int[] [] a) {}
+record SafeVarargComponent(<error descr="@SafeVarargs annotation cannot be applied for a record component">@SafeVarargs</error> int... component) {}

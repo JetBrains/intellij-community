@@ -19,18 +19,15 @@ import javax.swing.JCheckBox
 import javax.swing.JTextField
 
 /**
- * Allows to replace the implementation of showing messages. If you, as a plugin developer, need to show
- * messages, please use the [com.intellij.openapi.ui.Messages] class.
+ * Allows alternative implementations. If you, as a plugin developer, need to show messages,
+ * please use the [com.intellij.openapi.ui.Messages] class.
  */
 interface MessagesService {
   companion object {
     @JvmStatic
-    fun getInstance(): MessagesService {
-      ApplicationManager.getApplication()?.let {
-        return it.getService(MessagesService::class.java)
-      }
-      return MessagesService::class.java.classLoader.loadClass("com.intellij.ui.messages.MessagesServiceImpl")
-        .newInstance() as MessagesService
+    fun getInstance(): MessagesService = when (val app = ApplicationManager.getApplication()) {
+      null -> MessagesService::class.java.classLoader.loadClass("com.intellij.ui.messages.MessagesServiceImpl").getDeclaredConstructor().newInstance() as MessagesService
+      else -> app.getService(MessagesService::class.java)
     }
   }
 

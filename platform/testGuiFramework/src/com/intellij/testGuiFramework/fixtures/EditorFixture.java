@@ -84,7 +84,7 @@ public class EditorFixture {
    * @return the current 0-based line number, or -1 if there is no current file
    */
   public int getCurrentLineNumber() {
-    return execute(new GuiQuery<Integer>() {
+    return execute(new GuiQuery<>() {
       @NotNull
       @Override
       protected Integer executeInEDT() {
@@ -140,7 +140,7 @@ public class EditorFixture {
                                        @Nullable final String selectBegin,
                                        @Nullable final String selectEnd,
                                        final int additionalLines) {
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       @Nullable
       protected String executeInEDT() {
@@ -238,7 +238,7 @@ public class EditorFixture {
    */
   @Nullable
   public String getCurrentFileContents(@Nullable final String caret, @Nullable final String selectBegin, @Nullable final String selectEnd) {
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       @Nullable
       protected String executeInEDT() {
@@ -286,7 +286,7 @@ public class EditorFixture {
    * @return
    */
   public String getCurrentFileContents(int startOffset, int endOffset) {
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       @Nullable
       protected String executeInEDT() {
@@ -418,7 +418,7 @@ public class EditorFixture {
   @NotNull
   public EditorFixture moveToLine(final int lineNumber) {
     assertThat(lineNumber).isGreaterThanOrEqualTo(1);
-    Integer offset = execute(new GuiQuery<Integer>() {
+    Integer offset = execute(new GuiQuery<>() {
       @Override
       protected Integer executeInEDT() throws Throwable {
         Editor editor = getEditor();
@@ -451,7 +451,7 @@ public class EditorFixture {
   }
 
   private static Point getPointToClick(Editor editor, final int offset) {
-    return execute(new GuiQuery<Point>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected Point executeInEDT() {
         editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(offset), ScrollType.CENTER);
@@ -502,7 +502,7 @@ public class EditorFixture {
    * @throws EditorNotFoundException if no selected editor has been found
    */
   public List<Pair<Integer, Integer>> getSelection() {
-    return execute(new GuiQuery<List<Pair<Integer, Integer>>>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected List<Pair<Integer, Integer>> executeInEDT() throws Throwable {
         Editor editor = getEditor();
@@ -540,7 +540,7 @@ public class EditorFixture {
    */
   public int findOffset(@Nullable final String prefix, @Nullable final String suffix, final boolean searchFromTop) {
     assertTrue(prefix != null || suffix != null);
-    return execute(new GuiQuery<Integer>() {
+    return execute(new GuiQuery<>() {
       @NotNull
       @Override
       protected Integer executeInEDT() {
@@ -569,7 +569,7 @@ public class EditorFixture {
    * @return the 0-based offset in the document, or -1 if not found.
    */
   public int findOffsetByRegex(@NotNull String regex, boolean returnStartIndex) {
-    return execute(new GuiQuery<Integer>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected Integer executeInEDT() {
         Editor editor = getEditor();
@@ -664,7 +664,7 @@ public class EditorFixture {
         //  invokeActionViaKeystroke("ReformatCode");
         // However, before we replace this, make sure the dialog isn't shown in some scenarios (e.g. first users)
         invokeActionViaKeystroke("ShowReformatFileDialog");
-        JDialog dialog = robot.finder().find(new GenericTypeMatcher<JDialog>(JDialog.class) {
+        JDialog dialog = robot.finder().find(new GenericTypeMatcher<>(JDialog.class) {
           @Override
           protected boolean isMatching(@NotNull JDialog dialog) {
             return dialog.isShowing() && dialog.getTitle().contains("Reformat");
@@ -675,7 +675,7 @@ public class EditorFixture {
         // Find and click the Run button. We can't just invoke
         //    dialogFixture.button("Run").click();
         // because that searches by button name (which is null for the Run button), not the button *title*.
-        dialogFixture.button(new GenericTypeMatcher<JButton>(JButton.class) {
+        dialogFixture.button(new GenericTypeMatcher<>(JButton.class) {
           @Override
           protected boolean isMatching(@NotNull JButton component) {
             return component.getText().equals("Run");

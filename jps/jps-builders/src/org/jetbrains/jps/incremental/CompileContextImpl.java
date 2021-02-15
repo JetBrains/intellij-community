@@ -83,7 +83,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
 
-  @Override
   public boolean isMake() {
     return JavaBuilderUtil.isCompileJavaIncrementally(this);
   }

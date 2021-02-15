@@ -9,7 +9,7 @@ public interface PsiFieldStub extends PsiMemberStub<PsiField> {
   String INITIALIZER_TOO_LONG = ";INITIALIZER_TOO_LONG;";
   String INITIALIZER_NOT_STORED = ";INITIALIZER_NOT_STORED;";
 
-  @NotNull TypeInfo getType(boolean doResolve);
+  @NotNull TypeInfo getType();
   String getInitializerText();
   boolean isEnumConstant();
 }

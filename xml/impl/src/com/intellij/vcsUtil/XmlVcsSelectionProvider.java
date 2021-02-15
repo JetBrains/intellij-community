@@ -16,24 +16,26 @@
 package com.intellij.vcsUtil;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class XmlVcsSelectionProvider implements VcsSelectionProvider {
   @Override
-  public VcsSelection getSelection(VcsContext context) {
-    final Editor editor = context.getEditor();
+  public VcsSelection getSelection(@NotNull DataContext context) {
+    final Editor editor = context.getData(CommonDataKeys.EDITOR);
       if (editor == null) return null;
       PsiElement psiElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
       if (psiElement == null || !psiElement.isValid()) {

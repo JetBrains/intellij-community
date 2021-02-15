@@ -3,29 +3,30 @@ package com.intellij.terminal;
 
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalColor;
-import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.model.*;
+import com.jediterm.terminal.model.SelectionUtil;
+import com.jediterm.terminal.model.StyleState;
+import com.jediterm.terminal.model.TerminalSelection;
+import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.model.hyperlinks.LinkResult;
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
@@ -34,6 +35,7 @@ import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalPanel;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.Pair;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +52,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
 
-  private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
 
@@ -67,7 +68,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
                           @Nullable TerminalExecutionConsole console,
                           @NotNull Disposable parent) {
     super(columns, lines, settingsProvider);
-    mySettingsProvider = settingsProvider;
     myCompositeFilterWrapper = new CompositeFilterWrapper(project, console, this);
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
@@ -128,13 +128,13 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   @Override
-  protected Graphics getComponentGraphics(Graphics graphics) {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  public @NotNull JBTerminalPanel getTerminalPanel() {
+    return (JBTerminalPanel)super.getTerminalPanel();
   }
 
   @Override
-  protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
-    return new JBTerminalStarter(terminal, connector);
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   @Override
@@ -164,11 +164,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = super.getActions();
     if (isInTerminalToolWindow()) {
-      actions.add(new TerminalAction(mySettingsProvider.getNewSessionActionPresentation(), input -> {
+      JBTerminalSystemSettingsProviderBase settingsProvider = getSettingsProvider();
+      actions.add(new TerminalAction(settingsProvider.getNewSessionActionPresentation(), input -> {
         myListener.onNewSession();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(mySettingsProvider.getCloseSessionActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getCloseSessionActionPresentation(), input -> {
         myListener.onSessionClosed();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
@@ -176,26 +177,26 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       actions.add(TerminalSplitAction.create(true, myListener).withMnemonicKey(KeyEvent.VK_V).separatorBefore(true));
       actions.add(TerminalSplitAction.create(false, myListener).withMnemonicKey(KeyEvent.VK_H));
       if (myListener != null && myListener.isGotoNextSplitTerminalAvailable()) {
-        actions.add(mySettingsProvider.getGotoNextSplitTerminalAction(myListener, true));
-        actions.add(mySettingsProvider.getGotoNextSplitTerminalAction(myListener, false));
+        actions.add(settingsProvider.getGotoNextSplitTerminalAction(myListener, true));
+        actions.add(settingsProvider.getGotoNextSplitTerminalAction(myListener, false));
       }
-      actions.add(new TerminalAction(mySettingsProvider.getPreviousTabActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getPreviousTabActionPresentation(), input -> {
         myListener.onPreviousTabSelected();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(mySettingsProvider.getNextTabActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getNextTabActionPresentation(), input -> {
         myListener.onNextTabSelected();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(mySettingsProvider.getMoveTabRightActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getMoveTabRightActionPresentation(), input -> {
         myListener.moveTabRight();
         return true;
       }).withMnemonicKey(KeyEvent.VK_R).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabRight()));
-      actions.add(new TerminalAction(mySettingsProvider.getMoveTabLeftActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getMoveTabLeftActionPresentation(), input -> {
         myListener.moveTabLeft();
         return true;
       }).withMnemonicKey(KeyEvent.VK_L).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabLeft()));
-      actions.add(new TerminalAction(mySettingsProvider.getShowTabsActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getShowTabsActionPresentation(), input -> {
         myListener.showTabs();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
@@ -204,20 +205,15 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   private boolean isInTerminalToolWindow() {
-    return isInTerminalToolWindow(DataManager.getInstance().getDataContext(myTerminalPanel));
+    return isTerminalToolWindow(getTerminalPanel().getContextToolWindow());
   }
 
-  static boolean isInTerminalToolWindow(@NotNull DataContext dataContext) {
-    ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
-    return toolWindow != null && "Terminal".equals(toolWindow.getId());
+  static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
+    return toolWindow != null && "Terminal".equals(toolWindow.getId()); // TerminalToolWindowFactory.TOOL_WINDOW_ID is not visible here
   }
 
   @Override
   public void dispose() {
-    close();
-  }
-
-  public void terminateProcess() {
     close();
   }
 
@@ -280,8 +276,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     start();
   }
 
-  public JBTerminalSystemSettingsProviderBase getSettingsProvider() {
-    return mySettingsProvider;
+  public @NotNull JBTerminalSystemSettingsProviderBase getSettingsProvider() {
+    return (JBTerminalSystemSettingsProviderBase)mySettingsProvider;
   }
 
   public void moveDisposable(@NotNull Disposable newParent) {
@@ -324,5 +320,19 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       }
     }
     return null;
+  }
+
+  public void writePlainMessage(@NotNull @Nls String message) {
+    String str = StringUtil.convertLineSeparators(message, LineSeparator.LF.getSeparatorString());
+    List<String> lines = StringUtil.split(str, LineSeparator.LF.getSeparatorString(), true, false);
+    boolean first = true;
+    for (String line : lines) {
+      if (!first) {
+        myTerminal.carriageReturn();
+        myTerminal.newLine();
+      }
+      myTerminal.writeCharacters(line);
+      first = false;
+    }
   }
 }

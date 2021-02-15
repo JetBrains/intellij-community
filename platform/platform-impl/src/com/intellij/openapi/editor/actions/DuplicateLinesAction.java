@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -18,13 +19,9 @@ public final class DuplicateLinesAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       if (editor.getSelectionModel().hasSelection()) {
         int selStart = editor.getSelectionModel().getSelectionStart();
         int selEnd = editor.getSelectionModel().getSelectionEnd();

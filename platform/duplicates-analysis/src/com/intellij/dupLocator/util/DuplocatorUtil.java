@@ -58,7 +58,7 @@ public final class DuplocatorUtil {
   }
 
   public static PsiElement getOnlyChild(PsiElement element, @NotNull NodeFilter filter) {
-    FilteringNodeIterator it = new FilteringNodeIterator(new SiblingNodeIterator(element.getFirstChild()), filter);
+    FilteringNodeIterator it = new FilteringNodeIterator(SiblingNodeIterator.create(element.getFirstChild()), filter);
     PsiElement child = it.current();
     if (child != null) {
       it.advance();

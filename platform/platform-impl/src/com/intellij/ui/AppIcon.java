@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.*;
 import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
@@ -38,9 +39,11 @@ import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
-import static com.intellij.openapi.util.Pair.pair;
-
+/**
+ * Class must be accessed from EDT only
+ */
 public abstract class AppIcon {
   private static final Logger LOG = Logger.getInstance(AppIcon.class);
 
@@ -49,13 +52,13 @@ public abstract class AppIcon {
   @NotNull
   public static AppIcon getInstance() {
     if (ourIcon == null) {
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         ourIcon = new MacAppIcon();
       }
-      else if (SystemInfo.isXWindow) {
+      else if (SystemInfoRt.isXWindow) {
         ourIcon = new XAppIcon();
       }
-      else if (SystemInfo.isWin7OrNewer && JnaLoader.isLoaded()) {
+      else if (SystemInfoRt.isWindows && JnaLoader.isLoaded()) {
         ourIcon = new Win7AppIcon();
       }
       else {
@@ -107,7 +110,7 @@ public abstract class AppIcon {
 
     @Override
     public final boolean setProgress(Project project, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
-      if (!isAppActive() && Registry.is("ide.appIcon.progress") && (myCurrentProcessId == null || myCurrentProcessId.equals(processId))) {
+      if (!isAppActive() && isProgressAppIconEnabled() && (myCurrentProcessId == null || myCurrentProcessId.equals(processId))) {
         return _setProgress(getIdeFrame(project), processId, scheme, value, isOk);
       }
       else {
@@ -117,7 +120,7 @@ public abstract class AppIcon {
 
     @Override
     public final boolean hideProgress(Project project, Object processId) {
-      if (Registry.is("ide.appIcon.progress")) {
+      if (isProgressAppIconEnabled()) {
         return _hideProgress(getIdeFrame(project), processId);
       }
       else {
@@ -164,31 +167,35 @@ public abstract class AppIcon {
 
     private boolean isAppActive() {
       Application app = ApplicationManager.getApplication();
-
-      if (app != null && myAppListener == null) {
-        myAppListener = new ApplicationActivationListener() {
-          @Override
-          public void applicationActivated(@NotNull IdeFrame ideFrame) {
-            JFrame frame;
-            if (ideFrame instanceof JFrame) {
-              frame = (JFrame)ideFrame;
-            }
-            else {
-              frame = ((ProjectFrameHelper)ideFrame).getFrame();
-            }
-
-            if (Registry.is("ide.appIcon.progress")) {
-              _hideProgress(frame, myCurrentProcessId);
-            }
-            _setOkBadge(frame, false);
-            _setTextBadge(frame, null);
-          }
-        };
-        app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+      if (app == null || myAppListener != null) {
+        return app != null && app.isActive();
       }
 
-      return app != null && app.isActive();
+      myAppListener = new ApplicationActivationListener() {
+        @Override
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
+          JFrame frame;
+          if (ideFrame instanceof JFrame) {
+            frame = (JFrame)ideFrame;
+          }
+          else {
+            frame = ((ProjectFrameHelper)ideFrame).getFrame();
+          }
+
+          if (isProgressAppIconEnabled()) {
+            _hideProgress(frame, myCurrentProcessId);
+          }
+          _setOkBadge(frame, false);
+          _setTextBadge(frame, null);
+        }
+      };
+      app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+      return app.isActive();
     }
+  }
+
+  private static boolean isProgressAppIconEnabled() {
+    return SystemProperties.getBooleanProperty("ide.appIcon.progress", true);
   }
 
   @SuppressWarnings("UseJBColor")
@@ -374,7 +381,7 @@ public abstract class AppIcon {
       Graphics2D g = current.createGraphics();
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       StartupUiUtil.drawImage(g, appImage, 0, 0, null);
-      return pair(current, g);
+      return new Pair<>(current, g);
     }
 
     static void setDockIcon(BufferedImage image) {
@@ -403,6 +410,8 @@ public abstract class AppIcon {
   private static final class Win7AppIcon extends BaseIcon {
     @Override
     public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      EDT.assertIsEdt();
+
       myCurrentProcessId = processId;
 
       if (Math.abs(myLastValue - value) < 0.02d) {
@@ -425,6 +434,7 @@ public abstract class AppIcon {
 
     @Override
     public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
+      EDT.assertIsEdt();
       if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) {
         return false;
       }
@@ -548,6 +558,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setTextBadge(@Nullable JFrame frame, String text) {
+      EDT.assertIsEdt();
       if (!isValid(frame)) {
         return;
       }
@@ -563,7 +574,7 @@ public abstract class AppIcon {
           int shadowRadius = 16;
           g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g.setPaint(errorBadgeShadowColor);
-          g.fillRoundRect(size / 2 - shadowRadius / 2, size / 2 - shadowRadius / 2, shadowRadius, shadowRadius, size, size);
+          g.fillRoundRect(0, 0, shadowRadius, shadowRadius, size, size);
 
           int mainRadius = 14;
           g.setPaint(errorBadgeMainColor);
@@ -602,6 +613,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setOkBadge(@Nullable JFrame frame, boolean visible) {
+      EDT.assertIsEdt();
       if (!isValid(frame)) {
         return;
       }
@@ -612,7 +624,7 @@ public abstract class AppIcon {
         synchronized (Win7AppIcon.class) {
           if (myOkIcon == null) {
             try {
-              BufferedImage image = ImageIO.read(getClass().getResource("/mac/appIconOk512.png"));
+              BufferedImage image = ImageIO.read(Objects.requireNonNull(AppIcon.class.getResourceAsStream("/mac/appIconOk512.png")));
               byte[] bytes = writeTransparentIco(image);
               myOkIcon = Win7TaskBar.createIcon(bytes);
             }
@@ -636,6 +648,7 @@ public abstract class AppIcon {
 
     @Override
     public void _requestAttention(@Nullable JFrame frame, boolean critical) {
+      EDT.assertIsEdt();
       try {
         if (isValid(frame)) {
           Win7TaskBar.attention(frame);
@@ -691,7 +704,7 @@ public abstract class AppIcon {
     }
   }
 
-  private static class EmptyIcon extends AppIcon {
+  private static final class EmptyIcon extends AppIcon {
     @Override
     public boolean setProgress(Project project, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       return false;

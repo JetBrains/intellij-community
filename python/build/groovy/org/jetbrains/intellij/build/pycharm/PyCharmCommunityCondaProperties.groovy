@@ -1,13 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.pycharm
 
-import org.jetbrains.intellij.build.*
+import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+
+import java.nio.file.Path
 
 import static org.jetbrains.intellij.build.pycharm.PyCharmPropertiesBase.downloadMiniconda
 
 /**
  * @author Aleksey.Rostovskiy
  */
+@CompileStatic
 class PyCharmCommunityCondaProperties extends PyCharmCommunityProperties {
   PyCharmCommunityCondaProperties(String communityHome) {
     super(communityHome)
@@ -49,9 +57,9 @@ class PyCharmCommunityCondaProperties extends PyCharmCommunityProperties {
 
 
       @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+      void copyAdditionalFiles(BuildContext context, Path targetDirectory) {
         super.copyAdditionalFiles(context, targetDirectory)
-        downloadMiniconda(context, targetDirectory, "Linux")
+        downloadMiniconda(context, targetDirectory.toString(), "Linux")
       }
     }
   }

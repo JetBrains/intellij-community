@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -15,7 +15,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,11 +67,17 @@ public class JavaResolveCache {
 
     AtomicReference<Map<PsiVariable, Object>> ref = physical ? myVarToConstValueMapPhysical : myVarToConstValueMapNonPhysical;
     Map<PsiVariable, Object> map = ref.get();
-    if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
+    if (map == null) {
+      map = ConcurrencyUtil.cacheOrGet(ref, CollectionFactory.createConcurrentWeakMap());
+    }
 
     Object cached = map.get(variable);
-    if (cached == NULL) return null;
-    if (cached != null) return cached;
+    if (cached == NULL) {
+      return null;
+    }
+    if (cached != null) {
+      return cached;
+    }
 
     Object result = computer.execute(variable, visitedVars);
     map.put(variable, result == null ? NULL : result);

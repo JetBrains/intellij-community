@@ -2,24 +2,29 @@
 package com.intellij.grazie.jlanguage
 
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
-import com.intellij.grazie.jlanguage.broker.GrazieDynamicClassBroker
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.CollectionFactory
 import org.languagetool.JLanguageTool
+import org.languagetool.broker.ClassBroker
 import org.languagetool.rules.CategoryId
 import java.net.Authenticator
 import java.util.concurrent.ConcurrentHashMap
 
-object LangTool : GrazieStateLifecycle {
+internal object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = ConcurrentHashMap()
   private val rulesToLanguages = CollectionFactory.createSmallMemoryFootprintMap<String, MutableSet<Lang>>()
 
   init {
     JLanguageTool.setDataBroker(GrazieDynamicDataBroker)
-    JLanguageTool.setClassBrokerBroker(GrazieDynamicClassBroker)
+    JLanguageTool.setClassBrokerBroker(object : ClassBroker {
+      override fun forName(qualifiedName: String): Class<*> {
+        return GrazieDynamic.loadClass(qualifiedName) ?: throw ClassNotFoundException(qualifiedName)
+      }
+    })
   }
 
   val allRules: Set<String>

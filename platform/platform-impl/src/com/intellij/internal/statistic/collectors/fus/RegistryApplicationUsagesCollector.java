@@ -2,8 +2,10 @@
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -25,15 +27,15 @@ import java.util.stream.Collectors;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.*;
 
 public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "platform.registry";
-  }
+  private static final EventLogGroup GROUP = new EventLogGroup("platform.registry", 3);
+  private static final StringEventField REGISTRY_KEY = EventFields.StringValidatedByCustomRule("id", "registry_key");
+
+  private static final VarargEventId REGISTRY = GROUP.registerVarargEvent("registry", REGISTRY_KEY, EventFields.PluginInfo);
+  private static final VarargEventId EXPERIMENT = GROUP.registerVarargEvent("experiment", REGISTRY_KEY, EventFields.PluginInfo);
 
   @Override
-  public int getVersion() {
-    return 2;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -46,12 +48,12 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
   static Set<MetricEvent> getChangedValuesUsages() {
     final Set<MetricEvent> registry = Registry.getAll().stream()
       .filter(key -> key.isChangedFromDefault())
-      .map(key -> MetricEventFactoryKt.newMetric("registry", new FeatureUsageData().addData("id", key.getKey())))
+      .map(key -> REGISTRY.metric(REGISTRY_KEY.with(key.getKey())))
       .collect(Collectors.toSet());
 
     final Set<MetricEvent> experiments = Experiments.EP_NAME.extensions()
       .filter(f -> Experiments.getInstance().isFeatureEnabled(f.id))
-      .map(f -> MetricEventFactoryKt.newMetric("experiment", new FeatureUsageData().addData("id", f.id)))
+      .map(f -> EXPERIMENT.metric(REGISTRY_KEY.with(f.id)))
       .collect(Collectors.toSet());
 
     final Set<MetricEvent> result = new HashSet<>(registry);

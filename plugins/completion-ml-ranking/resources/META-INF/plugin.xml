@@ -68,6 +68,9 @@
     <registryKey key="completion.ml.reorder.only.top.items" defaultValue="true"
                  description="Reorder only a few items on the top in the lookup to preserve a proper grouping for the items below"/>
 
+    <registryKey key="completion.ml.reorder.without.duplicates" defaultValue="false"
+                 description="Reorder only items with different names"/>
+
     <registryKey key="completion.ml.show.arrows.notification" defaultValue="true"
                  description="Show notification with question about ML completion arrows"/>
 

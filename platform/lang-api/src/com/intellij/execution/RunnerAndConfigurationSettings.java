@@ -212,13 +212,6 @@ public interface RunnerAndConfigurationSettings {
   void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException;
 
   /**
-   * @deprecated use {@link ExecutionTargetManager#canRun(RunnerAndConfigurationSettings, ExecutionTarget)} instead
-   */
-  @Deprecated
-  @SuppressWarnings({"unused"})
-  default boolean canRunOn(@NotNull ExecutionTarget target) { return true; }
-
-  /**
    * Returns a factory object which can be used to create a copy of this configuration.
    *
    * @return copying factory instance
@@ -283,4 +276,6 @@ public interface RunnerAndConfigurationSettings {
    * @return the folder name, or null if the configuration is displayed on the top level.
    */
   @Nullable String getFolderName();
+
+  @NlsSafe String toString();
 }

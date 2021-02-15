@@ -6,8 +6,8 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -275,7 +275,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     final Balloon balloon = balloonBuilder.createBalloon();
     Point pointOnComponent = new Point(myToolbar.getWidth() / 4, myToolbar.getHeight() / 4);
     balloon.show(new RelativePoint(myToolbar, pointOnComponent), Balloon.Position.above);
-    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
+    Disposer.register(ApplicationManager.getApplication(), balloon);
   }
 
   private static class ShowSchemesActionsListAction extends DefaultActionGroup {

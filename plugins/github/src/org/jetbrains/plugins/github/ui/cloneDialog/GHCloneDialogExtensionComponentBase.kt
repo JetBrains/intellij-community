@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.dvcs.repo.ClonePathProvider
@@ -57,7 +57,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.*
 import java.awt.FlowLayout
 import java.awt.event.MouseAdapter
@@ -72,8 +72,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private val authenticationManager: GithubAuthenticationManager,
   private val executorManager: GithubApiRequestExecutorManager,
   private val accountInformationProvider: GithubAccountInformationProvider,
-  private val avatarLoader: CachingGithubUserAvatarLoader,
-  private val imageResizer: GithubImageResizer
+  private val avatarLoader: CachingGHUserAvatarLoader
 ) : VcsCloneDialogExtensionComponent(),
     AccountRemovedListener,
     AccountTokenChangedListener {
@@ -84,8 +83,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private val githubGitHelper: GithubGitHelper = GithubGitHelper.getInstance()
 
   // UI
-  private val defaultAvatar = resizeIcon(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize)
-  private val defaultPopupAvatar = resizeIcon(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize)
+  private val defaultAvatar = IconUtil.resizeSquared(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize)
+  private val defaultPopupAvatar = IconUtil.resizeSquared(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize)
   private val avatarSizeUiInt = JBValue.UIInteger("GHCloneDialogExtensionComponent.popupAvatarSize",
                                                   VcsCloneDialogUiSpec.Components.popupMenuAvatarSize)
 
@@ -256,20 +255,18 @@ internal abstract class GHCloneDialogExtensionComponentBase(
                               executor: GithubApiRequestExecutor.WithTokenAuth) {
     progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
       lateinit var user: GithubAuthenticatedUser
-      lateinit var iconProvider: CachingGithubAvatarIconsProvider
+      lateinit var iconProvider: GHAvatarIconsProvider
 
       override fun run(indicator: ProgressIndicator) {
         user = accountInformationProvider.getInformation(executor, indicator, account)
-        iconProvider = CachingGithubAvatarIconsProvider
-          .Factory(avatarLoader, imageResizer, executor)
-          .create(avatarSizeUiInt, accountsPanel)
+        iconProvider = GHAvatarIconsProvider(avatarLoader, executor)
       }
 
       override fun onSuccess() {
         userDetailsByAccount[account] = user
-        val avatar = iconProvider.getIcon(user.avatarUrl)
+        val avatar = iconProvider.getIcon(user.avatarUrl, avatarSizeUiInt.get())
         avatarsByAccount[account] = avatar
-        accountComponents[account]?.icon = resizeIcon(avatar, VcsCloneDialogUiSpec.Components.avatarSize)
+        accountComponents[account]?.icon = IconUtil.resizeSquared(avatar, VcsCloneDialogUiSpec.Components.avatarSize)
         refillRepositories()
       }
 
@@ -454,11 +451,6 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       // Contract is "true if this set did not already contain the specified element"
       return !wasThere
     }
-  }
-
-  private fun resizeIcon(icon: Icon, size: Int): Icon {
-    val scale = JBUI.scale(size).toFloat() / icon.iconWidth.toFloat()
-    return IconUtil.scale(icon, null, scale)
   }
 
   protected abstract fun createAccountMenuLoginActions(account: GithubAccount?): Collection<Action>

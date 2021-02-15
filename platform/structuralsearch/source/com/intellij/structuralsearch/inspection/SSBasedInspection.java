@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -39,7 +40,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -307,11 +307,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return removed;
   }
 
-  private class InspectionResultSink extends DefaultMatchResultSink {
+  private final class InspectionResultSink extends DefaultMatchResultSink {
     private Configuration myConfiguration;
     private ProblemsHolder myHolder;
 
-    private final Set<SmartPsiPointer> duplicates = new THashSet<>();
+    private final Set<SmartPsiPointer> duplicates = new HashSet<>();
 
     InspectionResultSink() {}
 
@@ -440,7 +440,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element)) {
         return;
       }
-      final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
+      final NodeIterator matchedNodes = SsrFilteringNodeIterator.create(element);
       if (!matcher.checkIfShouldAttemptToMatch(matchedNodes)) {
         return;
       }

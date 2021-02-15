@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -44,7 +45,11 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return !getElements(editor, file, true).isEmpty();
+    List<PsiElement> elements = getElements(editor, file, true);
+    if (elements.isEmpty()) return false;
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
+    if (psiClass == null) return false;
+    return psiClass instanceof PsiAnonymousClass || RefactoringActionContextUtil.isClassWithExtendsOrImplements(psiClass);
   }
 
   @Override

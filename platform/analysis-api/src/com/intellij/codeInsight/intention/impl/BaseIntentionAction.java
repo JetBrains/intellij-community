@@ -3,7 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.ide.scratch.ScratchFileHelper;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -42,6 +42,6 @@ public abstract class BaseIntentionAction implements IntentionAction {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     PsiFile containingFile = element.getContainingFile();
     return element.getManager().isInProject(element)
-           || ScratchFileHelper.isScratchFile(virtualFile)
+           || ScratchUtil.isScratch(virtualFile)
            || (containingFile != null && containingFile.getViewProvider().getVirtualFile().getFileSystem() instanceof NonPhysicalFileSystem);
   }}

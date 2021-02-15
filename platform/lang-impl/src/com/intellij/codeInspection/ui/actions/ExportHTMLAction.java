@@ -55,7 +55,7 @@ public final class ExportHTMLAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     ListPopup popup = JBPopupFactory.getInstance()
-      .createListPopup(new BaseListPopupStep<String>(InspectionsBundle.message("inspection.action.export.popup.title"), HTML, XML) {
+      .createListPopup(new BaseListPopupStep<>(InspectionsBundle.message("inspection.action.export.popup.title"), HTML, XML) {
         @Override
         public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
           return doFinalStep(() -> exportHTML(Comparing.strEqual(selectedValue, HTML)));
@@ -150,7 +150,8 @@ public final class ExportHTMLAction extends AnAction implements DumbAware {
       InspectionsResultUtil.writeInspectionResult(view.getProject(), shortName, wrappers, outputDirectory, (wrapper -> view.getGlobalInspectionContext().getPresentation(wrapper)));
     }
 
-    InspectionsResultUtil.writeProfileName(outputDirectory, profile.getName());
+    final Path descriptionsFile = outputDirectory.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION);
+    InspectionsResultUtil.describeInspections(descriptionsFile, profile.getName(), profile);
   }
 
 

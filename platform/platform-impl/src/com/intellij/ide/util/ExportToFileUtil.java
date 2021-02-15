@@ -27,7 +27,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +67,7 @@ public final class ExportToFileUtil {
         char[] buf = new char[(int)file.length()];
         try (FileReader reader = new FileReader(fileName)) {
           reader.read(buf, 0, (int)file.length());
-          prepend = new String(buf) + SystemProperties.getLineSeparator();
+          prepend = new String(buf) + System.lineSeparator();
         }
         catch (IOException ignored) {
         }

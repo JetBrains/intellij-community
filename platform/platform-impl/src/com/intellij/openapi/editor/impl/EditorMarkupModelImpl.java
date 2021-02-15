@@ -405,7 +405,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       });
 
-    InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<InspectionWidgetActionProvider>() {
+    InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         AnAction action = extension.createAction(myEditor);

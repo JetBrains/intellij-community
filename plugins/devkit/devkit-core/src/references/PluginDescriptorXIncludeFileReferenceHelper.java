@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  */
 public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHelper {
   @Override
-  public boolean isMine(Project project, @NotNull VirtualFile file) {
+  public boolean isMine(@NotNull Project project, @NotNull VirtualFile file) {
     return !DumbService.isDumb(project) &&
            FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) &&
            PsiUtil.isPluginProject(project) &&
@@ -41,7 +41,7 @@ public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHe
 
   @NotNull
   @Override
-  public Collection<PsiFileSystemItem> getContexts(Project project, @NotNull VirtualFile file) {
+  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
     return getRootsContainingPluginXmlFiles(project);
   }
 

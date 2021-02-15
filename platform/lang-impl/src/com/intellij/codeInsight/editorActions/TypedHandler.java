@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -15,6 +14,8 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PreloadingActivity;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -32,6 +33,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.ProperTextRange;
@@ -47,15 +49,16 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
 
-public class TypedHandler extends TypedActionHandlerBase {
+public final class TypedHandler extends TypedActionHandlerBase {
   private static final Set<Character> COMPLEX_CHARS =
-    ContainerUtil.set('\n', '\t', '(', ')', '<', '>', '[', ']', '{', '}', '"', '\'');
+    Set.of('\n', '\t', '(', ')', '<', '>', '[', ']', '{', '}', '"', '\'');
 
   private static final Logger LOG = Logger.getInstance(TypedHandler.class);
 
@@ -124,7 +127,9 @@ public class TypedHandler extends TypedActionHandlerBase {
     if (COMPLEX_CHARS.contains(c) || Character.isSurrogate(c)) return;
 
     for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
-      if (!delegate.isImmediatePaintingEnabled(editor, c, context)) return;
+      if (!delegate.isImmediatePaintingEnabled(editor, c, context)) {
+        return;
+      }
     }
 
     if (editor.isInsertMode()) {
@@ -227,7 +232,7 @@ public class TypedHandler extends TypedActionHandlerBase {
   }
 
   // returns true if any delegate requested a STOP
-  private static boolean callDelegates(Function<? super TypedHandlerDelegate, ? extends TypedHandlerDelegate.Result> action) {
+  private static boolean callDelegates(Function<? super TypedHandlerDelegate, TypedHandlerDelegate.Result> action) {
     for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
       TypedHandlerDelegate.Result result = action.apply(delegate);
       if (result == TypedHandlerDelegate.Result.STOP) {
@@ -443,10 +448,11 @@ public class TypedHandler extends TypedActionHandlerBase {
     return true;
   }
 
-  private static boolean handleQuote(@NotNull Editor editor,
-                                     Project project,
-                                     char quote,
-                                     @NotNull PsiFile file) {
+  @ApiStatus.Internal
+  public static boolean handleQuote(@NotNull Editor editor,
+                                    Project project,
+                                    char quote,
+                                    @NotNull PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return false;
     final QuoteHandler quoteHandler = getQuoteHandler(file, editor);
     if (quoteHandler == null) return false;
@@ -517,7 +523,7 @@ public class TypedHandler extends TypedActionHandlerBase {
   @Nullable
   private static CharSequence getClosingQuote(@NotNull Editor editor, @NotNull MultiCharQuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-    if (iterator.atEnd()){
+    if (iterator.atEnd()) {
       LOG.assertTrue(false);
       return null;
     }
@@ -527,7 +533,7 @@ public class TypedHandler extends TypedActionHandlerBase {
 
   private static boolean isOpeningQuote(@NotNull Editor editor, @NotNull QuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-    if (iterator.atEnd()){
+    if (iterator.atEnd()) {
       LOG.assertTrue(false);
       return false;
     }
@@ -645,5 +651,13 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
   }
 
+  static final class TypedHandlerDelegatePreloader extends PreloadingActivity {
+    @Override
+    public void preload(@NotNull ProgressIndicator indicator) {
+      if (!ApplicationManagerEx.getApplicationEx().isLightEditMode()) {
+        TypedHandlerDelegate.EP_NAME.getExtensionList();
+      }
+    }
+  }
 }
 

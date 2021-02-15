@@ -18,4 +18,6 @@ object FeatureUsageStatisticConsts {
   const val ACTION_ID = "action_id"
   const val TASK_ID = "task_id"
   const val KEYMAP_SCHEME = "keymap_scheme"
+  const val SHORTCUT = "shortcut"
+  const val SHORTCUT_RULE = "shortcut_or_none"
 }

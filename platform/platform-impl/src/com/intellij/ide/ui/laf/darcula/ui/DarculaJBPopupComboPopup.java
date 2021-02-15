@@ -272,7 +272,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
   }
 
   protected ComboBoxPopup<T> createPopup(@Nullable T selectedItem) {
-    return new ComboBoxPopup<T>(this, selectedItem, value -> myComboBox.setSelectedItem(value)) {
+    return new ComboBoxPopup<>(this, selectedItem, value -> myComboBox.setSelectedItem(value)) {
       @Override
       public void cancel(InputEvent e) {
         if (e instanceof MouseEvent) {

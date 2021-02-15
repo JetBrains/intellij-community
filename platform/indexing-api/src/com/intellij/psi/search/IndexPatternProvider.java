@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -17,9 +17,9 @@ import java.beans.PropertyChangeListener;
  * @see com.intellij.psi.search.searches.IndexPatternSearch
  */
 public interface IndexPatternProvider {
-  ExtensionPointName<IndexPatternProvider> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternProvider");
+  ExtensionPointName<IndexPatternProvider> EP_NAME = new ExtensionPointName<>("com.intellij.indexPatternProvider");
 
-  Topic<PropertyChangeListener> INDEX_PATTERNS_CHANGED = new Topic<>("index patterns changed", PropertyChangeListener.class);
+  Topic<PropertyChangeListener> INDEX_PATTERNS_CHANGED = new Topic<>("index patterns changed", PropertyChangeListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * The property the change of which should be reported to the property change listener

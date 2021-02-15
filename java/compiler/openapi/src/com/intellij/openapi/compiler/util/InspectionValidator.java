@@ -89,6 +89,7 @@ public abstract class InspectionValidator {
     return myInspectionToolProvider.getInspectionClasses();
   }
 
+  @NotNull
   public final String getId() {
     return myId;
   }

@@ -9,7 +9,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import java.util.*
 import javax.swing.tree.DefaultTreeModel
 
-class GrazieRulesTreeFilter(val tree: GrazieTreeComponent) : FilterComponent("GRAZIE_RULES_FILTER", 10) {
+internal class GrazieRulesTreeFilter(private val tree: GrazieTreeComponent) : FilterComponent("GRAZIE_RULES_FILTER", 10) {
   private val expansionMonitor = TreeExpansionMonitor.install(tree)
 
   override fun filter() {

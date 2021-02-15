@@ -7,7 +7,6 @@ import com.jetbrains.rd.util.lifetime.Lifetime;
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 
 public final class DisposableExKt {
@@ -29,24 +28,6 @@ public final class DisposableExKt {
   @Deprecated
   public static Lifetime createLifetime(Disposable disposable) {
     return DisposableEx.defineNestedLifetime(disposable).getLifetime();
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#doIfAlive(Disposable, Function1)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static void doIfAlive(Disposable disposable, Function1<Lifetime, Unit> action) {
-    DisposableEx.doIfAlive(disposable, action);
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#createNestedDisposable(Lifetime, String)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static Disposable createNestedDisposable(Lifetime lifetime) {
-    return createNestedDisposable(lifetime, "lifetimeToDisposable");
   }
 
   /**

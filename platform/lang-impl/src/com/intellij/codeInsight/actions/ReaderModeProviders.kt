@@ -5,26 +5,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingP
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.documentation.render.DocRenderManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.xml.breadcrumbs.BreadcrumbsForceShownSettings
-import com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity
-
-class BreadcrumbsReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
-    val showBreadcrumbs = (readerMode && ReaderModeSettings.instance(project).showBreadcrumbs)
-                          || EditorSettingsExternalizable.getInstance().isBreadcrumbsShown
-    BreadcrumbsForceShownSettings.setForcedShown(showBreadcrumbs, editor)
-    ApplicationManager.getApplication().invokeLater { BreadcrumbsInitializingActivity.reinitBreadcrumbsInAllEditors(project) }
-  }
-}
 
 class HighlightingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
@@ -57,23 +44,15 @@ class LigaturesReaderModeProvider : ReaderModeProvider {
     scheme.fontPreferences =
       FontPreferencesImpl().also {
         preferences.copyTo(it)
-        it.setUseLigatures(readerMode && ReaderModeSettings.instance(project).showLigatures
-                           || (AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl).useLigatures())
+        it.setUseLigatures(readerMode && ReaderModeSettings.instance(project).showLigatures)
       }
   }
 }
 
-
 class FontReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
-    if (readerMode) {
-      if (ReaderModeSettings.instance(project).increaseLineSpacing) {
-        setLineSpacing(editor, 1.4f)
-      }
-    }
-    else {
-      setLineSpacing(editor, AppEditorFontOptions.getInstance().fontPreferences.lineSpacing)
-    }
+    val lineSpacing = AppEditorFontOptions.getInstance().fontPreferences.lineSpacing
+    setLineSpacing(editor, if (readerMode && ReaderModeSettings.instance(project).increaseLineSpacing) { lineSpacing * 1.2f } else lineSpacing)
   }
 
   private fun setLineSpacing(editor: Editor, lineSpacing: Float) {
@@ -85,6 +64,6 @@ class FontReaderModeProvider : ReaderModeProvider {
 
 class DocsRenderingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
-    DocRenderManager.setDocRenderingEnabled(editor, if (readerMode) ReaderModeSettings.instance(project).showRenderedDocs else null)
+    DocRenderManager.setDocRenderingEnabled(editor, readerMode && ReaderModeSettings.instance(project).showRenderedDocs)
   }
 }

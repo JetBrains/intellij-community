@@ -5,17 +5,26 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.template.JavaCodeContextType
+import com.intellij.codeInsight.template.JavaStringContextType
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateActionContext
+import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction
 import com.intellij.codeInsight.template.impl.*
-import com.intellij.codeInsight.template.macro.*
+import com.intellij.codeInsight.template.macro.BaseCompleteMacro
+import com.intellij.codeInsight.template.macro.CompleteMacro
+import com.intellij.codeInsight.template.macro.CompleteSmartMacro
+import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro
+import com.intellij.codeInsight.template.macro.VariableOfTypeMacro
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 
-import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE 
+import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
+
 /**
  * @author peter
  */
@@ -24,7 +33,7 @@ class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14
+    return JAVA_15
   }
 
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"

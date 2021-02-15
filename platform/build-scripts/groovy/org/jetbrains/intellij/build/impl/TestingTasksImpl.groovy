@@ -185,7 +185,7 @@ class TestingTasksImpl extends TestingTasks {
           "org.jetbrains.instrumentation.trace.file": getTestDiscoveryTraceFilePath(),
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
           "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
-          "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
+          // "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
           "test.discovery.excluded.roots"           : excludeRoots.collect { FileUtilRt.toSystemDependentName(it) }.join(";"),
         ] as Map<String, String>)
     }
@@ -397,7 +397,7 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
     else if (options.debugEnabled) {
-      String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"},address=localhost:$options.debugPort"
+      String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"},address=$options.debugHost:$options.debugPort"
       jvmArgs.add(debuggerParameter)
     }
 

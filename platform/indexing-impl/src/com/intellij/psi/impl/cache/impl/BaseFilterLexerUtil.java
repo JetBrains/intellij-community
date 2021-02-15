@@ -12,10 +12,10 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.indexing.FileContent;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class BaseFilterLexerUtil {
@@ -32,7 +32,7 @@ public final class BaseFilterLexerUtil {
     final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
     IndexPattern[] todoPatterns = IndexPatternUtil.getIndexPatterns();
     if (!needIdIndex && todoPatterns.length <= 0) return EMPTY;
-    final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile()) || content.getFile() instanceof LightVirtualFile;
+    final boolean needTodo = TodoIndexers.needsTodoIndex(content) || content.getFile() instanceof LightVirtualFile;
 
     data = doScanContent(content, indexer, needIdIndex, needTodo, todoPatterns);
 
@@ -57,7 +57,9 @@ public final class BaseFilterLexerUtil {
       for (IndexPattern indexPattern : todoPatterns) {
           final int count = todoOccurrenceConsumer.getOccurrenceCount(indexPattern);
           if (count > 0) {
-            if (todoMap == null) todoMap = new THashMap<>();
+            if (todoMap == null) {
+              todoMap = new HashMap<>();
+            }
             todoMap.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
           }
         }
@@ -69,7 +71,7 @@ public final class BaseFilterLexerUtil {
     );
   }
 
-  public static class ScanContent {
+  public static final class ScanContent {
     public final Map<IdIndexEntry, Integer> idMap;
     public final Map<TodoIndexEntry,Integer> todoMap;
 

@@ -220,14 +220,6 @@ public abstract class FileAnnotation {
     myReloader = reloader;
   }
 
-  /**
-   * @deprecated does nothing
-   */
-  @Deprecated
-  public boolean revisionsNotEmpty() {
-    return true;
-  }
-
 
   @Nullable
   public CurrentFileRevisionProvider getCurrentFileRevisionProvider() {

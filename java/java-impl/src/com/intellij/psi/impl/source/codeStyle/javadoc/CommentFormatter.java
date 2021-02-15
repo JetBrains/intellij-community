@@ -29,16 +29,6 @@ public class CommentFormatter {
   private final JDParser myParser;
   private final Project myProject;
 
-  /**
-   * @deprecated Use {@link ##CommentFormatter(PsiFile)} instead.
-   */
-  @Deprecated
-  public CommentFormatter(@NotNull Project project) {
-    mySettings = CodeStyle.getSettings(project);
-    myParser = new JDParser(mySettings);
-    myProject = project;
-  }
-
   public CommentFormatter(@NotNull PsiFile file) {
     mySettings = CodeStyle.getSettings(file);
     myParser = new JDParser(mySettings);

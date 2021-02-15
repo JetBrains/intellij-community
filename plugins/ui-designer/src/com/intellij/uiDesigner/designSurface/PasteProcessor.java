@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -10,30 +10,30 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
  */
-public class PasteProcessor extends EventProcessor {
+public final class PasteProcessor extends EventProcessor {
   private final GridInsertProcessor myGridInsertProcessor;
   private final PastedComponentList myPastedComponentList;
   private final GuiEditor myEditor;
-  private final ArrayList<RadComponent> myComponentsToPaste;
+  private final List<RadComponent> myComponentsToPaste;
   private ComponentDropLocation myLastLocation;
   private final int[] myDX;
   private final int[] myDY;
   private final int myMinRow;
   private final int myMinCol;
 
-  public PasteProcessor(GuiEditor editor, final ArrayList<RadComponent> componentsToPaste,
-                        final TIntArrayList xs, final TIntArrayList ys) {
+  public PasteProcessor(GuiEditor editor, final List<RadComponent> componentsToPaste,
+                        final IntList xs, final IntList ys) {
     myEditor = editor;
     myComponentsToPaste = componentsToPaste;
     myGridInsertProcessor = new GridInsertProcessor(editor);
@@ -43,20 +43,20 @@ public class PasteProcessor extends EventProcessor {
     int minY = Integer.MAX_VALUE;
 
     // TIntArrayList.min() is broken
-    for(int i=0; i<xs.size(); i++) {
-      minX = Math.min(minX, xs.get(i));
+    for (int i = 0; i < xs.size(); i++) {
+      minX = Math.min(minX, xs.getInt(i));
     }
-    for(int i=0; i<ys.size(); i++) {
-      minY = Math.min(minY, ys.get(i));
+    for (int i = 0; i < ys.size(); i++) {
+      minY = Math.min(minY, ys.getInt(i));
     }
 
     myDX = new int[xs.size()];
     myDY = new int[ys.size()];
     for(int i=0; i<xs.size(); i++) {
-      myDX [i] = xs.get(i) - minX;
+      myDX [i] = xs.getInt(i) - minX;
     }
     for(int i=0; i<ys.size(); i++) {
-      myDY [i] = ys.get(i) - minY;
+      myDY [i] = ys.getInt(i) - minY;
     }
 
     int myMinRow = Integer.MAX_VALUE;

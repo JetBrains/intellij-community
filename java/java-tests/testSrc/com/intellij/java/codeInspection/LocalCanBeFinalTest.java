@@ -26,7 +26,7 @@ public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     // has to have JFrame and sources
-    return JAVA_14;
+    return JAVA_15;
   }
 
   private void doTest() {

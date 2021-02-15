@@ -85,7 +85,7 @@ class ModifiableModelCommitterServiceImpl implements ModifiableModelCommitterSer
     }
 
     final Collection<RootModelImpl> allRootModels = nameToModel.values();
-    InboundSemiGraph<RootModelImpl> graph = new InboundSemiGraph<RootModelImpl>() {
+    InboundSemiGraph<RootModelImpl> graph = new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<RootModelImpl> getNodes() {

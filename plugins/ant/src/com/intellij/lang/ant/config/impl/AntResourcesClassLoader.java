@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URL;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,16 +14,12 @@ import java.util.Set;
  * @author Eugene Zhuravlev
 */
 public final class AntResourcesClassLoader extends UrlClassLoader {
+  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+
   private final Set<String> myMisses = new HashSet<>();
 
-  static {
-    if (registerAsParallelCapable()) {
-      markParallelCapable(AntResourcesClassLoader.class);
-    }
-  }
-
-  public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
-    super(build().urls(urls).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload());
+  public AntResourcesClassLoader(List<Path> files, ClassLoader parentLoader, boolean canLockJars, boolean canUseCache) {
+    super(build().files(files).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload(), isParallelCapable);
   }
 
   @Override

@@ -6,9 +6,14 @@ import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollec
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.util.Version
 import org.jetbrains.annotations.NonNls
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 
+@Suppress("FunctionName")
 object EventFields {
   /**
    * Creates a field that will be validated by global regexp rule
@@ -52,6 +57,9 @@ object EventFields {
 
   @JvmStatic
   fun Long(@NonNls name: String): LongEventField = LongEventField(name)
+
+  @JvmStatic
+  fun Float(@NonNls name: String): FloatEventField = FloatEventField(name)
 
   @JvmStatic
   fun Double(@NonNls name: String): DoubleEventField = DoubleEventField(name)
@@ -124,6 +132,45 @@ object EventFields {
   }
 
   @JvmField
+  val InputEventByAnAction = object : PrimitiveEventField<AnActionEvent?>() {
+    override val name = "input_event"
+    override val validationRule: List<String>
+      get() = listOf("{util#shortcut}")
+
+    override fun addData(fuData: FeatureUsageData, value: AnActionEvent?) {
+      if (value != null) {
+        fuData.addInputEvent(value)
+      }
+    }
+  }
+
+  @JvmField
+  val InputEventByKeyEvent = object : PrimitiveEventField<KeyEvent?>() {
+    override val name = "input_event"
+    override val validationRule: List<String>
+      get() = listOf("{util#shortcut}")
+
+    override fun addData(fuData: FeatureUsageData, value: KeyEvent?) {
+      if (value != null) {
+        fuData.addInputEvent(value)
+      }
+    }
+  }
+
+  @JvmField
+  val InputEventByMouseEvent = object : PrimitiveEventField<MouseEvent?>() {
+    override val name = "input_event"
+    override val validationRule: List<String>
+      get() = listOf("{util#shortcut}")
+
+    override fun addData(fuData: FeatureUsageData, value: MouseEvent?) {
+      if (value != null) {
+        fuData.addInputEvent(value)
+      }
+    }
+  }
+
+  @JvmField
   val ActionPlace = object : PrimitiveEventField<String?>() {
     override val name: String = "place"
     override val validationRule: List<String>
@@ -161,11 +208,35 @@ object EventFields {
   @JvmField
   val AnonymizedPath = object : PrimitiveEventField<String?>() {
     override val validationRule: List<String>
-      get() = listOf("{regex#hash}")
+      get() = listOf("{regexp#hash}")
 
     override val name = "file_path"
     override fun addData(fuData: FeatureUsageData, value: String?) {
       fuData.addAnonymizedPath(value)
+    }
+  }
+
+  @JvmField
+  val AnonymizedId = object : PrimitiveEventField<String?>() {
+    override val validationRule: List<String>
+      get() = listOf("{regexp#hash}")
+
+    override val name = "anonymous_id"
+    override fun addData(fuData: FeatureUsageData, value: String?) {
+      value?.let {
+        fuData.addAnonymizedId(value)
+      }
+    }
+  }
+
+  @JvmField
+  val CodeWithMeClientId = object : PrimitiveEventField<String?>() {
+    override val validationRule: List<String>
+      get() = listOf("{regexp#hash}")
+
+    override val name: String = "client_id"
+    override fun addData(fuData: FeatureUsageData, value: String?) {
+      fuData.addClientId(value)
     }
   }
 
@@ -176,6 +247,17 @@ object EventFields {
       get() = listOf("{util#lang}")
 
     override fun addData(fuData: FeatureUsageData, value: Language?) {
+      fuData.addLanguage(value)
+    }
+  }
+
+  @JvmField
+  val LanguageById = object : PrimitiveEventField<String?>() {
+    override val name = "lang"
+    override val validationRule: List<String>
+      get() = listOf("{util#lang}")
+
+    override fun addData(fuData: FeatureUsageData, value: String?) {
       fuData.addLanguage(value)
     }
   }
@@ -222,7 +304,21 @@ object EventFields {
   }
 
   @JvmField
+  val VersionByObject = object : PrimitiveEventField<Version?>() {
+    override val name: String = "version"
+    override val validationRule: List<String>
+      get() = listOf("{regexp#version}")
+
+    override fun addData(fuData: FeatureUsageData, value: Version?) {
+      fuData.addVersion(value)
+    }
+  }
+
+  @JvmField
   val Count = Int("count")
+
+  @JvmField
+  val Enabled = Boolean("enabled")
 
   @JvmStatic
   fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {

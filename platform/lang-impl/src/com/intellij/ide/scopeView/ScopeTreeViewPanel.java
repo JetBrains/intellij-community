@@ -282,7 +282,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myBuilder.setTree(myTree);
     myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myActionCallback = new ActionCallback();
-    ComponentUtil.putClientProperty(myTree, TreeState.CALLBACK, new WeakReference<ActionCallback>(myActionCallback));
+    ComponentUtil.putClientProperty(myTree, TreeState.CALLBACK, new WeakReference<>(myActionCallback));
     myTree.setModel(myBuilder.build(myProject, true, () -> {
       myTree.setPaintBusy(false);
       myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));

@@ -24,7 +24,7 @@ public final class ApplicationNamesInfo {
 
   private static @NotNull Element loadData() {
     String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "");
-    String resource = "/idea/" + prefix + "ApplicationInfo.xml";
+    String resource = "/idea/" + (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml";
     InputStream stream = ApplicationNamesInfo.class.getResourceAsStream(resource);
     if (stream == null) {
       throw new RuntimeException("Resource not found: " + resource);

@@ -9,6 +9,8 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
@@ -46,7 +48,7 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     myFixture.addClass("package test; public class A {}");
     PsiClass aClass = myFixture.addClass("public class test {}");
     doTest();
-    assertNull(ReferencesSearch.search(aClass).findFirst());
+    assertNull(ProgressManager.getInstance().runProcess(() -> ReferencesSearch.search(aClass).findFirst(), new EmptyProgressIndicator()));
   }
 
   public void testPackageNameAsClassFQName() {
@@ -199,6 +201,13 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
 
   public void testDiamondsWithAnonymousProtectedConstructor() {
     myFixture.addClass("package a; public class Base<T> { protected Base() {}}");
+    doTest();
+  }
+  
+  public void testDiamondsWithProtectedCallInConstruction() {
+    myFixture.addClass("package a; public class Base { " +
+                       " protected String createString() {return null;}" +
+                       "}");
     doTest();
   }
 

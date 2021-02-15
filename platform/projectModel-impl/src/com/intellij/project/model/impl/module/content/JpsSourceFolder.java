@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
@@ -48,8 +47,8 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
   @NotNull
   @Override
   public String getPackagePrefix() {
-    final JpsSimpleElement<JavaSourceRootProperties> properties = getJavaProperties();
-    return properties != null ? properties.getData().getPackagePrefix() : "";
+    final @Nullable JavaSourceRootProperties properties = getJavaProperties();
+    return properties != null ? properties.getPackagePrefix() : "";
   }
 
   @Nullable

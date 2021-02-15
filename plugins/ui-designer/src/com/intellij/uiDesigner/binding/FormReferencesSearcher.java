@@ -201,7 +201,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     psiManager.startBatchFilesProcessingMode();
 
     try {
-      CommonProcessors.CollectProcessor<VirtualFile> collector = new CommonProcessors.CollectProcessor<VirtualFile>() {
+      CommonProcessors.CollectProcessor<VirtualFile> collector = new CommonProcessors.CollectProcessor<>() {
         @Override
         protected boolean accept(VirtualFile virtualFile) {
           return FileTypeRegistry.getInstance().isFileOfType(virtualFile, GuiFormFileType.INSTANCE);

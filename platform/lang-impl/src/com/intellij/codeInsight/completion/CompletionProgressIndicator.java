@@ -56,6 +56,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -68,7 +69,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -101,7 +101,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Semaphore myFinishSemaphore = new Semaphore(1);
   @NotNull private final OffsetMap myOffsetMap;
   private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions =
-    Collections.newSetFromMap(new ConcurrentHashMap<>());
+    ContainerUtil.newConcurrentSet();
   private final LookupListener myLookupListener = new LookupListener() {
     @Override
     public void lookupCanceled(@NotNull final LookupEvent event) {
@@ -224,13 +224,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
 
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       for (CompletionContributor contributor :
         CompletionContributor.forLanguageHonorDumbness(initContext.getPositionLanguage(), initContext.getProject())) {
         ProgressManager.checkCanceled();
         contributor.duringCompletion(initContext);
       }
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
     if (document instanceof DocumentWindow) {
       myHostOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
     }
@@ -308,7 +308,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (myLookup.isAvailableToUser()) {
       return;
     }
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
         if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
 
@@ -318,7 +318,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           addAdvertisement(s, null);
         }
       }
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
   }
 
   private boolean isOutdated() {
@@ -452,9 +452,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void addItemToLookup(CompletionResult item) {
     Ref<Boolean> stopRef = new Ref<>(Boolean.FALSE);
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       stopRef.set(!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher()));
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
 
     if (stopRef.get()) {
       return;
@@ -800,7 +800,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @HintText
   private String getNoSuggestionsMessage(CompletionParameters parameters) {
-    return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return CompletionContributor.forParameters(parameters)
         .stream()
         .map(c -> c.handleEmptyLookup(parameters, getEditor()))
@@ -855,12 +855,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher, CompletionParameters parameters) {
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       duringCompletion(initContext, parameters);
       ProgressManager.checkCanceled();
 
       CompletionService.getCompletionService().performCompletion(parameters, weigher);
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
     ProgressManager.checkCanceled();
 
     weigher.waitFor();

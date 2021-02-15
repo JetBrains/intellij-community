@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 public class GroovyFieldPattern extends PsiMemberPattern<GrField, GroovyFieldPattern> {
 
   public GroovyFieldPattern() {
-    super(new InitialPatternCondition<GrField>(GrField.class) {
+    super(new InitialPatternCondition<>(GrField.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof GrField;

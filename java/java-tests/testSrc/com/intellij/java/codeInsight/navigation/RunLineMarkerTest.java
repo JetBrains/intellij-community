@@ -19,6 +19,7 @@ import com.intellij.application.options.editor.GutterIconsConfigurable;
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -97,8 +98,12 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(list.toString(), 2, list.size());
     list.get(0).update(event);
     assertEquals("Run 'MainTest.main()'", event.getPresentation().getText());
+    // when testEditConfigurationAction is run before, there exists "main" configuration, none - otherwise 
+    // assertNotNull(ConfigurationContext.getFromContext(event.getDataContext()).findExisting());
     list.get(1).update(event);
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
+    myFixture.testAction(list.get(1));
+    assertEquals("MainTest", RunManager.getInstance(getProject()).getSelectedConfiguration().getName());
   }
 
   public void testAbstractTestClassMethods() {

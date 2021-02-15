@@ -59,15 +59,6 @@ public final class PatchReader {
     myPatchContentParser = new PatchContentParser(saveHunks);
   }
 
-  /**
-   * @deprecated use {@link PatchReader#readTextPatches()} instead
-   */
-  @Deprecated
-  @NotNull
-  public List<TextFilePatch> readAllPatches() throws PatchSyntaxException {
-    return readTextPatches();
-  }
-
   @NotNull
   public List<TextFilePatch> readTextPatches() throws PatchSyntaxException {
     parseAllPatches();
@@ -84,15 +75,6 @@ public final class PatchReader {
       }
     }
     return null;
-  }
-
-  /**
-   * @deprecated use {@link PatchReader#getTextPatches()} or {@link PatchReader#getAllPatches()} instead
-   */
-  @Deprecated
-  @NotNull
-  public List<TextFilePatch> getPatches() {
-    return getTextPatches();
   }
 
   @NotNull

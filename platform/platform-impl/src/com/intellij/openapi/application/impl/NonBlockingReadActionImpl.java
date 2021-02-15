@@ -70,7 +70,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private final @Nullable ProgressIndicator myProgressIndicator;
   private final Callable<? extends T> myComputation;
 
-  private static final Set<Submission<?>> ourTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<Submission<?>> ourTasks = ContainerUtil.newConcurrentSet();
   private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 

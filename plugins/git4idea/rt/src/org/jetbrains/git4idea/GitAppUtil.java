@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Vector;
 
-public class GitAppUtil {
+public final class GitAppUtil {
 
   // Android Studio specific authentication to the builtin webserver
   @SuppressWarnings("UseOfObsoleteCollectionType")

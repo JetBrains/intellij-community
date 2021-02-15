@@ -14,8 +14,8 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
     myProject = project;
     myExecutor = executor;
 
-    setTitle(executor.getId());
+    setTitle(executor.getActionName());
 
     setOKButtonText(executor.getActionName());
     //setOKButtonIcon(executor.getIcon());

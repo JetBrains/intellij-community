@@ -31,10 +31,10 @@ public class Topic<L> {
   @Target(ElementType.FIELD)
   public @interface ProjectLevel {}
 
-  private final String name;
+  private final String myDisplayName;
   private final Class<L> myListenerClass;
   private final BroadcastDirection myBroadcastDirection;
-  private final boolean immediateDelivery;
+  private final boolean myImmediateDelivery;
 
   public Topic(@NonNls @NotNull String name, @NotNull Class<L> listenerClass) {
     this(name, listenerClass, BroadcastDirection.TO_CHILDREN);
@@ -50,17 +50,17 @@ public class Topic<L> {
 
   @ApiStatus.Experimental
   public Topic(@NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection, boolean immediateDelivery) {
-    name = listenerClass.getSimpleName();
+    myDisplayName = listenerClass.getSimpleName();
     myListenerClass = listenerClass;
     myBroadcastDirection = broadcastDirection;
-    this.immediateDelivery = immediateDelivery;
+    myImmediateDelivery = immediateDelivery;
   }
 
   public Topic(@NonNls @NotNull String name, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
-    this.name = name;
+    myDisplayName = name;
     myListenerClass = listenerClass;
     myBroadcastDirection = broadcastDirection;
-    immediateDelivery = false;
+    myImmediateDelivery = false;
   }
 
   /**
@@ -68,7 +68,7 @@ public class Topic<L> {
    */
   @NonNls
   public @NotNull String getDisplayName() {
-    return name;
+    return myDisplayName;
   }
 
   /**
@@ -93,10 +93,10 @@ public class Topic<L> {
   @Override
   public String toString() {
     return "Topic(" +
-           "name='" + name + '\'' +
+           "name='" + myDisplayName + '\'' +
            ", listenerClass=" + myListenerClass +
            ", broadcastDirection=" + myBroadcastDirection +
-           ", immediateDelivery=" + immediateDelivery +
+           ", immediateDelivery=" + myImmediateDelivery +
            ')';
   }
 
@@ -119,7 +119,7 @@ public class Topic<L> {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public boolean isImmediateDelivery() {
-    return immediateDelivery;
+    return myImmediateDelivery;
   }
 
   /**

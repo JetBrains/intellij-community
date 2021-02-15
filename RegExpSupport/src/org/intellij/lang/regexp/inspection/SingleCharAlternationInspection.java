@@ -6,13 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.stream.Stream;
 
 /**
  * @author Bas Leijdekkers
@@ -39,7 +38,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       if (branches.length < 2) {
         return;
       }
-      if (!Stream.of(branches).allMatch(SingleCharAlternationVisitor::isSingleChar)) {
+      if (!ContainerUtil.and(branches, SingleCharAlternationVisitor::isSingleChar)) {
         return;
       }
       final String text = buildReplacementText(pattern);

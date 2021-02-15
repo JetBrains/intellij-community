@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -203,6 +204,13 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
   }
 
   private static boolean usedOnlyIn(@NotNull PsiElement explored, @NotNull PsiMember place) {
+    if (explored instanceof PsiClassOwner) {
+      for (PsiClass aClass : ((PsiClassOwner)explored).getClasses()) {
+        if (!usedOnlyIn(aClass, place)) return false;
+      }
+      return true;
+    }
+    if (UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(explored)) return false;
     CommonProcessors.FindProcessor<PsiReference> findProcessor = new CommonProcessors.FindProcessor<>() {
       @Override
       protected boolean accept(PsiReference reference) {

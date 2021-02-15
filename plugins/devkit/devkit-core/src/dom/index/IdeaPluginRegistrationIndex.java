@@ -52,7 +52,7 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
 
   private static final ID<String, List<RegistrationEntry>> NAME = ID.create("IdeaPluginRegistrationIndex");
 
-  private final DataExternalizer<List<RegistrationEntry>> myValueExternalizer = new DataExternalizer<List<RegistrationEntry>>() {
+  private final DataExternalizer<List<RegistrationEntry>> myValueExternalizer = new DataExternalizer<>() {
 
     @Override
     public void save(@NotNull DataOutput out, List<RegistrationEntry> values) throws IOException {

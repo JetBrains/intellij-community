@@ -38,7 +38,8 @@ import static org.junit.Assume.assumeTrue;
 
 public final class IoTestUtil {
   @ReviseWhenPortedToJDK("13")
-  private static final @Nullable Boolean symLinkMode = SystemInfo.isUnix ? Boolean.TRUE : canCreateSymlinks();  // `TRUE` == NIO, `FALSE` == "mklink"
+  // `TRUE` == NIO, `FALSE` == "mklink", null == nothing works
+  private static final @Nullable Boolean symLinkMode = SystemInfo.isUnix ? Boolean.TRUE : canCreateSymlinks();
   public static final boolean isSymLinkCreationSupported = symLinkMode != null;
 
   private IoTestUtil() { }
@@ -118,11 +119,11 @@ public final class IoTestUtil {
   }
 
   public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    assumeTrue("Can't create symlinks on " + SystemInfo.OS_NAME, isSymLinkCreationSupported);
+    assumeTrue("Can't create symlinks on " + SystemInfo.getOsNameAndVersion(), isSymLinkCreationSupported);
   }
 
   public static void assumeNioSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    assumeTrue("Can't create symlinks via NIO2 on " + SystemInfo.OS_NAME, symLinkMode == Boolean.TRUE);
+    assumeTrue("Can't create symlinks via NIO2 on " + SystemInfo.getOsNameAndVersion(), symLinkMode == Boolean.TRUE);
   }
 
   public static void assumeWindows() throws AssumptionViolatedException {
@@ -133,16 +134,20 @@ public final class IoTestUtil {
     assumeTrue("Need macOS, can't run on " + SystemInfo.OS_NAME, SystemInfo.isMac);
   }
 
+  public static void assumeLinux() throws AssumptionViolatedException {
+    assumeTrue("Need Linux, can't run on " + SystemInfo.OS_NAME, SystemInfo.isLinux);
+  }
+
   public static void assumeUnix() throws AssumptionViolatedException {
     assumeTrue("Need Unix, can't run on " + SystemInfo.OS_NAME, SystemInfo.isUnix);
   }
 
   public static void assumeCaseSensitiveFS() throws AssumptionViolatedException {
-    assumeTrue("Assumed case sensitive FS but got " + SystemInfo.OS_NAME, SystemInfo.isFileSystemCaseSensitive);
+    assumeTrue("Assumed case sensitive FS but got " + SystemInfo.getOsNameAndVersion(), SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static void assumeCaseInsensitiveFS() throws AssumptionViolatedException {
-    assumeFalse("Assumed case insensitive FS but got " + SystemInfo.OS_NAME, SystemInfo.isFileSystemCaseSensitive);
+    assumeFalse("Assumed case insensitive FS but got " + SystemInfo.getOsNameAndVersion(), SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static void assumeWslPresence() throws AssumptionViolatedException {
@@ -205,13 +210,17 @@ public final class IoTestUtil {
     return linkFile;
   }
 
-  private static void runCommand(String... command) {
+  private static @NotNull String runCommand(String @NotNull ... command) {
     try {
       GeneralCommandLine cmd = new GeneralCommandLine(command).withRedirectErrorStream(true);
       ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
+      String out = output.getStdout().trim();
       if (output.getExitCode() != 0) {
-        fail("failed: " + cmd + "\nexit code: " + output.getExitCode() + "; output:\n" + output.getStdout().trim());
+        fail("failed: " + cmd + "\n" +
+             "exit code: " + output.getExitCode() + "; output:\n" +
+             out);
       }
+      return out;
     }
     catch (ExecutionException e) {
       throw new RuntimeException(e);
@@ -366,6 +375,8 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
+            //noinspection RedundantSuppression,SSBasedInspection
+            Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
             runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
             return Boolean.FALSE;
           }
@@ -378,9 +389,9 @@ public final class IoTestUtil {
         Files.delete(target);
       }
     }
-    catch (Exception e) {
-      //noinspection SSBasedInspection
-      Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
+    catch (Throwable t) {
+      //noinspection RedundantSuppression,SSBasedInspection
+      Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(t);
       return null;
     }
   }
@@ -393,10 +404,10 @@ public final class IoTestUtil {
   public static @NotNull List<@NotNull String> enumerateWslDistributions() {
     assertTrue(SystemInfo.isWin10OrNewer);
     try {
-      GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-l", "-v").withRedirectErrorStream(true).withCharset(StandardCharsets.UTF_16LE);
+      GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-l", "-q").withRedirectErrorStream(true).withCharset(StandardCharsets.UTF_16LE);
       ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
       if (output.getExitCode() == 0) {
-        return output.getStdoutLines().stream().skip(1).map(line -> line.split("\\s+")[1]).collect(Collectors.toList());
+        return output.getStdoutLines();
       }
       else {
         Logger.getInstance(IoTestUtil.class).debug(output.getExitCode() + " " + output.getStdout().trim());
@@ -409,8 +420,30 @@ public final class IoTestUtil {
     return Collections.emptyList();
   }
 
-  public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) {
+  public static boolean reanimateWslDistribution(@NotNull String name) {
+    try {
+      GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-d", name, "-e", "pwd").withRedirectErrorStream(true);
+      ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
+      if (output.getExitCode() == 0) {
+        return true;
+      }
+      else {
+        Logger.getInstance(IoTestUtil.class).debug(output.getExitCode() + " " + output.getStdout().trim());
+      }
+    }
+    catch (Exception e) {
+      Logger.getInstance(IoTestUtil.class).debug(e);
+    }
+
+    return false;
+  }
+
+  public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {
     assertTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
-    runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
+    String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
+    String out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.getPath());
+    if (!out.endsWith(caseSensitive ? "enabled." : "disabled.")) {
+      throw new IOException("Can't setCaseSensitivity("+dir+", "+caseSensitive+"). 'fsutil.exe setCaseSensitiveInfo' output:"+changeOut+"; 'fsutil.exe getCaseSensitiveInfo' output:"+out);
+    }
   }
 }

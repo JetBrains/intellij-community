@@ -81,7 +81,7 @@ public class ToggleCaseAction extends TextComponentEditorAction {
         highlighter = ((EditorEx)editor).getHighlighter();
       }
       else {
-        highlighter = new EmptyEditorHighlighter(null);
+        highlighter = new EmptyEditorHighlighter();
         highlighter.setText(text);
       }
       HighlighterIterator iterator = highlighter.createIterator(startOffset);

@@ -416,9 +416,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void showCythonWarning() { }
-
-  @Override
   public void showWarning(String warningId) {
     if (warningId.equals("cython")) {
       if (!isCythonWarningShown) {

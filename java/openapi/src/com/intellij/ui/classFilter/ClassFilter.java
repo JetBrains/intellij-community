@@ -35,7 +35,6 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
 
   public ClassFilter(String pattern) {
     PATTERN = pattern;
-    ENABLED = true;
   }
 
   @Transient

@@ -74,13 +74,4 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    */
   @RequiresBackgroundThread
   public abstract void waitForUpdate();
-
-  /**
-   * @deprecated Parameter ignored, use {@link #waitForUpdate()}.
-   */
-  @Deprecated
-  @RequiresBackgroundThread
-  public void waitForUpdate(@Nullable String operationName) {
-    waitForUpdate();
-  }
 }

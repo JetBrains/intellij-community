@@ -25,7 +25,7 @@ public abstract class ScanningIdIndexer implements IdIndexer {
     final CharSequence chars = inputData.getContentAsText();
     final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
     final IdDataConsumer consumer = new IdDataConsumer();
-    createScanner().processWords(chars, new Processor<WordOccurrence>() {
+    createScanner().processWords(chars, new Processor<>() {
       @Override
       public boolean process(final WordOccurrence t) {
         if (charsArray != null && t.getBaseText() == chars) {

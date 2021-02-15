@@ -53,7 +53,11 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
 
   @Nullable
   @Override
-  public TextRange format(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly, boolean keepLineBreaks) {
+  public TextRange format(@NotNull PsiFile source,
+                          @NotNull TextRange range,
+                          boolean canChangeWhiteSpacesOnly,
+                          boolean keepLineBreaks,
+                          boolean enableBulkUpdate) {
     doFormat(source.getProject(), source.getVirtualFile());
     return range;
   }

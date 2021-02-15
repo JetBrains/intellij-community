@@ -38,7 +38,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComponent myAnchor;
 
-  public ApplicationConfigurable(Project project) {
+  public ApplicationConfigurable(@NotNull Project project) {
     myProject = project;
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
 

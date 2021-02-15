@@ -103,20 +103,4 @@ internal object HeavyTestHelper {
     return WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildDirectory(null, name) }
   }
 
-  @JvmStatic
-  fun createVirtualFileWithEncodingUsingNio(ext: String,
-                                            bom: ByteArray?,
-                                            content: String,
-                                            charset: Charset,
-                                            temporaryDirectory: TemporaryDirectory): VirtualFile {
-    val file = temporaryDirectory.newPath(".$ext")
-    Files.createDirectories(file.parent)
-    Files.newByteChannel(file, HashSet(listOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW))).use { channel ->
-      if (bom != null) {
-        channel.write(ByteBuffer.wrap(bom))
-      }
-      channel.write(charset.encode(CharBuffer.wrap(content)))
-    }
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)!!
-  }
 }

@@ -42,11 +42,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void scheduleUpdate(boolean updateUnversionedFiles) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 String title,
@@ -284,11 +279,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
     throw new UnsupportedOperationException();
   }
 

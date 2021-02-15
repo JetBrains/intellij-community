@@ -131,7 +131,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         MapInfo info = (MapInfo)value;
 
         if (!selected && (info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED)) {
-          setBackground(getUnregisteredRootBackground());
+          setBackground(UIUtil.getDecoratedRowColor());
         }
 
         if (info == MapInfo.SEPARATOR) {
@@ -167,11 +167,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   @NotNull
-  private static Color getUnregisteredRootBackground() {
-    return new JBColor(UIUtil.getLabelBackground(), new Color(0x45494A));
-  }
-
-  @NotNull
   private static SimpleTextAttributes getAttributes(@NotNull MapInfo info) {
     if (info == MapInfo.SEPARATOR) {
       return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD | SimpleTextAttributes.STYLE_SMALLER, null);
@@ -188,7 +183,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private final ColumnInfo<MapInfo, String> VCS_SETTING =
-    new ColumnInfo<MapInfo, String>(VcsBundle.message("column.name.configure.vcses.vcs")) {
+    new ColumnInfo<>(VcsBundle.message("column.name.configure.vcses.vcs")) {
       @Override
       public String valueOf(final MapInfo object) {
         return object.mapping.getVcs();
@@ -210,16 +205,21 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       public TableCellRenderer getRenderer(final MapInfo info) {
         return new ColoredTableCellRenderer() {
           @Override
-          protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          protected void customizeCellRenderer(@NotNull JTable table,
+                                               Object value,
+                                               boolean selected,
+                                               boolean hasFocus,
+                                               int row,
+                                               int column) {
             if (info == MapInfo.SEPARATOR) {
               if (!selected) {
-                setBackground(getUnregisteredRootBackground());
+                setBackground(UIUtil.getDecoratedRowColor());
               }
               return;
             }
 
             if (info.type == MapInfo.Type.UNREGISTERED && !selected) {
-              setBackground(getUnregisteredRootBackground());
+              setBackground(UIUtil.getDecoratedRowColor());
             }
 
             final String vcsName = info.mapping.getVcs();

@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.history.VcsDiffUtil
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
@@ -34,12 +33,13 @@ import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThr
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.util.concurrent.CompletableFuture
 
 class GHPRChangesDiffHelperImpl(private val project: Project,
                                 private val dataProvider: GHPRDataProvider,
-                                private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                private val avatarIconsProvider: GHAvatarIconsProvider,
                                 private val currentUser: GHUser)
   : GHPRChangesDiffHelper {
 
@@ -104,7 +104,7 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
   private fun getReviewSupport(changesProvider: GHPRChangesProvider, change: Change): GHPRDiffReviewSupport? {
     val diffData = changesProvider.findChangeDiffData(change) ?: return null
 
-    return GHPRDiffReviewSupportImpl(dataProvider.reviewData, diffData, avatarIconsProviderFactory, currentUser)
+    return GHPRDiffReviewSupportImpl(dataProvider.reviewData, diffData, avatarIconsProvider, currentUser)
   }
 
   private fun getDiffComputer(changesProvider: GHPRChangesProvider, change: Change): DiffUserDataKeysEx.DiffComputer? {

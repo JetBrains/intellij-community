@@ -47,7 +47,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     IGNORED_URIS.addAll(XmlUtil.ourSchemaUrisList);
   }
 
-  private static final SimpleFieldCache<CachedValue<ElementNames>, XsltContextProviderBase> myNamesCache = new SimpleFieldCache<CachedValue<ElementNames>, XsltContextProviderBase>() {
+  private static final SimpleFieldCache<CachedValue<ElementNames>, XsltContextProviderBase> myNamesCache = new SimpleFieldCache<>() {
     @Override
     protected CachedValue<ElementNames> compute(final XsltContextProviderBase xsltContextProvider) {
       return xsltContextProvider.createCachedValue(xsltContextProvider.getFile());
@@ -306,7 +306,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   private CachedValue<ElementNames> createCachedValue(final PsiFile file) {
-    return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<ElementNames>() {
+    return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<>() {
       @Override
       public Result<ElementNames> compute() {
         final ElementNames names = new ElementNames();
@@ -314,7 +314,8 @@ public abstract class XsltContextProviderBase extends ContextProvider {
 
         if (associations.length == 0) {
           fillFromSchema(file, names);
-        } else {
+        }
+        else {
           names.validateNames = true;
           //noinspection unchecked
           ContainerUtil.addAll(names.dependencies, associations);

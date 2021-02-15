@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.NonBlockingReadAction
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -30,18 +32,20 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
     return ExternalSystemSetupProjectTestCase.ProjectInfo(projectFile, "$name-project", "$name-module", "$name-external-module")
   }
 
-  override fun assertDefaultProjectSettings(project: Project) {
-  }
-
-  override fun doAttachProject(project: Project, projectFile: VirtualFile) {
+  override fun attachProject(project: Project, projectFile: VirtualFile) {
     AddManagedFilesAction().perform(project, selectedFile = projectFile)
+    waitForImportCompletion(project)
   }
 
-  override fun doAttachProjectFromScript(project: Project, projectFile: VirtualFile) {
+  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile) {
     AddFileAsMavenProjectAction().perform(project, selectedFile = projectFile)
+    waitForImportCompletion(project)
   }
 
-  override fun waitForImportCompletion(project: Project) {
+  override fun <R> waitForImport(action: () -> R): R = action()
+
+  private fun waitForImportCompletion(project: Project) {
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     val projectManager = MavenProjectsManager.getInstance(project)
     ApplicationManager.getApplication().invokeAndWait {
       projectManager.waitForResolvingCompletion()

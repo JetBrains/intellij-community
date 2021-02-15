@@ -46,13 +46,13 @@ public class ManageRepoDialog extends DialogWrapper {
     myList = new JBList<>();
     myList.setPaintBusy(true);
     final DefaultListModel<String> repoModel = new DefaultListModel<>();
-    controller.fetchAllRepositories(new CatchingConsumer<List<String>, Exception>() {
+    controller.fetchAllRepositories(new CatchingConsumer<>() {
       @Override
       public void consume(List<@NlsSafe String> repoUrls) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (isDisposed()) return;
           myList.setPaintBusy(false);
-          for (@NlsSafe String repoUrl: repoUrls) {
+          for (@NlsSafe String repoUrl : repoUrls) {
             repoModel.addElement(repoUrl);
           }
         }, ModalityState.any());

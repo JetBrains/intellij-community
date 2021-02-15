@@ -10,9 +10,9 @@ import java.io.IOException;
 
 public interface IntForwardIndex extends ForwardIndex {
 
-  int getInt(@NotNull Integer key) throws IOException;
+  int getInt(int key) throws IOException;
 
-  void putInt(@NotNull Integer key, int value) throws IOException;
+  void putInt(int  key, int value) throws IOException;
 
   @Nullable
   @Override

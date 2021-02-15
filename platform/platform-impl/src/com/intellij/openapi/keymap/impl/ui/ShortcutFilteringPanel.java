@@ -11,9 +11,11 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -98,11 +100,11 @@ final class ShortcutFilteringPanel extends JPanel {
     JLabel label = new JLabel(KeyMapBundle.message("filter.mouse.pad.label"));
     label.setOpaque(false);
     label.setIcon(AllIcons.General.Mouse);
-    label.setForeground(MouseShortcutPanel.FOREGROUND);
+    label.setForeground(UIUtil.getContextHelpForeground());
     label.setBorder(JBUI.Borders.empty(14, 4));
     myMousePanel.add(BorderLayout.CENTER, label);
     myMousePanel.addPropertyChangeListener("shortcut", myPropertyListener);
-    myMousePanel.setBorder(JBUI.Borders.customLine(MouseShortcutPanel.BORDER, 1, 0, 0, 0));
+    myMousePanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
 
     add(VerticalLayout.TOP, myKeyboardPanel);
     add(VerticalLayout.TOP, myMousePanel);

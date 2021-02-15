@@ -164,7 +164,7 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         }
       }
 
-      if (changed) {
+      if (changed && !project.isDefault()) {
         BuildManager.getInstance().clearState(project);
       }
     });

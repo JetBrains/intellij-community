@@ -14,7 +14,7 @@ public class CStyleArrayDeclarationFixTest extends IGQuickFixesTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     super.tuneFixture(builder);
-    builder.setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+    builder.setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
   }
 
   public void testMethod() { doTest(); }

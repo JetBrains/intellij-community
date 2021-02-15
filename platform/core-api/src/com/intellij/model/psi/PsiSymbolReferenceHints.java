@@ -39,10 +39,10 @@ public interface PsiSymbolReferenceHints {
    * Provider may return references which contain specified offset if the offset is greater than or equal to 0;
    * in this case the offset is guaranteed to be within {@code [0, element.getTextLength())}.
    *
-   * @return offset in the element for which references are queried, or {@code null} if the offset doesn't matter
+   * @return offset in the element for which references are queried, or {@code -1} if the offset doesn't matter
    */
-  default @Nullable Integer getOffsetInElement() {
-    return null;
+  default int getOffsetInElement() {
+    return -1;
   }
 
   static @NotNull PsiSymbolReferenceHints referenceClassHint(@NotNull Class<? extends PsiSymbolReference> referenceClass) {
@@ -59,7 +59,7 @@ public interface PsiSymbolReferenceHints {
     assert offsetInElement >= 0;
     return new PsiSymbolReferenceHints() {
       @Override
-      public Integer getOffsetInElement() {
+      public int getOffsetInElement() {
         return offsetInElement;
       }
     };

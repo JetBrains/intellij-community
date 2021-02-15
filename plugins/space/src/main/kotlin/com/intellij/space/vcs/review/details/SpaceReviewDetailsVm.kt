@@ -1,41 +1,45 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
-import circlet.client.api.Navigator
 import circlet.client.api.ProjectKey
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.identifier
 import circlet.code.api.*
 import circlet.code.codeReview
-import circlet.platform.api.*
+import circlet.platform.api.Ref
+import circlet.platform.api.TID
 import circlet.platform.client.*
+import circlet.workspaces.Workspace
 import com.intellij.openapi.project.Project
-import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
+import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
+import com.intellij.space.vcs.review.details.diff.SpaceDiffVmImpl
+import com.intellij.space.vcs.review.details.diff.SpaceReviewDiffLoader
+import com.intellij.space.vcs.review.details.process.SpaceReviewStateUpdater
+import com.intellij.space.vcs.review.details.process.SpaceReviewStateUpdaterImpl
 import libraries.coroutines.extra.Lifetime
-import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.Lifetimed
-import libraries.coroutines.extra.usingSource
 import runtime.reactive.*
+import runtime.reactive.property.seqCombineLatest
 
-private const val MAX_CHANGES_TO_LOAD = 1024
-
-internal open class CrDetailsVm<R : CodeReviewRecord>(
+internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   final override val lifetime: Lifetime,
   val ideaProject: Project,
   val spaceProjectInfo: SpaceProjectInfo,
-  val spaceReposInfo: Set<SpaceRepoInfo>,
-  private val reviewRef: Ref<R>,
-  val client: KCircletClient
+  spaceReposInfo: Set<SpaceRepoInfo>,
+  val reviewRef: Ref<R>,
+  val workspace: Workspace
 ) : Lifetimed {
+  val client: KCircletClient = workspace.client
 
   val review: Property<R> = reviewRef.property()
 
   val projectKey: ProjectKey = review.value.project
   val reviewKey: String? = review.value.key
 
-  val reviewUrl: String = buildReviewUrl(projectKey, review.value.number)
+  val reviewUrl: String = SpaceUrls.review(projectKey, review.value.number)
 
   val reviewId: TID = review.value.id
 
@@ -49,6 +53,10 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
 
   val turnBased: Property<Boolean?> = cellProperty { review.live.turnBased }
 
+  val reviewStateUpdater: SpaceReviewStateUpdater = SpaceReviewStateUpdaterImpl(workspace, review.value)
+
+  private val infoByRepos = spaceReposInfo.associateBy(SpaceRepoInfo::name)
+
   private val participantsProperty: Property<LoadingValue<Ref<CodeReviewParticipants>>> = load {
     client.arena.resolveRefsOrFetch {
       reviewRef.extensionRef(CodeReviewParticipants::class)
@@ -56,41 +64,62 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
   }
 
   private val participantsRef: Property<Ref<CodeReviewParticipants>?> = lastLoadedValueOrNull(participantsProperty)
+  private val pendingCounterRef: Property<Ref<CodeReviewPendingMessageCounter>?> = lastLoadedValueOrNull(pendingCounterAsync(client))
 
-  val participantsVm: Property<SpaceReviewParticipantsVm?> = seqMap(participantsRef) { r ->
-    r?.let { SpaceReviewParticipantsVmImpl(it, projectKey, review.value.identifier, client, lifetime) }
+  val participantsVm: Property<SpaceReviewParticipantsVm?> = seqCombineLatest(participantsRef,
+                                                                              pendingCounterRef) { participantsRef, pendingCounterRef ->
+    if (participantsRef != null && pendingCounterRef != null) {
+      SpaceReviewParticipantsVmImpl(lifetime, projectKey, reviewRef, participantsRef, pendingCounterRef, review.value.identifier, workspace)
+    }
+    else null
   }
 
-  protected val detailedInfo: Property<CodeReviewDetailedInfo?> = mapInit(review, null) {
+  private val detailedInfo: Property<CodeReviewDetailedInfo?> = mapInit(review, null) {
     client.codeReview.getReviewDetails(review.value.project.identifier, review.value.identifier)
   }
 
-  val commits: Property<List<ReviewCommitListItem>?> = mapInit(detailedInfo, null) { detailedInfo ->
-    val spaceReposByName = spaceReposInfo.associateBy(SpaceRepoInfo::name)
+  val commits: Property<List<SpaceReviewCommitListItem>> = mapInit(detailedInfo, emptyList()) { detailedInfo ->
+    val revisions: List<RevisionsInReview> = detailedInfo?.commits ?: emptyList()
 
-    detailedInfo?.commits?.flatMap { revInReview ->
+    revisions.flatMap { revInReview ->
       val repo = revInReview.repository
-      val repoInfo = spaceReposByName[repo.name]
+      val repoInfo = infoByRepos[repo.name]
       val commitsInRepository = revInReview.commits.size
 
-      revInReview.commits.mapIndexed { index, gitCommitWithGraph ->
-        ReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo)
-      }
+      revInReview.commits
+        .filterNot(GitCommitWithGraph::unreachable)
+        .mapIndexed { index, gitCommitWithGraph -> SpaceReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo) }
     }
   }
 
-  val selectedCommitIndices: MutableProperty<List<Int>> = Property.createMutable(emptyList())
+  val selectedTab: MutableProperty<SelectedTab> = mutableProperty(SelectedTab.INFO)
 
-  protected suspend fun loadChanges(lt: LifetimeSource, revisions: List<RevisionInReview>): List<ChangeInReview> {
-    val reviewChanges: InitializedChannel<DiscussionEvent, DiscussionChannelInitialState<Batch<ChangeInReview>>> = client.codeReview.getReviewChanges(
-      lt,
-      BatchInfo("0", MAX_CHANGES_TO_LOAD),
-      projectKey.identifier,
-      reviewId,
-      revisions)
-    // TODO: check api changes
-    return reviewChanges.initial.payload.data
+  val commitChangesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
+    lifetime, client, projectKey, review.value.identifier,
+    reviewId, commits, participantsVm, infoByRepos
+  )
+
+  val allChangesVm: SpaceReviewChangesVmImpl = SpaceReviewChangesVmImpl(
+    lifetime, client, projectKey, review.value.identifier,
+    reviewId, commits, participantsVm, infoByRepos
+  )
+
+  val selectedChangesVm: Property<SpaceReviewChangesVm> = map(selectedTab) { tab ->
+    selectedOrAll(tab, commitChangesVm, allChangesVm)
   }
+
+  val spaceDiffVm: SpaceDiffVm = SpaceDiffVmImpl(client,
+                                                 reviewId,
+                                                 reviewKey as String,
+                                                 projectKey,
+                                                 selectedChangesVm,
+                                                 SpaceReviewDiffLoader(lifetime, client),
+                                                 participantsVm)
+}
+
+private fun <T> selectedOrAll(tab: SelectedTab, selected: T, all: T): T = when (tab) {
+  SelectedTab.INFO -> all
+  SelectedTab.COMMITS -> selected
 }
 
 internal class MergeRequestDetailsVm(
@@ -99,26 +128,14 @@ internal class MergeRequestDetailsVm(
   spaceProjectInfo: SpaceProjectInfo,
   spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<MergeRequestRecord>,
-  client: KCircletClient
-) : CrDetailsVm<MergeRequestRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
+  workspace: Workspace
+) : SpaceReviewDetailsVm<MergeRequestRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, workspace) {
 
   private val branchPair: Property<MergeRequestBranchPair> = cellProperty { review.live.branchPair }
 
   val repository: Property<String> = cellProperty { branchPair.live.repository }
   val targetBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.targetBranchInfo }
   val sourceBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.sourceBranchInfo }
-
-  val repoInfo = spaceReposInfo.firstOrNull { it.name == repository.value }
-
-  val changes = mapInit(commits, selectedCommitIndices, null) { allCommits, selectedCommitIndices ->
-    allCommits ?: return@mapInit null
-    lifetime.usingSource { lt ->
-      val selectedCommits = if (selectedCommitIndices.isNotEmpty()) selectedCommitIndices.map { allCommits[it] } else allCommits
-      selectedCommits
-        .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
-        .let { loadChanges(lt, it) }
-    }
-  }
 }
 
 internal class CommitSetReviewDetailsVm(
@@ -127,57 +144,24 @@ internal class CommitSetReviewDetailsVm(
   spaceProjectInfo: SpaceProjectInfo,
   spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<CommitSetReviewRecord>,
-  client: KCircletClient
-) : CrDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
-
-  val reposInCurrentProject: Property<Map<String, SpaceRepoInfo?>?> = mapInit(commits, null) { commits ->
-    val spaceReposByName = spaceReposInfo.associateBy(SpaceRepoInfo::name)
-
-    commits?.associateBy(
-      { it.repositoryInReview.name },
-      { spaceReposByName[it.repositoryInReview.name] }
-    )
-  }
-
-  val changesByRepos: Property<Map<String, List<ChangeInReview>>?> = mapInit(commits, selectedCommitIndices,
-                                                                             null) { commits, selectedCommitIndices ->
-    commits ?: return@mapInit null
-
-    val selectedCommits = if (selectedCommitIndices.isNotEmpty()) selectedCommitIndices.map { commits[it] } else commits
-
-    lifetime.usingSource { lt ->
-      selectedCommits
-        .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
-        .groupBy { it.repository }
-        .map {
-          val repoName = it.key
-          val revisionsInRepo = it.value
-          repoName to loadChanges(lt, revisionsInRepo)
-        }.toMap()
-    }
-  }
-}
-
-fun buildReviewUrl(projectKey: ProjectKey, reviewNumber: Int): String {
-  return Navigator.p.project(projectKey)
-    .review(reviewNumber)
-    .absoluteHref(SpaceSettings.getInstance().serverSettings.server)
-}
+  workspace: Workspace
+) : SpaceReviewDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, workspace)
 
 internal fun createReviewDetailsVm(lifetime: Lifetime,
                                    project: Project,
-                                   client: KCircletClient,
+                                   workspace: Workspace,
                                    spaceProjectInfo: SpaceProjectInfo,
                                    spaceReposInfo: Set<SpaceRepoInfo>,
-                                   ref: Ref<CodeReviewRecord>): CrDetailsVm<out CodeReviewRecord> {
-  return when (val codeReviewRecord = ref.resolve()) {
+                                   codeReviewListItem: CodeReviewListItem): SpaceReviewDetailsVm<out CodeReviewRecord> {
+  val client = workspace.client
+  return when (val codeReviewRecord = codeReviewListItem.review.resolve()) {
     is MergeRequestRecord -> MergeRequestDetailsVm(
       lifetime,
       project,
       spaceProjectInfo,
       spaceReposInfo,
       codeReviewRecord.toRef(client.arena),
-      client
+      workspace
     )
     is CommitSetReviewRecord -> CommitSetReviewDetailsVm(
       lifetime,
@@ -185,18 +169,21 @@ internal fun createReviewDetailsVm(lifetime: Lifetime,
       spaceProjectInfo,
       spaceReposInfo,
       codeReviewRecord.toRef(client.arena),
-      client
+      workspace
     )
     else -> throw IllegalArgumentException("Unable to resolve CodeReviewRecord")
   }
 }
 
-data class ReviewCommitListItem(
-  val commitWithGraph: GitCommitWithGraph,
-  val repositoryInReview: RepositoryInReview,
-  val index: Int,
-  val commitsInRepository: Int,
-  val spaceRepoInfo: SpaceRepoInfo?
-) {
-  val inCurrentProject: Boolean = spaceRepoInfo != null
+enum class SelectedTab {
+  INFO,
+  COMMITS
+}
+
+private fun SpaceReviewDetailsVm<*>.pendingCounterAsync(client: KCircletClient): LoadingProperty<Ref<CodeReviewPendingMessageCounter>> {
+  return load {
+    client.arena.resolveRefsOrFetch {
+      reviewRef.extensionRef(CodeReviewPendingMessageCounter::class)
+    }
+  }
 }

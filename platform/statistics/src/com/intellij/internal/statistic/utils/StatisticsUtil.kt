@@ -24,20 +24,20 @@ object StatisticsUtil {
   private const val mega = kilo * kilo
 
   @JvmStatic
-  fun getProjectId(project: Project, recorderId: String): String {
-    return EventLogConfiguration.getOrCreate(recorderId).anonymize(project.getProjectCacheFileName())
+  fun getProjectId(project: Project): String {
+    return EventLogConfiguration.anonymize(project.getProjectCacheFileName())
   }
 
   /**
    * Anonymizes sensitive project properties by rounding it to the next power of two
-   * @see com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
+   * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */
   @JvmStatic
   fun getNextPowerOfTwo(value: Int): Int = if (value <= 1) 1 else Integer.highestOneBit(value - 1) shl 1
 
   /**
    * Anonymizes sensitive project properties by rounding it to the next value in steps list.
-   * @see com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
+   * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */
   fun getCountingStepName(value: Int, steps: List<Int>): String {
     if (steps.isEmpty()) return value.toString()

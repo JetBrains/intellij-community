@@ -69,7 +69,7 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   @Override
-  public Component getPanel() {
+  public JComponent getPanel() {
     return myPanel;
   }
 

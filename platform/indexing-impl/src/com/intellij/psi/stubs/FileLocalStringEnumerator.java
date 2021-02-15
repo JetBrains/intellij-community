@@ -4,7 +4,7 @@ package com.intellij.psi.stubs;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,18 +17,20 @@ import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
 final class FileLocalStringEnumerator implements AbstractStringEnumerator {
-  private final TObjectIntHashMap<String> myEnumerates;
+  private final Object2IntOpenHashMap<String> myEnumerates;
   private final ArrayList<String> myStrings = new ArrayList<>();
 
   FileLocalStringEnumerator(boolean forSavingStub) {
-    myEnumerates = forSavingStub ? new TObjectIntHashMap<>() : null;
+    myEnumerates = forSavingStub ? new Object2IntOpenHashMap<>() : null;
   }
 
   @Override
   public int enumerate(@Nullable String value) {
-    if (value == null) return 0;
+    if (value == null) {
+      return 0;
+    }
     assert myEnumerates != null; // enumerate possible only when writing stub
-    int i = myEnumerates.get(value);
+    int i = myEnumerates.getInt(value);
     if (i == 0) {
       myEnumerates.put(value, i = myStrings.size() + 1);
       myStrings.add(value);

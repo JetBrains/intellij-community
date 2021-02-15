@@ -38,9 +38,9 @@ public final class JavaLexer extends LexerBase {
     return id != null &&
            (level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id) ||
             level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id) ||
-            level.isAtLeast(LanguageLevel.JDK_14_PREVIEW) && RECORD.contentEquals(id) ||
+            level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && RECORD.contentEquals(id) ||
             level.isAtLeast(LanguageLevel.JDK_14) && YIELD.contentEquals(id) ||
-            (level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id))));
+            (level.isAtLeast(LanguageLevel.JDK_15_PREVIEW) && (level == LanguageLevel.JDK_X || level.isPreview()) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id))));
   }
 
   private final _JavaLexer myFlexLexer;

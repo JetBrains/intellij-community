@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.libraryJar;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,11 +48,11 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
     LibraryJarDescriptor[] descriptors = LibraryJarStatisticsService.getInstance().getTechnologyDescriptors();
     Set<MetricEvent> result = new HashSet<>(descriptors.length);
 
-    ApplicationManager.getApplication().runReadAction(() -> {
-      for (LibraryJarDescriptor descriptor : descriptors) {
-        String className = descriptor.myClass;
-        if (className == null) continue;
+    for (LibraryJarDescriptor descriptor : descriptors) {
+      String className = descriptor.myClass;
+      if (className == null) continue;
 
+      MetricEvent event = ReadAction.nonBlocking(() -> {
         PsiClass[] psiClasses = JavaPsiFacade.getInstance(project).findClasses(className, ProjectScope.getLibrariesScope(project));
         for (PsiClass psiClass : psiClasses) {
           VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(psiClass.getContainingFile().getVirtualFile());
@@ -60,12 +61,14 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
             if (version == null) version = getVersionByJarFileName(jarFile.getName());
             if (StringUtil.isNotEmpty(version)) {
               final FeatureUsageData data = new FeatureUsageData().addVersionByString(version).addData("library", descriptor.myName);
-              result.add(new MetricEvent("used.library", data));
+              return new MetricEvent("used.library", data);
             }
           }
         }
-      }
-    });
+        return null;
+      }).executeSynchronously();
+      ContainerUtil.addIfNotNull(result, event);
+    }
 
     return result;
   }

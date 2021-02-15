@@ -8,21 +8,25 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.codereview.diff.AddCommentGutterIconRenderer
+import com.intellij.util.ui.codereview.diff.DiffEditorGutterIconRendererFactory
+import com.intellij.util.ui.codereview.diff.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 
 class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel: GHPRReviewProcessModel,
                                                   private val inlaysManager: EditorComponentInlaysManager,
                                                   private val componentFactory: GHPRDiffEditorReviewComponentsFactory,
-                                                  private val lineLocationCalculator: (Int) -> Pair<Side, Int>?)
-  : GHPRDiffEditorGutterIconRendererFactory {
+                                                  private val cumulative: Boolean,
+                                                  private val lineLocationCalculator: (Int) -> GHPRCommentLocation?)
+  : DiffEditorGutterIconRendererFactory {
 
-  override fun createCommentRenderer(line: Int): GHPRAddCommentGutterIconRenderer = CreateCommentIconRenderer(line)
+  override fun createCommentRenderer(line: Int): AddCommentGutterIconRenderer = CreateCommentIconRenderer(line)
 
   private inner class CreateCommentIconRenderer(override val line: Int)
-    : GHPRAddCommentGutterIconRenderer() {
+    : AddCommentGutterIconRenderer() {
 
     private var reviewState = ReviewState(false, null)
 
@@ -42,62 +46,83 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
       if (inlay != null) return FocusInlayAction()
       val reviewId = reviewState.reviewId
       if (!reviewState.isDataActual || reviewId == null) return null
-      return AddReviewCommentAction(line, reviewId)
+
+      return AddReviewCommentAction(line, reviewId, isMultiline(line))
     }
 
     private inner class FocusInlayAction : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) {
-        if (inlay?.let { GithubUIUtil.focusPanel(it.first) } != null) return
+        if (inlay?.let { GHUIUtil.focusPanel(it.first) } != null) return
       }
     }
 
     override fun getPopupMenuActions(): ActionGroup? {
       if (inlay != null) return null
       if (!reviewState.isDataActual || reviewState.reviewId != null) return null
-      return DefaultActionGroup(StartReviewAction(line), AddSingleCommentAction(line))
+
+      val multiline = isMultiline(line)
+      return DefaultActionGroup(StartReviewAction(line, multiline), AddSingleCommentAction(line, multiline))
     }
+
+    private fun isMultiline(line: Int) = cumulative &&
+                                         (lineLocationCalculator(line)
+                                          ?: GHPRCommentLocation(Side.RIGHT, line, line, line)).let { it.line != it.startLine }
 
     private abstract inner class InlayAction(actionName: () -> String,
                                              private val editorLine: Int)
       : DumbAwareAction(actionName) {
 
       override fun actionPerformed(e: AnActionEvent) {
-        if (inlay?.let { GithubUIUtil.focusPanel(it.first) } != null) return
+        if (inlay?.let { GHUIUtil.focusPanel(it.first) } != null) return
 
-        val (side, line) = lineLocationCalculator(editorLine) ?: return
+        val (side, line, startLine, realEditorLine) = lineLocationCalculator(editorLine) ?: return
 
         val hideCallback = {
           inlay?.let { Disposer.dispose(it.second) }
           inlay = null
         }
-        val component = createComponent(side, line, hideCallback)
-        val disposable = inlaysManager.insertAfter(editorLine, component) ?: return
-        GithubUIUtil.focusPanel(component)
+
+        val component = if (isMultiline(editorLine))
+          createComponent(side, line, startLine, hideCallback)
+        else
+          createComponent(side, line, line, hideCallback)
+
+        val disposable = inlaysManager.insertAfter(realEditorLine, component) ?: return
+        GHUIUtil.focusPanel(component)
         inlay = component to disposable
       }
 
-      protected abstract fun createComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent
+      protected abstract fun createComponent(side: Side, line: Int, startLine: Int = line, hideCallback: () -> Unit): JComponent
     }
 
-    private inner class AddSingleCommentAction(editorLine: Int)
-      : InlayAction({ GithubBundle.message("pull.request.diff.editor.add.single.comment") }, editorLine) {
+    private inner class AddSingleCommentAction(editorLine: Int, isMultiline: Boolean = false)
+      : InlayAction({
+                      if (isMultiline) GithubBundle.message("pull.request.diff.editor.add.multiline.comment")
+                      else GithubBundle.message("pull.request.diff.editor.add.single.comment")
+                    }, editorLine) {
 
-      override fun createComponent(side: Side, line: Int, hideCallback: () -> Unit) =
-        componentFactory.createSingleCommentComponent(side, line, hideCallback)
+      override fun createComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit) =
+        componentFactory.createSingleCommentComponent(side, line, startLine, hideCallback)
     }
 
-    private inner class StartReviewAction(editorLine: Int)
-      : InlayAction({ GithubBundle.message("pull.request.diff.editor.review.with.comment") }, editorLine) {
+    private inner class StartReviewAction(editorLine: Int, isMultiline: Boolean = false)
+      : InlayAction({
+                      if (isMultiline) GithubBundle.message("pull.request.diff.editor.start.review.with.multiline.comment")
+                      else GithubBundle.message("pull.request.diff.editor.review.with.comment")
+                    }, editorLine) {
 
-      override fun createComponent(side: Side, line: Int, hideCallback: () -> Unit) =
-        componentFactory.createNewReviewCommentComponent(side, line, hideCallback)
+      override fun createComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit) =
+        componentFactory.createNewReviewCommentComponent(side, line, startLine, hideCallback)
     }
 
-    private inner class AddReviewCommentAction(editorLine: Int, private val reviewId: String)
-      : InlayAction({ GithubBundle.message("pull.request.diff.editor.add.review.comment") }, editorLine) {
+    private inner class AddReviewCommentAction(editorLine: Int, private val reviewId: String, isMultiline: Boolean = false)
+      : InlayAction({
+                      if (isMultiline) GithubBundle.message("pull.request.diff.editor.add.multiline.review.comment")
+                      else GithubBundle.message("pull.request.diff.editor.add.review.comment")
+                    }, editorLine) {
 
-      override fun createComponent(side: Side, line: Int, hideCallback: () -> Unit) =
-        componentFactory.createReviewCommentComponent(reviewId, side, line, hideCallback)
+      override fun createComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit) =
+        componentFactory.createReviewCommentComponent(reviewId, side, line, startLine, hideCallback)
     }
 
     override fun dispose() {
@@ -112,3 +137,5 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
 
   private data class ReviewState(val isDataActual: Boolean, val reviewId: String?)
 }
+
+data class GHPRCommentLocation(val side: Side, val line: Int, val startLine: Int = line, val editorLine: Int = line)

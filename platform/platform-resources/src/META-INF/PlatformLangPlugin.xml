@@ -77,6 +77,7 @@
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+    <multiHostInjector id="adapter" implementation="com.intellij.psi.impl.source.tree.injected.LanguageInjectionPerformerAdapter" order="last"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
 

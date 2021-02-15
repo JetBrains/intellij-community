@@ -31,15 +31,4 @@ public class CollectionQuery<T> implements Query<T> {
   public boolean forEach(@NotNull final Processor<? super T> consumer) {
     return ContainerUtil.process(myCollection, consumer);
   }
-
-  @Override
-  public T @NotNull [] toArray(final T @NotNull [] a) {
-    return findAll().toArray(a);
-  }
-
-  @NotNull
-  @Override
-  public Iterator<T> iterator() {
-    return myCollection.iterator();
-  }
 }

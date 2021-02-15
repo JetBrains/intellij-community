@@ -20,7 +20,12 @@ import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
+  private static final Collection<String> FIELD_ANNOTATIONS = Arrays.asList(JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, 
+                                                                            "org.junit.jupiter.api.extension.RegisterExtension");
   public boolean ADD_JUNIT_TO_ENTRIES = true;
 
   @Override
@@ -45,7 +50,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
           if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, !isJUnit5, true)) {
             return true;
           }
-          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
+          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<>() {
             @Override
             protected boolean accept(PsiClass psiClass) {
               return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -65,7 +70,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
       if (JUnitUtil.isTestMethodOrConfig(method)) return true;
     }
     else if (psiElement instanceof PsiField) {
-      return AnnotationUtil.isAnnotated((PsiField)psiElement, JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, 0);
+      return AnnotationUtil.isAnnotated((PsiField)psiElement, FIELD_ANNOTATIONS, 0);
     }
     return false;
   }

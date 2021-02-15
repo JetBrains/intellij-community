@@ -71,7 +71,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     if (prefix == null) {
       return delegate;
     }
-    return new Iterator<String>() {
+    return new Iterator<>() {
       @Override
       public boolean hasNext() {
         return delegate.hasNext();
@@ -242,8 +242,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return prefix;
   }
 
-  @Nullable
-  private ClassLoader getClassLoader() {
+  private @NotNull ClassLoader getClassLoader() {
     ClassLoader loader = myCachedLoader;
     if (loader == null) {
       myCachedLoader = loader = CustomAntElementsRegistry.createClassLoader(CustomAntElementsRegistry.collectUrls(this), getContextAntProject());

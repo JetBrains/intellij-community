@@ -11,3 +11,15 @@ interface VirtualFileUrlIndex {
    */
   fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>>
 }
+
+interface MutableVirtualFileUrlIndex : VirtualFileUrlIndex {
+  /**
+   * Manual add association of certain entity with VFU. In the usual case, appropriate property delegates should be
+   * used e.g [VirtualFileUrlProperty]. But if it's needed to manually add an association for an entity to VFU it
+   * can be done via this method.
+   * @param entity which should be associated with this url
+   * @param propertyName name of the property which contains this VFU
+   * @param virtualFileUrl virtual file url which should be associated with the entity
+   */
+  fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrl: VirtualFileUrl? = null)
+}

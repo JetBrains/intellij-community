@@ -3,8 +3,6 @@ package git4idea.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -25,18 +23,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.ui.UIUtil.BR;
-
 /**
  * Utilities for git plugin user interface
  */
 public final class GitUIUtil {
-  /**
-   * Text containing in the label when there is no current branch
-   * @deprecated Use {@link #getNoCurrentBranch()} instead
-   */
-  @Deprecated
-  public static final String NO_CURRENT_BRANCH = "<no active branch>";
 
   /**
    * A private constructor for utility class
@@ -47,7 +37,6 @@ public final class GitUIUtil {
   /**
    * @deprecated use {@link VcsNotifier} instead
    */
-  @SuppressWarnings("HardCodedStringLiteral")
   @Deprecated
   public static void notifyError(Project project,
                                  @Nls @NotNull String title,

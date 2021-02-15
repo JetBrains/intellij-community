@@ -52,7 +52,7 @@ public final class PatchDiffRequestFactory {
   public static DiffRequest createConflictDiffRequest(@Nullable Project project,
                                                       @Nullable VirtualFile file,
                                                       @NotNull TextFilePatch patch,
-                                                      @NotNull String afterTitle,
+                                                      @NotNull @NlsContexts.Label String afterTitle,
                                                       @NotNull final ApplyPatchForBaseRevisionTexts texts,
                                                       @NotNull String name)
     throws DiffRequestProducerException {
@@ -88,7 +88,7 @@ public final class PatchDiffRequestFactory {
                                               @Nullable VirtualFile file,
                                               @NotNull List<String> contents,
                                               @Nullable @NlsContexts.DialogTitle String windowTitle,
-                                              @NotNull List<String> titles) {
+                                              @NotNull List<@NlsContexts.Label String> titles) {
     assert contents.size() == 3;
     assert titles.size() == 3;
 
@@ -161,7 +161,7 @@ public final class PatchDiffRequestFactory {
                                                 @Nullable VirtualFile file,
                                                 @NotNull List<String> contents,
                                                 @Nullable @NlsContexts.DialogTitle String windowTitle,
-                                                @NotNull List<String> titles,
+                                                @NotNull List<@NlsContexts.Label String> titles,
                                                 @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     assert contents.size() == 3;
@@ -173,7 +173,7 @@ public final class PatchDiffRequestFactory {
     String baseTitle = StringUtil.notNullize(titles.get(1), VcsBundle.message("patch.apply.conflict.merged.version"));
     String patchedTitle = StringUtil.notNullize(titles.get(2), VcsBundle.message("patch.apply.conflict.patched.version"));
 
-    List<String> actualTitles = Arrays.asList(localTitle, baseTitle, patchedTitle);
+    List<@NlsContexts.Label String> actualTitles = Arrays.asList(localTitle, baseTitle, patchedTitle);
 
     FileType fileType = file != null ? file.getFileType() : null;
     return DiffRequestFactory.getInstance().createMergeRequest(project, fileType, document, contents, windowTitle, actualTitles, callback);

@@ -1,11 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.io.ByteSequenceDataExternalizer;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.PersistentHashMap;
-import com.intellij.util.io.PersistentHashMapValueStorage;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +11,7 @@ import java.nio.file.Path;
 
 public class PersistentMapBasedForwardIndex implements ForwardIndex {
   @NotNull
-  private volatile PersistentHashMap<Integer, ByteArraySequence> myPersistentMap;
+  private volatile PersistentMap<Integer, ByteArraySequence> myPersistentMap;
   @NotNull
   private final Path myMapFile;
   private final boolean myUseChunks;
@@ -54,7 +51,7 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
 
   @Override
   public void clear() throws IOException {
-    PersistentHashMap.deleteMap(myPersistentMap);
+    myPersistentMap.closeAndClean();
     myPersistentMap = createMap(myMapFile, myUseChunks, myReadOnly);
   }
 
@@ -68,17 +65,11 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
   }
 
   @NotNull
-  private static PersistentHashMap<Integer, ByteArraySequence> createMap(@NotNull Path file, boolean useChunks, boolean isReadOnly) throws IOException {
-    Boolean oldHasNoChunksValue = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
-    PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!useChunks);
-    Boolean previousReadOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
-    PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(isReadOnly);
-    try {
-      return new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
-    }
-    finally {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(oldHasNoChunksValue);
-      PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(previousReadOnly);
-    }
+  private static PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file, boolean useChunks, boolean isReadOnly) throws IOException {
+    return PersistentMapBuilder
+      .newBuilder(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)
+      .hasChunks(useChunks)
+      .withReadonly(isReadOnly)
+      .build();
   }
 }

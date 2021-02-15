@@ -127,13 +127,14 @@ public final class BuildConsoleUtils {
   public static String getMessageTitle(@NotNull String message) {
     message = stripHtml(message, true);
     int sepIndex = message.indexOf(". ");
-    if (sepIndex < 0) {
-      sepIndex = message.indexOf("\n");
+    int eolIndex = message.indexOf("\n");
+    if (sepIndex < 0 || sepIndex > eolIndex && eolIndex > 0) {
+      sepIndex = eolIndex;
     }
     if (sepIndex > 0) {
       message = message.substring(0, sepIndex);
     }
-    return StringUtil.trimEnd(message, '.');
+    return StringUtil.trimEnd(message.trim(), '.');
   }
 
   @ApiStatus.Experimental

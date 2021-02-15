@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="461" height="134"/>
+      <xy x="20" y="20" width="461" height="148"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <labelFor value="ff158"/>
-              <text value="&amp;Name:"/>
+              <text resource-bundle="messages/TaskBundle" key="name"/>
             </properties>
           </component>
           <component id="ff158" class="com.intellij.ui.components.JBTextField" binding="myNameField">
@@ -64,7 +64,7 @@
               </grid>
             </constraints>
             <properties>
-              <text value="&amp;Update issue state"/>
+              <text resource-bundle="messages/TaskBundle" key="update.issue.state1"/>
             </properties>
           </component>
           <component id="fedb6" class="javax.swing.JCheckBox" binding="myClearContext" default-binding="true">
@@ -76,7 +76,7 @@
             <properties>
               <focusable value="true"/>
               <selected value="true"/>
-              <text value="&amp;Clear current context"/>
+              <text resource-bundle="messages/TaskBundle" key="clear.current.context"/>
             </properties>
           </component>
         </children>

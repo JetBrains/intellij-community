@@ -23,7 +23,7 @@ import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +44,8 @@ import java.util.concurrent.locks.LockSupport;
  * Write lock: sets global {@link #writeRequested} bit and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
  */
 class ReadMostlyRWLock {
-  volatile Thread writeThread;
-  private volatile Thread writeIntendedThread;
+  final Thread writeThread;
+  @VisibleForTesting
   volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private final AtomicBoolean writeIntent = new AtomicBoolean(false);
   private volatile boolean writeAcquired;   // this writer obtained the write lock
@@ -53,8 +53,12 @@ class ReadMostlyRWLock {
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
 
   private volatile boolean writeSuspended;
+  // time stamp (nanoTime) of the last check for dead reader threads in writeUnlock().
+  // (we have to reduce frequency of this "dead readers GC" activity because Thread.isAlive() turned out to be too expensive)
+  private volatile long deadReadersGCStamp;
 
-  ReadMostlyRWLock() {
+  ReadMostlyRWLock(@NotNull Thread writeThread) {
+    this.writeThread = writeThread;
   }
 
   // Each reader thread has instance of this struct in its thread local. it's also added to global "readers" list.
@@ -85,15 +89,6 @@ class ReadMostlyRWLock {
     assert added : readers + "; "+Thread.currentThread();
     return status;
   });
-
-  @TestOnly
-  void setWriteThread(@NotNull Thread thread) {
-    assert !writeAcquired;
-    assert !writeRequested;
-    assert writeThread == null;
-
-    writeThread = thread;
-  }
 
   boolean isWriteThread() {
     return Thread.currentThread() == writeThread;
@@ -207,13 +202,11 @@ class ReadMostlyRWLock {
 
   void writeIntentLock() {
     //checkWriteThreadAccess();
-    writeIntendedThread = Thread.currentThread();
     for (int iter=0; ;iter++) {
       if (writeIntent.compareAndSet(false, true)) {
         assert !writeRequested;
         assert !writeAcquired;
 
-        writeThread = Thread.currentThread();
         break;
       }
 
@@ -232,9 +225,8 @@ class ReadMostlyRWLock {
     assert !writeAcquired;
     assert !writeRequested;
 
-    writeThread = null;
     writeIntent.set(false);
-    LockSupport.unpark(writeIntendedThread);
+    LockSupport.unpark(writeThread);
   }
 
   void writeLock() {
@@ -275,16 +267,26 @@ class ReadMostlyRWLock {
     checkWriteThreadAccess();
     writeAcquired = false;
     writeRequested = false;
-    List<Reader> dead = new ArrayList<>(readers.size());
+    List<Reader> dead;
+    long current = System.nanoTime();
+    if (current - deadReadersGCStamp > 1_000_000) {
+      dead = new ArrayList<>(readers.size());
+      deadReadersGCStamp = current;
+    }
+    else {
+      dead = null;
+    }
     for (Reader reader : readers) {
       if (reader.blocked) {
         LockSupport.unpark(reader.thread); // parked by readLock()
       }
-      else if (!reader.thread.isAlive()) {
+      else if (dead != null && !reader.thread.isAlive()) {
         dead.add(reader);
       }
     }
-    readers.removeAll(dead);
+    if (dead != null) {
+      readers.removeAll(dead);
+    }
   }
 
   private void checkWriteThreadAccess() {

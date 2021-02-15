@@ -40,6 +40,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,9 +172,8 @@ public final class ReplaceInProjectManager {
       super(project, findModel);
     }
 
-    @NotNull
     @Override
-    public String getLongDescriptiveName() {
+    public @Nls @NotNull String getLongDescriptiveName() {
       UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myFindModel);
       return StringUtil.decapitalize(presentation.getToolwindowTitle());
     }
@@ -399,9 +399,8 @@ public final class ReplaceInProjectManager {
     }
 
     int[] replacedCount = {0};
-    final boolean[] success = {true};
-
-    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
+    boolean[] success = {true};
+    boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       FindBundle.message("find.replace.all.confirmation.title"),
       myProject,
       null,
@@ -437,7 +436,7 @@ public final class ReplaceInProjectManager {
         }
       }
     );
-
+    success[0] &= result;
     replaceContext.getUsageView().removeUsagesBulk(usages);
     reportNumberReplacedOccurrences(myProject, replacedCount[0]);
     return success[0];

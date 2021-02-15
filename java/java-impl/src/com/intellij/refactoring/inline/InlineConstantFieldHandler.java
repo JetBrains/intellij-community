@@ -120,8 +120,11 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     }
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, referenceElement);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      dialog.doAction();
-      dialog.close(DialogWrapper.OK_EXIT_CODE, true);
+      try {
+        dialog.doAction();
+      } finally {
+        dialog.close(DialogWrapper.OK_EXIT_CODE, true);
+      }
     }
     else {
       dialog.show();

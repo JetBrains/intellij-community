@@ -119,7 +119,9 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     myExcludes.apply();
     myConfig.setInvokeDynamic(myInvokeDynamicSupportCB.isSelected());
     myConfig.setConfigScript(getExternalizableConfigScript());
-    BuildManager.getInstance().clearState(myProject);
+    if (!myProject.isDefault()) {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   @Override

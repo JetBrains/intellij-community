@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
@@ -27,7 +27,6 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashMap;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
 import org.jetbrains.annotations.NonNls;
@@ -56,7 +55,7 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.*;
 
-public class RepositoryAttachDialog extends DialogWrapper {
+public final class RepositoryAttachDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH_ENABLED = "Downloaded.Files.Path.Enabled";
   @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
@@ -84,7 +83,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   private final JComboBox myCombobox;
 
-  private final Map<String, RepositoryArtifactDescription> myCoordinates = new THashMap<>();
+  private final Map<String, RepositoryArtifactDescription> myCoordinates = new HashMap<>();
   private final List<String> myShownItems = new ArrayList<>();
   private final @NlsSafe String myDefaultDownloadFolder;
 

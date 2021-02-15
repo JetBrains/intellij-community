@@ -1,37 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.LeafBlockWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
-public class BlockRangesMap {
+public final class BlockRangesMap {
   private final LeafBlockWrapper myLastBlock;
-  private final TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
+  private final Int2ObjectMap<LeafBlockWrapper> myTextRangeToWrapper;
 
   public BlockRangesMap(LeafBlockWrapper first, LeafBlockWrapper last) {
     myLastBlock = last;
     myTextRangeToWrapper = buildTextRangeToInfoMap(first);
   }
 
-  private static TIntObjectHashMap<LeafBlockWrapper> buildTextRangeToInfoMap(final LeafBlockWrapper first) {
-    final TIntObjectHashMap<LeafBlockWrapper> result = new TIntObjectHashMap<>();
+  private static Int2ObjectMap<LeafBlockWrapper> buildTextRangeToInfoMap(final LeafBlockWrapper first) {
+    final Int2ObjectMap<LeafBlockWrapper> result = new Int2ObjectOpenHashMap<>();
     LeafBlockWrapper current = first;
     while (current != null) {
       result.put(current.getStartOffset(), current);
@@ -39,7 +26,7 @@ public class BlockRangesMap {
     }
     return result;
   }
-  
+
   public boolean containsLineFeedsOrTooLong(final TextRange dependency) {
     LeafBlockWrapper child = myTextRangeToWrapper.get(dependency.getStartOffset());
     if (child == null) return false;

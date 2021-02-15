@@ -36,6 +36,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,8 +193,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     filteredChangeLists = ContainerUtil.sorted(filteredChangeLists, myGroupingStrategy.getComparator());
     myGroupingStrategy.beforeStart();
     DefaultMutableTreeNode lastGroupNode = null;
-    String lastGroupName = null;
-    for(CommittedChangeList list: filteredChangeLists) {
+    @Nls String lastGroupName = null;
+    for(CommittedChangeList list : filteredChangeLists) {
       String groupName = StringUtil.notNullize(myGroupingStrategy.getGroupName(list));
       if (!Objects.equals(groupName, lastGroupName)) {
         lastGroupName = groupName;

@@ -91,7 +91,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public static <T> ReorderableListController<T> create(final JList list, final DefaultActionGroup actionGroup) {
-    return new ReorderableListController<T>(list) {
+    return new ReorderableListController<>(list) {
       @Override
       protected void addActionDescription(final ActionDescription description) {
         actionGroup.add(description.createAction(list));
@@ -193,7 +193,7 @@ public abstract class ReorderableListController <T> {
 
     @Override
     public BaseAction createAction(final JComponent component) {
-      final ActionBehaviour<List<T>> behaviour = new ActionBehaviour<List<T>>() {
+      final ActionBehaviour<List<T>> behaviour = new ActionBehaviour<>() {
         @Override
         public List<T> performAction(@NotNull final AnActionEvent e) {
           if (myConfirmation != null && !myConfirmation.value((List<T>)Arrays.asList(myList.getSelectedValues()))) {
@@ -249,7 +249,7 @@ public abstract class ReorderableListController <T> {
 
     @Override
     public BaseAction createAction(final JComponent component) {
-      final ActionBehaviour<V> behaviour = new ActionBehaviour<V>() {
+      final ActionBehaviour<V> behaviour = new ActionBehaviour<>() {
         @Override
         public V performAction(@NotNull final AnActionEvent e) {
           return addInternal(myAddHandler.create());

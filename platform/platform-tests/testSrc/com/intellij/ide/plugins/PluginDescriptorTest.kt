@@ -5,7 +5,6 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -23,7 +22,6 @@ import org.junit.Test
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
@@ -37,10 +35,7 @@ private fun loadDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins
   context.usePluginClassLoader = true
 
   // constant order in tests
-  lateinit var paths: List<Path>
-  Files.newDirectoryStream(dir).use { dirStream ->
-    paths = dirStream.sorted()
-  }
+  val paths: List<Path> = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
     for (file in paths) {
       val descriptor = PluginDescriptorLoader.loadDescriptor(file, false, context) ?: continue
@@ -375,7 +370,7 @@ class PluginDescriptorTest {
 
     }
 
-    class TestLoader(prefix: String, suffix: String) : UrlClassLoader(build()) {
+    class TestLoader(prefix: String, suffix: String) : UrlClassLoader(build(), false) {
       private val url = URL(prefix + File(testDataPath).toURI().toURL().toString() + suffix + "META-INF/plugin.xml")
 
       override fun getResource(name: String) = null

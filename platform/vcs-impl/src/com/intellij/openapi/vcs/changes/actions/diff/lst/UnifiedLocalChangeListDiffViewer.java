@@ -36,7 +36,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   private final boolean myAllowExcludeChangesFromCommit;
 
   private final LocalTrackerDiffUtil.LocalTrackerActionProvider myTrackerActionProvider;
-  private LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
+  private final LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
 
   public UnifiedLocalChangeListDiffViewer(@NotNull DiffContext context,
                                           @NotNull LocalChangeListDiffRequest localRequest) {
@@ -45,6 +45,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
     myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context);
     myTrackerActionProvider = new MyLocalTrackerActionProvider(this, localRequest, myAllowExcludeChangesFromCommit);
+    myExcludeAllCheckboxPanel = new LocalTrackerDiffUtil.ExcludeAllCheckboxPanel(this, getEditor());
     myExcludeAllCheckboxPanel.init(myLocalRequest, myAllowExcludeChangesFromCommit);
 
     LocalTrackerDiffUtil.installTrackerListener(this, myLocalRequest);
@@ -54,8 +55,6 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   @Override
   protected JComponent createTitles() {
     JComponent titles = super.createTitles();
-
-    myExcludeAllCheckboxPanel = new LocalTrackerDiffUtil.ExcludeAllCheckboxPanel(this, getEditor());
 
     BorderLayoutPanel titleWithCheckbox = JBUI.Panels.simplePanel();
     if (titles != null) titleWithCheckbox.addToCenter(titles);

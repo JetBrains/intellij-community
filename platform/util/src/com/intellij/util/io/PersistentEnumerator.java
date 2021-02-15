@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,246 +15,113 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.Forceable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 
-/**
- * @author max
- * @author jeka
- */
-public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
-  private static final int FIRST_VECTOR_OFFSET = DATA_START;
+public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Closeable, Forceable {
+  @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
 
-  private static final int BITS_PER_LEVEL = 4;
-  private static final int SLOTS_PER_VECTOR = 1 << BITS_PER_LEVEL;
-  private static final int LEVEL_MASK = SLOTS_PER_VECTOR - 1;
-  private static final byte[] EMPTY_VECTOR = new byte[SLOTS_PER_VECTOR * 4];
+  public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
+    this(file, dataDescriptor, initialSize, null);
+  }
 
-  private static final int BITS_PER_FIRST_LEVEL = 12;
-  private static final int SLOTS_PER_FIRST_VECTOR = 1 << BITS_PER_FIRST_LEVEL;
-  private static final int FIRST_LEVEL_MASK = SLOTS_PER_FIRST_VECTOR - 1;
-  private static final byte[] FIRST_VECTOR = new byte[SLOTS_PER_FIRST_VECTOR * 4];
+  public PersistentEnumerator(@NotNull final Path file,
+                              @NotNull KeyDescriptor<Data> dataDescriptor,
+                              final int initialSize,
+                              @Nullable StorageLockContext lockContext) throws IOException {
+    myEnumerator = new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext);
+  }
 
-  private static final int COLLISION_OFFSET = 0;
-  private static final int KEY_HASHCODE_OFFSET = COLLISION_OFFSET + 4;
-  private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;
-  private static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
-  private int valuesCount; // TODO: valuesCount should be persistent
-
-  static final int VERSION = 6;
-
-  public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    this(file, dataDescriptor, initialSize, null, 0);
+  public PersistentEnumerator(@NotNull final File file,
+                              @NotNull KeyDescriptor<Data> dataDescriptor,
+                              final int initialSize,
+                              @Nullable StorageLockContext lockContext,
+                              int version) throws IOException {
+    this(file.toPath(), dataDescriptor, initialSize, lockContext, version);
   }
 
   public PersistentEnumerator(@NotNull Path file,
                               @NotNull KeyDescriptor<Data> dataDescriptor,
-                              int initialSize,
-                              @Nullable StorageLockContext storageLockContext,
+                              final int initialSize,
+                              @Nullable StorageLockContext lockContext,
                               int version) throws IOException {
-    super(file, new ResizeableMappedFile(file, initialSize, storageLockContext, -1, false), dataDescriptor, initialSize, new Version(VERSION + version),
-          new RecordBufferHandler(), true);
+    myEnumerator = createDefaultEnumerator(file, dataDescriptor, initialSize, lockContext, version);
+  }
+
+  @NotNull
+  static <Data> PersistentEnumeratorBase<Data> createDefaultEnumerator(@NotNull Path file,
+                                                                       @NotNull KeyDescriptor<Data> dataDescriptor,
+                                                                       final int initialSize,
+                                                                       @Nullable StorageLockContext lockContext,
+                                                                       int version) throws IOException {
+    return new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version);
+  }
+
+  @ApiStatus.Internal
+  public static int getVersion() {
+    return PersistentBTreeEnumerator.VERSION;
   }
 
   @Override
-  protected void setupEmptyFile() {
-    allocVector(FIRST_VECTOR);
+  public void close() throws IOException {
+    final PersistentEnumeratorBase<Data> enumerator = myEnumerator;
+    //noinspection ConstantConditions
+    if (enumerator != null) {
+      enumerator.close();
+    }
+  }
+
+  public boolean isClosed() {
+    return myEnumerator.isClosed();
   }
 
   @Override
-  public boolean traverseAllRecords(@NotNull RecordsProcessor p) throws IOException {
-    synchronized (getDataAccessLock()) {
-      return traverseRecords(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, p);
-    }
+  public boolean isDirty() {
+    return myEnumerator.isDirty();
   }
 
-  private boolean traverseRecords(int vectorStart, int slotsCount, @NotNull RecordsProcessor p) throws IOException {
-    lockStorageRead();
-    try {
-      for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
-        final int vector = myStorage.getInt(vectorStart + slotIdx * 4L);
-        if (vector < 0) {
-          for (int record = -vector; record != 0; record = nextCandidate(record)) {
-            if (!p.process(record)) return false;
-          }
-        }
-        else if (vector > 0) {
-          if (!traverseRecords(vector, SLOTS_PER_VECTOR, p)) return false;
-        }
-      }
-      return true;
-    }
-    finally {
-      unlockStorageRead();
-    }
+  public final void markDirty() throws IOException {
+    myEnumerator.markDirty(true);
+  }
+
+  public boolean isCorrupted() {
+    return myEnumerator.isCorrupted();
+  }
+
+  public void markCorrupted() {
+    myEnumerator.markCorrupted();
   }
 
   @Override
-  protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
-    synchronized (getDataAccessLock()) {
-      if (onlyCheckForExisting) {
-        lockStorageWrite();
-      }
-      else {
-        lockStorageWrite();
-      }
-      try {
-        int depth = 0;
-        final int valueHC = myDataDescriptor.getHashCode(value);
-        int hc = valueHC;
-        int vector = FIRST_VECTOR_OFFSET;
-        int pos;
-        int lastVector;
-
-        int levelMask = FIRST_LEVEL_MASK;
-        int bitsPerLevel = BITS_PER_FIRST_LEVEL;
-        do {
-          lastVector = vector;
-          pos = vector + (hc & levelMask) * 4;
-          hc >>>= bitsPerLevel;
-          vector = myStorage.getInt(pos);
-          depth++;
-
-          levelMask = LEVEL_MASK;
-          bitsPerLevel = BITS_PER_LEVEL;
-        }
-        while (vector > 0);
-
-        if (vector == 0) {
-          // Empty slot
-          if (onlyCheckForExisting) {
-            return NULL_ID;
-          }
-          final int newId = writeData(value, valueHC);
-          myStorage.putInt(pos, -newId);
-          return newId;
-        }
-        else {
-          int collision = -vector;
-          boolean splitVector = false;
-          int candidateHC;
-          do {
-            candidateHC = hashCodeOf(collision);
-            if (candidateHC != valueHC) {
-              splitVector = true;
-              break;
-            }
-
-            Data candidate = valueOf(collision);
-            if (myDataDescriptor.isEqual(value, candidate)) {
-              return collision;
-            }
-
-            collision = nextCandidate(collision);
-          }
-          while (collision != 0);
-
-          if (onlyCheckForExisting) {
-            return NULL_ID;
-          }
-
-          final int newId = writeData(value, valueHC);
-
-          if (splitVector) {
-            depth--;
-            do {
-              final int valueHCByte = hcByte(valueHC, depth);
-              final int oldHCByte = hcByte(candidateHC, depth);
-              if (valueHCByte == oldHCByte) {
-                int newVector = allocVector(EMPTY_VECTOR);
-                myStorage.putInt(lastVector + oldHCByte * 4L, newVector);
-                lastVector = newVector;
-              }
-              else {
-                myStorage.putInt(lastVector + valueHCByte * 4L, -newId);
-                myStorage.putInt(lastVector + oldHCByte * 4L, vector);
-                break;
-              }
-              depth++;
-            }
-            while (true);
-          }
-          else {
-            // Hashcode collision detected. Insert new string into the list of colliding.
-            myStorage.putInt(newId, vector);
-            myStorage.putInt(pos, -newId);
-          }
-          return newId;
-        }
-      }
-      finally {
-        if (onlyCheckForExisting) {
-          unlockStorageWrite();
-        }
-        else {
-          unlockStorageWrite();
-        }
-      }
-    }
+  public void force() {
+    myEnumerator.force();
   }
 
   @Override
-  protected int writeData(final Data value, int hashCode) {
-    int id = super.writeData(value, hashCode);
-    ++valuesCount;
-
-    if (IOStatistics.DEBUG && (valuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
-      IOStatistics.dump("Index " + myFile + ", values " + valuesCount + ", storage size:" + myStorage.length());
-    }
-    return id;
-  }
-
-  private static int hcByte(int hashcode, int byteN) {
-    if (byteN == 0) {
-      return hashcode & FIRST_LEVEL_MASK;
-    }
-
-    hashcode >>>= BITS_PER_FIRST_LEVEL;
-    byteN--;
-
-    return (hashcode >>> (byteN * BITS_PER_LEVEL)) & LEVEL_MASK;
-  }
-
-  private int allocVector(final byte @NotNull [] empty) {
-    final int pos = (int)myStorage.length();
-    myStorage.put(pos, empty, 0, empty.length);
-    return pos;
-  }
-
-  private int nextCandidate(final int idx) {
-    return -myStorage.getInt(idx);
-  }
-
-  private int hashCodeOf(int idx) {
-    return myStorage.getInt(idx + KEY_HASHCODE_OFFSET);
+  public Data valueOf(int id) throws IOException {
+    return myEnumerator.valueOf(id);
   }
 
   @Override
-  protected int indexToAddr(int idx) {
-    return myStorage.getInt(idx + KEY_REF_OFFSET);
+  public int enumerate(Data name) throws IOException {
+    return myEnumerator.enumerate(name);
   }
 
-  private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumerator<?>> {
-    private final ThreadLocal<byte[]> myBuffer = ThreadLocal.withInitial(() -> new byte[RECORD_SIZE]);
+  @Override
+  public int tryEnumerate(Data name) throws IOException {
+    return myEnumerator.tryEnumerate(name);
+  }
 
-    @Override
-    protected int recordWriteOffset(@NotNull PersistentEnumerator<?> enumerator, byte[] buf) {
-      return (int)enumerator.myStorage.length();
-    }
-
-    @Override
-    byte @NotNull [] getRecordBuffer(PersistentEnumerator<?> t) {
-      return myBuffer.get();
-    }
-
-    @Override
-    void setupRecord(PersistentEnumerator<?> enumerator, int hashCode, int dataOffset, byte[] buf) {
-      Bits.putInt(buf, COLLISION_OFFSET, 0);
-      Bits.putInt(buf, KEY_HASHCODE_OFFSET, hashCode);
-      Bits.putInt(buf, KEY_REF_OFFSET, dataOffset);
-    }
+  @ApiStatus.Internal
+  public Collection<Data> getAllDataObjects(@Nullable final PersistentEnumeratorBase.DataFilter filter) throws IOException {
+    return myEnumerator.getAllDataObjects(filter);
   }
 }

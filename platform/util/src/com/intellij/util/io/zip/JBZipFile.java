@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -202,7 +201,7 @@ public class JBZipFile implements Closeable {
     if (myOutputStream != null) {
       if (entries.isEmpty()) {
         JBZipEntry empty = getOrCreateEntry("/empty.file.marker");
-        myOutputStream.putNextEntryBytes(empty, "empty".getBytes(CharsetToolkit.US_ASCII_CHARSET));
+        myOutputStream.putNextEntryBytes(empty, "empty".getBytes(StandardCharsets.US_ASCII));
       }
 
       myOutputStream.finish();

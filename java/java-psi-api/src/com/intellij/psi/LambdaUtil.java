@@ -741,9 +741,9 @@ public final class LambdaUtil {
         break;
       }
 
-      final PsiCall psiCall = PsiTreeUtil.getParentOfType(parent, PsiCall.class, false, PsiMember.class, PsiVariable.class,
+      final PsiCall psiCall = PsiTreeUtil.getParentOfType(parent, PsiCall.class, false, PsiVariable.class, PsiMethod.class,
                                                           PsiAssignmentExpression.class, PsiTypeCastExpression.class);
-      if (psiCall == null) {
+      if (psiCall == null || !PsiTreeUtil.isAncestor(psiCall.getArgumentList(), parent, false)) {
         break;
       }
       if (MethodCandidateInfo.isOverloadCheck(psiCall.getArgumentList()) ||

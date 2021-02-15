@@ -3,20 +3,29 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Registers {@link DomFileDescription}.
  */
-public class DomFileMetaData extends AbstractExtensionPointBean {
-  static final ExtensionPointName<DomFileMetaData> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileMetaData");
+public final class DomFileMetaData implements PluginAware {
+  static final ExtensionPointName<DomFileMetaData> EP_NAME = new ExtensionPointName<>("com.intellij.dom.fileMetaData");
+
+  private transient PluginDescriptor pluginDescriptor;
+
+  @Override
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
+  }
 
   /**
    * A {@link DomFileDescription} inheritor.
@@ -65,29 +74,32 @@ public class DomFileMetaData extends AbstractExtensionPointBean {
   // synchronized under DomApplicationComponent lock
   DomFileDescription<?> getDescription() {
     DomFileDescription<?> instance = lazyInstance;
-    if (instance == null) {
-      try {
-        instance = instantiate(findExtensionClass(implementation), ApplicationManager.getApplication().getPicoContainer());
-        if (StringUtil.isEmpty(rootTagName)) {
-          if (!instance.acceptsOtherRootTagNames()) {
-            throw new PluginException(
-              implementation + " should either specify 'rootTagName' in XML, or return true from 'acceptsOtherRootTagNames'",
-              getPluginId());
-          }
-        }
-        else if (!rootTagName.equals(instance.getRootTagName())) {
-          throw new PluginException(implementation + " XML declaration should have '" + instance.getRootTagName() + "' for 'rootTagName'",
-                                    getPluginId());
-        }
-        DomApplicationComponent.getInstance().initDescription(instance);
-        lazyInstance = instance;
+    if (instance != null) {
+      return instance;
+    }
+
+    instance = ApplicationManager.getApplication().instantiateClass(implementation, pluginDescriptor);
+    if (Strings.isEmpty(rootTagName)) {
+      if (!instance.acceptsOtherRootTagNames()) {
+        throw new PluginException(
+          implementation + " should either specify 'rootTagName' in XML, or return true from 'acceptsOtherRootTagNames'",
+          pluginDescriptor.getPluginId());
       }
-      catch (ProcessCanceledException | PluginException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new PluginException(e, getPluginId());
-      }
+    }
+    else if (!rootTagName.equals(instance.getRootTagName())) {
+      throw new PluginException(implementation + " XML declaration should have '" + instance.getRootTagName() + "' for 'rootTagName'",
+                                pluginDescriptor.getPluginId());
+    }
+
+    try {
+      DomApplicationComponent.getInstance().initDescription(instance);
+      lazyInstance = instance;
+    }
+    catch (ProcessCanceledException | PluginException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new PluginException(e, pluginDescriptor.getPluginId());
     }
     return instance;
   }

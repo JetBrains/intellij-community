@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -10,6 +10,7 @@ import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
@@ -29,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
@@ -106,21 +106,25 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiType getTypeGroovy() {
-    PsiType type = TypeInferenceHelper.inTopContext(() -> GroovyPsiManager.getInstance(getProject()).getType(this, field -> {
-      if (getDeclaredType() == null && getInitializerGroovy() == null) {
-        final PsiType type1 = GrVariableEnhancer.getEnhancedType(field);
-        if (type1 != null) {
-          return type1;
-        }
-      }
-      return null;
-    }));
-
+    PsiType type = TypeInferenceHelper.inTopContext(() -> getEnhancedType());
     if (type != null) {
       return type;
     }
-
     return TypeInferenceHelper.inTopContext(() -> super.getTypeGroovy());
+  }
+
+  private @Nullable PsiType getEnhancedType() {
+    return CachedValuesManager.getProjectPsiDependentCache(this, GrFieldImpl::doGetEnhancedType);
+  }
+
+  private static @Nullable PsiType doGetEnhancedType(@NotNull GrFieldImpl field) {
+    if (field.getDeclaredType() == null && field.getInitializerGroovy() == null) {
+      final PsiType type1 = GrVariableEnhancer.getEnhancedType(field);
+      if (type1 != null) {
+        return type1;
+      }
+    }
+    return null;
   }
 
   @Override

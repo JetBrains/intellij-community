@@ -13,6 +13,8 @@ class SimpleDiffVirtualFile(val request: DiffRequest) : DiffVirtualFile(DiffBund
 
   override fun createProcessor(project: Project): DiffRequestProcessor = MyDiffRequestProcessor(project, request)
 
+  override fun toString(): String = "${super.toString()}:$request"
+
   private class MyDiffRequestProcessor(
     project: Project?,
     val request: DiffRequest

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.CommonClassNames;
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.typing.EmptyListLiteralType;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SET;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.resolvesTo;
 import static org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.ASSIGNMENT;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
+import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCompileStatic;
 
 /**
  * @author Maxim.Medvedev

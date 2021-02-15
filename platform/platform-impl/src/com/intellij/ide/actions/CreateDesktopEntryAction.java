@@ -41,7 +41,7 @@ import java.util.Map;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
-public class CreateDesktopEntryAction extends DumbAwareAction {
+public final class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
   public static boolean isAvailable() {

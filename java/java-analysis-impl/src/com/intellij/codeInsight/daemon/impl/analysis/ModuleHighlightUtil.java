@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.search.FilenameIndex;
@@ -29,8 +29,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -39,9 +37,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.openapi.module.ModuleUtilCore.findModuleForFile;
-import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 final class ModuleHighlightUtil {
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
@@ -78,7 +73,7 @@ final class ModuleHighlightUtil {
   }
 
   static HighlightInfo checkFileDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    Module module = findModuleForFile(file);
+    Module module = ModuleUtilCore.findModuleForFile(file);
     if (module != null) {
       Project project = file.getProject();
       Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope());
@@ -111,7 +106,7 @@ final class ModuleHighlightUtil {
                                                                   @NotNull Function<? super T, String> ref,
                                                                   @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
                                                                   @NotNull List<? super HighlightInfo> results) {
-    Set<String> filter = new THashSet<>();
+    Set<String> filter = new HashSet<>();
     for (T statement : statements) {
       String refText = ref.apply(statement);
       if (refText != null && !filter.add(refText)) {
@@ -126,9 +121,9 @@ final class ModuleHighlightUtil {
 
   @NotNull
   static List<HighlightInfo> checkUnusedServices(@NotNull PsiJavaModule module, @NotNull PsiFile file) {
-    List<HighlightInfo> results = new SmartList<>();
+    List<HighlightInfo> results = new ArrayList<>();
 
-    Module host = findModuleForFile(file);
+    Module host = ModuleUtilCore.findModuleForFile(file);
     if (host != null) {
       List<PsiProvidesStatement> provides = JBIterable.from(module.getProvides()).toList();
       if (!provides.isEmpty()) {
@@ -138,7 +133,7 @@ final class ModuleHighlightUtil {
           PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
           if (ref != null) {
             PsiElement target = ref.resolve();
-            if (target instanceof PsiClass && findModuleForFile(target.getContainingFile()) == host) {
+            if (target instanceof PsiClass && ModuleUtilCore.findModuleForFile(target.getContainingFile()) == host) {
               String className = qName(ref);
               String packageName = StringUtil.getPackageName(className);
               if (!exports.contains(packageName) && !uses.contains(className)) {
@@ -235,7 +230,7 @@ final class ModuleHighlightUtil {
   static HighlightInfo checkPackageReference(@NotNull PsiPackageAccessibilityStatement statement, @NotNull PsiFile file) {
     PsiJavaCodeReferenceElement refElement = statement.getPackageReference();
     if (refElement != null) {
-      Module module = findModuleForFile(file);
+      Module module = ModuleUtilCore.findModuleForFile(file);
       if (module != null) {
         PsiElement target = refElement.resolve();
         PsiDirectory[] directories = PsiDirectory.EMPTY_ARRAY;
@@ -266,7 +261,7 @@ final class ModuleHighlightUtil {
 
   private static boolean isPackageEmpty(PsiDirectory @NotNull [] directories, @NotNull String packageName, boolean anyFile) {
     if (anyFile) {
-      return Arrays.stream(directories).noneMatch(dir -> dir.getFiles().length > 0);
+      return !ContainerUtil.exists(directories, dir -> dir.getFiles().length > 0);
     }
     else {
       return PsiUtil.isPackageEmpty(directories, packageName);
@@ -277,7 +272,7 @@ final class ModuleHighlightUtil {
   static List<HighlightInfo> checkPackageAccessTargets(@NotNull PsiPackageAccessibilityStatement statement) {
     List<HighlightInfo> results = new SmartList<>();
 
-    Set<String> targets = new THashSet<>();
+    Set<String> targets = new HashSet<>();
     for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
       String refText = refElement.getReferenceText();
       PsiJavaModuleReference ref = refElement.getReference();
@@ -322,7 +317,7 @@ final class ModuleHighlightUtil {
     PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
     PsiElement intTarget = intRef != null ? intRef.resolve() : null;
 
-    Set<String> filter = new THashSet<>();
+    Set<String> filter = new HashSet<>();
     for (PsiJavaCodeReferenceElement implRef : implRefList.getReferenceElements()) {
       String refText = implRef.getQualifiedName();
       if (!filter.add(refText)) {
@@ -338,7 +333,7 @@ final class ModuleHighlightUtil {
       if (implTarget instanceof PsiClass) {
         PsiClass implClass = (PsiClass)implTarget;
 
-        if (findModuleForFile(file) != findModuleForFile(implClass.getContainingFile())) {
+        if (ModuleUtilCore.findModuleForFile(file) != ModuleUtilCore.findModuleForFile(implClass.getContainingFile())) {
           String message = JavaErrorBundle.message("module.service.alien");
           results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
         }
@@ -393,7 +388,7 @@ final class ModuleHighlightUtil {
   static List<HighlightInfo> checkModifiers(@NotNull PsiRequiresStatement statement) {
     PsiModifierList modList = statement.getModifierList();
     if (modList != null && PsiJavaModule.JAVA_BASE.equals(statement.getModuleName())) {
-      return psiTraverser().children(modList)
+      return SyntaxTraverser.psiTraverser().children(modList)
           .filter(PsiKeyword.class)
           .map(keyword -> {
             @PsiModifier.ModifierConstant String modifier = keyword.getText();
@@ -425,41 +420,5 @@ final class ModuleHighlightUtil {
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
     QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(refElement, QuickFixBundle.message("delete.reference.fix.text")));
     return info;
-  }
-
-  @Nullable
-  public static HighlightInfo checkModulePreviewFeatureAnnotation(@Nullable final PsiStatement statement,
-                                                                  @NotNull final LanguageLevel level) {
-    if (statement instanceof PsiRequiresStatement) {
-      final PsiRequiresStatement requiresStatement = (PsiRequiresStatement)statement;
-      final PsiJavaModule module = requiresStatement.resolve();
-
-      return HighlightUtil.checkPreviewFeatureElement(statement, module, level);
-    }
-    else if (statement instanceof PsiPackageAccessibilityStatement) {
-      final PsiPackageAccessibilityStatement accessibilityStatement = (PsiPackageAccessibilityStatement)statement;
-      final PsiJavaCodeReferenceElement reference = accessibilityStatement.getPackageReference();
-      if (reference == null) return null;
-
-      final PsiElement resolve = reference.resolve();
-      if (!(resolve instanceof PsiPackage)) return null;
-
-      final PsiPackage psiPackage = (PsiPackage)resolve;
-      return HighlightUtil.checkPreviewFeatureElement(statement, psiPackage, level);
-    }
-    else if (statement instanceof PsiProvidesStatement) {
-      final PsiProvidesStatement providesStatement = (PsiProvidesStatement)statement;
-      final PsiReferenceList list = providesStatement.getImplementationList();
-      if (list == null) return null;
-
-      return StreamEx.of(list.getReferenceElements())
-        .map(PsiReference::resolve)
-        .select(PsiClass.class)
-        .map(clazz -> HighlightUtil.checkPreviewFeatureElement(statement, clazz, level))
-        .nonNull()
-        .findAny()
-        .orElse(null);
-    }
-    return null;
   }
 }

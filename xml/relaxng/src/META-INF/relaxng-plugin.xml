@@ -27,7 +27,7 @@
     <include.provider implementation="org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeProvider"/>
 
     <externalAnnotator language="XML" implementationClass="org.intellij.plugins.relaxNG.validation.RngSchemaValidator" />
-    <lang.documentationProvider language="XML" implementationClass="org.intellij.plugins.relaxNG.RngDocumentationProvider" />
+    <lang.documentationProvider language="XML" implementationClass="org.intellij.plugins.relaxNG.RngDocumentationProvider" id="rng" />
     <psi.referenceContributor language="XML" implementation="org.intellij.plugins.relaxNG.RelaxNGReferenceContributor"/>
 
     <dom.fileMetaData implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngChoiceDescription" rootTagName="choice"/>

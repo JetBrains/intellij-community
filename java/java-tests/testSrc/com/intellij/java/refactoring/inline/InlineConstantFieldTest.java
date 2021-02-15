@@ -88,11 +88,11 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
   }
 
   public void testFieldInitializedWithParameter() {
-    doTestConflict("Field initializer refers to parameter <b><code>a</code></b> which is not accessible in method <b><code>Test.test()</code></b>");
+    doTestConflict("Field initializer refers to parameter <b><code>a</code></b>, which is not accessible in method <b><code>Test.test()</code></b>");
   }
 
   public void testFieldInitializedLocalClass() {
-    doTestConflict("Field initializer refers to class <b><code>Local</code></b> which is not accessible in method <b><code>Test.test()</code></b>");
+    doTestConflict("Field initializer refers to class <b><code>Local</code></b>, which is not accessible in method <b><code>Test.test()</code></b>");
   }
 
   public void testFieldInitializedWithParameter1() {

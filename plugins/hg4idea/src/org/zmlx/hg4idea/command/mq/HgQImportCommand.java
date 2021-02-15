@@ -28,6 +28,8 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QIMPORT_ERROR;
+
 public class HgQImportCommand {
 
   @NotNull private final HgRepository myRepository;
@@ -47,7 +49,7 @@ public class HgQImportCommand {
     HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(myRepository.getRoot(), "qimport", arguments);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError("hg.qimport.error",
+        .notifyError(QIMPORT_ERROR,
                      result,
                      HgBundle.message("action.hg4idea.QImport.error"),
                      HgBundle.message("action.hg4idea.QImport.error.msg", startRevisionNumber));

@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -94,11 +96,15 @@ public final class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActio
   }
 
   @Nullable
-  public static CollapseAnnotationsFix from(PsiAnnotation annotation) {
+  public static LocalQuickFixAndIntentionActionOnPsiElement from(PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
     String name = annotation.getQualifiedName();
+    if (owner == null || name == null) return null;
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    if (owner == null || name == null || attributes.length != 1) return null;
+    if (attributes.length == 0) {
+      return QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
+    }
+    if (attributes.length != 1) return null;
     PsiNameValuePair attribute = attributes[0];
     if (attribute.getValue() == null) return null;
     PsiMethod annoMethod = findAttributeMethod(attribute);

@@ -32,6 +32,7 @@ import java.awt.*;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -209,8 +210,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   @Override public int[] getGridCellCoords(RadContainer container, boolean isRow) {
     final FormLayout.LayoutInfo layoutInfo = getFormLayout(container).getLayoutInfo(container.getDelegee());
     int[] origins = isRow ? layoutInfo.rowOrigins : layoutInfo.columnOrigins;
-    int[] result = new int [origins.length-1];
-    System.arraycopy(origins, 0, result, 0, result.length);
+    int[] result = Arrays.copyOf(origins, origins.length-1);
     return result;
   }
 
@@ -611,12 +611,10 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
             // deleted cell is contained in a group with 1 or 2 cells => delete entire group
             newIndices = new int[groupIndices.length-1][];
             for (int newI = 0; newI < i; newI++) {
-              newIndices [newI] = new int[groupIndices [newI].length];
-              System.arraycopy(groupIndices [newI], 0, newIndices [newI], 0, groupIndices [newI].length);
+              newIndices [newI] = groupIndices [newI].clone();
             }
             for(int newI=i+1; newI<groupIndices.length; newI++) {
-              newIndices [newI-1] = new int[groupIndices [newI].length];
-              System.arraycopy(groupIndices [newI], 0, newIndices [newI-1], 0, groupIndices [newI].length);
+              newIndices [newI-1] = groupIndices [newI].clone();
             }
           }
           else {

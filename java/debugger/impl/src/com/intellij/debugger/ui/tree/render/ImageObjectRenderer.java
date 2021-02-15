@@ -17,6 +17,7 @@ import com.sun.jdi.Method;
 import com.sun.jdi.StringReference;
 import com.sun.jdi.Value;
 import org.intellij.images.editor.impl.ImageEditorManagerImpl;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +102,7 @@ final class ImageObjectRenderer extends CompoundRendererProvider {
   }
 
   static abstract class IconPopupEvaluator extends CustomPopupFullValueEvaluator<Icon> {
-    IconPopupEvaluator(@NotNull String linkText, @NotNull EvaluationContextImpl evaluationContext) {
+    IconPopupEvaluator(@NotNull @Nls String linkText, @NotNull EvaluationContextImpl evaluationContext) {
       super(linkText, evaluationContext);
     }
 

@@ -121,6 +121,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
         case ERROR:
           return forToolWindow ? AllIcons.Toolwindows.ErrorEvents : AllIcons.Ide.Notification.ErrorEvents;
         case INFORMATION:
+        case IDE_UPDATE:
           return forToolWindow ? AllIcons.Toolwindows.InfoEvents : AllIcons.Ide.Notification.InfoEvents;
       }
     }
@@ -131,14 +132,15 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   public static NotificationType getMaximumType(List<? extends Notification> notifications) {
     NotificationType result = null;
     for (Notification notification : notifications) {
-      if (NotificationType.ERROR == notification.getType()) {
+      NotificationType type = notification.getType();
+      if (NotificationType.ERROR == type) {
         return NotificationType.ERROR;
       }
 
-      if (NotificationType.WARNING == notification.getType()) {
+      if (NotificationType.WARNING == type) {
         result = NotificationType.WARNING;
       }
-      else if (result == null && NotificationType.INFORMATION == notification.getType()) {
+      else if (result == null && (NotificationType.INFORMATION == type || NotificationType.IDE_UPDATE == type)) {
         result = NotificationType.INFORMATION;
       }
     }

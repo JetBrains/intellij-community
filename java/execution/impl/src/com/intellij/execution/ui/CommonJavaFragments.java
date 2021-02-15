@@ -193,7 +193,8 @@ public final class CommonJavaFragments {
     });
     CommonParameterFragments.setMonospaced(comboBox);
 
-    setMinimumWidth(jrePathEditor, 200);
+    Dimension minimumSize = setMinimumWidth(jrePathEditor, 200);
+    jrePathEditor.setPreferredSize(minimumSize);
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.getComponent().getAccessibleContext().setAccessibleName(jrePathEditor.getLabel().getText());
     SettingsEditorFragment<T, JrePathEditor> jrePath =

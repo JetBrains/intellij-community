@@ -60,30 +60,32 @@ public class UnknownSdkTracker {
   }
 
   @NotNull
-  private Runnable newUpdateTask(@NotNull ShowStatusCallback showStatus,
-                                 @NotNull Predicate<UnknownSdkSnapshot> shouldProcessSnapshot) {
-    return new Runnable() {
+  private UnknownSdkTrackerTask newUpdateTask(@NotNull ShowStatusCallback showStatus,
+                                              @NotNull Predicate<UnknownSdkSnapshot> shouldProcessSnapshot) {
+    return new UnknownSdkTrackerTask() {
+      @Nullable
       @Override
-      public void run() {
+      public UnknownSdkCollector createCollector() {
         if (!isEnabled() || !Registry.is("unknown.sdk.auto")) {
           showStatus.showEmptyStatus();
-          return;
+          return null;
         }
+        return new UnknownSdkCollector(myProject);
+      }
 
-        new UnknownSdkCollector(myProject)
-          .collectSdksPromise(snapshot -> {
-            if (!shouldProcessSnapshot.test(snapshot)) return;
+      @Override
+      public void onLookupCompleted(@NotNull UnknownSdkSnapshot snapshot) {
+        if (!shouldProcessSnapshot.test(snapshot)) return;
 
-            var action = createProcessSdksAction(snapshot, showStatus);
-            if (action == null) return;
+        var action = createProcessSdksAction(snapshot, showStatus);
+        if (action == null) return;
 
-            ProgressManager.getInstance()
-              .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
-                @Override
-                public void run(@NotNull ProgressIndicator indicator) {
-                  action.run(indicator);
-                }
-              });
+        ProgressManager.getInstance()
+          .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              action.run(indicator);
+            }
           });
       }
     };

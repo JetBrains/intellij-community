@@ -1,0 +1,148 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+{
+  parserClass="com.intellij.jsonpath.parser.JsonPathParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="JsonPath"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.intellij.jsonpath.psi"
+  psiImplPackage="com.intellij.jsonpath.psi.impl"
+
+  elementTypeHolderClass="com.intellij.jsonpath.psi.JsonPathTypes"
+  elementTypeClass="com.intellij.jsonpath.psi.JsonPathElementType"
+  tokenTypeClass="com.intellij.jsonpath.psi.JsonPathTokenType"
+}
+
+private root ::= functionCall | (head_ segments_*)
+
+private head_ ::= (rootSegment | evalSegment | idSegment | quotedSegment | wildcardSegment)
+private segments_ ::= dotExpr | scanExpr | dotSegment | quotedSegment
+
+rootSegment ::= ROOT_CONTEXT segmentExpression*
+evalSegment ::= EVAL_CONTEXT segmentExpression*
+
+private dotSegment ::= ((RECURSIVE_DESCENT | DOT) (functionCall | idSegment | wildcardSegment | quotedSegment))
+private dotExpr ::= DOT segmentExpression+
+private scanExpr ::= RECURSIVE_DESCENT segmentExpression+
+
+wildcardSegment ::= WILDCARD segmentExpression* {
+  name="wildcard"
+}
+id ::= IDENTIFIER {
+  name="identifier"
+}
+idSegment ::= id segmentExpression*
+
+quotedSegment ::= LBRACKET quotedPathsList RBRACKET segmentExpression*
+quotedPathsList ::= stringLiteral (COMMA stringLiteral)*
+
+functionCall ::= id LPARENTH functionArgsList? RPARENTH
+functionArgsList ::= expression (COMMA expression)* {
+  name="function arguments"
+}
+
+segmentExpression ::= LBRACKET nestedExpression_ RBRACKET
+
+private nestedExpression_ ::=
+  wildcardSegment |
+  FILTER_OPERATOR (LPARENTH filterExpression RPARENTH)? | // standalone filter operator may be substituted by programmatic filter
+  (LPARENTH indexExpression RPARENTH) | // supported only in some implementations
+  spliceExpression |
+  indexesList
+
+filterExpression ::= expression
+indexExpression ::= expression
+spliceExpression ::=
+  (INTEGER_NUMBER COLON INTEGER_NUMBER) |
+  (INTEGER_NUMBER COLON) |
+  (COLON INTEGER_NUMBER) {
+  name="splice expression"
+}
+indexesList ::= (INTEGER_NUMBER (COMMA INTEGER_NUMBER)*) {
+  name="indexes list"
+}
+
+expression ::=
+  unaryGroup_ |
+  booleanGroup_ |
+  conditionalGroup_ |
+  addGroup_ |
+  mulGroup_ |
+  primaryGroup_ {
+  extraRoot=true
+  name="expression"
+}
+
+private unaryGroup_ ::= unaryNotExpression | unaryMinusExpression
+private conditionalGroup_ ::= conditionalExpression | regexExpression
+private booleanGroup_ ::= andExpression | orExpression
+private addGroup_ ::= plusExpression | minusExpression
+private mulGroup_ ::= multiplyExpression | divideExpression
+private primaryGroup_ ::= literal | pathExpression | parenthesizedExpression
+
+literal ::= nullLiteral | booleanLiteral | numberLiteral | stringLiteral {
+  extends=expression
+  name="literal"
+}
+
+nullLiteral ::= NULL {
+  extends=literal
+}
+booleanLiteral ::= TRUE | FALSE {
+  extends=literal
+}
+numberLiteral ::= DOUBLE_NUMBER | INTEGER_NUMBER {
+  extends=literal
+}
+stringLiteral ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
+  extends=literal
+}
+
+unaryNotExpression ::= NOT_OP expression {
+  extends=expression
+}
+unaryMinusExpression ::= MINUS_OP expression {
+  extends=expression
+}
+
+pathExpression ::= head_ segments_* {
+  extends=expression
+  extraRoot=true
+  name="path expression"
+}
+
+parenthesizedExpression ::= LPARENTH expression RPARENTH {
+  extends=expression
+}
+
+conditionalExpression ::= expression (EQ_OP | NE_OP | GT_OP | LT_OP | GE_OP | LE_OP | IN_OP) expression {
+  extends=expression
+}
+
+regexExpression ::= expression RE_OP regexLiteral {
+  extends=expression
+}
+
+regexLiteral ::= REGEX_STRING {
+  name="regex literal"
+}
+
+plusExpression ::= expression PLUS_OP expression {
+  extends=expression
+}
+minusExpression ::= expression MINUS_OP expression {
+  extends=expression
+}
+multiplyExpression ::= expression MULTIPLY_OP expression {
+  extends=expression
+}
+divideExpression ::= expression DIVIDE_OP expression {
+  extends=expression
+}
+andExpression ::= expression AND_OP expression {
+  extends=expression
+}
+orExpression ::= expression OR_OP expression {
+  extends=expression
+}

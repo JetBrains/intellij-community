@@ -13,12 +13,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
+public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> implements ImplementationClassResolver {
   public BeanExtensionPoint(@NotNull String name,
                             @NotNull String className,
                             @NotNull PluginDescriptor pluginDescriptor,
                             boolean dynamic) {
     super(name, className, pluginDescriptor, null, dynamic);
+  }
+
+  @Override
+  public final @NotNull Class<?> resolveImplementationClass(@NotNull ComponentManager componentManager, @NotNull ExtensionComponentAdapter adapter)
+    throws ClassNotFoundException {
+    return getExtensionClass();
   }
 
   @Override
@@ -37,9 +43,9 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
     Element effectiveElement = !JDOMUtil.isEmpty(extensionElement) ? extensionElement : null;
     // project level extensions requires Project as constructor argument, so, for now constructor injection disabled only for app level
     if (((DefaultPicoContainer)componentManager.getPicoContainer()).getParent() == null) {
-      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
+      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement, this);
     }
-    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement, this);
   }
 
   @Override

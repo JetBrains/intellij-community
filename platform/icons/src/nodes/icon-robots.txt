@@ -1,3 +1,2 @@
 deprecated: treeDownArrow.png; to be removed in IDEA 2021.1 - use AllIcons.General.ArrowDown
 deprecated: treeRightArrow.png; to be removed in IDEA 2021.1 - use AllIcons.General.ArrowRight
-deprecated: jsr45.svg; to be removed in IDEA 2020.2 - use Jsr45debugIcons.Jsr45

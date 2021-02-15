@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.instrumentation;
 
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -7,7 +7,7 @@ import org.jetbrains.org.objectweb.asm.Label;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class FailSafeClassReader extends ClassReader {
+public final class FailSafeClassReader extends ClassReader {
   private static final Label INVALID = new Label();
 
   public FailSafeClassReader(byte[] b) {

@@ -4,7 +4,6 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,13 +113,6 @@ public abstract class AbstractMessage {
 
   void setDevelopersTimestamp(@Nullable Long developersTimestamp) {
     myDevelopersTimestamp = developersTimestamp;
-  }
-
-  /** @deprecated use {@link #getIncludedAttachments()} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public List<Attachment> getAttachments() {
-    return getIncludedAttachments();
   }
 
   protected @Nullable String getAppInfo() {

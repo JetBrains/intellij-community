@@ -93,7 +93,7 @@ final class VfsEventGenerationHelper {
       }
     }
     myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
-    VFileEvent event = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, childName);
+    VFileEvent event = VfsImplUtil.generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
     if (event != null) {
       myEvents.add(event);
     }

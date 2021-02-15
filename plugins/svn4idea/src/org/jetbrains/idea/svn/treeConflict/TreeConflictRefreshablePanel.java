@@ -24,7 +24,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.VcsBackgroundTask;
-import gnu.trove.TLongArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
@@ -49,13 +49,13 @@ import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
 
-public class TreeConflictRefreshablePanel implements Disposable {
+public final class TreeConflictRefreshablePanel implements Disposable {
   private final ConflictedSvnChange myChange;
   private final SvnVcs myVcs;
   private SvnRevisionNumber myCommittedRevision;
   private final FilePath myPath;
   private final CompositeDisposable myChildDisposables = new CompositeDisposable();
-  private final TLongArrayList myRightRevisionsList;
+  private final LongArrayList myRightRevisionsList;
   @NotNull private final JBLoadingPanel myDetailsPanel;
   @NotNull private final BackgroundTaskQueue myQueue;
   private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
@@ -64,7 +64,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     myVcs = SvnVcs.getInstance(project);
     myChange = change;
     myPath = ChangesUtil.getFilePath(myChange);
-    myRightRevisionsList = new TLongArrayList();
+    myRightRevisionsList = new LongArrayList();
 
     myQueue = queue;
     myDetailsPanel = new JBLoadingPanel(new BorderLayout(), this);
@@ -180,7 +180,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   @RequiresEdt
-  protected JPanel dataToPresentation(BeforeAfter<BeforeAfter<ConflictSidePresentation>> data) {
+  private JPanel dataToPresentation(BeforeAfter<BeforeAfter<ConflictSidePresentation>> data) {
     final JPanel wrapper = new JPanel(new BorderLayout());
     final JPanel main = new JPanel(new GridBagLayout());
 
@@ -256,7 +256,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
         FileDocumentManager.getInstance().saveAllDocuments();
         final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<TreeConflictDescription>(
+          new VcsBackgroundTask<>(
             myVcs.getProject(),
             message("progress.title.accepting.theirs.for.path", filePath(paths.myMainPath)),
             PerformInBackgroundOption.ALWAYS_BACKGROUND,
@@ -324,7 +324,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
         FileDocumentManager.getInstance().saveAllDocuments();
         final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<TreeConflictDescription>(
+          new VcsBackgroundTask<>(
             myVcs.getProject(),
             message("progress.title.accepting.yours.for.path", filePath(paths.myMainPath)),
             PerformInBackgroundOption.ALWAYS_BACKGROUND,

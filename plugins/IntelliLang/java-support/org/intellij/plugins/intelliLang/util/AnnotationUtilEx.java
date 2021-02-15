@@ -293,7 +293,7 @@ public final class AnnotationUtilEx {
   }
 
   private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner) {
-    final Set<PsiAnnotation> all = new HashSet<PsiAnnotation>() {
+    final Set<PsiAnnotation> all = new HashSet<>() {
       @Override
       public boolean add(PsiAnnotation o) {
         // don't overwrite "higher level" annotations

@@ -48,7 +48,7 @@ public class StopBackgroundProcessesAction extends DumbAwareAction implements An
     }
 
     final JBList<StopAction.HandlerItem> list = new JBList<>(handlerItems);
-    list.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<StopAction.HandlerItem>() {
+    list.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
       @Nullable
       @Override
       public String getTextFor(StopAction.HandlerItem item) {

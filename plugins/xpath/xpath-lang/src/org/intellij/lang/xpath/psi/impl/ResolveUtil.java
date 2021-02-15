@@ -40,7 +40,7 @@ public final class ResolveUtil {
 
   @Nullable
   public static Collection<XmlFile> getDependencies(XmlFile element) {
-    final CommonProcessors.CollectUniquesProcessor<XmlFile> processor = new CommonProcessors.CollectUniquesProcessor<XmlFile>() {
+    final CommonProcessors.CollectUniquesProcessor<XmlFile> processor = new CommonProcessors.CollectUniquesProcessor<>() {
       @Override
       public boolean process(XmlFile file) {
         if (!getResults().contains(file)) {

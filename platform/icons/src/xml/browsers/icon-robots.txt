@@ -1,6 +1,1 @@
-deprecated: canary16.png; use {@link #Canary}
 deprecated: chrome16.png; use {@link #Chrome}
-deprecated: chromium16.png; use {@link #Chromium}
-deprecated: nwjs16.png; use {@link #Nwjs}
-deprecated: opera16.png; use {@link #Opera}
-deprecated: yandex16.png; use {@link #Yandex}

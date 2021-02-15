@@ -26,6 +26,10 @@
     <completion.contributor language="JSON"
                             implementationClass="com.intellij.internal.statistic.actions.scheme.ValidationRulesCompletionContributor"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint name="statisticsLogGroupActionsProvider"
+                    interface="com.intellij.internal.statistic.toolwindow.StatisticsLogGroupActionsProvider" dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.internal.statistic.actions.scheme.EventsSchemeJsonSchemaProviderFactory"/>
   </extensions>

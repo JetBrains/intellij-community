@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
+import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
@@ -39,6 +40,10 @@ interface GHPRReviewDataProvider {
     : CompletableFuture<GHPullRequestPendingReview>
 
   @RequiresEdt
+  fun createReview(progressIndicator: ProgressIndicator, body: String, line: Int, side: Side, startLine: Int, fileName: String)
+    : CompletableFuture<GHPullRequestReviewThread>
+
+  @RequiresEdt
   fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<String>
 
   @RequiresEdt
@@ -68,6 +73,10 @@ interface GHPRReviewDataProvider {
   @RequiresEdt
   fun updateComment(progressIndicator: ProgressIndicator, commentId: String, newText: String)
     : CompletableFuture<GHPullRequestReviewComment>
+
+  @RequiresEdt
+  fun createThread(progressIndicator: ProgressIndicator, reviewId: String?, body: String, line: Int, side: Side, startLine: Int, fileName: String)
+    : CompletableFuture<GHPullRequestReviewThread>
 
   @RequiresEdt
   fun resolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread>

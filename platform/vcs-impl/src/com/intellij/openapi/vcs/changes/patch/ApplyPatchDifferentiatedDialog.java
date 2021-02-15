@@ -137,7 +137,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         @Nullable ChangeList defaultList,
                                         @Nullable List<ShelvedBinaryFilePatch> binaryShelvedPatches,
                                         @Nullable Collection<Change> preselectedChanges,
-                                        @Nullable String externalCommitMessage,
+                                        @Nullable @NlsSafe String externalCommitMessage,
                                         boolean useProjectRootAsPredefinedBase) {
     super(project, true);
 
@@ -206,9 +206,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.areChangeListsEnabled()) {
-      myChangeListChooser = new ChangeListChooserPanel(project, new NullableConsumer<String>() {
+      myChangeListChooser = new ChangeListChooserPanel(project, new NullableConsumer<>() {
         @Override
-        public void consume(@Nullable String errorMessage) {
+        public void consume(final @Nullable @NlsContexts.DialogMessage String errorMessage) {
           setOKActionEnabled(errorMessage == null && isChangeTreeEnabled());
           setErrorText(errorMessage, myChangeListChooser);
         }
@@ -887,7 +887,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @NotNull
     @Override
     public String getTextFor(VirtualFile value) {
-      return value == null ? VcsBundle.message("patch.apply.select.base.for.a.path.message") : value.getPath();
+      return value == null ? VcsBundle.message("patch.apply.select.base.for.a.path.message")
+                           : value.getPath(); //NON-NLS
     }
   }
 

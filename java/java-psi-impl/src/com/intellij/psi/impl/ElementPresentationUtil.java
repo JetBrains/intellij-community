@@ -115,7 +115,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
     if (!DumbService.getInstance(aClass.getProject()).isDumb()) {
       final PsiManager manager = aClass.getManager();
       final PsiClass javaLangTrowable =
-        JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
+        JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, aClass.getResolveScope());
       final boolean isException = javaLangTrowable != null && InheritanceUtil.isInheritorOrSelf(aClass, javaLangTrowable, true);
       if (isException) {
         return CLASS_KIND_EXCEPTION;

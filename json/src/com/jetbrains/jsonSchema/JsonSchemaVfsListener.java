@@ -68,7 +68,7 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
     @NotNull private final Project myProject;
     private final ZipperUpdater myUpdater;
     @NotNull private final JsonSchemaService myService;
-    private final Set<VirtualFile> myDirtySchemas = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<VirtualFile> myDirtySchemas = ContainerUtil.newConcurrentSet();
     private final Runnable myRunnable;
     private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Json Vfs Updater Executor");
 

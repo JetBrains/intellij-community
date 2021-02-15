@@ -46,8 +46,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean;
@@ -291,7 +289,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
     List<Element> injectionElements = element.getChildren("injection");
     if (!injectionElements.isEmpty()) {
-      final Map<String, LanguageInjectionSupport> supports = new THashMap<>();
+      final Map<String, LanguageInjectionSupport> supports = new HashMap<>();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         supports.put(support.getId(), support);
       }
@@ -329,7 +327,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   private static List<BaseInjection> loadDefaultInjections() {
     final List<Configuration> cfgList = new ArrayList<>();
-    final Set<Object> visited = new THashSet<>();
+    final Set<Object> visited = new HashSet<>();
     for (LanguageInjectionConfigBean configBean : LanguageInjectionSupport.CONFIG_EP_NAME.getExtensionList()) {
       PluginDescriptor descriptor = configBean.getPluginDescriptor();
       final ClassLoader loader = descriptor.getPluginClassLoader();
@@ -544,21 +542,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @NotNull
   public List<BaseInjection> getInjections(final String injectorId) {
     return Collections.unmodifiableList(myInjections.get(injectorId));
-  }
-
-  /**
-   * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, List, List, List)},
-   * and consider passing non-null {@code hostFile} to make undo-redo registered for this file,
-   * especially when {@code psiElementsToRemove} is null (IDEA-109366)
-   * To be removed in IDEA 2020.1
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void replaceInjectionsWithUndo(final Project project,
-                                        final List<? extends BaseInjection> newInjections,
-                                        final List<? extends BaseInjection> originalInjections,
-                                        final List<? extends PsiElement> psiElementsToRemove) {
-    replaceInjectionsWithUndo(project, null, newInjections, originalInjections, psiElementsToRemove);
   }
 
   public void replaceInjectionsWithUndo(Project project,

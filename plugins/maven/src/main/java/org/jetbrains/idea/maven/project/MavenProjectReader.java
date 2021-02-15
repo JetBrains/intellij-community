@@ -51,11 +51,13 @@ public class MavenProjectReader {
                                               VirtualFile file,
                                               MavenExplicitProfiles explicitProfiles,
                                               MavenProjectReaderProjectLocator locator) {
-    Pair<RawModelReadResult, MavenExplicitProfiles> readResult =
-      doReadProjectModel(generalSettings, file, explicitProfiles, new THashSet<>(), locator);
-
     File basedir = getBaseDir(file);
-    MavenModel model = MavenServerManager.getInstance().getConnector(myProject).interpolateAndAlignModel(readResult.first.model, basedir);
+
+    Pair<RawModelReadResult, MavenExplicitProfiles> readResult =
+      doReadProjectModel(generalSettings, basedir, file, explicitProfiles, new THashSet<>(), locator);
+
+
+    MavenModel model = MavenServerManager.getInstance().getConnector(myProject, basedir.getPath()).interpolateAndAlignModel(readResult.first.model, basedir);
 
     Map<String, String> modelMap = new HashMap<>();
     modelMap.put("groupId", model.getMavenId().getGroupId());
@@ -75,6 +77,7 @@ public class MavenProjectReader {
   }
 
   private Pair<RawModelReadResult, MavenExplicitProfiles> doReadProjectModel(MavenGeneralSettings generalSettings,
+                                                                             File projectPomDir,
                                                                              VirtualFile file,
                                                                              MavenExplicitProfiles explicitProfiles,
                                                                              Set<VirtualFile> recursionGuard,
@@ -90,10 +93,10 @@ public class MavenProjectReader {
     Set<String> alwaysOnProfiles = cachedModel.alwaysOnProfiles;
     Collection<MavenProjectProblem> problems = cachedModel.problems;
 
-    model = resolveInheritance(generalSettings, model, file, explicitProfiles, recursionGuard, locator, problems);
+    model = resolveInheritance(generalSettings, model, projectPomDir, file, explicitProfiles, recursionGuard, locator, problems);
     addSettingsProfiles(generalSettings, model, alwaysOnProfiles, problems);
 
-    ProfileApplicationResult applied = applyProfiles(model, getBaseDir(file), explicitProfiles, alwaysOnProfiles);
+    ProfileApplicationResult applied = applyProfiles(model, projectPomDir, getBaseDir(file), explicitProfiles, alwaysOnProfiles);
     model = applied.getModel();
 
     repairModelBody(model);
@@ -409,14 +412,16 @@ public class MavenProjectReader {
   }
 
   private ProfileApplicationResult applyProfiles(MavenModel model,
+                                                 File projectPomDir,
                                                  File basedir,
                                                  MavenExplicitProfiles explicitProfiles,
                                                  Collection<String> alwaysOnProfiles) {
-    return MavenServerManager.getInstance().getConnector(myProject).applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+    return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath()).applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
 
   private MavenModel resolveInheritance(final MavenGeneralSettings generalSettings,
                                         MavenModel model,
+                                        final File projectPomDir,
                                         final VirtualFile file,
                                         final MavenExplicitProfiles explicitProfiles,
                                         final Set<VirtualFile> recursionGuard,
@@ -466,7 +471,7 @@ public class MavenProjectReader {
 
           @Override
           protected Pair<VirtualFile, RawModelReadResult> doProcessParent(VirtualFile parentFile) {
-            RawModelReadResult result = doReadProjectModel(generalSettings, parentFile, explicitProfiles, recursionGuard, locator).first;
+            RawModelReadResult result = doReadProjectModel(generalSettings, projectPomDir, parentFile, explicitProfiles, recursionGuard, locator).first;
             return Pair.create(parentFile, result);
           }
         }.process(generalSettings, file, parentDesc[0]);
@@ -481,7 +486,7 @@ public class MavenProjectReader {
                                                        MavenProjectProblem.ProblemType.PARENT));
       }
 
-      model = MavenServerManager.getInstance().getConnector(myProject).assembleInheritance(model, parentModel);
+      model = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath()).assembleInheritance(model, parentModel);
 
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
       List<MavenProfile> profiles = model.getProfiles();

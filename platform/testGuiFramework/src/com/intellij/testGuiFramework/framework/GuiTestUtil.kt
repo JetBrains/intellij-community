@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework
 
 import com.intellij.diagnostic.MessagePool
@@ -36,7 +36,7 @@ import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher
 import com.intellij.testGuiFramework.util.*
 import com.intellij.ui.KeyStrokeAdapter
-import com.intellij.util.JdkBundle
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil.getFirstItem
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EdtInvocationManager
@@ -72,14 +72,13 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicReferenceArray
-import javax.annotation.Nonnull
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
 object GuiTestUtil {
   const val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
 
-  private val LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTestUtil")
+  private val LOG = Logger.getInstance(GuiTestUtil::class.java)
 
   /**
    * Environment variable pointing to the JDK to be used for tests
@@ -111,10 +110,11 @@ object GuiTestUtil {
 
   val bundledJdkLocation: String
     get() {
-      var jdkBundle = JdkBundle.createBundled()
-      if (jdkBundle == null) jdkBundle = JdkBundle.createBoot()
-      val homeSubPath = if (SystemInfo.isMac) "/Contents/Home" else ""
-      return jdkBundle.location.absolutePath + homeSubPath
+      val bundled = Path.of(PathManager.getBundledRuntimePath())
+      if (Files.isDirectory(bundled)) {
+        return (if (SystemInfo.isMac) bundled.resolve("Contents/Home") else bundled).toString()
+      }
+      return SystemProperties.getJavaHome()
     }
 
   fun failIfIdeHasFatalErrors() {
@@ -628,7 +628,7 @@ object GuiTestUtil {
 
   fun findRadioButton(container: Container?, text: String, timeout: Timeout): RadioButtonFixture {
     val radioButton = waitUntilFound(GuiRobotHolder.robot, container, object : GenericTypeMatcher<JRadioButton>(JRadioButton::class.java) {
-      override fun isMatching(@Nonnull button: JRadioButton): Boolean {
+      override fun isMatching(button: JRadioButton): Boolean {
         return button.text != null && button.text == text && button.isShowing
       }
     }, timeout)
@@ -637,7 +637,7 @@ object GuiTestUtil {
 
   fun findRadioButton(container: Container, text: String): RadioButtonFixture {
     val radioButton = waitUntilFound(GuiRobotHolder.robot, container, object : GenericTypeMatcher<JRadioButton>(JRadioButton::class.java) {
-      override fun isMatching(@Nonnull button: JRadioButton): Boolean {
+      override fun isMatching(button: JRadioButton): Boolean {
         return button.text != null && button.text == text
       }
     }, Timeouts.minutes02)

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Konstantin Bulenkov
  */
-public class SearchEverywhereAction extends SearchEverywhereBaseAction implements CustomComponentAction, DumbAware, DataProvider {
+public class SearchEverywhereAction extends SearchEverywhereBaseAction
+  implements CustomComponentAction, RightAlignedToolbarAction, DumbAware, DataProvider {
 
   public static final Key<ConcurrentHashMap<ClientId, JBPopup>> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 
@@ -45,7 +47,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction implement
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    ActionButton button = new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();
 
@@ -64,6 +66,9 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction implement
         }
       }
     };
+
+    button.setBorder(JBUI.Borders.empty(1, 2));
+    return button;
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtilRt;
@@ -41,7 +42,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
   private final FileAttributes FAKE_ROOT_ATTRIBUTES =
-    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
+    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false,
+                       isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
 
@@ -58,16 +60,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public @Nullable VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return VfsImplUtil.refreshAndFindFileByPath(this, path);
-  }
-
-  @Override
-  public VirtualFile findFileByIoFile(@NotNull File file) {
-    return findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
-  }
-
-  @Override
-  public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
-    return refreshAndFindFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
   }
 
   private static @NotNull String toIoPath(@NotNull VirtualFile file) {
@@ -314,16 +306,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
-    if (!isValidName(file)) {
-      throw new IOException(CoreBundle.message("file.invalid.name.error", file));
+  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
+    if (!isValidName(name)) {
+      throw new IOException(CoreBundle.message("file.invalid.name.error", name));
     }
 
     if (!parent.exists() || !parent.isDirectory()) {
       throw new IOException(IdeBundle.message("vfs.target.not.directory.error", parent.getPath()));
-    }
-    if (parent.findChild(file) != null) {
-      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + file));
     }
 
     File ioParent = convertToIOFile(parent);
@@ -331,16 +320,34 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
 
-    if (!auxCreateFile(parent, file)) {
-      File ioFile = new File(ioParent, file);
-      if (!FileUtil.createIfDoesntExist(ioFile)) {
+    if (!auxCreateFile(parent, name)) {
+      File ioFile = new File(ioParent, name);
+      VirtualFile existing = parent.findChild(name);
+      boolean created = FileUtil.createIfDoesntExist(ioFile);
+      if (!created) {
+        if (existing != null) {
+          throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + name));
+        }
+
         throw new IOException(IdeBundle.message("new.file.failed.error", ioFile.getPath()));
+      }
+      else if (existing != null) {
+        // wow, IO created file successfully although it already existed in VFS. Maybe we got dir case sensitivity wrong?
+        boolean oldCaseSensitive = parent.isCaseSensitive();
+        FileAttributes.CaseSensitivity actualSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
+        if ((actualSensitivity == FileAttributes.CaseSensitivity.SENSITIVE) != oldCaseSensitive) {
+          // we need to update case sensitivity
+          VFilePropertyChangeEvent event = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, actualSensitivity);
+          if (event != null) {
+            RefreshQueue.getInstance().processSingleEvent(false, event);
+          }
+        }
       }
     }
 
-    auxNotifyCompleted(handler -> handler.createFile(parent, file));
+    auxNotifyCompleted(handler -> handler.createFile(parent, name));
 
-    return new FakeVirtualFile(parent, file);
+    return new FakeVirtualFile(parent, name);
   }
 
   @Override
@@ -595,7 +602,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
-    if (file.isCaseSensitive()) {
+    if (file.getParent().isCaseSensitive()) {
       return super.getCanonicallyCasedName(file);
     }
 

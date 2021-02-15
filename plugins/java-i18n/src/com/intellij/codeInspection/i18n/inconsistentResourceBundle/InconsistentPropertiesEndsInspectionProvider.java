@@ -13,13 +13,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
@@ -49,7 +45,7 @@ public final class InconsistentPropertiesEndsInspectionProvider implements Incon
                     RefManager refManager,
                     ProblemDescriptionsProcessor processor) {
     for (PropertiesFile file : files) {
-      final Set<String> filePropertyKeys = new THashSet<>(propertiesFilesNamesMaps.get(file).keySet());
+      final Set<String> filePropertyKeys = new HashSet<>(propertiesFilesNamesMaps.get(file).keySet());
       PropertiesFile parent = parents.get(file);
       while (parent != null) {
         final Collection<String> commonKeys = ContainerUtil.intersection(propertiesFilesNamesMaps.get(parent).keySet(), filePropertyKeys);

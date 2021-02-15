@@ -6,12 +6,9 @@ import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * Used to build and run a live template.
@@ -74,7 +71,7 @@ public abstract class Template implements PresentableLookupValue {
    * 
    * E.g. they might be useful for inplace rename.
    * 
-   * @see com.intellij.codeInsight.template.impl.TemplateState#start(TemplateImpl, PairProcessor, Map) 
+   * @see com.intellij.codeInsight.template.impl.TemplateState#start
    */
   public abstract void setInline(boolean isInline);
 

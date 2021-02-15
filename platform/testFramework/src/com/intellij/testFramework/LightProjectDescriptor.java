@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,8 +132,9 @@ public class LightProjectDescriptor {
         return file.getFileSystem() == srcRoot.getFileSystem() && project.isOpen();
       }
     };
-    FileBasedIndex.getInstance().registerIndexableSet(indexableFileSet, project);
-    Disposer.register(project, () -> FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet));
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    fileBasedIndex.registerIndexableSet(indexableFileSet, project);
+    Disposer.register(project, () -> fileBasedIndex.removeIndexableSet(indexableFileSet));
   }
 
   protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {

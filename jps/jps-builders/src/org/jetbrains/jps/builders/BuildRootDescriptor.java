@@ -17,7 +17,6 @@ package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -42,14 +41,6 @@ public abstract class BuildRootDescriptor {
    * Returns the target to which this source root belongs.
    */
   public abstract BuildTarget<?> getTarget();
-
-  /**
-   * @deprecated override {@link #createFileFilter()} instead
-   */
-  @Deprecated
-  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
-    return null;
-  }
 
   /**
    * Creates the file filter specifying which files under the specified root belong to this build target.

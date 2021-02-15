@@ -52,7 +52,7 @@ final class BindingsCache {
   }
 
   private static @NotNull StateCache<MyState> createCache(final File cacheStoreDirectory) throws IOException {
-    return new StateCache<MyState>(new File(cacheStoreDirectory, BINDINGS_FILE_NAME)) {
+    return new StateCache<>(new File(cacheStoreDirectory, BINDINGS_FILE_NAME)) {
       @Override
       public MyState read(final DataInput stream) throws IOException {
         return new MyState(stream.readLong(), stream.readUTF());

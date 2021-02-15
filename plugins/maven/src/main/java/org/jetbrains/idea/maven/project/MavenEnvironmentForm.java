@@ -115,6 +115,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     mavenHomeField.setHistorySize(-1);
     final ArrayList<String> foundMavenHomes = new ArrayList<>();
     foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_3);
+    foundMavenHomes.add(MavenServerManager.WRAPPED_MAVEN);
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
     final File bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3);
     if (mavenHomeDirectory != null && ! FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
@@ -154,6 +155,9 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     if (MavenServerManager.BUNDLED_MAVEN_3.equals(mavenHome)) {
       text = MavenProjectBundle.message("maven.bundled.version.title");
     }
+    if (MavenServerManager.WRAPPED_MAVEN.equals(mavenHome)) {
+      text = MavenProjectBundle.message("maven.wrapper.version.title");
+    }
     mavenHomeField.setText(text);
     mavenHomeField.addCurrentTextToHistory();
     updateMavenVersionLabel();
@@ -172,7 +176,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
 
   @Nullable
   private static String resolveMavenHome(@Nullable String mavenHome) {
-    if (StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome)) {
+    if (StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome) || StringUtil.equals(MavenServerManager.WRAPPED_MAVEN, mavenHome)) {
       return mavenHome;
     }
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(mavenHome);
@@ -185,7 +189,10 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     String versionText = null;
     if (version != null) {
       versionText = MavenProjectBundle.message("label.invalid.maven.home.version", version);
-    } else if (localTarget) {
+    } else if (StringUtil.equals(MavenProjectBundle.message("maven.wrapper.version.title"), mavenHomeField.getText())) {
+      versionText = MavenProjectBundle.message("maven.wrapper.version.label", version);
+    }
+    else if(localTarget) {
       versionText = MavenProjectBundle.message("label.invalid.maven.home.directory");
     }
     mavenVersionLabelComponent.getComponent().setText(StringUtil.notNullize(versionText));

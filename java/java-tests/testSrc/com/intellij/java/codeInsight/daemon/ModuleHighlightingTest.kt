@@ -224,7 +224,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     fixes("module M { exports <caret>pkg.missing; }", arrayOf("CreateClassInPackageInModuleFix"))
     fixes("module M { exports <caret>pkg.m3; }", arrayOf())
     fixes("module M { uses pkg.m3.<caret>C3; }", arrayOf("AddModuleDependencyFix"))
-    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiresDirectiveFix", "PackageSearchQuickFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiresDirectiveFix"))
 
     addFile("module-info.java", "module M { requires M6; }")
     addFile("pkg/main/Util.java", "package pkg.main;\nclass Util {\n static <T> void sink(T t) { }\n}")
@@ -233,7 +233,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     addFile("module-info.java", "module M2 { }", M2)
     fixes("module M { requires M2; uses <caret>pkg.m2.C2; }", arrayOf("AddExportsDirectiveFix"))
-    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddExportsDirectiveFix", "PackageSearchQuickFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddExportsDirectiveFix"))
 
     addFile("pkg/main/S.java", "package pkg.main;\npublic class S { }")
     fixes("module M { provides pkg.main.<caret>S with pkg.main.S; }", arrayOf("AddExportsDirectiveFix", "AddUsesDirectiveFix"))
@@ -257,10 +257,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
     addFile("module-info.java", "module M6 { requires transitive M7; exports pkg.m6.inner; }", M6)
     addFile("pkg/sub/C6X.java", "package pkg.sub;\npublic class C6X { }", M6)
-
     addFile("pkg/m6/C6_1.java", "package pkg.m6.inner;\npublic class C6_1 {}", M6)
-    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\nclass C6_2", M6) TODO: uncomment to fail the test
-
+    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\n class C6_2", M6) TODO: uncomment to fail the test
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
 
@@ -496,7 +494,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val available = myFixture.availableIntentions
       .map { IntentionActionDelegate.unwrap(it)::class.java.simpleName }
-      .filter { it != "GutterIntentionAction" }
+      .filter { it != "GutterIntentionAction" && it != "PackageSearchQuickFix" }
     assertThat(available).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>

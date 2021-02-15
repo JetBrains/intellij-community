@@ -1,9 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
-import static git4idea.GitUtil.isUnderGit;
-import static java.util.Arrays.asList;
-
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,14 +21,19 @@ import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GitUpdateEnvironment implements UpdateEnvironment {
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+import static git4idea.GitUtil.isUnderGit;
+import static java.util.Arrays.asList;
+
+@Service(Service.Level.PROJECT)
+public final class GitUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
 
   public GitUpdateEnvironment(@NotNull Project project) {

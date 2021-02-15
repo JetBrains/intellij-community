@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.light.LightTypeElement;
@@ -28,7 +28,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -391,7 +390,7 @@ public final class GenerateMembersUtil {
         final PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiTypeParameter) {
           final PsiType type = factory.createType((PsiTypeParameter)resolve);
-          replacementMap.put(reference, factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, type, sourceMethod)));
+          replacementMap.put(reference, factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, type, sourceMethod, null)));
         }
       }
     });
@@ -423,7 +422,7 @@ public final class GenerateMembersUtil {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
-      final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope());
+      final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope(), parameter.getModifierList());
       String paramName = parameter.getName();
       boolean isBaseNameGenerated = true;
       final boolean isSubstituted = substituted.equals(parameterType);
@@ -461,7 +460,7 @@ public final class GenerateMembersUtil {
                                        @NotNull PsiMethod sourceMethod,
                                        @NotNull List<? extends PsiClassType> thrownTypes) {
     for (PsiClassType thrownType : thrownTypes) {
-      targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, sourceMethod)));
+      targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, sourceMethod, null)));
     }
   }
 
@@ -501,7 +500,7 @@ public final class GenerateMembersUtil {
     if (returnTypeElement == null || returnType == null) {
       return;
     }
-    final PsiType substitutedReturnType = substituteType(substitutor, returnType, method);
+    final PsiType substitutedReturnType = substituteType(substitutor, returnType, method, method.getModifierList());
 
     returnTypeElement.replace(new LightTypeElement(manager, substitutedReturnType instanceof PsiWildcardType ? TypeConversionUtil.erasure(substitutedReturnType) : substitutedReturnType));
   }
@@ -520,11 +519,11 @@ public final class GenerateMembersUtil {
            NameUtil.getSuggestionsByName(typeName, "", "", false, false, parameterType instanceof PsiArrayType).contains(paramName);
   }
 
-  private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type, @NotNull PsiTypeParameterListOwner owner) {
-    if (PsiUtil.isRawSubstitutor(owner, substitutor)) {
-      return TypeConversionUtil.erasure(type);
-    }
-    return GenericsUtil.eliminateWildcards(substitutor.substitute(type), false, true);
+  private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type, @NotNull PsiTypeParameterListOwner owner, PsiModifierList modifierList) {
+    PsiType substitutedType = PsiUtil.isRawSubstitutor(owner, substitutor)
+                    ? TypeConversionUtil.erasure(type)
+                    : GenericsUtil.eliminateWildcards(substitutor.substitute(type), false, true);
+    return substitutedType != null ? AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(modifierList, substitutedType) : null;
   }
 
   public static boolean isChildInRange(PsiElement child, PsiElement first, PsiElement last) {
@@ -581,15 +580,6 @@ public final class GenerateMembersUtil {
       OverrideImplementUtil.setupMethodBody(method, overridden, containingClass);
     }
     OverrideImplementUtil.annotateOnOverrideImplement(method, base, overridden);
-  }
-
-  /**
-   * @deprecated use {@link #copyOrReplaceModifierList(PsiModifierListOwner, PsiElement, PsiModifierListOwner)}. to be deleted in 2017.2
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017.2")
-  @Deprecated
-  public static void copyOrReplaceModifierList(@NotNull PsiModifierListOwner sourceParam, @NotNull PsiModifierListOwner targetParam) {
-    copyOrReplaceModifierList(sourceParam, null, targetParam);
   }
 
   public static void copyOrReplaceModifierList(@NotNull PsiModifierListOwner sourceParam, @Nullable PsiElement targetClass, @NotNull PsiModifierListOwner targetParam) {
@@ -778,8 +768,7 @@ public final class GenerateMembersUtil {
       if (superMethod != null && superMethod.getContainingClass() != targetClass && PsiUtil.isAccessible(superMethod, targetClass, null)) {
         OverrideImplementUtil.annotateOnOverrideImplement(generated, targetClass, superMethod, true);
       }
-      if (JavaPsiRecordUtil.getRecordComponentForAccessor(generated) != null &&
-          PsiUtil.getLanguageLevel(targetClass) != LanguageLevel.JDK_14_PREVIEW) {
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor(generated) != null) {
         AddAnnotationPsiFix
           .addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_LANG_OVERRIDE, PsiNameValuePair.EMPTY_ARRAY, generated.getModifierList());
       }

@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -16,7 +15,6 @@ import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -36,14 +34,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   AbstractConstructorClassProcessor(@NotNull String supportedAnnotationClass,
                                     @NotNull Class<? extends PsiElement> supportedClass) {
     super(supportedClass, supportedAnnotationClass);
-  }
-
-  @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    return nameHint == null ||
-           nameHint.equals(getConstructorName(psiClass)) ||
-           nameHint.equals(getStaticConstructorName(psiAnnotation));
   }
 
   @Override
@@ -218,7 +208,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       final PsiModifierList modifierList = psiField.getModifierList();
       if (null != modifierList) {
         final boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
-        final boolean isNonNull = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, ArrayUtil.toStringArray(LombokUtils.NONNULL_ANNOTATIONS));
+        final boolean isNonNull = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokUtils.NON_NULL_PATTERN);
         // accept initialized final or nonnull fields
         if ((isFinal || isNonNull) && !psiField.hasInitializer()) {
           result.add(psiField);
@@ -317,18 +307,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       }
     }
 
-    copyOnXAnnotations(psiAnnotation, constructorBuilder.getModifierList(), "onConstructor");
+    constructorBuilder.withAnnotations(LombokProcessorUtil.getOnX(psiAnnotation, "onConstructor"));
 
     if (!useJavaDefaults) {
       final Iterator<String> fieldNameIterator = fieldNames.iterator();
       final Iterator<PsiField> fieldIterator = params.iterator();
       while (fieldNameIterator.hasNext() && fieldIterator.hasNext()) {
-        final String parameterName = fieldNameIterator.next();
-        final PsiField parameterField = fieldIterator.next();
-
-        final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterField.getType(), constructorBuilder);
-        constructorBuilder.withParameter(parameter);
-        copyCopyableAnnotations(parameterField, parameter.getModifierList(), LombokUtils.BASE_COPYABLE_ANNOTATIONS);
+        constructorBuilder.withParameter(fieldNameIterator.next(), fieldIterator.next().getType());
       }
     }
 
@@ -368,6 +353,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       for (int index = 0; index < classTypeParameters.length; index++) {
         final PsiTypeParameter classTypeParameter = classTypeParameters[index];
         final LightTypeParameterBuilder methodTypeParameter = createTypeParameter(methodBuilder, index, classTypeParameter);
+
         methodBuilder.withTypeParameter(methodTypeParameter);
 
         substitutor = substitutor.put(classTypeParameter, PsiSubstitutor.EMPTY.substitute(methodTypeParameter));
@@ -380,11 +366,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     if (!useJavaDefaults) {
       for (PsiField param : params) {
-        final String parameterName = StringUtil.notNullize(param.getName());
-        final PsiType parameterType = substitutor.substitute(param.getType());
-        final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterType, methodBuilder);
-        methodBuilder.withParameter(parameter);
-        copyCopyableAnnotations(param, parameter.getModifierList(), LombokUtils.BASE_COPYABLE_ANNOTATIONS);
+        methodBuilder.withParameter(StringUtil.notNullize(param.getName()), substitutor.substitute(param.getType()));
       }
     }
 

@@ -63,12 +63,18 @@ public final class JpsProjectLoader extends JpsLoaderBase {
 
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
+  private final JpsPathMapper myPathMapper;
   private final boolean myLoadUnloadedModules;
 
-  private JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, Path baseDir, boolean loadUnloadedModules) {
+  private JpsProjectLoader(JpsProject project,
+                           Map<String, String> pathVariables,
+                           @NotNull JpsPathMapper pathMapper,
+                           Path baseDir,
+                           boolean loadUnloadedModules) {
     super(createProjectMacroExpander(pathVariables, baseDir));
     myProject = project;
     myPathVariables = pathVariables;
+    myPathMapper = pathMapper;
     myProject.getContainer().setChild(JpsProjectSerializationDataExtensionImpl.ROLE, new JpsProjectSerializationDataExtensionImpl(baseDir));
     myLoadUnloadedModules = loadUnloadedModules;
   }
@@ -80,13 +86,13 @@ public final class JpsProjectLoader extends JpsLoaderBase {
   }
 
   public static void loadProject(JpsProject project, Map<String, String> pathVariables, String projectPath) throws IOException {
-    loadProject(project, pathVariables, projectPath, false);
+    loadProject(project, pathVariables, JpsPathMapper.IDENTITY, projectPath, false);
   }
 
-  public static void loadProject(JpsProject project, Map<String, String> pathVariables, String projectPath, boolean loadUnloadedModules) throws IOException {
+  public static void loadProject(JpsProject project, Map<String, String> pathVariables, @NotNull JpsPathMapper pathMapper, String projectPath, boolean loadUnloadedModules) throws IOException {
     Path file = Paths.get(FileUtil.toCanonicalPath(projectPath));
     if (Files.isRegularFile(file) && projectPath.endsWith(".ipr")) {
-      new JpsProjectLoader(project, pathVariables, file.getParent(), loadUnloadedModules).loadFromIpr(file);
+      new JpsProjectLoader(project, pathVariables, pathMapper, file.getParent(), loadUnloadedModules).loadFromIpr(file);
     }
     else {
       Path dotIdea = file.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
@@ -100,7 +106,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
       else {
         throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
       }
-      new JpsProjectLoader(project, pathVariables, directory.getParent(), loadUnloadedModules).loadFromDirectory(directory);
+      new JpsProjectLoader(project, pathVariables, pathMapper, directory.getParent(), loadUnloadedModules).loadFromDirectory(directory);
     }
   }
 
@@ -293,7 +299,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private void loadProjectLibraries(@Nullable Element libraryTableElement) {
-    JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
+    JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myPathMapper, myProject.getLibraryCollection());
   }
 
   private void loadModules(@Nullable Element componentElement, final @Nullable JpsSdkType<?> projectSdkType, @NotNull Path workspaceFile) {
@@ -322,7 +328,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
       }
     }
 
-    List<JpsModule> modules = loadModules(moduleFiles, projectSdkType, myPathVariables);
+    List<JpsModule> modules = loadModules(moduleFiles, projectSdkType, myPathVariables, myPathMapper);
     for (JpsModule module : modules) {
       myProject.addModule(module);
     }
@@ -338,7 +344,8 @@ public final class JpsProjectLoader extends JpsLoaderBase {
   @NotNull
   public static List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
                                             @Nullable JpsSdkType<?> projectSdkType,
-                                            @NotNull Map<String, String> pathVariables) {
+                                            @NotNull Map<String, String> pathVariables,
+                                            @NotNull JpsPathMapper pathMapper) {
     List<JpsModule> modules = new ArrayList<>();
     List<Future<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();
     Path externalModuleDir = resolveExternalProjectConfig("modules");
@@ -389,7 +396,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
         final Pair<Path, Element> moduleFile = futureModuleFile.get();
         if (moduleFile.getSecond() != null) {
           futures.add(ourThreadPool.submit(
-            () -> loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables)));
+            () -> loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables, pathMapper)));
         }
       }
       for (Future<JpsModule> future : futures) {
@@ -407,7 +414,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
 
   @NotNull
   private static JpsModule loadModule(@NotNull Path file, @NotNull Element moduleRoot, List<String> paths,
-                                      @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables) {
+                                      @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables, @NotNull JpsPathMapper pathMapper) {
     String name = getModuleName(file);
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
@@ -424,7 +431,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     if (classpath == null) {
       try {
         JpsModuleRootModelSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"),
-                                                   projectSdkType);
+                                                   projectSdkType, pathMapper);
       }
       catch (JpsSerializationFormatException e) {
         LOG.warn("Failed to load module configuration from " + file.toString() + ": " + e.getMessage(), e);

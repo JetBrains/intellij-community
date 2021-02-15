@@ -11,6 +11,7 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A method visitor to be used in [UastVisitor].
  */
 interface UMethod : UDeclaration, PsiMethod {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiMethod
 
   override val javaPsi: PsiMethod
@@ -88,6 +89,7 @@ interface UMethod : UDeclaration, PsiMethod {
 }
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiAnnotationMethod
 
   /**

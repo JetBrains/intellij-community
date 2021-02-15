@@ -2,10 +2,7 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -29,10 +26,10 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @NotNull private final Project myProject;
 
-  @NotNull private RunProfile myRunProfile;
+  @NotNull private final RunProfile myRunProfile;
   @NotNull private final Executor myExecutor;
 
-  @NotNull private ExecutionTarget myTarget;
+  @NotNull private final ExecutionTarget myTarget;
   private TargetEnvironmentFactory myTargetEnvironmentFactory;
   private volatile TargetEnvironment myPrepareRemoteEnvironment;
 
@@ -55,6 +52,8 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     myRunnerAndConfigurationSettings = null;
     myExecutor = null;
     myRunner = null;
+    myRunProfile = null;
+    myTarget = null;
   }
 
   public ExecutionEnvironment(@NotNull Executor executor,
@@ -134,7 +133,14 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   public @NotNull TargetEnvironment prepareTargetEnvironment(@NotNull RunProfileState runProfileState,
                                                              TargetEnvironmentAwareRunProfileState.@NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException {
-    TargetEnvironmentFactory factory = getTargetEnvironmentFactory();
+    TargetEnvironmentFactory factory = null;
+    if (runProfileState instanceof TargetEnvironmentAwareRunProfileState &&
+        myRunProfile instanceof TargetEnvironmentAwareRunProfile && ((TargetEnvironmentAwareRunProfile) myRunProfile).getDefaultTargetName() == null) {
+      factory = ((TargetEnvironmentAwareRunProfileState) runProfileState).createCustomTargetEnvironmentFactory();
+    }
+    if (factory == null) {
+      factory = getTargetEnvironmentFactory();
+    }
     TargetEnvironmentRequest request = factory.createRequest();
     if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {
       ((TargetEnvironmentAwareRunProfileState)runProfileState)
@@ -246,13 +252,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     if (myRunnerAndConfigurationSettings != null) {
       return myRunnerAndConfigurationSettings.getName();
     }
-    else if (myRunProfile != null) {
-      return myRunProfile.getName();
-    }
-    else if (myContentToReuse != null) {
-      return myContentToReuse.getDisplayName();
-    }
-    return super.toString();
+    return myRunProfile.getName();
   }
 
   void setDataContext(@NotNull DataContext dataContext) {

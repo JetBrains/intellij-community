@@ -243,11 +243,11 @@ public interface ASTNode extends UserDataHolder {
    * Attaches a copyable user data object to this node. Copyable user data objects are copied
    * when the AST tree nodes are copied.
    *
-   * @param key the key for accessing the user data object.
+   * @param key   the key for accessing the user data object.
    * @param value the user data object to attach.
    * @see #getCopyableUserData(Key)
    */
-  <T> void putCopyableUserData(@NotNull Key<T> key, T value);
+  <T> void putCopyableUserData(@NotNull Key<T> key, @Nullable T value);
 
   /**
    * Returns the first child of the specified node which has the specified type.

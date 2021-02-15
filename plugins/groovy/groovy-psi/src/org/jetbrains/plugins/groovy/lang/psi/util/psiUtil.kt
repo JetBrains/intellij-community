@@ -5,10 +5,13 @@ import com.intellij.lang.jvm.types.JvmArrayType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.GroovyElementFilter
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NULL
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -100,4 +103,16 @@ fun GrExpression.isApplicationExpression(): Boolean {
     is GrIndexProperty -> invokedExpression.isApplicationExpression()
     else -> false
   }
+}
+
+fun PsiElement.isNewLine(): Boolean = node.elementType == GroovyElementTypes.NL
+
+fun PsiElement.isWhiteSpaceOrNewLine(): Boolean = TokenSets.WHITE_SPACES_SET.contains(node.elementType)
+
+fun PsiElement.skipWhiteSpacesAndNewLinesBackward(): PsiElement? = skipWhiteSpacesAndNewLines(PsiElement::getPrevSibling)
+
+fun PsiElement.skipWhiteSpacesAndNewLinesForward(): PsiElement? = skipWhiteSpacesAndNewLines(PsiElement::getNextSibling)
+
+fun PsiElement.skipWhiteSpacesAndNewLines(next: (PsiElement) -> PsiElement?): PsiElement? {
+  return PsiTreeUtil.skipMatching(this, next, PsiElement::isWhiteSpaceOrNewLine)
 }

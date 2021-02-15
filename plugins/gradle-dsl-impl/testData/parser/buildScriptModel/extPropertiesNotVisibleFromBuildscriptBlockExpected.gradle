@@ -1,0 +1,18 @@
+ext {
+  VERSION = '3.2.0'
+}
+
+buildscript {
+  ext {
+    VERSION = '2.1.2'
+  }
+  dependencies {
+    classpath "com.android.tools.build:gradle:$VERSION"
+  }
+}
+
+android {
+  defaultConfig {
+    applicationId VERSION
+  }
+}

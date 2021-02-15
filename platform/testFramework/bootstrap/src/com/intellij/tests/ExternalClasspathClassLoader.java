@@ -2,23 +2,23 @@
 package com.intellij.tests;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public final class ExternalClasspathClassLoader {
-
-  private static List<File> loadFilesPaths(String classpathFilePath) {
+  private static List<Path> loadFilesPaths(String classpathFilePath) {
     try {
-      File file = new File(classpathFilePath);
-      Set<File> roots = new LinkedHashSet<>();
-      try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+      Path file = Paths.get(classpathFilePath);
+      Set<Path> roots = new LinkedHashSet<>();
+      try (BufferedReader reader = Files.newBufferedReader(file)) {
         while (reader.ready()) {
-          roots.add(new File(reader.readLine()));
+          roots.add(Paths.get(reader.readLine()));
         }
       }
       return new ArrayList<>(roots);
@@ -28,14 +28,14 @@ public final class ExternalClasspathClassLoader {
     }
   }
 
-  public static List<File> getRoots() {
-    final String classPathFilePath = System.getProperty("classpath.file");
+  public static List<Path> getRoots() {
+    String classPathFilePath = System.getProperty("classpath.file");
     return classPathFilePath != null ? loadFilesPaths(classPathFilePath) : null;
   }
 
-  public static List<File> getExcludeRoots() {
+  public static List<Path> getExcludeRoots() {
     try {
-      final String classPathFilePath = System.getProperty("exclude.tests.roots.file");
+      String classPathFilePath = System.getProperty("exclude.tests.roots.file");
       return classPathFilePath != null ? loadFilesPaths(classPathFilePath) : null;
     }
     catch (Exception e) {
@@ -44,42 +44,35 @@ public final class ExternalClasspathClassLoader {
   }
 
   public static void install() {
+    List<Path> files = getRoots();
+    if (files == null) {
+      return;
+    }
+
     try {
-      URL[] urls = parseUrls();
-      if (urls != null) {
-        URLClassLoader auxLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
-        Thread.currentThread().setContextClassLoader(auxLoader);
-        Thread.currentThread().setContextClassLoader(loadOptimizedLoader(urls, auxLoader));
-      }
+      URL[] urls = files.stream().map(path -> {
+        try {
+          return path.toUri().toURL();
+        }
+        catch (MalformedURLException e) {
+          throw new RuntimeException(e);
+        }
+      }).toArray(URL[]::new);
+      URLClassLoader auxLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
+      Thread.currentThread().setContextClassLoader(auxLoader);
+      Thread.currentThread().setContextClassLoader(loadOptimizedLoader(files, auxLoader));
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  private static ClassLoader loadOptimizedLoader(Object urls, URLClassLoader auxLoader) throws Exception {
+  private static ClassLoader loadOptimizedLoader(Object files, URLClassLoader auxLoader) throws Exception {
     Object builder = auxLoader.loadClass("com.intellij.util.lang.UrlClassLoader").getMethod("build").invoke(null);
-    builder.getClass().getMethod("urls", URL[].class).invoke(builder, urls);
+    builder.getClass().getMethod("files", List.class).invoke(builder, files);
     builder.getClass().getMethod("useCache").invoke(builder);
-    builder.getClass().getMethod("allowLock").invoke(builder);
     builder.getClass().getMethod("allowBootstrapResources").invoke(builder);
     builder.getClass().getMethod("parent", ClassLoader.class).invoke(builder, auxLoader.getParent());
     return (ClassLoader)builder.getClass().getMethod("get").invoke(builder);
-  }
-
-  private static URL[] parseUrls() {
-    try {
-      List<File> roots = getRoots();
-      if (roots == null) return null;
-
-      URL[] urls = new URL[roots.size()];
-      for (int i = 0; i < urls.length; i++) {
-        urls[i] = roots.get(i).toURI().toURL();
-      }
-      return urls;
-    }
-    catch (MalformedURLException e) {
-      throw new RuntimeException(e);
-    }
   }
 }

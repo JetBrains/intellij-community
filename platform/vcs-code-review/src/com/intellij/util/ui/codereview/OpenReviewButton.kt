@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClickListener
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.EmptyIcon
@@ -17,7 +18,7 @@ import java.awt.event.MouseMotionAdapter
 import javax.swing.JPanel
 
 object OpenReviewButton {
-  fun createOpenReviewButton(tooltip: String): JPanel = JPanel(GridBagLayout()).apply {
+  fun createOpenReviewButton(@NlsContexts.Tooltip tooltip: String? = null): JPanel = JPanel(GridBagLayout()).apply {
     isOpaque = false
     background = JBUI.CurrentTheme.ActionButton.pressedBackground()
     add(InlineIconButton(AllIcons.General.ArrowRight).apply {

@@ -105,7 +105,7 @@ public class ExternalJavaDocAction extends AnAction {
           BrowserUtil.browse(finalUrls.get(0));
         }
         else {
-          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(
             LangBundle.message("popup.title.choose.external.documentation.root"),
             ArrayUtilRt.toStringArray(finalUrls)) {
             @Override

@@ -11,15 +11,14 @@ import java.util.*
  * [com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector.getMetrics]<br/>
  * [com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector.getMetrics]
  *
- * You can either create it manually or with factory methods [com.intellij.internal.statistic.beans.MetricEventFactoryKt]
- *
- * @see newMetric
- * @see newBooleanMetric
- * @see newCounterMetric
+ * To create MetricEvent use one of these methods:
+ * [com.intellij.internal.statistic.eventLog.events.EventId.metric]
+ * [com.intellij.internal.statistic.eventLog.events.EventId1.metric]
+ * [com.intellij.internal.statistic.eventLog.events.EventId2.metric]
+ * [com.intellij.internal.statistic.eventLog.events.VarargEventId.metric]
  */
 @ApiStatus.Internal
-class MetricEvent @JvmOverloads @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 1) constructor(@NonNls val eventId: String,
-                                                                                                      data: FeatureUsageData? = null) {
+class MetricEvent @JvmOverloads constructor(@NonNls val eventId: String, data: FeatureUsageData? = null) {
   val data: FeatureUsageData = data ?: FeatureUsageData()
 
   override fun equals(other: Any?): Boolean {

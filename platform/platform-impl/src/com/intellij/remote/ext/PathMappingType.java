@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote.ext;
 
-import com.intellij.AbstractBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,17 +21,6 @@ public final class PathMappingType {
 
   @Nullable private final Icon myIcon;
   private final @Nullable Supplier<@NlsContexts.Tooltip @Nullable String> myTooltipPointer;
-
-  /**
-   * In order to make inheritors unload-friendly, use {@link #PathMappingType(Icon, Supplier)}
-   *
-   * @see AbstractBundle#getLazyMessage(java.lang.String, java.lang.Object...)
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public PathMappingType(@Nullable Icon icon, @NlsContexts.Tooltip @Nullable String tooltip) {
-    this(icon, tooltip == null ? null : () -> tooltip);
-  }
 
   public PathMappingType(@Nullable Icon icon, @Nullable Supplier<@NlsContexts.Tooltip @Nullable String> tooltipPointer) {
     myIcon = icon;

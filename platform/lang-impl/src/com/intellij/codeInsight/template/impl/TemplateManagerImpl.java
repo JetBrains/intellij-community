@@ -35,8 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public class TemplateManagerImpl extends TemplateManager implements Disposable {
-
+public final class TemplateManagerImpl extends TemplateManager implements Disposable {
   @NotNull
   private final Project myProject;
   private static final Key<Boolean> ourTemplateTesting = Key.create("TemplateTesting");

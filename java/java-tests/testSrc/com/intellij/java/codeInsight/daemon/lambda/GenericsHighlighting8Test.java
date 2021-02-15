@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
@@ -45,6 +46,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new JavacQuirksInspection());
   }
 
   @Override
@@ -619,7 +621,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA55510() {
-    doTest();
+    doTest(true);
   }
 
   public void testIDEA27185(){
@@ -644,7 +646,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA108287() {
-    doTest();
+    doTest(true);
   }
 
   public void testIDEA77128() {

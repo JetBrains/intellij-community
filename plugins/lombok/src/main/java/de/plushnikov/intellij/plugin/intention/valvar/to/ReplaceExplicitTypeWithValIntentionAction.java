@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.intention.valvar.to;
 
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.PsiModifier.FINAL;
 
@@ -13,7 +12,7 @@ public class ReplaceExplicitTypeWithValIntentionAction extends AbstractReplaceEx
   }
 
   @Override
-  protected boolean isAvailableOnDeclarationCustom(@NotNull PsiDeclarationStatement declarationStatement, @NotNull PsiLocalVariable localVariable) {
+  protected boolean isAvailableOnDeclarationCustom(PsiDeclarationStatement declarationStatement, PsiLocalVariable localVariable) {
     return !(declarationStatement.getParent() instanceof PsiForStatement);
   }
 

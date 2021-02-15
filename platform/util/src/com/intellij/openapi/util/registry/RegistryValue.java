@@ -223,7 +223,8 @@ public class RegistryValue {
       String message = "Attempt to load key '" + key + "' for not yet loaded registry";
       // use Disposer.isDebugMode as "we are in internal mode or inside test" flag
       if (Disposer.isDebugMode()) {
-        LOG.warn(message, new Throwable());
+        LOG.warn(message + ". Use system properties instead of registry values to configure behaviour at early startup stages.",
+                 new Throwable());
       }
       else {
         LOG.warn(message);

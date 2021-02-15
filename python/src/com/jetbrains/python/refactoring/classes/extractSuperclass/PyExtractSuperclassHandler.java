@@ -47,7 +47,7 @@ public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
     }
 
     ViewPresenterUtils.linkViewWithPresenterAndLaunch(PyExtractSuperclassPresenter.class, PyExtractSuperclassView.class,
-                                                      new Creator<PyExtractSuperclassView, PyExtractSuperclassPresenter>() {
+                                                      new Creator<>() {
                                                         @NotNull
                                                         @Override
                                                         public PyExtractSuperclassPresenter createPresenter(@NotNull final PyExtractSuperclassView view) {

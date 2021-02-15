@@ -2,17 +2,17 @@
 package com.intellij.util.indexing;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public final class SubstitutedFileType extends LanguageFileType{
+public final class SubstitutedFileType extends LanguageFileType {
   @NotNull private final FileType myOriginalFileType;
   @NotNull private final FileType myFileType;
 
@@ -24,17 +24,22 @@ public final class SubstitutedFileType extends LanguageFileType{
     myFileType = substitutionFileType;
   }
 
+  @Override
+  public @NotNull CharsetHint getCharsetHint() {
+    return myFileType.getCharsetHint();
+  }
+
   @NotNull
   public static FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, @Nullable Project project) {
     if (project == null) {
       return fileType;
     }
     if (fileType instanceof LanguageFileType) {
-      final Language language = ((LanguageFileType)fileType).getLanguage();
-      final Language substitutedLanguage = LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
-      LanguageFileType substFileType;
-      if (!substitutedLanguage.equals(language) && (substFileType = substitutedLanguage.getAssociatedFileType()) != null) {
-        return new SubstitutedFileType(fileType, substFileType, substitutedLanguage);
+      Language substLang = LanguageUtil.getLanguageForPsi(project, file, fileType);
+      LanguageFileType substFileType = substLang != null && substLang != ((LanguageFileType)fileType).getLanguage() ?
+                                       substLang.getAssociatedFileType() : null;
+      if (substFileType != null) {
+        return new SubstitutedFileType(fileType, substFileType, substLang);
       }
     }
 

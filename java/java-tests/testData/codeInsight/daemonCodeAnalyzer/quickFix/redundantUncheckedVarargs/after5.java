@@ -7,6 +7,9 @@ public class Test {
     return null;
   }
 
+  /**
+   * Some javadoc with unchecked word inside
+   */
   void foo() {
     List<ArrayList<String>> list = foo(new ArrayList<String>());
   }

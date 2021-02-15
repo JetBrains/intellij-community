@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,17 +7,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.uast.UastPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.testFramework.TestDataFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.testAssistant.TestDataNavigationHandler;
+import org.jetbrains.idea.devkit.testAssistant.TestFrameworkConstants;
 import org.jetbrains.uast.*;
 
 import java.util.Collections;
 import java.util.List;
 
-public class TestDataFilesReferencesContributor extends PsiReferenceContributor {
+final class TestDataFilesReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -27,7 +27,6 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
         registrar,
         UastPatterns.injectionHostUExpression().inCall(UastPatterns.callExpression()),
         new UastInjectionHostReferenceProvider() {
-          private final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = TestDataFile.class.getCanonicalName();
 
           @Override
           public boolean acceptsTarget(@NotNull PsiElement target) {
@@ -35,14 +34,14 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
           }
 
           @Override
-          public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression expression,
-                                                                        @NotNull PsiLanguageInjectionHost host,
-                                                                        @NotNull ProcessingContext context) {
+          public @NotNull PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression expression,
+                                                                                 @NotNull PsiLanguageInjectionHost host,
+                                                                                 @NotNull ProcessingContext context) {
             UCallExpression call = UastUtils.getUCallExpression(expression);
             if (call == null) return PsiReference.EMPTY_ARRAY;
 
             PsiParameter targetParameter = UastUtils.getParameterForArgument(call, expression);
-            if (targetParameter == null || !targetParameter.hasAnnotation(TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
+            if (targetParameter == null || !targetParameter.hasAnnotation(TestFrameworkConstants.TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
               return PsiReference.EMPTY_ARRAY;
             }
 

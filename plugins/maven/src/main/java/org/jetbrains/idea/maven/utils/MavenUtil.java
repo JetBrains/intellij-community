@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.notification.Notification;
@@ -22,7 +23,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.*;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -53,6 +53,7 @@ import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
 import gnu.trove.THashSet;
+import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -63,7 +64,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
-import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -71,7 +71,10 @@ import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -88,6 +91,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -101,10 +105,11 @@ import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
 
 public class MavenUtil {
+  public static final String INTELLIJ_PLUGIN_ID = "org.jetbrains.idea.maven";
   @ApiStatus.Experimental
-  public static final @NlsSafe String MAVEN_NAME = "Maven";
+  @NonNls public static final String MAVEN_NAME = "Maven";
   @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
-  public static final @NotNull ProjectSystemId SYSTEM_ID = new ProjectSystemId(MAVEN_NAME_UPCASE);
+  public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId(MAVEN_NAME_UPCASE);
   public static final String MAVEN_NOTIFICATION_GROUP = MAVEN_NAME;
   public static final String SETTINGS_XML = "settings.xml";
   public static final String DOT_M2_DIR = ".m2";
@@ -132,20 +137,19 @@ public class MavenUtil {
   public static Map<String, String> getPropertiesFromMavenOpts() {
     Map<String, String> res = ourPropertiesFromMvnOpts;
     if (res == null) {
-      String mavenOpts = System.getenv("MAVEN_OPTS");
-      if (mavenOpts != null) {
-        ParametersList mavenOptsList = new ParametersList();
-        mavenOptsList.addParametersString(mavenOpts);
-        res = mavenOptsList.getProperties();
-      }
-      else {
-        res = Collections.emptyMap();
-      }
-
+      res = parseMavenProperties(System.getenv("MAVEN_OPTS"));
       ourPropertiesFromMvnOpts = res;
     }
-
     return res;
+  }
+
+  public static @NotNull Map<String, String> parseMavenProperties(@Nullable String mavenOpts) {
+    if (mavenOpts != null) {
+      ParametersList mavenOptsList = new ParametersList();
+      mavenOptsList.addParametersString(mavenOpts);
+      return mavenOptsList.getProperties();
+    }
+    return Collections.emptyMap();
   }
 
 
@@ -244,13 +248,6 @@ public class MavenUtil {
   public static void showError(Project project, @NlsContexts.NotificationTitle String title, Throwable e) {
     MavenLog.LOG.warn(title, e);
     Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR), project);
-  }
-
-  public static void showError(Project project,
-                               @NlsContexts.NotificationTitle String title,
-                               @NlsContexts.NotificationContent String message) {
-    MavenLog.LOG.warn(title);
-    Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, message, NotificationType.ERROR), project);
   }
 
   @NotNull
@@ -410,7 +407,7 @@ public class MavenUtil {
     String text = fileTemplate.getText(allProperties);
     Pattern pattern = Pattern.compile("\\$\\{(.*)\\}");
     Matcher matcher = pattern.matcher(text);
-    StringBuffer builder = new StringBuffer();
+    StringBuilder builder = new StringBuilder();
     while (matcher.find()) {
       matcher.appendReplacement(builder, "\\$" + toUpperCase(matcher.group(1)) + "\\$");
     }
@@ -476,7 +473,7 @@ public class MavenUtil {
       @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
-          task.run(new MavenProgressIndicator(i, null));
+          task.run(new MavenProgressIndicator(project, i, null));
         }
         catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
@@ -513,9 +510,9 @@ public class MavenUtil {
                                                  @NotNull final MavenTask task,
                                                  @Nullable("null means application pooled thread")
                                                      ExecutorService executorService) {
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-    final MavenProgressIndicator indicator = new MavenProgressIndicator(manager::getSyncConsole);
+    MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
+    Supplier<MavenSyncConsole> syncConsoleSupplier = manager == null ? null : () -> manager.getSyncConsole();
+    final MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
 
     Runnable runnable = () -> {
       if (project.isDisposed()) return;
@@ -1036,17 +1033,6 @@ public class MavenUtil {
             || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY));
   }
 
-  public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {
-    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, () -> askConfirmation, SYSTEM_ID);
-  }
-
-  public static void restartMavenConnectors(Project project) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      MavenServerManager.getInstance().shutdownServer(project);
-      MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
-    }, SyncBundle.message("maven.sync.restarting"), false, project);
-  }
-
   public interface MavenTaskHandler {
     void waitFor();
   }
@@ -1359,5 +1345,10 @@ public class MavenUtil {
       }
     }
     throw new InvalidSdkException(name);
+  }
+
+  public static File getMavenPluginParentFile() {
+    File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+    return luceneLib.getParentFile().getParentFile().getParentFile();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -17,7 +17,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,7 +165,7 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
 
   @NotNull
   public ArrangementRuleAliasDialog createRuleAliasEditDialog() {
-    final Set<String> tokenIds = new THashSet<>();
+    final Set<String> tokenIds = new HashSet<>();
     final List<ArrangementSectionRule> sections = getSections();
     for (ArrangementSectionRule section : sections) {
       for (StdArrangementMatchRule rule : section.getMatchRules()) {

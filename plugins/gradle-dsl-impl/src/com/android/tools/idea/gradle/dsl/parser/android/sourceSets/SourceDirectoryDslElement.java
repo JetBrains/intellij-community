@@ -31,8 +31,8 @@ import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -50,15 +50,19 @@ public class SourceDirectoryDslElement extends GradleDslBlockElement {
     new PropertiesElementDescription<>("jni", SourceDirectoryDslElement.class, SourceDirectoryDslElement::new);
   public static final PropertiesElementDescription<SourceDirectoryDslElement> JNI_LIBS =
     new PropertiesElementDescription<>("jniLibs", SourceDirectoryDslElement.class, SourceDirectoryDslElement::new);
+  public static final PropertiesElementDescription<SourceDirectoryDslElement> ML_MODELS =
+    new PropertiesElementDescription<>("mlModels", SourceDirectoryDslElement.class, SourceDirectoryDslElement::new);
   public static final PropertiesElementDescription<SourceDirectoryDslElement> RENDERSCRIPT =
     new PropertiesElementDescription<>("renderscript", SourceDirectoryDslElement.class, SourceDirectoryDslElement::new);
   public static final PropertiesElementDescription<SourceDirectoryDslElement> RES =
     new PropertiesElementDescription<>("res", SourceDirectoryDslElement.class, SourceDirectoryDslElement::new);
   public static final PropertiesElementDescription<SourceDirectoryDslElement> RESOURCES =
     new PropertiesElementDescription<>("resources", SourceDirectoryDslElement.class, SourceDirectoryDslElement::new);
+  public static final PropertiesElementDescription<SourceDirectoryDslElement> SHADERS =
+    new PropertiesElementDescription<>("shaders", SourceDirectoryDslElement.class, SourceDirectoryDslElement::new);
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"excludes", property, EXCLUDES, VAL},
     {"exclude", atLeast(0), EXCLUDES, OTHER},
     {"includes", property, INCLUDES, VAL},
@@ -70,7 +74,7 @@ public class SourceDirectoryDslElement extends GradleDslBlockElement {
   }).collect(toModelMap());
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> groovyToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.of(new Object[][]{
     {"excludes", property, EXCLUDES, VAL},
     {"exclude", atLeast(0), EXCLUDES, OTHER},
     {"includes", property, INCLUDES, VAL},
@@ -82,7 +86,7 @@ public class SourceDirectoryDslElement extends GradleDslBlockElement {
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }

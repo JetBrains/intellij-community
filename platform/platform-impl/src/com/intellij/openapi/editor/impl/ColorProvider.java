@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public abstract class ColorProvider {
   /**
    * @return    target {@link Color} object managed by the current holder
    */
+  @NotNull
   public abstract Color getColor();
 
   /**
@@ -44,7 +46,8 @@ public abstract class ColorProvider {
    * @param color   target color to use
    * @return        color holder that uses given color all the time
    */
-  public static ColorProvider byColor(Color color) {
+  @NotNull
+  public static ColorProvider byColor(@NotNull Color color) {
     return new StaticColorHolder(color);
   }
 
@@ -80,12 +83,12 @@ public abstract class ColorProvider {
 
     private final Color myColor;
 
-    StaticColorHolder(Color color) {
+    StaticColorHolder(@NotNull Color color) {
       myColor = color;
     }
 
     @Override
-    public Color getColor() {
+    public @NotNull Color getColor() {
       return myColor;
     }
   }
@@ -102,7 +105,7 @@ public abstract class ColorProvider {
     }
 
     @Override
-    public Color getColor() {
+    public @NotNull Color getColor() {
       while (!myKeys.isEmpty()) {
         ColorKey key = myKeys.get(myKeys.size() - 1);
         Color result = myScheme.getColor(key);

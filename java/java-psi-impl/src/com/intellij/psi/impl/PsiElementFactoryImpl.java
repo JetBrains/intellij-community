@@ -57,8 +57,8 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   private PsiClass createArrayClass(LanguageLevel level) {
     String text = level.isAtLeast(LanguageLevel.JDK_1_5) ?
-                  "public class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
-                  "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
+                  "public static class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
+                  "public static class __Array__{\n public final int length;\n public Object clone() {}\n}";
     PsiClass psiClass = ((PsiExtensibleClass)createClassFromText(text, null)).getOwnInnerClasses().get(0);
     ensureNonWritable(psiClass);
     PsiFile file = psiClass.getContainingFile();

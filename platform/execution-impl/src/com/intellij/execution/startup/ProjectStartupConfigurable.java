@@ -172,8 +172,9 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
   private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {
     if (myTable.isEmpty()) return;
-    myModel.reValidateConfigurations(new Processor<RunnerAndConfigurationSettings>() {
+    myModel.reValidateConfigurations(new Processor<>() {
       private final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+
       @Override
       public boolean process(RunnerAndConfigurationSettings settings) {
         return runManager.getConfigurationById(settings.getUniqueID()) != null;
@@ -195,7 +196,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
   }
 
   private ChooseRunConfigurationPopup.ItemWrapper<Void> createNewWrapper(final AnActionButton button) {
-    return new ChooseRunConfigurationPopup.ItemWrapper<Void>(null) {
+    return new ChooseRunConfigurationPopup.ItemWrapper<>(null) {
       @Override
       public Icon getIcon() {
         return IconUtil.getAddIcon();
@@ -209,23 +210,26 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
       @Override
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-        List<ConfigurationType> typesToShow = ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), configurationType -> {
-          ConfigurationFactory factory = runManager.getFactory(configurationType, null);
-          return factory != null &&
-                 ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
-        });
+        List<ConfigurationType> typesToShow =
+          ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), configurationType -> {
+            ConfigurationFactory factory = runManager.getFactory(configurationType, null);
+            return factory != null &&
+                   ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
+          });
         final JBPopup popup = NewRunConfigurationPopup.createAddPopup(project, typesToShow, "",
-                                                                        factory -> ApplicationManager.getApplication().invokeLater(() -> {
-                                                                          final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
-                                                                          if (dialog.showAndGet()) {
-                                                                            ApplicationManager.getApplication().invokeLater(() -> {
-                                                                              RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
-                                                                              if (configuration != null) {
-                                                                                addConfiguration(configuration);
-                                                                              }
-                                                                            }, project.getDisposed());
-                                                                          }
-                                                                        }, project.getDisposed()), null, null, false);
+                                                                      factory -> ApplicationManager.getApplication().invokeLater(() -> {
+                                                                        final EditConfigurationsDialog dialog =
+                                                                          new EditConfigurationsDialog(project, factory);
+                                                                        if (dialog.showAndGet()) {
+                                                                          ApplicationManager.getApplication().invokeLater(() -> {
+                                                                            RunnerAndConfigurationSettings configuration =
+                                                                              RunManager.getInstance(project).getSelectedConfiguration();
+                                                                            if (configuration != null) {
+                                                                              addConfiguration(configuration);
+                                                                            }
+                                                                          }, project.getDisposed());
+                                                                        }
+                                                                      }, project.getDisposed()), null, null, false);
         showPopup(button, popup);
       }
 

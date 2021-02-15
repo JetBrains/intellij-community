@@ -29,4 +29,6 @@ class EditedCommitNode(editedCommit: EditedCommitDetails) : ChangesBrowserNode<E
     val currentUser = editedCommit.currentUser ?: return false
     return !isSamePerson(currentUser, commit.committer)
   }
+
+  override fun getTextPresentation(): String = getUserObject().commit.subject
 }

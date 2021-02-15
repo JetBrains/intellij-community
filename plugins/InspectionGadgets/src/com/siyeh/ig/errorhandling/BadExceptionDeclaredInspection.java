@@ -42,7 +42,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet exceptions =
     new ExternalizableStringSet(
-      "java.lang.Throwable",
+      CommonClassNames.JAVA_LANG_THROWABLE,
       "java.lang.Exception",
       "java.lang.Error",
       "java.lang.RuntimeException",
@@ -77,7 +77,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
     final ListTable table =
       new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
     final JPanel tablePanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), "java.lang.Throwable");
+      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), CommonClassNames.JAVA_LANG_THROWABLE);
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;

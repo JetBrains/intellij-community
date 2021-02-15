@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.model.psi.PsiSymbolDeclaration;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -22,7 +23,7 @@ import java.util.Collections;
 /**
  * The common base interface for all elements of the PSI tree.
  * <p/>
- * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/psi-elements.html">IntelliJ Platform Docs</a>
  * for high-level overview.
  */
 public interface PsiElement extends UserDataHolder, Iconable {
@@ -437,6 +438,18 @@ public interface PsiElement extends UserDataHolder, Iconable {
   boolean isWritable();
 
   /**
+   * The contents of the returned collection are copied after the method returns,
+   * the platform doesn't store or modify the returned collection.
+   *
+   * @return collection of declarations in this element, or empty collection if there are no such declarations
+   * @see com.intellij.model.psi.PsiSymbolDeclarationProvider
+   */
+  @Experimental
+  default @NotNull Iterable<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
+    return Collections.emptyList();
+  }
+
+  /**
    * The returned references are expected to be used by language support,
    * for example in Java `foo` element in `foo = 42` expression has a reference,
    * which is used by Java language support to compute expected type of the assignment.
@@ -445,6 +458,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * and from Java language perspective it has no references,
    * but the framework support "knows" that this literal contains the reference to a file.
    * These are external references.
+   * <p/>
+   * The contents of the returned collection are copied after the method returns,
+   * the platform doesn't store or modify the returned collection.
    *
    * @return collection of references from this element, or empty collection if there are no such references
    * @see com.intellij.model.psi.PsiExternalReferenceHost
@@ -495,8 +511,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see #putCopyableUserData(Key, Object)
    */
   @Nullable
-  @Contract(pure=true)
-  <T> T getCopyableUserData(Key<T> key);
+  @Contract(pure = true)
+  <T> T getCopyableUserData(@NotNull Key<T> key);
 
   /**
    * Attaches a copyable user data object to this element. Copyable user data objects are copied
@@ -506,7 +522,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param value the user data object to attach.
    * @see #getCopyableUserData(Key)
    */
-  <T> void putCopyableUserData(Key<T> key, @Nullable T value);
+  <T> void putCopyableUserData(@NotNull Key<T> key, @Nullable T value);
 
   /**
    * Passes the declarations contained in this PSI element and its children

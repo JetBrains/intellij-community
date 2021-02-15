@@ -1,0 +1,32 @@
+### Upgrading NSIS to a newer version
+
+The NSIS.zip archive contains both Windows and Linux binaries, so in order to upgrade NSIS one has to download the former,
+compile the latter, and pack both together. **Note**: please make sure all archives are of the same version.
+
+##### [Building](https://documentation.help/NSIS/SectionG.3.html) NSIS compiler on Linux
+
+1. Install [SCons](https://scons.org) (standalone package is enough).
+1. Unpack NSIS source archive and `cd` into that directory.
+1. Build:
+   ```
+   scons \
+     SKIPSTUBS=all SKIPPLUGINS=all SKIPUTILS=all SKIPMISC=all NSIS_CONFIG_CONST_DATA_PATH=no NSIS_MAX_STRLEN=8192 PREFIX=. \
+     install-compiler
+   ```
+   The resulting binary ('makensis') is in the current directory.
+
+##### Preparing the combined archive
+
+1. [Download](https://sourceforge.net/projects/nsis/files/) and unpack zipped NSIS installation.
+1. Rename NSIS top-level directory into 'NSIS' and drop unneeded stuff ('Docs', 'Examples', 'makensisw.exe', 'NSIS.*', 'Plugins/x86-ansi').
+1. Download "strlen_8192" archive and unpack it into the 'NSIS' directory (overwrite existing files).
+1. Copy compiled Linux binary into 'NSIS/Bin' directory.
+1. From the old NSIS.zip archive, copy the following files into corresponding subdirectories of the 'NSIS' directory:
+   - 'Include/UAC.nsh'
+   - 'Plugins/x86-unicode/AccessControl.dll'
+   - 'Plugins/x86-unicode/ExecDos.dll'
+   - 'Plugins/x86-unicode/INetC.dll'
+   - 'Plugins/x86-unicode/ShellLink.dll'
+   - 'Plugins/x86-unicode/UAC.dll'
+   - 'Plugins/x86-unicode/untgz.dll'
+1. Zip the 'NSIS' directory.

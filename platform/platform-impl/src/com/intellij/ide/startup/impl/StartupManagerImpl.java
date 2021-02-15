@@ -13,6 +13,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -415,31 +417,39 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
 
       long startTimeNano = System.nanoTime();
-      StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<>() {
-        @Override
-        public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
-          runStartupActivity(extension);
-        }
-      }, myProject);
-      List<StartupActivity.Background> activities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
-
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-        for (StartupActivity activity : activities) {
-          ProgressManager.checkCanceled();
-
-          if (myProject.isDisposed()) {
-            return;
+      List<StartupActivity.Background> activities = ReadAction.compute(() -> {
+        StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<>() {
+          @Override
+          public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
+            AppExecutorUtil.getAppScheduledExecutorService().execute(() -> {
+              runBackgroundPostStartupActivities(Collections.singletonList(extension));
+            });
           }
-
-          runStartupActivity(activity);
-        }
+        }, myProject);
+        return StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
       });
+
+      runBackgroundPostStartupActivities(activities);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Background post-startup activities done in " + TimeoutUtil.getDurationMillis(startTimeNano) + "ms");
       }
     }, Registry.intValue("ide.background.post.startup.activity.delay"), TimeUnit.MILLISECONDS);
     Disposer.register(myProject, () -> {
       scheduledFuture.cancel(false);
+    });
+  }
+
+  private void runBackgroundPostStartupActivities(@NotNull List<StartupActivity.Background> activities) {
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+      for (StartupActivity activity : activities) {
+        ProgressManager.checkCanceled();
+
+        if (myProject.isDisposed()) {
+          return;
+        }
+
+        runStartupActivity(activity);
+      }
     });
   }
 

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
@@ -19,8 +20,8 @@ import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
 import com.intellij.util.ui.JBHtmlEditorKit
-import com.intellij.util.ui.TestScaleHelper
-import com.intellij.util.ui.paint.ImageComparator
+import com.intellij.ui.scale.TestScaleHelper
+import com.intellij.ui.scale.paint.ImageComparator
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
@@ -59,10 +60,12 @@ open class RequireHeadlessMode : ExternalResource() {
 
 open class RestoreScaleRule : ExternalResource() {
   override fun before() {
+    IconLoader.activate()
     TestScaleHelper.setState()
   }
 
   override fun after() {
+    IconLoader.deactivate()
     TestScaleHelper.restoreState()
   }
 }

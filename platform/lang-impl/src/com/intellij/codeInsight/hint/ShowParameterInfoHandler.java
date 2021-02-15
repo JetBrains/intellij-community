@@ -16,7 +16,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,14 +45,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   @Override
   public boolean startInWriteAction() {
     return false;
-  }
-
-  /**
-   * @deprecated use {@link #invoke(Project, Editor, PsiFile, int, PsiElement, boolean)} instead
-   */
-  @Deprecated
-  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
-    invoke(project, editor, file, lbraceOffset, highlightedElement, false);
   }
 
   public static void invoke(final Project project, final Editor editor, PsiFile file,
@@ -99,15 +90,15 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                 getHandlers(project, language, file.getViewProvider().getBaseLanguage());
 
 
-              return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+              return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
                 for (ParameterInfoHandler<PsiElement, Object> handler : handlers) {
                   PsiElement element = handler.findElementForParameterInfo(context);
                   if (element != null) {
-                    return (Runnable)() -> FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+                    return (Runnable)() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
                       if (element.isValid()) {
                         handler.showParameterInfo(element, context);
                       }
-                    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+                    });
                   }
                 }
                 return null;
@@ -125,7 +116,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
             editor);
   }
 
-  public static ParameterInfoHandler @NotNull [] getHandlers(Project project, final Language... languages) {
+  public static ParameterInfoHandler @NotNull [] getHandlers(Project project, final Language @NotNull ... languages) {
     Set<ParameterInfoHandler> handlers = new LinkedHashSet<>();
     DumbService dumbService = DumbService.getInstance(project);
     for (final Language language : languages) {

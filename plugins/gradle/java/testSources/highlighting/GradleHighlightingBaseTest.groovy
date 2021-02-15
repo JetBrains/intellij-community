@@ -125,7 +125,7 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase implem
   }
 
   @Override
-  void tearDownFixtures() {
+  void tearDownFixtures() throws Exception {
     fixture.tearDown()
   }
 

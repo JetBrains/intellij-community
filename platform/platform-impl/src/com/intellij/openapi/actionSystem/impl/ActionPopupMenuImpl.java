@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,12 +124,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
       int x2 = Math.max(0, Math.min(x, component.getWidth() - 1)); // fit x into [0, width-1]
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
-
-      myContext = myDataContextProvider != null ? myDataContextProvider.get() : DataManager.getInstance().getDataContext(component, x2, y2);
-      long time = -System.currentTimeMillis();
-      Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false, LaterInvocator.isInModalContext(), false);
-      time += System.currentTimeMillis();
-      if (time > 1000) LOG.warn(time + "ms to fill popup menu " + myPlace);
+      myContext = Utils.wrapDataContext(myDataContextProvider != null ? myDataContextProvider.get() :
+                                        DataManager.getInstance().getDataContext(component, x2, y2));
+      TimeoutUtil.run(
+        () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
+                             myPresentationFactory, myContext, myPlace, false, LaterInvocator.isInModalContext(), false),
+        1000, ms -> LOG.warn(ms + "ms to fill popup menu " + myPlace));
       if (getComponentCount() == 0) {
         LOG.warn("no components in popup menu " + myPlace);
         return;

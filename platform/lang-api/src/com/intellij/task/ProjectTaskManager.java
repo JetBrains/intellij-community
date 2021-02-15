@@ -136,16 +136,6 @@ public abstract class ProjectTaskManager {
   public abstract void buildAllModules(@Nullable ProjectTaskNotification callback);
 
   /**
-   * Rebuild the whole project modules from scratch.
-   *
-   * @param callback a notification callback, or null if no notifications needed
-   * @deprecated use {@link #rebuildAllModules()}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public abstract void rebuildAllModules(@Nullable ProjectTaskNotification callback);
-
-  /**
    * Build modules and all modules these modules depend on recursively.
    *
    * @param modules  modules to build
@@ -183,11 +173,5 @@ public abstract class ProjectTaskManager {
   @Deprecated
   public abstract void build(ProjectModelBuildableElement @NotNull [] buildableElements, @Nullable ProjectTaskNotification callback);
 
-  /**
-   * @deprecated use {@link #rebuild(ProjectModelBuildableElement[])}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public abstract void rebuild(ProjectModelBuildableElement @NotNull [] buildableElements, @Nullable ProjectTaskNotification callback);
   //</editor-fold>
 }

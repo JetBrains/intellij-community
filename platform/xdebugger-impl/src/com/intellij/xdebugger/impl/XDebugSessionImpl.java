@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
@@ -44,7 +43,6 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
-import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -65,10 +63,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   private static final Logger LOG = Logger.getInstance(XDebugSessionImpl.class);
   private static final Logger PERFORMANCE_LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl.performance");
   private static final NotificationGroup BP_NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Breakpoint hit");
-
-  /** @deprecated Use {@link XDebuggerManagerImpl#NOTIFICATION_GROUP} */
-  @Deprecated
-  public static final NotificationGroup NOTIFICATION_GROUP = XDebuggerManagerImpl.NOTIFICATION_GROUP;
 
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<>();
@@ -499,7 +493,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (areBreakpointsMuted() == muted) return;
     mySessionData.setBreakpointsMuted(muted);
-    processAllBreakpoints(!muted, muted);
+    if (!myBreakpointsDisabled) {
+      processAllBreakpoints(!muted, muted);
+    }
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate();
   }
 
@@ -509,7 +505,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     if (ignoreBreakpoints) {
-      disableBreakpoints();
+      setBreakpointsDisabledTemporarily(true);
     }
     myDebugProcess.startStepOver(doResume());
   }
@@ -553,7 +549,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     if (ignoreBreakpoints) {
-      disableBreakpoints();
+      setBreakpointsDisabledTemporarily(true);
     }
     myDebugProcess.runToPosition(position, doResume());
   }
@@ -567,14 +563,20 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void processAllBreakpoints(final boolean register, final boolean temporary) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       processBreakpoints(handler, register, temporary);
     }
   }
 
-  private void disableBreakpoints() {
-    myBreakpointsDisabled = true;
-    processAllBreakpoints(false, true);
+  private void setBreakpointsDisabledTemporarily(boolean disabled) {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (myBreakpointsDisabled == disabled) return;
+      myBreakpointsDisabled = disabled;
+      if (!areBreakpointsMuted()) {
+        processAllBreakpoints(!disabled, disabled);
+      }
+    });
   }
 
   @Override
@@ -619,10 +621,6 @@ public final class XDebugSessionImpl implements XDebugSession {
       boolean isTopFrame = isTopFrameSelected();
 
       myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
-
-      if (Registry.is("debugger.show.values.between.lines")) {
-        XDebuggerInlayUtil.setupValuePlaceholders(this, false);
-      }
     }
   }
 
@@ -842,7 +840,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void positionReachedInternal(@NotNull final XSuspendContext suspendContext, boolean attract) {
-    enableBreakpoints();
+    setBreakpointsDisabledTemporarily(false);
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
     myCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
@@ -904,13 +902,6 @@ public final class XDebugSessionImpl implements XDebugSession {
     doResume();
   }
 
-  private void enableBreakpoints() {
-    if (myBreakpointsDisabled) {
-      myBreakpointsDisabled = false;
-      ReadAction.run(() -> processAllBreakpoints(true, false));
-    }
-  }
-
   @Override
   public boolean isStopped() {
     return myStopped.get();
@@ -941,9 +932,6 @@ public final class XDebugSessionImpl implements XDebugSession {
         }
 
         clearPausedData();
-        if (Registry.is("debugger.show.values.between.lines")) {
-          XDebuggerInlayUtil.setupValuePlaceholders(this, true);
-        }
 
         if (myValueMarkers != null) {
           myValueMarkers.clear();

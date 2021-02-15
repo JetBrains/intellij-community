@@ -189,11 +189,11 @@ object LessonUtil {
     return x != 0
   }
 
-  fun LessonContext.highlightBreakpointGutter(logicalPosition: LogicalPosition) {
+  fun LessonContext.highlightBreakpointGutter(logicalPosition: () -> LogicalPosition) {
     task {
       triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
-        val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition).line)
+        val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
         return@l Rectangle(20, y, ui.width - 26, editor.lineHeight)
       }
     }
@@ -259,7 +259,12 @@ fun LessonContext.gotItTask(position: Balloon.Position, dimension: Dimension, @N
     text(text(), LearningBalloonConfig(position, dimension) { gotIt.complete(true) })
     addStep(gotIt)
   }
+}
 
+fun TaskContext.gotItStep(position: Balloon.Position, dimension: Dimension, @Nls text: String) {
+  val gotIt = CompletableFuture<Boolean>()
+  text(text, LearningBalloonConfig(position, dimension, false) { gotIt.complete(true) })
+  addStep(gotIt)
 }
 
 fun String.dropMnemonic(): String {
@@ -268,7 +273,8 @@ fun String.dropMnemonic(): String {
 
 val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
 
-fun LessonContext.highlightButtonById(actionId: String) {
+fun LessonContext.highlightButtonById(actionId: String): CompletableFuture<Boolean> {
+  val feature: CompletableFuture<Boolean> = CompletableFuture()
   val needToFindButton = ActionManager.getInstance().getAction(actionId)
   prepareRuntimeTask {
     LearningUiHighlightingManager.clearHighlights()
@@ -278,6 +284,7 @@ fun LessonContext.highlightButtonById(actionId: String) {
         ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
       }
       invokeLater {
+        feature.complete(result.isNotEmpty())
         for (button in result) {
           val options = LearningUiHighlightingManager.HighlightingOptions(clearPreviousHighlights = false)
           LearningUiHighlightingManager.highlightComponent(button, options)
@@ -285,6 +292,7 @@ fun LessonContext.highlightButtonById(actionId: String) {
       }
     }
   }
+  return feature
 }
 
 inline fun <reified ComponentType : Component> LessonContext.highlightAllFoundUi(

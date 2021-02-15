@@ -68,6 +68,7 @@
       <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
+    <action id="Terminal.SelectAll" class="org.jetbrains.plugins.terminal.action.TerminalSelectAllAction"/>
     <action id="Terminal.SmartCommandExecution.Run" class="org.jetbrains.plugins.terminal.shellCommandRunner.TerminalRunSmartCommandAction">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
     </action>

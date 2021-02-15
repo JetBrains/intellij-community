@@ -1,22 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
-public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalInspectionTool {
-
+public final class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls
   private final static String NEXT_TOKEN = "nextToken";
   @NonNls
@@ -56,7 +55,7 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
       final Object value = ((PsiLiteralExpression)delimiterArgument).getValue();
       if (value instanceof String) {
         String delimiters = (String)value;
-        final Set<Character> chars = new THashSet<>();
+        final Set<Character> chars = new HashSet<>();
         for (char c : delimiters.toCharArray()) {
           if (!chars.add(c)) {
             holder.registerProblem(delimiterArgument, JavaAnalysisBundle.message("delimiters.argument.contains.duplicated.characters"),

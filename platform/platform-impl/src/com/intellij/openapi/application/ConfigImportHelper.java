@@ -214,11 +214,10 @@ public final class ConfigImportHelper {
     finally {
       if (tempBackup != null) {
         try {
-          moveTempBackupToStandardBackup(tempBackup, log);
+          moveTempBackupToStandardBackup(tempBackup);
         }
         catch (IOException e) {
-          log.warn(String.format("Couldn't move the backup of current config from temp dir [%s] to backup dir [%s]",
-                                 tempBackup, getBackupPath()), e);
+          log.warn(String.format("Couldn't move the backup of current config from temp dir [%s] to backup dir", tempBackup), e);
         }
       }
     }
@@ -282,7 +281,7 @@ public final class ConfigImportHelper {
 
   @NotNull
   private static File backupCurrentConfigToTempAndDelete(@NotNull Path currentConfig, @NotNull Logger log, boolean smartDelete) throws IOException {
-    File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup");
+    File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup-" + UUID.randomUUID());
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
     FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.getName()));
 
@@ -330,22 +329,12 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static void moveTempBackupToStandardBackup(@NotNull File backupToMove,
-                                                     @NotNull Logger log) throws IOException {
-    Path backupPath = getBackupPath();
-    log.info("Move backup from " + backupToMove + " to " + backupPath);
-    FileUtil.delete(backupPath);
-    FileUtil.copyDir(backupToMove, backupPath.toFile());
+  private static void moveTempBackupToStandardBackup(@NotNull File backupToMove) throws IOException {
+    new ConfigBackup(PathManager.getConfigDir()).moveToBackup(backupToMove);
   }
 
   @NotNull
-  public static Path getBackupPath() {
-    Path configDir = PathManager.getConfigDir();
-    return configDir.resolveSibling(getConfigDirName() + "-backup");
-  }
-
-  @NotNull
-  private static String getConfigDirName() {
+  static String getConfigDirName() {
     return PathManager.getConfigDir().getFileName().toString();
   }
 
@@ -378,6 +367,13 @@ public final class ConfigImportHelper {
   /** Returns {@code true} when the IDE is launched for the first time (i.e. there was no config directory). */
   public static boolean isFirstSession() {
     return Boolean.getBoolean(FIRST_SESSION_KEY);
+  }
+
+  /**
+   * Checks that current user is "new", i. e. this is the first launch of the IDE on this machine.
+   */
+  public static boolean isNewUser() {
+    return isFirstSession() && !isConfigImported();
   }
 
   /** Simple check by file type, content is not checked. */

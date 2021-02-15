@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.TextBlockBackwardMigrationInspection;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,10 +42,5 @@ public class TextBlockBackwardMigrationInspectionTest extends LightQuickFixParam
   @Override
   protected String getBasePath() {
     return "/inspection/textBlockBackwardMigration/";
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_14_PREVIEW;
   }
 }

@@ -54,7 +54,6 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -105,7 +104,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   private final List<TaskRepository> myRepositories = new ArrayList<>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
-  private final Set<TaskRepository> myBadRepositories = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
 
   public TaskManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -171,7 +170,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   public <T extends TaskRepository> void setRepositories(@NotNull List<T> repositories) {
     Set<TaskRepository> set = new HashSet<>(myRepositories);
-    set.removeAll(repositories);
+    repositories.forEach(set::remove);
     myBadRepositories.removeAll(set); // remove all changed reps
     myIssueCache.clear();
 
@@ -230,11 +229,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   @Override
   public void addTaskListener(@NotNull TaskListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
-  }
-
-  @Override
-  public void removeTaskListener(TaskListener listener) {
-    myDispatcher.removeListener(listener);
   }
 
   @NotNull
@@ -374,7 +368,8 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   private void restoreVcsContext(LocalTask task, boolean newTask) {
     List<ChangeListInfo> changeLists = task.getChangeLists();
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    if (changeLists.isEmpty()) {
+    if (changeLists.isEmpty() || !changeListManager.areChangeListsEnabled()) {
+      task.getChangeLists().clear();
       task.addChangelist(new ChangeListInfo(changeListManager.getDefaultChangeList()));
     }
     else {

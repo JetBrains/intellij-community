@@ -7,7 +7,6 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +27,7 @@ public final class AstBufferUtil {
     int length = toBuffer(element, null, 0, true);
     char[] buffer = new char[length];
     toBuffer(element, buffer, 0, true);
-    return StringFactory.createShared(buffer);
+    return new String(buffer);
   }
 
   public static class BufferVisitor extends RecursiveTreeElementWalkingVisitor {

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.rpc
 
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.jsonProtocol.Request
 import java.io.IOException
@@ -30,7 +30,7 @@ interface MessageProcessor {
 }
 
 class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(private val handler: MessageManager.Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>) : MessageManagerBase() {
-  private val callbackMap = ContainerUtil.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
+  private val callbackMap = ConcurrentCollectionFactory.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
 
   interface Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS> {
     fun getUpdatedSequence(message: OUTGOING): Int

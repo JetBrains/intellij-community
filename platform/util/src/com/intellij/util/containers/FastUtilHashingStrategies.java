@@ -30,9 +30,23 @@ public final class FastUtilHashingStrategies implements Hash.Strategy<CharSequen
     return FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE;
   }
 
-  private static @NotNull <T> Hash.Strategy<T> getCanonicalStrategy() {
+  public static @NotNull <T> Hash.Strategy<T> getCanonicalStrategy() {
     //noinspection unchecked
     return (Hash.Strategy<T>)CanonicalObjectStrategy.INSTANCE;
+  }
+
+  public static @NotNull <T> Hash.Strategy<T> adaptAsNotNull(@NotNull HashingStrategy<? super T> hashingStrategy) {
+    return new Hash.Strategy<T>() {
+      @Override
+      public int hashCode(@Nullable T o) {
+        return o == null ? 0 : hashingStrategy.hashCode(o);
+      }
+
+      @Override
+      public boolean equals(@Nullable T a, @Nullable T b) {
+        return a == b || (a != null && b != null && hashingStrategy.equals(a, b));
+      }
+    };
   }
 
   private FastUtilHashingStrategies(boolean caseSensitive) {

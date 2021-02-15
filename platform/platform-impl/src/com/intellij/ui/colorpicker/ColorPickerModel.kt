@@ -24,7 +24,9 @@ val DEFAULT_PICKER_COLOR = Color(0xFF, 0xFF, 0xFF, 0xFF)
 class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
 
   private val listeners = mutableSetOf<ColorListener>()
+  private val pipetteListeners = mutableSetOf<ColorPipette.Callback>()
   private val instantListeners = mutableSetOf<ColorListener>()
+  private var changedByUser = false
 
   var color: Color = originalColor
     private set
@@ -32,13 +34,18 @@ class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
   fun setColor(newColor: Color, source: Any? = null) {
     color = newColor
     Color.RGBtoHSB(color.red, color.green, color.blue, hsb)
+    if (source != null) {
+      changedByUser = true
+    }
 
     instantListeners.forEach { it.colorChanged(color, source) }
   }
 
   fun onClose() {
-    ApplicationManager.getApplication().invokeLater {
-      listeners.forEach { it.colorChanged(color, this) }
+    if (changedByUser) {
+      ApplicationManager.getApplication().invokeLater {
+        listeners.forEach { it.colorChanged(color, this) }
+      }
     }
   }
 
@@ -81,4 +88,14 @@ class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
     listeners.remove(listener)
     instantListeners.remove(listener)
   }
+
+  fun addPipetteListener(listener: ColorPipette.Callback) = pipetteListeners.add(listener)
+
+  fun removePipetteListener(listener: ColorPipette.Callback) = pipetteListeners.remove(listener)
+
+  fun firePipettePicked(pickedColor: Color) = pipetteListeners.forEach { it.picked(pickedColor) }
+
+  fun firePipetteUpdated(updatedColor: Color) = pipetteListeners.forEach { it.update(updatedColor) }
+
+  fun firePipetteCancelled() = pipetteListeners.forEach { it.cancel() }
 }

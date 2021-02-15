@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
 
-class ProjectNotificationAware : Disposable {
+class ProjectNotificationAware(private val project: Project) : Disposable {
   private var isHidden = false
   private val projectsWithNotification = HashSet<ExternalSystemProjectId>()
 
@@ -40,8 +40,7 @@ class ProjectNotificationAware : Disposable {
   private fun setHideStatus(isHidden: Boolean) = runInEdt {
     this.isHidden = isHidden
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val toolbarProvider = ProjectRefreshFloatingProvider.getExtension()
-    toolbarProvider.updateAllToolbarComponents()
+    ProjectRefreshFloatingProvider.updateToolbarComponents(project)
   }
 
   private fun revealNotification() = setHideStatus(false)

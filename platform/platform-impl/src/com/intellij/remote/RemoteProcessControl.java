@@ -7,12 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface RemoteProcessControl extends ProcessControlWithMappings {
 
-  /**
-   * @deprecated use {@link #getRemoteSocket(int)}
-   */
-  @Deprecated
-  void addRemoteForwarding(int remotePort, int localPort);
-
   Pair<String, Integer> getRemoteSocket(int localPort) throws RemoteSdkException;
 
   @Nullable

@@ -466,14 +466,15 @@ public final class HtmlUtil {
 
   public static boolean tagHasHtml5Schema(@NotNull XmlTag context) {
     XmlElementDescriptor descriptor = context.getDescriptor();
-    if (descriptor != null) {
-      XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
-      XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile() : null;
-      String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
-      return Objects.equals(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
-             Objects.equals(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
-    }
-    return false;
+    XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor() : null;
+    return isHtml5Schema(nsDescriptor);
+  }
+
+  public static boolean isHtml5Schema(@Nullable XmlNSDescriptor nsDescriptor) {
+    XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile() : null;
+    String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
+    return Objects.equals(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
+           Objects.equals(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
   }
 
   private static class TerminateException extends RuntimeException {

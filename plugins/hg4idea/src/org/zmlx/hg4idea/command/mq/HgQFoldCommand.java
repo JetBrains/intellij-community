@@ -26,6 +26,8 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QFOLD_ERROR;
+
 public class HgQFoldCommand {
   @NotNull private final HgRepository myRepository;
 
@@ -39,7 +41,7 @@ public class HgQFoldCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qfold", patchNames);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError("hg.qfold.error",
+        .notifyError(QFOLD_ERROR,
                      result,
                      HgBundle.message("action.hg4idea.QFold.error"),
                      HgBundle.message("action.hg4idea.QFold.error.msg"));

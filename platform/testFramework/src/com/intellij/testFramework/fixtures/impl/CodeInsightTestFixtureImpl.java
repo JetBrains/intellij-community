@@ -60,6 +60,7 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -255,7 +256,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
           infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), null, project));
           if (readEditorMarkupModel) {
-            infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor, null, project));
+            MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
+            DaemonCodeAnalyzerEx.processHighlights(markupModel, project, null, 0, editor.getDocument().getTextLength(),
+                                                   Processors.cancelableCollectProcessor(infos));
           }
         });
         infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
@@ -810,7 +813,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void renameElementAtCaretUsingHandler(@NotNull final String newName) {
     final DataContext editorContext = ((EditorEx)myEditor).getDataContext();
-    final DataContext context = dataId -> PsiElementRenameHandler.DEFAULT_NAME.getName().equals(dataId)
+    final DataContext context = dataId -> PsiElementRenameHandler.DEFAULT_NAME.is(dataId)
            ? newName
            : editorContext.getData(dataId);
     final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
@@ -1910,7 +1913,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
-    SearchEverywhereContributor<Object> contributor = createMockContributor(contextForSorting, searchEverywhere);
+    SearchEverywhereContributor<Object> contributor = createMockContributor(searchEverywhere);
     final ArrayList<Object> results = new ArrayList<>();
     contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results));
     return results;
@@ -1922,9 +1925,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myEditorTestFixture.getBreadcrumbsAtCaret();
   }
 
-  private SearchEverywhereContributor<Object> createMockContributor(@Nullable PsiElement context, boolean everywhere) {
-    DataContext dataContext = SimpleDataContext.getSimpleContext(
-      CommonDataKeys.PSI_FILE.getName(), ObjectUtils.tryCast(context, PsiFile.class), SimpleDataContext.getProjectContext(getProject()));
+  private SearchEverywhereContributor<Object> createMockContributor(boolean everywhere) {
+    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
     ClassSearchEverywhereContributor contributor = new ClassSearchEverywhereContributor(event) {{
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));

@@ -42,7 +42,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class PluginHostsConfigurable implements Configurable.NoScroll, Configurable {
-  private final ListTableModel<UrlInfo> myModel = new ListTableModel<UrlInfo>() {
+  private final ListTableModel<UrlInfo> myModel = new ListTableModel<>() {
     @Override
     public void addRow() {
       addRow(new UrlInfo(""));

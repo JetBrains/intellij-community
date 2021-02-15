@@ -9,11 +9,11 @@ import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.Interner;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -567,7 +567,9 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
       }
 
       Set<PsiVariable> oldVisitedVars = myVisitedVars;
-      if (myVisitedVars == null) { myVisitedVars = new THashSet<>(); }
+      if (myVisitedVars == null) {
+        myVisitedVars = new HashSet<>();
+      }
 
       myVisitedVars.add(variable);
       try {

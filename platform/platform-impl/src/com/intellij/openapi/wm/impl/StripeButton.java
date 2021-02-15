@@ -5,15 +5,17 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +41,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   private boolean myPressedWhenSelected;
 
   private JLayeredPane myDragPane;
-  final ToolWindowsPane pane;
+  @NotNull final ToolWindowsPane pane;
   final ToolWindowImpl toolWindow;
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
@@ -91,17 +93,11 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   private void updateHelpTooltip() {
     HelpTooltip.dispose(this);
 
+    HelpTooltip tooltip = new HelpTooltip();
+    tooltip.setTitle(toolWindow.getStripeTitle());
     String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.getId());
-    AnAction action = ActionManager.getInstance().getAction(activateActionId);
-    if (action != null) {
-      KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
-      if (shortcut != null) {
-        HelpTooltip tooltip = new HelpTooltip();
-        tooltip.setTitle(toolWindow.getStripeTitle());
-        tooltip.setShortcut(KeymapUtil.getShortcutText(shortcut));
-        tooltip.installOn(this);
-      }
-    }
+    tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut(activateActionId));
+    tooltip.installOn(this);
   }
 
   public @NotNull WindowInfo getWindowInfo() {
@@ -333,7 +329,10 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   @Override
   public void updateUI() {
     setUI(StripeButtonUI.createUI(this));
-    setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+
+    Font font = StartupUiUtil.getLabelFont();
+    RelativeFont relativeFont = RelativeFont.NORMAL.fromResource("StripeButton.fontSizeOffset", -2, JBUIScale.scale(11f));
+    setFont(relativeFont.derive(font));
   }
 
   void updatePresentation() {

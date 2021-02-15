@@ -27,6 +27,7 @@ import com.intellij.util.Functions;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -181,7 +182,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         name += "...";
       }
     }
-    Content content = UsageViewContentManager.getInstance(myProject).addContent(name, false, panel, true, true);
+    Content content = UsageViewContentManager.getInstance(myProject).addContent(XmlStringUtil.wrapInHtml(name), false, panel, true, true);
     panel.setContent(content);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND).activate(null);
   }

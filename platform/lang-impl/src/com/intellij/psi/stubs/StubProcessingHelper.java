@@ -12,12 +12,12 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,20 +32,23 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
   public <Key, Psi extends PsiElement> StubIdList retrieveStubIdList(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                      @NotNull Key key,
                                                                      @NotNull VirtualFile file,
-                                                                     @NotNull Project project) {
+                                                                     @NotNull Project project,
+                                                                     boolean failOnMissedKeys) {
     int id = ((VirtualFileWithId)file).getId();
     try {
       Map<Integer, SerializedStubTree> data = StubIndexImpl.getStubUpdatingIndex().getIndexedFileData(id);
       if (data.size() != 1) {
-        LOG.error("Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree; " +
-                  "indexing stamp = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
-                  "can have stubs = " + StubUpdatingIndex.canHaveStub(file));
-        onInternalError(file);
+        if (failOnMissedKeys) {
+          LOG.error("Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree; " +
+                    "indexing stamp = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
+                    "can have stubs = " + StubUpdatingIndex.canHaveStub(file));
+          onInternalError(file);
+        }
         return null;
       }
       SerializedStubTree tree = data.values().iterator().next();
       StubIdList stubIdList = tree.restoreIndexedStubs(indexKey, key);
-      if (stubIdList == null) {
+      if (stubIdList == null && failOnMissedKeys) {
         String mainMessage = "Stub ids not found for key in index = " + indexKey.getName() + ", " + getFileTypeInfo(file, project);
         String additionalMessage;
         if (REPORT_SENSITIVE_DATA_ON_ERROR) {
@@ -73,7 +76,9 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
   protected void onInternalError(final VirtualFile file) {
     if (SKIP_INDEX_REPAIR_ON_ERROR) return;
     Set<VirtualFile> set = myFilesHavingProblems.get();
-    if (set == null) myFilesHavingProblems.set(set = new THashSet<>());
+    if (set == null) {
+      myFilesHavingProblems.set(set = new HashSet<>());
+    }
     set.add(file);
     // requestReindex() may want to acquire write lock (for indices not requiring content loading)
     // thus, because here we are under read lock, need to use invoke later

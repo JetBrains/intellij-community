@@ -76,6 +76,11 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
   }
 
   @Override
+  public void scrollTo(int offset) {
+    myConsole.scrollTo(offset);
+  }
+
+  @Override
   public void clear() {
     myConsole.clear();
   }

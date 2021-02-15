@@ -11,31 +11,32 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import javax.crypto.KeyAgreement;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
-import java.util.Base64;
-import java.util.Enumeration;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class SecureUrlClassLoaderTest {
   /**
    * IDEA's UrlClassLoader should verify JAR signatures and checksum if they are exists
-   * but only if JAR url specified in {@link UrlClassLoader.Builder#urlsWithProtectionDomain}.
+   * but only if JAR url specified in {@link UrlClassLoader.Builder#pathsWithProtectionDomain}.
    */
   @Test
   public void testSignedJars() throws Exception {
@@ -50,7 +51,7 @@ public class SecureUrlClassLoaderTest {
     assertNull(error);
 
     classLoader = UrlClassLoader.build()
-      .urls(classUrl)
+      .files(Collections.singletonList(Paths.get(classUrl.toURI())))
       .get();
     error = codeThatRegistersSecurityProvider(classLoader, className);
 
@@ -66,8 +67,8 @@ public class SecureUrlClassLoaderTest {
     }
 
     classLoader = UrlClassLoader.build()
-      .urls(classUrl)
-      .urlsWithProtectionDomain(singleton(classUrl))
+      .files(Collections.singletonList(Paths.get(classUrl.toURI())))
+      .urlsWithProtectionDomain(Collections.singleton(Paths.get(classUrl.toURI())))
       .get();
     error = codeThatRegistersSecurityProvider(classLoader, className);
     assertNull(error);
@@ -175,13 +176,13 @@ public class SecureUrlClassLoaderTest {
     try {
       File hackedClassJar = new File(root, "hacked-bouncycastle.jar");
       URL classUrl = getJarUrl(className);
-      URL hackedJarUrl = hackedClassJar.toURI().toURL();
+      Path hackedJarPath = hackedClassJar.toPath();
 
       createHackedJar(hackedClassJar, classUrl, className, changeClass, changeManifest, changeSignatureFile);
 
       ClassLoader classLoader = UrlClassLoader.build()
-        .urls(hackedJarUrl)
-        .urlsWithProtectionDomain(singleton(hackedJarUrl))
+        .files(Collections.singletonList(hackedJarPath))
+        .urlsWithProtectionDomain(Collections.singleton(hackedJarPath))
         .get();
 
       try {

@@ -445,7 +445,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         mySelectedPackageName = packageName;
         myVersionComboBox.removeAllItems();
         if (myVersionCheckBox.isEnabled()) {
-          myController.fetchPackageVersions(packageName, new CatchingConsumer<List<String>, Exception>() {
+          myController.fetchPackageVersions(packageName, new CatchingConsumer<>() {
             @Override
             public void consume(final List<@NlsSafe String> releases) {
               ApplicationManager.getApplication().invokeLater(() -> {

@@ -4,13 +4,16 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Function;
 
 /**
  * @author gregsh
@@ -83,5 +86,15 @@ public final class EditorColorsUtil {
       if (o instanceof EditorColorsListener)
         ((EditorColorsListener)o).globalSchemeChange(EditorColorsManager.getInstance().getGlobalScheme());
     }
+  }
+
+  public static @NotNull ColorKey createColorKey(@NonNls @NotNull String name, @NotNull Color defaultColor) {
+    return ColorKey.createColorKey(name, JBColor.namedColor(name, defaultColor));
+  }
+
+  public static @Nullable Color getColor(@Nullable Component component, @NotNull ColorKey key) {
+    Function<ColorKey, Color> function = UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY);
+    Color color = function == null ? null : function.apply(key);
+    return color != null ? color : key.getDefaultColor();
   }
 }

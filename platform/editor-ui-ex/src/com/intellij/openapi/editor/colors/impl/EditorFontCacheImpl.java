@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,35 +60,37 @@ public class EditorFontCacheImpl extends EditorFontCache {
 
   private void initFonts() {
     EditorColorsScheme scheme = getFontCacheScheme();
-    String editorFontName = scheme.getFontPreferences().getFontFamily();
+    FontPreferences preferences = scheme.getFontPreferences();
+    String editorFontName = preferences.getFontFamily();
     int editorFontSize = scheme.getEditorFontSize();
     String fallbackName = getFallbackName(editorFontName, editorFontSize);
     if (fallbackName != null) {
       editorFontName = fallbackName;
     }
 
-    Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
-    Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
-    Font italicFont = new Font(editorFontName, Font.ITALIC, editorFontSize);
-    Font boldItalicFont = new Font(editorFontName, Font.BOLD | Font.ITALIC, editorFontSize);
+    setFont(EditorFontType.PLAIN, editorFontName, Font.PLAIN, editorFontSize, preferences);
+    setFont(EditorFontType.BOLD, editorFontName, Font.BOLD, editorFontSize, preferences);
+    setFont(EditorFontType.ITALIC, editorFontName, Font.ITALIC, editorFontSize, preferences);
+    setFont(EditorFontType.BOLD_ITALIC, editorFontName, Font.BOLD | Font.ITALIC, editorFontSize, preferences);
 
-    myFonts.put(EditorFontType.PLAIN, plainFont);
-    myFonts.put(EditorFontType.BOLD, boldFont);
-    myFonts.put(EditorFontType.ITALIC, italicFont);
-    myFonts.put(EditorFontType.BOLD_ITALIC, boldItalicFont);
-
+    FontPreferences consolePreferences = scheme.getConsoleFontPreferences();
     String consoleFontName = scheme.getConsoleFontName();
     int consoleFontSize = scheme.getConsoleFontSize();
 
-    Font consolePlainFont = new Font(consoleFontName, Font.PLAIN, consoleFontSize);
-    Font consoleBoldFont = new Font(consoleFontName, Font.BOLD, consoleFontSize);
-    Font consoleItalicFont = new Font(consoleFontName, Font.ITALIC, consoleFontSize);
-    Font consoleBoldItalicFont = new Font(consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize);
+    setFont(EditorFontType.CONSOLE_PLAIN, consoleFontName, Font.PLAIN, consoleFontSize, consolePreferences);
+    setFont(EditorFontType.CONSOLE_BOLD, consoleFontName, Font.BOLD, consoleFontSize, consolePreferences);
+    setFont(EditorFontType.CONSOLE_ITALIC, consoleFontName, Font.ITALIC, consoleFontSize, consolePreferences);
+    setFont(EditorFontType.CONSOLE_BOLD_ITALIC, consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize, consolePreferences);
+  }
 
-    myFonts.put(EditorFontType.CONSOLE_PLAIN, consolePlainFont);
-    myFonts.put(EditorFontType.CONSOLE_BOLD, consoleBoldFont);
-    myFonts.put(EditorFontType.CONSOLE_ITALIC, consoleItalicFont);
-    myFonts.put(EditorFontType.CONSOLE_BOLD_ITALIC, consoleBoldItalicFont);
+  private void setFont(EditorFontType fontType,
+                       String familyName,
+                       int style,
+                       int fontSize,
+                       FontPreferences fontPreferences) {
+    myFonts.put(fontType,
+                FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
+                                          style, fontSize));
   }
 
   @Nullable

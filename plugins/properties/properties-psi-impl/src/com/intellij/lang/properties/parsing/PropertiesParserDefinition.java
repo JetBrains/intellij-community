@@ -25,7 +25,7 @@ public class PropertiesParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return PropertiesElementTypes.FILE;
   }
 
@@ -54,12 +54,15 @@ public class PropertiesParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new PropertiesFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    if (left.getElementType() == PropertiesTokenTypes.END_OF_LINE_COMMENT) {
+      return SpaceRequirements.MUST_LINE_BREAK;
+    }
     return SpaceRequirements.MAY;
   }
 

@@ -20,16 +20,6 @@ import java.util.Collection;
 
 public final class FindUsagesHelper {
   private static final Logger LOG = Logger.getInstance(FindUsagesHelper.class);
-  /**
-   * @deprecated use {@code processUsagesInText(PsiElement, Collection<String>, GlobalSearchScope, boolean, Processor<? super UsageInfo>} instead.
-   */
-  @Deprecated
-  public static boolean processUsagesInText(@NotNull final PsiElement element,
-                                            @NotNull Collection<String> stringToSearch,
-                                            @NotNull GlobalSearchScope searchScope,
-                                            @NotNull Processor<? super UsageInfo> processor) {
-    return processUsagesInText(element, stringToSearch, false, searchScope, processor);
-  }
 
   public static boolean processUsagesInText(@NotNull final PsiElement element,
                                             @NotNull Collection<String> stringToSearch,

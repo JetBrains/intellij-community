@@ -7,7 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 // Vfs invalidation will rebuild this mapping, also any exception with the mapping will cause rebuild of the vfs
 // stored data is VfsTimeStamp Version T*
 public final class VfsDependentEnum<T> {
-  @NonNls private static final String DEPENDENT_PERSISTENT_LIST_START_PREFIX = "vfs_enum_";
   private final File myFile;
   private final DataExternalizer<T> myKeyDescriptor;
   private final int myVersion;
@@ -36,13 +35,14 @@ public final class VfsDependentEnum<T> {
   private boolean myTriedToLoadFile;
 
   public VfsDependentEnum(@NotNull String fileName, @NotNull KeyDescriptor<T> descriptor, int version) {
-    myFile = new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + FSRecords.VFS_FILES_EXTENSION);
-    myKeyDescriptor = descriptor;
-    myVersion = version;
+    this(FSRecords.getPersistentFSPaths(), fileName, descriptor, version);
   }
 
-  static @NotNull File getBaseFile() {
-    return new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
+  @ApiStatus.Internal
+  VfsDependentEnum(@NotNull PersistentFSPaths paths, @NotNull String fileName, @NotNull KeyDescriptor<T> descriptor, int version) {
+    myFile = paths.getVfsEnumFile(fileName);
+    myKeyDescriptor = descriptor;
+    myVersion = version;
   }
 
   public int getId(@NotNull T s) throws IOException {

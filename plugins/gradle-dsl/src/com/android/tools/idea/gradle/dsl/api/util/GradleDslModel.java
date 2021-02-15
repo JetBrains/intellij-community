@@ -35,6 +35,11 @@ public interface GradleDslModel {
   @NotNull
   Map<String, GradlePropertyModel> getInScopeProperties();
 
+  @NotNull
+  default Boolean isPropertyInScope(@NotNull String name) {
+    return getInScopeProperties().containsKey(name);
+  }
+
   /**
    * @return a list containing all of the {@link GradlePropertyModel}s that are declared within this element.
    */

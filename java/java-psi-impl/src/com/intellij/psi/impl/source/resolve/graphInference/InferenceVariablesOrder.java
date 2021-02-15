@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
 
 public final class InferenceVariablesOrder {
   public static List<InferenceVariable> resolveOrder(List<InferenceVariable> vars,
@@ -55,7 +53,7 @@ public final class InferenceVariablesOrder {
   public static Map<InferenceVariable, Set<InferenceVariable>> getDependencies(
     Collection<? extends InferenceVariable> vars, InferenceSession session) {
 
-    Map<InferenceVariable, Set<InferenceVariable>> map = new THashMap<>();
+    Map<InferenceVariable, Set<InferenceVariable>> map = new HashMap<>();
     for (InferenceVariable var : vars) {
       map.put(var, var.getDependencies(session));
     }

@@ -98,6 +98,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private var layoutToRestoreLater: DesktopLayout? = null
   private var currentState = KeyState.WAITING
   private var waiterForSecondPress: SingleAlarm? = null
+  private val recentToolWindows = LinkedList<String>()
 
   private val pendingSetLayoutTask = AtomicReference<Runnable?>()
 
@@ -617,6 +618,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       ToolWindowCollector.getInstance().recordActivation(entry.id, info, source)
     }
 
+    recentToolWindows.remove(entry.id)
+    recentToolWindows.add(0, entry.id)
+
     if (!entry.toolWindow.isAvailable) {
       // Tool window can be "logically" active but not focused. For example,
       // when the user switched to another application. So we just need to bring
@@ -641,6 +645,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     fireStateChanged()
   }
+
+  fun getRecentToolWindows() = ArrayList(recentToolWindows)
 
   internal fun updateToolWindow(toolWindow: ToolWindowImpl, component: Component) {
     toolWindow.setFocusedComponent(component)
@@ -1043,7 +1049,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     button.isSelected = windowInfoSnapshot.isVisible
     button.updatePresentation()
     addStripeButton(button, toolWindowPane.getStripeFor((contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor))
-    toolWindowPane.onStripeButtonAdded(button)
+    toolWindowPane.onStripeButtonAdded(project, button)
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
@@ -1596,6 +1602,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     layoutToRestoreLater?.writeExternal(LAYOUT_TO_RESTORE)?.let {
       element.addContent(it)
     }
+
+    if (recentToolWindows.isNotEmpty()) {
+      val recentState = Element(RECENT_TW_TAG)
+      recentToolWindows.forEach {
+        recentState.addContent(Element("value").apply { addContent(it) })
+      }
+      element.addContent(recentState)
+    }
     return element
   }
 
@@ -1613,6 +1627,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       else if (LAYOUT_TO_RESTORE == element.name) {
         layoutToRestoreLater = DesktopLayout()
         layoutToRestoreLater!!.readExternal(element)
+      }
+      else if (RECENT_TW_TAG == element.name) {
+        recentToolWindows.clear()
+        element.content.forEach {
+          recentToolWindows.add(it.value)
+        }
       }
     }
   }
@@ -1888,11 +1908,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
 
-      val layeredPane = toolWindowPane!!.layeredPane
-      var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / layeredPane.height else source.width.toFloat() / layeredPane.width
+      val size = toolWindowPane!!.size
+      var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / size.height else source.width.toFloat() / size.width
       info.weight = paneWeight
       if (another != null && anchor.isSplitVertically) {
-        paneWeight = if (anchor.isHorizontal) another.height.toFloat() / layeredPane.height else another.width.toFloat() / layeredPane.width
+        paneWeight = if (anchor.isHorizontal) another.height.toFloat() / size.height else another.width.toFloat() / size.width
         getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
       }
     }
@@ -2068,6 +2088,7 @@ private fun getRootBounds(frame: JFrame): Rectangle {
 private const val EDITOR_ELEMENT = "editor"
 private const val ACTIVE_ATTR_VALUE = "active"
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
+private const val RECENT_TW_TAG = "recentWindows"
 
 internal enum class ToolWindowProperty {
   TITLE, ICON, AVAILABLE, STRIPE_TITLE
@@ -2107,10 +2128,11 @@ interface RegisterToolWindowTaskProvider {
   fun getTasks(project: Project): Collection<ToolWindowEP>
 }
 
+//Adding or removing items? Don't forget to increment the version in ToolWindowEventLogGroup.GROUP
 enum class ToolWindowEventSource {
   StripeButton, ToolWindowHeader, ToolWindowHeaderAltClick, Content, Switcher, SwitcherSearch,
   ToolWindowsWidget, RemoveStripeButtonAction,
   HideOnShowOther, HideSide, CloseFromSwitcher,
   ActivateActionMenu, ActivateActionKeyboardShortcut, ActivateActionGotoAction, ActivateActionOther,
-  CloseAction, HideButton, HideToolWindowAction, HideSideWindowsAction, HideAllWindowsAction, JumpToLastWindowAction
+  CloseAction, HideButton, HideToolWindowAction, HideSideWindowsAction, HideAllWindowsAction, JumpToLastWindowAction, ToolWindowSwitcher
 }

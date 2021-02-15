@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.PsiDocumentManager;
@@ -46,7 +47,7 @@ public class DaemonEditorPopup extends PopupHandler {
     DefaultActionGroup gotoGroup = createGotoGroup();
     actionGroup.add(gotoGroup);
     actionGroup.addSeparator();
-    actionGroup.add(new AnAction(EditorBundle.messagePointer("customize.highlighting.level.menu.item")) {
+    actionGroup.add(new DumbAwareAction(EditorBundle.messagePointer("customize.highlighting.level.menu.item")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         JBPopup popup = getConfigureHighlightingLevelPopup(e.getDataContext());

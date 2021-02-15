@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.model.impl
 
 import circlet.client.api.CPrincipal
@@ -20,6 +20,7 @@ internal class SpaceChatItemImpl private constructor(
   override val thread: M2ChannelVm? = null
 ) : SpaceChatItem {
   private val record = messageVm.message
+  override val id = record.id
   override val chat = messageVm.channelVm
   override val author: CPrincipal = record.author
   override val created: circlet.platform.api.KDateTime = record.created
@@ -36,6 +37,10 @@ internal class SpaceChatItemImpl private constructor(
 
   override val isEdited = record.edited != null
 
+  override val pending = record.pending
+
+  override val attachments = record.attachments ?: listOf()
+
   override fun startEditing() {
     messageVm.startEditing()
   }
@@ -45,7 +50,7 @@ internal class SpaceChatItemImpl private constructor(
   }
 
   override suspend fun delete() {
-    messageVm.delete()
+    chat.deleteMessage(id)
   }
 
   override fun equals(other: Any?): Boolean {

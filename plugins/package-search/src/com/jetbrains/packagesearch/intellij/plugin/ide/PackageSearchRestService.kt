@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
@@ -17,15 +18,12 @@ import com.jetbrains.packagesearch.intellij.plugin.PACKAGE_SEARCH_NOTIFICATION_G
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.HttpMethod
-import io.netty.handler.codec.http.HttpRequest
-import io.netty.handler.codec.http.HttpResponseStatus
-import io.netty.handler.codec.http.HttpUtil
-import io.netty.handler.codec.http.QueryStringDecoder
+import io.netty.handler.codec.http.*
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.ide.RestService
 import java.net.URI
 import java.net.URISyntaxException
-import org.jetbrains.ide.RestService
 
 internal class PackageSearchRestService : RestService() {
     override fun getServiceName() = "packageSearch"
@@ -70,10 +68,9 @@ internal class PackageSearchRestService : RestService() {
     ) {
         val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
         val data: InstallPackageRequest = gson.fromJson(createJsonReader(request), InstallPackageRequest::class.java)
-        val project = ProjectManager.getInstance().openProjects.find { it.name.toLowerCase() == data.project?.toLowerCase() }
-        val pkg = data.`package`
-        val query = data.query.nullize(true)
-        if (project == null || pkg == null) {
+        val project = ProjectManager.getInstance().openProjects.find { it.name.equals(data.project, ignoreCase = true) }
+        val packageName = data.`package`
+        if (project == null || packageName == null) {
             sendStatus(HttpResponseStatus.BAD_REQUEST, HttpUtil.isKeepAlive(request), context.channel())
             return
         }
@@ -83,10 +80,12 @@ internal class PackageSearchRestService : RestService() {
 
             PackageSearchToolWindowFactory.activateToolWindow(project) {
                 project.getUserData(PackageSearchToolWindowFactory.ToolWindowModelKey)?.let {
-                    it.selectedPackage.set(pkg)
-                    it.searchTerm.set(query ?: pkg.replace(':', ' '))
+                    it.selectedPackage.set(packageName)
 
-                    notify(project, pkg)
+                    val query = data.query.nullize(true)
+                    it.searchTerm.set(query ?: packageName.replace(':', ' '))
+
+                    notify(project, packageName)
                 }
             }
         }
@@ -111,18 +110,18 @@ internal class PackageSearchRestService : RestService() {
             super.isHostTrusted(request)
     }
 
-    private fun notify(project: Project, pkg: String) = NotificationGroup.balloonGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
+    private fun notify(project: Project, @Nls packageName: String) = NotificationGroup.balloonGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
         .createNotification(
-            PackageSearchBundle.message("packagesearch.title"),
-            pkg,
-            PackageSearchBundle.message("packagesearch.restService.readyForInstallation"),
-            NotificationType.INFORMATION
+          PackageSearchBundle.message("packagesearch.title"),
+          packageName,
+          PackageSearchBundle.message("packagesearch.restService.readyForInstallation"),
+          NotificationType.INFORMATION
         )
         .notify(project)
 }
 
 internal class InstallPackageRequest {
     var project: String? = null
-    var `package`: String? = null
-    var query: String? = null
+    @NlsSafe var `package`: String? = null
+    @NonNls var query: String? = null
 }

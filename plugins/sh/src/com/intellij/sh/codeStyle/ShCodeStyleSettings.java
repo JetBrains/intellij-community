@@ -10,6 +10,7 @@ public class ShCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean REDIRECT_FOLLOWED_BY_SPACE = false;
   public boolean KEEP_COLUMN_ALIGNMENT_PADDING = false;
   public boolean MINIFY_PROGRAM = false;
+  public boolean USE_UNIX_LINE_SEPARATOR = true;
 
   public ShCodeStyleSettings(CodeStyleSettings container) {
     super("Shell_Script", container);

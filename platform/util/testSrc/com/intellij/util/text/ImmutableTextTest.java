@@ -32,10 +32,10 @@ public class ImmutableTextTest extends UsefulTestCase {
     }).assertTiming();
   }
 
-  private static void assertBalanced(ImmutableText.Node node) {
+  private static void assertBalanced(CharSequence node) {
     if (node instanceof ImmutableText.CompositeNode) {
-      ImmutableText.Node head = ((ImmutableText.CompositeNode)node).head;
-      ImmutableText.Node tail = ((ImmutableText.CompositeNode)node).tail;
+      CharSequence head = ((ImmutableText.CompositeNode)node).head;
+      CharSequence tail = ((ImmutableText.CompositeNode)node).tail;
       int headLength = head.length();
       int tailLength = tail.length();
       assertTrue("unbalanced: head " + headLength + ", tail " + tailLength,

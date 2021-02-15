@@ -134,7 +134,7 @@ public class MoveClassToModuleFix implements IntentionAction {
     LOG.assertTrue(fqName != null);
     PsiDirectory directory = PackageUtil
       .findOrCreateDirectoryForPackage(myCurrentModule, StringUtil.getPackageName(fqName), mySourceRoot, true);
-    DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory, dataContext);
+    DataContext context = directory == null ? dataContext : SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory, dataContext);
 
     moveHandler.invoke(project, new PsiElement[]{aClass}, context);
     PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());

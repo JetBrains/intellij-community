@@ -12,7 +12,7 @@ import platform.common.ProductName
 
 class SpaceRunConfigurationType : SimpleConfigurationType(
   "SpaceRunConfiguration",
-  "$ProductName Task",
+  SpaceBundle.message("space.task.run.configuration.name"),
   SpaceBundle.message("run.configuration.description", ProductName),
   NotNullLazyValue.createValue { SpaceIcons.Main }
 ) {

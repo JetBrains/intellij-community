@@ -308,9 +308,6 @@
   <item name="java.io.FilterInputStream int read(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="java.io.FilterOutputStream FilterOutputStream(java.io.OutputStream) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
   <item name="java.io.FilterOutputStream void write(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

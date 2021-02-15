@@ -227,7 +227,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
             }
             else {
               JBPopupFactory.getInstance()
-                .createListPopup(new BaseListPopupStep<CopyrightProfile>(CopyrightBundle.message("popup.title.choose.profile.to.import"), profiles) {
+                .createListPopup(new BaseListPopupStep<>(CopyrightBundle.message("popup.title.choose.profile.to.import"), profiles) {
                   @Override
                   public PopupStep<?> onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
                     return doFinalStep(() -> importProfile(selectedValue));

@@ -38,7 +38,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
 
   @Override
   public String getDescription(UnknownTask task) {
-    return ExecutionBundle.message("before.launch.run.unknown.task") + " " + myId.toString();
+    return ExecutionBundle.message("before.launch.run.unknown.task") + " " + myId.toString(); //NON-NLS
   }
 
   @Override

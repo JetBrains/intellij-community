@@ -1,10 +1,22 @@
 <html>
 <body>
-Reports any <b>List.indexOf()</b>
-expressions which can be replaced with the method
-<b>List.contains()</b>.
+Reports any <code>List.indexOf()</code>
+expressions that can be replaced with the 
+<code>List.contains()</code> method.
+<p>Example:</p>
+<pre>
+  boolean hasEmptyString(List&lt;String&gt; list) {
+    // Warning: can be simplified
+    return list.indexOf("") >= 0;
+  }
+</pre>
+A quick-fix is provided that will replace the <code>indexOf</code> call with a <code>contains</code> call:
+<pre>
+  boolean hasEmptyString(List&lt;String&gt; list) {
+    // Quick-fix is applied
+    return list.contains("");
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

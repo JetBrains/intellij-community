@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -17,18 +16,12 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRecordComponentStub> implements PsiRecordComponent {
+public final class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRecordComponentStub> implements PsiRecordComponent {
   private final NotNullLazyValue<PsiTypeElement> myType;
 
   public ClsRecordComponentImpl(@NotNull PsiRecordComponentStub stub) {
     super(stub);
-    myType = new AtomicNotNullLazyValue<PsiTypeElement>() {
-      @NotNull
-      @Override
-      protected PsiTypeElement compute() {
-        return new ClsTypeElementImpl(ClsRecordComponentImpl.this, getStub().getType(false));
-      }
-    };
+    myType = NotNullLazyValue.atomicLazy(() -> new ClsTypeElementImpl(this, getStub().getType()));
   }
 
   @Override

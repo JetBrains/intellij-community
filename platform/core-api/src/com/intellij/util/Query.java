@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -48,7 +49,9 @@ public interface Query<Result> extends Iterable<Result> {
     return AsyncUtil.wrapBoolean(forEach(consumer));
   }
 
-  Result @NotNull [] toArray(Result @NotNull [] a);
+  default Result @NotNull [] toArray(Result @NotNull [] a) {
+    return findAll().toArray(a);
+  }
 
   /**
    * Checks whether predicate is satisfied for every result of this query.
@@ -119,5 +122,10 @@ public interface Query<Result> extends Iterable<Result> {
   @Contract(pure = true)
   default Query<Result> allowParallelProcessing() {
     return this;
+  }
+
+  @Override
+  default @NotNull Iterator<Result> iterator() {
+    return findAll().iterator();
   }
 }

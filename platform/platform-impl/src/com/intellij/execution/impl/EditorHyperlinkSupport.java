@@ -208,17 +208,6 @@ public class EditorHyperlinkSupport {
     return getHyperlinkAt(myEditor.logicalPositionToOffset(new LogicalPosition(line, col)));
   }
 
-  /**
-   * @deprecated left for API compatibility, use {@link #createHyperlink(int, int, TextAttributes, HyperlinkInfo)}
-   */
-  @Deprecated
-  public void addHyperlink(final int highlightStartOffset,
-                           final int highlightEndOffset,
-                           @Nullable final TextAttributes highlightAttributes,
-                           @NotNull final HyperlinkInfo hyperlinkInfo) {
-    createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo);
-  }
-
   public void createHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
     associateHyperlink(highlighter, hyperlinkInfo, null);
   }
@@ -254,14 +243,6 @@ public class EditorHyperlinkSupport {
     return highlighter;
   }
 
-  /**
-   * @deprecated Use {@link #get(Editor)} and then {@link #createHyperlink(RangeHighlighter, HyperlinkInfo)}
-   */
-  @Deprecated
-  public static void associateHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
-    associateHyperlink(highlighter, hyperlinkInfo, null);
-  }
-
   private static void associateHyperlink(@NotNull RangeHighlighter highlighter,
                                         @NotNull HyperlinkInfo hyperlinkInfo,
                                         @Nullable TextAttributes followedHyperlinkAttributes) {
@@ -281,14 +262,6 @@ public class EditorHyperlinkSupport {
     @Nullable
   public HyperlinkInfo getHyperlinkInfoByEvent(@NotNull EditorMouseEvent event) {
     return event.isOverText() ? getHyperlinkAt(event.getOffset()) : null;
-  }
-
-  @Deprecated
-  public void highlightHyperlinks(@NotNull Filter customFilter, final Filter predefinedMessageFilter, final int line1, final int endLine) {
-    highlightHyperlinks((line, entireLength) -> {
-      Filter.Result result = customFilter.applyFilter(line, entireLength);
-      return result != null ? result : predefinedMessageFilter.applyFilter(line, entireLength);
-    }, line1, endLine);
   }
 
   public void highlightHyperlinks(@NotNull Filter customFilter, final int line1, final int endLine) {

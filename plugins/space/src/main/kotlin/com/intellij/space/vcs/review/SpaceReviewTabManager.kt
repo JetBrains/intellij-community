@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.vcs.Context
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.SpaceProjectInfo
@@ -22,20 +22,22 @@ import runtime.reactive.mapInit
 @Service
 internal class SpaceCodeReviewTabManager(private val project: Project) {
 
-  private lateinit var myReviewTabContentManager: SpaceCodeReviewTabContentManager
+  private var myReviewTabContentManager: SpaceCodeReviewTabContentManager? = null
 
   companion object {
     fun getInstance(project: Project): SpaceCodeReviewTabManager = project.service()
   }
 
   internal fun showReviews(contentManager: ContentManager) {
-    myReviewTabContentManager = SpaceCodeReviewTabContentManager(project, contentManager)
+    if (myReviewTabContentManager == null) {
+      myReviewTabContentManager = SpaceCodeReviewTabContentManager(project, contentManager)
+    }
   }
 }
 
 internal class SpaceCodeReviewTabContentManager(private val project: Project, private val cm: ContentManager) {
   private val lifetime: LifetimeSource = LifetimeSource()
-  private val workspace: Property<Workspace?> = space.workspace
+  private val workspace: Property<Workspace?> = SpaceWorkspaceComponent.getInstance().workspace
   private val context: Property<Context> = SpaceProjectContext.getInstance(project).context
 
   private val contents: Property<MutableMap<SpaceProjectInfo, Content>> =
@@ -78,7 +80,7 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
     val lifeTime = LifetimeSource()
     val factory = ContentFactory.SERVICE.getInstance()
 
-    return factory.createContent(null, spaceProjectInfo.project.name, false).apply {
+    return factory.createContent(null, spaceProjectInfo.project.name, false).apply { // NON-NLS
       val disposable = Disposable {
         lifeTime.terminate()
       }
@@ -86,8 +88,8 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
       setDisposer(disposable)
       icon = SpaceIcons.Main
 
-      component = ReviewLoginComponent(lifetime, project, spaceProjectInfo, projectRepos).view
-      description = spaceProjectInfo.key.key
+      component = ReviewLoginComponent(disposable, lifetime, project, spaceProjectInfo, projectRepos).view
+      description = spaceProjectInfo.key.key // NON-NLS
     }
   }
 }

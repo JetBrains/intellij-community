@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.List;
@@ -202,5 +203,11 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(() -> update(), delay);
     }
+  }
+
+  @TestOnly
+  public static ExternalSystemProcessingManager getInstance() {
+    Application application = ApplicationManager.getApplication();
+    return application.getService(ExternalSystemProcessingManager.class);
   }
 }

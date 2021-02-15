@@ -2,18 +2,18 @@
 package com.intellij.java.codeInsight.generation.surroundWith
 
 import com.intellij.codeInsight.generation.surroundWith.*
-import com.intellij.java.codeInsight.folding.JavaFoldingTestCase
 import com.intellij.lang.LanguageSurrounders
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_15
 import com.intellij.util.containers.ContainerUtil
 
 class JavaSurroundWith13Test : LightJavaCodeInsightTestCase() {
   private val BASE_PATH = "/codeInsight/generation/surroundWith/java13/"
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JavaFoldingTestCase.JAVA_14
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_15
 
   fun testCaseBlockWithIf() = doTest(JavaWithIfSurrounder())
   fun testCaseResultWithIf() = doTest(JavaWithIfSurrounder())

@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
@@ -246,7 +247,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   protected open fun getProjectDisplayName(project: Project): String? = null
 
   fun getProjectIcon(path: String, isDark: Boolean): Icon {
-    return projectIconHelper.getProjectIcon(path, isDark)
+    return projectIconHelper.getProjectIcon(path, isDark, false)
+  }
+
+  fun getProjectIcon(path: String, isDark: Boolean, generateFromName: Boolean): Icon {
+    return projectIconHelper.getProjectIcon(path, isDark, generateFromName)
   }
 
   fun getProjectOrAppIcon(path: String): Icon {
@@ -324,7 +329,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     private val manager = instanceEx
 
     override fun projectOpened(project: Project) {
-      if (manager.disableUpdatingRecentInfo.get()) {
+      if (manager.disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
         return
       }
 
@@ -431,10 +436,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     finally {
       disableUpdatingRecentInfo.set(false)
     }
-  }
-
-  override fun suggestNewProjectLocation(): String {
-    return ProjectUtil.getBaseDir()
   }
 
   // open for rider

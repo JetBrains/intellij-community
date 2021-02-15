@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
@@ -11,6 +12,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.render.PyNodeRenderer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -351,7 +353,7 @@ public class PyDebugValue extends XNamedValue {
 
   public void updateNodeValueAfterLoading(@NotNull XValueNode node,
                                           @NotNull String value,
-                                          @NotNull String linkText,
+                                          @NotNull @Nls String linkText,
                                           @Nullable String errorMessage) {
     if (errorMessage != null) {
       node.setPresentation(getValueIcon(), new XRegularValuePresentation(value, myType) {
@@ -370,15 +372,10 @@ public class PyDebugValue extends XNamedValue {
       node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, getEvaluationExpression()));
     }
     else {
-      node.setFullValueEvaluator(new XFullValueEvaluator() {
+      node.setFullValueEvaluator(new XFullValueEvaluator(linkText) {
         @Override
         public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
           callback.evaluated(value);
-        }
-
-        @Override
-        public String getLinkText() {
-          return linkText;
         }
 
         @Override

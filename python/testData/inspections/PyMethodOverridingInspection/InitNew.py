@@ -16,5 +16,5 @@ class C(B):
     def __new__(self, p, q): # different but ok because __new__ is special
         pass
 
-    def foo<warning descr="Signature of method 'C.foo()' does not match signature of base method in class 'B'">(self, s, t)</warning>:
+    def foo<warning descr="Signature of method 'C.foo()' does not match signature of the base method in class 'B'">(self, s, t)</warning>:
         pass

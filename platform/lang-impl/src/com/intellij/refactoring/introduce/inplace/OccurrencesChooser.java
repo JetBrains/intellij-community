@@ -63,7 +63,7 @@ public abstract class OccurrencesChooser<T> {
   }
 
   public static <T extends PsiElement> OccurrencesChooser<T> simpleChooser(Editor editor) {
-    return new OccurrencesChooser<T>(editor) {
+    return new OccurrencesChooser<>(editor) {
       @Override
       protected TextRange getOccurrenceRange(T occurrence) {
         return occurrence.getTextRange();

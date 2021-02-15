@@ -53,7 +53,7 @@ public abstract class RefreshQueue {
   }
 
   @ApiStatus.Internal
-  public abstract void processSingleEvent(@NotNull VFileEvent event);
+  public abstract void processSingleEvent(boolean async, @NotNull VFileEvent event);
 
   public abstract void cancelSession(long id);
 }

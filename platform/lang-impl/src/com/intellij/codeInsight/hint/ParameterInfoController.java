@@ -34,7 +34,6 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -260,9 +259,7 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
 
     runTask(myProject,
             ReadAction.nonBlocking(() -> {
-              FileBasedIndex.getInstance().ignoreDumbMode(
-                () -> myParameterInfoControllerData.getHandler().updateParameterInfo(elementForUpdating, context),
-                DumbModeAccessType.RELIABLE_DATA_ONLY);
+              DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> myParameterInfoControllerData.getHandler().updateParameterInfo(elementForUpdating, context));
               return elementForUpdating;
             })
               .withDocumentsCommitted(myProject)

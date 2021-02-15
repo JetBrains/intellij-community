@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -27,12 +31,10 @@ public class GrClassConverter extends GrTypeConverter {
                                         @NotNull PsiType actualType,
                                         @NotNull Position position,
                                         @NotNull GroovyPsiElement context) {
-    if (!(targetType instanceof PsiClassType) ||
-        !((PsiClassType)targetType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+    if (!PsiTypesUtil.classNameEquals(targetType, CommonClassNames.JAVA_LANG_CLASS)) {
       return null;
     }
-    if (actualType instanceof PsiClassType &&
-        ((PsiClassType)actualType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+    if (PsiTypesUtil.classNameEquals(actualType, CommonClassNames.JAVA_LANG_CLASS)) {
       return null;
     }
     if (actualType == PsiType.NULL) return ConversionResult.OK;

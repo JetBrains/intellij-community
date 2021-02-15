@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.impl.ContentRevisionCache
 import com.intellij.openapi.vcs.merge.MergeUtils.putRevisionInfos
@@ -259,7 +260,7 @@ abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) 
     return statusNode.filePath.presentableUrl
   }
 
-  override fun getPopupTag(): Any? {
+  override fun getPopupTag(): ChangesBrowserNode.Tag? {
     return getTag(kind)
   }
 
@@ -296,7 +297,7 @@ private class StagedContentRevision(val project: Project, val root: VirtualFile,
   override fun getContentAsBytes(): ByteArray = stagedContentFile(project, root, status).contentsToByteArray()
 }
 
-private class KindTag(private val kind: NodeKind) {
+private class KindTag(private val kind: NodeKind): ChangesBrowserNode.Tag {
   override fun toString(): String = GitBundle.message(kind.key)
 
   override fun equals(other: Any?): Boolean {

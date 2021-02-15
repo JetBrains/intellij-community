@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 
+import static git4idea.GitNotificationIdsHolder.LOCAL_CHANGES_NOT_RESTORED;
+
 /**
  * Saves and restores uncommitted local changes - it is used before and after the update process.
  * Respects changelists.
@@ -82,7 +84,7 @@ public abstract class GitChangesSaver {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        "git.local.changes.not.restored", GitBundle.message("restore.notification.failed.title"),
+        LOCAL_CHANGES_NOT_RESTORED, GitBundle.message("restore.notification.failed.title"),
         getSaveMethod().selectBundleMessage(
           GitBundle.message("restore.notification.failed.stash.message"),
           GitBundle.message("restore.notification.failed.shelf.message")

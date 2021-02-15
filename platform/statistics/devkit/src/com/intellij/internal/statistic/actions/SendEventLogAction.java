@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NavigatablePsiElement;
@@ -40,6 +39,8 @@ import java.util.List;
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
 public class SendEventLogAction extends AnAction {
+  private static final String FUS_RECORDER = "FUS";
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
@@ -66,12 +67,10 @@ public class SendEventLogAction extends AnAction {
       }
 
       private StatisticsResult send() {
-        String recorderId = Registry.stringValue("usage.statistics.test.action.recorder.id");
-        EventLogRecorderConfiguration config = EventLogConfiguration.INSTANCE.getOrCreate(recorderId);
         return EventLogStatisticsService.send(
-          new DeviceConfiguration(config.getDeviceId(), config.getBucket()),
-          new EventLogInternalRecorderConfig(recorderId),
-          new EventLogTestSettingsService(recorderId),
+          new DeviceConfiguration(EventLogConfiguration.INSTANCE.getDeviceId(), EventLogConfiguration.INSTANCE.getBucket()),
+          new EventLogInternalRecorderConfig(FUS_RECORDER),
+          new EventLogTestSettingsService(),
           new EventLogTestResultDecorator()
         );
       }
@@ -79,8 +78,8 @@ public class SendEventLogAction extends AnAction {
   }
 
   private static final class EventLogTestSettingsService extends EventLogUploadSettingsService implements EventLogSettingsService {
-    private EventLogTestSettingsService(@NotNull String recorderId) {
-      super(recorderId, new EventLogTestApplication(recorderId));
+    private EventLogTestSettingsService() {
+      super(FUS_RECORDER, new EventLogTestApplication());
     }
 
     @Override
@@ -97,8 +96,8 @@ public class SendEventLogAction extends AnAction {
   }
 
   private static final class EventLogTestApplication extends EventLogInternalApplicationInfo {
-    private EventLogTestApplication(@NotNull String recorderId) {
-      super(recorderId, true);
+    private EventLogTestApplication() {
+      super(FUS_RECORDER, true);
     }
 
     @Override
@@ -117,7 +116,7 @@ public class SendEventLogAction extends AnAction {
     }
 
     @Override
-    public void onFailed(@Nullable LogEventRecordRequest request, @Nullable String content) {
+    public void onFailed(@Nullable LogEventRecordRequest request, int error, @Nullable String content) {
       if (request != null) {
         myFailed.add(request);
       }

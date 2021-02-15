@@ -313,7 +313,9 @@ public class TooBroadScopeInspection extends BaseInspection {
             // String s = "";
             // String t = "";
             // String u = s + t;
-            registerError(nameIdentifier, ProblemHighlightType.INFORMATION, variable);
+            if (isOnTheFly()) {
+              registerError(nameIdentifier, ProblemHighlightType.INFORMATION, variable);
+            }
           }
           return;
         }

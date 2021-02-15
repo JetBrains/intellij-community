@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
@@ -11,7 +11,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -269,7 +269,9 @@ public final class SocketLock {
         System.setProperty(CommandLineArgs.NO_SPLASH, "true");
         EventQueue.invokeLater(() -> {
           Runnable hideSplashTask = SplashManager.getHideTask();
-          if (hideSplashTask != null) hideSplashTask.run();
+          if (hideSplashTask != null) {
+            hideSplashTask.run();
+          }
         });
 
         try {
@@ -286,7 +288,7 @@ public final class SocketLock {
           socket.setSoTimeout(0);
           List<String> response = readStringSequence(in);
           log("read: response=%s", String.join(";", response));
-          if (OK_RESPONSE.equals(ContainerUtil.getFirstItem(response))) {
+          if (!response.isEmpty() && OK_RESPONSE.equals(response.get(0))) {
             if (JetBrainsProtocolHandler.isShutdownCommand()) {
               printPID(portNumber);
             }
@@ -379,7 +381,7 @@ public final class SocketLock {
               return;
             }
 
-            if (StringUtil.startsWith(command, PID_COMMAND)) {
+            if (StringUtilRt.startsWith(command, PID_COMMAND)) {
               ByteBuf buffer = context.alloc().ioBuffer();
               try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
                 String name = ManagementFactory.getRuntimeMXBean().getName();
@@ -388,13 +390,20 @@ public final class SocketLock {
               context.writeAndFlush(buffer);
             }
 
-            if (StringUtil.startsWith(command, ACTIVATE_COMMAND)) {
+            if (StringUtilRt.startsWith(command, ACTIVATE_COMMAND)) {
               String data = command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString();
-              List<String> args = StringUtil.split(data, data.contains("\0") ? "\0" : "\uFFFD");
-
+              StringTokenizer tokenizer = new StringTokenizer(data, data.contains("\0") ? "\0" : "\uFFFD");
               CliResult result;
-              boolean tokenOK = !args.isEmpty() && myToken.equals(args.get(0));
-              if (!tokenOK) {
+              boolean tokenOK = tokenizer.hasMoreTokens() && myToken.equals(tokenizer.nextToken());
+              if (tokenOK) {
+                List<String> list = new ArrayList<>();
+                while (tokenizer.hasMoreTokens()) {
+                  list.add(tokenizer.nextToken());
+                }
+                Future<CliResult> future = myCommandProcessorRef.get().apply(list);
+                result = CliResult.unmap(future, Main.ACTIVATE_ERROR);
+              }
+              else {
                 log(new UnsupportedOperationException("unauthorized request: " + command));
                 Notifications.Bus.notify(new Notification(
                   Notifications.SYSTEM_MESSAGES_GROUP_ID,
@@ -402,10 +411,6 @@ public final class SocketLock {
                   IdeBundle.message("activation.auth.message"),
                   NotificationType.WARNING));
                 result = new CliResult(Main.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"));
-              }
-              else {
-                Future<CliResult> future = myCommandProcessorRef.get().apply(args.subList(1, args.size()));
-                result = CliResult.unmap(future, Main.ACTIVATE_ERROR);
               }
 
               List<String> response = new ArrayList<>();

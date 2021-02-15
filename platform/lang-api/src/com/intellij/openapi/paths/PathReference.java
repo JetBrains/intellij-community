@@ -38,7 +38,7 @@ public class PathReference {
 
   public PathReference(@NotNull String path, final @NotNull Function<? super PathReference, ? extends Icon> icon) {
     myPath = path;
-    myIcon = new NullableLazyValue<Icon>() {
+    myIcon = new NullableLazyValue<>() {
       @Override
       protected Icon compute() {
         return icon.fun(PathReference.this);

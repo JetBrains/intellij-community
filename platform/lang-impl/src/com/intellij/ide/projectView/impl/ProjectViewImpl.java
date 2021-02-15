@@ -78,7 +78,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -499,7 +498,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = Comparator.comparingInt(AbstractProjectViewPane::getWeight);
   private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
-  private final Map<String, Element> myUninitializedPaneState = new THashMap<>();
+  private final Map<String, Element> myUninitializedPaneState = new HashMap<>();
   private final Map<String, SelectInTarget> mySelectInTargets = new LinkedHashMap<>();
   private ContentManager myContentManager;
 
@@ -560,7 +559,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     });
 
-    AbstractProjectViewPane.EP.addExtensionPointListener(project, new ExtensionPointListener<AbstractProjectViewPane>() {
+    AbstractProjectViewPane.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull AbstractProjectViewPane extension, @NotNull PluginDescriptor pluginDescriptor) {
         reloadPanes();
@@ -1793,6 +1792,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public void setHideEmptyPackages(@NotNull String paneId, boolean hideEmptyPackages) {
     if (myHideEmptyMiddlePackages.isEnabled(paneId)) myHideEmptyMiddlePackages.setSelected(hideEmptyPackages);
+  }
+
+  @Override
+  public boolean isUseFileNestingRules(String paneId) {
+    if (!myCurrentState.getUseFileNestingRules()) return false;
+    AbstractProjectViewPane pane = myId2Pane.get(paneId);
+    return pane != null && pane.isFileNestingEnabled();
+  }
+
+  @Override
+  public void setUseFileNestingRules(boolean useFileNestingRules) {
+    if (myProject.isDisposed()) return;
+    boolean updated = useFileNestingRules != myCurrentState.getUseFileNestingRules();
+    myCurrentState.setUseFileNestingRules(useFileNestingRules);
+    getDefaultState().setUseFileNestingRules(useFileNestingRules);
+    if (updated) updatePanes(false);
   }
 
   @Override

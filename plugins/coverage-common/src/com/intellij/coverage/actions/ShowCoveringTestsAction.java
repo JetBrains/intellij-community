@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class ShowCoveringTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
@@ -76,14 +77,10 @@ public class ShowCoveringTestsAction extends AnAction {
       final String title = CoverageBundle.message("popup.title.tests.covering.line", myClassFQName, myLineData.getLineNumber());
       final ComponentPopupBuilder popupBuilder;
       if (!elements.isEmpty()) {
-        component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0);
+        Consumer<ImplementationViewComponent> processor = viewComponent -> viewComponent.showInUsageView();
+        component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0, processor);
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
-          .setDimensionServiceKey(project, "ShowTestsPopup", false)
-          .setCouldPin(popup -> {
-            component.showInUsageView();
-            popup.cancel();
-            return false;
-          });
+          .setDimensionServiceKey(project, "ShowTestsPopup", false);
       } else {
         component = null;
         @NonNls String testsPresentation = StringUtil.join(testNames, "<br/>").replace("_", ".");

@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.module.Module;
@@ -11,16 +10,12 @@ import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author spleaner
- */
-public class LogicalRootsManagerImpl extends LogicalRootsManager {
+public final class LogicalRootsManagerImpl extends LogicalRootsManager {
   private Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> myRoots = null;
   private final MultiValuesMap<LogicalRootType, NotNullFunction<? super Module, ? extends List<? extends LogicalRoot>>> myProviders = new MultiValuesMap<>();
   private final ModuleManager myModuleManager;
@@ -40,7 +35,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
 
   private synchronized  Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> getRoots(final ModuleManager moduleManager) {
     if (myRoots == null) {
-      myRoots = new THashMap<>();
+      myRoots = new HashMap<>();
 
       final Module[] modules = moduleManager.getModules();
       for (Module module : modules) {

@@ -30,7 +30,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
     .withInsertHandler(AddSpaceInsertHandler.INSTANCE_WITH_AUTO_POPUP);
 
   public ExtensionOrderKeywordCompletionContributor() {
-    extend(CompletionType.BASIC, getCapture(), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, getCapture(), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -54,7 +54,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
     //TODO write a method for attribute value in XmlPatterns
     return psiElement().inside(
       XmlPatterns.xmlAttributeValue("order").inside(
-        XmlPatterns.xmlTag().with(new PatternCondition<XmlTag>("extension tag") {
+        XmlPatterns.xmlTag().with(new PatternCondition<>("extension tag") {
           @Override
           public boolean accepts(@NotNull XmlTag tag, ProcessingContext context) {
             if (!PsiUtil.isPluginXmlPsiElement(tag)) {

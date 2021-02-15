@@ -7,7 +7,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiBinaryFile
 import com.intellij.psi.PsiElement
@@ -31,6 +30,10 @@ abstract class ImplementationViewElement {
   abstract val name: String?
   @get:NlsSafe
   abstract val presentableText: String
+
+  @get:NlsSafe
+  open val containerPresentation: String? = null
+
   abstract val containingFile: VirtualFile?
   @get:NlsSafe
   abstract val text: String?
@@ -72,18 +75,20 @@ class PsiImplementationViewElement(val psiElement: PsiElement) : ImplementationV
       if (presentation == null) {
         return presentableName
       }
-
       val elementPresentation  = presentation.presentableText
-      val locationString = presentation.locationString
+      if (elementPresentation == null) {
+        return presentableName
+      }
+      return elementPresentation
 
-      return if (vFile.name == elementPresentation + "." + vFile.extension) {
-        presentableName + if (!StringUtil.isEmptyOrSpaces(locationString)) " $locationString" else ""
-      }
-      else {
-        "$presentableName ($elementPresentation)"
-      }
     }
 
+  override val containerPresentation: String?
+    get() {
+      val presentation = (psiElement as? NavigationItem)?.presentation ?: return null
+      return presentation.locationString
+    }
+  
   override val locationText: String?
     get() = ElementLocationUtil.renderElementLocation(psiElement, Ref())
 

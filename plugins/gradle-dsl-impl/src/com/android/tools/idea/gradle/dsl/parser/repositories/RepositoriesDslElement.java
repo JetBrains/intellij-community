@@ -31,8 +31,10 @@ public class RepositoriesDslElement extends GradleDslBlockElement {
 
   public static final ImmutableMap<String, PropertiesElementDescription> CHILD_PROPERTIES_ELEMENTS_MAP = Stream.of(new Object[][]{
     {"flatDir", FlatDirRepositoryDslElement.FLAT_DIR},
+    {"google", MavenRepositoryDslElement.GOOGLE},
     {"jcenter", MavenRepositoryDslElement.JCENTER},
-    {"maven", MavenRepositoryDslElement.MAVEN}
+    {"maven", MavenRepositoryDslElement.MAVEN},
+    {"mavenCentral", MavenRepositoryDslElement.MAVEN_CENTRAL}
   }).collect(toImmutableMap(data -> (String)data[0], data -> (PropertiesElementDescription)data[1]));
 
   @NotNull

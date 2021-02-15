@@ -29,10 +29,6 @@ import java.util.concurrent.Future;
 public final class IndexInfrastructure {
   private static final String STUB_VERSIONS = ".versions";
   private static final String PERSISTENT_INDEX_DIRECTORY_NAME = ".persistent";
-  private static final boolean ourDoParallelIndicesInitialization = SystemProperties
-    .getBooleanProperty("idea.parallel.indices.initialization", false);
-  public static final boolean ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true);
-  private static final ExecutorService ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("IndexInfrastructure Pool");
 
   private IndexInfrastructure() {
   }
@@ -95,91 +91,6 @@ public final class IndexInfrastructure {
       indexDir.mkdirs();
     }
     return indexDir;
-  }
-
-  @Nullable
-  public static VirtualFile findFileById(@NotNull PersistentFS fs, final int id) {
-    return fs.findFileById(id);
-  }
-
-  @Nullable
-  public static VirtualFile findFileByIdIfCached(@NotNull PersistentFS fs, final int id) {
-    return fs.findFileByIdIfCached(id);
-  }
-
-  @NotNull
-  public static <T> Future<T> submitGenesisTask(@NotNull Callable<T> action) {
-    return ourGenesisExecutor.submit(action);
-  }
-
-  public abstract static class DataInitialization<T> implements Callable<T> {
-    private final List<ThrowableRunnable<?>> myNestedInitializationTasks = new ArrayList<>();
-
-    @Override
-    public final T call() throws Exception {
-      long started = System.nanoTime();
-      try {
-        prepare();
-        runParallelNestedInitializationTasks();
-        return finish();
-      }
-      finally {
-        Logger.getInstance(getClass().getName()).info("Initialization done: " + (System.nanoTime() - started) / 1000000);
-      }
-    }
-
-    protected T finish() {
-      return null;
-    }
-
-    protected void prepare() {}
-    protected abstract void onThrowable(@NotNull Throwable t);
-
-    protected void addNestedInitializationTask(@NotNull ThrowableRunnable<?> nestedInitializationTask) {
-      myNestedInitializationTasks.add(nestedInitializationTask);
-    }
-
-    private void runParallelNestedInitializationTasks() throws InterruptedException {
-      int numberOfTasksToExecute = myNestedInitializationTasks.size();
-      if (numberOfTasksToExecute == 0) return;
-
-      CountDownLatch proceedLatch = new CountDownLatch(numberOfTasksToExecute);
-
-      if (ourDoParallelIndicesInitialization) {
-        ExecutorService taskExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-          "IndexInfrastructure.DataInitialization.RunParallelNestedInitializationTasks", AppExecutorUtil.getAppExecutorService(),
-          UnindexedFilesUpdater.getNumberOfIndexingThreads());
-
-        for (ThrowableRunnable<?> callable : myNestedInitializationTasks) {
-          taskExecutor.execute(() -> executeNestedInitializationTask(callable, proceedLatch));
-        }
-
-        proceedLatch.await();
-        taskExecutor.shutdown();
-      }
-      else {
-        for (ThrowableRunnable<?> callable : myNestedInitializationTasks) {
-          executeNestedInitializationTask(callable, proceedLatch);
-        }
-      }
-    }
-
-    private void executeNestedInitializationTask(@NotNull ThrowableRunnable<?> callable, CountDownLatch proceedLatch) {
-      Application app = ApplicationManager.getApplication();
-      try {
-        // To correctly apply file removals in indices's shutdown hook we should process all initialization tasks
-        // Todo: make processing removed files more robust because ignoring 'dispose in progress' delays application exit and
-        // may cause memory leaks IDEA-183718, IDEA-169374,
-        if (app.isDisposed() /*|| app.isDisposeInProgress()*/) return;
-        callable.run();
-      }
-      catch (Throwable t) {
-        onThrowable(t);
-      }
-      finally {
-        proceedLatch.countDown();
-      }
-    }
   }
 
   @ApiStatus.Internal

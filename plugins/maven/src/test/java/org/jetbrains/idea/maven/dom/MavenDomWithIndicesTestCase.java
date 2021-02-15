@@ -22,6 +22,7 @@ import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvide
 import org.jetbrains.idea.reposearch.DependencySearchProvider;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -35,7 +36,7 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
     myIndicesFixture = createIndicesFixture();
     myIndicesFixture.setUp();
     List<DependencySearchProvider> indexProviders =
-      ContainerUtil.map(myIndicesFixture.getProjectIndicesManager().getIndices(), IndexBasedCompletionProvider::new);
+      new ArrayList<>(ContainerUtil.map(myIndicesFixture.getProjectIndicesManager().getIndices(), IndexBasedCompletionProvider::new));
     indexProviders.add(new ProjectModulesCompletionProvider(myProject));
     DependencySearchService.getInstance(myProject).setProviders(indexProviders,
                                                                 emptyList()

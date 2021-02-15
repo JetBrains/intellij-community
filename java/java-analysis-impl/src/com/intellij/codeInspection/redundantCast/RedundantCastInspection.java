@@ -21,7 +21,7 @@ public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool
   private final LocalQuickFix myQuickFixAction;
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 
-  public boolean IGNORE_SUSPICIOUS_METHOD_CALLS;
+  public boolean IGNORE_SUSPICIOUS_METHOD_CALLS = true;
 
   public RedundantCastInspection() {
     myQuickFixAction = new AcceptSuggested();

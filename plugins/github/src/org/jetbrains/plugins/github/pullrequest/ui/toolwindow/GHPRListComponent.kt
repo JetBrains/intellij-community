@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.ide.DataManager
@@ -11,7 +11,11 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.ui.*
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
+import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.OpenReviewButton
 import com.intellij.util.ui.codereview.OpenReviewButtonViewModel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -23,13 +27,13 @@ import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
+import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchCompletionProvider
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
-import org.jetbrains.plugins.github.ui.GHHandledErrorPanelModel
-import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
+import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
+import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.BoundedRangeModelThresholdListener
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
@@ -94,8 +98,7 @@ internal object GHPRListComponent {
       ActionManager.getInstance().getAction("Github.PullRequest.Show")
     }
 
-    val avatarIconsProvider = dataContext.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
-    val renderer = GHPRListCellRenderer(avatarIconsProvider, openButtonViewModel)
+    val renderer = GHPRListCellRenderer(dataContext.avatarIconsProvider, openButtonViewModel)
     list.cellRenderer = renderer
     UIUtil.putClientProperty(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
@@ -117,7 +120,7 @@ internal object GHPRListComponent {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
 
-    val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, UI.scale(5), 0)).apply {
+    val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
       background = UIUtil.getPanelBackground()
       border = JBUI.Borders.empty(4, 0)
       add(JLabel(GithubBundle.message("pull.request.list.outdated")))
@@ -187,7 +190,6 @@ internal object GHPRListComponent {
     }
     return progressStripe
   }
-
 
 
   private class ListEmptyTextController(private val listLoader: GHListLoader<*>,

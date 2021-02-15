@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.search
 
 import com.intellij.icons.AllIcons
@@ -17,7 +17,6 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -44,8 +43,7 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
-class GitSearchEverywhereContributor(private val project: Project) : WeightedSearchEverywhereContributor<Any>, DumbAware {
-
+internal class GitSearchEverywhereContributor(private val project: Project) : WeightedSearchEverywhereContributor<Any>, DumbAware {
   private val filter = PersistentSearchEverywhereContributorFilter(
     GitSearchEverywhereItemType.values().asList(),
     project.service<GitSearchEverywhereFilterConfiguration>(),
@@ -153,7 +151,7 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
           else -> null
         }
         icon = when (value) {
-          is VcsRef -> LabelIcon(this, UI.scale(16), background, listOf(value.type.backgroundColor))
+          is VcsRef -> LabelIcon(this, JBUI.scale(16), background, listOf(value.type.backgroundColor))
           else -> AllIcons.Vcs.CommitNode
         }
         foreground = UIUtil.getListForeground(isSelected, cellHasFocus)
@@ -173,9 +171,11 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
 
     @NlsSafe
     private fun getTrackingRemoteBranchName(vcsRef: VcsRef): String? {
-      if (vcsRef.type != GitRefManager.LOCAL_BRANCH) return null
+      if (vcsRef.type != GitRefManager.LOCAL_BRANCH) {
+        return null
+      }
       val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(vcsRef.root) ?: return null
-      return GitBranchUtil.getTrackInfo(repository, vcsRef.name)?.remoteBranch?.name;
+      return GitBranchUtil.getTrackInfo(repository, vcsRef.name)?.remoteBranch?.name
     }
   }
 
@@ -218,9 +218,10 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
   override fun getSortWeight() = 500
   override fun showInFindResults() = false
 
-  override fun isShownInSeparateTab(): Boolean =
-    ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME) &&
-    VcsProjectLog.getInstance(project).logManager != null
+  override fun isShownInSeparateTab(): Boolean {
+    return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME) &&
+           VcsProjectLog.getInstance(project).logManager != null
+  }
 
   override fun getDataForItem(element: Any, dataId: String): Any? = null
 

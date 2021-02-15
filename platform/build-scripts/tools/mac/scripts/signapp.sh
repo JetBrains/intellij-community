@@ -38,7 +38,7 @@ APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
 
 if [ "$JDK_ARCHIVE" != "no-jdk" ] && [ -f "$JDK_ARCHIVE" ]; then
   log "Copying JDK: $JDK_ARCHIVE to $APPLICATION_PATH/Contents"
-  tar xvf "$JDK_ARCHIVE" -C "$APPLICATION_PATH/Contents" --exclude='._jdk'
+  tar xvf "$JDK_ARCHIVE" -C "$APPLICATION_PATH/Contents"
   find "$APPLICATION_PATH/Contents/" -mindepth 1 -maxdepth 1 -exec chmod -R u+w '{}' \;
   log "JDK has been copied"
   rm -f "$JDK_ARCHIVE"

@@ -1,12 +1,16 @@
 <html>
 <body>
 Reports bitwise mask expressions which are guaranteed to
-evaluate to <b>true</b> or <b>false</b>.
-Expressions checked are of the form <b><i>(var & constant1) == constant2</i></b> or
-<b><i>(var | constant1) == constant2</i></b>, where <b><i>constant1</i></b>
-and <b><i>constant2</i></b> are incompatible bitmask constants.
+evaluate to <code>true</code> or <code>false</code>.
+Expressions checked are of the form <code>(var & constant1) == constant2</code> or
+<code>(var | constant1) == constant2</code>, where <code>constant1</code>
+and <code>constant2</code> are incompatible bitmask constants.
+<p>Example:</p>
+<pre>
+  // Incompatible mask: as the last byte in mask is zero, 
+  // something like 0x1200 would be possible, but not 0x1234 
+  if ((mask & 0xFF00) == 0x1234) {...}
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

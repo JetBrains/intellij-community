@@ -23,7 +23,7 @@ public class AbstractMethodWithMissingImplementationsInspectionTest extends Ligh
   }
 
   public void testSearchReturnsUnrelatedClass() {
-    ClassInheritorsSearch.EP_NAME.getPoint().registerExtension(new QueryExecutor<PsiClass, ClassInheritorsSearch.SearchParameters>() {
+    ClassInheritorsSearch.EP_NAME.getPoint().registerExtension(new QueryExecutor<>() {
       @Override
       public boolean execute(@NotNull ClassInheritorsSearch.SearchParameters p, @NotNull Processor<? super PsiClass> consumer) {
         return ContainerUtil.process(((PsiClassOwner)p.getClassToProcess().getContainingFile()).getClasses(), consumer);

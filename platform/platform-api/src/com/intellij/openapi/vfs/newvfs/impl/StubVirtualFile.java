@@ -41,7 +41,7 @@ public class StubVirtualFile extends VirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     throw unsupported();
   }
 

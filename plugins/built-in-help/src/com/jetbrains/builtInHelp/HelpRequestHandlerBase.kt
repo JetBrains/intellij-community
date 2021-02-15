@@ -6,8 +6,8 @@ import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpRequest
 import org.apache.commons.compress.utils.IOUtils
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.HttpRequestHandler
+import org.jetbrains.annotations.NonNls
 
 /**
  * Created by Egor.Malyshev on 7/13/2017.
@@ -21,15 +21,8 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
   }
 
   protected fun sendResource(resourceName: String, request: FullHttpRequest, channel: Channel, extraHeaders: HttpHeaders): Boolean {
-
-    val requestedResource = HelpRequestHandlerBase::class.java.getResourceAsStream(
-      (if (request.uri().contains("/img/")) "/images/" else "/topics/") + resourceName)
-
-    if (requestedResource != null) {
-      val content = IOUtils.toByteArray(requestedResource)
-      return sendData(content, resourceName, request, channel, extraHeaders)
-    }
-
-    throw Exception("$resourceName not found")
+    return sendData(IOUtils.toByteArray(HelpRequestHandlerBase::class.java.getResourceAsStream(
+      (if (request.uri().contains("/img/")) "/images/" else "/topics/") + resourceName) ?: throw Exception("$resourceName not found")),
+                    resourceName, request, channel, extraHeaders)
   }
 }

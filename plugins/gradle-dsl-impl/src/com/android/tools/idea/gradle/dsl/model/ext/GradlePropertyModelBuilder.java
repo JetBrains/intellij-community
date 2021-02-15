@@ -17,7 +17,6 @@ package com.android.tools.idea.gradle.dsl.model.ext;
 
 import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel;
 import com.android.tools.idea.gradle.dsl.api.ext.PasswordPropertyModel;
-import com.android.tools.idea.gradle.dsl.api.ext.PropertyType;
 import com.android.tools.idea.gradle.dsl.api.ext.ResolvedPropertyModel;
 import com.android.tools.idea.gradle.dsl.api.java.LanguageLevelPropertyModel;
 import com.android.tools.idea.gradle.dsl.model.ext.transforms.PropertyTransform;
@@ -25,9 +24,10 @@ import com.android.tools.idea.gradle.dsl.model.java.LanguageLevelPropertyModelIm
 import com.android.tools.idea.gradle.dsl.model.kotlin.JvmTargetPropertyModelImpl;
 import com.android.tools.idea.gradle.dsl.parser.elements.FakeElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
-import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslExpressionList;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslGlobalValue;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +53,17 @@ public final class GradlePropertyModelBuilder {
   }
 
   /**
+   * Creates a builder.
+   *
+   * @param holder   the GradlePropertiesDslElement that the property belongs to
+   * @param property a description of the model property
+   * @return new builder for model.
+   */
+  @NotNull
+  public static GradlePropertyModelBuilder create(@NotNull GradlePropertiesDslElement holder, @NotNull ModelPropertyDescription property) {
+    return new GradlePropertyModelBuilder(holder, property);
+  }
+  /**
    * Creates a builder from an element.
    * This is used for things such as {@link FakeElement}s as these can't be created in the normal way since they are not visible from
    * their parents. See {@link FakeElement} for more information.
@@ -71,13 +82,11 @@ public final class GradlePropertyModelBuilder {
   @NotNull
   private final String myName;
   @Nullable
+  private final ModelPropertyDescription myProperty;
+  @Nullable
   private final GradleDslElement myElement;
   @Nullable
   private GradleDslElement myDefault;
-  @NotNull
-  private PropertyType myType = REGULAR;
-  private boolean myIsMethod = false;
-  private boolean myIsSet = false;
   @NotNull
   private List<PropertyTransform> myTransforms = new ArrayList<>();
 
@@ -85,52 +94,27 @@ public final class GradlePropertyModelBuilder {
     myHolder = holder;
     myName = name;
     myElement = null;
+    myProperty = null;
+  }
+
+  private GradlePropertyModelBuilder(@NotNull GradlePropertiesDslElement holder, @NotNull ModelPropertyDescription property) {
+    myHolder = holder;
+    myName = property.name;
+    myElement = null;
+    myProperty = property;
   }
 
   private GradlePropertyModelBuilder(@NotNull GradleDslElement element) {
     myHolder = null;
     myName = element.getName();
     myElement = element;
-    myIsMethod = !myElement.shouldUseAssignment();
-    if (element instanceof GradleDslExpressionList) {
-      myIsSet = ((GradleDslExpressionList) element).isSet();
+    ModelEffectDescription effect = element.getModelEffect();
+    if (effect == null) {
+      myProperty = null;
     }
-  }
-
-  /**
-   * Sets whether or not the property model should be represented as a method call or an assignment statement. The
-   * difference is as follows:
-   * {@code true}  -> Method Call -> propertyName propertyValue
-   * {@code false} -> Assignment  -> propertyName = propertyValue
-   * <p>
-   * This is only applied to new elements that are created via this model. If an element already exists on file and does not
-   * use the form that is requested, changing its value may or may not cause the form to change. A form change will occur
-   * if the underlying {@link GradleDslElement} can't be reused i.e if an existing literal property is being set to a reference.
-   * <p>
-   * Defaults to {@code false}.
-   *
-   * @param bool whether to use the method call form.
-   * @return this model builder
-   */
-  public GradlePropertyModelBuilder asMethod(boolean bool) {
-    myIsMethod = bool;
-    return this;
-  }
-
-  public GradlePropertyModelBuilder asSet(boolean bool) {
-    myIsSet = bool;
-    return this;
-  }
-
-  /**
-   * Sets the type of this model, defaults to {@link PropertyType#REGULAR}
-   *
-   * @param type of the result model.
-   * @return this model builder
-   */
-  public GradlePropertyModelBuilder withType(@NotNull PropertyType type) {
-    myType = type;
-    return this;
+    else {
+      myProperty = effect.property;
+    }
   }
 
   /**
@@ -183,9 +167,16 @@ public final class GradlePropertyModelBuilder {
    */
   public GradlePropertyModelImpl build() {
     GradleDslElement currentElement = getElement();
-    GradlePropertyModelImpl model = currentElement == null
-                                    ? new GradlePropertyModelImpl(getParentElement(), myType, myName)
-                                    : new GradlePropertyModelImpl(currentElement);
+    GradlePropertyModelImpl model;
+    if (currentElement != null) {
+      model = new GradlePropertyModelImpl(currentElement);
+    }
+    else if(myProperty != null) {
+      model = new GradlePropertyModelImpl(getParentElement(), REGULAR, myProperty);
+    }
+    else {
+      model = new GradlePropertyModelImpl(getParentElement(), REGULAR, myName);
+    }
     return setUpModel(model);
   }
 
@@ -201,7 +192,7 @@ public final class GradlePropertyModelBuilder {
   public PasswordPropertyModelImpl buildPassword() {
     GradleDslElement currentElement = getElement();
     PasswordPropertyModelImpl model = currentElement == null
-                                      ? new PasswordPropertyModelImpl(getParentElement(), myType, myName)
+                                      ? new PasswordPropertyModelImpl(getParentElement(), REGULAR, myName)
                                       : new PasswordPropertyModelImpl(currentElement);
     return setUpModel(model);
   }
@@ -235,14 +226,6 @@ public final class GradlePropertyModelBuilder {
 
   @NotNull
   private <T extends GradlePropertyModelImpl> T setUpModel(@NotNull T model) {
-    if (myIsMethod) {
-      model.markAsMethodCall();
-    }
-
-    if (myIsSet) {
-      model.markAsSet();
-    }
-
     if (myDefault != null) {
       model.setDefaultElement(myDefault);
     }

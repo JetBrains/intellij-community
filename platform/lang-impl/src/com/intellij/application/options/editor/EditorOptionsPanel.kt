@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings
+import com.intellij.openapi.extensions.BaseExtensionPointName
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.keymap.KeymapUtil
@@ -48,7 +50,8 @@ private val uiSettings get() = UISettings.instance
 private val richCopySettings get() = RichCopySettings.getInstance()
 private val codeAnalyzerSettings get() = DaemonCodeAnalyzerSettings.getInstance()
 
-@Contract(pure = true) private fun String.capitalizeWords(): String = StringUtil.capitalizeWords(this, true)
+@Contract(pure = true)
+private fun String.capitalizeWords(): String = StringUtil.capitalizeWords(this, true)
 
 private val enableWheelFontChange                                      get() = CheckboxDescriptor(if (SystemInfo.isMac) message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos") else message("checkbox.enable.ctrl.mousewheel.changes.font.size"), PropertyBinding(editorSettings::isWheelFontChangeEnabled, editorSettings::setWheelFontChangeEnabled))
 
@@ -93,6 +96,7 @@ internal val optionDescriptors: List<OptionDescription>
     showInlineDialogForCheckBox
   ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
+private val EP_NAME = ExtensionPointName<GeneralEditorOptionsProviderEP>("com.intellij.generalEditorOptionsExtension")
 
 class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
   companion object {
@@ -123,8 +127,9 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
     }
   }
 
-  override fun createConfigurables() = ConfigurableWrapper.createConfigurables(GeneralEditorOptionsProviderEP.EP_NAME)
-  override fun getDependencies() = setOf(GeneralEditorOptionsProviderEP.EP_NAME)
+  override fun createConfigurables(): List<UnnamedConfigurable> = ConfigurableWrapper.createConfigurables(EP_NAME)
+
+  override fun getDependencies(): Collection<BaseExtensionPointName<*>> = setOf(EP_NAME)
 
   override fun createPanel(): DialogPanel {
     return panel {

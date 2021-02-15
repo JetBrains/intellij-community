@@ -8,14 +8,14 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class AdditionalIndexableFileSet implements IndexableFileSet {
+public final class AdditionalIndexableFileSet implements IndexableFileSet {
   @Nullable
   private final Project myProject;
   private final Supplier<IndexableSetContributor[]> myExtensions;
@@ -39,8 +39,8 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
 
   @NotNull
   private AdditionalIndexableFileSet.AdditionalIndexableRoots collectFilesAndDirectories() {
-    Set<VirtualFile> files = new THashSet<>();
-    Set<VirtualFile> directories = new THashSet<>();
+    Set<VirtualFile> files = new HashSet<>();
+    Set<VirtualFile> directories = new HashSet<>();
     for (IndexableSetContributor contributor : myExtensions.get()) {
       for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
         (root.isDirectory() ? directories : files).add(root);

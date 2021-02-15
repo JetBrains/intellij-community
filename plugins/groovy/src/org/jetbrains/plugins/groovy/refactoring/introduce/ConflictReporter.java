@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.MultiMap;
 
@@ -22,5 +23,5 @@ import com.intellij.util.containers.MultiMap;
  * @author Maxim.Medvedev
  */
 public interface ConflictReporter {
-  void check(PsiElement toCheck, MultiMap<PsiElement, String> conflicts, String varName);
+  void check(PsiElement toCheck, MultiMap<PsiElement, String> conflicts, @NlsSafe String varName);
 }

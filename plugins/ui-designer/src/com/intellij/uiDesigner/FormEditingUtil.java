@@ -488,7 +488,7 @@ public final class FormEditingUtil {
 
   public static Set<String> collectUsedBundleNames(final IRootContainer rootContainer) {
     final Set<String> bundleNames = new HashSet<>();
-    iterateStringDescriptors(rootContainer, new StringDescriptorVisitor<IComponent>() {
+    iterateStringDescriptors(rootContainer, new StringDescriptorVisitor<>() {
       @Override
       public boolean visit(final IComponent component, final StringDescriptor descriptor) {
         if (descriptor.getBundleName() != null) {
@@ -835,7 +835,7 @@ public final class FormEditingUtil {
 
   public static void iterateStringDescriptors(final IComponent component,
                                               final StringDescriptorVisitor<? super IComponent> visitor) {
-    iterate(component, new ComponentVisitor<IComponent>() {
+    iterate(component, new ComponentVisitor<>() {
 
       @Override
       public boolean visit(final IComponent component) {

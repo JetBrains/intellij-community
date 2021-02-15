@@ -38,7 +38,7 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
     LOG.assertTrue(method != null);
     PsiMethod template = (PsiMethod)method.copy();
 
-    OverrideImplementUtil.setupMethodBody(template, method, method.getContainingClass());
+    OverrideImplementUtil.setupMethodBody(template, findNonAbstractSuper(method), method.getContainingClass());
     PsiCodeBlock templateBody = template.getBody();
     LOG.assertTrue(templateBody != null, template);
     PsiStatement superCall = templateBody.getStatements()[0];
@@ -60,6 +60,15 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
     toGo = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(toGo);
     editor.getCaretModel().moveToOffset(toGo.getTextOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static PsiMethod findNonAbstractSuper(PsiMethod method) {
+    List<? extends HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+    for (HierarchicalMethodSignature superSignature : superSignatures) {
+      PsiMethod superMethod = superSignature.getMethod();
+      if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return superMethod;
+    }
+    return null;
   }
 
   public static PsiMethod canInsertSuper(Editor editor, PsiFile file) {

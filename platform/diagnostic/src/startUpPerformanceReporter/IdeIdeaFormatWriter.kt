@@ -13,10 +13,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongMap
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -25,7 +28,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
-                                   private val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
+                                   private val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
                                    threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager, StartUpPerformanceReporter.VERSION) {
   val publicStatMetrics = Object2IntOpenHashMap<String>()
 
@@ -56,8 +59,44 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
   }
 
   override fun writeExtraData(writer: JsonGenerator) {
+    val stats = getClassAndResourceLoadingStats()
+    writer.obj("classLoading") {
+      val time = stats.getValue("classLoadingTime")
+      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(time))
+      val defineTime = stats.getValue("classDefineTime")
+      writer.writeNumberField("searchTime", TimeUnit.NANOSECONDS.toMillis(time - defineTime))
+      writer.writeNumberField("defineTime", TimeUnit.NANOSECONDS.toMillis(defineTime))
+      writer.writeNumberField("count", stats.getValue("classRequests"))
+    }
+    writer.obj("resourceLoading") {
+      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getValue("resourceLoadingTime")))
+      writer.writeNumberField("count", stats.getValue("resourceRequests"))
+    }
+
     writeServiceStats(writer)
     writeIcons(writer)
+  }
+
+  private fun getClassAndResourceLoadingStats(): Map<String, Long> {
+    // data from bootstrap classloader
+    val classLoader = IdeIdeaFormatWriter::class.java.classLoader
+    @Suppress("UNCHECKED_CAST")
+    val stats = MethodHandles.lookup()
+      .findVirtual(classLoader::class.java, "getLoadingStats", MethodType.methodType(Map::class.java))
+      .bindTo(classLoader).invokeExact() as MutableMap<String, Long>
+
+    // data from core classloader
+    val coreStats = ClassPath.getLoadingStats()
+    if (coreStats.get("identity") != stats.get("identity")) {
+      for (entry in coreStats.entries) {
+        val v1 = stats.getValue(entry.key)
+        if (v1 != entry.value) {
+          stats.put(entry.key, v1 + entry.value)
+        }
+      }
+    }
+
+    return stats
   }
 
   override fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {
@@ -116,7 +155,7 @@ private fun writeServiceStats(writer: JsonGenerator) {
   val component = StatItem("component")
   val service = StatItem("service")
 
-  val plugins = PluginManagerCore.getLoadedPlugins()
+  val plugins = PluginManagerCore.getLoadedPlugins(null).sortedBy { it.pluginId }
   for (plugin in plugins) {
     service.app += (plugin as IdeaPluginDescriptorImpl).app.services.size
     service.project += plugin.project.services.size
@@ -136,14 +175,16 @@ private fun writeServiceStats(writer: JsonGenerator) {
         writer.writeNumberField("module", statItem.module)
       }
     }
+  }
 
-    writer.obj("loadedClasses") {
-      for (plugin in plugins) {
-        val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginAwareClassLoader ?: continue
-        val classCount = classLoader.loadedClassCount
-        if (classCount > 0) {
-          writer.writeNumberField(plugin.pluginId.idString, classCount)
-        }
+  writer.array("plugins") {
+    for (plugin in plugins) {
+      val classLoader = plugin.pluginClassLoader as? PluginAwareClassLoader ?: continue
+      writer.obj {
+        writer.writeStringField("id", plugin.pluginId.idString)
+        writer.writeNumberField("classCount", classLoader.loadedClassCount)
+        writer.writeNumberField("classLoadingEdtTime", TimeUnit.NANOSECONDS.toMillis(classLoader.edtTime))
+        writer.writeNumberField("classLoadingBackgroundTime", TimeUnit.NANOSECONDS.toMillis(classLoader.backgroundTime))
       }
     }
   }

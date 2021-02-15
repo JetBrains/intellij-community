@@ -11,10 +11,20 @@ public final class StringBuilderSpinAllocator {
   private StringBuilderSpinAllocator() {
   }
 
+  /**
+   * @deprecated Use {@link StringBuilder}
+   */
+  @Deprecated
   public static StringBuilder alloc() {
+    DeprecatedMethodException.report("Use 'new StringBuilder()' instead");
     return new StringBuilder();
   }
 
+  /**
+   * @deprecated Use nothing instead, stop worrying, let GC do its job and start living
+   */
+  @Deprecated
   public static void dispose(StringBuilder instance) {
+    DeprecatedMethodException.report("Do not use");
   }
 }

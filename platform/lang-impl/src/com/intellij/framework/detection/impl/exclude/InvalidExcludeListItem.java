@@ -22,7 +22,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.EmptyIcon;
 
 class InvalidExcludeListItem extends ExcludeListItem {
-  private final String myFileUrl;
+  private final @NlsSafe String myFileUrl;
   private final String myFrameworkTypeId;
 
   InvalidExcludeListItem(String frameworkTypeId, @NlsSafe String fileUrl) {

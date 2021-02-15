@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -13,7 +14,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +42,7 @@ final class JavaTelescope {
       return newCount != TOO_MANY_USAGES;
     });
     if (totalUsageCount.get() == TOO_MANY_USAGES || totalUsageCount.get() == 0) return null;
-    String format = "{0,choice, 0#no usages|1#1 usage|2#{0,number} usages}";
-    return MessageFormat.format(format, totalUsageCount.get());
+    return JavaBundle.message("usages.telescope", totalUsageCount.get());
   }
 
   private static int usagesCount(@NotNull Project project,

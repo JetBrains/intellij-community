@@ -28,13 +28,15 @@ import com.intellij.openapi.vcs.changes.ignore.actions.IgnoreFileActionGroup
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.Nls
 import javax.swing.tree.TreePath
 
 
 class ChangesBrowserIgnoredFilesNode(val project: Project,
                                      files: List<FilePath>,
-                                     private val myUpdatingMode: Boolean) : ChangesBrowserSpecificFilePathsNode<Any>(
-  ChangesBrowserNode.IGNORED_FILES_TAG, files, { if (!project.isDisposed) IgnoredViewDialog(project).show() }) {
+                                     private val myUpdatingMode: Boolean)
+  : ChangesBrowserSpecificFilePathsNode<ChangesBrowserNode.Tag>(ChangesBrowserNode.IGNORED_FILES_TAG, files,
+                                        { if (!project.isDisposed) IgnoredViewDialog(project).show() }) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     super.render(renderer, selected, expanded, hasFocus)
@@ -60,6 +62,9 @@ class ChangesBrowserIgnoredFilesNode(val project: Project,
       popup.show(RelativePoint(dragBean.sourceComponent, dropBounds.location))
     }
   }
+
+  @Nls
+  override fun getTextPresentation(): String = getUserObject().toString()
 
   override fun getSortWeight() = ChangesBrowserNode.IGNORED_SORT_WEIGHT
 

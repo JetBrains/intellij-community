@@ -39,11 +39,6 @@ public final class GithubAuthData {
     myUseProxy = useProxy;
   }
 
-  @Deprecated
-  public static GithubAuthData createAnonymous() {
-    return createAnonymous(StringUtil.notNullize(GithubSettings.getInstance().getHost()));
-  }
-
   public static GithubAuthData createAnonymous(@NotNull String host) {
     return new GithubAuthData(AuthType.ANONYMOUS, host, null, null, true);
   }

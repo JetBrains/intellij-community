@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.FastUtilHashingStrategies;
+import com.intellij.util.containers.HashingStrategy;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +14,6 @@ import java.util.Set;
 
 /**
  * Common {@link Processor} collect/find implementations.
- * .
- * @author max
  */
 public final class CommonProcessors {
   public static class CollectProcessor<T> implements Processor<T> {
@@ -85,12 +83,13 @@ public final class CommonProcessors {
     private final Processor<? super T> myDelegate;
 
     public UniqueProcessor(@NotNull Processor<? super T> delegate) {
-      this(delegate, ContainerUtil.canonicalStrategy());
+      myDelegate = delegate;
+      processed = new HashSet<>();
     }
 
-    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
+    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull HashingStrategy<? super @NotNull T> strategy) {
       myDelegate = delegate;
-      processed = new THashSet<>(strategy);
+      processed = new ObjectOpenCustomHashSet<>(FastUtilHashingStrategies.adaptAsNotNull(strategy));
     }
 
     @Override

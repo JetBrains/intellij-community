@@ -70,7 +70,7 @@ public class Log4jBasedLogger extends Logger {
   }
 
   @Override
-  public final void setLevel(Level level) {
+  public final void setLevel(@NotNull Level level) {
     myLogger.setLevel(level);
   }
 }

@@ -18,6 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.Hash
 import com.intellij.xml.util.XmlStringUtil
+import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_PATCH_APPLIED
+import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_UNRESOLVED_CONFLICTS
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.changes.GitCommittedChangeList
@@ -84,11 +86,11 @@ object GitStashOperations {
   }
 
   @JvmStatic
-  fun viewStash(project: Project, stash: StashInfo, compareWithLocal: Boolean) {
+  fun viewStash(project: Project, stash: StashInfo) {
     val emptyChangeList = CommittedChangeListImpl(stash.stash, stash.message, "", -1, Date(0), emptyList())
     val dialog = ChangeListViewerDialog(project, emptyChangeList, null)
     dialog.loadChangesInBackground {
-      ChangelistData(loadStashedChanges(project, stash.root, stash.hash, compareWithLocal), null)
+      ChangelistData(loadStashedChanges(project, stash.root, stash.hash), null)
     }
     dialog.title = GitBundle.message("unstash.view.dialog.title", stash.stash)
     dialog.show()
@@ -96,16 +98,15 @@ object GitStashOperations {
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
-  fun loadStashedChanges(project: Project, root: VirtualFile, hash: Hash, compareWithLocal: Boolean): GitCommittedChangeList {
+  fun loadStashedChanges(project: Project, root: VirtualFile, hash: Hash): GitCommittedChangeList {
     return GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, root), hash.asString(),
-                                             true, compareWithLocal, false)
+                                             true, false, false)
   }
 
   @JvmStatic
   fun unstash(project: Project, stash: StashInfo, branch: String?, popStash: Boolean, reinstateIndex: Boolean): Boolean {
     val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       ThrowableComputable {
-        //better to use quick to keep consistent state with ui
         return@ThrowableComputable unstash(project, mapOf(Pair(stash.root, stash.hash)),
                                            { unstashHandler(project, stash, branch, popStash, reinstateIndex) },
                                            UnstashConflictResolver(project, stash))
@@ -116,7 +117,7 @@ object GitStashOperations {
     )
     if (!completed) return false
 
-    VcsNotifier.getInstance(project).notifySuccess("git.unstash.patch.applied", "",
+    VcsNotifier.getInstance(project).notifySuccess(UNSTASH_PATCH_APPLIED, "",
                                                    VcsBundle.message("patch.apply.success.applied.text"))
     return true
   }
@@ -146,7 +147,7 @@ private class UnstashConflictResolver(project: Project,
   GitConflictResolver(project, setOf(stashInfo.root), makeParams(project, stashInfo)) {
 
   override fun notifyUnresolvedRemain() {
-    VcsNotifier.getInstance(myProject).notifyImportantWarning("git.unstash.with.unresolved.conflicts",
+    VcsNotifier.getInstance(myProject).notifyImportantWarning(UNSTASH_UNRESOLVED_CONFLICTS,
                                                               GitBundle.message(
                                                                 "unstash.dialog.unresolved.conflict.warning.notification.title"),
                                                               GitBundle.message(
@@ -154,7 +155,7 @@ private class UnstashConflictResolver(project: Project,
     ) { _, event ->
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == "resolve") {
-          UnstashConflictResolver(myProject, stashInfo).mergeNoProceed()
+          UnstashConflictResolver(myProject, stashInfo).mergeNoProceedInBackground()
         }
       }
     }

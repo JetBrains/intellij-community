@@ -22,6 +22,7 @@ import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -47,7 +48,8 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       get() = 5
 
 
-    val LABEL_BORDER get() = JBUI.Borders.empty(V, 0)
+    val LABEL_BORDER: JBEmptyBorder
+      get() = JBUI.Borders.empty(V, 0)
 
     val WINDOWS_VERSION = getWindowsReleaseId()
 
@@ -102,13 +104,13 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   protected val iconSize = (16 * UISettings.defFontScale).toInt()
 
   private fun getFrameIcon(): Icon {
-    val ctx = ScaleContext.create(window)
-    ctx.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
-    return myIconProvider.getOrProvide(ctx)!!
+    val scaleContext = ScaleContext.create(window)
+    scaleContext.overrideScale(ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
+    return myIconProvider.getOrProvide(scaleContext)!!
   }
 
-  protected open fun getFrameIcon(ctx: ScaleContext): Icon {
-    return AppUIUtil.loadSmallApplicationIcon(ctx, iconSize)
+  protected open fun getFrameIcon(scaleContext: ScaleContext): Icon {
+    return AppUIUtil.loadSmallApplicationIcon(scaleContext, iconSize)
   }
 
   protected val productIcon: JComponent by lazy {
@@ -198,7 +200,9 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   }
 
   protected fun updateCustomDecorationHitTestSpots() {
-    if (!added) return
+    if (!added) {
+      return
+    }
     if ((window is JDialog && window.isUndecorated) ||
         (window is JFrame && window.isUndecorated)) {
       JdkEx.setCustomDecorationHitTestSpots(window, Collections.emptyList())

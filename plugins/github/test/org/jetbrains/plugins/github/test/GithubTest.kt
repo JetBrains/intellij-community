@@ -74,13 +74,13 @@ abstract class GithubTest : GitPlatformTest() {
 
   @Throws(Exception::class)
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { deleteRepos(secondaryAccount, secondaryRepos) })
-      .append(ThrowableRunnable { deleteRepos(mainAccount, mainRepos) })
-      .append(ThrowableRunnable { setCurrentAccount(null) })
-      .append(ThrowableRunnable { if (::authenticationManager.isInitialized) authenticationManager.clearAccounts() })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { deleteRepos(secondaryAccount, secondaryRepos) },
+      ThrowableRunnable { deleteRepos(mainAccount, mainRepos) },
+      ThrowableRunnable { setCurrentAccount(null) },
+      ThrowableRunnable { if (::authenticationManager.isInitialized) authenticationManager.clearAccounts() },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   override fun getDebugLogCategories(): Collection<String> {

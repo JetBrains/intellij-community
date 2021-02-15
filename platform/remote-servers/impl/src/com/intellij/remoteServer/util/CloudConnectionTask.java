@@ -47,7 +47,7 @@ public abstract class CloudConnectionTask<
   protected void run(final ServerConnection<DC> connection,
                      final Semaphore semaphore,
                      final AtomicReference<T> result) {
-    connection.connectIfNeeded(new ServerConnector.ConnectionCallback<DC>() {
+    connection.connectIfNeeded(new ServerConnector.ConnectionCallback<>() {
 
       @Override
       public void connected(@NotNull ServerRuntimeInstance<DC> serverRuntimeInstance) {

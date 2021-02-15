@@ -73,6 +73,11 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return project.getService(CommittedChangesCache.class);
   }
 
+  @Nullable
+  public static CommittedChangesCache getInstanceIfCreated(Project project) {
+    return project.getServiceIfCreated(CommittedChangesCache.class);
+  }
+
   public CommittedChangesCache(@NotNull Project project) {
     super(new CommittedChangesCacheState());
     myProject = project;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
@@ -26,16 +26,12 @@ public class WeigherExtensionPoint extends AbstractExtensionPointBean implements
   @Attribute("id")
   public String id;
 
-  private final NotNullLazyValue<Weigher> myHandler = new NotNullLazyValue<Weigher>() {
-    @Override
-    @NotNull
-    protected final Weigher compute() {
-      Class<Weigher> tClass = findExtensionClass(implementationClass);
-      final Weigher weigher = ReflectionUtil.newInstance(tClass);
-      weigher.setDebugName(id);
-      return weigher;
-    }
-  };
+  private final NotNullLazyValue<Weigher> myHandler = NotNullLazyValue.lazy(() -> {
+    Class<Weigher> tClass = findExtensionClass(implementationClass);
+    final Weigher weigher = ReflectionUtil.newInstance(tClass);
+    weigher.setDebugName(id);
+    return weigher;
+  });
 
   @NotNull
   @Override

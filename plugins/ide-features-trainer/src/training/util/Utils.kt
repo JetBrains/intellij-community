@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nls
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.CourseManager
+import training.learn.LearnBundle
 import training.learn.interfaces.Lesson
 import training.learn.lesson.LessonManager
 import training.learn.lesson.LessonStateManager
@@ -162,4 +163,18 @@ fun getPreviousLessonForCurrent(): Lesson? {
   val index = lessonsForModules.indexOf(lesson)
   if (index <= 0) return null
   return lessonsForModules[index - 1]
+}
+
+
+@Nls
+fun learningProgressString(lessons: List<Lesson>): String {
+  val total = lessons.size
+  var done = 0
+  for (lesson in lessons) {
+    if (lesson.passed) done++
+  }
+  return if (done == total)
+    LearnBundle.message("learn.module.progress.completed")
+  else
+    LearnBundle.message("learn.module.progress", done, total)
 }

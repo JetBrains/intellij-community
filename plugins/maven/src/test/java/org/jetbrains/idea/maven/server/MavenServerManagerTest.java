@@ -29,25 +29,26 @@ import java.util.concurrent.TimeoutException;
 public class MavenServerManagerTest extends MavenTestCase {
   public void testInitializingDoesntTakeReadAction() throws Exception {
     //make sure all components are initialized to prevent deadlocks
-    ensureConnected(MavenServerManager.getInstance().getConnector(myProject));
+    MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
 
     Future result = ApplicationManager.getApplication().runWriteAction(
       (ThrowableComputable<Future, Exception>)() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MavenServerManager.getInstance().shutdown(true);
-        ensureConnected(MavenServerManager.getInstance().getConnector(myProject));
+        MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
       }));
 
 
     long start = System.currentTimeMillis();
     long end = TimeUnit.SECONDS.toMillis(10) + start;
     boolean ok = false;
-    while (System.currentTimeMillis() < end && !ok) {
+    while (System.currentTimeMillis() < end) {
       EdtTestUtil.runInEdtAndWait(() -> {
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       });
       try {
         result.get(0, TimeUnit.MILLISECONDS);
         ok = true;
+        break;
       }
       catch (InterruptedException | java.util.concurrent.ExecutionException e) {
         throw new RuntimeException(e);
@@ -65,18 +66,12 @@ public class MavenServerManagerTest extends MavenTestCase {
     MavenWorkspaceSettingsComponent settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject);
     String vmOptions = settingsComponent.getSettings().importingSettings.getVmOptionsForImporter();
     try {
-      MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject);
-      ensureConnected(connector);
+      MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
       settingsComponent.getSettings().importingSettings.setVmOptionsForImporter(vmOptions + " -DtestVm=test");
-      assertNotSame(connector, ensureConnected(MavenServerManager.getInstance().getConnector(myProject)));
+      assertNotSame(connector, MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath()));
     }
     finally {
       settingsComponent.getSettings().importingSettings.setVmOptionsForImporter(vmOptions);
     }
-  }
-
-  private MavenServerConnector ensureConnected(MavenServerConnector connector) {
-    assertTrue("Connector is Dummy!", connector instanceof MavenServerConnectorImpl);
-    return connector;
   }
 }

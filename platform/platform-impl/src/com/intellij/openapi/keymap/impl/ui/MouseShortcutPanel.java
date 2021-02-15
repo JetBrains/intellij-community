@@ -12,9 +12,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
-  static final JBColor FOREGROUND = new JBColor(0x8C8C8C, 0x8C8C8C);
-  static final JBColor BACKGROUND = new JBColor(0xF5F5F5, 0x4B4F52);
-  static final JBColor BORDER = new JBColor(0xDEDEDE, 0x383B3D);
+  private static final JBColor BACKGROUND = JBColor.namedColor("Panel.mouseShortcutBackground", new JBColor(0xF5F5F5, 0x4B4F52));
 
   private final int myClickCount;
   private MouseShortcut myMouseShortcut = null;
@@ -52,7 +50,7 @@ public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
     myClickCount = allowDoubleClick ? 2 : 1;
     addMouseListener(myMouseListener);
     addMouseWheelListener(myMouseListener);
-    if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm) {
+    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
       new MacGestureSupportForMouseShortcutPanel(this, () -> myMouseShortcut = null);
     }
     setBackground(BACKGROUND);

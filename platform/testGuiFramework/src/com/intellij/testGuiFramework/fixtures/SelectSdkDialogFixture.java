@@ -46,7 +46,7 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
 
   @NotNull
   public static SelectSdkDialogFixture find(@NotNull Robot robot, String sdkType) {
-    JDialog dialog = robot.finder().find(new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = robot.finder().find(new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return ProjectBundle.message("sdk.configure.home.title", sdkType).equals(dialog.getTitle()) && dialog.isShowing();
@@ -71,10 +71,10 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
       @Override
       public boolean test() {
         //noinspection ConstantConditions
-        return execute(new GuiQuery<Boolean>() {
+        return execute(new GuiQuery<>() {
           @Override
           protected Boolean executeInEDT() throws Throwable {
-            return (textField.getText().equals(pathToSdk.getPath()) && !builder.getUi().getUpdater().hasNodesToUpdate()) ;
+            return (textField.getText().equals(pathToSdk.getPath()) && !builder.getUi().getUpdater().hasNodesToUpdate());
           }
         });
       }

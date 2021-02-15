@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 
-class IdeVirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUrlManager {
+open class IdeVirtualFileUrlManagerImpl(private val project: Project) : VirtualFileUrlManager {
   private var testDisposable: Disposable? = null
   private var projectDisposable = Disposer.newDisposable(project, "VirtualFileUrlManager")
   private val filePointerManager = VirtualFilePointerManager.getInstance()

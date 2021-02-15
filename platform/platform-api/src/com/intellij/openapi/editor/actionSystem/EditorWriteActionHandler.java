@@ -32,6 +32,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
   protected EditorWriteActionHandler() {
   }
 
+  /** Consider subclassing {@link ForEachCaret} instead. */
   protected EditorWriteActionHandler(boolean runForEachCaret) {
     super(runForEachCaret);
   }
@@ -85,5 +86,16 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     finally {
       inExecution = false;
     }
+  }
+
+  public static abstract class ForEachCaret extends EditorWriteActionHandler {
+    protected ForEachCaret() {
+      super(true);
+    }
+
+    @Override
+    public abstract void executeWriteAction(@NotNull Editor editor,
+                                            @SuppressWarnings("NullableProblems") @NotNull Caret caret,
+                                            DataContext dataContext);
   }
 }

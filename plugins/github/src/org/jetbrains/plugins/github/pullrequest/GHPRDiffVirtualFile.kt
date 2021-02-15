@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -11,7 +12,7 @@ internal class GHPRDiffVirtualFile(fileManagerId: String,
                                    project: Project,
                                    repository: GHRepositoryCoordinates,
                                    pullRequest: GHPRIdentifier)
-  : GHPRVirtualFile(fileManagerId, project, repository, pullRequest) {
+  : GHPRVirtualFile(fileManagerId, project, repository, pullRequest), DiffContentVirtualFile {
 
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)

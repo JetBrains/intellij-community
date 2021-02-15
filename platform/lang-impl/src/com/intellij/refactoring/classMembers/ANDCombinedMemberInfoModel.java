@@ -23,7 +23,7 @@ public class ANDCombinedMemberInfoModel<T extends PsiElement, M extends MemberIn
   private final MemberInfoModel<T, M> myModel1;
   private final MemberInfoModel<T, M> myModel2;
   private final MemberInfoTooltipManager<T, M> myTooltipManager =
-    new MemberInfoTooltipManager<>(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+    new MemberInfoTooltipManager<>(new MemberInfoTooltipManager.TooltipProvider<>() {
       @Override
       public String getTooltip(M memberInfo) {
         final String tooltipText1 = myModel1.getTooltipText(memberInfo);

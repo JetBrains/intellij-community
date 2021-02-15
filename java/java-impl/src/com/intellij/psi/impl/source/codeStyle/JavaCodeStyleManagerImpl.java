@@ -772,7 +772,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   private static String @NotNull [] getSuggestionsByValue(@NotNull String stringValue) {
     List<String> result = new ArrayList<>();
-    StringBuffer currentWord = new StringBuffer();
+    StringBuilder currentWord = new StringBuilder();
 
     boolean prevIsUpperCase = false;
 
@@ -781,7 +781,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       if (Character.isUpperCase(c)) {
         if (currentWord.length() > 0 && !prevIsUpperCase) {
           result.add(currentWord.toString());
-          currentWord = new StringBuffer();
+          currentWord = new StringBuilder();
         }
         currentWord.append(c);
       }
@@ -796,7 +796,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       else {
         if (currentWord.length() > 0) {
           result.add(currentWord.toString());
-          currentWord = new StringBuffer();
+          currentWord = new StringBuilder();
         }
       }
 

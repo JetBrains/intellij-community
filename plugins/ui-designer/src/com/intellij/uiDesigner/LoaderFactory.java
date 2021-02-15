@@ -1,32 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.uiDesigner.core.Spacer;
-import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -46,7 +48,7 @@ public final class LoaderFactory implements Disposable {
 
   public LoaderFactory(final Project project) {
     myProject = project;
-    myModule2ClassLoader = ContainerUtil.createConcurrentWeakMap();
+    myModule2ClassLoader = CollectionFactory.createConcurrentWeakMap();
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
@@ -63,7 +65,7 @@ public final class LoaderFactory implements Disposable {
   }
 
   @NotNull public ClassLoader getLoader(final VirtualFile formFile) {
-    final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
+    final Module module = ModuleUtilCore.findModuleForFile(formFile, myProject);
     if (module == null) {
       return getClass().getClassLoader();
     }
@@ -95,31 +97,24 @@ public final class LoaderFactory implements Disposable {
   }
 
   private static ClassLoader createClassLoader(final String runClasspath, final String moduleName) {
-    final ArrayList<URL> urls = new ArrayList<>();
+    List<Path> files = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     final JarFileSystemImpl fileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
     final StringTokenizer tokenizer = new StringTokenizer(runClasspath, File.pathSeparator);
     while (tokenizer.hasMoreTokens()) {
       final String s = tokenizer.nextToken();
       try {
-        VirtualFile vFile = manager.findFileByUrl(VfsUtil.pathToUrl(s));
-        final File realFile = fileSystem.getMirroredFile(vFile);
-        urls.add(realFile != null ? realFile.toURI().toURL() : new File(s).toURI().toURL());
+        VirtualFile vFile = manager.findFileByUrl(VfsUtilCore.pathToUrl(s));
+        File realFile = fileSystem.getMirroredFile(vFile);
+        files.add(realFile == null ? new File(s).toPath() : realFile.toPath());
       }
       catch (Exception e) {
         // ignore ?
       }
     }
 
-    try {
-      urls.add(new File(PathUtil.getJarPathForClass(Spacer.class)).toURI().toURL());
-    }
-    catch (MalformedURLException ignored) {
-      // ignore
-    }
-
-    final URL[] _urls = urls.toArray(new URL[0]);
-    return new DesignTimeClassLoader(Arrays.asList(_urls), LoaderFactory.class.getClassLoader(), moduleName);
+    files.add(PathManager.getJarForClass(Spacer.class));
+    return new DesignTimeClassLoader(files, LoaderFactory.class.getClassLoader(), moduleName);
   }
 
   public void clearClassLoaderCache() {
@@ -139,13 +134,14 @@ public final class LoaderFactory implements Disposable {
     myProjectClassLoader = null;
   }
 
-  private static class DesignTimeClassLoader extends UrlClassLoader {
-    static { if (registerAsParallelCapable()) markParallelCapable(DesignTimeClassLoader.class); }
+  private static final class DesignTimeClassLoader extends UrlClassLoader {
+    private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
 
     private final String myModuleName;
 
-    DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
-      super(build().urls(urls).parent(parent));
+    DesignTimeClassLoader(List<Path> files, ClassLoader parent, String moduleName) {
+      super(UrlClassLoader.build().files(files).allowLock(false).parent(parent), isParallelCapable);
+
       myModuleName = moduleName;
     }
 

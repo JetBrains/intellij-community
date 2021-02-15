@@ -32,7 +32,7 @@ import java.text.MessageFormat;
 import java.util.List;
 
 public abstract class MavenConsole {
-  private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+  private static final String LINE_SEPARATOR = System.lineSeparator();
   private final List<ProcessListener> myProcessListeners = new SmartList<>();
   private final List<AttachProcessListener> myAttachProcessListeners = new SmartList<>();
 

@@ -42,7 +42,7 @@ import java.util.regex.Pattern
  * @author peter
  */
 abstract class GroovyFormatterTestCase extends LightJavaCodeInsightFixtureTestCase {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase")
+  private static final Logger LOG = Logger.getInstance(GroovyFormatterTestCase.class)
   private static final String OPTION_START = "<option>"
   private static final String OPTION_END = "</option>"
   private static final Pattern PATTERN = ~"$OPTION_START(\\w+=(true|false+|\\d|\\w+))$OPTION_END\n"

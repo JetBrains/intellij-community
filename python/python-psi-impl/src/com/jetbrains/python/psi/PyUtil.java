@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -44,7 +45,6 @@ import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
@@ -544,6 +544,10 @@ public final class PyUtil {
     return ContainerUtil.filter(resolveResults, resolveResult -> getRate(resolveResult) >= maxRate);
   }
 
+  public static @NotNull <E extends ResolveResult> List<PsiElement> filterTopPriorityElements(@NotNull List<? extends E> resolveResults) {
+    return ContainerUtil.mapNotNull(filterTopPriorityResults(resolveResults), ResolveResult::getElement);
+  }
+
   private static int getMaxRate(@NotNull List<? extends ResolveResult> resolveResults) {
     return resolveResults
       .stream()
@@ -553,7 +557,7 @@ public final class PyUtil {
   }
 
   private static int getRate(@NotNull ResolveResult resolveResult) {
-    return resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
+    return resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : RatedResolveResult.RATE_NORMAL;
   }
 
   /**
@@ -841,7 +845,7 @@ public final class PyUtil {
     if (!(scope instanceof PyClass) && !(scope instanceof PyFile) && !(scope instanceof PyFunction)) {
       return Collections.emptyList();
     }
-    final Set<String> variables = new HashSet<String>() {
+    final Set<String> variables = new HashSet<>() {
       @Override
       public boolean add(String s) {
         return s != null && super.add(s);
@@ -1103,7 +1107,12 @@ public final class PyUtil {
   public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
-      return getSourceRoots(module);
+      Collection<VirtualFile> roots = getSourceRoots(module);
+      ModelBranch branch = ModelBranch.getPsiBranch(foothold);
+      if (branch != null) {
+        return ContainerUtil.map(roots, branch::findFileCopy);
+      }
+      return roots;
     }
     return Collections.emptyList();
   }

@@ -77,7 +77,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     final Project project = file.getProject();
     SoftFactoryMap<Class[], PsiFile> map = project.getUserData(PATTERN_INJECTION_CONTEXT);
     if (map == null) {
-      map = new SoftFactoryMap<Class[], PsiFile>() {
+      map = new SoftFactoryMap<>() {
 
         @Override
         protected PsiFile create(Class[] key) {

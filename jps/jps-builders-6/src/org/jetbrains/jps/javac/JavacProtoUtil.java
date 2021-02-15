@@ -27,13 +27,13 @@ public final class JavacProtoUtil {
     return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.SHUTDOWN).build();
   }
 
-  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options,
-                                                                          Collection<? extends File> files,
-                                                                          Collection<? extends File> classpath,
-                                                                          Collection<? extends File> platformCp,
+  public static JavacRemoteProto.Message.Request createCompilationRequest(Iterable<String> options,
+                                                                          Iterable<? extends File> files,
+                                                                          Iterable<? extends File> classpath,
+                                                                          Iterable<? extends File> platformCp,
                                                                           ModulePath modulePath,
-                                                                          Collection<? extends File> upgradeModulePath,
-                                                                          Collection<? extends File> sourcePath,
+                                                                          Iterable<? extends File> upgradeModulePath,
+                                                                          Iterable<? extends File> sourcePath,
                                                                           Map<File, Set<File>> outs) {
     final JavacRemoteProto.Message.Request.Builder builder = JavacRemoteProto.Message.Request.newBuilder();
     builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);

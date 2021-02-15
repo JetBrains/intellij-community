@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
-public class DefaultBranchConfig {
+public final class DefaultBranchConfig {
   private static final Logger LOG = Logger.getInstance(DefaultBranchConfig.class);
 
   public static final @NlsSafe String TRUNK_NAME = "trunk";

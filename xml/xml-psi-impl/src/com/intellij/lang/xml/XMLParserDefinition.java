@@ -28,7 +28,7 @@ public class XMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return XmlElementType.XML_FILE;
   }
 
@@ -67,12 +67,12 @@ public class XMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new XmlFileImpl(viewProvider, XmlElementType.XML_FILE);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return canStickTokensTogether(left, right);
   }
 

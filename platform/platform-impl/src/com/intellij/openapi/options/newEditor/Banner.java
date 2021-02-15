@@ -32,8 +32,10 @@ final class Banner extends SimpleBanner {
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
     myProjectIcon.setForeground(UIUtil.getContextHelpForeground());
     showProject(false);
-    myLeftPanel.add(myBreadcrumbs, 0);
-    add(BorderLayout.CENTER, myProjectIcon);
+    myLeftPanel.removeAll();
+    myLeftPanel.add(myBreadcrumbs);
+    myLeftPanel.add(myProjectIcon);
+    myLeftPanel.add(myProgress);
     add(BorderLayout.EAST, RelativeFont.BOLD.install(new ActionLink(action)));
   }
 
@@ -52,7 +54,7 @@ final class Banner extends SimpleBanner {
     boolean visible = projectText != null;
     showProject(visible);
     if (visible) {
-      myProjectIcon.setText(projectText);
+      myProjectIcon.setToolTipText(projectText);
     }
   }
 
@@ -61,23 +63,9 @@ final class Banner extends SimpleBanner {
   }
 
   @Override
-  void setCenterComponent(Component component) {
-    boolean addProjectIcon = myCenterComponent != null && component == null;
-    super.setCenterComponent(component);
-
-    if (addProjectIcon) {
-      getLayout().addLayoutComponent(BorderLayout.CENTER, myProjectIcon);
-    }
-  }
-
-  @Override
   void setLeftComponent(Component component) {
     super.setLeftComponent(component);
     myBreadcrumbs.setVisible(component == null);
-  }
-
-  @Override
-  void updateProgressBorder() {
   }
 
   @Override

@@ -30,7 +30,7 @@ Groovy script
       Open block
         PsiElement({)('{')
         PsiElement(})('}')
-    PsiWhiteSpace('\n')
+    PsiElement(new line)('\n')
     Finally clause
       PsiElement(finally)('finally')
       Open block

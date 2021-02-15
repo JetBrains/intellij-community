@@ -18,7 +18,7 @@ import java.util.List;
  * @author peter
  */
 final class IgnoredFileCache {
-  private final ConcurrentBitSet myNonIgnoredIds = new ConcurrentBitSet();
+  private final ConcurrentBitSet myNonIgnoredIds = ConcurrentBitSet.create();
   private final IgnoredPatternSet myIgnoredPatterns;
   private int myVfsEventNesting;
 

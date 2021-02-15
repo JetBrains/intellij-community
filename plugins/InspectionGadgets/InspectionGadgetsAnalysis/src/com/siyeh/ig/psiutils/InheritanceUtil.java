@@ -82,7 +82,7 @@ public final class InheritanceUtil {
   public static boolean doSearch(PsiClass class1, PsiClass class2, boolean avoidExpensiveProcessing, SearchScope scope) {
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true);
     final boolean[] result = new boolean[1];
-    search.forEach(new Processor<PsiClass>() {
+    search.forEach(new Processor<>() {
       final AtomicInteger count = new AtomicInteger(0);
 
       @Override

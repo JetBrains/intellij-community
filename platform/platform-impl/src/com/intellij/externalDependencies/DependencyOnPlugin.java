@@ -18,14 +18,6 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
   private final @NlsSafe String myMinVersion;
   private final @NlsSafe String myMaxVersion;
 
-  /**
-   * @deprecated use {@link #DependencyOnPlugin(String, String, String)} instead
-   */
-  @Deprecated
-  public DependencyOnPlugin(@NotNull String pluginId, @NlsSafe @Nullable String minVersion, @NlsSafe @Nullable String maxVersion, @Nullable String channel) {
-    this(pluginId, minVersion, maxVersion);
-  }
-
   public DependencyOnPlugin(@NotNull String pluginId, @NlsSafe @Nullable String minVersion, @NlsSafe @Nullable String maxVersion) {
     myPluginId = pluginId;
     myMinVersion = minVersion;

@@ -22,6 +22,9 @@ import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.actions.impl.MutableDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.editor.DiffVirtualFile;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -58,8 +61,8 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
 
   protected abstract boolean isAvailable(@NotNull AnActionEvent e);
 
-  protected static boolean hasContent(VirtualFile file) {
-    return !(file instanceof VirtualFileWithoutContent);
+  protected static boolean hasContent(@NotNull VirtualFile file) {
+    return !DiffUtil.isFileWithoutContent(file);
   }
 
   @Nullable
@@ -69,18 +72,38 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
   protected static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
                                                                        @NotNull VirtualFile file1,
                                                                        @NotNull VirtualFile file2) {
+    return createMutableChainFromFiles(project, file1, file2, null);
+  }
+
+  @NotNull
+  protected static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                       @NotNull VirtualFile file1,
+                                                                       @NotNull VirtualFile file2,
+                                                                       @Nullable VirtualFile baseFile) {
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
 
     DiffContent content1 = contentFactory.create(project, file1);
     DiffContent content2 = contentFactory.create(project, file2);
+    DiffContent baseContent = baseFile != null ? contentFactory.create(project, baseFile) : null;
 
-    MutableDiffRequestChain chain = new MutableDiffRequestChain(content1, content2);
+    MutableDiffRequestChain chain;
+    if (content1 instanceof DocumentContent && content2 instanceof DocumentContent &&
+        (baseContent == null || baseContent instanceof DocumentContent)) {
+      chain = BlankDiffWindowUtil.createBlankDiffRequestChain((DocumentContent)content1,
+                                                              (DocumentContent)content2,
+                                                              (DocumentContent)baseContent);
+    }
+    else {
+      chain = new MutableDiffRequestChain(content1, baseContent, content2);
+    }
 
-    chain.setWindowTitle(requestFactory.getTitle(file1, file2));
-    chain.setTitle1(requestFactory.getContentTitle(file1));
-    chain.setTitle2(requestFactory.getContentTitle(file2));
-
+    if (baseFile != null) {
+      chain.setWindowTitle(requestFactory.getTitle(baseFile));
+    }
+    else {
+      chain.setWindowTitle(requestFactory.getTitle(file1, file2));
+    }
     return chain;
   }
 }

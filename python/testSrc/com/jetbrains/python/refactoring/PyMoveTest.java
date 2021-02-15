@@ -4,6 +4,7 @@ package com.jetbrains.python.refactoring;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -268,7 +269,7 @@ public class PyMoveTest extends PyTestCase {
       fail();
     }
     catch (IncorrectOperationException e) {
-      assertEquals("Cannot use module name 'dst-unimportable.py' in imports", e.getMessage());
+      assertEquals("Cannot use a module name 'dst-unimportable.py' in imports", e.getMessage());
     }
   }
 
@@ -521,5 +522,18 @@ public class PyMoveTest extends PyTestCase {
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
+  }
+
+  public static class BranchTest extends PyMoveTest {
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+      Registry.get("run.refactorings.in.model.branch").setValue(true, getTestRootDisposable());
+    }
+
+    @Override
+    public void testModuleToNonPackage() {
+      super.testModuleToNonPackage();
+    }
   }
 }

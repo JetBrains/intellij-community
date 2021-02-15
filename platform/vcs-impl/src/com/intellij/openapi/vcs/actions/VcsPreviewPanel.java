@@ -44,6 +44,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -68,7 +69,7 @@ class VcsPreviewPanel implements PreviewPanel {
   }
 
   @Override
-  public Component getPanel() {
+  public JComponent getPanel() {
     return myEditor.getComponent();
   }
 

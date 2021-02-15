@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public abstract class ArtifactType {
-  public static final ExtensionPointName<ArtifactType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.artifactType");
+  public static final ExtensionPointName<ArtifactType> EP_NAME = new ExtensionPointName<>("com.intellij.packaging.artifactType");
   private final String myId;
   private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myTitle;
 
@@ -61,13 +61,12 @@ public abstract class ArtifactType {
     return true;
   }
 
-  public static ArtifactType[] getAllTypes() {
-    return EP_NAME.getExtensions();
+  public static @NotNull List<ArtifactType> getAllTypes() {
+    return EP_NAME.getExtensionList();
   }
 
-  @Nullable
-  public static ArtifactType findById(@NotNull @NonNls String id) {
-    for (ArtifactType type : getAllTypes()) {
+  public static @Nullable ArtifactType findById(@NotNull @NonNls String id) {
+    for (ArtifactType type : EP_NAME.getIterable()) {
       if (id.equals(type.getId())) {
         return type;
       }

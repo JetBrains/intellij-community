@@ -29,7 +29,10 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
@@ -169,38 +172,44 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   }
 
   private void installExtendedTypes(@Nullable Project project) {
-    List<CredentialsType<?>> types = CredentialsManager.getInstance().getAllTypes();
+    List<CredentialsType<?>> types = new ArrayList<>(CredentialsManager.getInstance().getAllTypes());
     types.sort(Comparator.comparing(CredentialsType::getWeight));
-    for (final CredentialsType<?> type : types) {
-      CredentialsEditorProvider editorProvider = ObjectUtils.tryCast(type, CredentialsEditorProvider.class);
-      if (editorProvider != null) {
-        final List<CredentialsLanguageContribution> contributions = getContributions();
-        if (!contributions.isEmpty()) {
-          for (CredentialsLanguageContribution contribution : contributions) {
-            if (contribution.getType() == type && editorProvider.isAvailable(contribution)) {
-              final CredentialsEditor<?> editor = editorProvider.createEditor(project, contribution, this);
+    for (CredentialsType<?> type : types) {
+      CredentialsEditorProvider editorProvider = type instanceof CredentialsEditorProvider ? (CredentialsEditorProvider)type : null;
+      if (editorProvider == null) {
+        continue;
+      }
 
-              trackEditorLabelsColumn(editor);
+      List<CredentialsLanguageContribution> contributions = getContributions();
+      if (contributions.isEmpty()) {
+        continue;
+      }
 
-              JBRadioButton typeButton = new JBRadioButton(editor.getName());
-              myTypeButtonGroup.add(typeButton);
-              myRadioPanel.add(typeButton);
+      for (CredentialsLanguageContribution contribution : contributions) {
+        if (contribution.getType() != type || !editorProvider.isAvailable(contribution)) {
+          continue;
+        }
 
-              final JPanel editorMainPanel = editor.getMainPanel();
-              myTypesPanel.add(editorMainPanel, type.getName());
+        final CredentialsEditor<?> editor = editorProvider.createEditor(project, contribution, this);
 
-              myCredentialsType2Handler.put(type,
-                                            new TypeHandlerEx(typeButton,
-                                                              editorMainPanel,
-                                                              editorProvider.getDefaultInterpreterPath(myBundleAccessor),
-                                                              type,
-                                                              editor));
-              // set initial connection type
-              if (myConnectionType == null) {
-                myConnectionType = type;
-              }
-            }
-          }
+        trackEditorLabelsColumn(editor);
+
+        JBRadioButton typeButton = new JBRadioButton(editor.getName());
+        myTypeButtonGroup.add(typeButton);
+        myRadioPanel.add(typeButton);
+
+        final JPanel editorMainPanel = editor.getMainPanel();
+        myTypesPanel.add(editorMainPanel, type.getName());
+
+        myCredentialsType2Handler.put(type,
+                                      new TypeHandlerEx(typeButton,
+                                                        editorMainPanel,
+                                                        editorProvider.getDefaultInterpreterPath(myBundleAccessor),
+                                                        type,
+                                                        editor));
+        // set initial connection type
+        if (myConnectionType == null) {
+          myConnectionType = type;
         }
       }
     }

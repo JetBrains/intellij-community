@@ -38,7 +38,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     if (context != null) {
       Map<K, V> cachemap = cacheKind.get(context);
       if (cachemap == null) {
-        cacheKind.set(context, cachemap = Collections.synchronizedMap(new HashMap<K, V>()));
+        cacheKind.set(context, cachemap = Collections.synchronizedMap(new HashMap<>()));
       }
       cachemap.put(key, value);
     }

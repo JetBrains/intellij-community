@@ -21,9 +21,9 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,8 +144,10 @@ final class RefreshWorker {
     List<String> persistedNames = snapshot.getFirst();
     List<VirtualFile> children = snapshot.getSecond();
 
-    String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
-    Set<String> newNames = new THashSet<>(upToDateNames.length);
+    Map<String, FileAttributes> childrenWithAttributes = fs instanceof BatchingFileSystem ? ((BatchingFileSystem)fs).listWithAttributes(dir) : null;
+    String[] listDir = childrenWithAttributes != null ? ArrayUtil.toStringArray(childrenWithAttributes.keySet()) : fs.list(dir);
+    String[] upToDateNames = VfsUtil.filterNames(listDir);
+    Set<String> newNames = new HashSet<>(upToDateNames.length);
     ContainerUtil.addAll(newNames, upToDateNames);
     if (dir.allChildrenLoaded() && children.size() < upToDateNames.length) {
       for (VirtualFile child : children) {
@@ -156,10 +158,11 @@ final class RefreshWorker {
       newNames.removeAll(persistedNames);
     }
 
-    Set<String> deletedNames = new THashSet<>(persistedNames);
+    Set<String> deletedNames = new HashSet<>(persistedNames);
     ContainerUtil.removeAll(deletedNames, upToDateNames);
 
-    ObjectOpenCustomHashSet<String> actualNames = dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(upToDateNames, false);
+    ObjectOpenCustomHashSet<String> actualNames =
+      dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(upToDateNames, false);
     if (LOG.isTraceEnabled()) {
       LOG.trace("current=" + persistedNames + " +" + newNames + " -" + deletedNames);
     }
@@ -167,7 +170,7 @@ final class RefreshWorker {
     List<ChildInfo> newKids = new ArrayList<>(newNames.size());
     for (String newName : newNames) {
       checkCancelled(dir);
-      ChildInfo record = childRecord(fs, dir, newName);
+      ChildInfo record = childRecord(fs, dir, newName, false);
       if (record != null) {
         newKids.add(record);
       }
@@ -180,7 +183,8 @@ final class RefreshWorker {
     List<VirtualFile> chs = ContainerUtil.filter(children, file -> !deletedNames.contains(file.getName()));
 
     if (fs instanceof BatchingFileSystem) {
-      Map<String, FileAttributes> map = ((BatchingFileSystem)fs).listWithAttributes(dir, ContainerUtil.map(chs, file -> file.getName()));
+      Set<String> names = ContainerUtil.map2Set(chs, file -> file.getName());
+      Map<String, FileAttributes> map = ContainerUtil.filter(childrenWithAttributes, s -> names.contains(s));
       Map<String, VirtualFile> nameToFile = new HashMap<>();
       for (VirtualFile file : chs) {
         nameToFile.put(file.getName(), file);
@@ -276,7 +280,7 @@ final class RefreshWorker {
     for (String name : wanted) {
       if (name.isEmpty()) continue;
       checkCancelled(dir);
-      ChildInfo record = childRecord(fs, dir, name);
+      ChildInfo record = childRecord(fs, dir, name, true);
       if (record != null) {
         newKids.add(record);
       }
@@ -313,16 +317,14 @@ final class RefreshWorker {
     });
   }
 
-  @Nullable
-  private static ChildInfo childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
+  private static @Nullable ChildInfo childRecord(NewVirtualFileSystem fs, VirtualFile dir, String name, boolean canonicalize) {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
     FileAttributes attributes = fs.getAttributes(file);
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    if (!dir.isCaseSensitive()) {
-      // extra check if "suspicious name" differs from the actual name - we want actual names in the file events
-      name = fs.getCanonicallyCasedName(file);
+    if (canonicalize) {
+      name = fs.getCanonicallyCasedName(file);  // need case-exact names in file events
     }
     return new ChildInfoImpl(name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }

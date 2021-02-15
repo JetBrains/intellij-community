@@ -92,7 +92,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
   }
 
   private List<Debugger.Variable> collectVariables() {
-    final Set<Debugger.Variable> variables = new HashSet<Debugger.Variable>();
+    final Set<Debugger.Variable> variables = new HashSet<>();
 
     ElemTemplateElement p = myCurrentElement;
     while (p != null) {
@@ -116,7 +116,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
       addVariable(variable, true, variables);
     }
 
-    final ArrayList<Debugger.Variable> result = new ArrayList<Debugger.Variable>(variables);
+    final ArrayList<Debugger.Variable> result = new ArrayList<>(variables);
     result.sort(VariableComparator.INSTANCE);
     return result;
   }

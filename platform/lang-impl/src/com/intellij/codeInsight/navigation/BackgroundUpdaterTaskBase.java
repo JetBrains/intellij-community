@@ -51,6 +51,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     myUsageView = usageView;
   }
 
+  @Nullable
   public abstract @PopupTitle String getCaption(int size);
 
   @Nullable
@@ -138,7 +139,10 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
       data = new ArrayList<>(myData);
     }
     replaceModel(data);
-    myPopup.setCaption(getCaption(getCurrentSize()));
+    String caption = getCaption(getCurrentSize());
+    if (caption != null) {
+      myPopup.setCaption(caption);
+    }
     myPopup.pack(true, true);
   }
 

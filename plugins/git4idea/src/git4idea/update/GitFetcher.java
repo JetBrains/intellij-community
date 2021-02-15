@@ -37,6 +37,8 @@ import java.util.regex.Pattern;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
+import static git4idea.GitNotificationIdsHolder.FETCH_ERROR;
+import static git4idea.GitNotificationIdsHolder.FETCH_SUCCESS;
 import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 
 /**
@@ -225,7 +227,7 @@ public class GitFetcher {
                                         @NotNull Collection<? extends Exception> errors) {
     VcsNotifier notifier = VcsNotifier.getInstance(project);
     if (result.isSuccess()) {
-      notifier.notifySuccess("git.fetch.success", "",
+      notifier.notifySuccess(FETCH_SUCCESS, "",
                              GitBundle.message("notification.content.fetched.successfully") + result.getAdditionalInfo());
     }
     else if (result.isCancelled()) {
@@ -233,19 +235,19 @@ public class GitFetcher {
     }
     else if (result.isNotAuthorized()) {
       if (errorNotificationTitle != null) {
-        notifier.notifyError("git.fetch.error",
+        notifier.notifyError(FETCH_ERROR,
                              errorNotificationTitle,
                              GitBundle.message("notification.content.fetch.failed.couldn.t.authorize") + result.getAdditionalInfo());
       }
       else {
-        notifier.notifyError("git.fetch.error",
+        notifier.notifyError(FETCH_ERROR,
                              GitBundle.message("notification.title.fetch.failed"),
                              GitBundle.message("notification.content.couldn.t.authorize") + result.getAdditionalInfo());
       }
     }
     else {
       VcsNotifier.getInstance(project)
-        .notifyError("git.fetch.failed", GitBundle.message("notification.title.fetch.failed"), result.getAdditionalInfo(), errors);
+        .notifyError(FETCH_ERROR, GitBundle.message("notification.title.fetch.failed"), result.getAdditionalInfo(), errors);
     }
   }
 
@@ -280,7 +282,7 @@ public class GitFetcher {
       }
     }
     if (notifySuccess) {
-      VcsNotifier.getInstance(myProject).notifySuccess("git.fetch.success", "", GitBundle.message("notification.content.fetched.successfully"));
+      VcsNotifier.getInstance(myProject).notifySuccess(FETCH_SUCCESS, "", GitBundle.message("notification.content.fetched.successfully"));
     }
 
     if (!additionalInfo.asString().isEmpty()) {

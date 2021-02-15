@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -7,7 +7,11 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.GradleRunner
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.jps.model.JpsElementFactory
@@ -25,6 +29,9 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 
@@ -63,11 +70,13 @@ class CompilationContextImpl implements CompilationContext {
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '1.8', null, "JDK_18_x64"))
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
-    if (!options.isInDevelopmentMode) {
-      setupCompilationDependencies(gradle, options)
-    }
-    else {
-      gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
+    if (!options.skipDependencySetup) {
+      if (!options.isInDevelopmentMode) {
+        setupCompilationDependencies(gradle, options)
+      }
+      else {
+        gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
+      }
     }
 
     projectHome = toCanonicalPath(projectHome)
@@ -187,7 +196,7 @@ class CompilationContextImpl implements CompilationContext {
     model
   }
 
-  static boolean dependenciesInstalled
+  private static boolean dependenciesInstalled
   static void setupCompilationDependencies(GradleRunner gradle, BuildOptions options) {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
@@ -247,7 +256,9 @@ class CompilationContextImpl implements CompilationContext {
       it.outputPath = "$baseArtifactsOutput/${PathUtilRt.getFileName(it.outputPath)}"
     }
 
-    messages.info("Incremental compilation: " + options.incrementalCompilation)
+    if (!options.useCompiledClassesFromProjectOutput) {
+      messages.info("Incremental compilation: " + options.incrementalCompilation)
+    }
     if (options.incrementalCompilation) {
       System.setProperty("kotlin.incremental.compilation", "true")
       outputDirectoriesToKeep.add(dataDirName)
@@ -260,7 +271,8 @@ class CompilationContextImpl implements CompilationContext {
 
     if (options.cleanOutputFolder) {
       cleanOutput(outputDirectoriesToKeep)
-    } else {
+    }
+    else {
       messages.info("cleanOutput step was skipped")
     }
   }
@@ -431,49 +443,54 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private static final AtomicLong totalSizeOfProducedArtifacts = new AtomicLong()
+
   @Override
   void notifyArtifactBuilt(String artifactPath) {
+    notifyArtifactWasBuilt(Paths.get(artifactPath).toAbsolutePath().normalize())
+  }
+
+  @Override
+  void notifyArtifactWasBuilt(Path file) {
     if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION)) {
       return
     }
-    def file = new File(artifactPath)
-    def artifactsDir = new File(paths.artifacts)
 
-    if (file.isFile()) {
+    Path artifactsDir = Paths.get(paths.artifacts)
+    if (Files.isRegularFile(file)) {
       //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
       def fileSize = file.size()
       if (fileSize > 1000000) {
-        def producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
-        def willBePublishedWhenBuildFinishes = FileUtil.isAncestor(artifactsDir, file, true)
+        long producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
+        boolean willBePublishedWhenBuildFinishes = FileUtil.isAncestor(artifactsDir.toString(), file.toString(), true)
 
         long oneGb = 1024L * 1024 * 1024
         long requiredAdditionalSpace = oneGb * 6
         long requiredSpaceForArtifacts = oneGb * 9
-        long availableSpace = file.freeSpace
+        long availableSpace = Files.getFileStore(file).getUsableSpace()
         //heuristics: a build publishes at most 9Gb of artifacts and requires some additional space for compiled classes, dependencies, temp files, etc.
         // So we'll publish an artifact earlier only if there will be enough space for its copy.
         def skipPublishing = willBePublishedWhenBuildFinishes && availableSpace < (requiredSpaceForArtifacts - producedSize) + requiredAdditionalSpace + fileSize
-        messages.debug("Checking free space before publishing $artifactPath (${StringUtil.formatFileSize(fileSize)}): ")
+        messages.debug("Checking free space before publishing $file (${StringUtil.formatFileSize(fileSize)}): ")
         messages.debug(" total produced: ${StringUtil.formatFileSize(producedSize)}")
         messages.debug(" available space: ${StringUtil.formatFileSize(availableSpace)}")
         messages.debug(" ${skipPublishing ? "will be" : "won't be"} skipped")
         if (skipPublishing) {
-          messages.info("Artifact $artifactPath won't be published early to avoid caching on agent (workaround for TW-54541)")
+          messages.info("Artifact $file won't be published early to avoid caching on agent (workaround for TW-54541)")
           return
         }
       }
     }
 
-    def pathToReport = file.absolutePath
-
-    def targetDirectoryPath = ""
-    if (FileUtil.isAncestor(artifactsDir, file.parentFile, true)) {
-      targetDirectoryPath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(artifactsDir, file.parentFile) ?: "")
+    String targetDirectoryPath = ""
+    if (file.parent.startsWith(artifactsDir)) {
+      targetDirectoryPath = FileUtil.toSystemIndependentName(artifactsDir.relativize(file.parent).toString())
     }
 
-    if (file.isDirectory()) {
-      targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.name
+    if (Files.isDirectory(file)) {
+      targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.fileName
     }
+
+    String pathToReport = file.toString()
     if (targetDirectoryPath) {
       pathToReport += "=>" + targetDirectoryPath
     }
@@ -493,13 +510,11 @@ class CompilationContextImpl implements CompilationContext {
 @CompileStatic
 class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
-    this.communityHome = communityHome
+    super(Paths.get(communityHome).toAbsolutePath().normalize(), Paths.get(buildOutputRoot).toAbsolutePath().normalize())
+
     this.projectHome = projectHome
-    this.buildOutputRoot = buildOutputRoot
     this.jdkHome = jdkHome
     this.kotlinHome = kotlinHome
-    artifacts = "$buildOutputRoot/artifacts"
-    distAll = "$buildOutputRoot/dist.all"
-    temp = "$buildOutputRoot/temp"
+    artifacts = "${this.buildOutputRoot}/artifacts"
   }
 }

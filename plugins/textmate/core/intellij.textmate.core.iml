@@ -14,6 +14,6 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" exported="" name="joni" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

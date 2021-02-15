@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.CutProvider;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.PasteProvider;
+import com.intellij.ide.*;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -189,7 +186,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   protected void processInputMethodEvent(InputMethodEvent e) {
-    // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
+    if (EditorImpl.EVENT_LOG.isDebugEnabled()) {
+      EditorImpl.EVENT_LOG.debug(e.toString());
+    }
+    // Don't dispatch to super first; now that EdditorComponentImpl is a JTextComponent,
     // this would have the side effect of invoking Swing document machinery which relies
     // on creating Document positions etc (and won't update the document in an IntelliJ safe
     // way, such as running through all the carets etc.
@@ -246,7 +246,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       UISettings.setupAntialiasing(gg);
     }
     gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
+    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
     myEditor.paint(gg);
     if (origTx != null) gg.setTransform(origTx);
 
@@ -990,9 +990,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
       VirtualFile file = myEditor.getVirtualFile();
       if (file != null) {
-        return "Editor for " + file.getName();
+        return EditorBundle.message("editor.for.file.accessible.name", file.getName());
       }
-      return "Editor";
+      return EditorBundle.message("editor.accessible.name");
     }
 
     @Override

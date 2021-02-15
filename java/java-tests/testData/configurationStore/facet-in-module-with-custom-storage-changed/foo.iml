@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<module classpath="custom" version="4">
-  <component name="FacetManager">
-    <facet type="MockFacetId" name="MockFacet">
-      <configuration data="changed" />
-    </facet>
-  </component>
-</module>

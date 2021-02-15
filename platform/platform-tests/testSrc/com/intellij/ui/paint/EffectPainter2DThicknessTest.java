@@ -6,7 +6,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.TestScaleHelper;
+import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -16,7 +16,7 @@ import java.awt.*;
 
 import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
-import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
  * Tests {@link EffectPainter2D#maybeScaleFontMetricsThickness(double, Graphics2D, Font)}

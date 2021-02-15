@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.handler;
 import com.intellij.codeInsight.CustomExceptionHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -12,6 +11,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
 
@@ -39,7 +41,9 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
   }
 
   private boolean isHandledByTryCatch(@NotNull PsiClassType exceptionType, PsiTryStatement topElement) {
-    List<PsiType> caughtExceptions = ContainerUtil.map(topElement.getCatchBlockParameters(), PsiParameter::getType);
+    List<PsiType> caughtExceptions = Stream.of(topElement.getCatchBlockParameters())
+      .map(PsiParameter::getType)
+      .collect(Collectors.toList());
     return isExceptionHandled(exceptionType, caughtExceptions);
   }
 

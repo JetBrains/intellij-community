@@ -54,29 +54,29 @@ import java.util.List;
 public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
   public GroovySmartEnterProcessor() {
     final List<SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor>> ourFixers = Arrays.asList(
-        new SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor>() {
-          @Override
-          public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
-            GrCatchClause catchClause = PsiTreeUtil.getParentOfType(psiElement, GrCatchClause.class);
-            if (catchClause == null || catchClause.getBody() != null) return;
-            if (!PsiTreeUtil.isAncestor(catchClause.getParameter(), psiElement, false)) return;
-        
-            final Document doc = editor.getDocument();
-        
-            PsiElement lBrace = catchClause.getLBrace();
-            if (lBrace != null) return;
-        
-            PsiElement eltToInsertAfter = catchClause.getRParenth();
-            String text = "{\n}";
-            if (eltToInsertAfter == null) {
-              eltToInsertAfter = catchClause.getParameter();
-              text = "){\n}";
-            }
-            if (eltToInsertAfter != null) {
-              doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
-            }
+      new SmartEnterProcessorWithFixers.Fixer<>() {
+        @Override
+        public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
+          GrCatchClause catchClause = PsiTreeUtil.getParentOfType(psiElement, GrCatchClause.class);
+          if (catchClause == null || catchClause.getBody() != null) return;
+          if (!PsiTreeUtil.isAncestor(catchClause.getParameter(), psiElement, false)) return;
+
+          final Document doc = editor.getDocument();
+
+          PsiElement lBrace = catchClause.getLBrace();
+          if (lBrace != null) return;
+
+          PsiElement eltToInsertAfter = catchClause.getRParenth();
+          String text = "{\n}";
+          if (eltToInsertAfter == null) {
+            eltToInsertAfter = catchClause.getParameter();
+            text = "){\n}";
           }
-        },
+          if (eltToInsertAfter != null) {
+            doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
+          }
+        }
+      },
         new GrClassBodyFixer() ,
         new GrMissingIfStatement(),
         new GrIfConditionFixer(),

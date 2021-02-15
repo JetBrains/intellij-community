@@ -43,7 +43,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     Element effectiveElement = shouldDeserializeInstance(extensionElement) ? extensionElement : null;
-    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement, InterfaceExtensionImplementationClassResolver.INSTANCE);
   }
 
   @Override

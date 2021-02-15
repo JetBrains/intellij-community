@@ -69,9 +69,11 @@ public class ExcludedFiles {
     public void setDescriptors(@NotNull List<FileSetDescriptor.State> states) {
       myDescriptors.clear();
       for (FileSetDescriptor.State state : states) {
-        FileSetDescriptor descriptor = FileSetDescriptorFactory.createDescriptor(state);
-        if (descriptor != null) {
-          myDescriptors.add(descriptor);
+        for (FileSetDescriptorFactory factory : FileSetDescriptorFactory.EP_NAME.getExtensionList()) {
+          FileSetDescriptor descriptor = factory.createDescriptor(state);
+          if (descriptor != null) {
+            myDescriptors.add(descriptor);
+          }
         }
       }
     }

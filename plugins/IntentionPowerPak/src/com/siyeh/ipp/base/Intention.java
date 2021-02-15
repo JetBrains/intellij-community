@@ -19,7 +19,6 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @SafeFieldForPreview
-  private final NotNullLazyValue<PsiElementPredicate> myPredicate = AtomicNotNullLazyValue.createValue(() -> getElementPredicate());
+  private final NotNullLazyValue<PsiElementPredicate> myPredicate = NotNullLazyValue.atomicLazy(() -> getElementPredicate());
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){

@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics.PROJECT_ROOTS
 import com.intellij.configurationStore.StoreUtil
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -12,11 +11,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
@@ -447,10 +444,7 @@ class ModuleBridgesTest {
     }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = PlatformTestUtil.loadAndOpenProject(iprFile)
-      Disposer.register(disposableRule.disposable, Disposable {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      })
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
 
@@ -483,10 +477,7 @@ class ModuleBridgesTest {
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = PlatformTestUtil.loadAndOpenProject(iprFile)
-      Disposer.register(disposableRule.disposable, Disposable {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      })
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
       invokeAndWaitIfNeeded { UIUtil.dispatchAllInvocationEvents() }
@@ -822,8 +813,7 @@ class ModuleBridgesTest {
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
   val projectDir = temporaryDirectory.newPath("project")
   val project = WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
-    PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"))
+    PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"), disposableRule.disposable)
   }
-  disposableRule.disposable.attach { PlatformTestUtil.forceCloseProjectWithoutSaving(project) }
   return project
 }

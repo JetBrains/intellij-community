@@ -83,6 +83,7 @@ public final class LanguageLevelUtil {
       case BIG_DECIMAL:
       case INTEGER:
       case REFERENCE:
+      case CUSTOM:
         stringToParse = model.toString();
         break;
       case STRING:

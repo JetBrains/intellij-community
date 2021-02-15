@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
-public class Message {
+public final class Message {
   @NotNull private final String myTitle;
   @NotNull private final String myText;
   @Nullable private final String myGroup;

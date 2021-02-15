@@ -147,7 +147,7 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setIcon(isBusy(project) ? LOADING_ICON : AllIcons.Actions.Refresh);
+        e.getPresentation().setIcon(isBusy(project) ? LOADING_ICON : AllIcons.Vcs.Fetch);
         e.getPresentation().setText(isBusy(project) ? GitBundle.message("fetching") : GitBundle.message("action.fetch.text"));
       }
 

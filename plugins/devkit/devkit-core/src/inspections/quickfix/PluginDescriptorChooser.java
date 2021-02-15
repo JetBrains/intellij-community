@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class PluginDescriptorChooser {
+public final class PluginDescriptorChooser {
 
   private static final Map<String, String> INTELLIJ_MODULES =
     ContainerUtil.<String, String>immutableMapBuilder()

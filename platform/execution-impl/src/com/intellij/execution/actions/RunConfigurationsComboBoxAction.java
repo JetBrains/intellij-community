@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -33,7 +34,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 
-public final class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
+public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final String BUTTON_MODE = "ButtonMode";
 
   public static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
@@ -68,7 +69,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
     }
   }
 
-  private static void updatePresentation(@Nullable ExecutionTarget target,
+  protected static void updatePresentation(@Nullable ExecutionTarget target,
                                          @Nullable RunnerAndConfigurationSettings settings,
                                          @Nullable Project project,
                                          @NotNull Presentation presentation,
@@ -80,7 +81,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
         name += " | " + target.getDisplayName();
       } else {
         if (!ExecutionTargetManager.canRun(settings.getConfiguration(), target)) {
-          name += " | Nothing to run on";
+          name += " | " + ExecutionBundle.message("run.configurations.combo.action.nothing.to.run.on");
         }
       }
       presentation.setText(name, false);
@@ -99,7 +100,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
     }
   }
 
-  private static void setConfigurationIcon(final Presentation presentation,
+  protected static void setConfigurationIcon(final Presentation presentation,
                                            final RunnerAndConfigurationSettings settings,
                                            final Project project) {
     try {
@@ -205,11 +206,11 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
-        String folderName = entry.getKey();
+        @NlsSafe String folderName = entry.getKey();
         DefaultActionGroup group = folderName == null ? actionGroup : DefaultActionGroup.createPopupGroup(() -> folderName);
         group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
         for (RunnerAndConfigurationSettings settings : entry.getValue()) {
-          group.add(new SelectConfigAction(settings, project));
+          group.add(createFinalAction(settings, project));
         }
         if (group != actionGroup) {
           actionGroup.add(group);
@@ -220,6 +221,10 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
       allActionsGroup.addSeparator();
     }
     return allActionsGroup;
+  }
+
+  protected AnAction createFinalAction(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Project project) {
+    return new SelectConfigAction(configuration, project);
   }
 
   private static final class SaveTemporaryAction extends DumbAwareAction {
@@ -254,6 +259,7 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
       }
       else {
         presentation.setText(ExecutionBundle.messagePointer("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
+        //noinspection DialogTitleCapitalization
         presentation.setDescription(presentation.getText());
         presentation.setEnabledAndVisible(true);
       }

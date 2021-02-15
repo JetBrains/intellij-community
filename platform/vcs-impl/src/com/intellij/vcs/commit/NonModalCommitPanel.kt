@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
@@ -16,12 +14,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.actions.ShowCommitOptionsAction
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.awt.RelativePoint.getNorthEastOf
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
@@ -31,6 +31,7 @@ import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
+import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.LayoutManager
 import java.awt.Point
@@ -144,7 +145,9 @@ abstract class NonModalCommitPanel(
     showCommitOptions(commitOptionsPopup, isFromToolbar, dataContext)
   }
 
-  protected abstract fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext)
+  protected open fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
+    if (isFromToolbar) popup.show(getNorthEastOf(toolbar.getShowCommitOptionsButton() ?: toolbar.component))
+    else popup.showInBestPositionFor(dataContext)
 
   companion object {
     internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
@@ -164,3 +167,8 @@ abstract class NonModalCommitPanel(
     }
   }
 }
+
+private fun ActionToolbar.getShowCommitOptionsButton(): JComponent? =
+  uiTraverser(component)
+    .filter(ActionButton::class.java)
+    .find { it.action is ShowCommitOptionsAction }

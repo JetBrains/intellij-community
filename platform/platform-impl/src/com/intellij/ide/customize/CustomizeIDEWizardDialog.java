@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
@@ -8,7 +8,6 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
@@ -86,9 +85,10 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
   }
 
   @Override
-  public final void show() {
+  public void show() {
     if (mySteps.isEmpty()) {
-      throw new IllegalStateException("no steps provided");  // use showIfNeeded() instead
+      // use showIfNeeded() instead
+      throw new IllegalStateException("no steps provided");
     }
     CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.WizardDisplayed);
     SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
@@ -233,24 +233,26 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
                          : IdeBundle.message("button.start.using.0", ApplicationNamesInfo.getInstance().getFullProductName()));
     myHeaderLabel.setText(ensureHTML(myCurrentStep.getHTMLHeader()));
     myFooterLabel.setText(ensureHTML(myCurrentStep.getHTMLFooter()));
-    if (mySteps.size() > 1) {
-      HtmlChunk.Element body = HtmlChunk.body();
-      String arrow = myNavigationLabel.getFont().canDisplay(0x2192) ? "&#8594;" : "&gt;";
-      for (int i = 0; i < mySteps.size(); i++) {
-        if (i > 0) {
-          body = body.children(nbsp(), raw(arrow), nbsp());
-        }
-        if (i == myIndex) {
-          body = body.children(
-            tag("b").addText(mySteps.get(i).getTitle()));
-        } else {
-          body = body.addText(mySteps.get(i).getTitle());
-        }
-      }
-      String navHtml = new HtmlBuilder().append(HtmlChunk.html().child(body)).toString();
-
-      myNavigationLabel.setText(navHtml);
+    if (mySteps.size() <= 1) {
+      return;
     }
+
+    Element body = body();
+    String arrow = myNavigationLabel.getFont().canDisplay(0x2192) ? "&#8594;" : "&gt;";
+    for (int i = 0; i < mySteps.size(); i++) {
+      if (i > 0) {
+        body = body.children(nbsp(), raw(arrow), nbsp());
+      }
+      if (i == myIndex) {
+        body = body.children(
+          tag("b").addText(mySteps.get(i).getTitle()));
+      } else {
+        body = body.addText(mySteps.get(i).getTitle());
+      }
+    }
+    String navHtml = new HtmlBuilder().append(html().child(body)).toString();
+
+    myNavigationLabel.setText(navHtml);
   }
 
   @Contract(value = "!null->!null" ,pure = true)

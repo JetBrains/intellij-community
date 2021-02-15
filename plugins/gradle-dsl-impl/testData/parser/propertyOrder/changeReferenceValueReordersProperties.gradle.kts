@@ -1,0 +1,5 @@
+val prop1 by extra(prop)
+val prop3 by extra("${prop2}")
+val prop6 by extra(prop)
+val prop4 by extra(prop3)
+val prop5 by extra(prop4)

@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -88,9 +89,8 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
     return false;
   }
 
-  @NotNull
   @Override
-  protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull GrReferenceElement ref) {
+  protected @NotNull Collection<PsiClass> filterByContext(@NotNull Collection<PsiClass> candidates, @NotNull GrReferenceElement ref) {
     PsiElement typeElement = ref.getParent();
     if (typeElement instanceof GrTypeElement) {
       PsiElement decl = typeElement.getParent();

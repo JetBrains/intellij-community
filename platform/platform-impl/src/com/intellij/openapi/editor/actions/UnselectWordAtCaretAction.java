@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class UnselectWordAtCaretAction extends EditorAction implements DumbAware {
   public UnselectWordAtCaretAction() {
@@ -31,13 +30,9 @@ public class UnselectWordAtCaretAction extends EditorAction implements DumbAware
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     }
   }
 }

@@ -33,8 +33,8 @@ public class MarkdownCodeFencePluginCache implements Disposable {
 
   @NotNull private final Alarm myAlarm = new Alarm(this);
   @NotNull private final Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches =
-    Collections.newSetFromMap(new ConcurrentHashMap<>());
-  @NotNull private final Collection<File> myAdditionalCacheToDelete = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    ContainerUtil.newConcurrentSet();
+  @NotNull private final Collection<File> myAdditionalCacheToDelete = ContainerUtil.newConcurrentSet();
 
   public static MarkdownCodeFencePluginCache getInstance() {
     return ApplicationManager.getApplication().getService(MarkdownCodeFencePluginCache.class);

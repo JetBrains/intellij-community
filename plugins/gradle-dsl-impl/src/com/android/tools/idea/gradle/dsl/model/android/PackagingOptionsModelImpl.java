@@ -15,19 +15,22 @@
  */
 package com.android.tools.idea.gradle.dsl.model.android;
 
+import static com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyType.MUTABLE_SET;
+
 import com.android.tools.idea.gradle.dsl.api.android.PackagingOptionsModel;
 import com.android.tools.idea.gradle.dsl.api.ext.ResolvedPropertyModel;
 import com.android.tools.idea.gradle.dsl.model.GradleDslBlockModel;
 import com.android.tools.idea.gradle.dsl.model.ext.GradlePropertyModelBuilder;
 import com.android.tools.idea.gradle.dsl.parser.android.PackagingOptionsDslElement;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class PackagingOptionsModelImpl extends GradleDslBlockModel implements PackagingOptionsModel {
   // FIXME: implement doNotStrip
-  @NonNls public static final String EXCLUDES = "mExcludes";
-  @NonNls public static final String MERGES = "mMerges";
-  @NonNls public static final String PICK_FIRSTS = "mPickFirsts";
+  @NonNls public static final ModelPropertyDescription EXCLUDES = new ModelPropertyDescription("mExcludes", MUTABLE_SET);
+  @NonNls public static final ModelPropertyDescription MERGES = new ModelPropertyDescription("mMerges", MUTABLE_SET);
+  @NonNls public static final ModelPropertyDescription PICK_FIRSTS = new ModelPropertyDescription("mPickFirsts", MUTABLE_SET);
 
   public PackagingOptionsModelImpl(@NotNull PackagingOptionsDslElement dslElement) {
     super(dslElement);
@@ -36,18 +39,18 @@ public class PackagingOptionsModelImpl extends GradleDslBlockModel implements Pa
   @Override
   @NotNull
   public ResolvedPropertyModel excludes() {
-    return GradlePropertyModelBuilder.create(myDslElement, EXCLUDES).asSet(true).buildResolved();
+    return getModelForProperty(EXCLUDES);
   }
 
   @Override
   @NotNull
   public ResolvedPropertyModel merges() {
-    return GradlePropertyModelBuilder.create(myDslElement, MERGES).asSet(true).buildResolved();
+    return getModelForProperty(MERGES);
   }
 
   @Override
   @NotNull
   public ResolvedPropertyModel pickFirsts() {
-    return GradlePropertyModelBuilder.create(myDslElement, PICK_FIRSTS).asSet(true).buildResolved();
+    return getModelForProperty(PICK_FIRSTS);
   }
 }

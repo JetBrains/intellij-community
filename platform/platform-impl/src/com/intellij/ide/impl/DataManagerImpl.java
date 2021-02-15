@@ -44,10 +44,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
+
+  private static final ThreadLocal<AtomicInteger> ourGetDataLevel = ThreadLocal.withInitial(AtomicInteger::new);
+
   private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = new ConcurrentHashMap<>();
 
   private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
@@ -75,11 +79,13 @@ public class DataManagerImpl extends DataManager {
     return null;
   }
 
+  @ApiStatus.Internal
   public @Nullable Object getDataFromProvider(final @NotNull DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
     return getDataFromProvider(provider, dataId, alreadyComputedIds, getDataRule(dataId));
   }
 
-  private @Nullable Object getDataFromProvider(@NotNull DataProvider provider,
+  @ApiStatus.Internal
+  public @Nullable Object getDataFromProvider(@NotNull DataProvider provider,
                                                @NotNull String dataId,
                                                @Nullable Set<String> alreadyComputedIds,
                                                @Nullable GetDataRule dataRule) {
@@ -88,6 +94,7 @@ public class DataManagerImpl extends DataManager {
       return null;
     }
     try {
+      ourGetDataLevel.get().incrementAndGet();
       Object data = provider.getData(dataId);
       if (data != null) return validated(data, dataId, provider);
 
@@ -102,6 +109,7 @@ public class DataManagerImpl extends DataManager {
       return null;
     }
     finally {
+      ourGetDataLevel.get().decrementAndGet();
       if (alreadyComputedIds != null) alreadyComputedIds.remove(dataId);
     }
   }
@@ -116,6 +124,10 @@ public class DataManagerImpl extends DataManager {
     }
     else if (component instanceof JComponent) {
       dataProvider = getDataProvider((JComponent)component);
+    }
+
+    if (dataProvider instanceof BackgroundableDataProvider) {
+      dataProvider = ((BackgroundableDataProvider)dataProvider).createBackgroundDataProvider();
     }
 
     return dataProvider;
@@ -157,6 +169,12 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext getDataContext(Component component) {
+    if (Registry.is("actionSystem.dataContextAssertions")) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      if (ourGetDataLevel.get().get() > 0) {
+        LOG.warn("DataContext shall not be created and queried inside another getData() call.");
+      }
+    }
     return new MyDataContext(component);
   }
 
@@ -271,10 +289,9 @@ public class DataManagerImpl extends DataManager {
     return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
   }
 
-  public static @Nullable Editor validateEditor(Editor editor) {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner instanceof JComponent) {
-      final JComponent jComponent = (JComponent)focusOwner;
+  public static @Nullable Editor validateEditor(Editor editor, Component contextComponent) {
+    if (contextComponent instanceof JComponent) {
+      final JComponent jComponent = (JComponent)contextComponent;
       if (jComponent.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null) return null;
     }
 
@@ -295,6 +312,8 @@ public class DataManagerImpl extends DataManager {
 
   /**
    * todo make private in 2020
+   * @see DataManager#loadFromDataContext(DataContext, Key)
+   * @see DataManager#saveInDataContext(DataContext, Key, Object)
    * @deprecated use {@link DataManager#getDataContext(Component)} instead
    */
   @Deprecated
@@ -361,7 +380,7 @@ public class DataManagerImpl extends DataManager {
       }
       Object data = calcData(dataId, component);
       if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
-        return validateEditor((Editor)data);
+        return validateEditor((Editor)data, component);
       }
       return data;
     }

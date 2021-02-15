@@ -109,17 +109,19 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
   @NotNull
   @Override
   protected AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
-    return new DescriptionAwareSchemeActions<InspectionProfileModifiableModel>(this) {
+    return new DescriptionAwareSchemeActions<>(this) {
       @Nullable
       @Override
       public String getDescription(@NotNull InspectionProfileModifiableModel scheme) {
-        SingleInspectionProfilePanel inspectionProfile = ((InspectionProfileSchemesModel) getModel()).getProfilePanel(scheme);
+        SingleInspectionProfilePanel inspectionProfile = ((InspectionProfileSchemesModel)getModel()).getProfilePanel(scheme);
         return inspectionProfile == null ? null : inspectionProfile.getProfile().getDescription();
       }
 
       @Override
-      protected void setDescription(@NotNull InspectionProfileModifiableModel scheme, @NlsContexts.DetailedDescription @NotNull String newDescription) {
-        InspectionProfileModifiableModel inspectionProfile = InspectionProfileSchemesPanel.this.getModel().getProfilePanel(scheme).getProfile();
+      protected void setDescription(@NotNull InspectionProfileModifiableModel scheme,
+                                    @NlsContexts.DetailedDescription @NotNull String newDescription) {
+        InspectionProfileModifiableModel inspectionProfile =
+          InspectionProfileSchemesPanel.this.getModel().getProfilePanel(scheme).getProfile();
         if (!Comparing.strEqual(newDescription, inspectionProfile.getDescription())) {
           inspectionProfile.setDescription(newDescription);
           inspectionProfile.setModified(true);
@@ -140,7 +142,8 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
             try {
               InspectionProfileImpl profile = importInspectionProfile(JDOMUtil.load(file.getInputStream()), myAppProfileManager, myProject);
               if (profile == null) {
-                Messages.showErrorDialog(myProject, AnalysisBundle.message("inspections.settings.invalid.format.warning", file.getName()), CommonBundle.getErrorTitle());
+                Messages.showErrorDialog(myProject, AnalysisBundle.message("inspections.settings.invalid.format.warning", file.getName()),
+                                         CommonBundle.getErrorTitle());
                 return;
               }
               final SingleInspectionProfilePanel existed = InspectionProfileSchemesPanel.this.getModel().getProfilePanel(profile);
@@ -148,7 +151,8 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
                 if (Messages.showOkCancelDialog(myProject, AnalysisBundle
                                                   .message("inspections.settings.profile.already.exists.dialog.message", profile.getName()),
                                                 AnalysisBundle.message("inspections.settings.overwrite.warning.title"),
-                                                AnalysisBundle.message("inspections.settings.overwrite.action.text"), CommonBundle.getCancelButtonText(),
+                                                AnalysisBundle.message("inspections.settings.overwrite.action.text"),
+                                                CommonBundle.getCancelButtonText(),
                                                 Messages.getInformationIcon()) != Messages.OK) {
                   return;
                 }

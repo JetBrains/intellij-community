@@ -17,6 +17,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,6 +123,7 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
 
   @Override
   public void startNonCancelableSection() {
+    DeprecatedMethodException.report("Use ProgressManager#executeNonCancelableSection() instead");
     myNonCancelableSectionCount++;
   }
 

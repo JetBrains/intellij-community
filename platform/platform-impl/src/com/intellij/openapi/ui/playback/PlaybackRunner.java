@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -26,7 +26,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 
 public class PlaybackRunner {
   private static final Logger LOG = Logger.getInstance(PlaybackRunner.class);
@@ -36,7 +35,7 @@ public class PlaybackRunner {
   private final String myScript;
   private final StatusCallback myCallback;
 
-  private final List<CommandDescriptor> myCommands = new ArrayList<>();
+  private final ArrayList<PlaybackCommand> myCommands = new ArrayList<>();
   private ActionCallback myActionCallback;
   private boolean myStopRequested;
 
@@ -109,15 +108,7 @@ public class PlaybackRunner {
         myRobot = new Robot();
       }
 
-      try {
-        myCommands.addAll(includeScript(myScript, getScriptDir()));
-      }
-      catch (Exception e) {
-        String message = "Failed to parse script commands: " + myScript;
-        LOG.error(message, e);
-        myActionCallback.reject(message + ": " + e.getMessage());
-        return myActionCallback;
-      }
+      parse();
 
       new Thread("playback runner") {
         @Override
@@ -147,8 +138,7 @@ public class PlaybackRunner {
 
   private void executeFrom(final int cmdIndex, File baseDir) {
     if (cmdIndex < myCommands.size()) {
-      CommandDescriptor commandDescriptor = myCommands.get(cmdIndex);
-      final PlaybackCommand cmd = createCommand(commandDescriptor.fullLine, commandDescriptor.line, commandDescriptor.scriptDir);
+      final PlaybackCommand cmd = myCommands.get(cmdIndex);
       if (myStopRequested) {
         myCallback.message(null, "Stopped", StatusCallback.Type.message);
         myActionCallback.setRejected();
@@ -196,6 +186,21 @@ public class PlaybackRunner {
               myRegistryValues.put(key, Registry.stringValue(key));
             }
           }
+
+          @Override
+          public void setProject(@Nullable Project project) {
+            myRunner.setProject(project);
+          }
+
+          @Override
+          @NotNull
+          public Project getProject() {
+            Project project = myRunner.getProject();
+            if (project == null) {
+              throw new IllegalStateException("Project is null. Use a project-aware runner and check if its project has been set up properly");
+            }
+            return project;
+          }
         };
       final Promise<Object> cmdCallback = cmd.execute(context);
       cmdCallback
@@ -211,13 +216,21 @@ public class PlaybackRunner {
         .onError(error -> {
           myCallback.message(null, "Stopped: " + error, StatusCallback.Type.message);
           LOG.warn("Callback step stopped with error: " + error, error);
-          myActionCallback.setRejected();
+          myActionCallback.reject(error.getMessage());
         });
     }
     else {
       myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", StatusCallback.Type.message);
       myActionCallback.setDone();
     }
+  }
+
+  protected void setProject(@Nullable Project project) {
+  }
+
+  @Nullable
+  protected Project getProject() {
+    return null;
   }
 
   protected void subscribeListeners(MessageBusConnection connection) {
@@ -228,11 +241,12 @@ public class PlaybackRunner {
     myCommands.clear();
   }
 
-  @NotNull
-  private List<CommandDescriptor> includeScript(String scriptText, File scriptDir) {
-    List<CommandDescriptor> commands = new ArrayList<>();
+  private void parse() {
+    includeScript(myScript, getScriptDir(), myCommands, 0);
+  }
+
+  private void includeScript(String scriptText, File scriptDir, ArrayList<? super PlaybackCommand> commandList, int line) {
     final StringTokenizer tokens = new StringTokenizer(scriptText, "\n");
-    int line = 0;
     while (tokens.hasMoreTokens()) {
       final String eachLine = tokens.nextToken();
 
@@ -242,16 +256,17 @@ public class PlaybackRunner {
       if (eachLine.startsWith(includeCmd)) {
         File file = new PathMacro().setScriptDir(scriptDir).resolveFile(eachLine.substring(includeCmd.length()).trim(), scriptDir);
         if (!file.exists()) {
-          throw new RuntimeException("Cannot find file to include at line " + line + ": " + file.getAbsolutePath());
+          commandList.add(new ErrorCommand("Cannot find file to include: " + file.getAbsolutePath(), line));
+          return;
         }
         try {
           String include = FileUtil.loadFile(file);
-          commands.add(new CommandDescriptor(PrintCommand.PREFIX + " " + eachLine, line, scriptDir));
-          List<CommandDescriptor> includeCommands = includeScript(include, file.getParentFile());
-          commands.addAll(includeCommands);
+          myCommands.add(new PrintCommand(eachLine, line));
+          includeScript(include, file.getParentFile(), commandList, 0);
         }
         catch (IOException e) {
-          throw new RuntimeException("Error reading file at line " + line + ": " + file.getAbsolutePath());
+          commandList.add(new ErrorCommand("Error reading file: " + file.getAbsolutePath(), line));
+          return;
         }
       }
       else if (eachLine.startsWith(importCallCmd)) {
@@ -259,37 +274,20 @@ public class PlaybackRunner {
         try {
           Class<?> facadeClass = Class.forName(className);
           myFacadeClasses.add(facadeClass);
-          commands.add(new CommandDescriptor(PrintCommand.PREFIX + " " + eachLine, line++, scriptDir));
+          myCommands.add(new PrintCommand(eachLine, line++));
         }
         catch (ClassNotFoundException e) {
-          throw new RuntimeException("Cannot find class at line " + line +": " + className);
+          commandList.add(new ErrorCommand("Cannot find class: " + className, line));
+          return;
         }
       }
       else {
-        commands.add(new CommandDescriptor(eachLine, line++, scriptDir));
+        final PlaybackCommand cmd = createCommand(eachLine, line++, scriptDir);
+        commandList.add(cmd);
       }
     }
-    return commands;
   }
 
-  /**
-   * This data class aggregates parameters of a command to be called.
-   * We do not create instances of commands beforehand because
-   * command classes may be provided by plugins and may prevent plugin from unloading [IDEA-259898].
-   */
-  private static class CommandDescriptor {
-    public final String fullLine;
-    public final int line;
-    public final File scriptDir;
-
-    private CommandDescriptor(String fullLine, int line, File scriptDir) {
-      this.fullLine = fullLine;
-      this.line = line;
-      this.scriptDir = scriptDir;
-    }
-  }
-
-  @NotNull
   protected PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
 
@@ -331,9 +329,6 @@ public class PlaybackRunner {
     }
     else if (string.startsWith(PopStage.PREFIX)) {
       cmd = new PopStage(string, line);
-    }
-    else if (string.startsWith(PrintCommand.PREFIX)) {
-      cmd = new PrintCommand(string.substring(PrintCommand.PREFIX.length() + 1), line);
     }
     else {
       cmd = new AlphaNumericTypeCommand(string, line);

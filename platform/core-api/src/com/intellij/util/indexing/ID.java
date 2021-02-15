@@ -6,9 +6,10 @@ import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import java.util.Objects;
  */
 public class ID<K, V> extends IndexId<K,V> {
   private static final Logger LOG = Logger.getInstance(ID.class);
-  private static final IntObjectMap<ID<?, ?>> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
+  private static final Int2ObjectMap<ID<?, ?>> ourRegistry = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
 
   private static final SimpleStringPersistentEnumerator ourNameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
 
@@ -45,7 +46,7 @@ public class ID<K, V> extends IndexId<K,V> {
     super(name);
     myUniqueId = stringToId(name);
 
-    final ID old = ourRegistry.put(myUniqueId, this);
+    ID<?,?> old = ourRegistry.put(myUniqueId, this);
     assert old == null : "ID with name '" + name + "' is already registered";
 
     PluginId oldPluginId = ourIdToPluginId.put(this, pluginId);
@@ -79,6 +80,7 @@ public class ID<K, V> extends IndexId<K,V> {
   protected static <K, V> ID<K, V> findByName(@NotNull String name,
                                               boolean checkCallerPlugin,
                                               @Nullable PluginId requiredPluginId) {
+    //noinspection unchecked
     ID<K, V> id = (ID<K, V>)findById(stringToId(name));
     if (checkCallerPlugin && id != null) {
       PluginId actualPluginId = ourIdToPluginId.get(id);
@@ -140,12 +142,9 @@ public class ID<K, V> extends IndexId<K,V> {
 
   @ApiStatus.Internal
   public synchronized static void unloadId(@NotNull ID<?, ?> id) {
-    LOG.assertTrue(id.equals(ourRegistry.remove(id.getUniqueId())));
+    ID<?, ?> oldID = ourRegistry.remove(id.getUniqueId());
+    LOG.assertTrue(id.equals(oldID));
     ourIdToPluginId.remove(id);
     ourIdToRegistrationStackTrace.remove(id);
-  }
-
-  public static void dump() {
-    Logger.getInstance(ID.class).info("ID registry: " + ourRegistry.toString());
   }
 }

@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -23,7 +22,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -78,12 +76,12 @@ final class UpdateFoldRegionsOperation implements Runnable {
   public void run() {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
-    Map<TextRange,Boolean> rangeToExpandStatusMap = new THashMap<>();
+    Map<TextRange,Boolean> rangeToExpandStatusMap = new HashMap<>();
 
     removeInvalidRegions(info, foldingModel, rangeToExpandStatusMap);
 
-    Map<FoldRegion, Boolean> shouldExpand = new THashMap<>();
-    Map<FoldingGroup, Boolean> groupExpand = new THashMap<>();
+    Map<FoldRegion, Boolean> shouldExpand = new HashMap<>();
+    Map<FoldingGroup, Boolean> groupExpand = new HashMap<>();
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);

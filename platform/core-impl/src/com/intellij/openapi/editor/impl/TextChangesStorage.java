@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -266,7 +265,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change intersects stored change range from the right.
-      if (newChangeStart < storedClientEnd && newChangeEnd >= storedClientEnd) {
+      if (newChangeEnd >= storedClientEnd) {
         CharSequence adjustedText = storedText.subSequence(0, newChangeStart - storedClientStart);
         TextChangeImpl adjusted = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
         changeEntry.change = adjusted;
@@ -277,9 +276,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change is left-adjacent to the stored change.
-      if (newChangeEnd == storedClientStart) {
-        changeEntry.clientStartOffset += changeDiff;
-      }
+      changeEntry.clientStartOffset += changeDiff;
     }
 
     if (insertionIndex >= 0) {
@@ -442,7 +439,7 @@ public class TextChangesStorage {
     if (outputOffset < data.length) {
       System.arraycopy(originalData, originalStart, data, outputOffset, data.length - outputOffset);
     }
-    return StringFactory.createShared(data);
+    return new String(data);
   }
   
   /**

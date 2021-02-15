@@ -24,6 +24,7 @@ import com.jetbrains.python.PyUserInitiatedResolvableReference;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
@@ -59,7 +60,7 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
       referenceOwner = (PyReferenceOwner)parent; //Reference expression may be parent of IDENTIFIER
     }
     if (referenceOwner != null) {
-      final PsiElement resolved = referenceOwner.getReference(context).resolve();
+      final PsiElement resolved = PyResolveUtil.resolveDeclaration(referenceOwner.getReference(context), context);
       if (resolved instanceof PyiFile) {
         final PsiElement original = PyiUtil.getOriginalElement(((PyElement)resolved));
         return ObjectUtils.chooseNotNull(original, resolved);

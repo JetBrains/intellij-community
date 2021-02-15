@@ -20,7 +20,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 
 public final class FileBasedIndexProjectHandler {
@@ -30,24 +33,39 @@ public final class FileBasedIndexProjectHandler {
   public static final int ourMinFilesToStartDumbMode = Registry.intValue("ide.dumb.mode.minFilesToStart", 20);
   private static final int ourMinFilesSizeToStartDumbMode = Registry.intValue("ide.dumb.mode.minFilesSizeToStart", 1048576);
 
+  /**
+   * @deprecated Use {@see scheduleReindexingInDumbMode()} instead.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @Nullable
   public static DumbModeTask createChangedFilesIndexingTask(@NotNull Project project) {
     final FileBasedIndex i = FileBasedIndex.getInstance();
     if (!(i instanceof FileBasedIndexImpl) || !IndexInfrastructure.hasIndices()) {
       return null;
     }
+    if (project.isDisposed()) return null;
 
-    FileBasedIndexImpl index = (FileBasedIndexImpl)i;
-    if (!mightHaveManyChangedFilesInProject(project, index)) {
+    if (!mightHaveManyChangedFilesInProject(project)) {
       return null;
     }
 
-    return new ProjectChangedFilesIndexingTask(project, index);
+    return new ProjectChangedFilesIndexingTask(project);
   }
 
-  private static boolean mightHaveManyChangedFilesInProject(Project project, FileBasedIndexImpl index) {
+  public static void scheduleReindexingInDumbMode(@NotNull Project project) {
+    DumbModeTask task = createChangedFilesIndexingTask(project);
+    if (task != null) {
+      DumbService.getInstance(project).queueTask(task);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static boolean mightHaveManyChangedFilesInProject(Project project) {
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    if (!(fileBasedIndex instanceof FileBasedIndexImpl)) return false;
     long start = System.currentTimeMillis();
-    return !index.processChangedFiles(project, new Processor<>() {
+    return !((FileBasedIndexImpl)fileBasedIndex).processChangedFiles(project, new Processor<>() {
       int filesInProjectToBeIndexed;
       long sizeOfFilesToBeIndexed;
 
@@ -64,12 +82,10 @@ public final class FileBasedIndexProjectHandler {
 
   private static class ProjectChangedFilesIndexingTask extends DumbModeTask {
     private @NotNull final Project myProject;
-    private final FileBasedIndexImpl myIndex;
 
-    private ProjectChangedFilesIndexingTask(@NotNull Project project, FileBasedIndexImpl index) {
+    private ProjectChangedFilesIndexingTask(@NotNull Project project) {
       super(project);
       myProject = project;
-      myIndex = index;
     }
 
     @Override
@@ -78,13 +94,14 @@ public final class FileBasedIndexProjectHandler {
       indicator.setText(IndexingBundle.message("progress.indexing.updating"));
 
       long start = System.currentTimeMillis();
-      Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
+      FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+      Collection<VirtualFile> files = fileBasedIndex.getFilesToUpdate(myProject);
       long calcDuration = System.currentTimeMillis() - start;
 
       LOG.info("Reindexing refreshed files: " + files.size() + " to update, calculated in " + calcDuration + "ms");
       if (!files.isEmpty()) {
         PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-        indexChangedFiles(files, indicator, myIndex, myProject);
+        indexChangedFiles(files, indicator, fileBasedIndex, myProject);
         snapshot.logResponsivenessSinceCreation("Reindexing refreshed files");
       }
     }
@@ -99,8 +116,7 @@ public final class FileBasedIndexProjectHandler {
       IndexingJobStatistics statistics;
       IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
       ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project);
-      projectIndexingHistory.getTimes().setTotalStart(Instant.now());
-      projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
+      Instant indexingStart = Instant.now();
       String fileSetName = "Refreshed files";
       try {
         statistics = indexUpdateRunner.indexFiles(project, fileSetName, files, indicator);
@@ -109,8 +125,9 @@ public final class FileBasedIndexProjectHandler {
         statistics = e.myStatistics;
         interruptedException = e;
       } finally {
-        projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
-        projectIndexingHistory.getTimes().setTotalEnd(Instant.now());
+        Instant now = Instant.now();
+        projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(indexingStart, now));
+        projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
       }
       ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
       scanningStatistics.setNumberOfScannedFiles(files.size());
@@ -127,7 +144,7 @@ public final class FileBasedIndexProjectHandler {
     public String toString() {
       StringBuilder sampleOfChangedFilePathsToBeIndexed = new StringBuilder();
 
-      myIndex.processChangedFiles(myProject, new Processor<VirtualFile>() {
+      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).processChangedFiles(myProject, new Processor<>() {
         int filesInProjectToBeIndexed;
         final String projectBasePath = myProject.getBasePath();
 
@@ -137,8 +154,7 @@ public final class FileBasedIndexProjectHandler {
 
           String filePath = file.getPath();
           String loggedPath = projectBasePath != null ? FileUtil.getRelativePath(projectBasePath, filePath, '/') : null;
-          if (loggedPath == null) loggedPath = filePath;
-          else loggedPath = "%project_path%/" + loggedPath;
+          loggedPath = loggedPath == null ? filePath : "%project_path%/" + loggedPath;
           sampleOfChangedFilePathsToBeIndexed.append(loggedPath);
 
           return ++filesInProjectToBeIndexed < ourMinFilesToStartDumbMode;

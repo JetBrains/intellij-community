@@ -17,10 +17,6 @@ import java.nio.file.attribute.FileTime
 import java.util.function.Predicate
 import kotlin.math.min
 
-operator fun Path.div(x: String): Path = resolve(x)
-
-operator fun File.div(x: String): File = File(this, x)
-
 fun Path.exists(): Boolean = Files.exists(this)
 
 fun Path.createDirectories(): Path {

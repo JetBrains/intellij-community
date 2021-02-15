@@ -3,14 +3,12 @@
 package com.intellij.pom.tree.events.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -22,19 +20,19 @@ import java.util.*;
 
 @ApiStatus.Internal
 public class TreeChangeEventImpl implements TreeChangeEvent{
-  private final Map<CompositeElement, TreeChangeImpl> myChangedElements = new LinkedHashMap<>();
-  private final MultiMap<CompositeElement, TreeChangeImpl> myChangesByAllParents = MultiMap.createSet();
+  private final Map<ASTNode, TreeChangeImpl> myChangedElements = new LinkedHashMap<>();
+  private final MultiMap<ASTNode, TreeChangeImpl> myChangesByAllParents = MultiMap.createSet();
   private final PomModelAspect myAspect;
-  private final FileElement myFileElement;
+  private final FileASTNode myFileElement;
 
-  public TreeChangeEventImpl(@NotNull PomModelAspect aspect, @NotNull FileElement treeElement) {
+  public TreeChangeEventImpl(@NotNull PomModelAspect aspect, @NotNull FileASTNode treeElement) {
     myAspect = aspect;
     myFileElement = treeElement;
   }
 
   @Override
   @NotNull
-  public FileElement getRootElement() {
+  public FileASTNode getRootElement() {
     return myFileElement;
   }
 
@@ -45,10 +43,10 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   @Override
   public TreeChange getChangesByElement(@NotNull ASTNode element) {
-    return myChangedElements.get((CompositeElement)element);
+    return myChangedElements.get(element);
   }
 
-  public void addElementaryChange(@NotNull CompositeElement parent) {
+  public void addElementaryChange(@NotNull ASTNode parent) {
     TreeChangeImpl existing = myChangedElements.get(parent);
     if (existing != null) {
       existing.clearCache();
@@ -58,9 +56,9 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     }
   }
 
-  private boolean integrateIntoExistingChanges(CompositeElement nextParent) {
-    for (CompositeElement eachParent : JBIterable.generate(nextParent, TreeElement::getTreeParent)) {
-      CompositeElement superParent = eachParent.getTreeParent();
+  private boolean integrateIntoExistingChanges(ASTNode nextParent) {
+    for (ASTNode eachParent : JBIterable.generate(nextParent, ASTNode::getTreeParent)) {
+      ASTNode superParent = eachParent.getTreeParent();
       TreeChangeImpl superChange = myChangedElements.get(superParent);
       if (superChange != null) {
         superChange.markChildChanged(eachParent, 0);
@@ -71,10 +69,10 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   private void mergeChange(TreeChangeImpl nextChange) {
-    CompositeElement newParent = nextChange.getChangedParent();
+    ASTNode newParent = nextChange.getChangedParent();
 
     for (TreeChangeImpl descendant : new ArrayList<>(myChangesByAllParents.get(newParent))) {
-      TreeElement ancestorChild = findAncestorChild(newParent, descendant);
+      ASTNode ancestorChild = findAncestorChild(newParent, descendant);
       if (ancestorChild != null) {
         nextChange.markChildChanged(ancestorChild, descendant.getLengthDelta());
       }
@@ -87,22 +85,22 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   private void registerChange(TreeChangeImpl nextChange) {
     myChangedElements.put(nextChange.getChangedParent(), nextChange);
-    for (CompositeElement eachParent : nextChange.getSuperParents()) {
+    for (ASTNode eachParent : nextChange.getSuperParents()) {
       myChangesByAllParents.putValue(eachParent, nextChange);
     }
   }
 
   private void unregisterChange(TreeChangeImpl change) {
     myChangedElements.remove(change.getChangedParent());
-    for (CompositeElement superParent : change.getSuperParents()) {
+    for (ASTNode superParent : change.getSuperParents()) {
       myChangesByAllParents.remove(superParent, change);
     }
   }
 
   /** @return a direct child of {@code ancestor} which contains {@code change} */
   @Nullable
-  private static TreeElement findAncestorChild(@NotNull CompositeElement ancestor, @NotNull TreeChangeImpl change) {
-    List<CompositeElement> superParents = change.getSuperParents();
+  private static ASTNode findAncestorChild(@NotNull ASTNode ancestor, @NotNull TreeChangeImpl change) {
+    List<ASTNode> superParents = change.getSuperParents();
     int index = superParents.indexOf(ancestor);
     return index < 0 ? null :
            index == 0 ? change.getChangedParent() :

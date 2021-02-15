@@ -79,6 +79,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
   }
 
   public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
+    @Language("JAVA")
     String text = "class Foo { native Foo foo(); }\n" +
                   "class Bar<T extends Foo> extends Foo {\n" +
                   "  native Bar<T> foo();" +

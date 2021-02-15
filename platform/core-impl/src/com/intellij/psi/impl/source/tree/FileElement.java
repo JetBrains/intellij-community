@@ -17,7 +17,6 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.psi.PsiElement;
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileElement extends LazyParseableElement implements FileASTNode, Getter<FileElement> {
+public class FileElement extends LazyParseableElement implements FileASTNode {
   public static final FileElement[] EMPTY_ARRAY = new FileElement[0];
   private volatile CharTable myCharTable = new CharTableImpl();
   private volatile boolean myDetached;
@@ -90,11 +89,6 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
 
   public void setCharTable(@NotNull CharTable table) {
     myCharTable = table;
-  }
-
-  @Override
-  public FileElement get() {
-    return this;
   }
 
   @Override

@@ -110,7 +110,7 @@ public final class DfaPsiUtil {
     if (info == null || shouldIgnoreAnnotation(info.getAnnotation())) {
       return Nullability.UNKNOWN;
     }
-    if (ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(info.getAnnotation())) {
+    if (ignoreParameterNullabilityInference && owner instanceof PsiParameter && info.isInferred()) {
       List<PsiParameter> supers = AnnotationUtil.getSuperAnnotationOwners((PsiParameter)owner);
       return ContainerUtil.exists(supers, each -> manager.isNullable(each, false)) ? Nullability.NULLABLE :  Nullability.UNKNOWN;
     }

@@ -56,6 +56,8 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS")
   var reuseNotModifiedTabs by property(false)
+  @get:OptionTag("OPEN_TABS_IN_MAIN_WINDOW")
+  var openTabsInMainWindow by property(false)
   @get:OptionTag("OPEN_IN_PREVIEW_TAB_IF_POSSIBLE")
   var openInPreviewTabIfPossible by property(false)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS")

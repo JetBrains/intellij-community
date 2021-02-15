@@ -175,30 +175,60 @@ public class ClassRenderer extends NodeRendererImpl{
     final ReferenceType refType = objRef.referenceType();
     // default ObjectReference processing
     DebuggerUtilsAsync.allFields(refType)
-      .thenAccept(
-        fields -> {
+      .thenAccept(fields -> {
           if (fields.isEmpty()) {
             builder.setChildren(Collections.singletonList(nodeManager.createMessageNode(MessageDescriptor.CLASS_HAS_NO_FIELDS.getLabel())));
             return;
           }
 
-          List<Field> fieldsToShow = ContainerUtil.filter(fields, field -> shouldDisplay(evaluationContext, objRef, field));
-          if (fieldsToShow.isEmpty()) {
-            builder.setChildren(Collections.singletonList(
-              nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display"))));
-          return;
-        }
+          createNodesToShow(fields, evaluationContext, parentDescriptor, nodeManager, nodeDescriptorFactory, objRef)
+            .thenAccept(nodesToShow -> {
+              if (nodesToShow.isEmpty()) {
+                setClassHasNoFieldsToDisplayMessage(builder, nodeManager);
+                return;
+              }
 
-        List<List<Field>> chunks = DebuggerUtilsImpl.partition(fieldsToShow, XCompositeNode.MAX_CHILDREN_TO_SHOW);
-        Set<String> names = Collections.synchronizedSet(new HashSet<>());
-        //noinspection unchecked
-        CompletableFuture<List<DebuggerTreeNode>>[] futures = chunks.stream()
-          .map(l -> createNodes(l, evaluationContext, parentDescriptor, nodeManager, nodeDescriptorFactory, objRef, names))
-          .toArray(CompletableFuture[]::new);
-        CompletableFuture.allOf(futures)
-          .thenAccept(__ -> builder.setChildren(StreamEx.of(futures).flatCollection(CompletableFuture::join).toList()));
+              builder.setChildren(nodesToShow);
+            }
+          );
       }
     );
+  }
+
+  protected void setClassHasNoFieldsToDisplayMessage(ChildrenBuilder builder, NodeManager nodeManager) {
+    builder.setChildren(Collections.singletonList(nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display"))));
+  }
+
+  protected CompletableFuture<List<DebuggerTreeNode>> createNodesToShow(List<Field> fields,
+                                                                        EvaluationContext evaluationContext,
+                                                                        ValueDescriptorImpl parentDescriptor,
+                                                                        NodeManager nodeManager,
+                                                                        NodeDescriptorFactory nodeDescriptorFactory,
+                                                                        ObjectReference objRef) {
+    List<Field> fieldsToShow = ContainerUtil.filter(fields, field -> shouldDisplay(evaluationContext, objRef, field));
+    if (fieldsToShow.isEmpty()) {
+      return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+
+    CompletableFuture<List<DebuggerTreeNode>>[] futures = createNodesChunked(
+      fieldsToShow, evaluationContext, parentDescriptor, nodeManager, nodeDescriptorFactory, objRef
+    );
+
+    return CompletableFuture.allOf(futures).thenApply(__ -> StreamEx.of(futures).flatCollection(CompletableFuture::join).toList());
+  }
+
+  private CompletableFuture<List<DebuggerTreeNode>>[] createNodesChunked(List<Field> fields,
+                                                                         EvaluationContext evaluationContext,
+                                                                         ValueDescriptorImpl parentDescriptor,
+                                                                         NodeManager nodeManager,
+                                                                         NodeDescriptorFactory nodeDescriptorFactory,
+                                                                         ObjectReference objRef) {
+    List<List<Field>> chunks = DebuggerUtilsImpl.partition(fields, XCompositeNode.MAX_CHILDREN_TO_SHOW);
+    Set<String> names = Collections.synchronizedSet(new HashSet<>());
+    //noinspection unchecked
+    return chunks.stream()
+      .map(l -> createNodes(l, evaluationContext, parentDescriptor, nodeManager, nodeDescriptorFactory, objRef, names))
+      .toArray(CompletableFuture[]::new);
   }
 
   private CompletableFuture<List<DebuggerTreeNode>> createNodes(List<Field> fields,
@@ -281,16 +311,16 @@ public class ClassRenderer extends NodeRendererImpl{
 
   @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    FieldDescriptor fieldDescriptor = (FieldDescriptor)node.getDescriptor();
+    DescriptorWithParentObject descriptor = (DescriptorWithParentObject)node.getDescriptor();
 
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(node.getProject());
     try {
-      return elementFactory.createExpressionFromText("this." + fieldDescriptor.getField().name(), DebuggerUtils.findClass(
-        fieldDescriptor.getObject().referenceType().name(), context.getProject(), context.getDebugProcess().getSearchScope())
+      return elementFactory.createExpressionFromText("this." + descriptor.getName(), DebuggerUtils.findClass(
+        descriptor.getObject().referenceType().name(), context.getProject(), context.getDebugProcess().getSearchScope())
       );
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.field.name", fieldDescriptor.getField().name()), null);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.field.name", descriptor.getName()), null);
     }
   }
 

@@ -22,7 +22,7 @@ import javax.swing.border.CompoundBorder
 import javax.swing.text.html.HTMLDocument
 import kotlin.system.exitProcess
 
-class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Boolean) {
+class AgreementUi private constructor(val htmlText: String) {
 
   private val bundle
     get() = ResourceBundle.getBundle("messages.AgreementsBundle")
@@ -100,14 +100,12 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
 
       override fun doCancelAction() {
         super.doCancelAction()
-        if (exitOnCancel) {
-          val application = ApplicationManager.getApplication()
-          if (application == null) {
-            exitProcess(Main.PRIVACY_POLICY_REJECTION)
-          }
-          else {
-            application.exit(true, true, false)
-          }
+        val application = ApplicationManager.getApplication()
+        if (application == null) {
+          exitProcess(Main.PRIVACY_POLICY_REJECTION)
+        }
+        else {
+          application.exit(true, true, false)
         }
       }
     }
@@ -175,7 +173,7 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
     return this
   }
 
-  fun setAcceptButton(text: String, isEnabled: Boolean = true, action: (DialogWrapper) -> Unit): AgreementUi {
+  fun setAcceptButton(text: @NlsContexts.Button String, isEnabled: Boolean = true, action: (DialogWrapper) -> Unit): AgreementUi {
     acceptButton?.text = text
     if (acceptButtonActionListener != null)
       acceptButton?.removeActionListener(acceptButtonActionListener)
@@ -197,7 +195,7 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
     return this
   }
 
-  fun setDeclineButton(text: String, action: (DialogWrapper) -> Unit): AgreementUi {
+  fun setDeclineButton(text: @NlsContexts.Button String, action: (DialogWrapper) -> Unit): AgreementUi {
     declineButton?.text = text
     if (declineButtonActionListener != null)
       declineButton?.removeActionListener(declineButtonActionListener)
@@ -205,11 +203,6 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
       action(dialog!!)
     }
     declineButton?.addActionListener(declineButtonActionListener)
-    return this
-  }
-
-  fun setCentralPanelBackground(color: Color?): AgreementUi {
-    viewer!!.background = color
     return this
   }
 
@@ -222,8 +215,8 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
   }
 
   companion object {
-    fun create(htmlText: String = "", exitOnCancel: Boolean = true): AgreementUi {
-      return AgreementUi(htmlText, exitOnCancel).createDialog()
+    fun create(htmlText: String = ""): AgreementUi {
+      return AgreementUi(htmlText).createDialog()
     }
   }
 

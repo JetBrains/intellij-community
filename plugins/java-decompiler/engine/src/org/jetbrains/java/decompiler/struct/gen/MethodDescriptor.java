@@ -68,8 +68,7 @@ public final class MethodDescriptor {
 
     VarType[] newParams;
     if (params.length > 0) {
-      newParams = new VarType[params.length];
-      System.arraycopy(params, 0, newParams, 0, params.length);
+      newParams = params.clone();
       for (int i = 0; i < params.length; i++) {
         VarType substitute = buildNewType(params[i], builder);
         if (substitute != null) {

@@ -25,7 +25,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTree(GrazieRulesTreeCellRenderer(), GrazieRulesTreeNode()),
+internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTree(GrazieRulesTreeCellRenderer(), GrazieRulesTreeNode()),
                                                                      GrazieStateLifecycle, Disposable, GrazieUIComponent {
   private val state = CollectionFactory.createSmallMemoryFootprintMap<String, RuleWithLang>()
   private val filterComponent: GrazieRulesTreeFilter = GrazieRulesTreeFilter(this)

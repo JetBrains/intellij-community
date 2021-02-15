@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
+import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.createReaderModeComment
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.ide.IdeBundle
@@ -93,6 +94,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myRenderedDocCheckBox)
+        component(createReaderModeComment()).withLargeLeftGap()
       }
 
       for (configurable in configurables) {

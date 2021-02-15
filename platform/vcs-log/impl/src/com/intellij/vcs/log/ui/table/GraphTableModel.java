@@ -225,7 +225,7 @@ public final class GraphTableModel extends AbstractTableModel {
   @NotNull
   private Iterable<Integer> getCommitsToPreload(int row) {
     int maxRows = getRowCount();
-    return () -> new Iterator<Integer>() {
+    return () -> new Iterator<>() {
       private int myRowIndex = Math.max(0, row - UP_PRELOAD_COUNT);
 
       @Override
@@ -249,7 +249,7 @@ public final class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   private static <T> List<T> getDataForRows(int[] rows, @NotNull Function<? super Integer, ? extends T> dataGetter) {
-    return new AbstractList<T>() {
+    return new AbstractList<>() {
       @NotNull
       @Override
       public T get(int index) {

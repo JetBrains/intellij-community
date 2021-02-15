@@ -7,13 +7,12 @@ import org.jetbrains.jps.javac.ast.JavacReferenceCollector;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
 import javax.tools.JavaCompiler;
-import java.util.Collection;
 
 public abstract class AbstractRefCollectorCompilerToolExtension extends JavaCompilerToolExtension {
   @Override
   public final void beforeCompileTaskExecution(@NotNull JavaCompilingTool compilingTool,
                                                @NotNull JavaCompiler.CompilationTask task,
-                                               @NotNull Collection<String> options,
+                                               @NotNull Iterable<String> options,
                                                @NotNull final DiagnosticOutputConsumer diagnosticConsumer) {
     if (compilingTool.isCompilerTreeAPISupported() && isEnabled()) {
       JavacReferenceCollector.installOn(task, new JavacReferenceCollector.Consumer<JavacFileData>() {

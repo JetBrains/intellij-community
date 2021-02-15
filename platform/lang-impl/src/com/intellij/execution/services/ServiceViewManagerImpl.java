@@ -582,7 +582,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     else if (!contributors.isEmpty()) {
       String servicesToolWindowId = getToolWindowId();
       Collection<ServiceViewContributor<?>> servicesContributors =
-        myGroups.computeIfAbsent(servicesToolWindowId, __ -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+        myGroups.computeIfAbsent(servicesToolWindowId, __ -> ContainerUtil.newConcurrentSet());
       servicesContributors.addAll(contributors);
     }
   }

@@ -65,8 +65,13 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
 
   private fun getConnection(connectorParams: ConnectorParams): ProjectConnection {
     return connectorsMap.compute(connectorParams.projectPath) { _, conn ->
-      if (connectorParams == conn?.params) {
-        return@compute conn
+      if (conn != null) {
+        if (canBeReused(conn, connectorParams)) return@compute conn
+        else {
+          // close obsolete connection, can not disconnect the connector here - it may cause build cancel for the new connection operations
+          val unwrappedConnection = conn.connection as WrappedConnection
+          unwrappedConnection.delegate.close()
+        }
       }
       val newConnector = createConnector(connectorParams)
       val newConnection = newConnector.connect()
@@ -74,14 +79,15 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         "Can't create connection to the target project via gradle tooling api. Project path: '${connectorParams.projectPath}'"
       }
 
-      if (conn != null && connectorParams != conn.params) {
-        // close obsolete connection, can not disconnect the connector here - it may cause build cancel for the new connection operations
-        val unwrappedConnection = conn.connection as WrappedConnection
-        unwrappedConnection.delegate.close()
-      }
       val wrappedConnection = WrappedConnection(newConnection)
       return@compute GradleProjectConnection(connectorParams, newConnector, wrappedConnection)
     }!!.connection
+  }
+
+  private fun canBeReused(projectConnection: GradleProjectConnection, connectorParams: ConnectorParams): Boolean {
+    // don't cache connections for not-yet-installed gradle versions
+    if (connectorParams.gradleHome == null) return false
+    return connectorParams == projectConnection.params
   }
 
   private class GradleProjectConnection(val params: ConnectorParams, val connector: GradleConnector, val connection: ProjectConnection) {

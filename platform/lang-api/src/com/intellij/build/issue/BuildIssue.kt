@@ -18,5 +18,6 @@ interface BuildIssue {
   val description: String
 
   val quickFixes: List<BuildIssueQuickFix>
+
   fun getNavigatable(project: Project): Navigatable?
 }

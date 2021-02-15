@@ -26,7 +26,7 @@ import java.util.List;
  * @author ven
  */
 public class ChooseTypeExpression extends Expression {
-  public static final InsertHandler<PsiTypeLookupItem> IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
+  public static final InsertHandler<PsiTypeLookupItem> IMPORT_FIXER = new InsertHandler<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull PsiTypeLookupItem item) {
       GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);

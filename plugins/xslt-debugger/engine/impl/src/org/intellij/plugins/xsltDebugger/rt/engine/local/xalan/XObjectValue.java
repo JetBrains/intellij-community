@@ -28,7 +28,7 @@ class XObjectValue implements Value {
       }
 
       if (value instanceof XNodeSet) {
-        final ArrayList<Node> nodes = new ArrayList<Node>();
+        final ArrayList<Node> nodes = new ArrayList<>();
         final DTMIterator v = value.mutableNodeset();
         for (int i = 0; i < v.getLength(); i++) {
           final int p = v.item(i);

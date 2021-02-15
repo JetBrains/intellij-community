@@ -16,28 +16,24 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
+import com.intellij.testFramework.LightIdeaTestCase;
 import org.gradle.internal.exceptions.LocationAwareException;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Vladislav.Soroka
  */
-public class BaseProjectImportErrorHandlerTest {
+public class BaseProjectImportErrorHandlerTest extends LightIdeaTestCase {
   private BaseProjectImportErrorHandler myErrorHandler;
   private String myProjectPath;
 
-  @Before
-  public void setUp() {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
     myErrorHandler = new BaseProjectImportErrorHandler();
     myProjectPath = "basic";
   }
 
-  @Test
   public void testGetUserFriendlyError() {
     String causeMsg = "failed to find target current";
     RuntimeException rootCause = new IllegalStateException(causeMsg);
@@ -61,7 +57,6 @@ public class BaseProjectImportErrorHandlerTest {
     assertEquals(Integer.valueOf(86), locationAwareExternalSystemException.getLine());
   }
 
-  @Test
   public void testGetUserFriendlyErrorWithClassNotFoundException() {
     String causeMsg = "com.mypackage.MyImaginaryClass";
     ClassNotFoundException rootCause = new ClassNotFoundException(causeMsg);

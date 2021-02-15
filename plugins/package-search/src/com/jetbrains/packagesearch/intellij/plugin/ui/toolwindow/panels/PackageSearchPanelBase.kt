@@ -1,8 +1,9 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels
 
+import com.intellij.openapi.util.NlsContexts.TabTitle
 import javax.swing.JComponent
 
-abstract class PackageSearchPanelBase(val title: String) {
+abstract class PackageSearchPanelBase(@TabTitle val title: String) {
 
     private val _content = lazy { build() }
     val content: JComponent

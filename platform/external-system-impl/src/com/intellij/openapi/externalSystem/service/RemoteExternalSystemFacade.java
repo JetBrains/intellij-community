@@ -27,12 +27,11 @@ import java.util.Set;
 public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSettings> extends Remote, ExternalSystemTaskAware {
 
   /** <a href="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link RemoteExternalSystemFacade}. */
-  RemoteExternalSystemFacade<?> NULL_OBJECT = new RemoteExternalSystemFacade<ExternalSystemExecutionSettings>() {
+  RemoteExternalSystemFacade<?> NULL_OBJECT = new RemoteExternalSystemFacade<>() {
     @NotNull
     @Override
     public RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings> getResolver()
-      throws IllegalStateException
-    {
+      throws IllegalStateException {
       return RemoteExternalSystemProjectResolver.NULL_OBJECT;
     }
 

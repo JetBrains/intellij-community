@@ -76,7 +76,7 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
       invokeImpl(project, (PsiLocalVariable)element, editor);
     }
     else {
-      LOG.error("elements[0] should be PsiExpression or PsiLocalVariable");
+      LOG.error("elements[0] should be PsiExpression or PsiLocalVariable; was " + element);
     }
   }
 

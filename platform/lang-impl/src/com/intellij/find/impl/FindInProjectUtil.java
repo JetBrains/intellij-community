@@ -50,16 +50,15 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 public final class FindInProjectUtil {
   private static final int USAGES_PER_READ_ACTION = 100;
@@ -97,7 +96,11 @@ public final class FindInProjectUtil {
         } else {
           VirtualFile parent = virtualFile.getParent();
           if (parent != null && parent.isDirectory()) {
-            FindInProjectSettings.getInstance(project).addDirectory(parent.getPresentableUrl());
+            if (editor == null) {
+              directoryName = parent.getPresentableUrl();
+            } else {
+              FindInProjectSettings.getInstance(project).addDirectory(parent.getPresentableUrl());
+            }
           }
         }
       }
@@ -126,15 +129,6 @@ public final class FindInProjectUtil {
 
     // set project scope if we have no other settings
     model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
-  }
-
-  /** @deprecated use {@link #getDirectory(FindModel)} */
-  @Deprecated
-  @Nullable
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static PsiDirectory getPsiDirectory(@NotNull FindModel findModel, @NotNull Project project) {
-    VirtualFile directory = getDirectory(findModel);
-    return directory == null ? null : PsiManager.getInstance(project).findDirectory(directory);
   }
 
   @Nullable
@@ -196,9 +190,11 @@ public final class FindInProjectUtil {
     final String finalPattern = pattern;
     final String finalNegativePattern = negativePattern;
 
-    return new Condition<CharSequence>() {
+    return new Condition<>() {
       final Pattern regExp = Pattern.compile(finalPattern, Pattern.CASE_INSENSITIVE);
-      final Pattern negativeRegExp = StringUtil.isEmpty(finalNegativePattern) ? null : Pattern.compile(finalNegativePattern, Pattern.CASE_INSENSITIVE);
+      final Pattern negativeRegExp =
+        StringUtil.isEmpty(finalNegativePattern) ? null : Pattern.compile(finalNegativePattern, Pattern.CASE_INSENSITIVE);
+
       @Override
       public boolean value(CharSequence input) {
         return regExp.matcher(input).matches() && (negativeRegExp == null || !negativeRegExp.matcher(input).matches());
@@ -314,7 +310,7 @@ public final class FindInProjectUtil {
   }
 
   @NotNull
-  private static String getTitleForScope(@NotNull final FindModel findModel) {
+  private static @Nls String getTitleForScope(@NotNull final FindModel findModel) {
     String scopeName;
     if (findModel.isProjectScope()) {
       scopeName = FindBundle.message("find.scope.project.title");
@@ -362,8 +358,8 @@ public final class FindInProjectUtil {
       if (!scope.isEmpty()) {
         scope = Character.toLowerCase(scope.charAt(0)) + scope.substring(1);
       }
-      presentation.setTabText("Files");
-      presentation.setToolwindowTitle("Files in " + scope);
+      presentation.setTabText(FindBundle.message("tab.title.files"));
+      presentation.setToolwindowTitle(FindBundle.message("tab.title.files.in.scope", scope));
       presentation.setUsagesString("files");
     }
     else {
@@ -380,7 +376,6 @@ public final class FindInProjectUtil {
         presentation.setToolwindowTitle(FindBundle.message("replace.usage.view.toolwindow.title", stringToFind, stringToReplace, scope, contextText));
       }
       presentation.setSearchString(FindBundle.message("find.occurrences.search.string", stringToFind, searchContext.ordinal()));
-      presentation.setUsagesWord(FindBundle.message("occurrence"));
       presentation.setCodeUsagesString(FindBundle.message("found.occurrences"));
     }
     presentation.setOpenInNewTab(toOpenInNewTab);
@@ -492,9 +487,8 @@ public final class FindInProjectUtil {
       return presentation.getToolwindowTitle();
     }
 
-    @NotNull
     @Override
-    public String getLongDescriptiveName() {
+    public @Nls @NotNull String getLongDescriptiveName() {
       return getPresentableText();
     }
 
@@ -655,8 +649,7 @@ public final class FindInProjectUtil {
     );
   }
 
-  @NotNull
-  public static String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
+  public static @Nls(capitalization = Title) @NotNull String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
     @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = null;
     switch (searchContext) {
       case ANY:

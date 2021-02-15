@@ -24,13 +24,13 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * @author ven
@@ -43,6 +43,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInCommentsAndStrings;
   private final boolean mySearchForTextOccurrences;
   private final boolean myDeleteDeclaration;
+  @SuppressWarnings("LeakableMapKey") //short living refactoring 
   private Map<Language, InlineHandler.Inliner> myInliners;
 
   public InlineConstantFieldProcessor(PsiField field, Project project, PsiElement ref, boolean isInlineThisOnly) {
@@ -291,7 +292,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
           }
         }
         if (element instanceof PsiLiteralExpression &&
-            Stream.of(element.getReferences()).anyMatch(JavaLangClassMemberReference.class::isInstance)) {
+            ContainerUtil.or(element.getReferences(), JavaLangClassMemberReference.class::isInstance)) {
           conflicts.putValue(element, JavaRefactoringBundle.message("inline.field.used.in.reflection"));
         }
       }

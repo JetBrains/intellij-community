@@ -205,7 +205,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       .setHideOnClickOutside(true)
       .setHideOnKeyOutside(true)
       .setHideOnAction(false)
-      .setFillColor(UIUtil.getControlColor())
+      .setFillColor(UIUtil.getPanelBackground())
       .createBalloon();
     DumbAwareAction.create(e -> balloon.hide())
       .registerCustomShortcutSet(CommonShortcuts.ESCAPE, component);

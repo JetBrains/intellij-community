@@ -80,7 +80,7 @@ public final class FoldingUtil {
    */
   public static Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-    return new Iterator<FoldRegion>() {
+    return new Iterator<>() {
       private int sectionStart;
       private int current;
       private int sectionEnd;
@@ -94,7 +94,8 @@ public final class FoldingUtil {
         //noinspection StatementWithEmptyBody
         for (sectionEnd = sectionStart + 1;
              sectionEnd < allRegions.length && allRegions[sectionEnd].getStartOffset() == allRegions[sectionStart].getStartOffset();
-             sectionEnd++);
+             sectionEnd++) {
+        }
         current = sectionEnd;
       }
 

@@ -2,47 +2,27 @@
 package com.intellij.util.loader;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.win32.IdeaWin32;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 
 public final class NativeLibraryLoader {
-  public static void loadPlatformLibrary(@NotNull @NonNls String libName) {
-    String libFileName = mapLibraryName(libName);
-
-    String libPath;
-    Path libFile = PathManager.findBinFile(libFileName);
-
-    if (libFile != null) {
-      libPath = libFile.toAbsolutePath().toString();
-    }
-    else {
-      libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName;
-      if (!Files.exists(Paths.get(libPath))) {
-        File libDir = new File(PathManager.getBinPath());
-        throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
-      }
-    }
-
-    System.load(libPath);
-  }
-
-  private static @NotNull String mapLibraryName(@NotNull String libName) {
+  public static void loadPlatformLibrary(@NotNull String libName) {
     String baseName = libName;
-    if (SystemInfoRt.is64Bit) {
+    if (CpuArch.isIntel64()) {
       baseName = baseName.replace("32", "") + "64";
     }
-    String fileName = System.mapLibraryName(baseName);
-    if (SystemInfoRt.isMac) {
-      fileName = fileName.replace(".jnilib", ".dylib");
+
+    String libFileName = System.mapLibraryName(baseName).replace(".jnilib", ".dylib");
+    Path libFile = PathManager.findBinFile(libFileName);
+    if (libFile == null) {
+      File libDir = new File(PathManager.getBinPath());
+      throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
     }
-    return fileName;
+
+    System.load(libFile.toString());
   }
 }

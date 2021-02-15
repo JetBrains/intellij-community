@@ -134,6 +134,11 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
           final FrameworkVersion selectedVersion = myConfigurable.getSelectedVersion();
           return selectedVersion == null || version.getVersionString().equals(selectedVersion.getVersionName());
         }
+
+        @Override
+        public String toString() {
+          return "FrameworkSupportLibraryVersionFilter(selectedVersion=" + myConfigurable.getSelectedVersion() + ")";
+        }
       };
     }
 

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
@@ -32,12 +33,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
+import com.intellij.psi.filters.classes.NoFinalLibraryClassesFilter;
+import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
@@ -86,6 +90,9 @@ public class JavaCompletionContributor extends CompletionContributor implements 
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
     or(psiElement(PsiIdentifier.class).withParent(NAME_VALUE_PAIR),
        psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
+  private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
+    psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
+      psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
 
   public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
     psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
@@ -113,19 +120,43 @@ public class JavaCompletionContributor extends CompletionContributor implements 
   private static final ElementPattern<PsiElement> AFTER_ENUM_CONSTANT =
     psiElement().inside(PsiTypeElement.class).afterLeaf(
       psiElement().inside(true, psiElement(PsiEnumConstant.class), psiElement(PsiClass.class, PsiExpressionList.class)));
+  static final ElementPattern<PsiElement> IN_EXTENDS_OR_IMPLEMENTS = psiElement().afterLeaf(
+    psiElement()
+      .withText(string().oneOf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&"))
+      .withParent(PsiReferenceList.class));
+  static final ElementPattern<PsiElement> IN_PERMITS_LIST = psiElement().afterLeaf(
+    psiElement()
+      .withText(string().oneOf(PsiKeyword.PERMITS, ","))
+      .withParent(psiElement(PsiReferenceList.class).withFirstChild(psiElement(PsiKeyword.class).withText(PsiKeyword.PERMITS))));
+  private static final ElementPattern<PsiElement> IN_VARIABLE_TYPE = psiElement()
+    .withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiDeclarationStatement.class)
+    .afterLeaf(psiElement().inside(psiAnnotation()));
 
+  /**
+   * @param position completion invocation position
+   * @return filter for acceptable references; if null then no references are accepted at a given position
+   */
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false,
                                                            PsiCodeBlock.class, PsiMethod.class,
                                                            PsiExpressionList.class, PsiVariable.class, PsiAnnotation.class);
     if (containingClass != null) {
-      if (isInPermitsList(position)) {
+      if (IN_PERMITS_LIST.accepts(position)) {
         return createPermitsListFilter();
       }
 
-      if (isInExtendsOrImplementsList(position)) {
-        return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
+      if (IN_EXTENDS_OR_IMPLEMENTS.accepts(position)) {
+        AndFilter filter = new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()),
+                                         new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class)));
+        PsiElement cls = position.getParent().getParent().getParent();
+        if (cls instanceof PsiClass && !(cls instanceof PsiTypeParameter)) {
+          filter = new AndFilter(filter, new NoFinalLibraryClassesFilter());
+        }
+        return filter;
+      }
+      if (IN_TYPE_PARAMETER.accepts(position)) {
+        return new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class));
       }
     }
 
@@ -137,7 +168,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
         JavaKeywordCompletion.isInsideParameterList(position) ||
         isInsideAnnotationName(position) ||
         PsiTreeUtil.getParentOfType(position, PsiReferenceParameterList.class, false, PsiAnnotation.class) != null ||
-        isDefinitelyVariableType(position)) {
+        IN_VARIABLE_TYPE.accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
 
@@ -199,6 +230,13 @@ public class JavaCompletionContributor extends CompletionContributor implements 
       return filter;
     }
 
+    if (position.getParent() instanceof PsiReferenceExpression) {
+      PsiClass enumClass = GenericsHighlightUtil.getEnumClassForExpressionInInitializer((PsiReferenceExpression)position.getParent());
+      if (enumClass != null) {
+        return new EnumStaticFieldsFilter(enumClass);
+      }
+    }
+
     return TrueFilter.INSTANCE;
   }
 
@@ -211,26 +249,6 @@ public class JavaCompletionContributor extends CompletionContributor implements 
         return qualifiedName != null && (qualifiedName.equals(candidate.getQualifiedName()) || curClass.isInheritor(candidate, true));
       }
     }));
-  }
-
-  private static boolean isDefinitelyVariableType(PsiElement position) {
-    return psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiDeclarationStatement.class).afterLeaf(psiElement().inside(psiAnnotation())).accepts(position);
-  }
-
-  private static boolean isInExtendsOrImplementsList(PsiElement position) {
-    return psiElement().afterLeaf(
-      psiElement()
-        .withText(string().oneOf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&"))
-        .withParent(PsiReferenceList.class)
-    ).accepts(position);
-  }
-
-  static boolean isInPermitsList(PsiElement position) {
-    return psiElement().afterLeaf(
-      psiElement()
-        .withText(string().oneOf(PsiKeyword.PERMITS, ","))
-        .withParent(psiElement(PsiReferenceList.class).withFirstChild(psiElement(PsiKeyword.class).withText(PsiKeyword.PERMITS)))
-    ).accepts(position);
   }
 
   private static boolean isInsideAnnotationName(PsiElement position) {
@@ -310,8 +328,8 @@ public class JavaCompletionContributor extends CompletionContributor implements 
       List<LookupElement> refSuggestions = Collections.emptyList();
       if (parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference) {
         PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)parent;
-        if (isInPermitsList(parent) && parameters.getInvocationCount() <= 1) {
-            refSuggestions = completePermitsListReference(parameters, parentRef, matcher);
+        if (IN_PERMITS_LIST.accepts(parent) && parameters.getInvocationCount() <= 1) {
+          refSuggestions = completePermitsListReference(parameters, parentRef, matcher);
         }
         else {
           refSuggestions = completeReference(parameters, parentRef, session, expectedInfos, matcher::prefixMatches);
@@ -595,6 +613,19 @@ public class JavaCompletionContributor extends CompletionContributor implements 
     PsiElement position = parameters.getPosition();
     ElementFilter filter = getReferenceFilter(position);
     if (filter == null) return Collections.emptyList();
+    if (parameters.getInvocationCount() <= 1 && JavaClassNameCompletionContributor.AFTER_NEW.accepts(position)) {
+      filter = new AndFilter(filter, new ElementFilter() {
+        @Override
+        public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+          return !JavaPsiClassReferenceElement.isInaccessibleConstructorSuggestion(position, tryCast(element, PsiClass.class));
+        }
+
+        @Override
+        public boolean isClassAcceptable(Class hintClass) {
+          return true;
+        }
+      });
+    }
 
     boolean smart = parameters.getCompletionType() == CompletionType.SMART;
     if (smart) {
@@ -1169,6 +1200,22 @@ public class JavaCompletionContributor extends CompletionContributor implements 
       }
 
       return false;
+    }
+
+    @Override
+    public boolean isClassAcceptable(Class hintClass) {
+      return true;
+    }
+  }
+
+  private static class EnumStaticFieldsFilter implements ElementFilter {
+    private final PsiClass myEnumClass;
+
+    public EnumStaticFieldsFilter(PsiClass enumClass) {myEnumClass = enumClass;}
+
+    @Override
+    public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+      return !(element instanceof PsiField) || !GenericsHighlightUtil.isRestrictedStaticEnumField((PsiField)element, myEnumClass);
     }
 
     @Override

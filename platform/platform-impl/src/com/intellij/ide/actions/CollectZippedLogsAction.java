@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -89,7 +89,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
                                                                 NotificationType.ERROR);
         Notifications.Bus.notify(errorNotification);
       }
-    }, IdeBundle.message("progress.title.collecting.logs"), false, project);
+    }, IdeBundle.message("progress.title.collecting.logs"), true, project);
   }
 
   @NotNull
@@ -104,20 +104,24 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     try (Compressor zip = new Compressor.Zip(zippedLogsFile)) {
       // Add additional files before logs folder to collect any logging
       // happened in additionalFiles.accept
+      ProgressManager.checkCanceled();
       additionalFiles.accept(zip);
 
+      ProgressManager.checkCanceled();
       zip.addDirectory(new File(PathManager.getLogPath()));
 
       StringBuilder troubleshooting = collectInfoFromExtensions(project);
       if (troubleshooting != null) {
+        ProgressManager.checkCanceled();
         zip.addFile("troubleshooting.txt", troubleshooting.toString().getBytes(StandardCharsets.UTF_8));
       }
 
       for (File javaErrorLog : getJavaErrorLogs()) {
+        ProgressManager.checkCanceled();
         zip.addFile(javaErrorLog.getName(), javaErrorLog);
       }
     }
-    catch (IOException exception) {
+    catch (Exception exception) {
       FileUtil.delete(zippedLogsFile);
       throw exception;
     }

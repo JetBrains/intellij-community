@@ -5,7 +5,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
-import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -29,12 +28,6 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
   override fun createDefaultConfig() = MavenRuntimeTargetConfiguration()
 
   override fun createSerializer(config: MavenRuntimeTargetConfiguration): PersistentStateComponent<*> = config
-
-  override fun createConfigurable(project: Project,
-                                  config: MavenRuntimeTargetConfiguration,
-                                  target: TargetEnvironmentConfiguration): Configurable {
-    return MavenRuntimeTargetUI(config, target.getTargetType(), { target }, project)
-  }
 
   override fun createConfigurable(project: Project,
                                   config: MavenRuntimeTargetConfiguration,

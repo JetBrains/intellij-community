@@ -14,7 +14,7 @@ public class GeneratedLocation implements Location {
   private final ReferenceType myReferenceType;
   private final Method myMethod;
 
-  public GeneratedLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int lineNumber) {
+  public GeneratedLocation(DebugProcessImpl debugProcess, @NotNull ReferenceType type, String methodName, int lineNumber) {
     myVirtualMachine = debugProcess.getVirtualMachineProxy().getVirtualMachine();
     myLineNumber = lineNumber;
     myReferenceType = type;

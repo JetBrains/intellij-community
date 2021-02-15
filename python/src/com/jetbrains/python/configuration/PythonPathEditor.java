@@ -131,13 +131,13 @@ public class PythonPathEditor extends SdkPathEditor {
   protected void onReloadButtonClicked() { }
 
   private static class PathListModel {
-    private Set<VirtualFile> myAdded = new HashSet<VirtualFile>();
-    private Set<VirtualFile> myExcluded = new HashSet<VirtualFile>();
-    private final Set<VirtualFile> myFoundFiles = new HashSet<VirtualFile>();
+    private Set<VirtualFile> myAdded = new HashSet<>();
+    private Set<VirtualFile> myExcluded = new HashSet<>();
+    private final Set<VirtualFile> myFoundFiles = new HashSet<>();
     private final List<VirtualFile> myFilteredOut = new ArrayList<>();
     private final DefaultListModel<VirtualFile> myListModel;
     private final OrderRootType myOrderRootType;
-    private final Set<VirtualFile> myUserAddedToRemove = new HashSet<VirtualFile>();
+    private final Set<VirtualFile> myUserAddedToRemove = new HashSet<>();
 
     PathListModel(OrderRootType orderRootType, DefaultListModel<VirtualFile> listModel) {
       myOrderRootType = orderRootType;

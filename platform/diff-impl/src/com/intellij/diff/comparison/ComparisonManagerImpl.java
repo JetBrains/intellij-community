@@ -291,17 +291,6 @@ public final class ComparisonManagerImpl extends ComparisonManager {
 
   @NotNull
   @Override
-  @Deprecated
-  public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
-                                              @NotNull CharSequence text2,
-                                              @NotNull List<LineFragment> lineFragments,
-                                              @NotNull ComparisonPolicy policy,
-                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    return compareLinesInner(text1, text2, policy, indicator);
-  }
-
-  @NotNull
-  @Override
   public List<DiffFragment> compareWords(@NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
                                          @NotNull ComparisonPolicy policy,

@@ -35,38 +35,36 @@ public class MavenProjectsManagerWatcher {
   private static final Logger LOG = Logger.getInstance(MavenProjectsManagerWatcher.class);
 
   private final Project myProject;
-  private final MavenProjectsManager myManager;
   private final MavenProjectsTree myProjectsTree;
   private final MavenGeneralSettings myGeneralSettings;
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenProjectsAware myProjectsAware;
-  private final ExternalSystemProjectTracker myProjectTracker;
   private final ExecutorService myBackgroundExecutor;
   private final Disposable myDisposable;
 
   public MavenProjectsManagerWatcher(Project project,
-                                     MavenProjectsManager manager,
                                      MavenProjectsTree projectsTree,
                                      MavenGeneralSettings generalSettings,
                                      MavenProjectsProcessor readingProcessor) {
     myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myProject = project;
-    myManager = manager;
     myProjectsTree = projectsTree;
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
-    myProjectsAware = new MavenProjectsAware(project, projectsTree, manager, this, myBackgroundExecutor);
-    myProjectTracker = ExternalSystemProjectTracker.getInstance(project);
-    myDisposable = Disposer.newDisposable(MavenProjectsManagerWatcher.class.toString());
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    myProjectsAware = new MavenProjectsAware(project, projectsTree, projectsManager, this, myBackgroundExecutor);
+    myDisposable = Disposer.newDisposable(projectsManager, MavenProjectsManagerWatcher.class.toString());
   }
 
   public synchronized void start() {
     MessageBusConnection busConnection = myProject.getMessageBus().connect(myDisposable);
     busConnection.subscribe(ProjectTopics.MODULES, new MavenIgnoredModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
-    registerGeneralSettingsWatcher(myManager, this, myBackgroundExecutor, myDisposable);
-    myProjectTracker.register(myProjectsAware, myManager);
-    myProjectTracker.activate(myProjectsAware.getProjectId());
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    registerGeneralSettingsWatcher(projectsManager, this, myBackgroundExecutor, myDisposable);
+    ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
+    projectTracker.register(myProjectsAware, projectsManager);
+    projectTracker.activate(myProjectsAware.getProjectId());
   }
 
   @TestOnly
@@ -97,10 +95,6 @@ public class MavenProjectsManagerWatcher {
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
     scheduleUpdateAll(false, false);
-  }
-
-  void scheduleReloadNotificationUpdate() {
-    myProjectTracker.scheduleProjectNotificationUpdate();
   }
 
   /**
@@ -147,7 +141,8 @@ public class MavenProjectsManagerWatcher {
       }
 
       if (forceImportAndResolve) {
-        myManager.scheduleImportAndResolve().onSuccess(modules -> promise.setResult(null));
+        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+        projectsManager.scheduleImportAndResolve().onSuccess(modules -> promise.setResult(null));
       }
       else {
         promise.setResult(null);
@@ -184,21 +179,22 @@ public class MavenProjectsManagerWatcher {
     public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
       if(Registry.is("maven.modules.do.not.ignore.on.delete")) return;
 
-      MavenProject mavenProject = myManager.findProject(module);
-      if (mavenProject != null && !myManager.isIgnored(mavenProject)) {
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+      MavenProject mavenProject = projectsManager.findProject(module);
+      if (mavenProject != null && !projectsManager.isIgnored(mavenProject)) {
         VirtualFile file = mavenProject.getFile();
 
-        if (myManager.isManagedFile(file) && myManager.getModules(mavenProject).isEmpty()) {
+        if (projectsManager.isManagedFile(file) && projectsManager.getModules(mavenProject).isEmpty()) {
           MavenLog.LOG.info("remove managed maven project  + " + mavenProject + "because there is no module for it");
-          myManager.removeManagedFiles(Collections.singletonList(file));
+          projectsManager.removeManagedFiles(Collections.singletonList(file));
         }
         else {
-          if (myManager.getRootProjects().contains(mavenProject)) {
+          if (projectsManager.getRootProjects().contains(mavenProject)) {
             MavenLog.LOG.info("Requested to ignore " + mavenProject + ", will not do it because it is a root project");
             return;
           }
           MavenLog.LOG.info("Ignoring " + mavenProject);
-          myManager.setIgnoredState(Collections.singletonList(mavenProject), true);
+          projectsManager.setIgnoredState(Collections.singletonList(mavenProject), true);
         }
       }
     }
@@ -207,8 +203,10 @@ public class MavenProjectsManagerWatcher {
     public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
       if(Registry.is("maven.modules.do.not.ignore.on.delete")) return;
       // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
-      MavenProject mavenProject = myManager.findProject(module);
-      if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
+
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+      MavenProject mavenProject = projectsManager.findProject(module);
+      if (mavenProject != null) projectsManager.setIgnoredState(Collections.singletonList(mavenProject), false);
     }
   }
 }

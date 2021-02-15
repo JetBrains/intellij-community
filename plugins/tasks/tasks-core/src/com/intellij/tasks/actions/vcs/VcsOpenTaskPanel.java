@@ -98,6 +98,12 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     myShelveChanges.setSelected(myTaskManager.getState().shelveChanges);
     myChangelistName.setText(getChangelistName(task));
 
+    if (!ChangeListManager.getInstance(myProject).areChangeListsEnabled()) {
+      myCreateChangelist.setVisible(false);
+      myCreateChangelist.setSelected(false);
+      myChangelistName.setVisible(false);
+    }
+
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
     if (handlers.length == 0) {
       myCreateBranch.setSelected(false);

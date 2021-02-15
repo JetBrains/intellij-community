@@ -412,8 +412,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   private DataContext createDataContextFor(final Editor editor) {
     return dataId -> {
-      if (dataId.equals(CommonDataKeys.EDITOR.getName())) return editor;
-      if (dataId.equals(CommonDataKeys.PROJECT.getName())) return getProject();
+      if (CommonDataKeys.EDITOR.is(dataId)) return editor;
+      if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
       return null;
     };
   }

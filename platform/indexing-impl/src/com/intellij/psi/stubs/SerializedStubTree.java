@@ -21,7 +21,6 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public final class SerializedStubTree {
-
   // serialized tree
   final byte[] myTreeBytes;
   final int myTreeByteLength;
@@ -31,7 +30,7 @@ public final class SerializedStubTree {
   final int myIndexedStubByteLength;
   private Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> myIndexedStubs;
 
-  private final @NotNull SerializationManagerEx mySerializationManager;
+  private final @NotNull StubTreeSerializer mySerializationManager;
   private final @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
   public SerializedStubTree(byte @NotNull [] treeBytes,
@@ -40,7 +39,7 @@ public final class SerializedStubTree {
                             int indexedStubByteLength,
                             @Nullable Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs,
                             @NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer,
-                            @NotNull SerializationManagerEx serializationManager) {
+                            @NotNull StubTreeSerializer serializationManager) {
     myTreeBytes = treeBytes;
     myTreeByteLength = treeByteLength;
     myIndexedStubBytes = indexedStubBytes;
@@ -51,7 +50,7 @@ public final class SerializedStubTree {
   }
 
   public static @NotNull SerializedStubTree serializeStub(@NotNull Stub rootStub,
-                                                          @NotNull SerializationManagerEx serializationManager,
+                                                          @NotNull StubTreeSerializer serializationManager,
                                                           @NotNull StubForwardIndexExternalizer<?> forwardIndexExternalizer) throws IOException {
     final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     serializationManager.serialize(rootStub, bytes);
@@ -74,10 +73,10 @@ public final class SerializedStubTree {
     );
   }
 
-  public @NotNull SerializedStubTree reSerialize(@NotNull SerializationManagerEx newSerializationManager,
+  public @NotNull SerializedStubTree reSerialize(@NotNull StubTreeSerializer newSerializationManager,
                                                  @NotNull StubForwardIndexExternalizer<?> newForwardIndexSerializer) throws IOException {
     BufferExposingByteArrayOutputStream outStub = new BufferExposingByteArrayOutputStream();
-    mySerializationManager.reSerialize(new ByteArrayInputStream(myTreeBytes, 0, myTreeByteLength), outStub, newSerializationManager);
+    ((SerializationManagerEx)mySerializationManager).reSerialize(new ByteArrayInputStream(myTreeBytes, 0, myTreeByteLength), outStub, newSerializationManager);
 
     byte[] reSerializedIndexBytes;
     int reSerializedIndexByteLength;
@@ -232,7 +231,7 @@ public final class SerializedStubTree {
     }
 
     @Override
-    public ObjectStubSerializer getStubType() {
+    public ObjectStubSerializer<?, ?> getStubType() {
       return null;
     }
 

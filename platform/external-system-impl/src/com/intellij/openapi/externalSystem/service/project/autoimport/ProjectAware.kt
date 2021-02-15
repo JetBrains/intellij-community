@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.autoimport
 
-import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
@@ -44,9 +43,6 @@ class ProjectAware(
     if (!context.isExplicitReload) {
       importSpec.dontReportRefreshErrors()
     }
-    if (!project.isTrusted()) {
-      importSpec.usePreviewMode()
-    }
     ExternalSystemUtil.refreshProject(projectPath, importSpec)
   }
 
@@ -61,7 +57,12 @@ class ProjectAware(
 
       val task = ApplicationManager.getApplication().getService(ExternalSystemProcessingManager::class.java).findTask(id)
       if (task is ExternalSystemResolveProjectTask) {
-        if (!autoImportAware.isApplicable(task.resolverPolicy)) return
+        if (task.isPreviewMode) {
+          return
+        }
+        if (!autoImportAware.isApplicable(task.resolverPolicy)) {
+          return
+        }
       }
       externalSystemTaskId.set(id)
       delegate.beforeProjectRefresh()

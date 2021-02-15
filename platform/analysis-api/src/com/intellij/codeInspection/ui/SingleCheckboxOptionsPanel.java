@@ -18,6 +18,8 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +36,7 @@ public class SingleCheckboxOptionsPanel extends JPanel {
         super(new GridBagLayout());
         final boolean selected = getPropertyValue(owner, property);
         final JCheckBox checkBox = new JCheckBox(label, selected);
+        checkBox.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
         final ButtonModel model = checkBox.getModel();
         final SingleCheckboxChangeListener listener =
                 new SingleCheckboxChangeListener(owner, property, model);

@@ -73,17 +73,6 @@ public abstract class LRUPopupBuilder<T> {
     });
   }
 
-  /**
-   * @deprecated use {@link #forFileLanguages(Project, String, Language, Consumer)}
-   */
-  @Deprecated
-  @NotNull
-  public static ListPopup forFileLanguages(@NotNull Project project,
-                                           @Nullable Language selection,
-                                           @NotNull Consumer<? super Language> onChosen) {
-    return forFileLanguages(project, "Languages", selection, onChosen); //NON-NLS
-  }
-
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @NotNull @PopupTitle String title,
@@ -181,7 +170,7 @@ public abstract class LRUPopupBuilder<T> {
 
     List<T> combinedItems = ContainerUtil.concat(lru, items, extra);
     BaseListPopupStep<T> step =
-      new BaseListPopupStep<T>(myTitle, combinedItems) {
+      new BaseListPopupStep<>(myTitle, combinedItems) {
         @NotNull
         @Override
         public String getTextFor(T t) {
@@ -281,7 +270,7 @@ public abstract class LRUPopupBuilder<T> {
     final Map<VirtualFile, Language> oldMapping = new HashMap<>();
     for (VirtualFile file : sortedFiles) {
       oldMapping.put(file, mappings.getMapping(file));
-      if (ScratchUtil.hasMatchingExtension(project, file)) {
+      if (ScratchImplUtil.hasMatchingExtension(project, file)) {
         matchedExtensions.add(file);
       }
     }
@@ -306,7 +295,7 @@ public abstract class LRUPopupBuilder<T> {
 
     for (VirtualFile file : matchedExtensions) {
       try {
-        ScratchUtil.updateFileExtension(project, file);
+        ScratchImplUtil.updateFileExtension(project, file);
       }
       catch (IOException ignored) {
       }

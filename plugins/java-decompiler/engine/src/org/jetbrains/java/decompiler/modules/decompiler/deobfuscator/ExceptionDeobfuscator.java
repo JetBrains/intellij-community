@@ -18,7 +18,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class ExceptionDeobfuscator {
+public final class ExceptionDeobfuscator {
 
   private static final class Range {
     private final BasicBlock handler;

@@ -5,16 +5,13 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL_EXT
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.resolveConstructors
-import com.jetbrains.python.psi.impl.references.PyReferenceImpl
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.resolveImplicitlyInvokedMethods
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.*
 
 
-fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext): Boolean {
-  return containsProtocol(classLikeType.getSuperClassTypes(context))
-}
+fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext): Boolean = containsProtocol(classLikeType.getSuperClassTypes(context))
 
 fun isProtocol(cls: PyClass, context: TypeEvalContext): Boolean = containsProtocol(cls.getSuperClassTypes(context))
 
@@ -43,18 +40,13 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
 
         val name = e.name ?: return@visitMembers true
 
-        val ratedResolveResult: List<RatedResolveResult>?
-
-        if (name == PyNames.CALL && subclass.isDefinition) {
-          ratedResolveResult = resolveConstructors(subclass.pyClass, null, context, true).map {
-            RatedResolveResult(PyReferenceImpl.getRate(it, context), it)
-          }
+        if (name == PyNames.CALL) {
+          result.add(Pair(e, resolveImplicitlyInvokedMethods(subclass, null, resolveContext)))
         }
         else {
-          ratedResolveResult = subclass.resolveMember(name, null, AccessDirection.READ, resolveContext)
+          result.add(Pair(e, subclass.resolveMember(name, null, AccessDirection.READ, resolveContext)))
         }
 
-        result.add(Pair(e, ratedResolveResult))
       }
 
       true

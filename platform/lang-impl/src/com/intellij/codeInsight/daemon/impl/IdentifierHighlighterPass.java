@@ -10,6 +10,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -55,6 +57,10 @@ public class IdentifierHighlighterPass {
   private final int myCaretOffset;
   private final ProperTextRange myVisibleRange;
 
+  /**
+   * @param file may be injected fragment, in which case the {@code editor} must be corresponding injected editor and  {@code visibleRange} must have consistent offsets inside the injected document.
+   * In both cases, {@link #doCollectInformation()} will produce and {@link #doApplyInformationToEditor()} will apply HighlightInfos for the host file.
+   */
   IdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange visibleRange) {
     myFile = file;
     myEditor = editor;
@@ -277,7 +283,9 @@ public class IdentifierHighlighterPass {
   public void doApplyInformationToEditor() {
     boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
     List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
-    UpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), myEditor, 0, myFile.getTextLength(), infos, myEditor.getColorsScheme(), getId());
+    PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+    UpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), hostEditor, 0, hostFile.getTextLength(), infos, hostEditor.getColorsScheme(), getId());
     doAdditionalCodeBlockHighlighting();
   }
 
@@ -297,7 +305,7 @@ public class IdentifierHighlighterPass {
     if (myCodeBlockMarkerRanges.size() < 2 || !(myEditor instanceof EditorEx)) {
       return;
     }
-    ArrayList<TextRange> markers = new ArrayList<>(myCodeBlockMarkerRanges);
+    List<TextRange> markers = new ArrayList<>(myCodeBlockMarkerRanges);
     markers.sort(Segment.BY_START_OFFSET_THEN_END_OFFSET);
     TextRange leftBraceRange = markers.get(0);
     TextRange rightBraceRange = markers.get(markers.size() - 1);

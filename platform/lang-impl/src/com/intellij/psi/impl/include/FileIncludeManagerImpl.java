@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.Disposable;
@@ -26,7 +26,6 @@ import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +42,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
   private final IncludeCacheHolder myIncludedHolder = new IncludeCacheHolder("compile time includes", "runtime includes") {
     @Override
     protected VirtualFile[] computeFiles(final PsiFile file, final boolean compileTimeOnly) {
-      final Set<VirtualFile> files = new THashSet<>();
+      final Set<VirtualFile> files = new HashSet<>();
       processIncludes(file, info -> {
         if (compileTimeOnly != info.runtimeOnly) {
           PsiFileSystemItem item = resolveFileInclude(info, file);
@@ -56,7 +55,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
       return VfsUtilCore.toVirtualFileArray(files);
     }
   };
-  
+
   public void processIncludes(PsiFile file, Processor<? super FileIncludeInfo> processor) {
     List<FileIncludeInfo> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), myProject);
     for (FileIncludeInfo info : infoList) {
@@ -69,7 +68,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
   private final IncludeCacheHolder myIncludingHolder = new IncludeCacheHolder("compile time contexts", "runtime contexts") {
     @Override
     protected VirtualFile[] computeFiles(PsiFile context, boolean compileTimeOnly) {
-      final Set<VirtualFile> files = new THashSet<>();
+      final Set<VirtualFile> files = new HashSet<>();
       processIncludingFiles(context, virtualFileFileIncludeInfoPair -> {
         files.add(virtualFileFileIncludeInfoPair.first);
         return true;
@@ -107,9 +106,9 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
 
   @NotNull
   private static Collection<String> getPossibleIncludeNames(@NotNull PsiFile context, @NotNull String originalName) {
-    Collection<String> names = new THashSet<>();
+    Collection<String> names = new HashSet<>();
     names.add(originalName);
-    for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensions()) {
+    for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensionList()) {
       String newName = provider.getIncludeName(context, originalName);
       if (newName != originalName) {
         names.add(newName);
@@ -125,7 +124,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
     myPsiManager = PsiManager.getInstance(project);
     myPsiFileFactory = PsiFileFactory.getInstance(myProject);
 
-    FileIncludeProvider.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<FileIncludeProvider>() {
+    FileIncludeProvider.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull FileIncludeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);

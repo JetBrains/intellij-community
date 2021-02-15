@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.Facet;
@@ -55,8 +41,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -280,7 +264,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       moduleEditor.canApply();
     }
 
-    final Map<Sdk, Sdk> modifiedToOriginalMap = new THashMap<>();
+    final Map<Sdk, Sdk> modifiedToOriginalMap = new HashMap<>();
     final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
     for (Map.Entry<Sdk, Sdk> entry : projectJdksModel.getProjectSdks().entrySet()) {
       modifiedToOriginalMap.put(entry.getValue(), entry.getKey());
@@ -298,10 +282,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               final Sdk modelSdk = model.getSdk();
               if (modelSdk != null) {
                 final Sdk original = modifiedToOriginalMap.get(modelSdk);
-                // in workspace model reference to Sdk instance isn't stored, only its name, so there is no need to invoke 'setSdk' method
-                // to avoid problems with multiple diffs (workaround for IDEA-260248)
-                if (original != null && (!WorkspaceModel.isEnabled() || !original.getName().equals(modelSdk.getName())
-                                         || !original.getSdkType().getName().equals(modelSdk.getSdkType().getName()))) {
+                if (original != null) {
                   model.setSdk(original);
                 }
               }

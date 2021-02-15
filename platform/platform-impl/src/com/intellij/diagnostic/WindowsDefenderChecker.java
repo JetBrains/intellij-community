@@ -39,7 +39,7 @@ public class WindowsDefenderChecker {
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10000;
   private static final int POWERSHELL_COMMAND_TIMEOUT_MS = 10000;
   private static final int MAX_POWERSHELL_STDERR_LENGTH = 500;
-  private static final String IGNORE_VIRUS_CHECK = "ignore.virus.scanning.warn.message";
+  static final String IGNORE_VIRUS_CHECK = "ignore.virus.scanning.warn.message";
 
   public enum RealtimeScanningStatus {
     SCANNING_DISABLED,
@@ -245,7 +245,7 @@ public class WindowsDefenderChecker {
   @NotNull
   private static String expandEnvVars(@NotNull String path) {
     Matcher m = WINDOWS_ENV_VAR_PATTERN.matcher(path);
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     while (m.find()) {
       String value = System.getenv(m.group(1));
       if (value != null) {
@@ -257,7 +257,7 @@ public class WindowsDefenderChecker {
   }
 
   /**
-   * Produces a {@link Pattern} that approximates how Windows Defender interprets the exclusion path {@link path}.
+   * Produces a {@link Pattern} that approximates how Windows Defender interprets the exclusion path {@code path}.
    * The path is split around wildcards; the non-wildcard portions are quoted, and regex equivalents of
    * the wildcards are inserted between them. See
    * https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-defender-antivirus/configure-extension-file-exclusions-windows-defender-antivirus

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
+import com.google.common.net.InetAddresses;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialPromptDialog;
 import com.intellij.execution.CommandLineUtil;
@@ -13,8 +14,10 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
@@ -29,7 +32,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
@@ -38,7 +43,6 @@ import static com.intellij.execution.wsl.WSLUtil.LOG;
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
  * @see WSLUtil
- * @see WSLDistributionWithRoot
  */
 public class WSLDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
@@ -49,8 +53,10 @@ public class WSLDistribution {
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
-  @NotNull private final WslDistributionDescriptor myDescriptor;
-  @Nullable private final Path myExecutablePath;
+  private final @NotNull WslDistributionDescriptor myDescriptor;
+  private final @Nullable Path myExecutablePath;
+  private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
+  private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(() -> readWslIp());
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -62,12 +68,15 @@ public class WSLDistribution {
   }
 
   public WSLDistribution(@NotNull String msId) {
-    this(new WslDistributionDescriptor(msId, msId, null, msId), null);
+    this(new WslDistributionDescriptor(msId), null);
   }
 
   /**
+   * @deprecated please don't use it, to be removed
    * @return executable file, null for WSL distributions parsed from `wsl.exe --list` output
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
   public @Nullable Path getExecutablePath() {
     return myExecutablePath;
   }
@@ -99,7 +108,7 @@ public class WSLDistribution {
    * @return creates and patches command line, e.g:
    * {@code ruby -v} => {@code bash -c "ruby -v"}
    */
-  public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) {
+  public @NotNull GeneralCommandLine createWslCommandLine(String @NotNull ... command) throws ExecutionException {
     return patchCommandLine(new GeneralCommandLine(command), null, new WSLCommandLineOptions());
   }
 
@@ -111,8 +120,7 @@ public class WSLDistribution {
    * @param timeout                timeout in ms
    * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    */
-  @NotNull
-  public ProcessOutput executeOnWsl(@NotNull List<String> command,
+  public @NotNull ProcessOutput executeOnWsl(@NotNull List<String> command,
                                     @NotNull WSLCommandLineOptions options,
                                     int timeout,
                                     @Nullable Consumer<? super ProcessHandler> processHandlerConsumer) throws ExecutionException {
@@ -168,15 +176,19 @@ public class WSLDistribution {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
+  public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                            @Nullable Project project,
                                                            @Nullable String remoteWorkingDir,
                                                            boolean askForSudo) {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setRemoteWorkingDirectory(remoteWorkingDir)
       .setSudo(askForSudo);
-    return patchCommandLine(commandLine, project, options);
+    try {
+      return patchCommandLine(commandLine, project, options);
+    }
+    catch (ExecutionException e) {
+      throw new IllegalStateException("Cannot patch command line for WSL", e);
+    }
   }
 
   /**
@@ -193,12 +205,16 @@ public class WSLDistribution {
    * @param <T>              GeneralCommandLine or descendant
    * @return original {@code commandLine}, prepared to run in WSL context
    */
-  @NotNull
-  public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
+  public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                            @Nullable Project project,
-                                                           @NotNull WSLCommandLineOptions options) {
+                                                           @NotNull WSLCommandLineOptions options) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
-    Path wslExe = findWslExe(options);
+    Path executable = getExecutablePath();
+    boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
+    Path wslExe = launchWithWslExe ? findWslExe() : null;
+    if (wslExe == null && executable == null) {
+      throw new ExecutionException(IdeBundle.message("wsl.not.installed.dialog.message"));
+    }
     boolean executeCommandInShell = wslExe == null || options.isExecuteCommandInShell();
     List<String> linuxCommand = buildLinuxCommand(commandLine, executeCommandInShell);
 
@@ -265,7 +281,7 @@ public class WSLDistribution {
       }
     }
     else {
-      commandLine.setExePath(Objects.requireNonNull(getExecutablePath()).toString());
+      commandLine.setExePath(executable.toString());
       commandLine.addParameter(getRunCommandLineParameter());
       commandLine.addParameter(linuxCommandStr);
     }
@@ -292,8 +308,8 @@ public class WSLDistribution {
     }
   }
 
-  private static @Nullable Path findWslExe(@NotNull WSLCommandLineOptions options) {
-    File file = options.isLaunchWithWslExe() ? PathEnvironmentVariableUtil.findInPath("wsl.exe") : null;
+   public static @Nullable Path findWslExe() {
+    File file = PathEnvironmentVariableUtil.findInPath("wsl.exe");
     return file != null ? file.toPath() : null;
   }
 
@@ -363,8 +379,7 @@ public class WSLDistribution {
    * @param processHandler process handler, created from patched commandline
    * @return passed processHandler, patched with sudo listener if any
    */
-  @NotNull
-  public <T extends ProcessHandler>T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
+  public @NotNull <T extends ProcessHandler>T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
     ProcessListener listener = SUDO_LISTENER_KEY.get(commandLine);
     if (listener != null) {
       processHandler.addProcessListener(listener);
@@ -376,8 +391,7 @@ public class WSLDistribution {
   /**
    * @return environment map of the default user in wsl
    */
-  @NotNull
-  public Map<String, String> getEnvironment() {
+  public @NotNull Map<String, String> getEnvironment() {
     try {
       ProcessOutput processOutput = executeOnWsl(5000, "env");
       Map<String, String> result = new HashMap<>();
@@ -400,17 +414,32 @@ public class WSLDistribution {
   }
 
   /**
-   * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable
+   * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
 
   public @Nullable @NlsSafe String getWindowsPath(@NotNull String wslPath) {
-    return WSLUtil.getWindowsPath(wslPath, getMntRoot());
+    if (wslPath.startsWith(getMntRoot())) {
+      return WSLUtil.getWindowsPath(wslPath, getMntRoot());
+    }
+    return getUNCRoot() + FileUtil.toSystemDependentName(wslPath);
   }
 
   /**
    * @return Linux path for a file pointed by {@code windowsPath} or null if unavailable, like \\MACHINE\path
    */
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
+    if (FileUtil.toSystemDependentName(windowsPath).startsWith(UNC_PREFIX)) {
+      windowsPath = StringUtil.trimStart(FileUtil.toSystemDependentName(windowsPath), UNC_PREFIX);
+      int index = windowsPath.indexOf('\\');
+      if (index == -1) return null;
+
+      String distName = windowsPath.substring(0, index);
+      if (!distName.equalsIgnoreCase(myDescriptor.getMsId())) {
+        throw new IllegalArgumentException("Trying to get WSL path from a different WSL distribution");
+      }
+      return FileUtil.toSystemIndependentName(windowsPath.substring(index));
+    }
+
     //noinspection deprecation
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return getMntRoot() + convertWindowsPath(windowsPath);
@@ -421,8 +450,12 @@ public class WSLDistribution {
   /**
    * @see WslDistributionDescriptor#getMntRoot()
    */
-  public final @NotNull @NlsSafe String getMntRoot(){
+  public final @NotNull @NlsSafe String getMntRoot() {
     return myDescriptor.getMntRoot();
+  }
+
+  public final @Nullable @NlsSafe String getUserHome() {
+    return myDescriptor.getUserHome();
   }
 
   /**
@@ -447,9 +480,7 @@ public class WSLDistribution {
 
   @Override
   public String toString() {
-    return "WSLDistribution{" +
-           "myDescriptor=" + myDescriptor +
-           '}';
+    return "WSLDistribution{myDescriptor=" + myDescriptor + '}';
   }
 
   private static void prependCommand(@NotNull List<String> command, String @NotNull ... commandToPrepend) {
@@ -458,28 +489,26 @@ public class WSLDistribution {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    WSLDistribution that = (WSLDistribution)o;
-
-    if (!myDescriptor.equals(that.myDescriptor)) return false;
-
-    return true;
+    return this == o || o != null && getClass() == o.getClass() && getMsId().equals(((WSLDistribution)o).getMsId());
   }
 
   @Override
   public int hashCode() {
-    return myDescriptor.hashCode();
+    return Strings.stringHashCodeInsensitive(getMsId());
+  }
+
+  /** @deprecated use {@link WSLDistribution#getUNCRootPath()} instead */
+  @Deprecated
+  public @NotNull File getUNCRoot() {
+    return new File(UNC_PREFIX + myDescriptor.getMsId());
   }
 
   /**
    * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
    */
   @ApiStatus.Experimental
-  @NotNull
-  public File getUNCRoot() {
-    return new File(UNC_PREFIX + myDescriptor.getMsId());
+  public @NotNull Path getUNCRootPath() {
+    return Paths.get(UNC_PREFIX + myDescriptor.getMsId());
   }
 
   /**
@@ -490,12 +519,72 @@ public class WSLDistribution {
    * for the network resource availability, this method may be simplified to findFileByIoFile
    */
   @ApiStatus.Experimental
-  @Nullable
-  public VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
+  public @Nullable VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
     if (!Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
       return null;
     }
     File uncRoot = getUNCRoot();
     return uncRoot.exists() ? VfsUtil.findFileByIoFile(uncRoot, refreshIfNeed) : null;
+  }
+
+  // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip
+  public String getHostIp() {
+    return myHostIp.getValue();
+  }
+
+  public String getWslIp() {
+    return myWslIp.getValue();
+  }
+
+  public InetAddress getHostIpAddress() {
+    return InetAddresses.forString(getHostIp());
+  }
+  public InetAddress getWslIpAddress() {
+    return InetAddresses.forString(getWslIp());
+  }
+
+  private @Nullable String readHostIp() {
+    final String releaseInfo = "/etc/resolv.conf"; // available for all distributions
+    final ProcessOutput output;
+    try {
+      output = executeOnWsl(10000, "cat", releaseInfo);
+    }
+    catch (ExecutionException e) {
+      return null;
+    }
+    if (LOG.isDebugEnabled()) LOG.debug("Reading release info: " + getId());
+    if (!output.checkSuccess(LOG)) return null;
+    for (String line : output.getStdoutLines(true)) {
+      if (line.startsWith("nameserver")) {
+        return line.substring("nameserver".length()).trim();
+      }
+    }
+    return null;
+  }
+
+  private @Nullable String readWslIp() {
+    final ProcessOutput output;
+    try {
+      output = executeOnWsl(10000, "ip", "addr", "show", "eth0");
+    }
+    catch (ExecutionException e) {
+      return null;
+    }
+    if (LOG.isDebugEnabled()) LOG.debug("Reading eth0 info: " + getId());
+    if (!output.checkSuccess(LOG)) return null;
+    for (String line : output.getStdoutLines(true)) {
+      String trimmed = line.trim();
+      if (trimmed.startsWith("inet ")) {
+        int index = trimmed.indexOf("/");
+        if (index != -1) {
+          return trimmed.substring("inet ".length(), index);
+        }
+      }
+    }
+    return null;
+  }
+
+  public @NonNls @Nullable String getEnvironmentVariable(String name) {
+    return myDescriptor.getEnvironmentVariable(name);
   }
 }

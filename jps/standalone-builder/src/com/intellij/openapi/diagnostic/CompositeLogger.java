@@ -101,7 +101,7 @@ public class CompositeLogger extends Logger {
   }
 
   @Override
-  public void setLevel(Level level) {
+  public void setLevel(@NotNull Level level) {
     for (Logger logger : myLoggers) {
       logger.setLevel(level);
     }

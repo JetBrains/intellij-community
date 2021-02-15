@@ -30,7 +30,8 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,10 +41,10 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HotSwapProgressImpl extends HotSwapProgress {
+public final class HotSwapProgressImpl extends HotSwapProgress {
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
 
-  private final TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<List<String>> myMessages = new Int2ObjectOpenHashMap<>();
   private final ProgressWindow myProgressWindow;
   private @NlsContexts.ProgressTitle String myTitle = JavaDebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
@@ -97,8 +98,8 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     }
     else if (!myMessages.isEmpty()){
       List<String> messages = new ArrayList<>();
-      for (int category : myMessages.keys()) {
-        messages.addAll(getMessages(category));
+      for (IntIterator iterator = myMessages.keySet().iterator(); iterator.hasNext(); ) {
+        messages.addAll(getMessages(iterator.nextInt()));
       }
       notifyUser("", buildMessage(messages, false), NotificationType.INFORMATION);
     }
@@ -158,7 +159,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     }
     return res.toString();
   }
-  
+
   @Override
   public void addMessage(DebuggerSession session, final int type, final String text) {
     List<String> messages = myMessages.get(type);

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,9 @@ public class TurnRefsToSuperAction extends BaseJavaRefactoringAction {
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
     if (ActionPlaces.isPopupPlace(place) || place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
-      return RefactoringActionContextUtil.isJavaClassHeader(element);
+      PsiElement caretElement = BaseRefactoringAction.getElementAtCaret(editor, file);
+      PsiClass psiClass = PsiTreeUtil.getParentOfType(caretElement, PsiClass.class, false);
+      return RefactoringActionContextUtil.isJavaClassHeader(caretElement) && RefactoringActionContextUtil.isClassWithExtendsOrImplements(psiClass);
     }
     return super.isAvailableOnElementInEditorAndFile(element, editor, file, context, place);
   }

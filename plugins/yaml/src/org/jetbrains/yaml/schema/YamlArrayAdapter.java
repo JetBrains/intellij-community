@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -15,16 +15,9 @@ import org.jetbrains.yaml.psi.YAMLValue;
 import java.util.ArrayList;
 import java.util.List;
 
-public class YamlArrayAdapter implements JsonArrayValueAdapter {
-
+public final class YamlArrayAdapter implements JsonArrayValueAdapter {
   @NotNull private final YAMLSequence myArray;
-  @NotNull private final NotNullLazyValue<List<JsonValueAdapter>> myChildAdapters = new NotNullLazyValue<List<JsonValueAdapter>>() {
-    @NotNull
-    @Override
-    protected List<JsonValueAdapter> compute() {
-      return computeChildAdapters();
-    }
-  };
+  @NotNull private final NotNullLazyValue<List<JsonValueAdapter>> myChildAdapters = NotNullLazyValue.lazy(this::computeChildAdapters);
 
   public YamlArrayAdapter(@NotNull YAMLSequence array) {myArray = array;}
 
@@ -72,9 +65,8 @@ public class YamlArrayAdapter implements JsonArrayValueAdapter {
     return null;
   }
 
-  @Nullable
   @Override
-  public JsonArrayValueAdapter getAsArray() {
+  public @NotNull JsonArrayValueAdapter getAsArray() {
     return this;
   }
 

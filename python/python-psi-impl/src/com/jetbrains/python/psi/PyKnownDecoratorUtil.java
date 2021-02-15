@@ -4,7 +4,6 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.*;
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Contains list of well-behaved decorators from Pythons standard library, that don't change
@@ -164,7 +162,6 @@ public final class PyKnownDecoratorUtil {
       }
       return StreamEx.of(resolved)
         .select(PyQualifiedNameOwner.class)
-        .map(e -> ObjectUtils.notNull(PyUtil.turnConstructorIntoClass(as(e, PyFunction.class)), e))
         .map(PyQualifiedNameOwner::getQualifiedName)
         .nonNull()
         .map(QualifiedName::fromDottedString)

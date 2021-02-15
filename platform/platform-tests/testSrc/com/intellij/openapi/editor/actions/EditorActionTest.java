@@ -95,6 +95,16 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("");
   }
 
+  public void testDeleteLineBeforeGuardedBlock() {
+    init("\n" +
+         "<caret>text\n" +
+         "#", TestFileType.TEXT);
+    getEditor().getDocument().createGuardedBlock(5, 7); // "\n#"
+    deleteLine();
+    checkResultByText("\n" +
+                      "#");
+  }
+
   public void testDeleteLineHonorSelection() {
     init("xxxx\n" +
          "bla <selection><caret>bla\n" +
@@ -208,6 +218,13 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("ab\ncd\n<selection>ab\ncd</selection>");
   }
   
+  public void testDuplicateLineWithGuardedBlock() {
+    initText("a\n#");
+    getEditor().getDocument().createGuardedBlock(1, 3);
+    executeAction(IdeActions.ACTION_EDITOR_DUPLICATE_LINES);
+    checkResultByText("a\na\n#");
+  }
+
   public void testSmartHomeAfterFoldedRegion() {
     initText(" text with [multiline\nfold region]<caret>");
     foldOccurrences("(?s)\\[.*\\]", "...");

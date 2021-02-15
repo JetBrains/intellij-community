@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowIdFor
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.IS_IN_COMMIT_TOOLWINDOW_KEY
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
@@ -22,6 +22,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.ui.UIUtil.getClientProperty
 import com.intellij.util.ui.UIUtil.putClientProperty
+import com.intellij.vcs.commit.CommitModeManager
 import javax.swing.JPanel
 
 private val Project.changesViewContentManager: ChangesViewContentI
@@ -46,6 +47,12 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     })
     connection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
+        updateState(project, window)
+        window.contentManagerIfCreated?.selectFirstContent()
+      }
+    })
+    connection.subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
+      override fun commitModeChanged() {
         updateState(project, window)
         window.contentManagerIfCreated?.selectFirstContent()
       }
@@ -88,6 +95,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   private fun updateContent(project: Project, toolWindow: ToolWindow) {
     val changesViewContentManager = project.changesViewContentManager
 
+    val wasEmpty = toolWindow.contentManager.contentCount == 0
     getExtensions(project, toolWindow).forEach { extension ->
       val isVisible = extension.newPredicateInstance(project)?.`fun`(project) != false
       val content = changesViewContentManager.findContents { it.getExtension() === extension }.firstOrNull()
@@ -99,10 +107,13 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
         changesViewContentManager.removeContent(content)
       }
     }
+    if (wasEmpty) toolWindow.contentManager.selectFirstContent()
   }
 
   private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> {
-    return ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(project, it.tabName) == toolWindow.id }
+    return ChangesViewContentEP.EP_NAME.getExtensions(project).filter {
+      ChangesViewContentManager.getToolWindowId(project, it) == toolWindow.id
+    }
   }
 
   private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content {
@@ -113,6 +124,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       tabName = extension.tabName
       putUserData(CHANGES_VIEW_EXTENSION, extension)
       putUserData(CONTENT_PROVIDER_SUPPLIER_KEY) { extension.getInstance(project) }
+      putUserData(IS_IN_COMMIT_TOOLWINDOW_KEY, extension.isInCommitToolWindow)
 
       extension.newPreloaderInstance(project)?.preloadTabContent(this)
     }

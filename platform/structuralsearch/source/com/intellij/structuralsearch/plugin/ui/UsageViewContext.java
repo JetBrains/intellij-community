@@ -56,7 +56,6 @@ public class UsageViewContext {
     final String usagesString = SSRBundle.message("occurrences.of", pattern);
     presentation.setUsagesString(usagesString);
     presentation.setTabText(StringUtil.shortenTextWithEllipsis(usagesString, 60, 0, false));
-    presentation.setUsagesWord(SSRBundle.message("occurrence"));
     presentation.setCodeUsagesString(SSRBundle.message("found.occurrences", scopeText));
     presentation.setTargetsNodeText(SSRBundle.message("targets.node.text"));
     presentation.setCodeUsages(false);

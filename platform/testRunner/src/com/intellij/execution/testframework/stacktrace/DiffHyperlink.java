@@ -75,6 +75,10 @@ public class DiffHyperlink implements Printable {
     myTestProxyName = name;
   }
 
+  public HyperlinkInfo getInfo() {
+    return myDiffHyperlink;
+  }
+
   private static String normalizeSeparators(String filePath) {
     return filePath == null ? null : filePath.replace(File.separatorChar, '/');
   }

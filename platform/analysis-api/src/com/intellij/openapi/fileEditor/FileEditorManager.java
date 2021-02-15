@@ -16,6 +16,7 @@ import java.util.List;
 
 public abstract class FileEditorManager {
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
+  public static final Key<Boolean> USE_MAIN_WINDOW = Key.create("OpenFile.useMainWindow");
 
   public static FileEditorManager getInstance(@NotNull Project project) {
     return project.getComponent(FileEditorManager.class);
@@ -189,13 +190,6 @@ public abstract class FileEditorManager {
    */
   @Deprecated
   public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
-  }
-
-  /**
-   * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
-   */
-  @Deprecated
-  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable) {
   }
 
   /**

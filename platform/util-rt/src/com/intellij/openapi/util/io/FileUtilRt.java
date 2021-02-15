@@ -823,9 +823,7 @@ public class FileUtilRt {
       return chars;
     }
     else {
-      char[] newChars = new char[count];
-      System.arraycopy(chars, 0, newChars, 0, count);
-      return newChars;
+      return Arrays.copyOf(chars, count);
     }
   }
 

@@ -144,6 +144,9 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     myChangeListener.run();
   }
 
+  /*
+    FIXME: memory leak. We need to remove closed handlers
+   */
   @NotNull
   public List<LoggingHandlerBase> getAdditionalLoggingHandlers() {
     List<LoggingHandlerBase> result;

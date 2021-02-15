@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
  * Interface for actions invoked in the editor.
  * Implementations should override {@link #doExecute(Editor, Caret, DataContext)}.
  * <p>
- * Two types of handlers are supported: the ones which are executed once, and the ones which are executed for each caret. The latter can be
- * created using {@link EditorActionHandler#EditorActionHandler(boolean)} constructor.
+ * Two types of handlers are supported: the ones which are executed once, and the ones which are executed for each caret.
+ * The latter can be created by extending the {@link ForEachCaret} class.
  *
  * @see EditorWriteActionHandler
  * @see EditorActionManager#setActionHandler(String, EditorActionHandler)
@@ -32,6 +32,7 @@ public abstract class EditorActionHandler {
     this(false);
   }
 
+  /** Consider subclassing {@link ForEachCaret} instead. */
   protected EditorActionHandler(boolean runForEachCaret) {
     myRunForEachCaret = runForEachCaret;
   }
@@ -219,5 +220,16 @@ public abstract class EditorActionHandler {
   @FunctionalInterface
   private interface CaretTask {
     void perform(@NotNull Caret caret, @Nullable DataContext dataContext);
+  }
+
+  public static abstract class ForEachCaret extends EditorActionHandler {
+    protected ForEachCaret() {
+      super(true);
+    }
+
+    @Override
+    protected abstract void doExecute(@NotNull Editor editor,
+                                      @SuppressWarnings("NullableProblems") @NotNull Caret caret,
+                                      DataContext dataContext);
   }
 }

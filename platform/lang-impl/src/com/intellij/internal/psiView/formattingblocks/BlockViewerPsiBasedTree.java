@@ -187,7 +187,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       parents.add((SimpleNode)root.getUserObject());
     }
 
-    return new TreeVisitor.ByComponent<BlockTreeNode, BlockTreeNode>(currentBlockNode, converter) {
+    return new TreeVisitor.ByComponent<>(currentBlockNode, converter) {
 
       @Override
       protected boolean contains(@NotNull BlockTreeNode pathComponent, @NotNull BlockTreeNode thisComponent) {

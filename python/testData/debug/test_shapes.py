@@ -28,4 +28,13 @@ n_array = np.random.random_sample((3, 2))
 
 series = pd.Series([10, 20, 30, 40, 50], index=['a', 'b', 'c', 'd', 'e'])
 
+
+class MyShapeCollection:
+    def __init__(self, shape):
+        self.shape = shape
+
+
+custom_shape = MyShapeCollection((3,))
+custom_shape2 = MyShapeCollection((2, 3))
+
 print("Executed")

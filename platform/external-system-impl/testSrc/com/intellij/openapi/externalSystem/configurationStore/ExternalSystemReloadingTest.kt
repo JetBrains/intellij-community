@@ -15,6 +15,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
+import kotlin.io.path.div
 
 class ExternalSystemReloadingTest {
   companion object {
@@ -32,10 +33,10 @@ class ExternalSystemReloadingTest {
 
   @Test
   fun `change iml of imported module`() {
-    loadProjectAndCheckResults(listOf(testDataRoot.resolve("changeIml/initial")), tempDirManager) { project ->
+    loadProjectAndCheckResults(listOf(testDataRoot / "changeIml/initial"), tempDirManager) { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       assertThat(ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<LibraryOrderEntry>()).isEmpty()
-      copyFilesAndReloadProject(project, testDataRoot.resolve("changeIml/update"))
+      copyFilesAndReloadProject(project, testDataRoot / "changeIml/update")
       assertThat(ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<LibraryOrderEntry>().single().libraryName).isEqualTo("lib")
     }
   }

@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -93,11 +93,4 @@ public interface SoftWrapModelEx extends SoftWrapModel {
    * Allows to instruct current model to return {@code 'true'} from {@link #isRespectAdditionalColumns()}.
    */
   void forceAdditionalColumnsUsage();
-
-  /**
-   * @deprecated To be removed in version 2021.1
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  EditorTextRepresentationHelper getEditorTextRepresentationHelper();
 }

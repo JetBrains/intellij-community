@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 public final class ColorKey implements Comparable<ColorKey> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.ColorKey");
+  private static final Logger LOG = Logger.getInstance(ColorKey.class);
 
   public static final Key<Function<ColorKey, Color>> FUNCTION_KEY = Key.create("COLOR_KEY_FUNCTION");
   private static final ConcurrentMap<String, ColorKey> ourRegistry = new ConcurrentHashMap<>();

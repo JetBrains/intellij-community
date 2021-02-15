@@ -257,7 +257,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public void fetchPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<String, Exception> consumer) {
-    PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new CatchingConsumer<PackageDetails.Info, Exception>() {
+    PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new CatchingConsumer<>() {
       @Override
       public void consume(PackageDetails.Info details) {
         consumer.consume(formatPackageInfo(details));

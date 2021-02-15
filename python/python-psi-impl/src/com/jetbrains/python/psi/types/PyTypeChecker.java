@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.jetbrains.python.PyNames.FUNCTION;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.PyUtil.getReturnTypeToAnalyzeAsCallType;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
@@ -69,14 +71,13 @@ public final class PyTypeChecker {
 
   @NotNull
   private static Optional<Boolean> match(@Nullable PyType expected, @Nullable PyType actual, @NotNull MatchContext context) {
-    final Pair<PyType, PyType> types = Pair.create(expected, actual);
-    if (context.matching.contains(types)) return Optional.of(true);
+    final Optional<Boolean> result = RecursionManager.doPreventingRecursion(
+      Pair.create(expected, actual),
+      false,
+      () -> matchImpl(expected, actual, context)
+    );
 
-    context.matching.add(types);
-    final Optional<Boolean> result = matchImpl(expected, actual, context);
-    context.matching.remove(types);
-
-    return result;
+    return result == null ? Optional.of(true) : result;
   }
 
   /**
@@ -91,6 +92,13 @@ public final class PyTypeChecker {
    */
   @NotNull
   private static Optional<Boolean> matchImpl(@Nullable PyType expected, @Nullable PyType actual, @NotNull MatchContext context) {
+    for (PyTypeCheckerExtension extension : PyTypeCheckerExtension.EP_NAME.getExtensionList()) {
+      final Optional<Boolean> result = extension.match(expected, actual, context.context, context.substitutions);
+      if (result.isPresent()) {
+        return result;
+      }
+    }
+
     if (expected instanceof PyClassType) {
       Optional<Boolean> match = matchObject((PyClassType)expected, actual);
       if (match.isPresent()) {
@@ -156,6 +164,10 @@ public final class PyTypeChecker {
       return Optional.of(actual instanceof PyModuleType && ((PyModuleType)expected).getModule() == ((PyModuleType)actual).getModule());
     }
 
+    if (expected instanceof PyClassType && actual instanceof PyModuleType) {
+      return match(expected, ((PyModuleType)actual).getModuleClassType(), context);
+    }
+
     return Optional.of(matchNumericTypes(expected, actual));
   }
 
@@ -206,16 +218,13 @@ public final class PyTypeChecker {
       if (expected.equals(actual) || substitution.equals(expected)) {
         return true;
       }
-      if (context.typeVarsInMatching.add(expected)) {
-        Optional<Boolean> recursiveMatch = context.reversedSubstitutions
-                                           ? match(actual, substitution, context)
-                                           : match(substitution, actual, context);
-        context.typeVarsInMatching.remove(expected);
-        if (recursiveMatch.isPresent()) {
-          return recursiveMatch.get();
-        }
-      }
-      return false;
+
+      Optional<Boolean> recursiveMatch = RecursionManager.doPreventingRecursion(
+        expected, false, context.reversedSubstitutions
+                         ? () -> match(actual, substitution, context)
+                         : () -> match(substitution, actual, context)
+      );
+      return recursiveMatch != null ? recursiveMatch.orElse(false) : false;
     }
 
     if (actual != null) {
@@ -458,6 +467,11 @@ public final class PyTypeChecker {
   private static Optional<Boolean> match(@NotNull PyCallableType expected,
                                          @NotNull PyCallableType actual,
                                          @NotNull MatchContext matchContext) {
+    if (actual instanceof PyFunctionType && expected instanceof PyClassType && FUNCTION.equals(expected.getName())
+        && expected.equals(PyBuiltinCache.getInstance(actual.getCallable()).getObjectType(FUNCTION))) {
+      return Optional.of(true);
+    }
+
     if (expected instanceof PyClassLikeType) {
       return PyTypingTypeProvider.CALLABLE.equals(((PyClassLikeType)expected).getClassQName())
              ? Optional.of(actual.isCallable())
@@ -500,6 +514,14 @@ public final class PyTypeChecker {
     return Optional.empty();
   }
 
+  private static @Nullable PyType getActualReturnType(@NotNull PyCallableType actual, @NotNull TypeEvalContext context) {
+    PyCallable callable = actual.getCallable();
+    if (callable instanceof PyFunction) {
+      return getReturnTypeToAnalyzeAsCallType((PyFunction)callable, context);
+    }
+    return actual.getReturnType(context);
+  }
+
   private static boolean couldBeMappedOntoPositionalContainer(@NotNull PyCallableParameter parameter) {
     if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) return false;
 
@@ -512,14 +534,6 @@ public final class PyTypeChecker {
     }
 
     return true;
-  }
-
-  private static @Nullable PyType getActualReturnType(@NotNull PyCallableType actual, @NotNull TypeEvalContext context) {
-    PyCallable callable = actual.getCallable();
-    if (callable instanceof PyFunction) {
-      return getReturnTypeToAnalyzeAsCallType((PyFunction)callable, context);
-    }
-    return actual.getReturnType(context);
   }
 
   private static boolean consistsOfSameElementNumberTuples(@NotNull PyUnionType unionType, int elementCount) {
@@ -768,6 +782,14 @@ public final class PyTypeChecker {
             .foldLeft(PyUnionType::union)
             .orElse(actualType);
         }
+        else if (PyUtil.isInitMethod(function)) {
+          actualType = PyTypeUtil.toStream(actualType)
+            .select(PyInstantiableType.class)
+            .map(PyInstantiableType::toInstance)
+            .select(PyType.class)
+            .foldLeft(PyUnionType::union)
+            .orElse(actualType);
+        }
       }
       if (!match(expectedType, actualType, context, substitutions)) {
         return null;
@@ -1007,34 +1029,24 @@ public final class PyTypeChecker {
     @NotNull
     private final Map<PyGenericType, PyType> substitutions; // mutable
 
-    @NotNull
-    private final Set<PyGenericType> typeVarsInMatching; // mutable
-
-    @NotNull
-    private final Set<Pair<PyType, PyType>> matching; // mutable
-
     private final boolean reversedSubstitutions;
 
     MatchContext(@NotNull TypeEvalContext context,
                  @NotNull Map<PyGenericType, PyType> substitutions) {
-      this(context, substitutions, new HashSet<>(), new HashSet<>(), false);
+      this(context, substitutions, false);
     }
 
     private MatchContext(@NotNull TypeEvalContext context,
                          @NotNull Map<PyGenericType, PyType> substitutions,
-                         @NotNull Set<PyGenericType> typeVarsInMatching,
-                         @NotNull Set<Pair<PyType, PyType>> matching,
                          boolean reversedSubstitutions) {
       this.context = context;
       this.substitutions = substitutions;
-      this.typeVarsInMatching = typeVarsInMatching;
-      this.matching = matching;
       this.reversedSubstitutions = reversedSubstitutions;
     }
 
     @NotNull
     public MatchContext reverseSubstitutions() {
-      return new MatchContext(context, substitutions, typeVarsInMatching, matching, !reversedSubstitutions);
+      return new MatchContext(context, substitutions, !reversedSubstitutions);
     }
   }
 }

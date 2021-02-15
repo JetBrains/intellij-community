@@ -17,10 +17,12 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
@@ -52,6 +54,22 @@ public class SafeDeleteAction extends BaseRefactoringAction {
   @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return SafeDeleteProcessor.validElement(element);
+  }
+
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file,
+                                                        @NotNull DataContext context,
+                                                        @NotNull String place) {
+    PsiElement targetElement = element;
+    if (place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
+      PsiElement caretElement = BaseRefactoringAction.getElementAtCaret(editor, file);
+      if (! PsiTreeUtil.isAncestor(element, caretElement, false)) {
+        targetElement = caretElement;
+      }
+    }
+    return isAvailableOnElementInEditorAndFile(targetElement, editor, file, context);
   }
 
   @Override

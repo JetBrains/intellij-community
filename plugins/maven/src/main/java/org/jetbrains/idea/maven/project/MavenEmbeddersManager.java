@@ -71,7 +71,7 @@ public class MavenEmbeddersManager {
     return getEmbedder(kind, baseDir.getPath(), baseDir.getPath());
   }
   @NotNull
-  public synchronized MavenEmbedderWrapper getEmbedder(Key kind, String workingDirectory, String multiModuleProjectDirectory) {
+  public synchronized MavenEmbedderWrapper getEmbedder(Key kind, String workingDirectory,  @NotNull String multiModuleProjectDirectory) {
     Trinity<Key, String, String> key = Trinity.create(kind, workingDirectory, multiModuleProjectDirectory);
     MavenEmbedderWrapper result = myPool.get(key);
     boolean alwaysOnline = kind == FOR_DOWNLOAD;

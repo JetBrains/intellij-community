@@ -42,6 +42,8 @@ public interface ProcessorConfigProfile extends AnnotationProcessingConfiguratio
 
   void setGeneratedSourcesDirectoryName(@Nullable String generatedSourcesDirectoryName, boolean forTests);
 
+  void setProcOnly(boolean value);
+
   @NotNull
   Set<String> getModuleNames();
 

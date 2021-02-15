@@ -12,7 +12,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
-private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
+private val LOG = Logger.getInstance(StatisticsEventLogger::class.java)
 private val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
 
 interface StatisticsEventLogger {
@@ -61,8 +61,8 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
-    val config = EventLogConfiguration.getOrCreate(recorderId)
-    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, EventLogConfiguration.build)
+    val config = EventLogConfiguration
+    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, config.build)
 
     val configService = EventLogConfigOptionsService.getInstance()
     val throttledWriter = StatisticsEventLogThrottleWriter(
@@ -70,7 +70,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     )
 
     val logger = StatisticsFileEventLogger(
-      recorderId, config.sessionId, isHeadless, EventLogConfiguration.build, config.bucket.toString(), version.toString(), throttledWriter,
+      recorderId, config.sessionId, isHeadless, config.build, config.bucket.toString(), version.toString(), throttledWriter,
       UsageStatisticsPersistenceComponent.getInstance()
     )
     Disposer.register(ApplicationManager.getApplication(), logger)
@@ -112,5 +112,3 @@ fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
   return EmptyStatisticsEventLoggerProvider(recorderId)
 }
 
-@Deprecated("Use EventLogGroup instead")
-class FeatureUsageGroup(val id: String, val version: Int)

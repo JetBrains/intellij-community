@@ -127,7 +127,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     });
     add(mySplitter, BorderLayout.CENTER);
-    myExclusionHandler = new ExclusionHandler<InspectionTreeNode>() {
+    myExclusionHandler = new ExclusionHandler<>() {
       @Override
       public boolean isNodeExclusionAvailable(@NotNull InspectionTreeNode node) {
         return true;
@@ -159,7 +159,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       public void onDone(boolean isExcludeAction) {
         if (isExcludeAction) {
           myTree.removeSelectedProblems();
-        } else {
+        }
+        else {
           myTree.repaint();
         }
         syncRightPanel();
@@ -539,12 +540,14 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                             contents,
                                             problems::get);
 
-        myLoadingProgressPreviewAlarm.cancelAllRequests();
-        myLoadingProgressPreviewAlarm.addRequest(() -> {
-          if (myLoadingProgressPreview != null) {
-            myLoadingProgressPreview.updateLoadingProgress();
-          }
-        }, 200);
+        if (!myLoadingProgressPreviewAlarm.isDisposed()) {
+          myLoadingProgressPreviewAlarm.cancelAllRequests();
+          myLoadingProgressPreviewAlarm.addRequest(() -> {
+            if (myLoadingProgressPreview != null) {
+              myLoadingProgressPreview.updateLoadingProgress();
+            }
+          }, 200);
+        }
       }
     }));
   }

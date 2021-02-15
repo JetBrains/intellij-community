@@ -16,18 +16,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
-import gnu.trove.THashMap;
+import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,12 +34,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
@@ -64,15 +59,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public LocalTerminalDirectRunner(Project project) {
     super(project);
     myDefaultCharset = StandardCharsets.UTF_8;
-  }
-
-  private static String getShellName(@Nullable String path) {
-    if (path == null) {
-      return null;
-    }
-    else {
-      return new File(path).getName();
-    }
   }
 
   @Nullable
@@ -135,9 +121,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
   private Map<String, String> getTerminalEnvironment() {
-    Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
-                                                                   : ContainerUtil.canonicalStrategy());
-
+    Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
@@ -147,6 +131,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put("TERM", "xterm-256color");
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
+    envs.put("TERM_SESSION_ID", UUID.randomUUID().toString());
 
     if (SystemInfo.isMac) {
       EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
@@ -214,8 +199,25 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected TtyConnector createTtyConnector(PtyProcess process) {
+  protected @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset) {
+
+      @Override
+      public void close() {
+        if (process instanceof UnixPtyProcess) {
+          ((UnixPtyProcess)process).hangup();
+          AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+            if (process.isAlive()) {
+              LOG.info("Terminal hasn't been terminated by SIGHUP, performing default termination");
+              process.destroy();
+            }
+          }, 1000, TimeUnit.MILLISECONDS);
+        }
+        else {
+          process.destroy();
+        }
+      }
+
       @Override
       protected void resizeImmediately() {
         if (LOG.isDebugEnabled()) {
@@ -275,13 +277,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       return ParametersListUtil.parse(shellPath, false, false);
     }
     List<String> command = ParametersListUtil.parse(shellPath, false, true);
-    String shellCommand = command.size() > 0 ? command.get(0) : null;
-    String shellName = getShellName(shellCommand);
-
-    if (shellName == null) {
+    String shellCommand = ContainerUtil.getFirstItem(command);
+    if (shellCommand == null) {
       return command;
     }
     command.remove(0);
+    String shellName = PathUtil.getFileName(shellCommand);
 
     if (!containsLoginOrInteractiveOption(command)) {
       if (isLoginOptionAvailable(shellName) && SystemInfo.isMac) {

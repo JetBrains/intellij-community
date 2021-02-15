@@ -99,12 +99,12 @@ public abstract class RemoteObjectWrapper<T> {
   }
 
   @FunctionalInterface
-  interface Retriable<T, E extends Exception> {
+  protected interface Retriable<T, E extends Exception> {
     T execute() throws RemoteException, E;
   }
 
   @FunctionalInterface
-  interface RetriableCancelable<T, E extends Exception> {
+  protected interface RetriableCancelable<T, E extends Exception> {
     T execute() throws RemoteException, MavenServerProcessCanceledException, E;
   }
 }

@@ -2,7 +2,9 @@
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -39,7 +41,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
 
   @NotNull
   private static Info getInfo(TestStateStorage.Record state, boolean isClass) {
-    return RunLineMarkerContributor.withExecutorActions(getTestStateIcon(state, isClass));
+    return new Info(getTestStateIcon(state, isClass), ExecutorAction.getActions(1), element -> ExecutionBundle.message("run.text"));
   }
 
   protected boolean isIdentifier(PsiElement e) {

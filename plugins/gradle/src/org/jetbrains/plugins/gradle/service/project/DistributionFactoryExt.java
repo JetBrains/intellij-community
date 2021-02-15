@@ -42,11 +42,6 @@ public final class DistributionFactoryExt extends DistributionFactory {
     super(Time.clock());
   }
 
-  @Deprecated
-  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleUserHome) {
-    setWrappedDistribution(connector, wrapperPropertyFile, gradleUserHome, null);
-  }
-
   public static void setWrappedDistribution(GradleConnector connector,
                                             String wrapperPropertyFile,
                                             File gradleUserHome,

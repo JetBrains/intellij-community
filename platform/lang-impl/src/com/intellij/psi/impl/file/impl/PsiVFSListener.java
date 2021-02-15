@@ -95,7 +95,7 @@ public final class PsiVFSListener implements BulkFileListener {
 
       connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
-        public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
           PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
           ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
         }
@@ -134,10 +134,6 @@ public final class PsiVFSListener implements BulkFileListener {
         Project[] projects = ProjectUtil.getOpenProjects();
         // let PushedFilePropertiesUpdater process all pending vfs events and update file properties before we issue PSI events
         for (Project project : projects) {
-          if (project.isDisposed()) {
-            continue;
-          }
-
           PushedFilePropertiesUpdater updater = PushedFilePropertiesUpdater.getInstance(project);
           // false in upsource
           if (updater instanceof PushedFilePropertiesUpdaterImpl) {
@@ -145,10 +141,6 @@ public final class PsiVFSListener implements BulkFileListener {
           }
         }
         for (Project project : projects) {
-          if (project.isDisposed()) {
-            continue;
-          }
-
           project.getService(PsiVFSListener.class).after(events);
         }
       }

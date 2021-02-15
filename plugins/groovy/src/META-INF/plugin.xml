@@ -395,6 +395,7 @@
                                             implementationClass="org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper"/>
     <codeInsight.typeInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyExpressionTypeProvider"/>
     <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyParameterTypeHintsInlayProvider"/>
+    <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyImplicitNullArgumentHintProvider"/>
     <codeInsight.parameterNameHints
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
@@ -1080,6 +1081,16 @@
                      groupKey="inspection.confusing"
                      enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyGStringKeyInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.implicit.null.argument"
+                     level="WEAK WARNING"
+                     groupKey="inspection.confusing"
+                     enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyImplicitNullArgumentCallInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.string.style.violation"
+                     level="WEAK WARNING"
+                     groupKey="inspection.style"
+                     enabledByDefault="false"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.duplicate.switch.branch"
                      groupKey="inspection.validity"
                      enabledByDefault="true"
@@ -1244,7 +1255,6 @@
     <notificationGroup id="Mvc notifications" displayType="TOOL_WINDOW" toolWindowId="Console"/>
     <notificationGroup id="Groovy DSL errors" displayType="BALLOON"/>
     <notificationGroup id="Grape" displayType="BALLOON"/>
-    <backgroundPostStartupActivity implementation="org.jetbrains.plugins.groovy.dsl.GdslStartupActivity"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

@@ -174,7 +174,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   protected BreakpointWithHighlighter(@NotNull Project project, XBreakpoint xBreakpoint) {
     //for persistency
     super(project, xBreakpoint);
-    ApplicationManager.getApplication().runReadAction((Runnable)this::reload);
+    ApplicationManager.getApplication().runReadAction(this::reload);
   }
 
   @Override
@@ -226,9 +226,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   public void reload() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     mySourcePosition = DebuggerUtilsEx.toSourcePosition(myXBreakpoint.getSourcePosition(), myProject);
-    if (mySourcePosition != null) {
-      reload(null);
-    }
   }
 
   @Nullable
@@ -262,7 +259,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     }
     else {
       XSourcePosition xPosition = myXBreakpoint.getSourcePosition();
-      LOG.error("Unable to create request for breakpoint with null position: " + toString() + " at " + xPosition +
+      LOG.error("Unable to create request for breakpoint with null position: " + this + " at " + xPosition +
                 ", file valid = " + (xPosition != null && xPosition.getFile().isValid()));
     }
     updateUI();
@@ -317,10 +314,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     int line = document.getLineNumber(offset);
     XSourcePosition position = myXBreakpoint.getSourcePosition();
     return position != null && position.getLine() == line && position.getFile().equals(file);
-  }
-
-  @Deprecated
-  protected void reload(PsiFile psiFile) {
   }
 
   @Override

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOT_ADDED;
 import static java.util.stream.Collectors.toList;
 
 public abstract class VcsIntegrationEnabler {
@@ -77,7 +78,7 @@ public abstract class VcsIntegrationEnabler {
 
   protected void notifyAddedRoots(Collection<? extends VirtualFile> roots) {
     String message = VcsBundle.message("roots.notification.content.added.vcs.name.roots", myVcs.getName(), roots.size(), joinRootsPaths(roots));
-    VcsNotifier.getInstance(myProject).notifySuccess("vcs.root.added", "", message);
+    VcsNotifier.getInstance(myProject).notifySuccess(ROOT_ADDED, "", message);
   }
 
   private void addVcsRoots(@NotNull Collection<? extends VirtualFile> roots) {

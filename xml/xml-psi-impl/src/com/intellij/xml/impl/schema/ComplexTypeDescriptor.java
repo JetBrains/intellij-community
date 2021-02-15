@@ -28,43 +28,43 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   protected final XmlNSDescriptorImpl myDocumentDescriptor;
 
   private static final FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement> myElementDescriptorsCache =
-    new FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement>() {
+    new FieldCache<>() {
 
-    @Override
-    protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement context) {
-      return complexTypeDescriptor.doCollectElements(context);
-    }
+      @Override
+      protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement context) {
+        return complexTypeDescriptor.doCollectElements(context);
+      }
 
-    @Override
-    protected XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
-      return complexTypeDescriptor.myElementDescriptors;
-    }
+      @Override
+      protected XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+        return complexTypeDescriptor.myElementDescriptors;
+      }
 
-    @Override
-    protected void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
-                            final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
-      complexTypeDescriptor.myElementDescriptors = xmlElementDescriptors;
-    }
-  };
+      @Override
+      protected void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
+                              final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+        complexTypeDescriptor.myElementDescriptors = xmlElementDescriptors;
+      }
+    };
 
   private static final FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement> myAttributeDescriptorsCache =
-    new FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement>() {
-    @Override
-    protected final XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
-      return complexTypeDescriptor.doCollectAttributes();
-    }
+    new FieldCache<>() {
+      @Override
+      protected final XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
+        return complexTypeDescriptor.doCollectAttributes();
+      }
 
-    @Override
-    protected final XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, Object o) {
-      return complexTypeDescriptor.myAttributeDescriptors;
-    }
+      @Override
+      protected final XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, Object o) {
+        return complexTypeDescriptor.myAttributeDescriptors;
+      }
 
-    @Override
-    protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
-                            final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
-      complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
-    }
-  };
+      @Override
+      protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
+                                    final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+        complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
+      }
+    };
 
   private final Map<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache =
     ConcurrentFactoryMap.createMap(key -> CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {

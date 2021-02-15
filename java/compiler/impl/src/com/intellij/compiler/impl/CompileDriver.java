@@ -99,7 +99,7 @@ public final class CompileDriver {
     }
   }
 
-  public boolean isUpToDate(CompileScope scope) {
+  public boolean isUpToDate(@NotNull CompileScope scope) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
     }
@@ -114,6 +114,7 @@ public final class CompileDriver {
       if (indicator.isCanceled() || myProject.isDisposed()) {
         return;
       }
+
       final BuildManager buildManager = BuildManager.getInstance();
       try {
         buildManager.postponeBackgroundTasks();
@@ -145,7 +146,8 @@ public final class CompileDriver {
     if (!EventQueue.isDispatchThread() && indicatorProvider.getProgressIndicator() != null) {
       // if called from background process on pooled thread, run synchronously
       task.run(compileWork, null, indicatorProvider.getProgressIndicator());
-    } else {
+    }
+    else {
       task.start(compileWork, null);
     }
 
@@ -292,7 +294,7 @@ public final class CompileDriver {
           final long line = message.hasLine() ? message.getLine() : -1;
           final long column = message.hasColumn() ? message.getColumn() : -1;
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
-          compileContext.addMessage(category, messageText, srcUrl, (int)line, (int)column);
+          compileContext.addMessage(category, messageText, srcUrl, (int)line, (int)column, null, message.getModuleNamesList());
           if (compileContext.shouldUpdateProblemsView() && kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
             // treat JPS_INFO messages in a special way: add them as info messages to the problems view
             final Project project = compileContext.getProject();
@@ -366,6 +368,11 @@ public final class CompileDriver {
              break;
 
         }
+      }
+
+      @Override
+      public @NotNull ProgressIndicator getProgressIndicator() {
+        return compileContext.getProgressIndicator();
       }
     });
   }
@@ -565,7 +572,7 @@ public final class CompileDriver {
                : JavaCompilerBundle.message("status.compilation.completed.successfully", durationString);
       }
       else {
-        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", 
+        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors",
                                              errorCount, warningCount, durationString);
       }
     }

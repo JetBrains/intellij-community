@@ -15,7 +15,9 @@
  */
 package com.android.tools.idea.gradle.dsl.parser.android.splits;
 
-import static com.android.tools.idea.gradle.dsl.model.android.splits.BaseSplitOptionsModelImpl.*;
+import static com.android.tools.idea.gradle.dsl.model.android.splits.BaseSplitOptionsModelImpl.ENABLE;
+import static com.android.tools.idea.gradle.dsl.model.android.splits.BaseSplitOptionsModelImpl.EXCLUDE;
+import static com.android.tools.idea.gradle.dsl.model.android.splits.BaseSplitOptionsModelImpl.INCLUDE;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.atLeast;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.exactly;
 import static com.android.tools.idea.gradle.dsl.parser.semantics.ArityHelper.property;
@@ -30,7 +32,7 @@ import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslBlockElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslMethodCall;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
 import com.google.common.collect.ImmutableMap;
 import java.util.stream.Stream;
 import kotlin.Pair;
@@ -39,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class BaseSplitOptionsDslElement extends GradleDslBlockElement {
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String, SemanticsDescription>> ktsToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> ktsToModelNameMap = Stream.of(new Object[][]{
     {"isEnable", property, ENABLE, VAR},
     {"exclude", property, EXCLUDE, VAL},
     {"exclude", atLeast(0), EXCLUDE, OTHER},
@@ -47,23 +49,21 @@ public abstract class BaseSplitOptionsDslElement extends GradleDslBlockElement {
     {"include", property, INCLUDE, VAL},
     {"include", atLeast(0), INCLUDE, OTHER},
     {"setInclude", exactly(1), INCLUDE, SET},
-    {"reset", exactly(0), INCLUDE, OTHER}
   }).collect(toModelMap());
 
   @NotNull
-  public static final ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> groovyToModelNameMap = Stream.of(new Object[][]{
+  public static final ImmutableMap<Pair<String,Integer>, ModelEffectDescription> groovyToModelNameMap = Stream.of(new Object[][]{
     {"enable", property, ENABLE, VAR},
     {"enable", exactly(1), ENABLE, SET},
     {"exclude", property, EXCLUDE, VAR},
     {"exclude", atLeast(0), EXCLUDE, OTHER},
     {"include", property, INCLUDE, VAR},
     {"include", atLeast(0), INCLUDE, OTHER},
-    {"reset", exactly(0), INCLUDE, OTHER}
   }).collect(toModelMap());
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String,Integer>, Pair<String,SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     if (converter.isKotlin()) {
       return ktsToModelNameMap;
     }

@@ -11,8 +11,8 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkException;
@@ -26,14 +26,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> extends DialogWrapper implements RemoteSdkEditorContainer {
+public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>> extends DialogWrapper implements RemoteSdkEditorContainer {
   private static final Logger LOG = Logger.getInstance(CreateRemoteSdkDialog.class);
   @Nullable
   protected final Project myProject;
   private CreateRemoteSdkForm<T> myInterpreterForm;
   private Sdk mySdk;
-  protected final AtomicNotNullLazyValue<RemoteSdkFactoryImpl<T>> mySdkFactoryProvider =
-    AtomicNotNullLazyValue.createValue(() -> createRemoteSdkFactory());
+  protected final NotNullLazyValue<RemoteSdkFactoryImpl<T>> mySdkFactoryProvider = NotNullLazyValue.atomicLazy(this::createRemoteSdkFactory);
   @Nullable
   private T myOriginalData;
   protected final Collection<Sdk> myExistingSdks;
@@ -157,7 +156,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
       assert newData instanceof RemoteSdkAdditionalData;
 
       //noinspection unchecked
-      if (((RemoteSdkAdditionalData)newData).isValid() &&
+      if (((RemoteSdkAdditionalData<?>)newData).isValid() &&
           (myOriginalData == null || !myOriginalData.isValid() ||
            (myOriginalData.getClass().isInstance(newData) && isModified(myOriginalData, (T)newData)))
       ) {

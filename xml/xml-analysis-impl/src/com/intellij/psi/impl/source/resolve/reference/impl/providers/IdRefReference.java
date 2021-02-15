@@ -108,7 +108,7 @@ public class IdRefReference extends BasicAttributeValueReference {
             !subTag.getName().contains(".directive"));
   }
 
-  private static final FileBasedUserDataCache<List<PsiElement>> ourCachedIdsCache = new FileBasedUserDataCache<List<PsiElement>>() {
+  private static final FileBasedUserDataCache<List<PsiElement>> ourCachedIdsCache = new FileBasedUserDataCache<>() {
     private final Key<CachedValue<List<PsiElement>>> ourCachedIdsValueKey = Key.create("my.ids.cached.value");
 
     @Override
@@ -169,7 +169,7 @@ public class IdRefReference extends BasicAttributeValueReference {
   @Nullable
   public PsiElement resolve() {
     final PsiElement[] result = new PsiElement[1];
-    process(new PsiElementProcessor<PsiElement>() {
+    process(new PsiElementProcessor<>() {
       final String canonicalText = getCanonicalText();
 
       @Override
@@ -190,7 +190,7 @@ public class IdRefReference extends BasicAttributeValueReference {
   public Object @NotNull [] getVariants() {
     final List<String> result = new LinkedList<>();
 
-    process(new PsiElementProcessor<PsiElement>() {
+    process(new PsiElementProcessor<>() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {
         String value = getIdValue(element);

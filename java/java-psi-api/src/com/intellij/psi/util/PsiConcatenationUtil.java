@@ -27,19 +27,6 @@ public final class PsiConcatenationUtil {
 
   // externally used
 
-  /**
-   * @deprecated use {@code buildUnescapedFormatString} instead and use either
-   * {@link StringUtil#escapeStringCharacters(String)}
-   * or
-   * {@link PsiLiteralUtil#escapeTextBlockCharacters(String)}
-   * to escape the resulting string.
-   */
-  @Deprecated
-  public static void buildFormatString(PsiExpression expression, StringBuilder formatString,
-                                       List<? super PsiExpression> formatParameters, boolean printfFormat) {
-    buildFormatString(expression, formatString, formatParameters, printfFormat, true);
-  }
-
   private static void buildFormatString(PsiExpression expression, StringBuilder formatString,
                                        List<? super PsiExpression> formatParameters, boolean printfFormat, boolean escape) {
     if (expression instanceof PsiLiteralExpression) {

@@ -12,11 +12,6 @@ import com.intellij.util.SmartList
 class DefaultPsiSymbolDeclarationProvider : PsiSymbolDeclarationProvider {
 
   override fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
-    if (element is PsiSymbolDeclaration) {
-      // PsiElement is a declaration already
-      return listOf(element)
-    }
-
     for (searcher in PomDeclarationSearcher.EP_NAME.extensions) {
       ProgressManager.checkCanceled()
       val result: MutableList<PsiSymbolDeclaration> = SmartList()

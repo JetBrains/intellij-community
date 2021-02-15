@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionListener;
@@ -27,7 +27,8 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.foundation.NSDefaults;
@@ -205,11 +206,11 @@ public final class TouchBarsManager {
   }
 
   public static boolean isTouchBarAvailable() {
-    return SystemInfo.isMac && NST.isAvailable();
+    return SystemInfoRt.isMac && NST.isAvailable();
   }
 
   public static boolean isTouchBarEnabled() {
-    return isTouchBarAvailable() && isEnabled;
+    return isTouchBarAvailable() && isEnabled && Registry.is("ide.mac.touchbar.enabled");
   }
 
   public static void reloadAll() {

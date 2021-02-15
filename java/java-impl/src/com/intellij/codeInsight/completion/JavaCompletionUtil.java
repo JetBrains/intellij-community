@@ -305,8 +305,11 @@ public final class JavaCompletionUtil {
       for (LookupElement item : createLookupElements(completionElement, javaReference)) {
         item.putUserData(QUALIFIER_TYPE_ATTR, plainQualifier);
         final Object o = item.getObject();
-        if (o instanceof PsiClass && !isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
-          continue;
+        if (o instanceof PsiClass) {
+          PsiClass specifiedQualifierClass = javaReference.isQualified() ? qualifierClass : ((PsiClass)o).getContainingClass();
+          if (!isSourceLevelAccessible(element, (PsiClass)o, pkgContext, specifiedQualifierClass)) {
+            continue;
+          }
         }
         if (o instanceof PsiMember) {
           if (honorExcludes && isInExcludedPackage((PsiMember)o, true)) {
@@ -874,8 +877,17 @@ public final class JavaCompletionUtil {
     return contextFile instanceof PsiClassOwner && StringUtil.isNotEmpty(((PsiClassOwner)contextFile).getPackageName());
   }
 
-  public static boolean isSourceLevelAccessible(PsiElement context, PsiClass psiClass, final boolean pkgContext) {
-    if (!JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass.getContainingClass())) {
+  public static boolean isSourceLevelAccessible(@NotNull PsiElement context,
+                                                @NotNull PsiClass psiClass,
+                                                final boolean pkgContext) {
+    return isSourceLevelAccessible(context, psiClass, pkgContext, psiClass.getContainingClass());
+  }
+
+  private static boolean isSourceLevelAccessible(PsiElement context,
+                                                 @NotNull PsiClass psiClass,
+                                                 final boolean pkgContext,
+                                                 @Nullable PsiClass qualifierClass) {
+    if (!JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, qualifierClass)) {
       return false;
     }
 

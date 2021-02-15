@@ -35,7 +35,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
     extend(
       CompletionType.BASIC,
       psiElement().inside(PySubscriptionExpression.class),
-      new CompletionProvider<CompletionParameters>() {
+      new CompletionProvider<>() {
         @Override
         protected void addCompletions(@NotNull CompletionParameters parameters,
                                       @NotNull ProcessingContext context,
@@ -205,7 +205,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
       .withIcon(PlatformIcons.PARAMETER_ICON);
 
     if (addHandler) {
-      item = item.withInsertHandler(new InsertHandler<LookupElement>() {
+      item = item.withInsertHandler(new InsertHandler<>() {
         @Override
         public void handleInsert(@NotNull final InsertionContext context, @NotNull final LookupElement item) {
           final PyStringLiteralExpression str = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),

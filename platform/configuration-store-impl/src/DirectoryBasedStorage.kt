@@ -10,8 +10,6 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
-import com.intellij.util.SmartList
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.isEmpty
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -56,13 +54,13 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
       }
     }
     else {
-      val subElements = SmartList<Element>()
+      val subElements = ArrayList<Element>()
       for (fileName in storageData.keys()) {
         val subState = storageData.getState(fileName, archive) ?: return null
         subElements.add(subState.clone())
       }
 
-      if (!subElements.isEmpty()) {
+      if (subElements.isNotEmpty()) {
         splitter.mergeStatesInto(state, subElements.toTypedArray())
       }
     }
@@ -121,7 +119,7 @@ open class DirectoryBasedStorage(override val dir: Path,
         return
       }
 
-      val existingFiles = CollectionFactory.createSmallMemoryFootprintSet<String>(stateAndFileNameList.size)
+      val existingFiles = HashSet<String>(stateAndFileNameList.size)
       for (pair in stateAndFileNameList) {
         doSetState(pair.second, pair.first)
         existingFiles.add(pair.second)

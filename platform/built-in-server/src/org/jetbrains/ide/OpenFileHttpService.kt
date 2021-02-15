@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectForContentFile
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -78,7 +77,7 @@ internal class OpenFileHttpService : RestService() {
     }
     else {
       apiRequest = OpenFileRequest()
-      apiRequest.file = StringUtil.nullize(getStringParameter("file", urlDecoder), true)
+      apiRequest.file = getStringParameter("file", urlDecoder).takeIf { !it.isNullOrBlank() }
       apiRequest.line = getIntParameter("line", urlDecoder)
       apiRequest.column = getIntParameter("column", urlDecoder)
       apiRequest.focused = getBooleanParameter("focused", urlDecoder, true)
@@ -185,7 +184,7 @@ internal class OpenFileRequest {
   var focused = true
 }
 
-private class OpenFileTask(internal val path: String, internal val request: OpenFileRequest) {
+private class OpenFileTask(val path: String, val request: OpenFileRequest) {
   internal val promise = AsyncPromise<Void?>()
 }
 

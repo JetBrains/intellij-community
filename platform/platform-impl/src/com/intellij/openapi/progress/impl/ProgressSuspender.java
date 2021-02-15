@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApiStatus.Internal
 public final class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
-  public static final Topic<SuspenderListener> TOPIC = Topic.create("ProgressSuspender", SuspenderListener.class);
+  public static final Topic<SuspenderListener> TOPIC = new Topic<>("ProgressSuspender", SuspenderListener.class, Topic.BroadcastDirection.NONE);
 
   private final Object myLock = new Object();
   private static final Application ourApp = ApplicationManager.getApplication();
@@ -39,7 +39,7 @@ public final class ProgressSuspender implements AutoCloseable {
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
-  private final Set<ProgressIndicator> myProgresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<ProgressIndicator> myProgresses = ContainerUtil.newConcurrentSet();
   private final Map<ProgressIndicator, Integer> myProgressesInNonSuspendableSections = new ConcurrentHashMap<>();
   private boolean myClosed;
 

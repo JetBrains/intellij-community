@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.util.containers.CollectionFactory;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -12,9 +14,9 @@ import java.util.*;
 class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private static final Logger LOG = Logger.getInstance(SyntaxNodeDescriptor.class);
 
-  private TIntObjectHashMap<SyntaxNodeDescriptor> myRepository = new TIntObjectHashMap<>();
+  private Int2ObjectMap<SyntaxNodeDescriptor> myRepository = new Int2ObjectOpenHashMap<>();
   private Map<Constants.StringKey, CharSequence> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
-  private Map<Constants.CaptureKey, TIntObjectHashMap<CharSequence>> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
+  private Map<Constants.CaptureKey, Int2ObjectMap<CharSequence>> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
 
   private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
   private List<InjectionNodeDescriptor> myInjections = new ArrayList<>();
@@ -38,13 +40,13 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setCaptures(@NotNull Constants.CaptureKey key, @Nullable TIntObjectHashMap<CharSequence> captures) {
+  public void setCaptures(@NotNull Constants.CaptureKey key, @Nullable Int2ObjectMap<CharSequence> captures) {
     myCaptures.put(key, captures);
   }
 
   @Nullable
   @Override
-  public TIntObjectHashMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
+  public Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
     return myCaptures.get(key);
   }
 
@@ -78,11 +80,11 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     myRepository = compactMap(myRepository);
   }
 
-  private static TIntObjectHashMap<SyntaxNodeDescriptor> compactMap(TIntObjectHashMap<SyntaxNodeDescriptor> map) {
+  private static Int2ObjectMap<SyntaxNodeDescriptor> compactMap(Int2ObjectMap<SyntaxNodeDescriptor> map) {
     if (map.isEmpty()) {
       return null;
     }
-    map.trimToSize();
+    CollectionFactory.trimMap(map);
     return map;
   }
 

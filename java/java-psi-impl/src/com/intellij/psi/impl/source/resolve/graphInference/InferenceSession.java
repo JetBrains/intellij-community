@@ -159,6 +159,9 @@ public class InferenceSession {
 
         if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, i, mySiteSubstitutor, varargs);
+          if (method != null && PsiUtil.isRawSubstitutor(method, mySiteSubstitutor)) {
+            parameterType = TypeConversionUtil.erasure(parameterType);
+          }
           LOG.assertTrue(parameterType != null);
           if (!ignoreLambdaConstraintTree(args[i])) {
             addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));

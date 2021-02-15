@@ -369,8 +369,9 @@ public final class NavigationUtil {
         return component;
       }
     };
-    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, elements) {
+    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<>(title, elements) {
       final Map<Object, ListSeparator> separators = new HashMap<>();
+
       {
         String current = null;
         boolean hasTitle = false;
@@ -420,7 +421,7 @@ public final class NavigationUtil {
       }
     }) {
     };
-    popup.getList().setCellRenderer(new PopupListElementRenderer<Object>(popup) {
+    popup.getList().setCellRenderer(new PopupListElementRenderer<>(popup) {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component component = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -432,7 +433,7 @@ public final class NavigationUtil {
             @Override
             protected void paintComponent(Graphics g) {
               g.setColor(new JBColor(Color.WHITE, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
-              g.fillRect(0,0,getWidth(), getHeight());
+              g.fillRect(0, 0, getWidth(), getHeight());
               super.paintComponent(g);
             }
           };

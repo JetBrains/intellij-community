@@ -41,6 +41,7 @@ class ModifiableRootModelBridgeTest {
       (ModuleManager.getInstance(projectModel.project) as ModuleManagerComponentBridge).getModifiableModel(diff).disposeModule(module)
 
       modifiableModel.prepareForCommit()
+      modifiableModel.postCommit()
     }
   }
 }

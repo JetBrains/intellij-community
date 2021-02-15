@@ -3,6 +3,7 @@ package com.intellij.space.components
 
 import circlet.client.api.englishFullName
 import circlet.platform.client.ConnectionStatus
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.space.ui.SpaceAvatarUtils
@@ -17,14 +18,14 @@ import runtime.reactive.filter
 import runtime.reactive.mapInit
 
 @Service
-class SpaceUserAvatarProvider {
+class SpaceUserAvatarProvider : Disposable {
   private val log = logger<SpaceUserAvatarProvider>()
 
   private val lifetime: LifetimeSource = LifetimeSource()
 
   private val avatarPlaceholders: SpaceAvatars = SpaceAvatars.MainIcon
 
-  val avatars: Property<SpaceAvatars> = lifetime.mapInit(space.workspace, avatarPlaceholders) { ws ->
+  val avatars: Property<SpaceAvatars> = lifetime.mapInit(SpaceWorkspaceComponent.getInstance().workspace, avatarPlaceholders) { ws ->
     ws ?: return@mapInit avatarPlaceholders
     val id = ws.me.value.username
     val name = ws.me.value.englishFullName()
@@ -52,6 +53,10 @@ class SpaceUserAvatarProvider {
       log.error { "user avatar not loaded: $e" }
       avatarPlaceholders
     }
+  }
+
+  override fun dispose() {
+    lifetime.terminate()
   }
 
   companion object {

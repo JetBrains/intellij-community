@@ -54,6 +54,13 @@ import java.util.List;
 import java.util.*;
 
 public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
+  public static final DataKey<FilePath> UPDATE_VIEW_SELECTED_PATH =
+    DataKey.create("AbstractCommonUpdateAction.UpdateViewSelectedPath");
+  public static final DataKey<Iterable<Pair<FilePath, FileStatus>>> UPDATE_VIEW_FILES_ITERABLE =
+    DataKey.create("AbstractCommonUpdateAction.UpdatedFilesIterable");
+  public static final DataKey<Label> LABEL_BEFORE = DataKey.create("LABEL_BEFORE");
+  public static final DataKey<Label> LABEL_AFTER = DataKey.create("LABEL_AFTER");
+
   private final Tree myTree = new Tree();
   @NotNull private final Project myProject;
   private final UpdatedFiles myUpdatedFiles;
@@ -223,14 +230,14 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       else {
         return myTreeExpander;
       }
-    } else if (VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.is(dataId)) {
+    } else if (UPDATE_VIEW_SELECTED_PATH.is(dataId)) {
       VirtualFilePointer pointer = getSelectedFilePointer();
       return pointer != null ? getFilePath(pointer) : null;
-    } else if (VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.is(dataId)) {
+    } else if (UPDATE_VIEW_FILES_ITERABLE.is(dataId)) {
       return myTreeIterable;
-    } else if (VcsDataKeys.LABEL_BEFORE.is(dataId)) {
+    } else if (LABEL_BEFORE.is(dataId)) {
       return myBefore;
-    }  else if (VcsDataKeys.LABEL_AFTER.is(dataId)) {
+    }  else if (LABEL_AFTER.is(dataId)) {
       return myAfter;
     }
 

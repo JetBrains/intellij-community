@@ -17,7 +17,7 @@ public abstract class TailTypeDecorator<T extends LookupElement> extends LookupE
   }
 
   public static <T extends LookupElement> TailTypeDecorator<T> withTail(T element, final TailType type) {
-    return new TailTypeDecorator<T>(element) {
+    return new TailTypeDecorator<>(element) {
       @Override
       protected TailType computeTailType(InsertionContext context) {
         return type;

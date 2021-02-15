@@ -4,7 +4,7 @@ package com.intellij.util.concurrency;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -102,24 +102,13 @@ final class EdtExecutorServiceImpl extends EdtExecutorService {
     return ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  static void manifestExceptionsIn(@NotNull Future<?> task) {
-    try {
-      task.get();
-    }
-    catch (CancellationException | InterruptedException ignored) {
-    }
-    catch (ExecutionException e) {
-      ExceptionUtil.rethrow(e.getCause());
-    }
-  }
-
   private static final class FlippantFuture<T> extends FutureTask<T> {
     private FlippantFuture(Callable<T> callable) {super(callable);}
 
     @Override
     public void run() {
       super.run();
-      manifestExceptionsIn(this);
+      ConcurrencyUtil.manifestExceptionsIn(this);
     }
   }
 }

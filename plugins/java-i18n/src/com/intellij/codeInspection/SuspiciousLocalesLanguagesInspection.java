@@ -34,7 +34,7 @@ import java.util.*;
 
 public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
-  private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<Set<String>>() {
+  private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<>() {
     @NotNull
     @Override
     protected Set<String> compute() {

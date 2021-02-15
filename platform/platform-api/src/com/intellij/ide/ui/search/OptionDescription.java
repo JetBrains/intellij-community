@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.util.Comparing;
@@ -47,22 +47,22 @@ public class OptionDescription implements Comparable<OptionDescription> {
 
   @NlsSafe
   @Nullable
-  public String getHit() {
+  public final String getHit() {
     return myHit;
   }
 
   @Nullable
-  public String getPath() {
+  public final String getPath() {
     return myPath;
   }
 
   @NonNls
-  public String getConfigurableId() {
+  public final String getConfigurableId() {
     return myConfigurableId;
   }
 
   @Nls
-  public String getGroupName() {
+  public final String getGroupName() {
     return myGroupName;
   }
 
@@ -78,12 +78,11 @@ public class OptionDescription implements Comparable<OptionDescription> {
   public void invokeInternalEditor() {
   }
 
-  public String toString() {
+  public final String toString() {
     return myHit;
   }
 
-
-  public boolean equals(final Object o) {
+  public final boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
@@ -97,7 +96,7 @@ public class OptionDescription implements Comparable<OptionDescription> {
     return true;
   }
 
-  public int hashCode() {
+  public final int hashCode() {
     int result;
     result = (myOption != null ? myOption.hashCode() : 0);
     result = 31 * result + (myHit != null ? myHit.hashCode() : 0);
@@ -107,7 +106,7 @@ public class OptionDescription implements Comparable<OptionDescription> {
   }
 
   @Override
-  public int compareTo(final OptionDescription o) {
+  public final int compareTo(final OptionDescription o) {
     if (Comparing.strEqual(myHit, o.getHit())) {
       return myOption != null ? myOption.compareTo(o.getOption()) : 0;
     }

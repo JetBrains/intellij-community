@@ -54,6 +54,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   private static final Logger LOG = Logger.getInstance(PsiElementListCellRenderer.class);
   private static final String LEFT = BorderLayout.WEST;
   private static final Pattern CONTAINER_PATTERN = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?");
+  private static final SimpleTextAttributes DEFAULT_ERROR_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, UIUtil.getInactiveTextColor(), JBColor.RED);
 
   private boolean myFocusBorderEnabled = Registry.is("psi.element.list.cell.renderer.focus.border.enabled");
   protected int myRightComponentWidth;
@@ -167,7 +169,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     private void appendLocationText(boolean selected, Color bgColor, boolean isProblemFile, @Nls String containerText) {
       SimpleTextAttributes locationAttrs = SimpleTextAttributes.GRAYED_ATTRIBUTES;
       if (isProblemFile) {
-        SimpleTextAttributes wavedAttributes = SimpleTextAttributes.merge(new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, UIUtil.getInactiveTextColor(), JBColor.RED), locationAttrs);
+        SimpleTextAttributes wavedAttributes = SimpleTextAttributes.merge(getErrorAttributes(), locationAttrs);
         java.util.regex.Matcher matcher = CONTAINER_PATTERN.matcher(containerText);
         if (matcher.matches()) {
           String prefix = matcher.group(1);
@@ -233,6 +235,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       spacer.setBackground(bg);
     }
     return this;
+  }
+
+  @NotNull
+  protected SimpleTextAttributes getErrorAttributes() {
+    return DEFAULT_ERROR_ATTRIBUTES;
   }
 
   @NotNull

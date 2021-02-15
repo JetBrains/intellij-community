@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -33,6 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStubBase;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentType;
 
 /**
  * @author ilyas
@@ -136,8 +138,6 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   @Override
   @Nullable
   public PsiType getTypeGroovy() {
-    final GrExpression initializer = getInitializerGroovy();
-
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;
     if (typeElement != null) {
@@ -147,15 +147,35 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
       }
     }
 
-    if (initializer != null) {
-      PsiType initializerType = RecursionManager.doPreventingRecursion(this, true, initializer::getType);
-      if (declaredType == null) return initializerType;
-      if (initializerType instanceof PsiClassType && TypesUtil.isAssignable(declaredType, initializerType, this)) {
-        return initializerType;
+    PsiType initializerType = RecursionManager.doPreventingRecursion(this, true, this::getInitializerType);
+    if (declaredType == null) {
+      return initializerType;
+    }
+    if (initializerType instanceof PsiClassType && TypesUtil.isAssignable(declaredType, initializerType, this)) {
+      return initializerType;
+    }
+    return declaredType;
+  }
+
+  @Override
+  public @Nullable PsiType getInitializerType() {
+    PsiElement parent = getParent();
+    if (parent instanceof GrVariableDeclaration) {
+      GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
+      if (declaration.isTuple()) {
+        GrExpression rValue = declaration.getTupleInitializer();
+        if (rValue == null) {
+          return null;
+        }
+        int position = ArrayUtil.indexOf(declaration.getVariables(), this);
+        if (position < 0) {
+          return null;
+        }
+        return getMultiAssignmentType(rValue, position);
       }
     }
-
-    return declaredType;
+    GrExpression rValue = getInitializerGroovy();
+    return rValue == null ? null : rValue.getType();
   }
 
   @Override

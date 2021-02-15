@@ -89,7 +89,7 @@ Includes the following features:</p>
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
     <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
 
-    <localInspection shortName="MarkdownUnresolvedFileReference" bundle="messages.MarkdownBundle"
+    <localInspection language="Markdown" shortName="MarkdownUnresolvedFileReference" bundle="messages.MarkdownBundle"
                      key="markdown.unresolved.file.inspection.name" groupKey="markdown.inspection.group.ruby.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.plugins.markdown.lang.references.MarkdownUnresolvedFileReferenceInspection"/>
@@ -131,6 +131,9 @@ Includes the following features:</p>
     <registryKey key="markdown.mermaid.download.link"
                  defaultValue="https://unpkg.com/mermaid@8.6.0/dist/mermaid.js"
                  description="Link which Markdown plugin will use to download Mermaid.js library"/>
+    <registryKey key="markdown.structure.view.list.visibility"
+                 defaultValue="false"
+                 description="Determines whether lists are visible in the document structure view"/>
   </extensions>
 
   <applicationListeners>

@@ -6,8 +6,10 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAware;
@@ -18,6 +20,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -127,6 +130,17 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     processScopes();
 
     loadStateOrder();
+
+    refreshProject();
+  }
+
+  private void refreshProject() {
+    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
+    for (VirtualFile openVirtualFile : fileEditorManager.getOpenFiles()) {
+      fileEditorManager.updateFilePresentation(openVirtualFile);
+    }
+
+    ProjectView.getInstance(myProject).refresh();
   }
 
   private void checkForPredefinedNames() throws ConfigurationException {

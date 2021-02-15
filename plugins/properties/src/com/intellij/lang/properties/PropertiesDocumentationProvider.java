@@ -65,7 +65,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
 
       @NonNls String info = "";
       if (text != null) {
-        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_COMMENT).clone();
+        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PropertiesComponent.PROPERTY_COMMENT.getTextAttributesKey()).clone();
         Color background = attributes.getBackgroundColor();
         if (background != null) {
           info +="<div bgcolor=#"+ GuiUtils.colorToHex(background)+">";

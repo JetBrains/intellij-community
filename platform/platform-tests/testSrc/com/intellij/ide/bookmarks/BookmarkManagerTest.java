@@ -219,7 +219,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (dataId.equals(OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName())) {
+    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       return getEditor();
     }
     return super.getData(dataId);

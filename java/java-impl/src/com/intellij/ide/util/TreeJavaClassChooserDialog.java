@@ -88,7 +88,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
                                             final String pattern,
                                             final GlobalSearchScope searchScope) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(getProject());
-    PsiClass[] classes = FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    PsiClass[] classes = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return cache
         .getClassesByName(name, checkBoxState ? searchScope : GlobalSearchScope.projectScope(getProject()).intersectWith(searchScope));
     });

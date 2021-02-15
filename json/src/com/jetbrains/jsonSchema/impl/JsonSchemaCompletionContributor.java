@@ -507,7 +507,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     }
 
     private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler(boolean newline, int insertedTextSize) {
-      return new InsertHandler<LookupElement>() {
+      return new InsertHandler<>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           Editor editor = context.getEditor();
@@ -590,7 +590,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                           (defaultValue instanceof String ? "\"" + defaultValue + "\"" :
                                            String.valueOf(defaultValue));
       JsonSchemaType finalType = type;
-      return new InsertHandler<LookupElement>() {
+      return new InsertHandler<>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           ApplicationManager.getApplication().assertWriteAccessAllowed();

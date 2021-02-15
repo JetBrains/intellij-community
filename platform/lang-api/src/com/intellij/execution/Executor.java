@@ -130,10 +130,4 @@ public abstract class Executor {
   public static String shortenNameIfNeeded(@NotNull String name) {
     return StringUtil.trimMiddle(name, Registry.intValue("run.configuration.max.name.length", 80));
   }
-
-  /** @deprecated use {@link #shortenNameIfNeeded(String)} instead */
-  @Deprecated
-  public static String shortenNameIfNeed(@NotNull String name) {
-    return shortenNameIfNeeded(name);
-  }
 }

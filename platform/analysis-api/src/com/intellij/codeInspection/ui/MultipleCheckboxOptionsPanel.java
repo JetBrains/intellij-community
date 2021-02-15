@@ -4,6 +4,8 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -61,6 +63,7 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
             constraints.gridy++;
         }
         constraints.weighty = 1.0;
+        component.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
         add(component, constraints);
     }
 }

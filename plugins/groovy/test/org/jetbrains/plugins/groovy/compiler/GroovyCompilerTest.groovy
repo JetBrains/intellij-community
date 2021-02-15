@@ -44,7 +44,7 @@ abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
     super.setUp()
-    Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
+    Logger.getInstance(GroovyCompilerTest.class).info(testStartMessage)
     addGroovyLibrary(module)
   }
 

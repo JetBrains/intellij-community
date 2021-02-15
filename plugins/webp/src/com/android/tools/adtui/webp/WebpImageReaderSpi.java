@@ -15,7 +15,6 @@
  */
 package com.android.tools.adtui.webp;
 
-
 import com.google.webp.libwebp;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +42,10 @@ import java.util.Locale;
  * @see IIORegistry
  */
 public class WebpImageReaderSpi extends ImageReaderSpi {
-
   private static final byte[] RIFF_HEADER = {'R', 'I', 'F', 'F'};
   private static final byte[] WEBP_HEADER = {'W', 'E', 'B', 'P'};
 
-  private static final int MAX_FILE_SIZE = 0x6400000;  // 100 Megs
+  private static final int MAX_FILE_SIZE = 0x06400000;  // 100 MiBs
 
   WebpImageReaderSpi() {
     vendorName = WebpMetadata.WEBP_VENDOR;
@@ -61,8 +59,9 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
 
   @Override
   public boolean canDecodeInput(@NotNull Object source) throws IOException {
-    assert source instanceof ImageInputStream;
-    ImageInputStream stream = (ImageInputStream) source;
+    if (!(source instanceof ImageInputStream)) return false;
+
+    ImageInputStream stream = (ImageInputStream)source;
     long length = stream.length();
     // The length may be -1 for files of unknown size.
     // Accept them for now and if needed, throw an IOException later.
@@ -78,7 +77,8 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
              arrayEquals(header, 0, RIFF_HEADER.length, RIFF_HEADER) &&
              arrayEquals(header, 8, WEBP_HEADER.length, WEBP_HEADER) &&
              WebpNativeLibHelper.loadNativeLibraryIfNeeded();
-    } finally {
+    }
+    finally {
       try {
         stream.reset();
       }
@@ -88,7 +88,7 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
     }
   }
 
-  private static boolean arrayEquals(@NotNull byte[] a1, int offset, int len, @NotNull byte[] a2) {
+  private static boolean arrayEquals(byte[] a1, int offset, int len, byte[] a2) {
     for (int i = 0; i < len; i++) {
       if (a1[offset + i] != a2[i]) {
         return false;
@@ -97,30 +97,26 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
     return true;
   }
 
-  @NotNull
   @Override
-  public ImageReader createReaderInstance(Object extension) throws IOException {
+  public @NotNull ImageReader createReaderInstance(Object extension) throws IOException {
     WebpNativeLibHelper.requireNativeLibrary();
     return new WebpReader(this);
   }
 
-  @NotNull
   @Override
-  public String getDescription(Locale locale) {
+  public @NotNull String getDescription(Locale locale) {
     return "Webp Image Decoder";
   }
 
   private static class WebpReader extends ImageReader {
-
     private static final String UNABLE_TO_READ_WEBP_IMAGE = "Unable to read WebP image";
 
-    @Nullable
     private byte[] myInputBytes;
     private final int[] myWidthOut = new int[1];
     private final int[] myHeightOut = new int[1];
     private int myError;
 
-    public WebpReader(ImageReaderSpi originatingProvider) {
+    private WebpReader(ImageReaderSpi originatingProvider) {
       super(originatingProvider);
     }
 
@@ -137,7 +133,7 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
     }
 
     @Override
-    public int getNumImages(boolean allowSearch) throws IOException {
+    public int getNumImages(boolean allowSearch) {
       return myInputBytes == null ? 0 : 1;
     }
 
@@ -148,17 +144,15 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
       }
     }
 
-    @NotNull
     private static byte[] readStreamFully(@NotNull ImageInputStream stream) throws IOException {
       if (stream.length() != -1) {
-        byte[] bytes = new byte[(int) stream.length()];  // Integer overflow prevented by canDecode check in reader spi above.
-
+        byte[] bytes = new byte[(int)stream.length()];  // Integer overflow prevented by canDecode check in reader spi above.
         stream.readFully(bytes);
         return bytes;
       }
 
       // Unknown file size
-      ByteArrayOutputStream buffer = new ByteArrayOutputStream(0x100000);  // initialize with 1 Meg to minimize reallocs.
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream(0x100000);  // initialize with 1 MiB to minimize reallocation.
       final int bufferSize = 0x4000;    // 16k
       byte[] bytes = new byte[bufferSize];
       int idx;
@@ -195,27 +189,23 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
       throw new IOException(UNABLE_TO_READ_WEBP_IMAGE);
     }
 
-    @Nullable
     @Override
-    public Iterator<ImageTypeSpecifier> getImageTypes(int imageIndex) throws IOException {
+    public @Nullable Iterator<ImageTypeSpecifier> getImageTypes(int imageIndex) {
       return null;
     }
 
-    @Nullable
     @Override
-    public IIOMetadata getStreamMetadata() throws IOException {
+    public @Nullable IIOMetadata getStreamMetadata() {
       return null;
     }
 
-    @Nullable
     @Override
-    public IIOMetadata getImageMetadata(int imageIndex) throws IOException {
+    public @Nullable IIOMetadata getImageMetadata(int imageIndex) {
       return null;
     }
 
-    @NotNull
     @Override
-    public BufferedImage read(int imageIndex, ImageReadParam param) throws IOException {
+    public @NotNull BufferedImage read(int imageIndex, ImageReadParam param) throws IOException {
       loadInfoIfNeeded();
       if (myError == 0) {
         throw new IOException(UNABLE_TO_READ_WEBP_IMAGE);

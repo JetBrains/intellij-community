@@ -30,7 +30,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
-  private final Tokenizer<JsonStringLiteral> ourStringLiteralTokenizer = new Tokenizer<JsonStringLiteral>() {
+  private final Tokenizer<JsonStringLiteral> ourStringLiteralTokenizer = new Tokenizer<>() {
     @Override
     public void tokenize(@NotNull JsonStringLiteral element, TokenConsumer consumer) {
       final PlainTextSplitter textSplitter = PlainTextSplitter.getInstance();

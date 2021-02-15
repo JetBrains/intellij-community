@@ -61,7 +61,7 @@ public class CopyReferencePopup extends DumbAwareAction {
                                             true, null, -1, null, COPY_REFERENCE_POPUP_PLACE) {
       @Override
       protected ListCellRenderer<PopupFactoryImpl.ActionItem> getListElementRenderer() {
-        return new PopupListElementRenderer<PopupFactoryImpl.ActionItem>(this) {
+        return new PopupListElementRenderer<>(this) {
           private JLabel myInfoLabel;
           private JLabel myShortcutLabel;
 

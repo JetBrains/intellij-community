@@ -66,8 +66,10 @@ public class CreateClassQuickFix implements LocalQuickFix {
       assert anchor != null;
     }
 
+    final boolean isPy3K = LanguageLevel.forElement(anchor).isPy3K();
+    String superClass = isPy3K ? "" : "(object)";
     PyClass pyClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class,
-                                                                             "class " + myClassName + "(object):\n    pass");
+                                                                             "class " + myClassName + superClass + ":\n    pass");
     if (anchor instanceof PyFile) {
       pyClass = (PyClass) anchor.add(pyClass);
     }
@@ -76,7 +78,9 @@ public class CreateClassQuickFix implements LocalQuickFix {
     }
     pyClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(pyClass);
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(pyClass);
-    builder.replaceElement(pyClass.getSuperClassExpressions() [0], "object");
+    if (!isPy3K) {
+      builder.replaceElement(pyClass.getSuperClassExpressions() [0], "object");
+    }
     builder.replaceElement(pyClass.getStatementList(), PyNames.PASS);
 
     PythonTemplateRunner.runTemplate(pyClass.getContainingFile(), builder);

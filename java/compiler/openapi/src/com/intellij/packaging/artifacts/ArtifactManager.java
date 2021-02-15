@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.project.Project;
@@ -15,7 +15,8 @@ import java.util.Collection;
 import java.util.Comparator;
 
 public abstract class ArtifactManager implements ArtifactModel {
-  public static final Topic<ArtifactListener> TOPIC = Topic.create("artifacts changes", ArtifactListener.class);
+  @Topic.ProjectLevel
+  public static final Topic<ArtifactListener> TOPIC = new Topic<>("artifacts changes", ArtifactListener.class, Topic.BroadcastDirection.NONE);
   public static final Comparator<Artifact> ARTIFACT_COMPARATOR = (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName());
 
   public static ArtifactManager getInstance(@NotNull Project project) {

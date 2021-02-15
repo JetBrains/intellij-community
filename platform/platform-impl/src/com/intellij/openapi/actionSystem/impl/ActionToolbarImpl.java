@@ -25,10 +25,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.GotItTooltip;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
@@ -217,7 +214,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     updateActionsImmediately();
   }
 
-  private boolean isInsideNavBar() {
+  protected boolean isInsideNavBar() {
     return ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace);
   }
 
@@ -380,7 +377,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private void tweakActionComponentUI(@NotNull Component actionComponent) {
     if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
       // tweak font & color for editor toolbar to match editor tabs style
-      actionComponent.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+      actionComponent.setFont(RelativeFont.NORMAL.fromResource("Toolbar.Component.fontSizeOffset", -2).derive(StartupUiUtil.getLabelFont()));
       actionComponent.setForeground(ColorUtil.dimmer(JBColor.BLACK));
     }
   }
@@ -1113,7 +1110,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     DataContext dataContext = getDataContext();
     boolean async = myAlreadyUpdated && Registry.is("actionSystem.update.actions.asynchronously") && ourToolbars.contains(this) && isShowing();
     ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
-                                              async ? new AsyncDataContext(dataContext) : dataContext,
+                                              Utils.wrapDataContext(dataContext),
                                               myPlace, false, true, transparentOnly);
     if (async) {
       if (myLastUpdate != null) myLastUpdate.cancel();
@@ -1476,6 +1473,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     myUpdater.updateActions(false, true, false);
+  }
+
+  @TestOnly
+  public static ActionToolbarImpl findToolbar(ActionGroup group) {
+    for (ActionToolbarImpl toolbar : ourToolbars) {
+      if (toolbar.myActionGroup.equals(group)) {
+        return toolbar;
+      }
+    }
+    return null;
   }
 
   @TestOnly

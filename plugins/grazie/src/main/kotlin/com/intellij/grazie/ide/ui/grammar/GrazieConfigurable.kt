@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.ConfigurableBase
 
-class GrazieConfigurable : ConfigurableBase<GrazieSettingsPanel, GrazieConfig>("reference.settingsdialog.project.grazie",
+internal class GrazieConfigurable : ConfigurableBase<GrazieSettingsPanel, GrazieConfig>("reference.settingsdialog.project.grazie",
                                                                                GraziePlugin.name,
                                                                                "reference.settings.ide.settings.grammar"), WithEpDependencies {
   private val ui: GrazieSettingsPanel by lazy { GrazieSettingsPanel() }

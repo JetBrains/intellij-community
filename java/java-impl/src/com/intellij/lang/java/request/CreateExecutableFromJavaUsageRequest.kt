@@ -43,7 +43,5 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
     }
   }
 
-  override fun getParameters() = getParameters(expectedParameters, project)
-
   val context get() = call.parentOfTypes(PsiMethod::class, PsiClass::class)
 }

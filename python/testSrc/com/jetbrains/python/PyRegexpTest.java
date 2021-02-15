@@ -36,6 +36,10 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
+  public void testConditional() {
+    doTestHighlighting();
+  }
+
   public void testRedundantEscape() {
     myFixture.enableInspections(new RedundantEscapeInspection());
     doTestHighlighting();

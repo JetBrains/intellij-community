@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -11,15 +11,23 @@ import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.stats.completion.CompletionStatsPolicy
 import kotlin.random.Random
 
-class CompletionLoggerInitializer(project: Project) : LookupTracker() {
+class CompletionLoggerInitializer : LookupTracker() {
   companion object {
-    fun shouldInitialize(): Boolean =
-      (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()) || ApplicationManager.getApplication().isUnitTestMode
+    private const val COMPLETION_EVALUATION_HEADLESS = "completion.evaluation.headless"
+
+    private fun shouldInitialize(): Boolean {
+      val app = ApplicationManager.getApplication()
+      return app.isEAP && StatisticsUploadAssistant.isSendAllowed()
+             || app.isHeadlessEnvironment && java.lang.Boolean.getBoolean(COMPLETION_EVALUATION_HEADLESS)
+             || app.isUnitTestMode
+    }
 
     private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
       "python" to 0.5,
@@ -27,27 +35,23 @@ class CompletionLoggerInitializer(project: Project) : LookupTracker() {
       "php" to 0.2,
       "kotlin" to 0.2,
       "java" to 0.1,
-      "ecmascript 6" to 0.2,
+      "javascript" to 0.2,
       "typescript" to 0.5,
       "c/c++" to 0.5,
       "c#" to 0.1,
       "go" to 0.4
     )
   }
-  private val actionListener: LookupActionsListener = LookupActionsListener()
-
-  init {
-    if (shouldInitialize()) {
-      project.messageBus.connect().subscribe(AnActionListener.TOPIC, actionListener)
-    }
-  }
+  private val actionListener: LookupActionsListener by lazy { LookupActionsListener.getInstance() }
 
   override fun lookupClosed() {
-    actionListener.listener = CompletionPopupListener.Adapter()
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    actionListener.listener = CompletionPopupListener.DISABLED
   }
 
   override fun lookupCreated(lookup: LookupImpl,
                              storage: MutableLookupStorage) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     if (!shouldInitialize()) return
 
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)
@@ -59,14 +63,14 @@ class CompletionLoggerInitializer(project: Project) : LookupTracker() {
       storage.markLoggingEnabled()
     }
     else {
-      actionListener.listener = CompletionPopupListener.Adapter()
+      actionListener.listener = CompletionPopupListener.DISABLED
     }
   }
 
   private fun actionsTracker(lookup: LookupImpl,
                              storage: MutableLookupStorage,
                              experimentInfo: ExperimentInfo): CompletionActionsListener {
-    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(storage.language)
+    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(getLoggingLanguageName(storage.language))
     val actionsTracker = CompletionActionsTracker(lookup, storage, logger, experimentInfo)
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
   }
@@ -80,7 +84,64 @@ class CompletionLoggerInitializer(project: Project) : LookupTracker() {
       return false
     }
 
-    val logSessionChance = LOGGED_SESSIONS_RATIO.getOrDefault(language.displayName.toLowerCase(), 1.0)
+    val logSessionChance = LOGGED_SESSIONS_RATIO.getOrDefault(getLoggingLanguageName(language).toLowerCase(), 1.0)
     return Random.nextDouble() < logSessionChance
+  }
+
+  private fun getLoggingLanguageName(language: Language): String {
+    Language.findLanguageByID("JavaScript")?.let { js ->
+      if (language.isKindOf(js) && !language.displayName.contains("TypeScript", ignoreCase = true)) {
+        return "JavaScript"
+      }
+    }
+    return language.displayName
+  }
+
+  private class LookupActionsListener private constructor(): AnActionListener {
+    companion object {
+      private val LOG = logger<LookupActionsListener>()
+      private val instance = LookupActionsListener()
+      private var subscribed = false
+
+      fun getInstance(): LookupActionsListener {
+        if (!subscribed) {
+          ApplicationManager.getApplication().messageBus.connect().subscribe(AnActionListener.TOPIC, instance)
+          subscribed = true
+        }
+        return instance
+      }
+    }
+
+    private val down by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
+    private val up by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP) }
+    private val backspace by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
+
+    var listener: CompletionPopupListener = CompletionPopupListener.DISABLED
+
+    override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      LOG.runAndLogException {
+        when (action) {
+          down -> listener.downPressed()
+          up -> listener.upPressed()
+          backspace -> listener.afterBackspacePressed()
+        }
+      }
+    }
+
+    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      LOG.runAndLogException {
+        when (action) {
+          down -> listener.beforeDownPressed()
+          up -> listener.beforeUpPressed()
+          backspace -> listener.beforeBackspacePressed()
+        }
+      }
+    }
+
+    override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
+      LOG.runAndLogException {
+        listener.beforeCharTyped(c)
+      }
+    }
   }
 }

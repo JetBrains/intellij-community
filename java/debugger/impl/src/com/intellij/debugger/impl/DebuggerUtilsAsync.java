@@ -38,6 +38,13 @@ public final class DebuggerUtilsAsync {
     return completedFuture(value.value());
   }
 
+  public static CompletableFuture<List<Method>> allMethods(ReferenceType type) {
+    if (type instanceof ReferenceTypeImpl && Registry.is("debugger.async.jdi")) {
+      return reschedule(((ReferenceTypeImpl)type).allMethodsAsync());
+    }
+    return completedFuture(type.allMethods());
+  }
+
   public static CompletableFuture<List<Field>> allFields(ReferenceType type) {
     if (type instanceof ReferenceTypeImpl && Registry.is("debugger.async.jdi")) {
       return reschedule(((ReferenceTypeImpl)type).allFieldsAsync());

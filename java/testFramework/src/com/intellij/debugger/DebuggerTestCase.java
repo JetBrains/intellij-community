@@ -67,6 +67,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected static final int DEFAULT_ADDRESS = 3456;
   protected static final String TEST_JDK_NAME = "JDK";
   protected DebuggerSession myDebuggerSession;
+  private ExecutionEnvironment myExecutionEnvironment;
+  private RunProfileState myRunnableState;
   private final AtomicInteger myRestart = new AtomicInteger();
   private static final int MAX_RESTARTS = 3;
   private volatile TestDisposable myTestRootDisposable;
@@ -166,8 +168,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected void createLocalProcess(String className) throws ExecutionException {
+    createLocalProcess(createJavaParameters(className));
+  }
+
+  protected void createLocalProcess(JavaParameters javaParameters) throws ExecutionException {
     LOG.assertTrue(myDebugProcess == null);
-    myDebuggerSession = createLocalProcess(DebuggerSettings.SOCKET_TRANSPORT, createJavaParameters(className));
+    myDebuggerSession = createLocalProcess(DebuggerSettings.SOCKET_TRANSPORT, javaParameters);
     myDebugProcess = myDebuggerSession.getProcess();
   }
 
@@ -182,9 +188,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
-      .runProfile(new MockConfiguration())
+      .runProfile(new MockConfiguration(myProject))
       .build();
-    final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment){
+    myRunnableState = new JavaCommandLineState(environment) {
       @Override
       protected JavaParameters createJavaParameters() {
         return javaParameters;
@@ -201,12 +207,13 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        myDebuggerSession =
-          DebuggerManagerEx.getInstanceEx(myProject)
-            .attachVirtualMachine(new DefaultDebugEnvironment(new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-                                                                .runProfile(new MockConfiguration())
-                                                                .build(), javaCommandLineState, debugParameters, false));
-        XDebuggerManager.getInstance(myProject).startSession(javaCommandLineState.getEnvironment(), new XDebugProcessStarter() {
+        myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
+          .runProfile(new MockConfiguration(myProject))
+          .build();
+        DefaultDebugEnvironment debugEnvironment =
+          new DefaultDebugEnvironment(myExecutionEnvironment, myRunnableState, debugParameters, false);
+        myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(debugEnvironment);
+        XDebuggerManager.getInstance(myProject).startSession(myExecutionEnvironment, new XDebugProcessStarter() {
           @Override
           @NotNull
           public XDebugProcess start(@NotNull XDebugSession session) {
@@ -247,11 +254,11 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     debuggerRunnerSettings.setTransport(transport);
     debuggerRunnerSettings.setDebugPort(transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : String.valueOf(DEFAULT_ADDRESS));
 
-    ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
+    myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
-      .runProfile(new MockConfiguration())
+      .runProfile(new MockConfiguration(myProject))
       .build();
-    final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment) {
+    myRunnableState = new JavaCommandLineState(myExecutionEnvironment) {
       @Override
       protected JavaParameters createJavaParameters() {
         return javaParameters;
@@ -266,15 +273,14 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     };
 
-    final RemoteConnection debugParameters =
-      DebuggerManagerImpl.createDebugParameters(javaCommandLineState.getJavaParameters(), debuggerRunnerSettings, true);
+    final RemoteConnection debugParameters = DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerRunnerSettings, true);
 
     final DebuggerSession[] debuggerSession = {null};
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
-        ExecutionEnvironment env = javaCommandLineState.getEnvironment();
+        ExecutionEnvironment env = myExecutionEnvironment;
         env.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, getTraceMode());
-        debuggerSession[0] = attachVirtualMachine(javaCommandLineState, env, debugParameters, false);
+        debuggerSession[0] = attachVirtualMachine(myRunnableState, env, debugParameters, false);
       }
       catch (ExecutionException e) {
         fail(e.getMessage());
@@ -330,7 +336,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         debuggerSession[0] = attachVirtualMachine(remoteState, new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-          .runProfile(new MockConfiguration())
+          .runProfile(new MockConfiguration(myProject))
           .build(), remoteConnection, pollConnection);
       }
       catch (ExecutionException e) {
@@ -491,6 +497,14 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return myDebuggerSession;
   }
 
+  public ExecutionEnvironment getExecutionEnvironment() {
+    return myExecutionEnvironment;
+  }
+
+  public RunProfileState getRunnableState() {
+    return myRunnableState;
+  }
+
   protected DebuggerSession attachVirtualMachine(RunProfileState state,
                                                  ExecutionEnvironment environment,
                                                  RemoteConnection remoteConnection,
@@ -508,6 +522,21 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   public class MockConfiguration implements ModuleRunConfiguration {
+    private final Project project;
+
+    /**
+     * @deprecated
+     * Use MockConfiguration(Project) instead.
+     */
+    @Deprecated
+    public MockConfiguration() {
+      this.project = null;
+    }
+
+    public MockConfiguration(Project project) {
+      this.project = project;
+    }
+
     @Override
     public Module @NotNull [] getModules() {
       return myModule == null ? Module.EMPTY_ARRAY : new Module[]{myModule};
@@ -534,7 +563,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     @Override
     public Project getProject() {
-      return null;
+      return project;
     }
 
     @Override

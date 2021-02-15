@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParserUtils.adapt_builder_;
@@ -22,15 +21,6 @@ public class GroovyParser extends GroovyGeneratedParser {
 
   //gsp template statement, for example
   protected boolean parseExtendedStatement(PsiBuilder builder) {
-    return false;
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public boolean parseDeclaration(@NotNull PsiBuilder builder,
-                                  boolean isInClass,
-                                  boolean isInAnnotation,
-                                  @Nullable String typeDefinitionName) {
     return false;
   }
 

@@ -52,7 +52,6 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -151,14 +150,6 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
-  /**
-   * @deprecated Use {@link #dropUseLocalDistributionButton()} instead
-   */
-  @Deprecated
-  public IdeaGradleProjectSettingsControlBuilder dropGradleHomePathComponents() {
-    return this;
-  }
-
   public IdeaGradleProjectSettingsControlBuilder dropCustomizableWrapperButton() {
     dropCustomizableWrapperButton = true;
     return this;
@@ -183,11 +174,6 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
-  @Deprecated
-  public IdeaGradleProjectSettingsControlBuilder dropCreateEmptyContentRootDirectoriesBox() {
-    return this;
-  }
-
   public IdeaGradleProjectSettingsControlBuilder dropResolveModulePerSourceSetCheckBox() {
     dropResolveModulePerSourceSetCheckBox = true;
     return this;
@@ -195,19 +181,6 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   public IdeaGradleProjectSettingsControlBuilder dropResolveExternalAnnotationsCheckBox() {
     dropResolveExternalAnnotationsCheckBox = true;
-    return this;
-  }
-
-  /**
-   * @deprecated Use {@link IdeaGradleSystemSettingsControlBuilder#dropStoreExternallyCheckBox}
-   */
-  @Deprecated
-  public IdeaGradleProjectSettingsControlBuilder dropStoreExternallyCheckBox() {
-    return this;
-  }
-
-  @Deprecated
-  public IdeaGradleProjectSettingsControlBuilder dropModulesGroupingOptionPanel() {
     return this;
   }
 
@@ -939,7 +912,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @NotNull
     private static SimpleTextAttributes getTextAttributes(boolean selected) {
-      return selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))
+      return selected && !(SystemInfoRt.isWindows && UIManager.getLookAndFeel().getName().contains("Windows"))
              ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES
              : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
     }
@@ -982,7 +955,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   private class DelayedBalloonInfo implements Runnable {
     private final MessageType myMessageType;
-    private final String myText;
+    private final @Nls String myText;
     private final long myTriggerTime;
 
     DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull LocationSettingType settingType, long delayMillis) {

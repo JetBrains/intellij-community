@@ -16,9 +16,10 @@
 package com.android.tools.idea.gradle.dsl.api.android;
 
 import com.android.tools.idea.gradle.dsl.api.java.LanguageLevelPropertyModel;
+import com.android.tools.idea.gradle.dsl.api.util.GradleDslModel;
 import org.jetbrains.annotations.NotNull;
 
-public interface KotlinOptionsModel {
+public interface KotlinOptionsModel extends GradleDslModel {
   @NotNull
   LanguageLevelPropertyModel jvmTarget();
 }

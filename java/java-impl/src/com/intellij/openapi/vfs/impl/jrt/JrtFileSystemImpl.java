@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.application.Application;
@@ -25,10 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public final class JrtFileSystemImpl extends JrtFileSystem {
+public class JrtFileSystemImpl extends JrtFileSystem {
   private final Map<String, ArchiveHandler> myHandlers = Collections.synchronizedMap(CollectionFactory.createFilePathMap());
   private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
 
@@ -148,7 +149,7 @@ public final class JrtFileSystemImpl extends JrtFileSystem {
 
   @Override
   protected boolean isCorrectFileType(@NotNull VirtualFile local) {
-    String path = local.getPath();
+    Path path = local.toNioPath();
     return JdkUtil.isModularRuntime(path) && !JdkUtil.isExplodedModularRuntime(path);
   }
 

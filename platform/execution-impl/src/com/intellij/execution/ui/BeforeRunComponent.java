@@ -79,7 +79,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   private TaskButton createTag(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
     return new TaskButton(provider, (e) -> {
       myChangeListener.run();
-      updateAddLabel();
+      buildPanel();
     });
   }
 
@@ -160,7 +160,12 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   private void buildPanel() {
     remove(myAddPanel);
     remove(myAddLabel);
+    int i = 1;
     for (TaskButton tag : myTags) {
+      if (tag.isVisible() && tag.myTask != null) {
+        tag.myOrder = i++;
+        tag.updateButton();
+      }
       add(tag);
     }
     add(myAddPanel);
@@ -256,6 +261,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
     private final JLabel myDropPlace = new JLabel(AllIcons.General.DropPlace);
     private BeforeRunTask<?> myTask;
+    private int myOrder;
 
     private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, Consumer<AnActionEvent> action) {
       super(provider.getName(), action);
@@ -293,10 +299,12 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     private void setTask(@Nullable BeforeRunTask<?> task) {
       myTask = task;
       setVisible(task != null);
-      if (task != null) {
-        updateButton(myProvider.getDescription(task), myProvider.getTaskIcon(task),
-                     !DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
-      }
+    }
+
+    private void updateButton() {
+      if (myTask == null) return;
+      updateButton(myOrder + ". " + myProvider.getDescription(myTask), myProvider.getTaskIcon(myTask),
+                   !DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
     }
 
     private void showDropPlace(boolean show) {

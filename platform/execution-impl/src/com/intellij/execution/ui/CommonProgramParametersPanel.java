@@ -23,6 +23,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -188,7 +189,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     component.getLabel().setLabelFor(rawCommandLineEditor.getTextField());
   }
 
-  public void setProgramParametersLabel(String textWithMnemonic) {
+  public void setProgramParametersLabel(@Nls String textWithMnemonic) {
     myProgramParametersComponent.setText(textWithMnemonic);
     copyDialogCaption(myProgramParametersComponent);
   }

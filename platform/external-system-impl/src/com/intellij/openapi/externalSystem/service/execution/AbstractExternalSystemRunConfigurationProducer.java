@@ -17,13 +17,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public abstract class AbstractExternalSystemRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated
-  public AbstractExternalSystemRunConfigurationProducer(@NotNull AbstractExternalSystemTaskConfigurationType type) {
-    super(type);
-  }
 
   protected AbstractExternalSystemRunConfigurationProducer() {
     super(true);

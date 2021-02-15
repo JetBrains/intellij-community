@@ -1,18 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
+import com.intellij.codeInsight.daemon.impl.IdentifierUtil
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.search.PsiSymbolDeclarationSearchParameters
 import com.intellij.model.search.PsiSymbolDeclarationSearcher
+import com.intellij.openapi.util.TextRange
 import com.intellij.pom.PomTargetPsiElement
+import com.intellij.pom.PsiDeclaredTarget
+import com.intellij.psi.ExternallyAnnotated
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ArrayQuery
 import com.intellij.util.Query
 
@@ -36,8 +41,8 @@ class PsiElementDeclarationSearcher : PsiSymbolDeclarationSearcher {
   private fun inLocalScope(psi: PsiElement, searchScope: LocalSearchScope): PsiSymbolDeclaration? {
     for (scopeElement in searchScope.scope) {
       val scopeFile = scopeElement.containingFile ?: continue
-      val declarationRange = HighlightUsagesHandler.getNameIdentifierRange(scopeFile, psi) ?: continue // call old implementation as is
-      return PsiElement2Declaration(psi, scopeFile, declarationRange)
+      val declarationRange = HighlightUsagesHandler.getNameIdentifierRangeInCurrentRoot(scopeFile, psi) ?: continue // call old implementation as is
+      return PsiElement2Declaration(psi, scopeFile, declarationRange.getSecond())
     }
     return null
   }

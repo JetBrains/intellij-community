@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
@@ -48,7 +48,7 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
         trackedEvents.add(event)
       }
     }
-    return CompletionFileLogger("installation-uid", "completion-uid", "0", Language.ANY, eventLogger)
+    return CompletionFileLogger("installation-uid", "completion-uid", "0", Language.ANY.displayName, eventLogger)
   }
 
   override fun setUp() {
@@ -63,7 +63,7 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
     myFixture.addClass(runnableInterface)
     myFixture.configureByText(JavaFileType.INSTANCE, testText)
 
-    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer(project))
+    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer())
     CompletionFactorsInitializer.isEnabledInTests = true
   }
 

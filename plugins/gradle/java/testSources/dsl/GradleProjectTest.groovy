@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
@@ -19,23 +19,16 @@ class GradleProjectTest extends GradleHighlightingBaseTest implements ResolveTes
   @Test
   void resolveTest() {
     importProject('')
-    new RunAll().append {
-      'resolve explicit getter'()
-    } append {
-      'resolve property'()
-    } append {
-      'resolve explicit setter'()
-    } append {
-      'resolve explicit setter without argument'()
-    } append {
-      'resolve property setter'()
-    } append {
-      'resolve implicit setter'()
-    } append {
-      'resolve implicit setter without argument'()
-    } append {
-      'property vs task'()
-    } run()
+    new RunAll(
+      { 'resolve explicit getter'() },
+      { 'resolve property'() },
+      { 'resolve explicit setter'() },
+      { 'resolve explicit setter without argument'() },
+      { 'resolve property setter'() },
+      { 'resolve implicit setter'() },
+      { 'resolve implicit setter without argument'() },
+      { 'property vs task'() }
+    ).run()
   }
 
   void 'resolve explicit getter'() {

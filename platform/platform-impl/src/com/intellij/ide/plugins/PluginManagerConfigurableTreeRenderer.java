@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.openapi.options.ConfigurableTreeRenderer;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
@@ -30,7 +31,7 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
 
   private PluginUpdatesService myService;
   private SimpleTree myTree;
-  private String myCountValue;
+  private @NlsSafe String myCountValue;
 
   public PluginManagerConfigurableTreeRenderer() {
     myPanel.setLayout(new BorderLayout(getHGap(), 0));
@@ -43,14 +44,12 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
                                                         @Nullable UnnamedConfigurable configurable,
                                                         boolean selected) {
     if (myTree == null) {
-      myService = PluginUpdatesService.connectTreeRenderer(this);
+      myService = PluginUpdatesService.connectWithCounter(this);
       tree.addAncestorListener(this);
       myTree = tree;
     }
 
-    Icon icon = DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions() ?
-                AllIcons.General.LocalizationSettings :
-                null;
+    Icon icon = DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions() ? AllIcons.General.LocalizationSettings : null;
     if (icon == null && myCountValue == null) {
       return null;
     }
@@ -60,16 +59,11 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
     myExtraLabel.setIcon(icon);
     myExtraLabel.setBackground(myCountLabel.getBackground());
 
-    Component component = icon == null ?
-                          myCountLabel :
-                          myCountValue == null ?
-                          myExtraLabel :
-                          myPanel;
+    Component component = icon == null ? myCountLabel : myCountValue == null ? myExtraLabel : myPanel;
     boolean isPanel = component == myPanel;
 
     return Pair.create(
-      component,
-      (renderer, bounds, text, right, textBaseline) -> {
+      component, (renderer, bounds, text, right, textBaseline) -> {
         Dimension size = renderer.getPreferredSize();
         int preferredWidth = size.width;
         int preferredHeight = size.height;
@@ -100,9 +94,7 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
   }
 
   private int getPreferredShift(boolean isPanel) {
-    return isPanel ?
-           getHGap() + myExtraLabel.getPreferredSize().width / 2 :
-           0;
+    return isPanel ? getHGap() + myExtraLabel.getPreferredSize().width / 2 : 0;
   }
 
   private static int getHGap() {

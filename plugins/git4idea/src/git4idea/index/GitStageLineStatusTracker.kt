@@ -42,6 +42,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.ui.JBUI
@@ -359,23 +360,25 @@ class GitStageLineStatusTracker(
     }
 
     private fun paintStageLines(g: Graphics2D, editor: Editor, block: List<ChangedLines<StageLineFlags>>) {
+      val borderColor = LineStatusMarkerDrawUtil.getGutterBorderColor(editor)
+
       val area = LineStatusMarkerDrawUtil.getGutterArea(editor)
       val x = area.first
       val endX = area.second
       val midX = (endX + x + 3) / 2
 
+      val y = block.first().y1
+      val endY = block.last().y2
+
       for (change in block) {
-        if (change.y1 != change.y2) {
+        if (change.y1 != change.y2 &&
+            change.flags.isUnstaged) {
           val start = change.y1
           val end = change.y2
           val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
 
-          if (change.flags.isUnstaged && change.flags.isStaged) {
+          if (change.flags.isStaged) {
             LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, midX, end)
-            LineStatusMarkerDrawUtil.paintRect(g, null, gutterColor, x, start, endX, end)
-          }
-          else if (change.flags.isStaged) {
-            LineStatusMarkerDrawUtil.paintRect(g, null, gutterColor, x, start, endX, end)
           }
           else {
             LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, endX, end)
@@ -383,25 +386,42 @@ class GitStageLineStatusTracker(
         }
       }
 
+      if (borderColor == null) {
+        for (change in block) {
+          if (change.y1 != change.y2 &&
+              change.flags.isStaged) {
+            val start = change.y1
+            val end = change.y2
+            val stagedBorderColor = LineStatusMarkerDrawUtil.getIgnoredGutterBorderColor(change.type, editor)
+
+            LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x, start, endX, end)
+          }
+        }
+      }
+      else if (y != endY) {
+        LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x, y, endX, endY)
+      }
+
       for (change in block) {
         if (change.y1 == change.y2) {
           val start = change.y1
           val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
+          val stagedBorderColor = borderColor ?: LineStatusMarkerDrawUtil.getIgnoredGutterBorderColor(change.type, editor)
 
           if (change.flags.isUnstaged && change.flags.isStaged) {
-            paintStripeTriangle(g, editor, gutterColor, x, endX, start)
+            paintStripeTriangle(g, editor, gutterColor, stagedBorderColor, x, endX, start)
           }
           else if (change.flags.isStaged) {
-            LineStatusMarkerDrawUtil.paintTriangle(g, editor, null, gutterColor, x, endX, start)
+            LineStatusMarkerDrawUtil.paintTriangle(g, editor, null, stagedBorderColor, x, endX, start)
           }
           else {
-            LineStatusMarkerDrawUtil.paintTriangle(g, editor, gutterColor, null, x, endX, start)
+            LineStatusMarkerDrawUtil.paintTriangle(g, editor, gutterColor, borderColor, x, endX, start)
           }
         }
       }
     }
 
-    private fun paintStripeTriangle(g: Graphics2D, editor: Editor, color: Color?, x1: Int, x2: Int, y: Int) {
+    private fun paintStripeTriangle(g: Graphics2D, editor: Editor, color: Color?, borderColor: Color?, x1: Int, x2: Int, y: Int) {
       @Suppress("NAME_SHADOWING") var y = y
       val editorScale = if (editor is EditorImpl) editor.scale else 1.0f
       val size = JBUIScale.scale(5 * editorScale).toInt()
@@ -413,7 +433,10 @@ class GitStageLineStatusTracker(
       if (color != null) {
         g.color = color
         g.fillPolygon(xPoints, yPointsFill, xPoints.size)
+      }
 
+      if (borderColor != null) {
+        g.color = borderColor
         val oldStroke = g.stroke
         g.stroke = BasicStroke(JBUIScale.scale(1).toFloat())
         g.drawPolygon(xPoints, yPointsBorder, xPoints.size)

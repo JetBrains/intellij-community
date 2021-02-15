@@ -71,7 +71,7 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
       for (CompilerMessage message : messages) {
         if (message.getCategory() == CompilerMessageCategory.ERROR) {
           FileUtil.delete(myModuleOutputDir);
-          fail("Compilation failed: " + message);
+          fail("Compilation failed: " + message + " " + message.getVirtualFile());
         }
       }
     }

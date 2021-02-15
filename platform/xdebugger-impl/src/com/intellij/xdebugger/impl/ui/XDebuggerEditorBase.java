@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -55,6 +56,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -390,7 +392,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     });
   }
 
-  protected void prepareEditor(Editor editor) {
+  protected void prepareEditor(EditorEx editor) {
   }
 
   protected final void setExpandable(Editor editor) {
@@ -526,8 +528,9 @@ public abstract class XDebuggerEditorBase implements Expandable {
   @NotNull
   private static @NlsContexts.Label String getAdText() {
     return XDebuggerBundle.message("xdebugger.evaluate.history.navigate.ad",
-                                   KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_DOWN)) + ", " +
-                                   KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_UP)));
+                                   NlsMessages.formatAndList(Arrays.asList(
+                                     KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_DOWN)),
+                                     KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_UP)))));
   }
 
   public static void copyCaretPosition(@Nullable Editor source, @Nullable Editor destination) {

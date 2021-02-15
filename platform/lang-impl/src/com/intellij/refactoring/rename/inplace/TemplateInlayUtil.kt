@@ -28,7 +28,6 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameInplacePopupUsagesCollector
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import com.intellij.refactoring.rename.RenameUsagesCollector
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.layout.*
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -99,7 +98,7 @@ object TemplateInlayUtil {
           .createPopup()
         DumbAwareAction.create {
           popup.cancel()
-          templateState.gotoEnd(false)
+          templateState.nextTab()
           logStatisticsOnHide.invoke()
         }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ENTER), panel)
         popup.showInBestPositionFor(editor)
@@ -233,10 +232,9 @@ object TemplateInlayUtil {
                                   toSearchForTextOccurrences: Boolean,
                                   toSearchForTextOccurrencesNew: Boolean) {
     RenameInplacePopupUsagesCollector.hide.log(editor.project,
-                                               RenameInplacePopupUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
-    RenameInplacePopupUsagesCollector.settingsChanged.log(editor.project,
-                                              RenameUsagesCollector.searchInComments.with(toSearchInCommentsNew),
-                                              RenameUsagesCollector.searchInTextOccurrences.with(toSearchForTextOccurrencesNew))
+                                               RenameInplacePopupUsagesCollector.searchInCommentsOnHide.with(toSearchInCommentsNew),
+                                               RenameInplacePopupUsagesCollector.searchInTextOccurrencesOnHide.with(toSearchForTextOccurrencesNew))
+    RenameInplacePopupUsagesCollector.settingsChanged.log(editor.project, RenameInplacePopupUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
   }
 
   private fun renamePanel(elementToRename: PsiElement,

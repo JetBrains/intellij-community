@@ -32,30 +32,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenSettings implements SearchableConfigurable.Parent {
-  private final Project myProject;
   private final Configurable myConfigurable;
   private final List<Configurable> myChildren;
 
   public MavenSettings(@NotNull Project project) {
-    myProject = project;
 
-    myConfigurable = new MavenGeneralConfigurable() {
-      @Override
-      protected MavenGeneralSettings getState() {
-        return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
-      }
-    };
+    myConfigurable = new MavenGeneralConfigurable(project);
 
     myChildren = new ArrayList<>();
-    myChildren.add(new MavenImportingConfigurable(myProject));
-    myChildren.add(new MavenIgnoredFilesConfigurable(myProject));
+    myChildren.add(new MavenImportingConfigurable(project));
+    myChildren.add(new MavenIgnoredFilesConfigurable(project));
 
     myChildren.add(new MyMavenRunnerConfigurable(project));
 
     myChildren.add(new MavenTestRunningConfigurable(project));
 
-    if (!myProject.isDefault()) {
-      myChildren.add(new MavenRepositoriesConfigurable(myProject));
+    if (!project.isDefault()) {
+      myChildren.add(new MavenRepositoriesConfigurable(project));
     }
   }
 

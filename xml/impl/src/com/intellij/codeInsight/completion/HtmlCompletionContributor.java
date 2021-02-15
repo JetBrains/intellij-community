@@ -58,7 +58,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       "wa", "wo", "xh", "yi", "yo", "za", "zh", "zu",};
 
   public HtmlCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,

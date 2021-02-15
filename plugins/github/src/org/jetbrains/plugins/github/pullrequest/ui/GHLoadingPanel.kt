@@ -16,7 +16,7 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.util.getName
+import org.jetbrains.plugins.github.ui.util.getName
 import java.awt.BorderLayout
 import java.awt.GridBagLayout
 import java.awt.event.KeyEvent

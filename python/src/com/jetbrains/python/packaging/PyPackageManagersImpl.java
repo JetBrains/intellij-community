@@ -28,7 +28,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
   private final Map<String, PyPackageManager> myProvidedManagers = new HashMap<>();
 
   public PyPackageManagersImpl() {
-    PyPackageManagerProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<PyPackageManagerProvider>() {
+    PyPackageManagerProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull PyPackageManagerProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         clearProvidedManagersCache();

@@ -17,8 +17,8 @@ import javax.swing.*;
  * Builder for the changes list in the file system. The instances of
  * this class are used to collect changes that happened in the file system.
  *
- * @see ChangeProvider#getChanges(VcsDirtyScope, ChangelistBuilder,com.intellij.openapi.progress.ProgressIndicator, ChangeListManagerGate)
  * @author max
+ * @see ChangeProvider#getChanges(VcsDirtyScope, ChangelistBuilder, com.intellij.openapi.progress.ProgressIndicator, ChangeListManagerGate)
  */
 public interface ChangelistBuilder {
   /**
@@ -26,7 +26,7 @@ public interface ChangelistBuilder {
    * version control system knows about.
    *
    * @param change a change to process.
-   * @param vcsKey
+   * @param vcsKey VCS
    */
   void processChange(Change change, VcsKey vcsKey);
 
@@ -39,7 +39,7 @@ public interface ChangelistBuilder {
    *
    * @param change         Submitted change
    * @param changeListName A name for a change list.
-   * @param vcsKey
+   * @param vcsKey         VCS
    */
   void processChangeInList(Change change, @NlsSafe String changeListName, VcsKey vcsKey);
 
@@ -67,7 +67,7 @@ public interface ChangelistBuilder {
    * @param file a file to process
    */
   void processLocallyDeletedFile(FilePath file);
-  
+
   void processLocallyDeletedFile(final LocallyDeletedChange locallyDeletedChange);
 
   /**

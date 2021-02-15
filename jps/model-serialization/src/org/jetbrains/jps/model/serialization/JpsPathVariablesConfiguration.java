@@ -26,22 +26,8 @@ public interface JpsPathVariablesConfiguration extends JpsElement {
 
   void removePathVariable(@NotNull String name);
 
-  /**
-   * @deprecated use {@link #getUserVariableValue(String)} instead
-   */
-  @Deprecated
-  @Nullable
-  String getPathVariable(@NotNull String name);
-
   @Nullable
   String getUserVariableValue(@NotNull String name);
-
-  /**
-   * @deprecated use {@link #getAllUserVariables()} instead
-   */
-  @Deprecated
-  @NotNull
-  Map<String, String> getAllVariables();
 
   @NotNull
   Map<String, String> getAllUserVariables();

@@ -13,6 +13,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 @ApiStatus.Internal
 public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
   public static final int UNKNOWN_ID_YET = -238;
@@ -122,5 +125,22 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
   @NotNull
   public ChildInfo withId(int id) {
     return new ChildInfoImpl(id, nameId, symLinkTarget, children, flags, length, lastModified);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    ChildInfoImpl info = (ChildInfoImpl)o;
+    return id == info.id &&
+           nameId == info.nameId &&
+           Objects.equals(symLinkTarget, info.symLinkTarget) &&
+           Arrays.equals(children, info.children);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), id, nameId, symLinkTarget, Arrays.hashCode(children));
   }
 }

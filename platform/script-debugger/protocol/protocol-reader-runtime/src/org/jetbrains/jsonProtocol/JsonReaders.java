@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class JsonReaders {
-  public static final ObjectFactory<String> STRING_OBJECT_FACTORY = new ObjectFactory<String>() {
+  public static final ObjectFactory<String> STRING_OBJECT_FACTORY = new ObjectFactory<>() {
     @Override
     public String read(JsonReaderEx reader) {
       return reader.nextString();

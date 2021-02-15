@@ -69,20 +69,77 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertInstanceOf(targetElement, PyFunction.class);
   }
 
-  public void testToConstructor() {
-    PsiElement target = resolve();
-    assertInstanceOf(target, PyFunction.class);
-    assertEquals(PyNames.INIT, ((PyFunction)target).getName());
+  public void testInitialization() {
+    assertResolvesTo(
+      "class Foo:\n" +
+      "  pass\n" +
+      "Foo()\n" +
+      " <ref>",
+      PyClass.class,
+      "Foo"
+    );
+  }
+
+  public void testInitializationWithDunderInit() {
+    assertResolvesTo(
+      "class Foo:\n" +
+      "  def __init__(self):\n" +
+      "    pass\n" +
+      "Foo()\n" +
+      " <ref>",
+      PyClass.class,
+      "Foo"
+    );
   }
 
   // PY-17877
-  public void testInitializingToMetaclassDunderCall() {
-    assertResolvesTo(LanguageLevel.getLatest(), PyFunction.class, PyNames.CALL);
+  public void testInitializationWithMetaclassDunderCall() {
+    assertResolvesTo(
+      "class MyMeta(type):\n" +
+      "    def __call__(cls, p1, p2):\n" +
+      "        pass\n" +
+      "\n" +
+      "class MyClass(metaclass=MyMeta):\n" +
+      "    pass\n" +
+      "\n" +
+      "MyClass()\n" +
+      "  <ref>",
+      PyClass.class,
+      "MyClass"
+    );
+  }
+
+  public void testInitializationWithDunderInitAndMetaclassDunderCall() {
+    assertResolvesTo(
+      "class MyMeta(type):\n" +
+      "    def __call__(cls, p1, p2):\n" +
+      "        pass\n" +
+      "\n" +
+      "class MyClass(metaclass=MyMeta):\n" +
+      "    def __init__(self): pass\n" +
+      "\n" +
+      "MyClass()\n" +
+      "  <ref>",
+      PyClass.class,
+      "MyClass"
+    );
   }
 
   // PY-17877, PY-41380
-  public void testInitializingNotToMetaclassSelfArgsKwargsDunderCall() {
-    assertResolvesTo(LanguageLevel.getLatest(), PyClass.class, "MyClass");
+  public void testInitializationWithMetaclassSelfArgsKwargsDunderCall() {
+    assertResolvesTo(
+      "class MyMeta(type):\n" +
+      "    def __call__(cls, *args, **kwargs):\n" +
+      "        pass\n" +
+      "\n" +
+      "class MyClass(metaclass=MyMeta):\n" +
+      "    pass\n" +
+      "\n" +
+      "MyClass()\n" +
+      "  <ref>",
+      PyClass.class,
+      "MyClass"
+    );
   }
 
   public void testInitOrNewReturnsInitWhenNewIsFirst() {
@@ -1474,5 +1531,13 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
 
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     assertEmpty(file.findTopLevelAttribute("t").multiResolveAssignedValue(PyResolveContext.defaultContext().withTypeEvalContext(context)));
+  }
+
+  // PY-36062
+  public void testModuleTypeAttributes() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "__name__");
+    assertEquals("ModuleType", target.getContainingClass().getName());
+    assertEquals("types.pyi", target.getContainingFile().getName());
   }
 }

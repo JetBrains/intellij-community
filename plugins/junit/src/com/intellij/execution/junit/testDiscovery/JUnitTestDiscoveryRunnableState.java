@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.testDiscovery.TestDiscoverySearchHelper;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
@@ -32,6 +33,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.FunctionUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -71,7 +74,7 @@ abstract class JUnitTestDiscoveryRunnableState extends TestObject {
   }
 
   @Override
-  public SearchForTestsTask createSearchingForTestsTask() {
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
 
       private Set<String> myPatterns;

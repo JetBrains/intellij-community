@@ -36,7 +36,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   @Override
   public Iterator<Result> iterator() {
     assertNotProcessing();
-    return new UnmodifiableIterator<>(findAll().iterator());
+    return new UnmodifiableIterator<>(Query.super.iterator());
   }
 
   @Override
@@ -50,14 +50,6 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
 
   private void assertNotProcessing() {
     assert myIsProcessing.get() == null : "Operation is not allowed while query is being processed";
-  }
-
-  @Override
-  public Result @NotNull [] toArray(Result @NotNull [] a) {
-    assertNotProcessing();
-
-    final Collection<Result> all = findAll();
-    return all.toArray(a);
   }
 
   @NotNull

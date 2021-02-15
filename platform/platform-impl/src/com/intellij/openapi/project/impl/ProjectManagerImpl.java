@@ -8,6 +8,8 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -165,7 +167,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
       Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
       //noinspection deprecation
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project);
       activity.end();
 
       ProjectLoadHelper.registerComponents(project);
@@ -197,7 +199,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
   @Override
   public @NotNull Project getDefaultProject() {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
+    LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application has already been disposed!");
     // call instance method to reset timeout
     MessageBus bus = myDefaultProject.getMessageBus(); // re-instantiate if needed
     LOG.assertTrue(!bus.isDisposed());
@@ -259,10 +261,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   }
 
   public static void showCannotConvertMessage(@NotNull CannotConvertException e, @Nullable Component component) {
-    AppUIUtil.invokeOnEdt(() -> {
-      Messages.showErrorDialog(component, IdeBundle.message("error.cannot.convert.project", e.getMessage()),
-                               IdeBundle.message("title.cannot.convert.project"));
-    });
+    AppUIUtil.invokeOnEdt(() -> Messages.showErrorDialog(component, IdeBundle.message("error.cannot.convert.project", e.getMessage()),
+                                                       IdeBundle.message("title.cannot.convert.project")));
   }
 
   @Override
@@ -283,7 +283,12 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   // return true if successful
   @Override
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
-    for (Project project : getOpenProjects()) {
+    Project[] projects = getOpenProjects();
+    Project lightEditProject = LightEditUtil.getProjectIfCreated();
+    if (lightEditProject != null) {
+      projects = ArrayUtil.append(projects, lightEditProject);
+    }
+    for (Project project : projects) {
       if (!closeProject(project, /* isSaveProject = */ true, /* dispose = */ true, checkCanClose)) {
         return false;
       }
@@ -315,7 +320,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       }
       projectImpl.setTemporarilyDisposed(false);
     }
-    else if (!isProjectOpened(project)) {
+    else if (!isProjectOpened(project) && !LightEdit.owns(project)) {
       if (dispose) {
         if (project instanceof ComponentManagerImpl) {
           ((ComponentManagerImpl)project).stopServicePreloading();
@@ -411,12 +416,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   @Override
   public void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener) {
     myListeners.add(listener);
-  }
-
-  @Override
-  public void addProjectManagerListener(final @NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable) {
-    addProjectManagerListener(listener);
-    Disposer.register(parentDisposable, () -> removeProjectManagerListener(listener));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -332,6 +332,16 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * Allow to disable continuous validation.
+   * When disabled {@link #initValidation()} needs to be invoked after every change of the dialog to validate.
+   *
+   * @return {@code false} to disable continuous validation
+   */
+  protected boolean continuousValidation() {
+    return true;
+  }
+
+  /**
    * Validates user input and returns {@code null} if everything is fine
    * or validation description with component where problem has been found.
    *
@@ -382,7 +392,7 @@ public abstract class DialogWrapper {
   private void installErrorPainter() {
     if (myErrorPainterInstalled) return;
     myErrorPainterInstalled = true;
-    UIUtil.invokeLaterIfNeeded(() -> IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable));
+    IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable);
   }
 
   protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
@@ -390,6 +400,10 @@ public abstract class DialogWrapper {
     if (updateNeeded) {
       SwingUtilities.invokeLater(() -> {
         if (myDisposed) return;
+        if (!info.isEmpty()) {
+          installErrorPainter();
+        }
+        myErrorPainter.setValidationInfo(info);
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
         getOKAction().setEnabled(info.isEmpty() || info.stream().allMatch(info1 -> info1.okEnabled));
@@ -846,13 +860,6 @@ public abstract class DialogWrapper {
   @NotNull
   protected DialogWrapperPeer createPeer(@NotNull Component parent, boolean canBeParent) {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
-  }
-
-  /** @deprecated Dialogs with no parents are discouraged. */
-  @Deprecated
-  @NotNull
-  protected DialogWrapperPeer createPeer(boolean canBeParent, boolean applicationModalIfPossible) {
-    return createPeer(null, canBeParent, applicationModalIfPossible);
   }
 
   @NotNull
@@ -1413,6 +1420,7 @@ public abstract class DialogWrapper {
   }
 
   protected void startTrackingValidation() {
+    if (!continuousValidation()) return;
     SwingUtilities.invokeLater(() -> {
       if (!myValidationStarted && !myDisposed) {
         myValidationStarted = true;
@@ -1425,14 +1433,9 @@ public abstract class DialogWrapper {
     myValidationAlarm.cancelAllRequests();
     final Runnable validateRequest = () -> {
       if (myDisposed) return;
-      List<ValidationInfo> result = doValidateAll();
-      if (!result.isEmpty()) {
-        installErrorPainter();
-      }
-      myErrorPainter.setValidationInfo(result);
-      updateErrorInfo(result);
+      updateErrorInfo(doValidateAll());
 
-      if (!myDisposed) {
+      if (!myDisposed && continuousValidation()) {
         initValidation();
       }
     };
@@ -1479,7 +1482,7 @@ public abstract class DialogWrapper {
       for (JTable table : tables) {
         Dimension tablePreferredSize = table.getPreferredSize();
         size.width = Math.max(size.width, tablePreferredSize.width);
-        size.height = Math.max(size.height, size.height - table.getParent().getSize().height + tablePreferredSize.height);
+        size.height = Math.max(size.height, size.height - table.getParent().getHeight() + tablePreferredSize.height);
       }
       size.width = Math.min(1000, Math.max(600, size.width));
       size.height = Math.min(800, size.height);
@@ -1889,7 +1892,7 @@ public abstract class DialogWrapper {
         if (!isInplaceValidationToolTipEnabled()) {
           DialogEarthquakeShaker.shake(getPeer().getWindow());
         }
-
+        updateErrorInfo(infoList);
         startTrackingValidation();
         if(infoList.stream().anyMatch(info1 -> !info1.okEnabled)) return;
       }
@@ -1982,7 +1985,7 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.cancelAllRequests();
     Runnable clearErrorRunnable = () -> {
       if (myErrorText != null) {
-        myErrorText.clearError(info.isEmpty());
+        myErrorText.clearError(info.stream().noneMatch(i -> StringUtil.isNotEmpty(i.message)));
       }
     };
     if (headless) {
@@ -2013,13 +2016,13 @@ public abstract class DialogWrapper {
           }
         }
 
-        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
+        if (StringUtil.isNotEmpty(vi.message)) SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
       });
     }
     else if (!myInfo.isEmpty()) {
       Runnable updateErrorTextRunnable = () -> {
         for (ValidationInfo vi: myInfo) {
-          myErrorText.appendError(vi);
+          if (StringUtil.isNotEmpty(vi.message)) myErrorText.appendError(vi);
         }
       };
       if (headless) {

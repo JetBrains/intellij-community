@@ -101,7 +101,7 @@ public final class MavenDomProjectProcessorUtils {
   public static XmlTag searchProperty(@NotNull final String propertyName,
                                       @NotNull MavenDomProjectModel projectDom,
                                       @NotNull final Project project) {
-    SearchProcessor<XmlTag, MavenDomProperties> searchProcessor = new SearchProcessor<XmlTag, MavenDomProperties>() {
+    SearchProcessor<XmlTag, MavenDomProperties> searchProcessor = new SearchProcessor<>() {
       @Override
       protected XmlTag find(MavenDomProperties element) {
         return findProperty(element, propertyName);
@@ -285,7 +285,7 @@ public final class MavenDomProjectProcessorUtils {
     final MavenDomProjectModel model = plugin.getParentOfType(MavenDomProjectModel.class, false);
     if (model == null) return null;
 
-    SearchProcessor<MavenDomPlugin, MavenDomPlugins> processor = new SearchProcessor<MavenDomPlugin, MavenDomPlugins>() {
+    SearchProcessor<MavenDomPlugin, MavenDomPlugins> processor = new SearchProcessor<>() {
       @Override
       protected MavenDomPlugin find(MavenDomPlugins mavenDomPlugins) {
         if (model.equals(mavenDomPlugins.getParentOfType(MavenDomProjectModel.class, true))) {

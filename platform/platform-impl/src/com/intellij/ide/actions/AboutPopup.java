@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.AboutPopupDescriptionProvider;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -16,6 +17,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -39,9 +41,11 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -359,7 +363,7 @@ public final class AboutPopup {
 
       Font labelFont = JBFont.label();
       if (SystemInfo.isWindows) {
-        labelFont = JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 14);
+        labelFont = JBUI.Fonts.create("Segoe UI", 14);
       }
 
       int startFontSize = 14;
@@ -400,7 +404,7 @@ public final class AboutPopup {
         g2.setFont(JBUI.Fonts.miniFont());
       }
       else {
-        g2.setFont(JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 12));
+        g2.setFont(JBUI.Fonts.create("Segoe UI", 12));
       }
 
       g2.setColor(createColor(appInfo.getAboutForeground()));
@@ -424,10 +428,14 @@ public final class AboutPopup {
       }
     }
 
-    private static @NotNull String getCopyrightText() {
+    private static @NotNull @Nls String getCopyrightText() {
       /* Android Studio: https://b.corp.google.com/issues/37079872 - Remove misleading copyright notice
       ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      return "Copyright © " + appInfo.getCopyrightStart() + '–' + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + ' ' + appInfo.getCompanyName();
+      // Copyright message should not be translated
+      @NlsSafe
+      String copyrightText = String.format(Locale.ROOT,
+        "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
+      return copyrightText;
       */
       return " ";
     }
@@ -646,8 +654,9 @@ public final class AboutPopup {
     protected class AccessibleInfoSurface extends AccessibleJPanel {
       @Override
       public String getAccessibleName() {
-        String text = "System Information\n" + getText() + "\n" + getCopyrightText();
-        return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(text);
+        String text = IdeBundle.message("about.popup.system.info", getText(), getCopyrightText());
+        @NlsSafe String result = AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(text);
+        return result;
       }
     }
   }
@@ -673,10 +682,19 @@ public final class AboutPopup {
       extraInfo += "Registry: " + registryKeys + "\n";
     }
 
-    String nonBundledPlugins = PluginManagerCore.getLoadedPlugins().stream().filter(p -> !p.isBundled())
-      .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
+    String nonBundledPlugins = PluginManagerCore.getLoadedPlugins().stream()
+      .filter(p -> !p.isBundled())
+      .map(p -> p.getPluginId().getIdString() + " (" + p.getVersion() + ")")
+      .collect(StringUtil.joining());
     if (!StringUtil.isEmpty(nonBundledPlugins)) {
       extraInfo += "Non-Bundled Plugins: " + nonBundledPlugins;
+    }
+
+    if (PlatformUtils.isIntelliJ()) {
+      IdeaPluginDescriptor kotlinPlugin = PluginManagerCore.getPlugin(PluginId.findId("org.jetbrains.kotlin"));
+      if (kotlinPlugin != null) {
+        extraInfo += "\nKotlin: " + kotlinPlugin.getVersion();
+      }
     }
 
     if (SystemInfo.isUnix && !SystemInfo.isMac) {
@@ -712,12 +730,12 @@ public final class AboutPopup {
       @Override
       public String getAccessibleName() {
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-        return "About " + appInfo.getFullApplicationName();
+        return IdeBundle.message("about.popup.about.app", appInfo.getFullApplicationName());
       }
 
       @Override
       public String getAccessibleDescription() {
-        return myInfoSurface != null ? "Press Copy key to copy system information to clipboard" : null;
+        return myInfoSurface != null ? IdeBundle.message("press.copy.key.to.copy.system.information.to.clipboard") : null;
       }
 
       @Override
@@ -732,7 +750,7 @@ public final class AboutPopup {
 
       @Override
       public String getAccessibleActionDescription(int i) {
-        return i == 0 && myInfoSurface != null ? "Copy system information to clipboard" : null;
+        return i == 0 && myInfoSurface != null ? IdeBundle.message("copy.system.information.to.clipboard") : null;
       }
 
       @Override
@@ -791,7 +809,7 @@ public final class AboutPopup {
         final Pattern pattern = Pattern.compile("(\\d+)px");
         final Matcher matcher = pattern.matcher(htmlText);
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
           matcher.appendReplacement(sb, JBUIScale.scale(Integer.parseInt(matcher.group(1))) + "px");
         }

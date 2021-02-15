@@ -3,6 +3,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.CommonActionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,7 @@ public interface FavoritesListProvider extends Comparator<FavoriteTreeNodeDescri
   String getListName(final Project project);
 
   @Nullable
+  @NlsActions.ActionText
   String getCustomName(@NotNull CommonActionsPanel.Buttons type);
 
   boolean willHandle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects);

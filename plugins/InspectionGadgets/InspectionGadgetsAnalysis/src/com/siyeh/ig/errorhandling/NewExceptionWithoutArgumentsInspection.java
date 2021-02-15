@@ -24,10 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
 
-  @Deprecated
-  @SuppressWarnings("PublicField")
-  public boolean ignoreWithoutParameters;
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

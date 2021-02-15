@@ -348,18 +348,6 @@ public class VcsNotifier {
     return notifyMinorInfo(displayId, false, title, message);
   }
 
-  /**
-   * @deprecated use {@link #notifyMinorInfo(String, String, String, NotificationAction...)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
-  @NotNull
-  public Notification notifyMinorInfo(@NotificationTitle @NotNull String title,
-                                      @NotificationContent @NotNull String message,
-                                      NotificationAction... actions) {
-    return notify(STANDARD_NOTIFICATION, null, title, message, NotificationType.INFORMATION, actions);
-  }
-
   @NotNull
   public Notification notifyMinorInfo(@NonNls @Nullable String displayId,
                                       @NotificationTitle @NotNull String title,

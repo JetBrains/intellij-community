@@ -2,7 +2,7 @@
 package com.intellij.util.indexing;
 
 /**
- * @author Eugene Zhuravlev
+ * An exception intended to report that {@link InvertedIndex} storage looks like corrupted and should be rebuilt.
  */
 public final class StorageException extends Exception {
   public StorageException(final String message) {

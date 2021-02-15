@@ -24,7 +24,7 @@ import java.util.Map;
  * @author Irina.Chernushina
  */
 public class TestClientRunner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.vcs.TestClientRunner");
+  private static final Logger LOG = Logger.getInstance(TestClientRunner.class);
   private final boolean myTraceClient;
   private final File myClientBinaryPath;
   private final Map<String, String> myClientEnvironment;

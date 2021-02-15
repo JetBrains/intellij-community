@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -12,7 +10,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import java.util.Arrays;
 import java.util.HashSet;
 
-public class TextUtil {
+public final class TextUtil {
   private static final HashSet<String> KEYWORDS = new HashSet<>(Arrays.asList(
     "abstract", "default", "if", "private", "this", "boolean", "do", "implements", "protected", "throw", "break", "double", "import",
     "public", "throws", "byte", "else", "instanceof", "return", "transient", "case", "extends", "int", "short", "try", "catch", "final",

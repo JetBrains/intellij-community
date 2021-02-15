@@ -17,6 +17,7 @@ package com.android.tools.idea.gradle.dsl.parser.elements;
 
 import com.android.tools.idea.gradle.dsl.api.BuildModelNotification;
 import com.android.tools.idea.gradle.dsl.api.ext.PropertyType;
+import com.android.tools.idea.gradle.dsl.api.util.GradleNameElementUtil;
 import com.android.tools.idea.gradle.dsl.model.notifications.NotificationTypeReference;
 import com.android.tools.idea.gradle.dsl.parser.GradleDslNameConverter;
 import com.android.tools.idea.gradle.dsl.parser.GradleReferenceInjection;
@@ -24,7 +25,8 @@ import com.android.tools.idea.gradle.dsl.parser.ModificationAware;
 import com.android.tools.idea.gradle.dsl.parser.build.BuildScriptDslElement;
 import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement;
 import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile;
-import com.android.tools.idea.gradle.dsl.parser.semantics.SemanticsDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelEffectDescription;
+import com.android.tools.idea.gradle.dsl.parser.semantics.ModelPropertyDescription;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,6 +69,8 @@ public abstract class GradleDslElementImpl implements GradleDslElement, Modifica
 
   @NotNull protected final List<GradleReferenceInjection> myDependencies = new ArrayList<>();
   @NotNull protected final List<GradleReferenceInjection> myDependents = new ArrayList<>();
+
+  @Nullable private ModelEffectDescription myModelEffectDescription;
 
   /**
    * Creates an instance of a {@link GradleDslElement}
@@ -122,7 +126,7 @@ public abstract class GradleDslElementImpl implements GradleDslElement, Modifica
   @Override
   @NotNull
   public String getName() {
-    return myName.name();
+    return myModelEffectDescription == null ? myName.name() : myModelEffectDescription.property.name;
   }
 
   @Override
@@ -130,17 +134,24 @@ public abstract class GradleDslElementImpl implements GradleDslElement, Modifica
   public String getQualifiedName() {
     // Don't include the name of the parent if this element is a direct child of the file.
     if (myParent == null || myParent instanceof GradleDslFile) {
-      return getName();
+      return GradleNameElementUtil.escape(getName());
     }
 
     String ourName = getName();
-    return myParent.getQualifiedName() + (ourName.isEmpty() ? "" : "." + getName());
+    return myParent.getQualifiedName() + (ourName.isEmpty() ? "" : "." + GradleNameElementUtil.escape(ourName));
   }
 
   @Override
   @NotNull
   public String getFullName() {
-    return myName.fullName();
+    if (myModelEffectDescription == null) {
+      return myName.fullName();
+    }
+    else {
+      List<String> parts = myName.qualifyingParts();
+      parts.add(getName());
+      return GradleNameElement.createNameFromParts(parts);
+    }
   }
 
   @Override
@@ -151,7 +162,12 @@ public abstract class GradleDslElementImpl implements GradleDslElement, Modifica
 
   @Override
   public void rename(@NotNull String newName) {
-    myName.rename(newName);
+    rename(Arrays.asList(newName));
+  }
+
+  @Override
+  public void rename(@NotNull List<String> hierarchicalName) {
+    myName.rename(hierarchicalName);
     setModified();
 
     // If we are a GradleDslSimpleExpression we need to ensure our dependencies are correct.
@@ -521,7 +537,24 @@ public abstract class GradleDslElementImpl implements GradleDslElement, Modifica
 
   @Override
   @NotNull
-  public ImmutableMap<Pair<String, Integer>, Pair<String, SemanticsDescription>> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
+  public ImmutableMap<Pair<String, Integer>, ModelEffectDescription> getExternalToModelMap(@NotNull GradleDslNameConverter converter) {
     return ImmutableMap.of();
+  }
+
+  @Nullable
+  @Override
+  public ModelEffectDescription getModelEffect() {
+    return myModelEffectDescription;
+  }
+
+  @Override
+  public void setModelEffect(@Nullable ModelEffectDescription effect) {
+    myModelEffectDescription = effect;
+  }
+
+  @Nullable
+  @Override
+  public ModelPropertyDescription getModelProperty() {
+    return myModelEffectDescription == null ? null : myModelEffectDescription.property;
   }
 }

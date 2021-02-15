@@ -437,7 +437,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
       ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myFileTypesList)
         .setScrollPaneBorder(JBUI.Borders.empty())
-        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 1))
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),0,1,0,1))
         .setAddAction(__ -> addFileType())
         .setRemoveAction(__ -> removeFileType())
         .setEditAction(__ -> editFileType())
@@ -571,7 +571,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
         .setScrollPaneBorder(JBUI.Borders.empty())
-        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 1))
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),0,1,0,1))
         .setAddAction(__ -> addPattern())
         .setEditAction(__ -> editPattern())
         .setRemoveAction(__ -> removePattern())
@@ -580,8 +580,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       JScrollPane scrollPane = new JBScrollPane(myList);
       add(scrollPane, BorderLayout.CENTER);
       //noinspection DialogTitleCapitalization IDEA-254041
-      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false, TITLE_INSETS)
-                  .setShowLine(false));
+      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false, TITLE_INSETS).setShowLine(false));
     }
 
     void clearList() {
@@ -629,7 +628,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     HashBangPanel() {
       setLayout(new BorderLayout());
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myList.setCellRenderer(new ExtensionRenderer() {
+      myList.setCellRenderer(new ExtensionRenderer(){
         @Override
         public @NotNull Component getListCellRendererComponent(@NotNull JList list,
                                                                Object value,
@@ -637,7 +636,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
                                                                boolean isSelected,
                                                                boolean cellHasFocus) {
           Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          setText(" #!*" + value + "*");
+          setText(" #!*"+value+"*");
           return component;
         }
       });
@@ -645,7 +644,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
         .setScrollPaneBorder(JBUI.Borders.empty())
-        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 1))
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),0,1,0,1))
         .setAddAction(__ -> editHashBang(null))
         .setAddActionName(LangBundle.message("action.HashBangPanel.add.hashbang.pattern.text"))
         .setEditAction(__ -> editHashBang())
@@ -656,8 +655,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       JScrollPane scrollPane = new JBScrollPane(myList);
       add(scrollPane, BorderLayout.CENTER);
       //noinspection DialogTitleCapitalization IDEA-254041
-      setBorder(
-        IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
+      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
     }
 
     void clearList() {

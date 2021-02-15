@@ -1,31 +1,42 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.config
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountSerializer
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
+import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 
+@Service
 @State(name = "GithubPullRequestsUISettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
-class GithubPullRequestsProjectUISettings : PersistentStateComponentWithModificationTracker<GithubPullRequestsProjectUISettings.SettingsState> {
+class GithubPullRequestsProjectUISettings(private val project: Project)
+  : PersistentStateComponentWithModificationTracker<GithubPullRequestsProjectUISettings.SettingsState> {
+
   private var state: SettingsState = SettingsState()
 
   class SettingsState : BaseState() {
-    var hiddenUrls by stringSet()
+    var selectedUrlAndAccountId by property<UrlAndAccount?>(null) { it == null }
     var recentSearchFilters by list<String>()
   }
 
-  fun getHiddenUrls(): Set<String> = state.hiddenUrls.toSet()
+  @Deprecated("Deprecated when moving to single-tab pull requests")
+  fun getHiddenUrls(): Set<String> = emptySet()
 
-  fun addHiddenUrl(url: String) {
-    if (state.hiddenUrls.add(url)) {
-      state.intIncrementModificationCount()
+  var selectedRepoAndAccount: Pair<GHGitRepositoryMapping, GithubAccount>?
+    get() {
+      val (url, accountId) = state.selectedUrlAndAccountId ?: return null
+      val repo = project.service<GHProjectRepositoriesManager>().knownRepositories.find {
+        it.gitRemote.url == url
+      } ?: return null
+      val account = GHAccountSerializer.deserialize(accountId) ?: return null
+      return repo to account
     }
-  }
-
-  fun removeHiddenUrl(url: String) {
-    if (state.hiddenUrls.remove(url)) {
-      state.intIncrementModificationCount()
+    set(value) {
+      state.selectedUrlAndAccountId = value?.let { (repo, account) ->
+        UrlAndAccount(repo.gitRemote.url, GHAccountSerializer.serialize(account))
+      }
     }
-  }
 
   fun getRecentSearchFilters(): List<String> = state.recentSearchFilters.toList()
 
@@ -53,5 +64,19 @@ class GithubPullRequestsProjectUISettings : PersistentStateComponentWithModifica
     fun getInstance(project: Project) = project.service<GithubPullRequestsProjectUISettings>()
 
     private const val RECENT_SEARCH_FILTERS_LIMIT = 10
+
+    class UrlAndAccount private constructor() {
+
+      var url: String = ""
+      var accountId: String = ""
+
+      constructor(url: String, accountId: String) : this() {
+        this.url = url
+        this.accountId = accountId
+      }
+
+      operator fun component1() = url
+      operator fun component2() = accountId
+    }
   }
 }

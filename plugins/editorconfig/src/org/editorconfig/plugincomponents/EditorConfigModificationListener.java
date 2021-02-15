@@ -17,26 +17,30 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class EditorConfigModificationListener implements BulkFileListener {
+final class EditorConfigModificationListener implements BulkFileListener {
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
 
     for (VFileEvent event : events) {
       VirtualFile file = event.getFile();
-      if (file != null && file.getName().equals(".editorconfig")) {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file) ||
-              !EditorConfigRegistry.shouldStopAtProjectRoot()) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              SettingsProviderComponent.getInstance().incModificationCount();
-              for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-                if (editor.isDisposed()) continue;
-                EditorSettingsManager.applyEditorSettings(editor);
-                ((EditorEx)editor).reinitSettings();
-              }
-            });
-          }
+      if (file == null || !file.getName().equals(".editorconfig")) {
+        continue;
+      }
+
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file) ||
+            !EditorConfigRegistry.shouldStopAtProjectRoot()) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            SettingsProviderComponent.getInstance().incModificationCount();
+            for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+              if (editor.isDisposed()) continue;
+              EditorSettingsManager.applyEditorSettings(editor);
+              ((EditorEx)editor).reinitSettings();
+            }
+          });
         }
       }
     }

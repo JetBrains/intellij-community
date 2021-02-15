@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -16,7 +16,7 @@ import java.util.Collection;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 
-public class DevKitGutterTargetsChecker {
+public final class DevKitGutterTargetsChecker {
 
   public static void checkGutterTargets(final GutterMark gutterMark,
                                         final String tooltip,

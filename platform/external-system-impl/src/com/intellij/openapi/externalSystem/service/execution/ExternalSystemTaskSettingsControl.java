@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizePath;
-
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -10,11 +8,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
-import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
+import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -26,19 +20,21 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.GridBag;
-import gnu.trove.THashMap;
-import java.awt.Dimension;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizePath;
 
 /**
  * @author Denis Zhdanov
  */
-public class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
-
+public final class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final Project myProject;
 
@@ -165,7 +161,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     settings.setVmOptions(myVmOptionsEditor.getText());
     settings.setScriptParameters(myArgumentsEditor.getText());
     settings.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());
-    settings.setEnv(myEnvVariablesComponent.getEnvs().isEmpty() ? Collections.emptyMap() : new THashMap<>(myEnvVariablesComponent.getEnvs()));
+    settings.setEnv(myEnvVariablesComponent.getEnvs().isEmpty() ? Collections.emptyMap() : new HashMap<>(myEnvVariablesComponent.getEnvs()));
   }
 
   @Override

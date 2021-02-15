@@ -108,7 +108,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       setIcon(LOADING_NODE_ICON);
     }
     else {
-      setForeground(RenderingUtil.getForeground(tree));
+      setForeground(RenderingUtil.getForeground(tree, selected));
       setIcon(null);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,17 +10,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
  */
-public class JavaClassSupersImpl extends JavaClassSupers {
+public final class JavaClassSupersImpl extends JavaClassSupers {
   private static final Logger LOG = Logger.getInstance(JavaClassSupersImpl.class);
 
   @Override
@@ -52,7 +51,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     }
 
     return derivedClass instanceof PsiTypeParameter
-           ? processTypeParameter((PsiTypeParameter)derivedClass, scope, superClass, new THashSet<>(), derivedSubstitutor)
+           ? processTypeParameter((PsiTypeParameter)derivedClass, scope, superClass, new HashSet<>(), derivedSubstitutor)
            : getSuperSubstitutorWithCaching(superClass, derivedClass, scope, derivedSubstitutor);
   }
 
@@ -172,7 +171,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     return null;
   }
 
-  private static final Set<String> ourReportedInconsistencies = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<String> ourReportedInconsistencies = ContainerUtil.newConcurrentSet();
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   @Override

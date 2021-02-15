@@ -29,7 +29,7 @@ public final class ImageInfoIndex {
 
   private static final long ourMaxImageSize = (long)(Registry.get("ide.index.image.max.size").asDouble() * 1024 * 1024);
 
-  private static final DataExternalizer<ImageInfo> ourValueExternalizer = new DataExternalizer<ImageInfo>() {
+  private static final DataExternalizer<ImageInfo> ourValueExternalizer = new DataExternalizer<>() {
     @Override
     public void save(@NotNull final DataOutput out, final ImageInfo info) throws IOException {
       DataInputOutputUtil.writeINT(out, info.width);

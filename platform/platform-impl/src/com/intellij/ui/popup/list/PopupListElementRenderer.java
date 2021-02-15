@@ -28,7 +28,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   private @Nullable JLabel myValueLabel;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
-    super(new ListItemDescriptorAdapter<E>() {
+    super(new ListItemDescriptorAdapter<>() {
       @Override
       public String getTextFor(E value) {
         return aPopup.getListStep().getTextFor(value);

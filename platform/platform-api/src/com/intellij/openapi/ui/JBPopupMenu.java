@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
@@ -135,6 +136,12 @@ public class JBPopupMenu extends JPopupMenu {
    */
   public static void showByEvent(@NotNull MouseEvent event, @NotNull JPopupMenu menu) {
     menu.show(event.getComponent(), event.getX(), event.getY());
+  }
+
+  public static void showByEditor(@NotNull Editor editor, @NotNull JPopupMenu menu) {
+    Component invoker = editor.getContentComponent();
+    Point caretPoint = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
+    menu.show(invoker, caretPoint.x, caretPoint.y);
   }
 
   /**

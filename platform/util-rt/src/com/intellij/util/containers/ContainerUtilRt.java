@@ -17,15 +17,6 @@ import java.util.*;
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  */
 public final class ContainerUtilRt {
-  /**
-   * @deprecated Use {@link HashMap#HashMap(int)}
-   */
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  @Deprecated
-  public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
-    return new HashMap<K, V>(initialCapacity);
-  }
 
   /**
    * @deprecated Use {@link HashMap#HashMap()}
@@ -38,32 +29,12 @@ public final class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link HashMap#HashMap(Map)}
-   */
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  @Deprecated
-  public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new HashMap<K, V>(map);
-  }
-
-  /**
    * Use only for {@link Iterable}, for {@link Collection} please use {@link LinkedList#LinkedList(Collection)} directly.
    */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
     return copy(new LinkedList<T>(), elements);
-  }
-
-  /**
-   * @deprecated Use {@link LinkedList#LinkedList(Collection)} instead.
-   */
-  @NotNull
-  @Contract(value = "_ -> fail", pure = true)
-  @Deprecated
-  public static <T> LinkedList<T> newLinkedList(@SuppressWarnings("unused") @NotNull Collection<? extends T> elements) {
-    throw new AbstractMethodError("Use 'new LinkedList<>(elements)' instead");
   }
 
   /**
@@ -86,26 +57,6 @@ public final class ContainerUtilRt {
     ArrayList<T> list = new ArrayList<T>(elements.length);
     Collections.addAll(list, elements);
     return list;
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newArrayList(Iterable)} instead
-   */
-  @Deprecated
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> ArrayList<T> newArrayList(@NotNull Iterable<? extends T> elements) {
-    return copy(new ArrayList<T>(), elements);
-  }
-
-  /**
-   * @deprecated Use {@link ArrayList#ArrayList(Collection)} instead
-   */
-  @Deprecated
-  @NotNull
-  @Contract(value = "_ -> fail", pure = true)
-  public static <T> ArrayList<T> newArrayList(@SuppressWarnings("unused") @NotNull Collection<? extends T> elements) {
-    throw new AbstractMethodError("Use 'new ArrayList<>(elements)' instead");
   }
 
   @NotNull

@@ -20,7 +20,7 @@ import java.util.Map;
  * It's not possible to know for sure, which 8-bit charset is used.
  * We will then infer that the charset encountered is the same as the default standard charset.</p>
  *
- * <p>On the other hand, unicode files encoded in UTF-16 (low or big endian) or UTF-8 files
+ * <p>On the other hand, Unicode files encoded in UTF-16 (low or big endian) or UTF-8 files
  * with a Byte Order Marker are easy to find. For UTF-8 files with no BOM, if the buffer
  * is wide enough, it's easy to guess.</p>
  *
@@ -46,15 +46,20 @@ import java.util.Map;
  */
 public final class CharsetToolkit {
   public static final String UTF8 = "UTF-8";
-
+  /** @deprecated use {@link StandardCharsets#UTF_8} instead */
+  @Deprecated
   public static final Charset UTF8_CHARSET = StandardCharsets.UTF_8;
-  public static final Charset UTF_16_CHARSET = StandardCharsets.UTF_16;
+  /** @deprecated use {@link StandardCharsets#UTF_16LE} instead */
+  @Deprecated
   public static final Charset UTF_16LE_CHARSET = StandardCharsets.UTF_16LE;
+  /** @deprecated use {@link StandardCharsets#UTF_16BE} instead */
+  @Deprecated
   public static final Charset UTF_16BE_CHARSET = StandardCharsets.UTF_16BE;
   public static final Charset UTF_32BE_CHARSET = Charset.forName("UTF-32BE");
   public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
+  /** @deprecated use {@link StandardCharsets#US_ASCII} instead */
+  @Deprecated
   public static final Charset US_ASCII_CHARSET = StandardCharsets.US_ASCII;
-  public static final Charset ISO_8859_1_CHARSET = StandardCharsets.ISO_8859_1;
   public static final Charset WIN_1251_CHARSET = Charset.forName("windows-1251");
 
   private static final byte FF = (byte)0xff;
@@ -66,46 +71,43 @@ public final class CharsetToolkit {
 
   private final byte[] buffer;
   private final @NotNull Charset defaultCharset;
-  private boolean enforce8Bit;
+  private final boolean enforce8Bit;
 
   public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf};
   public static final byte[] UTF16LE_BOM = {-1, -2, };
   public static final byte[] UTF16BE_BOM = {-2, -1, };
-  public static final byte[] UTF32BE_BOM = {0, 0, -2, -1, };
-  public static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
+  private static final byte[] UTF32BE_BOM = {0, 0, -2, -1, };
+  private static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
   public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
   private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new HashMap<>(4);
   static {
-    CHARSET_TO_MANDATORY_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
-    CHARSET_TO_MANDATORY_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(StandardCharsets.UTF_16LE, UTF16LE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(StandardCharsets.UTF_16BE, UTF16BE_BOM);
     CHARSET_TO_MANDATORY_BOM.put(UTF_32BE_CHARSET, UTF32BE_BOM);
     CHARSET_TO_MANDATORY_BOM.put(UTF_32LE_CHARSET, UTF32LE_BOM);
   }
 
   /**
    * Constructor of the {@code CharsetToolkit} utility class.
-   *
-   * @param buffer the byte buffer of which we want to know the encoding.
-   */
-  public CharsetToolkit(byte @NotNull [] buffer) {
-    this.buffer = buffer;
-    defaultCharset = getDefaultSystemCharset();
-  }
-
-  /**
-   * Constructor of the {@code CharsetToolkit} utility class.
-   *
-   * @param buffer the byte buffer of which we want to know the encoding.
+   *  @param buffer the byte buffer of which we want to know the encoding.
    * @param defaultCharset the default Charset to use in case an 8-bit charset is recognized.
+   * @param enforce8Bit If US-ASCII is recognized, enforce to return the default encoding, rather than US-ASCII.
+   *     It might be a file without any special character in the range 128-255, but that may be or become
+   *     a file encoded with the default {@code charset} rather than US-ASCII.
    */
-  public CharsetToolkit(byte @NotNull [] buffer, @NotNull Charset defaultCharset) {
+  public CharsetToolkit(byte @NotNull [] buffer, @NotNull Charset defaultCharset, boolean enforce8Bit) {
     this.buffer = buffer;
     this.defaultCharset = defaultCharset;
+    this.enforce8Bit = enforce8Bit;
+    if (buffer.length == 0){
+      throw new IllegalArgumentException("Can't analyze empty buffer");
+    }
   }
 
   public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
     if (!stream.markSupported()) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
       stream = new BufferedInputStream(stream);
     }
 
@@ -197,15 +199,6 @@ public final class CharsetToolkit {
   }
 
   /**
-   * If US-ASCII is recognized, enforce to return the default encoding, rather than US-ASCII.
-   * It might be a file without any special character in the range 128-255, but that may be or become
-   * a file encoded with the default {@code charset} rather than US-ASCII.
-   */
-  public void setEnforce8Bit(boolean enforce) {
-    enforce8Bit = enforce;
-  }
-
-  /**
    * Retrieves the default Charset
    */
   public @NotNull Charset getDefaultCharset() {
@@ -260,7 +253,8 @@ public final class CharsetToolkit {
   }
 
   public static @NotNull String bytesToString(byte @NotNull [] bytes, final @NotNull Charset defaultCharset) {
-    Charset charset = new CharsetToolkit(bytes, defaultCharset).guessEncoding(bytes.length);
+    if (bytes.length == 0) return "";
+    Charset charset = new CharsetToolkit(bytes, defaultCharset, false).guessEncoding(bytes.length);
     if (charset == null) charset = defaultCharset; // binary content. This is silly but method contract says to return something anyway
     return decodeString(bytes, charset);
   }
@@ -412,8 +406,8 @@ public final class CharsetToolkit {
     if (hasUTF8Bom(buffer)) return StandardCharsets.UTF_8;
     if (hasUTF32BEBom(buffer)) return UTF_32BE_CHARSET;
     if (hasUTF32LEBom(buffer)) return UTF_32LE_CHARSET;
-    if (hasUTF16LEBom(buffer)) return UTF_16LE_CHARSET;
-    if (hasUTF16BEBom(buffer)) return UTF_16BE_CHARSET;
+    if (hasUTF16LEBom(buffer)) return StandardCharsets.UTF_16LE;
+    if (hasUTF16BEBom(buffer)) return StandardCharsets.UTF_16BE;
 
     return null;
   }
@@ -423,12 +417,15 @@ public final class CharsetToolkit {
   }
 
   public static Charset guessEncoding(@NotNull File f, int bufferLength, @NotNull Charset defaultCharset) throws IOException {
+    if (bufferLength == 0) {
+      throw new IllegalArgumentException("Can't analyze empty buffer");
+    }
     byte[] buffer = new byte[bufferLength];
     int read;
     try (FileInputStream fis = new FileInputStream(f)) {
       read = fis.read(buffer);
     }
-    CharsetToolkit toolkit = new CharsetToolkit(buffer, defaultCharset);
+    CharsetToolkit toolkit = new CharsetToolkit(buffer, defaultCharset, false);
     return toolkit.guessEncoding(read);
   }
 
@@ -525,10 +522,6 @@ public final class CharsetToolkit {
     return collection.toArray(new Charset[0]);
   }
 
-  public static byte @NotNull [] getUtf8Bytes(@NotNull String s) {
-    return s.getBytes(StandardCharsets.UTF_8);
-  }
-
   public static int getBOMLength(byte @NotNull [] content, @NotNull Charset charset) {
     if (charset.name().contains(UTF8) && hasUTF8Bom(content)) {
       return UTF8_BOM.length;
@@ -562,14 +555,12 @@ public final class CharsetToolkit {
    *         Currently, these are UTF-16xx, UTF-32xx and UTF-8.
    */
   public static byte @Nullable [] getPossibleBom(@NotNull Charset charset) {
-    if (charset.equals(StandardCharsets.UTF_8)) return UTF8_BOM;
-    return CHARSET_TO_MANDATORY_BOM.get(charset);
+    return charset.equals(StandardCharsets.UTF_8) ? UTF8_BOM : CHARSET_TO_MANDATORY_BOM.get(charset);
   }
 
   // byte sequence for this encoding is allowed to be prepended with this BOM
   public static boolean canHaveBom(@NotNull Charset charset, byte @NotNull [] bom) {
-    return charset.equals(StandardCharsets.UTF_8) && Arrays.equals(bom, UTF8_BOM)
-           || Arrays.equals(getMandatoryBom(charset), bom);
+    return charset.equals(StandardCharsets.UTF_8) && Arrays.equals(bom, UTF8_BOM) || Arrays.equals(getMandatoryBom(charset), bom);
   }
 
   public static @Nullable Charset forName(@Nullable String name) {

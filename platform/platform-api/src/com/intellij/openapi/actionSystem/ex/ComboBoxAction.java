@@ -28,6 +28,7 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +53,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return enabled ? myIcon : myDisabledIcon;
   }
   private boolean mySmallVariant = true;
-  private @NlsContexts.PopupTitle String myPopupTitle;
+  protected @NlsContexts.PopupTitle String myPopupTitle;
 
 
   protected ComboBoxAction() {
@@ -205,6 +206,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           setEnabled((Boolean)evt.getNewValue());
         }
       });
+    }
+
+    @TestOnly
+    public Presentation getPresentation() {
+      return myPresentation;
     }
 
     @Override

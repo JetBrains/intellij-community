@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
@@ -29,16 +30,15 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
-import com.intellij.util.io.div
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
-import com.intellij.workspaceModel.ide.CustomModuleEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
@@ -46,13 +46,12 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
-import kotlin.collections.HashSet
 
 @Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
   private val LOG = Logger.getInstance(javaClass)
 
-  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
+  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = LinkedHashMap()
 
   override fun dispose() {
     modules().forEach {
@@ -204,7 +203,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     when (change) {
       is EntityChange.Removed -> {
         // It's possible case then idToModule doesn't contain element e.g if unloaded module was removed
-        val module = event.storageBefore.moduleMap.getDataByEntity(change.entity)
+        val module = event.storageBefore.findModuleByEntity(change.entity)
         if (module != null) {
           fireEventAndDisposeModule(module)
         }
@@ -212,7 +211,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       }
 
       is EntityChange.Added -> {
-        val alreadyCreatedModule = event.storageAfter.moduleMap.getDataByEntity(change.entity)
+        val alreadyCreatedModule = event.storageAfter.findModuleByEntity(change.entity)
         val module = if (alreadyCreatedModule != null) {
           unloadedModulesSet.remove(change.entity.name)
           unloadedModules.remove(change.entity.name)
@@ -244,7 +243,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         if (oldId != newId) {
           unloadedModulesSet.remove(change.newEntity.name)
           unloadedModules.remove(change.newEntity.name)
-          val module = event.storageBefore.moduleMap.getDataByEntity(change.oldEntity)
+          val module = event.storageBefore.findModuleByEntity(change.oldEntity)
           if (module != null) {
             module.rename(newId.name, true)
             oldModuleNames[module] = oldId.name
@@ -282,7 +281,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
           val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
           if (library == null && WorkspaceModelTopics.getInstance(project).modulesAreLoaded) {
-            val module = entityStore.current.moduleMap.getDataByEntity(moduleEntity)
+            val module = entityStore.current.findModuleByEntity(moduleEntity)
                          ?: error("Could not find module bridge for module entity $moduleEntity")
             val moduleRootComponent = ModuleRootComponentBridge.getInstance(module)
             moduleRootComponent.moduleLibraryTable.addLibrary(change.entity, null)
@@ -343,6 +342,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
 
       val results = service.invokeAll(tasks)
+
       WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
         val moduleMap = builder.mutableModuleMap
         results.mapNotNull { it.get() }.forEach { (entity, module) ->
@@ -353,6 +353,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
     finally {
       service.shutdownNow()
+    }
+
+    WriteAction.runAndWait<RuntimeException> {
+      (ProjectRootManager.getInstance(project) as ProjectRootManagerBridge).setupTrackedLibrariesAndJdks()
     }
   }
 
@@ -452,7 +456,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   override fun findModuleByName(name: String): Module? {
     val entity = entityStore.current.resolve(ModuleId(name)) ?: return null
-    return entityStore.current.moduleMap.getDataByEntity(entity)
+    return entityStore.current.findModuleByEntity(entity)
   }
 
   override fun disposeModule(module: Module) = ApplicationManager.getApplication().runWriteAction {
@@ -535,7 +539,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     if (entitySource !is JpsFileEntitySource.FileInDirectory) {
       return null
     }
-    return entitySource.directory.toPath() / "${moduleEntity.name}.iml"
+    return entitySource.directory.toPath().resolve("${moduleEntity.name}.iml")
   }
 
   fun createModuleInstance(moduleEntity: ModuleEntity,
@@ -604,6 +608,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     @JvmStatic
     fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) =
       moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
+
+    @JvmStatic
+    fun WorkspaceEntityStorage.findModuleByEntity(entity: ModuleEntity): ModuleBridge? = moduleMap.getDataByEntity(entity)
 
     private val dependencyGraphWithTestsValue = CachedValue { storage ->
       buildModuleGraph(storage, true)

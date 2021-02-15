@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,8 @@ public class PropertyUtilBase {
   @NonNls protected static final String IS_PREFIX = PropertyKind.BOOLEAN_GETTER.prefix;
   @NotNull protected static final String SET_PREFIX = PropertyKind.SETTER.prefix;
 
+  private static final @NonNls @PsiModifier.ModifierConstant String @NotNull [] ONLY_PUBLIC = new String[]{PsiModifier.PUBLIC};
+
   @Nullable
   public static String getPropertyName(@NonNls @NotNull String methodName) {
     return StringUtil.getPropertyName(methodName);
@@ -50,10 +53,18 @@ public class PropertyUtilBase {
   @NotNull
   public static Map<String, PsiMethod> getAllProperties(final boolean acceptSetters,
                                                         final boolean acceptGetters, PsiMethod[] methods) {
+    return getAllProperties(acceptSetters, acceptGetters, ONLY_PUBLIC, methods);
+  }
+
+  @NotNull
+  public static Map<String, PsiMethod> getAllProperties(final boolean acceptSetters,
+                                                        final boolean acceptGetters,
+                                                        final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels,
+                                                        PsiMethod[] methods) {
     final Map<String, PsiMethod> map = new HashMap<>();
 
     for (PsiMethod method : methods) {
-      if (filterMethods(method)) continue;
+      if (filterMethods(method, visibilityLevels)) continue;
       if (acceptSetters && isSimplePropertySetter(method) ||
           acceptGetters && isSimplePropertyGetter(method)) {
         map.put(getPropertyName(method), method);
@@ -62,9 +73,12 @@ public class PropertyUtilBase {
     return map;
   }
 
-
-  private static boolean filterMethods(final PsiMethod method) {
-    if (method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return true;
+  private static boolean filterMethods(final PsiMethod method,
+                                       final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels) {
+    if (method.hasModifierProperty(PsiModifier.STATIC) ||
+        !ContainerUtil.exists(visibilityLevels, it -> method.hasModifierProperty(it))) {
+      return true;
+    }
 
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;
@@ -74,11 +88,18 @@ public class PropertyUtilBase {
 
   @NotNull
   public static List<PsiMethod> getSetters(@NotNull final PsiClass psiClass, final String propertyName) {
+    return getSetters(psiClass, propertyName, ONLY_PUBLIC);
+  }
+
+  @NotNull
+  public static List<PsiMethod> getSetters(@NotNull final PsiClass psiClass,
+                                           final String propertyName,
+                                           final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels) {
     final String setterName = suggestSetterName(propertyName);
     final PsiMethod[] psiMethods = psiClass.findMethodsByName(setterName, true);
     final ArrayList<PsiMethod> list = new ArrayList<>(psiMethods.length);
     for (PsiMethod method : psiMethods) {
-      if (filterMethods(method)) continue;
+      if (filterMethods(method, visibilityLevels)) continue;
       if (isSimplePropertySetter(method)) {
         list.add(method);
       }
@@ -88,12 +109,19 @@ public class PropertyUtilBase {
 
   @NotNull
   public static List<PsiMethod> getGetters(@NotNull final PsiClass psiClass, final String propertyName) {
+    return getGetters(psiClass, propertyName, ONLY_PUBLIC);
+  }
+
+  @NotNull
+  public static List<PsiMethod> getGetters(@NotNull final PsiClass psiClass,
+                                           final String propertyName,
+                                           final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels) {
     final String[] names = suggestGetterNames(propertyName);
     final ArrayList<PsiMethod> list = new ArrayList<>();
     for (String name : names) {
       final PsiMethod[] psiMethods = psiClass.findMethodsByName(name, true);
       for (PsiMethod method : psiMethods) {
-        if (filterMethods(method)) continue;
+        if (filterMethods(method, visibilityLevels)) continue;
         if (isSimplePropertyGetter(method)) {
           list.add(method);
         }
@@ -104,7 +132,14 @@ public class PropertyUtilBase {
 
   @NotNull
   public static List<PsiMethod> getAccessors(@NotNull final PsiClass psiClass, final String propertyName) {
-    return ContainerUtil.concat(getGetters(psiClass, propertyName), getSetters(psiClass, propertyName));
+    return getAccessors(psiClass, propertyName, ONLY_PUBLIC);
+  }
+
+  @NotNull
+  public static List<PsiMethod> getAccessors(@NotNull final PsiClass psiClass,
+                                             final String propertyName,
+                                             final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels) {
+    return ContainerUtil.concat(getGetters(psiClass, propertyName, visibilityLevels), getSetters(psiClass, propertyName, visibilityLevels));
   }
 
   public static String @NotNull [] getReadableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
@@ -433,7 +468,7 @@ public class PropertyUtilBase {
     Project project = field.getProject();
     String name = field.getName();
     String getName = suggestGetterName(field);
-    PsiMethod getMethod = factory.createMethod(getName, field.getType());
+    PsiMethod getMethod = factory.createMethod(getName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
     PsiUtil.setModifierProperty(getMethod, PsiModifier.PUBLIC, true);
     if (field.hasModifierProperty(PsiModifier.STATIC)) {
       PsiUtil.setModifierProperty(getMethod, PsiModifier.STATIC, true);
@@ -487,7 +522,7 @@ public class PropertyUtilBase {
       .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID).getText(),
                             field);
     String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
-    PsiParameter param = factory.createParameter(parameterName, field.getType());
+    PsiParameter param = factory.createParameter(parameterName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
 
     NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, param);
 

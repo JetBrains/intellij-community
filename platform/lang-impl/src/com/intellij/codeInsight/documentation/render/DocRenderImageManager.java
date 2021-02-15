@@ -127,7 +127,7 @@ class DocRenderImageManager extends AbstractDocRenderMemoryManager<Image> {
     return myImageProvider;
   }
 
-  private final Dictionary<URL, Image> myImageProvider = new Dictionary<URL, Image>() {
+  private final Dictionary<URL, Image> myImageProvider = new Dictionary<>() {
     @Override
     public Image get(Object key) {
       if (!(key instanceof URL)) return null;

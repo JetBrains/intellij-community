@@ -3,7 +3,6 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.vcs.AbstractVcs
@@ -21,13 +20,15 @@ import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 private val LOG = logger<AbstractCommitWorkflowHandler<*, *>>()
 
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
+@Nls
 private fun String.fixUnderscoreMnemonic() = replace('_', '&')
 
-internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): String =
+internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): @Nls String =
   replaceMnemonicAmpersand(
     (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
      ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
@@ -186,13 +187,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     handlers.mapNotNullLoggingErrors(LOG) { it.getAfterCheckinConfigurationPanel(parent) }
 
   protected open fun refreshChanges(callback: () -> Unit) =
-    ChangeListManager.getInstance(project).invokeAfterUpdate(
-      {
-        ui.refreshData()
-        callback()
-      },
-      InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("commit.progress.title"), ModalityState.current()
-    )
+    ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(true, VcsBundle.message("commit.progress.title")) {
+      ui.refreshData()
+      callback()
+    }
 
   override fun dispose() = Unit
 }

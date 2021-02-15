@@ -2,32 +2,31 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public enum PluginEnabledState {
 
-  ENABLED_FOR_PROJECT(
-    "plugins.configurable.enabled.for.current.project",
-    true,
-    true
-  ),
   ENABLED(
     "plugins.configurable.enabled.for.all.projects",
     true,
     false
   ),
-  DISABLED_FOR_PROJECT(
-    "plugins.configurable.disabled.for.current.project",
-    false,
+  ENABLED_FOR_PROJECT(
+    "plugins.configurable.enabled.for.current.project",
+    true,
     true
   ),
   DISABLED(
     "plugins.configurable.disabled.for.all.projects",
     false,
     false
+  ),
+  DISABLED_FOR_PROJECT(
+    "plugins.configurable.disabled.for.current.project",
+    false,
+    true
   );
 
   private final @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String myPropertyKey;
@@ -43,25 +42,23 @@ public enum PluginEnabledState {
   }
 
   public @NotNull @Nls String toString() {
-    String propertyKey = this == ENABLED && !isPerProjectEnabled() ?
-                         "plugins.configurable.InstalledSearchOption.Enabled" :
-                         this == DISABLED && !isPerProjectEnabled() ?
-                         "plugins.configurable.InstalledSearchOption.Disabled" :
-                         myPropertyKey;
-
-    return IdeBundle.message(propertyKey);
+    return IdeBundle.message(myPropertyKey);
   }
 
   public boolean isEnabled() {
     return myEnabled;
   }
 
+  public boolean isDisabled() {
+    return !myEnabled;
+  }
+
   public boolean isPerProject() {
     return myPerProject;
   }
 
-  public static boolean isPerProjectEnabled() {
-    return Registry.is("ide.plugins.per.project", false);
+  public @NotNull PluginEnabledState getInverted() {
+    return getState(!myEnabled, isPerProject());
   }
 
   public static @NotNull PluginEnabledState getState(boolean enabled,

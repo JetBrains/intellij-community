@@ -189,7 +189,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected Collection<String> generateSuggestedNames(PyExpression expression) {
-    Collection<String> candidates = new LinkedHashSet<String>() {
+    Collection<String> candidates = new LinkedHashSet<>() {
       @Override
       public boolean add(String s) {
         if (PyNames.isReserved(s)) {
@@ -387,7 +387,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return true;
     }
     else if (expressions.size() > 1) {
-      IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PyExpression>() {
+      IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
         @Override
         public void pass(PyExpression pyExpression) {
           operation.setElement(pyExpression);
@@ -459,7 +459,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         performInplaceIntroduce(operation);
       }
       else {
-        OccurrencesChooser.simpleChooser(editor).showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
+        OccurrencesChooser.simpleChooser(editor).showChooser(operation.getElement(), operation.getOccurrences(), new Pass<>() {
           @Override
           public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
             operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);

@@ -36,10 +36,7 @@ import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
-import git4idea.config.GitExecutableManager;
-import git4idea.config.GitExecutableProblemsNotifier;
-import git4idea.config.GitExecutableValidator;
-import git4idea.config.GitVersion;
+import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
@@ -264,15 +261,6 @@ public final class GitVcs extends AbstractVcs {
     return GitExecutableManager.getInstance().getVersion(myProject);
   }
 
-  /**
-   * Shows a command line message in the Version Control Console
-   * @deprecated use {@link GitVcsConsoleWriter}
-   */
-  @Deprecated
-  public void showCommandLine(@Nls String cmdLine) {
-    GitVcsConsoleWriter.getInstance(myProject).showCommandLine(cmdLine);
-  }
-
   @Override
   public boolean allowsNestedRoots() {
     return true;
@@ -348,8 +336,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public boolean arePartialChangelistsSupported() {
-    return !GitStageManagerKt.isStagingAreaAvailable() ||
-           !GitStageManagerKt.stageLineStatusTrackerRegistryOption().asBoolean();
+    return true;
   }
 
   @TestOnly
@@ -369,8 +356,8 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public boolean isWithCustomLocalChanges() {
-    return GitStageManagerKt.isStagingAreaAvailable() &&
-           GitStageManagerKt.stageLocalChangesRegistryOption().asBoolean();
+    return GitVcsApplicationSettings.getInstance().isStagingAreaEnabled() &&
+           GitStageManagerKt.canEnableStagingArea();
   }
 
   @Override

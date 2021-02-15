@@ -84,7 +84,7 @@ public final class WebpNativeLibHelper {
   }
 
   public static String getLibName() {
-    String baseName = CpuArch.CURRENT == CpuArch.X86_64 || SystemInfo.isMac && CpuArch.CURRENT == CpuArch.ARM64 ? "webp_jni64" : "webp_jni";
+    String baseName = CpuArch.isIntel64() || SystemInfo.isMac && CpuArch.isArm64() ? "webp_jni64" : "webp_jni";
     String fileName = System.mapLibraryName(baseName);
     if (SystemInfo.isMac) {
       fileName = fileName.replace(".jnilib", ".dylib");

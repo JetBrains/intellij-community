@@ -33,7 +33,7 @@ public final class FakeElementTransform extends PropertyTransform {
   public FakeElementTransform() { }
 
   @Override
-  public boolean test(@Nullable GradleDslElement e) {
+  public boolean test(@Nullable GradleDslElement e, @NotNull GradleDslElement holder) {
     return e instanceof FakeElement;
   }
 

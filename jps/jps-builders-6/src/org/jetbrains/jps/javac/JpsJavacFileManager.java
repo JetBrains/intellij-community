@@ -4,20 +4,19 @@ package org.jetbrains.jps.javac;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 
 import javax.tools.*;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 
 /**
@@ -71,6 +70,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
 
   private Iterable<? extends JavaFileObject> myInputSources = Collections.emptyList();
   private final Map<String, JavaFileObject> myInputSourcesIndex = new HashMap<String, JavaFileObject>();
+  private final List<Closeable> myCloseables = new ArrayList<Closeable>();
 
   public JpsJavacFileManager(final Context context, boolean javacBefore9, Collection<? extends JavaSourceTransformer> transformers) {
     super(context.getStandardFileManager());
@@ -105,7 +105,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       }
 
       @Override
-      public void reportMessage(Diagnostic.Kind kind, String message) {
+      public void reportMessage(Diagnostic.Kind kind, @Nls String message) {
         context.reportMessage(kind, message);
       }
     };
@@ -156,7 +156,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
 
   @Override
   public FileObject getFileForOutput(Location location, String packageName, String relativeName, FileObject sibling) throws IOException {
-    final String fileName = packageName.isEmpty()? relativeName : externalizeFileName(packageName, File.separator, relativeName);
+    final String fileName = packageName.isEmpty()? relativeName : externalizeFileName(packageName, "/", relativeName);
     return getFileForOutput(location, JpsFileObject.findKind(fileName), fileName, null, sibling);
   }
 
@@ -250,21 +250,12 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
 
   @Override
   public ClassLoader getClassLoader(Location location) {
-    final Iterable<? extends File> path = getLocation(location);
-    if (path == null) {
-      return null;
-    }
-    final List<URL> urls = new ArrayList<URL>();
-    for (File f: path) {
-      try {
-        urls.add(f.toURI().toURL());
-      }
-      catch (MalformedURLException e) {
-        throw new AssertionError(e);
-      }
-    }
     // ensure processor's loader will not resolve against JPS classes and libraries used in JPS
-    return new URLClassLoader(urls.toArray(new URL[0]), myContext.getStandardFileManager().getClass().getClassLoader());
+    final ClassLoader loader = LazyInitClassLoader.createFrom(getLocation(location), myContext.getStandardFileManager().getClass().getClassLoader());
+    if (loader instanceof Closeable) {
+      myCloseables.add((Closeable)loader);
+    }
+    return loader;
   }
 
   private File getSingleOutputDirectory(final Location loc, final URI sourceUri) {
@@ -313,7 +304,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     StringBuilder buf = new StringBuilder();
     for (int i = 0, len = classOrPackageName.length(); i < len; i++) {
       char ch = classOrPackageName.charAt(i);
-      buf.append(ch == '.'? File.separatorChar : ch);
+      buf.append(ch == '.'? '/' : ch);
     }
     for (CharSequence s : suffix) {
       buf.append(s);
@@ -332,7 +323,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
 
     void consumeOutputFile(@NotNull OutputFileObject obj);
 
-    void reportMessage(final Diagnostic.Kind kind, String message);
+    void reportMessage(final Diagnostic.Kind kind, @Nls String message);
   }
 
   public final Context getContext() {
@@ -473,7 +464,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       if (isFileSystemLocation(location)) {
         // we consider here only locations that are known to be file-based
         final Iterable<? extends File> locationRoots = getLocation(location);
-        if (locationRoots == null) {
+        if (Iterators.isEmpty(locationRoots)) {
           return Collections.emptyList();
         }
         result = Iterators.flat(Iterators.map(locationRoots, new Function<File, Iterable<JavaFileObject>>() {
@@ -582,6 +573,14 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       myInputSources = Collections.emptyList();
       myInputSourcesIndex.clear();
       myFileOperations.clearCaches(null);
+      for (Closeable closeable : myCloseables) {
+        try {
+          closeable.close();
+        }
+        catch (IOException ignored) {
+        }
+      }
+      myCloseables.clear();
     }
   }
 

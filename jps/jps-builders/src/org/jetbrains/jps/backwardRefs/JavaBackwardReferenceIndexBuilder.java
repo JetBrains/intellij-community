@@ -2,6 +2,7 @@
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.*;
@@ -15,13 +16,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(JavaBackwardReferenceIndexBuilder.class);
   public static final String BUILDER_ID = "compiler.ref.index";
   private static final String MESSAGE_TYPE = "processed module";
-  private final Set<ModuleBuildTarget> myCompiledTargets = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<ModuleBuildTarget> myCompiledTargets = ContainerUtil.newConcurrentSet();
 
   public JavaBackwardReferenceIndexBuilder() {
     super(BuilderCategory.CLASS_POST_PROCESSOR);

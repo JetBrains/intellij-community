@@ -120,7 +120,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         dir = dir.createChildDirectory(this, "foo");
       }
       VirtualFile leafDir = dir;
-      ThrowableRunnable<RuntimeException> checkPerformance = new ThrowableRunnable<RuntimeException>() {
+      ThrowableRunnable<RuntimeException> checkPerformance = new ThrowableRunnable<>() {
         private VirtualFile findRoot(VirtualFile file) {
           while (true) {
             VirtualFile parent = file.getParent();

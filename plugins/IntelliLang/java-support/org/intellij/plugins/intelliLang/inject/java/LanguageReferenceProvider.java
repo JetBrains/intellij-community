@@ -40,7 +40,7 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final Configuration configuration = Configuration.getInstance();
     registerUastReferenceProvider(registrar, injectionHostUExpression().annotationParam(StandardPatterns.string().with(
-      new PatternCondition<String>(
+      new PatternCondition<>(
         "isLanguageAnnotation") {
         @Override
         public boolean accepts(@NotNull final String s, final ProcessingContext context) {
@@ -60,7 +60,7 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
         return new PsiReference[]{new ULiteralLanguageReference(uExpression, host)};
       }
     }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
-    registrar.registerReferenceProvider(literalExpression().with(new PatternCondition<PsiLiteralExpression>("isStringLiteral") {
+    registrar.registerReferenceProvider(literalExpression().with(new PatternCondition<>("isStringLiteral") {
       @Override
       public boolean accepts(@NotNull final PsiLiteralExpression expression, final ProcessingContext context) {
         return PsiUtilEx.isStringOrCharacterLiteral(expression);

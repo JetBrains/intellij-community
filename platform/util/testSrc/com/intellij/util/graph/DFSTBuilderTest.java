@@ -62,7 +62,7 @@ public class DFSTBuilderTest {
   }
 
   private static Graph<TestNode> graphByNodes(TestNode[] allNodes, Map<TestNode, TestNode[]> mapIn) {
-    return GraphGenerator.generate(new InboundSemiGraph<TestNode>() {
+    return GraphGenerator.generate(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<TestNode> getNodes() {

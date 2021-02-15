@@ -21,7 +21,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Moves caret to the the matching brace:
@@ -34,16 +33,11 @@ public class MatchBraceAction extends EditorAction {
     super(new MyHandler());
   }
 
-  private static class MyHandler extends EditorActionHandler {
-    MyHandler() {
-      super(true);
-    }
-
+  private static class MyHandler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (file == null) return;
-
 
       int targetOffset = getClosestTargetOffset(editor, file);
 

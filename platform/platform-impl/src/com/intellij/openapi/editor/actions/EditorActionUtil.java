@@ -24,7 +24,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -826,8 +825,8 @@ public final class EditorActionUtil {
 
   @NotNull
   private static Rectangle getVisibleArea(@NotNull Editor editor) {
-    return SystemProperties.isTrueSmoothScrollingEnabled() ? editor.getScrollingModel().getVisibleAreaOnScrollingFinished()
-                                                           : editor.getScrollingModel().getVisibleArea();
+    ScrollingModel model = editor.getScrollingModel();
+    return EditorCoreUtil.isTrueSmoothScrollingEnabled() ? model.getVisibleAreaOnScrollingFinished() : model.getVisibleArea();
   }
 
   /**

@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.util.ObjectUtils;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -48,9 +49,8 @@ public abstract class Configuration implements JDOMExternalizable {
 
   /**
    * String used to refer to this configuration. It should be unique or null.
-   * 1. {@link com.intellij.structuralsearch.PredefinedConfigurationUtil#createConfiguration} -> refName = "Template name (language)"
-   * 2. {@link com.intellij.structuralsearch.PredefinedConfigurationUtil#createLegacyConfiguration} -> refName = "Template name"
-   * 3. User defined configuration -> refName = null / getRefName = "Template name"
+   *  - For predefined configurations, the refName is a unique String
+   *  - For user-defined configurations, the refName is null and getRefName returns the template name
    */
   private @NonNls String refName;
 
@@ -62,7 +62,7 @@ public abstract class Configuration implements JDOMExternalizable {
     created = -1L;
   }
 
-  public Configuration(@NotNull @Nls String name, @NotNull String category) {
+  public Configuration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name, @NotNull String category) {
     this.name = name;
     this.category = category;
     created = -1L;
@@ -89,7 +89,7 @@ public abstract class Configuration implements JDOMExternalizable {
     return name;
   }
 
-  public void setName(@NotNull String value) {
+  public void setName(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String value) {
     if (uuid == null) {
       uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
     }
@@ -167,7 +167,8 @@ public abstract class Configuration implements JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) {
-    name = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
+    //noinspection HardCodedStringLiteral
+    name = ObjectUtils.notNull(element.getAttributeValue(NAME_ATTRIBUTE_NAME), "");
     final Attribute createdAttribute = element.getAttribute(CREATED_ATTRIBUTE_NAME);
     if (createdAttribute != null) {
       try {

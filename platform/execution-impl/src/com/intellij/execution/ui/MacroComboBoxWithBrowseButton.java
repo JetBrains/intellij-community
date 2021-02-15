@@ -101,7 +101,7 @@ public class MacroComboBoxWithBrowseButton extends ComboBox<String> implements T
     if (model != null) model.useModuleDir(always || module != null);
   }
 
-  private final TextComponentAccessor<ComboBox<String>> accessor = new TextComponentAccessor<ComboBox<String>>() {
+  private final TextComponentAccessor<ComboBox<String>> accessor = new TextComponentAccessor<>() {
     @Override
     public String getText(ComboBox<String> component) {
       Object item = component == null ? null : component.getSelectedItem();

@@ -185,7 +185,7 @@ public final class BuildFilePropertiesPanel {
     private final JTable myPropertiesTable;
     private final JPanel myWholePanel;
 
-    private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN = new ColumnInfo<BuildFileProperty, String>(
+    private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN = new ColumnInfo<>(
       AntBundle.message("edit.ant.properties.name.column.name")) {
       @Override
       public String valueOf(BuildFileProperty buildFileProperty) {
@@ -202,7 +202,7 @@ public final class BuildFilePropertiesPanel {
         buildFileProperty.setPropertyName(name);
       }
     };
-    private static final ColumnInfo<BuildFileProperty, String> VALUE_COLUMN = new ColumnInfo<BuildFileProperty, String>(
+    private static final ColumnInfo<BuildFileProperty, String> VALUE_COLUMN = new ColumnInfo<>(
       AntBundle.message("edit.ant.properties.value.column.name")) {
       @Override
       public boolean isCellEditable(BuildFileProperty buildFileProperty) {
@@ -286,7 +286,7 @@ public final class BuildFilePropertiesPanel {
     private JPanel myWholePanel;
 
     private static final int PREFERRED_CHECKBOX_COLUMN_WIDTH = new JCheckBox().getPreferredSize().width + 4;
-    private static final ColumnInfo<TargetFilter, Boolean> CHECK_BOX_COLUMN = new ColumnInfo<TargetFilter, Boolean>("") {
+    private static final ColumnInfo<TargetFilter, Boolean> CHECK_BOX_COLUMN = new ColumnInfo<>("") {
       @Override
       public Boolean valueOf(TargetFilter targetFilter) {
         return targetFilter.isVisible();
@@ -320,7 +320,7 @@ public final class BuildFilePropertiesPanel {
       if (name2 == null) return 1;
       return name1.compareToIgnoreCase(name2);
     };
-    private static final ColumnInfo<TargetFilter, String> NAME_COLUMN = new ColumnInfo<TargetFilter, String>(
+    private static final ColumnInfo<TargetFilter, String> NAME_COLUMN = new ColumnInfo<>(
       AntBundle.message("ant.target")) {
       @Override
       public String valueOf(TargetFilter targetFilter) {
@@ -344,7 +344,7 @@ public final class BuildFilePropertiesPanel {
       }
       return description1.compareToIgnoreCase(description2);
     };
-    private static final ColumnInfo<TargetFilter, String> DESCRIPTION = new ColumnInfo<TargetFilter, String>(
+    private static final ColumnInfo<TargetFilter, String> DESCRIPTION = new ColumnInfo<>(
       AntBundle.message("edit.ant.properties.description.column.name")) {
       @Override
       public String valueOf(TargetFilter targetFilter) {
@@ -405,25 +405,26 @@ public final class BuildFilePropertiesPanel {
       myAntCommandLine.setDialogCaption(AntBundle.message("run.execution.tab.ant.command.line.dialog.title"));
       setLabelFor(myJDKLabel, myJDKs);
 
-      myJDKsController = new ChooseAndEditComboBoxController<Sdk, String>(myJDKs, jdk -> jdk != null ? jdk.getName() : "", String.CASE_INSENSITIVE_ORDER) {
-        @Override
-        public Iterator<Sdk> getAllListItems() {
-          Application application = ApplicationManager.getApplication();
-          if (application == null) {
-            return Collections.singletonList((Sdk)null).iterator();
+      myJDKsController =
+        new ChooseAndEditComboBoxController<>(myJDKs, jdk -> jdk != null ? jdk.getName() : "", String.CASE_INSENSITIVE_ORDER) {
+          @Override
+          public Iterator<Sdk> getAllListItems() {
+            Application application = ApplicationManager.getApplication();
+            if (application == null) {
+              return Collections.singletonList((Sdk)null).iterator();
+            }
+            ArrayList<Sdk> allJdks = new ArrayList<>(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
+            allJdks.add(0, null);
+            return allJdks.iterator();
           }
-          ArrayList<Sdk> allJdks = new ArrayList<>(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
-          allJdks.add(0, null);
-          return allJdks.iterator();
-        }
 
-        @Override
-        public Sdk openConfigureDialog(Sdk jdk, JComponent parent) {
-          ProjectJdksEditor editor = new ProjectJdksEditor(jdk, myJDKs.getComboBox());
-          editor.show();
-          return editor.getSelectedJdk();
-        }
-      };
+          @Override
+          public Sdk openConfigureDialog(Sdk jdk, JComponent parent) {
+            ProjectJdksEditor editor = new ProjectJdksEditor(jdk, myJDKs.getComboBox());
+            editor.show();
+            return editor.getSelectedJdk();
+          }
+        };
 
       UIPropertyBinding.Composite binding = getBinding();
       binding.bindString(myAntCommandLine.getTextField(), AntBuildFileImpl.ANT_COMMAND_LINE_PARAMETERS);

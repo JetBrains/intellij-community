@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 
 public class EmptyQuery<R> implements Query<R> {
   private static final EmptyQuery<?> EMPTY_QUERY_INSTANCE = new EmptyQuery<>();
@@ -24,17 +23,6 @@ public class EmptyQuery<R> implements Query<R> {
   @Override
   public boolean forEach(@NotNull Processor<? super R> consumer) {
     return true;
-  }
-
-  @Override
-  public R @NotNull [] toArray(R @NotNull [] a) {
-    return findAll().toArray(a);
-  }
-
-  @NotNull
-  @Override
-  public Iterator<R> iterator() {
-    return findAll().iterator();
   }
 
   public static <T> Query<T> getEmptyQuery() {

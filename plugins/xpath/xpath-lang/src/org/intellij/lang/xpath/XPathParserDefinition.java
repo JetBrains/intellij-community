@@ -39,8 +39,8 @@ public class XPathParserDefinition implements ParserDefinition {
     }
 
     @Override
-    public IFileElementType getFileNodeType() {
-        return XPathElementTypes.FILE;
+    public @NotNull IFileElementType getFileNodeType() {
+      return XPathElementTypes.FILE;
     }
 
     @Override
@@ -61,15 +61,15 @@ public class XPathParserDefinition implements ParserDefinition {
         return TokenSet.create(XPathTokenTypes.STRING_LITERAL);
     }
 
-    @Override
-    public PsiParser createParser(Project project) {
-        return new XPathParser();
-    }
+  @Override
+  public @NotNull PsiParser createParser(Project project) {
+    return new XPathParser();
+  }
 
-    @Override
-    public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
-        return SpaceRequirements.MUST_NOT;
-    }
+  @Override
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return SpaceRequirements.MUST_NOT;
+  }
 
     @Override
     @NotNull
@@ -121,7 +121,7 @@ public class XPathParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
-        return new XPathFile(viewProvider, XPathFileType.XPATH);
-    }
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
+    return new XPathFile(viewProvider, XPathFileType.XPATH);
+  }
 }

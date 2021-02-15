@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Function
-import com.intellij.util.SystemProperties
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.append
@@ -397,7 +396,8 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
       WriteAction.runAndWait<RuntimeException> {
         getOrCreateVirtualFile(path, this).getOutputStream(this).use {
           //todo use proper line separator
-          EclipseJDOMUtil.output(root, OutputStreamWriter(it, StandardCharsets.UTF_8), SystemProperties.getLineSeparator())
+          EclipseJDOMUtil.output(root, OutputStreamWriter(it, StandardCharsets.UTF_8), //todo inline; schedule
+          System.lineSeparator())
         }
       }
     }

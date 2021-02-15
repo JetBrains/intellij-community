@@ -4,6 +4,7 @@ package com.intellij.openapi.fileTypes.impl.associate.ui;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences;
 import com.intellij.openapi.util.NlsSafe;
@@ -21,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -65,7 +67,14 @@ public class FileTypeAssociationForm {
         MyFileTypeItem item = myItems.get(index);
         Color textColor = getForeground(selected);
         Color backgroundColor = getBackground(selected);
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 2));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 2)) {
+          private final AccessibleContext myContext = checkBox.getAccessibleContext();
+
+          @Override
+          public AccessibleContext getAccessibleContext() {
+            return myContext;
+          }
+        };
         if (item.isSubType()) {
           panel.add(Box.createRigidArea(new Dimension(JBUIScale.scale(20),1)));
         }
@@ -77,6 +86,7 @@ public class FileTypeAssociationForm {
           panel.setBackground(backgroundColor);
           infoLabel.setForeground(selected ? textColor : JBColor.GRAY);
           infoLabel.setBackground(backgroundColor);
+          panel.getAccessibleContext().setAccessibleDescription(infoLabel.getText());
         }
         panel.setBackground(backgroundColor);
         return panel;
@@ -158,6 +168,7 @@ public class FileTypeAssociationForm {
     return !(fileType instanceof NativeFileType) &&
            !(fileType instanceof UserBinaryFileType) &&
            !(fileType instanceof ArchiveFileType) &&
+           !(fileType instanceof FakeFileType) &&
            (!(fileType instanceof OSFileIdeAssociation) ||
             ((OSFileIdeAssociation)fileType).isFileAssociationAllowed());
   }

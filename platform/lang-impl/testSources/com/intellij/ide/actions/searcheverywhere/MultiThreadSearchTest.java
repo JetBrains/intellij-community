@@ -191,7 +191,7 @@ public class MultiThreadSearchTest extends BasePlatformTestCase {
   }
 
   private static SearchEverywhereContributor<Object> createTestContributor(String id, int fixedPriority, String... items) {
-    return new SearchEverywhereContributor<Object>() {
+    return new SearchEverywhereContributor<>() {
       @NotNull
       @Override
       public String getSearchProviderId() {

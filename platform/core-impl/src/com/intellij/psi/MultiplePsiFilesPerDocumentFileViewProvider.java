@@ -19,6 +19,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -27,7 +28,6 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionUtil;
@@ -37,10 +37,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends AbstractFileViewProvider {
-  protected final ConcurrentMap<Language, PsiFileImpl> myRoots = ContainerUtil.newConcurrentMap(1, 0.75f, 1);
+  protected final ConcurrentMap<Language, PsiFileImpl> myRoots = new ConcurrentHashMap<>(1, 0.75f, 1);
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal;
 
   public MultiplePsiFilesPerDocumentFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, boolean eventSystemEnabled) {
@@ -111,12 +112,11 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
     return ContainerUtil.mapNotNull(myRoots.keySet(), this::getCachedPsi);
   }
 
-  @NotNull
   @Override
-  public final List<FileElement> getKnownTreeRoots() {
-    List<FileElement> files = new ArrayList<>(myRoots.size());
+  public final @NotNull List<FileASTNode> getKnownTreeRoots() {
+    List<FileASTNode> files = new ArrayList<>(myRoots.size());
     for (PsiFile file : myRoots.values()) {
-      final FileElement treeElement = ((PsiFileImpl)file).getTreeElement();
+      final FileASTNode treeElement = ((PsiFileImpl)file).getNodeIfLoaded();
       if (treeElement != null) {
         files.add(treeElement);
       }

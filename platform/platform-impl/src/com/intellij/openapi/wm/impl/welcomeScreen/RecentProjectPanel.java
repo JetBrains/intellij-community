@@ -179,19 +179,23 @@ public class RecentProjectPanel extends JPanel {
   public static Function<? super AnAction, String> createProjectNameFunction() {
     return o -> {
       if (o instanceof ReopenProjectAction) {
-        ReopenProjectAction item = (ReopenProjectAction)o;
-        String home = SystemProperties.getUserHome();
-        String path = item.getProjectPath();
-        if (FileUtil.startsWith(path, home)) {
-          path = path.substring(home.length());
-        }
-        return item.getProjectName() + " " + path;
+        return getProjectName((ReopenProjectAction)o);
       }
       else if (o instanceof ProjectGroupActionGroup) {
         return ((ProjectGroupActionGroup)o).getGroup().getName();
       }
       return o.toString();
     };
+  }
+
+  @NotNull
+  static String getProjectName(@NotNull ReopenProjectAction projectItem) {
+    String home = SystemProperties.getUserHome();
+    String path = projectItem.getProjectPath();
+    if (FileUtil.startsWith(path, home)) {
+      path = path.substring(home.length());
+    }
+    return projectItem.getProjectName() + " " + path;
   }
 
   @NotNull
@@ -424,13 +428,6 @@ public class RecentProjectPanel extends JPanel {
     protected final JLabel myName = new JLabel();
     protected final JLabel myPath = ComponentPanelBuilder.createNonWrappingCommentComponent("");
     protected boolean myHovered;
-
-    /** @deprecated use the default constructor */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-    protected RecentProjectItemRenderer(@SuppressWarnings("unused") UniqueNameBuilder<ReopenProjectAction> pathShortener) {
-      this();
-    }
 
     protected RecentProjectItemRenderer() {
       super(new VerticalFlowLayout());

@@ -2,9 +2,12 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 class IdBitSet implements Cloneable, RandomAccessIntContainer {
   private static final int SHIFT = 6;
@@ -62,7 +65,8 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     if (!set) {
       if (myBase < 0) {
         myBase = roundToNearest(bitIndex);
-      } else if (bitIndex < myBase) {
+      }
+      else if (bitIndex < myBase) {
         int newBase = roundToNearest(bitIndex);
         int wordDiff = (myBase - newBase) >> SHIFT;
         long[] n = new long[wordDiff + myBitMask.length];
@@ -75,9 +79,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
       bitIndex -= myBase;
       int wordIndex = bitIndex >> SHIFT;
       if (wordIndex >= myBitMask.length) {
-        long[] n = new long[Math.max(calcCapacity(myBitMask.length), wordIndex + 1)];
-        System.arraycopy(myBitMask, 0, n, 0, myBitMask.length);
-        myBitMask = n;
+        myBitMask = ArrayUtil.realloc(myBitMask, Math.max(calcCapacity(myBitMask.length), wordIndex + 1));
       }
       myBitMask[wordIndex] |= 1L << (bitIndex & MASK);
       myLastUsedSlot = Math.max(myLastUsedSlot, wordIndex);
@@ -139,13 +141,12 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     try {
       IdBitSet clone = (IdBitSet)super.clone();
       if (myBitMask.length != myLastUsedSlot + 1) { // trim to size
-        long[] longs = new long[myLastUsedSlot + 1];
-        System.arraycopy(myBitMask, 0, longs, 0, longs.length);
-        myBitMask = longs;
+        myBitMask = Arrays.copyOf(myBitMask, myLastUsedSlot + 1);
       }
       clone.myBitMask = myBitMask.clone();
       return clone;
-    } catch (CloneNotSupportedException ex) {
+    }
+    catch (CloneNotSupportedException ex) {
       Logger.getInstance(getClass().getName()).error(ex);
       return null;
     }

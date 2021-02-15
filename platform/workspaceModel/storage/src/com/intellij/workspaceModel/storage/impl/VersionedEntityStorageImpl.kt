@@ -134,6 +134,9 @@ open class VersionedEntityStorageImpl(initialStorage: WorkspaceEntityStorage) : 
   override val version: Long
     get() = currentPointer.version
 
+  val pointer: Current
+    get() = currentPointer
+
   override fun <R> cachedValue(value: CachedValue<R>): R =
     valuesCache.cachedValue(value, current)
 
@@ -144,7 +147,7 @@ open class VersionedEntityStorageImpl(initialStorage: WorkspaceEntityStorage) : 
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
     valuesCache.clearCachedValue(value, parameter)
 
-  private class Current(val version: Long, val storage: WorkspaceEntityStorage)
+  class Current(val version: Long, val storage: WorkspaceEntityStorage)
 
   @Volatile
   private var currentPointer: Current = Current(0, initialStorage)

@@ -281,15 +281,6 @@ public final class NameUtil {
     return buildMatcher(pattern, options);
   }
 
-  /**
-   * @deprecated Parameter {@code lowerCaseWords} is ignored, same as {@link #buildMatcher(String, int, boolean, boolean)} )}
-   */
-  @Deprecated
-  @NotNull
-  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, @SuppressWarnings("unused") boolean lowerCaseWords) {
-    return buildMatcher(pattern, exactPrefixLen, allowToUpper, allowToLower);
-  }
-
   public static class MatcherBuilder {
     private final String pattern;
     private String separators = "";

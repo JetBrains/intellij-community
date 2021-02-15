@@ -2,6 +2,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -60,7 +62,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public final class DomManagerImpl extends DomManager {
+public final class DomManagerImpl extends DomManager implements Disposable {
   private static final Key<Object> MOCK = Key.create("MockElement");
 
   static final Key<WeakReference<DomFileElementImpl<?>>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
@@ -105,7 +107,7 @@ public final class DomManagerImpl extends DomManager {
       public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
         return aspect instanceof TreeAspect;
       }
-    }, project);
+    }, this);
 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
@@ -134,8 +136,18 @@ public final class DomManagerImpl extends DomManager {
         }
         return event instanceof VFileMoveEvent || event instanceof VFileDeleteEvent;
       }
-    }, myProject);
+    }, this);
+
+    project.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        DomUtil.clearCaches();
+      }
+    });
   }
+
+  @Override
+  public void dispose() { }
 
   public long getPsiModificationCount() {
     return PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();

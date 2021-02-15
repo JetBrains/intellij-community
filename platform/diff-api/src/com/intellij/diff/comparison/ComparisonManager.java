@@ -40,14 +40,6 @@ public abstract class ComparisonManager {
                                                        @NotNull ComparisonPolicy policy,
                                                        @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 
-  @NotNull
-  @Deprecated
-  public abstract List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
-                                                       @NotNull CharSequence text2,
-                                                       @NotNull List<LineFragment> lineFragments,
-                                                       @NotNull ComparisonPolicy policy,
-                                                       @NotNull ProgressIndicator indicator) throws DiffTooBigException;
-
   /**
    * Compare three texts by-line (LEFT - BASE - RIGHT)
    */

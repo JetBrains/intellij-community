@@ -50,7 +50,7 @@ public class UserDefinedJsonSchemaConfiguration {
   public List<Item> patterns = new SmartList<>();
   @Transient
   private final AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns =
-    new AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>>() {
+    new AtomicClearableLazyValue<>() {
       @NotNull
       @Override
       protected List<PairProcessor<Project, VirtualFile>> compute() {

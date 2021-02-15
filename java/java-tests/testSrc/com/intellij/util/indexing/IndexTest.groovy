@@ -31,8 +31,10 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -58,6 +60,7 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
 import com.intellij.psi.search.*
 import com.intellij.psi.stubs.*
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -66,7 +69,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
 import com.intellij.util.indexing.impl.IndexDebugProperties
@@ -76,9 +78,12 @@ import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.indexing.impl.forward.IntForwardIndex
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
+import com.intellij.util.indexing.events.IndexedFilesListener
+import com.intellij.util.indexing.events.VfsEventsMerger
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.PersistentMapImpl
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -89,9 +94,8 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
 
 import java.util.concurrent.CountDownLatch
 
-/**
- * @author Eugene Zhuravlev
- */
+import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadExtensionWithText
+
 @SkipSlowTestLocally
 class IndexTest extends JavaCodeInsightFixtureTestCase {
 
@@ -108,7 +112,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    if ("testUndoToFileContentForUnsavedCommittedDocument".equals(getName())) {
+    if ("testUndoToFileContentForUnsavedCommittedDocument" == getName() ||
+        "test requestReindex" == getName()) {
       super.runTestRunnable(testRunnable)
     }
     else {
@@ -832,13 +837,14 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     GlobalSearchScope allScope = new EverythingGlobalScope()
     // create file to be indexed
     final VirtualFile testFile = myFixture.addFileToProject("test.txt", "test").getVirtualFile()
-    assertNoException(new IllegalArgumentExceptionCase() {
+    assertNoException(IllegalArgumentException.class, new ThrowableRunnable<Throwable>() {
       @Override
-      void tryClosure() throws IllegalArgumentException {
+      void run() throws Throwable {
         //force to index new file with null project scope
-        FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, null, allScope)
+        FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, getProject(), allScope)
       }
     })
+    assertNotNull(testFile)
   }
 
   class RecordingVfsListener extends IndexedFilesListener {
@@ -918,8 +924,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test requesting nonexisted index fails as expected"() {
     ID<?, ?> myId = ID.create("my.id")
-    FileBasedIndex.instance.getContainingFiles(myId, "null", GlobalSearchScope.allScope(project))
-    FileBasedIndex.instance.processAllKeys(myId, CommonProcessors.alwaysTrue(), project)
+    try {
+      FileBasedIndex.instance.getContainingFiles(myId, "null", GlobalSearchScope.allScope(project))
+      FileBasedIndex.instance.processAllKeys(myId, CommonProcessors.alwaysTrue(), project)
+      fail()
+    }
+    catch (IllegalStateException ignored) {}
   }
 
   void "test read-only index access"() {
@@ -978,8 +988,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     try {
       MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
       PersistentHashMap<String, UpdatableValueContainer<String>> map = storage.getIndexMap()
-      assertTrue(map.getReadOnly())
-      assertTrue(map.getValueStorage().isReadOnly())
+      assertTrue(PersistentMapImpl.unwrap(map).getReadOnly())
+      assertTrue(PersistentMapImpl.unwrap(map).getValueStorage().isReadOnly())
     }
     finally {
       index.dispose()
@@ -1172,6 +1182,28 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       assert !findClass('Foo')
     }
+  }
+
+  void "test every directory and file are marked as indexed in open project"() {
+    VirtualFile foo = myFixture.addFileToProject('src/main/a.java', 'class Foo {}').virtualFile
+    VirtualFile main = foo.parent
+    VirtualFile src = main.parent
+
+    def scope = GlobalSearchScope.allScope(getProject())
+    assertEquals(foo, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "a.java", scope)))
+    assertEquals(main, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "main", scope)))
+    assertEquals(src, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "src", scope)))
+
+    // content-less indexes has been passed
+    // now all directories are indexed
+
+    assertFalse(((VirtualFileSystemEntry)foo).isFileIndexed())
+    assertTrue(((VirtualFileSystemEntry)main).isFileIndexed())
+    assertTrue(((VirtualFileSystemEntry)src).isFileIndexed())
+
+    assert findClass("Foo") // ensure content dependent indexes are passed
+
+    assertTrue(((VirtualFileSystemEntry)foo).isFileIndexed())
   }
 
   void "test stub updating index stamp"() {
@@ -1388,19 +1420,19 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     // index queries aren't cached
     5.times {
-      assert clazz == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) { stubQuery.getValue() }
+      assert clazz == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(stubQuery))
     }
     assert indexQueries >= 5
 
     indexQueries = 0
-    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) { idQuery.getValue() }
-    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) { idQuery.getValue() }
+    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, asComputable(idQuery))
+    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(idQuery))
     assert indexQueries >= 2
 
     // non-index queries should work as usual
     3.times {
-      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) { plainValue.getValue() }
-      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) { plainValue.getValue() }
+      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, asComputable(plainValue))
+      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(plainValue))
     }
     assert plainQueries > 0 && plainQueries < 3*2
 
@@ -1457,4 +1489,49 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
   }
 
+  void 'test requestReindex'() {
+    def file = ScratchRootType.getInstance().createScratchFile(project, "Foo.java", JavaLanguage.INSTANCE, "class Foo {}")
+
+    def text = "<fileBasedIndex implementation=\"" + CountingFileBasedIndexExtension.class.getName() + "\"/>"
+    Disposer.register(testRootDisposable, loadExtensionWithText(text, CountingFileBasedIndexExtension.class.classLoader))
+
+    FileBasedIndex.getInstance().getFileData(CountingFileBasedIndexExtension.INDEX_ID, file, project)
+    assertTrue(CountingFileBasedIndexExtension.COUNTER.get() > 0)
+
+    CountingFileBasedIndexExtension.COUNTER.set(0)
+    FileBasedIndex.instance.requestReindex(file)
+
+    FileBasedIndex.getInstance().getFileData(CountingFileBasedIndexExtension.INDEX_ID, file, project)
+    assertTrue(CountingFileBasedIndexExtension.COUNTER.get() > 0)
+  }
+
+  void 'test modified excluded file not present in index'() {
+    // we don't update excluded file index data, so we should wipe it to be consistent
+    def file = myFixture.addFileToProject("src/to_be_excluded/A.java", "class A {}").virtualFile
+    assertNotNull(findClass("A"))
+
+    def fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.instance
+    def trigramId = TrigramIndex.INDEX_ID
+    def fileId = ((VirtualFileWithId)file).getId()
+
+    fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
+    assertNotEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
+
+    def parentDir = file.parent
+    PsiTestUtil.addExcludedRoot(myFixture.getModule(), parentDir)
+    VfsUtil.saveText(file, "class B {}")
+
+    fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
+    assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
+  }
+
+
+  private <T> ThrowableComputable<T, RuntimeException> asComputable(CachedValue<T> cachedValue) {
+    return new ThrowableComputable<T, RuntimeException>() {
+      @Override
+      T compute() throws RuntimeException {
+        return cachedValue.getValue()
+      }
+    }
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.testFramework.RunAll
@@ -15,11 +15,10 @@ class GradlePublishingTest extends GradleHighlightingBaseTest implements Resolve
   @Test
   void repositoriesTest() {
     importProject("apply plugin: 'maven-publish'")
-    new RunAll().append {
-      'publishing closure delegate'()
-    } append {
-      'publishing repositories maven url'()
-    } run()
+    new RunAll(
+      { 'publishing closure delegate'() },
+      { 'publishing repositories maven url'() }
+    ).run()
   }
 
   @Override

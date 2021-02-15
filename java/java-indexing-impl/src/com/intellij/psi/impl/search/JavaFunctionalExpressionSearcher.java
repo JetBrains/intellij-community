@@ -53,7 +53,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
@@ -456,7 +455,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     private final AtomicInteger contextsConsidered = new AtomicInteger();
     private final AtomicInteger sureExprsAfterLightCheck = new AtomicInteger();
     private final AtomicInteger exprsToHeavyCheck = new AtomicInteger();
-    private final Set<VirtualFile> filesLookedInside = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<VirtualFile> filesLookedInside = ContainerUtil.newConcurrentSet();
 
     public Session(@NotNull SearchParameters parameters, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
       this.consumer = consumer;

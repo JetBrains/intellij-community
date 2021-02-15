@@ -4,8 +4,10 @@ package com.intellij.find.ngrams;
 import com.intellij.find.TextSearchService;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -14,13 +16,6 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 public class TrigramTextSearchService implements TextSearchService {
-  @NotNull
-  private final FileBasedIndex myFileBasedIndex;
-
-  public TrigramTextSearchService() {
-    myFileBasedIndex = FileBasedIndex.getInstance();
-  }
-
   @Override
   public @NotNull TextSearchResult processFilesWithText(@NotNull String text,
                                                         Processor<? super VirtualFile> processor,
@@ -45,6 +40,9 @@ public class TrigramTextSearchService implements TextSearchService {
   @Override
   public boolean isInSearchableScope(@NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
-    return TrigramIndex.isIndexable(fileType) && myFileBasedIndex.isIndexingCandidate(file, TrigramIndex.INDEX_ID);
+    return !file.isDirectory() &&
+           TrigramIndex.isIndexable(fileType) &&
+           !ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType) &&
+           !SingleRootFileViewProvider.isTooLargeForIntelligence(file);
   }
 }

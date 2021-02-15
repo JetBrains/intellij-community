@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
@@ -25,7 +26,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +41,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new JavacQuirksInspection());
   }
 
   @Override
@@ -257,14 +261,14 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCaptureTopLevelWildcardsForConditionalExpression() { doTest5(false);}
   public void testGenericsOverrideMethodInRawInheritor() { doTest5(false);}
   public void testIDEA107654() { doTest5(false); }
-  public void testIDEA55510() { doTest5(false); }
+  public void testIDEA55510() { doTest5(true); }
   public void testIDEA27185(){ doTest6(false); }
   public void testIDEA67571(){ doTest7(false); }
   public void testTypeArgumentsOnRawType(){ doTest6(false); }
   public void testTypeArgumentsOnRawType17(){ doTest7(false); }
   public void testWildcardsOnRawTypes() { doTest5(false); }
   public void testDisableWithinBoundsCheckForSuperWildcards() { doTest7(false); }
-  public void testIDEA108287() { doTest5(false); }
+  public void testIDEA108287() { doTest5(true); }
   public void testIDEA77128() { doTest7(false); }
   public void testDisableCastingToNestedWildcards() { doTest5(false); }
   public void testBooleanInferenceFromIfCondition() { doTest7(false); }
@@ -297,15 +301,15 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA87860() { doTest5(false); }
   public void testIDEA67584() { doTest5(false); }
   public void testIDEA113225() { doTest5(false); }
-  public void testIDEA67518() { doTest5(false); }
+  public void testIDEA67518() { doTest5(true); }
 
   public void testIDEA57252() {
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    doTest5(false);
+    doTest5(true);
   }
 
   public void testIDEA57274() { doTest7(false); }
-  public void testIDEA67591() { doTest5(false); }
+  public void testIDEA67591() { doTest5(true); }
   public void testIDEA114894() { doTest5(false); }
   public void testIDEA60818() { doTest5(false); }
   public void testIDEA63331() { doTest5(false); }

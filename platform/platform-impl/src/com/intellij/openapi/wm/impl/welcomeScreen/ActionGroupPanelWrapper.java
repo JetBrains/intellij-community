@@ -62,7 +62,7 @@ public class ActionGroupPanelWrapper {
     });
 
     list.setBackground(getProjectsBackground());
-    list.setCellRenderer(new GroupedItemsListRenderer<AnAction>(new ListItemDescriptorAdapter<AnAction>() {
+    list.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<AnAction>() {
                            @Nullable
                            @Override
                            public String getTextFor(AnAction value) {

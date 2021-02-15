@@ -8,12 +8,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -22,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -36,7 +32,6 @@ import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -125,87 +120,70 @@ public class GetVersionAction extends AnAction implements DumbAware {
     return VcsBundle.message("action.name.for.file.get.version", filePath.getPath(), revision.getRevisionNumber());
   }
 
-  private static void write(@NotNull FilePath filePath, byte[] revision, @NotNull Project project) throws IOException {
+  private static void write(@NotNull FilePath filePath, byte[] revision) throws IOException {
     VirtualFile virtualFile = filePath.getVirtualFile();
     if (virtualFile == null) {
       FileUtil.writeToFile(filePath.getIOFile(), revision);
     }
     else {
-      Document document;
-      if (!virtualFile.getFileType().isBinary()) {
-        document = FileDocumentManager.getInstance().getDocument(virtualFile);
-      }
-      else {
-        document = null;
-      }
-
-      if (document == null) {
-        virtualFile.setBinaryContent(revision);
-      }
-      else {
-        String content = StringUtil.convertLineSeparators(new String(revision, filePath.getCharset().name()));
-
-        CommandProcessor
-          .getInstance().executeCommand(project, () -> document.replaceString(0, document.getTextLength(), content),
-                                        VcsBundle.message("message.title.get.version"), null);
-      }
+      virtualFile.setBinaryContent(revision);
+      // Avoid MemoryDiskConflictResolver. We've got user consent to override file in ReplaceFileConfirmationDialog.
+      FileDocumentManager.getInstance().reloadFiles(virtualFile);
     }
   }
 
   private static class MyWriteVersionTask extends Task.Backgroundable {
     @NotNull private final FilePath myFilePath;
     @NotNull private final VcsFileRevision myRevision;
-    @Nullable private final VirtualFile myFile;
 
     MyWriteVersionTask(@NotNull Project project, @NotNull FilePath filePath, @NotNull VcsFileRevision revision) {
       super(project, VcsBundle.message("show.diff.progress.title"));
       myFilePath = filePath;
       myRevision = revision;
-      myFile = filePath.getVirtualFile();
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      final LocalHistoryAction action = myFile != null ? startLocalHistoryAction(myFilePath, myRevision) : LocalHistoryAction.NULL;
-      final byte[] revisionContent;
       try {
-        revisionContent = VcsHistoryUtil.loadRevisionContent(myRevision);
+        byte[] revisionContent = VcsHistoryUtil.loadRevisionContent(myRevision);
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          writeFileContent(revisionContent);
+        });
       }
-      catch (final IOException | VcsException e) {
+      catch (IOException | VcsException e) {
         LOG.info(e);
         ApplicationManager.getApplication().invokeLater(
           () -> Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
                                            VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon()));
-        return;
       }
-      catch (ProcessCanceledException ex) {
+    }
+
+    private void writeFileContent(byte @NotNull [] revisionContent) {
+      VirtualFile virtualFile = myFilePath.getVirtualFile();
+      if (virtualFile != null && !virtualFile.isWritable() &&
+          ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(virtualFile)).hasReadonlyFiles()) {
         return;
       }
 
-      ApplicationManager.getApplication().invokeLater(() -> {
-        try {
-          if (myFile != null && !myFile.isWritable() &&
-              ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(myFile)).hasReadonlyFiles()) {
-            return;
-          }
-
-          WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      LocalHistoryAction action = virtualFile != null ? startLocalHistoryAction(myFilePath, myRevision) : LocalHistoryAction.NULL;
+      try {
+        WriteCommandAction.writeCommandAction(myProject)
+          .withName(VcsBundle.message("message.title.get.version"))
+          .run(() -> {
             try {
-              write(myFilePath, revisionContent, myProject);
+              write(myFilePath, revisionContent);
             }
             catch (IOException e) {
               Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
                                          VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
             }
           });
-          if (myFile != null) {
-            VcsDirtyScopeManager.getInstance(myProject).fileDirty(myFile);
-          }
-        }
-        finally {
-          action.finish();
-        }
-      });
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(myFilePath);
+      }
+      finally {
+        action.finish();
+      }
     }
   }
 }

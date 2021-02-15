@@ -32,12 +32,4 @@ public class BrowserHyperlinkInfo implements HyperlinkInfo {
   public void navigate(Project project) {
     BrowserUtil.browse(myUrl);
   }
-
-  /**
-   * @deprecated use {@link BrowserUtil#browse(String)}
-   */
-  @Deprecated
-  public static void openUrl(String url) {
-    BrowserUtil.browse(url);
-  }
 }

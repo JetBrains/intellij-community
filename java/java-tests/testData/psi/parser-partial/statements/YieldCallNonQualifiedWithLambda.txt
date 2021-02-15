@@ -1,0 +1,21 @@
+PsiJavaFile:YieldCallNonQualifiedWithLambda.java
+  PsiExpressionStatement
+    PsiMethodCallExpression:yield(() -> {})
+      PsiReferenceExpression:yield
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:yield('yield')
+      PsiExpressionList
+        PsiJavaToken:LPARENTH('(')
+        PsiLambdaExpression
+          PsiParameterList:()
+            PsiJavaToken:LPARENTH('(')
+            PsiJavaToken:RPARENTH(')')
+          PsiWhiteSpace(' ')
+          PsiJavaToken:ARROW('->')
+          PsiWhiteSpace(' ')
+          PsiCodeBlock
+            PsiJavaToken:LBRACE('{')
+            PsiJavaToken:RBRACE('}')
+        PsiJavaToken:RPARENTH(')')
+    PsiJavaToken:SEMICOLON(';')

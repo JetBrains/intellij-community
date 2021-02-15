@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
@@ -18,6 +18,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,11 +140,13 @@ public class SubstitutionHandler extends MatchingHandler {
     }
 
     MatchResult result = context.hasResult() ? context.getResult().findChild(name) : null;
-
+    if (result == null && myNestedResult != null) {
+      result = myNestedResult.findChild(name);
+    }
     if (result == null) {
       final MatchResultImpl previous = context.getPreviousResult();
       if (previous != null) {
-        result = MatchResultImpl.findChildDeep(previous, name);
+        result = previous.findChild(name);
       }
     }
 
@@ -187,7 +190,7 @@ public class SubstitutionHandler extends MatchingHandler {
   public void addResult(@NotNull PsiElement match, int start, int end, @NotNull MatchContext context) {
     if (totalMatchedOccurs == -1) {
       final MatchResultImpl matchResult = context.getResult();
-      final MatchResultImpl substitution = matchResult.findChild(name);
+      final MatchResultImpl substitution = matchResult.getChild(name);
 
       if (substitution == null) {
         matchResult.addChild(createMatch(match, start, end) );
@@ -232,12 +235,6 @@ public class SubstitutionHandler extends MatchingHandler {
   public boolean handle(PsiElement match, int start, int end, @NotNull MatchContext context) {
     if (!validate(match, start, end, context)) {
       myNestedResult = null;
-      
-      //if (maxOccurs==1 && minOccurs==1) {
-      //  if (context.hasResult()) context.getResult().removeSon(name);
-      //}
-      // @todo we may fail fast the match by throwing an exception
-
       return false;
     }
 
@@ -294,7 +291,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
   private void removeLastResults(int numberOfResults, @NotNull MatchContext context) {
     if (numberOfResults == 0) return;
-    final MatchResultImpl substitution = context.getResult().findChild(name);
+    final MatchResultImpl substitution = context.getResult().getChild(name);
 
     if (substitution != null) {
       if (substitution.hasChildren()) {
@@ -340,9 +337,12 @@ public class SubstitutionHandler extends MatchingHandler {
       matchedOccurs = 0;
 
       boolean flag = false;
+      final List<PsiElement> matchedNodes = new SmartList<>();
 
       while (fNodes.hasNext() && matchedOccurs < minOccurs) {
-        if (handler.match(currentPatternNode, matchNodes.current(), context)) {
+        final PsiElement current = matchNodes.current();
+        if (handler.match(currentPatternNode, current, context)) {
+          matchedNodes.add(current);
           ++matchedOccurs;
         }
         else if (handler instanceof TopLevelMatchingHandler && matchedOccurs == 0 ||
@@ -365,7 +365,9 @@ public class SubstitutionHandler extends MatchingHandler {
         // go greedily to maxOccurs
 
         while (fNodes.hasNext() && matchedOccurs < maxOccurs) {
-          if (handler.match(currentPatternNode, matchNodes.current(), context)) {
+          final PsiElement current = matchNodes.current();
+          if (handler.match(currentPatternNode, current, context)) {
+            matchedNodes.add(current);
             ++matchedOccurs;
           }
           else if (handler instanceof TopLevelMatchingHandler && matchedOccurs == 0 ||
@@ -394,10 +396,11 @@ public class SubstitutionHandler extends MatchingHandler {
               return true;
             }
 
-            if (matchedOccurs > 0) {
-              matchNodes.rewind();
-              removeLastResults(1, context);
+            final int size = matchedNodes.size();
+            if (size > 0) {
+              matchNodes.rewindTo(matchedNodes.remove(size - 1));
             }
+            removeLastResults(1, context);
             --matchedOccurs;
           }
 
@@ -469,9 +472,9 @@ public class SubstitutionHandler extends MatchingHandler {
       totalMatchedOccurs = matchedOccurs;
       return true;
     }
-    MatchResult result = context.hasResult() ? context.getResult().findChild(name) : null;
+    MatchResult result = context.hasResult() ? context.getResult().getChild(name) : null;
     if (result == null && context.getPreviousResult() != null) {
-      result = context.getPreviousResult().findChild(name);
+      result = context.getPreviousResult().getChild(name);
     }
     return result == null || result.size() == matchedOccurs;
   }

@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
@@ -227,6 +228,17 @@ public final class TreeUtil {
       parent = element.getUserData(CONTAINING_FILE_KEY_AFTER_REPARSE);
     }
     return (FileElement)parent;
+  }
+
+  public static FileASTNode getFileElement(@NotNull ASTNode element) {
+    ASTNode parent = element;
+    while (parent != null && !(parent instanceof FileASTNode)) {
+      parent = parent.getTreeParent();
+    }
+    if (parent == null) {
+      parent = element.getUserData(CONTAINING_FILE_KEY_AFTER_REPARSE);
+    }
+    return (FileASTNode)parent;
   }
 
   @Nullable

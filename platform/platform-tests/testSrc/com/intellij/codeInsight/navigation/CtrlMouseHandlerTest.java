@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.editor.RangeMarker;
@@ -51,7 +51,7 @@ public class CtrlMouseHandlerTest extends AbstractEditorTest {
   }
 
   private void waitForHighlighting() {
-    CtrlMouseHandler handler = getProject().getComponent(CtrlMouseHandler.class);
+    CtrlMouseHandler handler = getProject().getService(CtrlMouseHandler.class);
     TestTimeOut t = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
     while (handler.isCalculationInProgress()) {
       if (t.timedOut()) throw new RuntimeException("Timed out waiting for CtrlMouseHandler");

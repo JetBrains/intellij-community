@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.providers.FileTargetContext.toTargetContexts;
 import static java.util.Collections.*;
@@ -298,7 +300,14 @@ public class FileReferenceSet {
   public Collection<PsiFileSystemItem> getDefaultContexts() {
     Collection<PsiFileSystemItem> result = myDefaultContexts;
     if (result == null) {
-      myDefaultContexts = result = computeDefaultContexts();
+      result = computeDefaultContexts();
+      ModelBranch branch = ModelBranch.getPsiBranch(getElement());
+      if (branch != null) {
+        result = result.stream()
+          .map(item -> ModelBranch.getPsiBranch(item) == branch ? item : branch.obtainPsiCopy(item))
+          .collect(Collectors.toCollection(LinkedHashSet::new));
+      }
+      myDefaultContexts = result;
     }
     return result;
   }

@@ -32,7 +32,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
   @Override
   protected void setUpProject() throws Exception {
     String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath));
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath), getTestRootDisposable());
     ServiceContainerUtil.registerComponentImplementation(myProject, FileEditorManager.class, FileEditorManagerImpl.class);
   }
 

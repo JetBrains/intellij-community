@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
+import com.intellij.diff.util.Side
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
@@ -63,6 +64,11 @@ interface GHPRReviewService {
   @CalledInAny
   fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String)
     : CompletableFuture<GHPullRequestReviewComment>
+
+  @CalledInAny
+  fun addThread(progressIndicator: ProgressIndicator, pullRequestId: String, reviewId: String?,
+                body: String, line: Int, side: Side, startLine: Int, fileName: String)
+    : CompletableFuture<GHPullRequestReviewThread>
 
   @CalledInAny
   fun resolveThread(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, id: String)

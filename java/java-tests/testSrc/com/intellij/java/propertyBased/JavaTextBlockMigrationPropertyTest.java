@@ -45,7 +45,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   @Override
@@ -99,7 +99,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       // IDEA-224671
       if (injected != null && !injected.isEmpty()) continue;
       String expected = getConcatenationText(operands);
-      if (expected == null || countNewLines(expected) < 2) continue;
+      if (expected == null || countNewLines(expected) < 2 && getQuoteIndex(expected) == -1) continue;
       expected = replaceUnescapedSpaces(expected);
 
       Computable<PsiElement> replaceAction = () -> {
@@ -115,11 +115,19 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
 
       invokeIntention(textBlock, myFixture, backwardMigrationInvoker);
       PsiElement element = PsiUtil.skipParenthesizedExprDown(parent);
-      PsiPolyadicExpression after = (PsiPolyadicExpression)element;
+      PsiExpression[] operandsAfter = getOperands(element);
 
-      String actual = Objects.requireNonNull(getConcatenationText(after.getOperands()));
+      String actual = Objects.requireNonNull(getConcatenationText(operandsAfter));
       assertEquals("concatenation content", expected, actual);
     }
+  }
+  
+  private static PsiExpression[] getOperands(@NotNull PsiElement element) {
+    PsiPolyadicExpression polyadicExpression = ObjectUtils.tryCast(element, PsiPolyadicExpression.class);
+    if (polyadicExpression != null) return polyadicExpression.getOperands();
+    PsiLiteralExpression operand = (PsiLiteralExpression)element;
+    assertFalse(operand.isTextBlock());
+    return new PsiExpression[]{operand};
   }
 
   @NotNull
@@ -203,14 +211,22 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     return cnt;
   }
 
+  private static int getQuoteIndex(@NotNull String text) {
+    return getEscapedCharIndex(text, 0, '"');
+  }
+
   private static int getNewLineIndex(@NotNull String text, int start) {
+    return getEscapedCharIndex(text, start, 'n');
+  }
+
+  private static int getEscapedCharIndex(@NotNull String text, int start, char escapedChar) {
     int slashes = 0;
     for (int i = start; i < text.length(); i++) {
       char c = text.charAt(i);
       if (c == '\\') {
         slashes++;
       }
-      else if (c == 'n' && slashes % 2 != 0) {
+      else if (c == escapedChar && slashes % 2 != 0) {
         return i;
       }
       else {
@@ -231,13 +247,18 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
   private static class MigrationInvoker implements ActionInvoker<PsiPolyadicExpression> {
     @Override
     public int generateOffset(@NotNull PsiPolyadicExpression e) {
+      Integer firstNewLineIndex = null;
       for (PsiExpression operand : e.getOperands()) {
         PsiExpression literal = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiLiteralExpression.class);
         if (literal == null) continue;
-        int idx = getNewLineIndex(literal.getText(), 0);
-        if (idx != -1) return literal.getTextOffset() + idx;
+        String text = literal.getText();
+        int idx = getNewLineIndex(text, 0);
+        if (idx == -1) continue;
+        if (firstNewLineIndex != null) return firstNewLineIndex;
+        firstNewLineIndex = literal.getTextOffset() + idx;
+        if (getNewLineIndex(text, idx) != -1) return firstNewLineIndex;
       }
-      return -1;
+      return e.getTextOffset();
     }
 
     @NotNull

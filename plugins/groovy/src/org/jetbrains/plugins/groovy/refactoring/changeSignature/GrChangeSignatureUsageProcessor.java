@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isWhiteSpaceOrNewLine;
 
 /**
  * @author Maxim.Medvedev
@@ -317,7 +318,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       if (newParamIndex < oldParameters.length) {
         GrParameter oldParam = oldParameters[newParamIndex];
         PsiElement prev = oldParam.getPrevSibling();
-        if (prev instanceof PsiWhiteSpace) {
+        if (isWhiteSpaceOrNewLine(prev)) {
           parameterList.addBefore(prev, anchor);
         }
       }

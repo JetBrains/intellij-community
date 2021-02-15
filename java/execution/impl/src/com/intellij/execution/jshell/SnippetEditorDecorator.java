@@ -46,7 +46,7 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
     private final ConfigurationModuleSelector myModuleSelector;
     private MessageBusConnection myBusConnection;
 
-    ConfigurationPane(Project project) {
+    ConfigurationPane(@NotNull Project project) {
       final DefaultActionGroup actions = new DefaultActionGroup(ExecuteJShellAction.getSharedInstance(), DropJShellStateAction.getSharedInstance());
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("JShellSnippetEditor", actions, true);
 

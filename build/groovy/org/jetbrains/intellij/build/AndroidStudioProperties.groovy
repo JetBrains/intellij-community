@@ -101,7 +101,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         withModule("intellij.cidr.modulemap.language", mainJarName)
       },
     ]
-    productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
   }
 
   @Override
@@ -183,18 +182,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       @Override
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "android-studio" }
-
-      @Override
-      @CompileDynamic
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        def root = "$context.paths.communityHome/../.."
-
-        context.ant.copy(todir: "$targetDirectory/plugins/c-plugin/bin/clang/linux") {
-          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/linux")
-        }
-        extraExecutables.add("plugins/c-plugin/bin/clang/linux/clangd")
-        extraExecutables.add("plugins/c-plugin/bin/clang/linux/clang-tidy")
-      }
     }
   }
 

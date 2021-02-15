@@ -2,6 +2,7 @@
 package org.jetbrains.index.stubs
 
 import com.google.common.hash.HashCode
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -67,7 +68,7 @@ private fun writeStubsVersionFile(stubsStorageFilePath: String, stubsVersion: St
 
 fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String, projectPath: String, stubsVersion: String) {
   TestApplicationManager.getInstance()
-  PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath))
+  PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath), Disposable {  })
   // we don't need a project here, but I didn't find a better way to wait until indices and components are initialized
 
   val stubExternalizer = GeneratingFullStubExternalizer()

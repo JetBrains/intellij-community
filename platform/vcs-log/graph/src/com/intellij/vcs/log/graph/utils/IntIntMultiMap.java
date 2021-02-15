@@ -61,7 +61,7 @@ public final class IntIntMultiMap {
   @NotNull
   public Collection<Integer> get(int key) {
     final int[] asArray = getAsArray(key);
-    return new AbstractList<Integer>() {
+    return new AbstractList<>() {
       @NotNull
       @Override
       public Integer get(int index) {

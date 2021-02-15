@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil.ELLIPSIS
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
@@ -34,7 +35,7 @@ private object PropertyValueRenderer : DefaultTableCellRenderer() {
     text = getText(value as PropertyValue)
   }
 
-  private fun getText(property: PropertyValue): String {
+  private fun getText(property: PropertyValue): @NlsSafe String {
     val value = property.toString()
     val lines = value.lines()
 

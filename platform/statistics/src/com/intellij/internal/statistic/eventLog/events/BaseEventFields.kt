@@ -69,6 +69,15 @@ data class LongEventField(override val name: String): PrimitiveEventField<Long>(
   }
 }
 
+data class FloatEventField(override val name: String): PrimitiveEventField<Float>() {
+  override val validationRule: List<String>
+    get() =  listOf("{regexp#float}")
+
+  override fun addData(fuData: FeatureUsageData, value: Float) {
+    fuData.addData(name, value)
+  }
+}
+
 data class DoubleEventField(override val name: String): PrimitiveEventField<Double>() {
   override val validationRule: List<String>
     get() =  listOf("{regexp#float}")
@@ -84,6 +93,15 @@ data class BooleanEventField(override val name: String): PrimitiveEventField<Boo
 
   override fun addData(fuData: FeatureUsageData, value: Boolean) {
     fuData.addData(name, value)
+  }
+}
+
+data class AnonymizedEventField(override val name: String): PrimitiveEventField<String?>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#hash}")
+
+  override fun addData(fuData: FeatureUsageData, value: String?) {
+    fuData.addAnonymizedValue(name, value)
   }
 }
 

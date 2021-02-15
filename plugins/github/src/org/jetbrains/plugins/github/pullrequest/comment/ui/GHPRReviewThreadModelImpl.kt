@@ -21,6 +21,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   override val commit = thread.originalCommit
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
+  override val line = thread.line
+  override val startLine = thread.startLine
 
   private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 

@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 
 /**
@@ -222,8 +223,8 @@ public final class GrStringUtil {
           char nextCh = str.charAt(idx + 1);
           if (nextCh == '$') {
             // /$ -> $/$
-            buffer.append("$/$");
-            idx += 2;
+            buffer.append("$/");
+            idx++;
             continue;
           }
         }
@@ -231,11 +232,11 @@ public final class GrStringUtil {
       else if (ch == '$') {
         if (idx + 1 < length) {
           final char nextCh = str.charAt(idx + 1);
-          if (nextCh == '$' || nextCh == '/') {
+          if (nextCh == '$' || nextCh == '/' || GroovyNamesUtil.isIdentifier(Character.toString(nextCh))) {
             // $$ -> $$$
             // $/ -> $$/
-            buffer.append("$$").append(nextCh);
-            idx += 2;
+            buffer.append("$$");
+            idx += 1;
             continue;
           }
         }

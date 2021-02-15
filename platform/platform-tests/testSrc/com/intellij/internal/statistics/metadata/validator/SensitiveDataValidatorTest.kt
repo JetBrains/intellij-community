@@ -287,6 +287,25 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("UNKNOWN", EventContext.create("FIRST", emptyMap())))
   }
 
+  @Test
+  fun test_joined_string_validation() {
+    val validator = newValidatorByFile("test_join_string_regexp_rule.json")
+    val group = EventLogGroup("my.test.rule.with.long.string", 1)
+
+    val toAccept =
+      arrayOf("r50", "q50", "p", "p45", "p451", "k50", "l", "l50", "m11", "m40", "m403", "m5.0", "t", "t45", "t451",
+              "g1.0", "g1.1", "g2.0", "g2.2", "g3.0", "g3.1", "f", "e1.0", "e1.3", "e1.6", "e2.0", "e2.1",
+              "h-m5.0", "h-b12", "h-m40+d4", "h-m4.5+a8", "h-m4.5+y8.2", "h-m40+d5+a8", "h-a81+y81+w81",
+              "h-m40+d5+a8+w81", "h-m40+d5+a8+w81+y8", "h-m40+a8+d4+y7", "h-m45+d5+a8+w81+y8",
+              "d4", "d5", "c3", "c4", "b", "b10.0", "a", "a10", "a81", "x", "y", "y75", "y8", "w81")
+
+    for (value in toAccept) {
+      assertEventAccepted(validator, group, value)
+    }
+    assertEventRejected(validator, group, "8")
+    assertEventRejected(validator, group, "h-")
+  }
+
   fun test_validate_event_id_with_enum_and_existing_rule() {
     doTestWithRuleList("test_rules_list_event_id.json") { validator ->
       val elg = EventLogGroup("enum.and.existing.util.rule", 1)

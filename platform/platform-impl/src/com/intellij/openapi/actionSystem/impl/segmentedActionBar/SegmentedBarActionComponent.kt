@@ -15,7 +15,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.Border
 
-open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, DumbAware {
+open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOLBAR) : AnAction(), CustomComponentAction, DumbAware {
   enum class ControlBarProperty {
     FIRST,
     LAST,
@@ -42,8 +42,8 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
     fun paintButtonDecorations(g: Graphics2D, c: JComponent, paint: Paint): Boolean {
       return painter.paintButtonDecorations(g, c, paint)
     }
-
   }
+  protected var paintBorderAroundOneItem = true
 
   private val group: ActionGroup = object : ActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -57,12 +57,9 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
 
   protected var actionGroup: ActionGroup? = null
     set(value) {
-      val bla = field == null && value != null
-
+      if (field == value) return
       field = value
-      if (bla) {
-        ActionToolbarImpl.updateAllToolbarsImmediately()
-      }
+      ActionToolbarImpl.updateAllToolbarsImmediately()
     }
 
   private val buttonLook = object : ActionButtonLook() {
@@ -83,12 +80,16 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
   }
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
     e.presentation.isVisible = actionGroup != null
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-      val bar = object : ActionToolbarImpl(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true) {
+  override fun createCustomComponent(presentation: Presentation, place_: String): JComponent {
+      val bar = object : ActionToolbarImpl(place, group, true) {
+        init {
+          setForceMinimumSize(true)
+          layoutPolicy = NOWRAP_LAYOUT_POLICY
+        }
+
         private var isActive = false
 
         override fun getInsets(): Insets {
@@ -97,6 +98,10 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
 
         override fun setBorder(border: Border?) {
 
+        }
+
+        override fun isInsideNavBar(): Boolean {
+          return true
         }
 
         override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
@@ -170,12 +175,16 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
         }
 
         override fun paintBorder(g: Graphics) {
-          painter.paintActionBarBorder(this, g)
+          if(isActive || paintBorderAroundOneItem) {
+            painter.paintActionBarBorder(this, g)
+          }
         }
 
         override fun paint(g: Graphics) {
           super.paint(g)
-          painter.paintActionBarBorder(this, g)
+          if(isActive || paintBorderAroundOneItem) {
+            painter.paintActionBarBorder(this, g)
+          }
         }
 
         private fun addMetadata(component: JComponent, index: Int, count: Int) {
@@ -217,6 +226,10 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
       }
 
       return bar.component
+  }
+
+  private fun moreThanOneItemVisible(actions: List<AnAction>): Boolean {
+    return actions.count { action -> action.templatePresentation.isVisible } > 1
   }
 }
 

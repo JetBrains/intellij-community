@@ -149,22 +149,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, @Nls String displayActionName);
 
   /**
-   * Adds a listener for receiving notifications about changes in VCS configuration for the project.
-   *
-   * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
-   */
-  @Deprecated
-  public abstract void addVcsListener(VcsListener listener);
-
-  /**
-   * Removes a listener for receiving notifications about changes in VCS configuration for the project.
-   *
-   * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
-   */
-  @Deprecated
-  public abstract void removeVcsListener(VcsListener listener);
-
-  /**
    * Marks the beginning of a background VCS operation (commit or update).
    */
   public abstract void startBackgroundVcsOperation();
@@ -219,7 +203,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator,
                                       @Nullable VirtualFileFilter directoryFilter);
 
-  public abstract @Nullable AbstractVcs findVersioningVcs(VirtualFile file);
+  public abstract @Nullable AbstractVcs findVersioningVcs(@NotNull VirtualFile file);
 
   public abstract @NotNull VcsRootChecker getRootChecker(@NotNull AbstractVcs vcs);
 

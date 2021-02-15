@@ -112,7 +112,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
       if (type == null) {
-        type = JavaSharedImplUtil.createTypeFromStub(this, stub.getType(false));
+        type = JavaSharedImplUtil.createTypeFromStub(this, stub.getType());
         myCachedType = new SoftReference<>(type);
       }
       return type;

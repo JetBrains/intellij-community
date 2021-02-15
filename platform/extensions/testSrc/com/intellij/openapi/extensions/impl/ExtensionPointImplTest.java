@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
@@ -11,16 +12,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.PicoContainer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -142,11 +141,13 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testIncompatibleAdapter() {
+    DefaultLogger.disableStderrDumping(disposable);
+
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.addExtensionAdapter(newStringAdapter());
     assertThatThrownBy(() -> {
       extensionPoint.getExtensionList();
-    }).hasMessageContaining("Extension class java.lang.String does not implement class java.lang.Integer");
+    }).hasMessageContaining("Extension java.lang.String does not implement class java.lang.Integer");
   }
 
   @Test
@@ -336,7 +337,7 @@ public class ExtensionPointImplTest {
     private Runnable myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null, InterfaceExtensionImplementationClassResolver.INSTANCE);
     }
 
     public synchronized void setFire(@Nullable Runnable fire) {
@@ -381,6 +382,12 @@ public class ExtensionPointImplTest {
     }
 
     @Override
+    public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+      //noinspection unchecked
+      return (Class<T>)Class.forName(className);
+    }
+
+    @Override
     public void dispose() {
     }
 
@@ -391,6 +398,23 @@ public class ExtensionPointImplTest {
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    }
+
+    @Override
+    public @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
+      return new RuntimeException(message);
+    }
+
+    @Override
+    public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                                 @NotNull PluginId pluginId,
+                                                 @Nullable Map<String, String> attachments) {
+      return new RuntimeException(message);
+    }
+
+    @Override
+    public @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+      return new RuntimeException(error);
     }
   }
 }

@@ -19,8 +19,6 @@ package com.intellij.pom.tree.events.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -29,44 +27,44 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
-  private final CompositeElement myParent;
-  private final List<CompositeElement> mySuperParents;
-  private final LinkedHashMap<TreeElement, Integer> myInitialLengths = new LinkedHashMap<>();
-  private final Set<TreeElement> myContentChangeChildren = new HashSet<>();
-  private Map<TreeElement, ChangeInfoImpl> myChanges;
+  private final ASTNode myParent;
+  private final List<ASTNode> mySuperParents;
+  private final LinkedHashMap<ASTNode, Integer> myInitialLengths = new LinkedHashMap<>();
+  private final Set<ASTNode> myContentChangeChildren = new HashSet<>();
+  private Map<ASTNode, ChangeInfoImpl> myChanges;
 
-  public TreeChangeImpl(@NotNull CompositeElement parent) {
+  public TreeChangeImpl(@NotNull ASTNode parent) {
     myParent = parent;
     assert myParent.getPsi() != null : myParent.getElementType() + " of " + myParent.getClass();
-    mySuperParents = JBIterable.generate(parent.getTreeParent(), TreeElement::getTreeParent).toList();
-    for (TreeElement child : getCurrentChildren()) {
+    mySuperParents = JBIterable.generate(parent.getTreeParent(), ASTNode::getTreeParent).toList();
+    for (ASTNode child : getCurrentChildren()) {
       myInitialLengths.put(child, child.getTextLength());
     }
   }
 
-  List<CompositeElement> getSuperParents() {
+  List<ASTNode> getSuperParents() {
     return mySuperParents;
   }
 
   @NotNull
-  private JBIterable<TreeElement> getCurrentChildren() {
-    return JBIterable.generate(myParent.getFirstChildNode(), TreeElement::getTreeNext);
+  private JBIterable<ASTNode> getCurrentChildren() {
+    return JBIterable.generate(myParent.getFirstChildNode(), ASTNode::getTreeNext);
   }
 
   @Override
   public int compareTo(@NotNull TreeChangeImpl o) {
-    List<CompositeElement> thisParents = ContainerUtil.reverse(getSuperParents());
-    List<CompositeElement> thatParents = ContainerUtil.reverse(o.getSuperParents());
+    List<ASTNode> thisParents = ContainerUtil.reverse(getSuperParents());
+    List<ASTNode> thatParents = ContainerUtil.reverse(o.getSuperParents());
     for (int i = 1; i <= thisParents.size() && i <= thatParents.size(); i++) {
-      CompositeElement thisParent = i < thisParents.size() ? thisParents.get(i) : myParent;
-      CompositeElement thatParent = i < thatParents.size() ? thatParents.get(i) : o.myParent;
+      ASTNode thisParent = i < thisParents.size() ? thisParents.get(i) : myParent;
+      ASTNode thatParent = i < thatParents.size() ? thatParents.get(i) : o.myParent;
       int result = compareNodePositions(thisParent, thatParent);
       if (result != 0) return result;
     }
     return 0;
   }
 
-  private static int compareNodePositions(CompositeElement node1, CompositeElement node2) {
+  private static int compareNodePositions(ASTNode node1, ASTNode node2) {
     if (node1 == node2) return 0;
     
     int o1 = node1.getStartOffsetInParent();
@@ -74,7 +72,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
     return o1 != o2 ? Integer.compare(o1, o2) : Integer.compare(getChildIndex(node1), getChildIndex(node2));
   }
 
-  private static int getChildIndex(CompositeElement e) {
+  private static int getChildIndex(ASTNode e) {
     return ArrayUtil.indexOf(e.getTreeParent().getChildren(null), e);
   }
 
@@ -86,8 +84,8 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
     myChanges = null;
   }
 
-  private Map<TreeElement, ChangeInfoImpl> getAllChanges() {
-    Map<TreeElement, ChangeInfoImpl> changes = myChanges;
+  private Map<ASTNode, ChangeInfoImpl> getAllChanges() {
+    Map<ASTNode, ChangeInfoImpl> changes = myChanges;
     if (changes == null) {
       myChanges = changes = new ChildrenDiff().calcChanges();
     }
@@ -95,12 +93,12 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
   
   private class ChildrenDiff {
-    LinkedHashSet<TreeElement> currentChildren = getCurrentChildren().addAllTo(new LinkedHashSet<>());
-    Iterator<TreeElement> itOld = myInitialLengths.keySet().iterator();
-    Iterator<TreeElement> itNew = currentChildren.iterator();
-    TreeElement oldChild, newChild;
+    LinkedHashSet<ASTNode> currentChildren = getCurrentChildren().addAllTo(new LinkedHashSet<>());
+    Iterator<ASTNode> itOld = myInitialLengths.keySet().iterator();
+    Iterator<ASTNode> itNew = currentChildren.iterator();
+    ASTNode oldChild, newChild;
     int oldOffset = 0;
-    LinkedHashMap<TreeElement, ChangeInfoImpl> result = new LinkedHashMap<>();
+    LinkedHashMap<ASTNode, ChangeInfoImpl> result = new LinkedHashMap<>();
 
     void advanceOld() {
       oldOffset += oldChild == null ? 0 : myInitialLengths.get(oldChild);
@@ -111,7 +109,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
       newChild = itNew.hasNext() ? itNew.next() : null;
     }
     
-    Map<TreeElement, ChangeInfoImpl> calcChanges() {
+    Map<ASTNode, ChangeInfoImpl> calcChanges() {
       advanceOld(); advanceNew();
 
       while (oldChild != null || newChild != null) {
@@ -145,7 +143,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
 
   @NotNull
-  public CompositeElement getChangedParent() {
+  public ASTNode getChangedParent() {
     return myParent;
   }
 
@@ -163,16 +161,16 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
 
   @Override
-  public TreeElement @NotNull [] getAffectedChildren() {
-    return getAllChanges().keySet().toArray(TreeElement.EMPTY_ARRAY);
+  public ASTNode @NotNull [] getAffectedChildren() {
+    return getAllChanges().keySet().toArray(ASTNode.EMPTY_ARRAY);
   }
 
   @Override
   public ChangeInfoImpl getChangeByChild(ASTNode child) {
-    return getAllChanges().get((TreeElement)child);
+    return getAllChanges().get(child);
   }
 
-  public List<TreeElement> getInitialChildren() {
+  public List<ASTNode> getInitialChildren() {
     return new ArrayList<>(myInitialLengths.keySet());
   }
 
@@ -185,7 +183,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
     clearCache();
   }
 
-  public void markChildChanged(@NotNull TreeElement child, int lengthDelta) {
+  public void markChildChanged(@NotNull ASTNode child, int lengthDelta) {
     myContentChangeChildren.add(child);
     if (lengthDelta != 0) {
       myInitialLengths.computeIfPresent(child, (c, oldLength) -> oldLength - lengthDelta);

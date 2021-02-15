@@ -40,7 +40,7 @@ public class AntInstallation {
     return new AntReference.BindedReference(this);
   }
 
-  public static final Externalizer<AntInstallation> EXTERNALIZER = new Externalizer<AntInstallation>() {
+  public static final Externalizer<AntInstallation> EXTERNALIZER = new Externalizer<>() {
     @Override
     public AntInstallation readValue(Element dataElement) {
       AntInstallation antInstallation = new AntInstallation();

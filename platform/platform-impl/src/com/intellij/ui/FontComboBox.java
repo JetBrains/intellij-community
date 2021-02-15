@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.FontInfo;
@@ -20,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class FontComboBox extends ComboBox {
+public final class FontComboBox extends AbstractFontCombo {
 
   private Model myModel;
   private final JBDimension mySize;
@@ -66,23 +65,33 @@ public final class FontComboBox extends ComboBox {
     return mySize.size();
   }
 
+  @Override
   public boolean isMonospacedOnly() {
     return myModel.myMonospacedOnly;
   }
 
+  @Override
+  public boolean isMonospacedOnlySupported() {
+    return true;
+  }
+
+  @Override
   public void setMonospacedOnly(boolean monospaced) {
     myModel.setMonospacedOnly(monospaced);
   }
 
+  @Override
   public String getFontName() {
     Object item = myModel.getSelectedItem();
     return item == null ? null : item.toString();
   }
 
+  @Override
   public void setFontName(@NlsSafe @Nullable String item) {
     myModel.setSelectedItem(item);
   }
 
+  @Override
   public boolean isNoFontSelected() {
     return myModel.isNoFontSelected();
   }

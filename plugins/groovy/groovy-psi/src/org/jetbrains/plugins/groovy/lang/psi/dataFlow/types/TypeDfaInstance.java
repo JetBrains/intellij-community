@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Computable;
@@ -19,15 +19,12 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -74,7 +71,8 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
     updateVariableType(state, instruction, descriptor, () -> {
       ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(myFlow);
-      assert originalInstr != null && !originalInstr.isWrite();
+      assert originalInstr != null;
+      assert !originalInstr.isWrite();
 
       DFAType original = state.getOrCreateVariableType(descriptor);
       original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
@@ -177,7 +175,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       return;
     }
     GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
-    if (PsiUtil.isCompileStatic(block)) {
+    if (CompileStaticUtil.isCompileStatic(block)) {
       return;
     }
     GrControlFlowOwner blockFlowOwner = FunctionalExpressionFlowUtil.getControlFlowOwner(block);
@@ -210,7 +208,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       case UNKNOWN:
         runWithCycleCheck(instruction, () -> {
           for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
-            PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, initialTypes, descriptor);
+            var initialTypesWithNullizedDescriptorType = new HashMap<VariableDescriptor, DFAType>(initialTypes);
+            initialTypesWithNullizedDescriptorType.putIfAbsent(descriptor, DFAType.create(null));
+            PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, initialTypesWithNullizedDescriptorType, descriptor);
             if (upperBoundByWrites != PsiType.NULL) {
               DFAType existingType = state.getVariableType(descriptor);
               if (existingType == null) existingType = DFAType.create(null);

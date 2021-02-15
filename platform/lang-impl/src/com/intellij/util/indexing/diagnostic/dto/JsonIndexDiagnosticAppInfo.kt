@@ -3,7 +3,8 @@ package com.intellij.util.indexing.diagnostic.dto
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.SystemInfo
-import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 data class JsonIndexDiagnosticAppInfo(
   val build: String,
@@ -18,9 +19,9 @@ data class JsonIndexDiagnosticAppInfo(
       val appInfo = ApplicationInfo.getInstance()
       return JsonIndexDiagnosticAppInfo(
         build = appInfo.build.asStringWithoutProductCode(),
-        buildDate = JsonDateTime(appInfo.buildDate.toInstant()),
+        buildDate = JsonDateTime(ZonedDateTime.ofInstant(appInfo.buildDate.toInstant(), appInfo.buildDate.timeZone.toZoneId())),
         productCode = appInfo.build.productCode,
-        generated = JsonDateTime(Instant.now()),
+        generated = JsonDateTime(ZonedDateTime.now(ZoneOffset.UTC)),
         os = SystemInfo.getOsNameAndVersion(),
         runtime = SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION
       )

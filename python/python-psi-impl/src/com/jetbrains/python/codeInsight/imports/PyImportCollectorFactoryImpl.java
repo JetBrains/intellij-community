@@ -6,7 +6,7 @@ import com.jetbrains.python.psi.PyElement;
 
 public final class PyImportCollectorFactoryImpl implements PyImportCollectorFactory {
   @Override
-  public PyImportCollector create(PyElement node, PsiReference reference, String refText, String alias) {
-    return new PyImportCollector(node, reference, refText, alias);
+  public PyImportCollector create(PyElement node, PsiReference reference, String refText) {
+    return new PyImportCollector(node, reference, refText);
   }
 }

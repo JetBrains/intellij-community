@@ -60,9 +60,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -207,7 +207,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
     FileUtil.writeToFile(file, "xxx xxx xxx xxx");
     VirtualFile virtualFile = getVirtualFile(file);
-    assertNotNull(virtualFile);
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     assertNotNull(document);
     assertEquals(FileTypes.PLAIN_TEXT, virtualFile.getFileType());
@@ -218,7 +217,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
     FileUtil.writeToFile(file, "xxx xxx xxx xxx");
     VirtualFile virtualFile = getVirtualFile(file);
-    assertNotNull(virtualFile);
     TestCase.assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
   }
 
@@ -226,7 +224,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     File dir = createTempDirectory();
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
     VirtualFile virtualFile = getVirtualFile(file);
-    assertNotNull(virtualFile);
     assertEquals(FileTypes.UNKNOWN, virtualFile.getFileType());
     PsiFile psi = getPsiManager().findFile(virtualFile);
     assertTrue(psi instanceof PsiBinaryFile);
@@ -267,7 +264,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   public void test7BitBinaryIsNotText() throws IOException {
     File d = createTempDirectory();
     byte[] bytes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 'a', 'b'};
-    assertEquals(CharsetToolkit.GuessedEncoding.BINARY, new CharsetToolkit(bytes).guessFromContent(bytes.length));
+    assertEquals(CharsetToolkit.GuessedEncoding.BINARY, new CharsetToolkit(bytes, Charset.defaultCharset(), false).guessFromContent(bytes.length));
     File f = new File(d, "xx.asfdasdfas");
     FileUtil.writeToFile(f, bytes);
 
@@ -279,7 +276,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   public void test7BitIsText() throws IOException {
     File d = createTempDirectory();
     byte[] bytes = {9, 10, 13, 'x', 'a', 'b'};
-    assertEquals(CharsetToolkit.GuessedEncoding.SEVEN_BIT, new CharsetToolkit(bytes).guessFromContent(bytes.length));
+    assertEquals(CharsetToolkit.GuessedEncoding.SEVEN_BIT, new CharsetToolkit(bytes, Charset.defaultCharset(), false).guessFromContent(bytes.length));
     File f = new File(d, "xx.asfdasdfas");
     FileUtil.writeToFile(f, bytes);
     VirtualFile vFile = getVirtualFile(f);
@@ -301,7 +298,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertNotNull(project);
     assertFalse(project.equals(PlainTextFileType.INSTANCE));
 
-    final Set<VirtualFile> detectorCalled = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    final Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable
       @Override
@@ -708,7 +705,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     final UserBinaryFileType stuffType = new UserBinaryFileType(){};
     stuffType.setName("stuffType");
 
-    final Set<VirtualFile> detectorCalled = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    final Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
 
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable
@@ -857,11 +854,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
       assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
 
-      manager.setEncoding(file, CharsetToolkit.US_ASCII_CHARSET);
+      manager.setEncoding(file, StandardCharsets.US_ASCII);
       UIUtil.dispatchAllInvocationEvents();
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
+      assertEquals(StandardCharsets.US_ASCII, file.getCharset());
 
       manager.setEncoding(file, StandardCharsets.UTF_8);
       UIUtil.dispatchAllInvocationEvents();
@@ -869,11 +866,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(StandardCharsets.UTF_8, file.getCharset());
 
-      manager.setEncoding(file, CharsetToolkit.US_ASCII_CHARSET);
+      manager.setEncoding(file, StandardCharsets.US_ASCII);
       UIUtil.dispatchAllInvocationEvents();
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
+      assertEquals(StandardCharsets.US_ASCII, file.getCharset());
 
       manager.setEncoding(file, StandardCharsets.UTF_8);
       UIUtil.dispatchAllInvocationEvents();
@@ -1110,12 +1107,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isBinary() {
       return false;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   public void testPluginWhichOverridesBundledFileTypeMustWin() {
@@ -1123,7 +1114,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     FileType image = Objects.requireNonNull(fileTypeManager.findFileTypeByName("Image"));
     PluginDescriptor pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(image.getClass().getName());
     assertTrue(pluginDescriptor.isBundled());
-    System.out.println("pluginDescriptor = " + pluginDescriptor);
+    LOG.debug("pluginDescriptor = " + pluginDescriptor);
 
     FileTypeBean bean = new FileTypeBean();
     bean.name = new MyImageFileType().getName();
@@ -1190,12 +1181,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isReadOnly() {
       return true;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   public void testHashBangPatternsCanBeConfiguredDynamically() {
@@ -1245,12 +1230,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isBinary() {
       return false;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   private static class MyHaskellFileType implements FileType {
@@ -1287,12 +1266,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     public boolean isBinary() {
       return false;
     }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
-    }
   }
 
   public void testFileTypeConstructorsMustBeNonPublic() {
@@ -1305,5 +1278,19 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         assertFalse("FileType constructor must be non-public to avoid duplicates but got: " + constructor, Modifier.isPublic(constructor.getModifiers()));
       }
     }
+  }
+
+  public void testDetectedAsTextMustNotStuckWithUnknownFileTypeWhenShrinkedToZeroLength() throws IOException {
+    File f = createTempFile("xx.lkjlkjlkjlj", "a");
+    VirtualFile virtualFile = getVirtualFile(f);
+    assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
+
+    setBinaryContent(virtualFile, new byte[0]);
+    myFileTypeManager.drainReDetectQueue();
+    assertEquals(UnknownFileType.INSTANCE, virtualFile.getFileType());
+
+    setBinaryContent(virtualFile, "qwe\newq".getBytes(StandardCharsets.UTF_8));
+    myFileTypeManager.drainReDetectQueue();
+    assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
   }
 }

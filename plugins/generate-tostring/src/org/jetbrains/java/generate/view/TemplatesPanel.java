@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
-  private static final Namer<TemplateResource> NAMER = new Namer<TemplateResource>() {
+  private static final Namer<TemplateResource> NAMER = new Namer<>() {
     @Override
     public String getName(TemplateResource templateResource) {
       return templateResource.getFileName();
@@ -43,7 +43,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
 
   private static final Factory<TemplateResource> FACTORY = () -> new TemplateResource();
 
-  private static final Cloner<TemplateResource> CLONER = new Cloner<TemplateResource>() {
+  private static final Cloner<TemplateResource> CLONER = new Cloner<>() {
     @Override
     public TemplateResource cloneOf(TemplateResource templateResource) {
       if (templateResource.isDefault()) return templateResource;

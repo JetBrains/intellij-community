@@ -7,19 +7,19 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<StubElement<?>> implements StubElement<T> {
   StubList myStubList;
   private volatile T myPsi;
 
-  private static final AtomicFieldUpdater<StubBase, PsiElement> ourPsiUpdater =
-    AtomicFieldUpdater.forFieldOfType(StubBase.class, PsiElement.class);
+  private static final AtomicReferenceFieldUpdater<StubBase, PsiElement> myPsiUpdater =
+    AtomicReferenceFieldUpdater.newUpdater(StubBase.class, PsiElement.class, "myPsi");
 
   protected StubBase(@Nullable StubElement parent, IStubElementType elementType) {
     super(parent);
@@ -62,7 +62,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
     //noinspection unchecked
     psi = (T)getStubType().createPsi(this);
-    return ourPsiUpdater.compareAndSet(this, null, psi) ? psi : Objects.requireNonNull(myPsi);
+    return myPsiUpdater.compareAndSet(this, null, psi) ? psi : Objects.requireNonNull(myPsi);
   }
 
   @Override

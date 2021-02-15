@@ -4,10 +4,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.method.ExtensionMethodsHelper;
 import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
@@ -113,5 +115,15 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       }
     }
     return result;
+  }
+
+  @Override
+  protected List<PsiExtensionMethod> getExtensionMethods(@NotNull PsiClass aClass,
+                                                         @NotNull String nameHint,
+                                                         @NotNull PsiElement context) {
+    if (!LombokLibraryUtil.hasLombokLibrary(context.getProject())) {
+      return Collections.emptyList();
+    }
+    return ExtensionMethodsHelper.getExtensionMethods(aClass, nameHint, context);
   }
 }

@@ -250,15 +250,6 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
-  /**
-   * @deprecated use {@link #registerResourceTemporarily(String, String, Disposable)}
-   */
-  @Deprecated
-  @TestOnly
-  public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
-    registerResourceTemporarily(url, location, parentDisposable);
-  }
-
   @Override
   public void addResource(@NotNull String url, String location) {
     addResource(url, DEFAULT_VERSION, location);

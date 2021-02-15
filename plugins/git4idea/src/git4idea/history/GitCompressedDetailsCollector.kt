@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
 import com.intellij.openapi.project.Project
@@ -8,9 +8,7 @@ import com.intellij.util.PathUtil
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import git4idea.log.GitCompressedDetails
-import gnu.trove.TIntHashSet
-import gnu.trove.TIntIntHashMap
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.*
 
 internal class GitCompressedDetailsCollector(project: Project, root: VirtualFile, pathsEncoder: VcsLogIndexer.PathsEncoder) :
   GitDetailsCollector<GitCompressedRecord, GitCompressedDetails>(project, root, CompressedRecordBuilder(root, pathsEncoder)) {
@@ -29,9 +27,9 @@ internal class GitCompressedDetailsCollector(project: Project, root: VirtualFile
 
 internal class CompressedRecordBuilder(private val root: VirtualFile,
                                        private val pathsEncoder: VcsLogIndexer.PathsEncoder) : GitLogRecordBuilder<GitCompressedRecord> {
-  private var changes = TIntObjectHashMap<Change.Type>()
-  private var parents = TIntHashSet()
-  private var renames = TIntIntHashMap()
+  private var changes = Int2ObjectOpenHashMap<Change.Type>()
+  private var parents = IntOpenHashSet()
+  private var renames = Int2IntOpenHashMap()
 
   override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
     if (secondPath != null) {
@@ -67,21 +65,21 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
   }
 
   override fun build(options: MutableMap<GitLogParser.GitLogOption, String>, supportsRawBody: Boolean): GitCompressedRecord {
-    parents.forEach {
-      changes.put(it, Change.Type.MODIFICATION)
-      true
+    val iterator = parents.iterator()
+    while (iterator.hasNext()) {
+      changes.put(iterator.nextInt(), Change.Type.MODIFICATION)
     }
     return GitCompressedRecord(options, changes, renames, supportsRawBody)
   }
 
   override fun clear() {
-    changes = TIntObjectHashMap()
-    parents = TIntHashSet()
-    renames = TIntIntHashMap()
+    changes = Int2ObjectOpenHashMap()
+    parents = IntOpenHashSet()
+    renames = Int2IntOpenHashMap()
   }
 }
 
 internal class GitCompressedRecord(options: MutableMap<GitLogParser.GitLogOption, String>,
-                                   val changes: TIntObjectHashMap<Change.Type>,
-                                   val renames: TIntIntHashMap,
+                                   val changes: Int2ObjectMap<Change.Type>,
+                                   val renames: Int2IntMap,
                                    supportsRawBody: Boolean) : GitLogRecord(options, supportsRawBody)

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ import java.util.function.Supplier;
  */
 final class CachedValueStabilityChecker {
   private static final Logger LOG = Logger.getInstance(CachedValueStabilityChecker.class);
-  private static final Set<String> ourReportedKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<String> ourReportedKeys = ContainerUtil.newConcurrentSet();
   private static final ConcurrentMap<Class<?>, List<Field>> ourFieldCache = ConcurrentFactoryMap.createMap(ReflectionUtil::collectFields);
   private static final boolean DO_CHECKS = shouldDoChecks();
 

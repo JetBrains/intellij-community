@@ -63,6 +63,10 @@ public abstract class DocumentContentBase extends DiffContentBase implements Doc
     return getNavigatable(new LineCol(0));
   }
 
+  @Override
+  public String toString() {
+    return super.toString() + ":" + myDocument;
+  }
 
   private static class MyNavigatable implements Navigatable {
     @NotNull private final Project myProject;

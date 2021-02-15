@@ -200,10 +200,10 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { Disposer.dispose(treeConsoleView) })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { Disposer.dispose(treeConsoleView) },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 }
 

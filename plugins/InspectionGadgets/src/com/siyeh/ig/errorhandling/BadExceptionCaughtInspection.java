@@ -66,7 +66,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
     final ListTable table =
       new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
     return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"),
-                                                        "java.lang.Throwable");
+                                                        CommonClassNames.JAVA_LANG_THROWABLE);
   }
 
   @Override

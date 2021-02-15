@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -818,6 +819,28 @@ public class PsiTreeUtil {
   }
 
   /**
+   * Finds the closest element, skipping elements which match given predicate.
+   *
+   * @param element   element to start search from
+   * @param next      a function to obtain next element
+   * @param condition a predicate to test whether element should be skipped
+   */
+  @Contract("null, _, _ -> null")
+  public static @Nullable PsiElement skipMatching(@Nullable PsiElement element,
+                                                  @NotNull Function<@NotNull ? super PsiElement, @Nullable ? extends PsiElement> next,
+                                                  @NotNull Predicate<@NotNull ? super PsiElement> condition) {
+    if (element == null) {
+      return null;
+    }
+    for (PsiElement e = next.apply(element); e != null; e = next.apply(e)) {
+      if (!condition.test(e)) {
+        return e;
+      }
+    }
+    return null;
+  }
+  
+  /**
    * Finds the closest parent that is an instance of one of supplied classes. Traversal stops at {@link PsiFile} level.
    *
    * @param element element to start traversal from
@@ -1276,7 +1299,7 @@ public class PsiTreeUtil {
       offsets.add(pos);
       cur = cur.getParent();
       if (cur == null) {
-        throw new IllegalStateException("Cannot find parent file");
+        throw new IllegalStateException("Cannot find parent file; element class: " + element.getClass());
       }
     }
     cur = copy;

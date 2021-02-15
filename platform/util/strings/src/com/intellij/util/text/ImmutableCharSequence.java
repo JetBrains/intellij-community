@@ -28,6 +28,11 @@ public abstract class ImmutableCharSequence implements CharSequence {
   @Contract(pure = true)
   public abstract ImmutableCharSequence subtext(int start, int end);
 
+  @Contract(pure = true)
+  public ImmutableCharSequence replace(int start, int end, @NotNull CharSequence seq) {
+    return delete(start, end).insert(start, seq);
+  }
+
   @NotNull
   @Override
   public abstract String toString();

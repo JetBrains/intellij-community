@@ -62,7 +62,7 @@ public final class SheetController implements Disposable {
 
   private static final int GAP_BETWEEN_BUTTONS = 5;
 
-  @NonNls private static final String SPACE_OR_LINE_SEPARATOR_PATTERN = "([\\s" + System.getProperty("line.separator") + "]|(<br\\s*/?>))+";
+  @NonNls private static final String SPACE_OR_LINE_SEPARATOR_PATTERN = "([\\s" + System.lineSeparator() + "]|(<br\\s*/?>))+";
 
   // SHEET
   public int SHEET_WIDTH = 400;

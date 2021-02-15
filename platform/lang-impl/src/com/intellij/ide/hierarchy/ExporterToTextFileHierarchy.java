@@ -6,7 +6,6 @@ package com.intellij.ide.hierarchy;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -27,7 +26,7 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
     StringBuilder buf = new StringBuilder();
     StructureTreeModel currentBuilder = myHierarchyBrowserBase.getCurrentBuilder();
     LOG.assertTrue(currentBuilder != null);
-    appendNode(buf, currentBuilder.getRootImmediately(), SystemProperties.getLineSeparator(), "");
+    appendNode(buf, currentBuilder.getRootImmediately(), System.lineSeparator(), "");
     return buf.toString();
   }
 

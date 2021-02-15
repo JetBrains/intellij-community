@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static git4idea.GitNotificationIdsHolder.*;
 
 public final class GitRebaseUtils {
   private final static Logger LOG = Logger.getInstance(GitRebaseUtils.class.getName());
@@ -90,7 +91,7 @@ public final class GitRebaseUtils {
   private static void notifyContinueFailed(@NotNull Project project, @NotNull @NonNls String action) {
     LOG.warn(String.format("Refusing to %s: no rebase spec", action));
     VcsNotifier.getInstance(project).notifyError(
-      "git.rebase.cannot.continue", GitBundle.message("rebase.notification.no.rebase.in.progress.continue.title"),
+      REBASE_CANNOT_CONTINUE, GitBundle.message("rebase.notification.no.rebase.in.progress.continue.title"),
       GitBundle.message("rebase.notification.no.rebase.in.progress.message"),
       true
     );
@@ -111,7 +112,7 @@ public final class GitRebaseUtils {
     else {
       LOG.warn("Refusing to abort: no rebase spec");
       VcsNotifier.getInstance(project).notifyError(
-        "git.rebase.cannot.abort", GitBundle.message("rebase.notification.no.rebase.in.progress.abort.title"),
+        REBASE_CANNOT_ABORT, GitBundle.message("rebase.notification.no.rebase.in.progress.abort.title"),
         GitBundle.message("rebase.notification.no.rebase.in.progress.message"),
         true
       );
@@ -174,7 +175,7 @@ public final class GitRebaseUtils {
       }
       if (message != null) {
         VcsNotifier.getInstance(project).notifyError(
-          "git.rebase.not.allowed",
+          REBASE_NOT_ALLOWED,
           GitBundle.message("rebase.notification.not.allowed.title"),
           message
         );

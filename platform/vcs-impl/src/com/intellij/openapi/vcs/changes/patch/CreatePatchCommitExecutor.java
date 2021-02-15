@@ -44,6 +44,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_COPIED_TO_CLIPBOARD;
+
 public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
   private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path"; //NON-NLS
@@ -338,7 +340,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                            @NotNull CommitContext commitContext) throws VcsException, IOException {
     List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, honorExcludedFromCommit);
     PatchWriter.writeAsPatchToClipboard(project, patches, baseDir, commitContext);
-    VcsNotifier.getInstance(project).notifySuccess("vcs.patch.copied.to.clipboard", "",
+    VcsNotifier.getInstance(project).notifySuccess(PATCH_COPIED_TO_CLIPBOARD, "",
                                                    VcsBundle.message("patch.copied.to.clipboard"));
   }
 

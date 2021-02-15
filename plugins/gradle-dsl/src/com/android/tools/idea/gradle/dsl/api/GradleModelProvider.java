@@ -15,7 +15,6 @@
  */
 package com.android.tools.idea.gradle.dsl.api;
 
-import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencyModel;
 import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencySpec;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -36,7 +35,7 @@ public abstract class GradleModelProvider {
   }
 
   @NotNull
-  public static GradleModelProvider get() {
+  public static GradleModelProvider getInstance() {
     return ApplicationManager.getApplication().getService(GradleModelProviderFactory.class).get();
   }
 
@@ -75,11 +74,6 @@ public abstract class GradleModelProvider {
                                                                    @Nullable String version,
                                                                    @Nullable String classifier,
                                                                    @Nullable String extension);
-
-  @NotNull
-  public abstract ArtifactDependencySpec getArtifactDependencySpec(@NotNull ArtifactDependencyModel dependency);
-
   @Nullable
   public abstract ArtifactDependencySpec getArtifactDependencySpec(@NotNull String notation);
-
 }

@@ -68,43 +68,9 @@ public class VcsUtil {
     return (int)Math.min(result, Integer.MAX_VALUE);
   }
 
-  /**
-   * @deprecated use the {@link VcsDirtyScopeManager} directly.
-   */
-  @Deprecated
-  public static void markFileAsDirty(final Project project, final VirtualFile file) {
-    VcsDirtyScopeManager.getInstance(project).fileDirty(file);
-  }
-
-  /**
-   * @deprecated use the {@link VcsDirtyScopeManager} directly.
-   */
-  @Deprecated
-  public static void markFileAsDirty(final Project project, @NonNls FilePath path) {
-    VcsDirtyScopeManager.getInstance(project).fileDirty(path);
-  }
-
   public static void markFileAsDirty(final Project project, @NonNls String path) {
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path));
     VcsDirtyScopeManager.getInstance(project).fileDirty(filePath);
-  }
-
-  /**
-   * @deprecated use the {@link VcsDirtyScopeManager} directly.
-   */
-  @Deprecated
-  public static void refreshFiles(Project project, HashSet<? extends FilePath> paths) {
-    for (FilePath path : paths) {
-      VirtualFile vFile = path.getVirtualFile();
-      if (vFile != null) {
-        if (vFile.isDirectory()) {
-          markFileAsDirty(project, vFile);
-        }
-        else {
-          vFile.refresh(true, vFile.isDirectory());
-        }
-      }
-    }
   }
 
   /**
@@ -404,12 +370,6 @@ public class VcsUtil {
         return computable.convert(indicator);
       }
     });
-  }
-
-  @Deprecated
-  @Nullable
-  public static VirtualFile waitForTheFile(@NotNull @NonNls String path) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
   @NonNls

@@ -2,10 +2,11 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public interface TestModeFlagListener {
-  void testModeFlagChanged(Key<?> key, Object value);
+  void testModeFlagChanged(@NotNull Key<?> key, Object value);
 }

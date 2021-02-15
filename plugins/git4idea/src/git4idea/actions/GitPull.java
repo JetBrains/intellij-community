@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import static git4idea.GitNotificationIdsHolder.PULL_FAILED;
 import static git4idea.commands.GitImpl.REBASE_CONFIG_PARAMS;
 import static java.util.Collections.singletonList;
 
@@ -78,7 +79,7 @@ public class GitPull extends GitMergeAction {
 
   @Override
   protected String getNotificationErrorDisplayId() {
-    return "git.pull.failed";
+    return PULL_FAILED;
   }
 
   @Override

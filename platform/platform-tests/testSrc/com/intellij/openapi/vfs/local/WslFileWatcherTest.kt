@@ -47,7 +47,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 //todo[r.sh] fix ignored tests
 class WslFileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
-  private val LOG: Logger by lazy { Logger.getInstance(WslFileWatcher::class.java) }
+  companion object {
+    private val LOG: Logger by lazy { Logger.getInstance(WslFileWatcher::class.java) }
+    private val WSL: String? by lazy { enumerateWslDistributions().firstOrNull() }
+  }
 
   private lateinit var tempDir: Path
   private lateinit var wsl: String
@@ -64,14 +67,13 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     assumeTrue(SystemInfo.isWin10OrNewer)
     assumeWslPresence()
 
-    val distributions = enumerateWslDistributions()
-    assumeTrue("No WSL distributions found", distributions.isNotEmpty())
+    assumeTrue("No WSL distributions found", WSL != null)
+    wsl = WSL!!
+    assumeTrue("WSL distribution ${wsl} doesn't seem to be alive", reanimateWslDistribution(wsl))
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
-    wsl = distributions[0]
     tempDir = Files.createTempDirectory(Paths.get("\\\\wsl$\\${wsl}\\tmp"), "${UsefulTestCase.TEMP_DIR_MARKER}${getTestName(false)}_")
-
     fs = LocalFileSystem.getInstance()
     vfsTempDir = refresh(tempDir.toFile())
 
@@ -671,7 +673,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     LOG.debug("** done waiting")
 
     val events = VfsTestUtil.getEvents { fs.refresh(false) }.asSequence()
-      .filterNot { FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
+      .filterNot { FileUtil.startsWith(it.path, PathManager.getConfigPath()) || FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
       .filterNot { it is VFilePropertyChangeEvent && it.propertyName == VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY }
       .toList()
 

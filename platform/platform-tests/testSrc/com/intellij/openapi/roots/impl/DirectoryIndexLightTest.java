@@ -11,15 +11,12 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class DirectoryIndexLightTest extends BasePlatformTestCase {
 
   public void testAccessPerformance() throws IOException {
     VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-    List<VirtualFile> files = new ArrayList<>();
+    VirtualFile[] files = new VirtualFile[100*50];
     WriteAction.run(() -> {
       for (int i = 0; i < 100; i++) {
         VirtualFile directory = myFixture.getTempDirFixture().findOrCreateDir("dir" + i);
@@ -27,7 +24,7 @@ public class DirectoryIndexLightTest extends BasePlatformTestCase {
           directory = directory.createChildDirectory(this, "subDir");
         }
         for (int j = 0; j < 50; j++) {
-          files.add(directory.createChildData(this, "file" + j));
+          files[i*50+j] = directory.createChildData(this, "file" + j);
         }
       }
     });
@@ -45,7 +42,7 @@ public class DirectoryIndexLightTest extends BasePlatformTestCase {
         return noId2;
       }
     };
-    List<VirtualFile> filesWithoutId = Arrays.asList(noId1, noId2, noId3);
+    VirtualFile[] filesWithoutId = {noId1, noId2, noId3};
 
     ProjectFileIndex index = ProjectFileIndex.getInstance(getProject());
 
@@ -64,7 +61,7 @@ public class DirectoryIndexLightTest extends BasePlatformTestCase {
           assertFalse(index.isInLibrary(file));
         }
       }
-    }).reattemptUntilJitSettlesDown().assertTiming();
+    }).assertTiming();
   }
 
 }

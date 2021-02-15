@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -16,6 +17,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -23,15 +25,15 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
@@ -566,6 +568,16 @@ public final class AnnotationsHighlightUtil {
     return null;
   }
 
+  static HighlightInfo checkInvalidAnnotationOnRecordComponent(@NotNull PsiAnnotation annotation) {
+    if (!Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_SAFE_VARARGS)) return null;
+    PsiAnnotationOwner owner = annotation.getOwner();
+    if (!(owner instanceof PsiModifierList)) return null;
+    PsiElement parent = ((PsiModifierList)owner).getParent();
+    if (!(parent instanceof PsiRecordComponent)) return null;
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation)
+      .descriptionAndTooltip(JavaErrorBundle.message("safevararg.annotation.cannot.be.applied.for.record.component")).create();
+  }
+
   static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
       final PsiAnnotationOwner owner = annotation.getOwner();
@@ -647,6 +659,18 @@ public final class AnnotationsHighlightUtil {
       }
     }
 
+    @Nullable String missedAnnotationError = getMissedAnnotationError((PsiClass)target, container, Inherited.class.getName());
+    if (missedAnnotationError != null) {
+      return missedAnnotationError;
+    }
+    return getMissedAnnotationError((PsiClass)target, container, Documented.class.getName());
+  }
+
+  @Nls
+  private static String getMissedAnnotationError(PsiClass target, PsiClass container, String annotationFqn) {
+    if (AnnotationUtil.isAnnotated(target, annotationFqn, 0) && !AnnotationUtil.isAnnotated(container, annotationFqn, 0)) {
+      return JavaErrorBundle.message("annotation.container.missed.annotation", container.getQualifiedName(), StringUtil.getShortName(annotationFqn));
+    }
     return null;
   }
 
@@ -767,8 +791,7 @@ public final class AnnotationsHighlightUtil {
     @Override
     public Boolean visitClassType(@NotNull PsiClassType classType) {
       if (classType.getParameters().length > 0) {
-        PsiClassType rawType = classType.rawType();
-        return rawType.equalsToText(CommonClassNames.JAVA_LANG_CLASS);
+        return PsiTypesUtil.classNameEquals(classType, CommonClassNames.JAVA_LANG_CLASS);
       }
 
       PsiClass aClass = classType.resolve();

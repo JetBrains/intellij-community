@@ -7,7 +7,6 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -102,7 +101,7 @@ public final class DebugReflectionUtil {
     if (Unsafe_shouldBeInitialized == null) return false;
     boolean isInitialized = false;
     try {
-      isInitialized = !(Boolean)Unsafe_shouldBeInitialized.invoke(AtomicFieldUpdater.getUnsafe(), root);
+      isInitialized = !(Boolean)Unsafe_shouldBeInitialized.invoke(ReflectionUtil.getUnsafe(), root);
     }
     catch (Exception e) {
       //noinspection CallToPrintStackTrace

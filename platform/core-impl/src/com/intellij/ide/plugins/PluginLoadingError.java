@@ -4,7 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +73,7 @@ public final class PluginLoadingError {
 
   @NotNull
   public @NonNls String getInternalMessage() {
-    return formatErrorMessage(myPlugin, ObjectUtils.notNull(myDetailedMessage, myShortMessage).get());
+    return formatErrorMessage(myPlugin, (myDetailedMessage == null ? myShortMessage : myDetailedMessage).get());
   }
 
   public @NlsContexts.Label String getShortMessage() {

@@ -199,19 +199,6 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
-    if (file != null) {
-      VirtualFile vFile = file.getViewProvider().getVirtualFile();
-      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
-      if (cachedDocument != null && cachedDocument != document) {
-        throw new IllegalStateException("Can't replace existing document");
-      }
-
-      FileDocumentManagerImpl.registerDocument(document, vFile);
-    }
-  }
-
-  @Override
   public boolean commitAllDocumentsUnderProgress() {
     int eventCount = IdeEventQueue.getInstance().getEventCount();
     boolean success = super.commitAllDocumentsUnderProgress();

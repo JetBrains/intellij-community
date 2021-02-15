@@ -18,11 +18,11 @@ import junit.framework.TestCase.assertEquals
 import javax.swing.tree.DefaultMutableTreeNode
 
 class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
-
+  @Suppress("ObjectLiteralToLambda")
   private val fixtureDisposable: Disposable = object : Disposable {
-    override fun dispose() {
-    }
+    override fun dispose() { }
   }
+
   private lateinit var syncViewManager: TestSyncViewManager
   private lateinit var buildViewManager: TestBuildViewManager
 
@@ -38,11 +38,11 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
   }
 
   @Throws(Exception::class)
-  override fun tearDown() = RunAll()
-    .append(ThrowableRunnable { if (::syncViewManager.isInitialized) syncViewManager.waitForPendingBuilds() })
-    .append(ThrowableRunnable { if (::buildViewManager.isInitialized) buildViewManager.waitForPendingBuilds() })
-    .append(ThrowableRunnable { Disposer.dispose(fixtureDisposable) })
-    .run()
+  override fun tearDown() = RunAll(
+    ThrowableRunnable { if (::syncViewManager.isInitialized) syncViewManager.waitForPendingBuilds() },
+    ThrowableRunnable { if (::buildViewManager.isInitialized) buildViewManager.waitForPendingBuilds() },
+    ThrowableRunnable { Disposer.dispose(fixtureDisposable) }
+  ).run()
 
   fun assertSyncViewTreeEquals(executionTreeText: String) {
     assertExecutionTree(syncViewManager, executionTreeText, false)

@@ -115,17 +115,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     return true;
   }
 
-  private void setupProjectName(@NotNull Project project) {
-    if (!(project instanceof ProjectEx)) {
-      return;
-    }
-
-    String projectName = getSuggestedProjectName();
-    if (projectName != null) {
-      ((ProjectEx)project).setProjectName(projectName);
-    }
-  }
-
   @Nullable
   public Sdk suggestProjectSdk() {
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
@@ -159,7 +148,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       LOG.debug(String.format("Cannot import project for %s", project.toString()));
       return Collections.emptyList();
     }
-    setupProjectName(project);
     setupProjectSdk(project);
 
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
@@ -183,6 +171,10 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
+    if (!manager.hasProjects() && settings.generalSettings.isShowDialogWithAdvancedSettings()) {
+      showGeneralSettingsConfigurationDialog(project, settings.generalSettings);
+    }
+
     manager.setIgnoredState(getParameters().mySelectedProjects, false);
 
     manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles);
@@ -205,6 +197,11 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
     }
     return manager.importProjects();
+  }
+
+  private static void showGeneralSettingsConfigurationDialog(@NotNull Project project, @NotNull MavenGeneralSettings generalSettings) {
+    MavenEnvironmentSettingsDialog dialog = new MavenEnvironmentSettingsDialog(project, generalSettings);
+    ApplicationManager.getApplication().invokeAndWait(dialog::show);
   }
 
   private static void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {

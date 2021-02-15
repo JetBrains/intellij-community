@@ -56,4 +56,5 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
   public void testMethodCall() { doTest(); }
   public void testMethodCall2() { doTest(); }
   public void testYield() { doTest(); }
+  public void testOverwrittenDeclaration() { doTest(); }
 }

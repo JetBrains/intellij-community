@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -101,11 +101,11 @@ public abstract class GitHandler {
   }
 
   /**
-   * A constructor for handler that can be run without project association
+   * A constructor for handler that can be run without project association.
    *
    * @param project          optional project
    * @param directory        working directory
-   * @param pathToExecutable path to git executable
+   * @param executable       git executable
    * @param command          git command to execute
    * @param configParameters list of config parameters to use for this git execution
    */

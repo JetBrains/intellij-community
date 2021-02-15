@@ -238,6 +238,9 @@ class InspectionPopupManager {
       else if (getAnalyzerStatus().getExpandedStatus().size() > 0 && getAnalyzerStatus().getAnalyzingType() != AnalyzingType.EMPTY) {
         myContent.add(createDetailsPanel(), gc);
       }
+      else if (!passes.isEmpty()){
+        myProgressPanel.setBorder(JBUI.Borders.emptyBottom(12));
+      }
     }
 
     myContent.add(createLowerPanel(controller),
@@ -327,7 +330,7 @@ class InspectionPopupManager {
                                 FeatureUsageData data = new FeatureUsageData().
                                   addProject(myEditor.getProject()).
                                   addLanguage(level.getLangID()).
-                                  addData("level", inspectionsLevel.toString());
+                                  addData("level", inspectionsLevel.name());
 
                                 FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
                               },

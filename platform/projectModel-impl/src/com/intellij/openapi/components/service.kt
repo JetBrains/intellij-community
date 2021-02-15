@@ -6,7 +6,11 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.project.Project
 import com.intellij.project.ProjectStoreOwner
 
-inline fun <reified T : Any> service(): T = ApplicationManager.getApplication().getService(T::class.java)
+inline fun <reified T : Any> service(): T {
+  val serviceClass = T::class.java
+  return ApplicationManager.getApplication().getService(serviceClass)
+         ?: throw RuntimeException("Cannot find service ${serviceClass.name} (classloader=${serviceClass.classLoader})")
+}
 
 inline fun <reified T : Any> serviceOrNull(): T? = ApplicationManager.getApplication().getService(T::class.java)
 

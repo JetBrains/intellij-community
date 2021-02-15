@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
@@ -12,10 +9,12 @@ import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl
 import git4idea.update.VcsLogUiPropertiesWithSharedRecentFilters
 
 @State(name = "Git.Compare.Branches.Top.Log.Properties", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class GitCompareBranchesTopLogProperties(project: Project) : GitCompareBranchesLogProperties(project)
+@Service(Service.Level.PROJECT)
+internal class GitCompareBranchesTopLogProperties(project: Project) : GitCompareBranchesLogProperties(project)
 
 @State(name = "Git.Compare.Branches.Bottom.Log.Properties", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class GitCompareBranchesBottomLogProperties(project: Project) : GitCompareBranchesLogProperties(project)
+@Service(Service.Level.PROJECT)
+internal class GitCompareBranchesBottomLogProperties(project: Project) : GitCompareBranchesLogProperties(project)
 
 abstract class GitCompareBranchesLogProperties(project: Project) :
   VcsLogUiPropertiesWithSharedRecentFilters<GitCompareBranchesLogProperties.MyState>(project, service()) {

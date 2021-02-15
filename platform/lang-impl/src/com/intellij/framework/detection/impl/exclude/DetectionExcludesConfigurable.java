@@ -58,15 +58,20 @@ public class DetectionExcludesConfigurable implements Configurable {
     myEnabledDetectionCheckBox = new JCheckBox(ProjectBundle.message("checkbox.text.enable.framework.detection"));
     myEnabledDetectionCheckBox.setBorder(new EmptyBorder(10, 10, 0, 0));
     final JBList<ExcludeListItem> excludesList = new JBList<>(myModel);
-    final ColoredListCellRenderer<ExcludeListItem> renderer = new ColoredListCellRenderer<ExcludeListItem>() {
+    final ColoredListCellRenderer<ExcludeListItem> renderer = new ColoredListCellRenderer<>() {
       final JPanel panel = new JPanel(new BorderLayout());
+
       {
         panel.setBorder(JBUI.Borders.empty(2, 10, 2, 0));
         panel.add(this);
       }
 
       @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends ExcludeListItem> list, ExcludeListItem value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends ExcludeListItem> list,
+                                           ExcludeListItem value,
+                                           int index,
+                                           boolean selected,
+                                           boolean hasFocus) {
         setIconTextGap(4);
         if (value != null) {
           value.renderItem(this);
@@ -75,7 +80,11 @@ public class DetectionExcludesConfigurable implements Configurable {
       }
 
       @Override
-      public Component getListCellRendererComponent(JList<? extends ExcludeListItem> list, ExcludeListItem value, int index, boolean selected, boolean hasFocus) {
+      public Component getListCellRendererComponent(JList<? extends ExcludeListItem> list,
+                                                    ExcludeListItem value,
+                                                    int index,
+                                                    boolean selected,
+                                                    boolean hasFocus) {
         super.getListCellRendererComponent(list, value, index, selected, hasFocus);
         panel.setBackground(UIUtil.getListBackground(selected, hasFocus));
         return panel;
@@ -118,7 +127,7 @@ public class DetectionExcludesConfigurable implements Configurable {
     }
     types.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     types.add(0, null);
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<FrameworkType>(
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(
       LangBundle.message("popup.title.framework.to.exclude"), types) {
       @Override
       public Icon getIconFor(FrameworkType value) {
@@ -166,7 +175,7 @@ public class DetectionExcludesConfigurable implements Configurable {
 
   private PopupStep addExcludedFramework(final @NotNull FrameworkType frameworkType) {
     final String projectItem = "In the whole project";
-    return new BaseListPopupStep<String>(null, projectItem, "In directory...") {
+    return new BaseListPopupStep<>(null, projectItem, "In directory...") {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
         if (selectedValue.equals(projectItem)) {

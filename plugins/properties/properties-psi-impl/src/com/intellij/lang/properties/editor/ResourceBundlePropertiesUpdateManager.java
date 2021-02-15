@@ -17,7 +17,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.graph.*;
-import gnu.trove.THashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -158,7 +157,7 @@ public final class ResourceBundlePropertiesUpdateManager {
       ContainerUtil.map(resourceBundle.getPropertiesFiles(), PropertiesOrder::new);
 
     final boolean[] isAlphaSorted = new boolean[]{true};
-    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<String>() {
+    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<String> getNodes() {
@@ -219,7 +218,7 @@ public final class ResourceBundlePropertiesUpdateManager {
     PropertiesOrder(@NotNull PropertiesFile file) {
       final List<IProperty> properties = file.getProperties();
       myKeys = new ArrayList<>(properties.size());
-      myKeyIndices = FactoryMap.createMap(k->new IntArrayList(1),()->new THashMap<>(properties.size()));
+      myKeyIndices = FactoryMap.createMap(k -> new IntArrayList(1), () -> new HashMap<>(properties.size()));
 
       int index = 0;
       for (IProperty property : properties) {

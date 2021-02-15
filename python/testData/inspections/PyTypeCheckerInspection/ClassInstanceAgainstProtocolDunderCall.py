@@ -12,3 +12,4 @@ def foo(arg: P):
     pass
 
 foo(C())
+foo(<warning descr="Expected type 'P', got 'Type[C]' instead">C</warning>)

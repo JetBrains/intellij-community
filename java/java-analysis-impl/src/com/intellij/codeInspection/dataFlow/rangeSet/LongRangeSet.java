@@ -838,7 +838,7 @@ public abstract class LongRangeSet {
       return range(ranges[0], ranges[1]);
     }
     else {
-      return new RangeSet(Arrays.copyOfRange(ranges, 0, bound));
+      return new RangeSet(Arrays.copyOf(ranges, bound));
     }
   }
 

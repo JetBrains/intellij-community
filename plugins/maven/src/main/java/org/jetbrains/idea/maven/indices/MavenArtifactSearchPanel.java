@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -294,7 +293,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       add(myLeftComponent);
       add(myRightComponent);
 
-      Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+      Font font = EditorFontType.PLAIN.getGlobalFont();
       myLeftComponent.setFont(font);
       myRightComponent.setFont(font);
 

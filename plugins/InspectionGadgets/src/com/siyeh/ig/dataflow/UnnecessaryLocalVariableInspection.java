@@ -39,7 +39,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class UnnecessaryLocalVariableInspection extends BaseInspection {
   public boolean m_ignoreImmediatelyReturnedVariables;
 
-  /** @deprecated unused, left for compatibility */
+  /** @deprecated unused, left to avoid modifications in config files */
   @Deprecated
   public boolean m_ignoreAnnotatedVariables;
 

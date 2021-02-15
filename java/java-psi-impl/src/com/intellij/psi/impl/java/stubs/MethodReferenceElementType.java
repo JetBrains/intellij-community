@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -15,13 +15,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodReferenceElementType extends FunctionalExpressionElementType<PsiMethodReferenceExpression> {
   //prevents cyclic static variables initialization
-  private final static NotNullLazyValue<TokenSet> EXCLUDE_FROM_PRESENTABLE_TEXT = new NotNullLazyValue<TokenSet>() {
-    @NotNull
-    @Override
-    protected TokenSet compute() {
-      return TokenSet.orSet(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET, TokenSet.create(JavaElementType.REFERENCE_PARAMETER_LIST));
-    }
-  };
+  private final static NotNullLazyValue<TokenSet> EXCLUDE_FROM_PRESENTABLE_TEXT = NotNullLazyValue.lazy(() -> {
+    return TokenSet.orSet(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET, TokenSet.create(JavaElementType.REFERENCE_PARAMETER_LIST));
+  });
 
   public MethodReferenceElementType() {
     super("METHOD_REF_EXPRESSION");

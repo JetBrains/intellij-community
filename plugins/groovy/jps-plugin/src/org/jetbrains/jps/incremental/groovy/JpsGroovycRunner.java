@@ -163,10 +163,9 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       patchers.addAll(extension.getCompilationUnitPatchers(context, chunk));
     }
 
-
     Collection<String> classpath = generateClasspath(context, chunk);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Optimized class loading: " + optimizeClassLoading);
+      LOG.debug("Optimized class loading: " + optimizeClassLoading + ", inProcess = " + inProcess);
       LOG.debug("Groovyc classpath: " + classpath);
     }
 

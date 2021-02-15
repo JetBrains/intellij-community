@@ -105,7 +105,7 @@ public class PluginModelImpl implements PluginModel {
   @NotNull
   @Override
   public ResolvedPropertyModel name() {
-    return GradlePropertyModelBuilder.create(myDslElement).asMethod(true).buildResolved();
+    return GradlePropertyModelBuilder.create(myDslElement).buildResolved();
   }
 
   public void remove() {

@@ -304,39 +304,19 @@ public final class ScrollingUtil {
   }
 
   public static void installMoveEndAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
-    new ListScrollAction(CommonShortcuts.getMoveEnd(), focusParent == null ? list : focusParent){
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        moveEnd(list);
-      }
-    };
+    new ListMoveEndAction(focusParent, list);
   }
 
   public static void installMoveHomeAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
-    new ListScrollAction(CommonShortcuts.getMoveHome(), focusParent == null ? list : focusParent){
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        moveHome(list);
-      }
-    };
+    new ListMoveHomeAction(focusParent, list);
   }
 
   public static void installMovePageDownAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
-    new ListScrollAction(CommonShortcuts.getMovePageDown(), focusParent == null ? list : focusParent){
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        movePageDown(list);
-      }
-    };
+    new ListMovePageDownAction(focusParent, list);
   }
 
   public static void installMovePageUpAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
-    new ListScrollAction(CommonShortcuts.getMovePageUp(), focusParent == null ? list : focusParent){
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        movePageUp(list);
-      }
-    };
+    new ListMovePageUpAction(focusParent, list);
   }
 
   public static void installMoveDownAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
@@ -344,12 +324,7 @@ public final class ScrollingUtil {
   }
 
   private static void installMoveDownAction(@NotNull JList<?> list, @Nullable JComponent focusParent, boolean cycleScrolling) {
-    new ListScrollAction(CommonShortcuts.getMoveDown(), focusParent == null ? list : focusParent){
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        moveDown(list, 0, cycleScrolling);
-      }
-    };
+    new ListMoveDownAction(focusParent, list, cycleScrolling);
   }
 
   public static void installMoveUpAction(@NotNull JList<?> list, @Nullable JComponent focusParent) {
@@ -357,12 +332,7 @@ public final class ScrollingUtil {
   }
 
   private static void installMoveUpAction(@NotNull JList<?> list, @Nullable JComponent focusParent, boolean cycleScrolling) {
-    new ListScrollAction(CommonShortcuts.getMoveUp(), focusParent == null ? list : focusParent) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        moveUp(list, 0, cycleScrolling);
-      }
-    };
+    new ListMoveUpAction(focusParent, list, cycleScrolling);
   }
 
   private static void maybeInstallDefaultShortcuts(@NotNull JComponent component) {
@@ -617,66 +587,16 @@ public final class ScrollingUtil {
     maybeInstallDefaultShortcuts(table);
     JComponent target = focusParent == null ? table : focusParent;
 
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        moveHome(table);
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), table);
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        moveEnd(table);
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), table);
+    new TableMoveHomeAction(table).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), table);
+    new TableMoveEndAction(table).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), table);
     if (!(focusParent instanceof JTextComponent)) {
-      new MyScrollingAction(table) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          moveHome(table);
-        }
-      }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), target);
-      new MyScrollingAction(table) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          moveEnd(table);
-        }
-      }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), target);
+      new TableMoveHomeAction(table).registerCustomShortcutSet(CommonShortcuts.getMoveHome(), target);
+      new TableMoveEndAction(table).registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), target);
     }
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        moveDown(table, e.getModifiers(), cycleScrolling);
-      }
-
-      @Override
-      protected boolean isEnabled() {
-        return super.isEnabled() && !isMultiline(target);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), target);
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        moveUp(table, e.getModifiers(), cycleScrolling);
-      }
-
-      @Override
-      protected boolean isEnabled() {
-        return super.isEnabled() && !isMultiline(target);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), target);
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        movePageUp(table);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), target);
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        movePageDown(table);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), target);
+    new TableMoveDownAction(table, cycleScrolling, target).registerCustomShortcutSet(CommonShortcuts.getMoveDown(), target);
+    new TableMoveUpAction(table, cycleScrolling, target).registerCustomShortcutSet(CommonShortcuts.getMoveUp(), target);
+    new TableMovePageUpAction(table).registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), target);
+    new TableMovePageDownAction(table).registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), target);
   }
 
   private static boolean isMultiline(@NotNull JComponent component) {
@@ -749,6 +669,202 @@ public final class ScrollingUtil {
 
     private boolean isCycleScrolling() {
       return myCycleScrolling == null ? UISettings.getInstance().getCycleScrolling() : myCycleScrolling.booleanValue();
+    }
+  }
+
+  private static class ListMoveUpAction extends ListScrollAction {
+    private @NotNull final JList<?> myList;
+    private final boolean myCycleScrolling;
+
+    private ListMoveUpAction(@Nullable JComponent focusParent, @NotNull JList<?> list, boolean cycleScrolling) {
+      super(CommonShortcuts.getMoveUp(),
+            focusParent == null
+            ? list
+            : focusParent);
+      myList = list;
+      myCycleScrolling = cycleScrolling;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      moveUp(myList, 0, myCycleScrolling);
+    }
+  }
+
+  private static class ListMoveEndAction extends ListScrollAction {
+    private @NotNull final JList<?> myList;
+
+    private ListMoveEndAction(@Nullable JComponent focusParent, @NotNull JList<?> list) {
+      super(CommonShortcuts.getMoveEnd(), focusParent == null ? list : focusParent);
+      myList = list;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      moveEnd(myList);
+    }
+  }
+
+  private static class ListMoveHomeAction extends ListScrollAction {
+    private @NotNull final JList<?> myList;
+
+    private ListMoveHomeAction(@Nullable JComponent focusParent, @NotNull JList<?> list) {
+      super(CommonShortcuts.getMoveHome(), focusParent == null ? list : focusParent);
+      myList = list;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      moveHome(myList);
+    }
+  }
+
+  private static class ListMovePageDownAction extends ListScrollAction {
+    private @NotNull final JList<?> myList;
+
+    private ListMovePageDownAction(@Nullable JComponent focusParent, @NotNull JList<?> list) {
+      super(CommonShortcuts.getMovePageDown(), focusParent == null ? list : focusParent);
+      myList = list;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      movePageDown(myList);
+    }
+  }
+
+  private static class ListMovePageUpAction extends ListScrollAction {
+    private @NotNull final JList<?> myList;
+
+    private ListMovePageUpAction(@Nullable JComponent focusParent, @NotNull JList<?> list) {
+      super(CommonShortcuts.getMovePageUp(), focusParent == null ? list : focusParent);
+      myList = list;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      movePageUp(myList);
+    }
+  }
+
+  private static class ListMoveDownAction extends ListScrollAction {
+    private @NotNull final JList<?> myList;
+    private final boolean myCycleScrolling;
+
+    private ListMoveDownAction(@Nullable JComponent focusParent, @NotNull JList<?> list, boolean cycleScrolling) {
+      super(CommonShortcuts.getMoveDown(),
+            focusParent == null
+            ? list
+            : focusParent);
+      myList = list;
+      myCycleScrolling = cycleScrolling;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      moveDown(myList, 0, myCycleScrolling);
+    }
+  }
+
+  private static class TableMoveHomeAction extends MyScrollingAction {
+    private @NotNull final JTable myTable;
+
+    private TableMoveHomeAction(@NotNull JTable table) {
+      super(table);
+      myTable = table;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      moveHome(myTable);
+    }
+  }
+
+  private static class TableMoveEndAction extends MyScrollingAction {
+    private @NotNull final JTable myTable;
+
+    private TableMoveEndAction(@NotNull JTable table) {
+      super(table);
+      myTable = table;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      moveEnd(myTable);
+    }
+  }
+
+  private static class TableMoveDownAction extends MyScrollingAction {
+    private @NotNull final JTable myTable;
+    private final boolean myCycleScrolling;
+    private final JComponent myTarget;
+
+    private TableMoveDownAction(@NotNull JTable table, boolean cycleScrolling, JComponent target) {
+      super(table);
+      myTable = table;
+      myCycleScrolling = cycleScrolling;
+      myTarget = target;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      moveDown(myTable, e.getModifiers(), myCycleScrolling);
+    }
+
+    @Override
+    protected boolean isEnabled() {
+      return super.isEnabled() && !isMultiline(myTarget);
+    }
+  }
+
+  private static class TableMoveUpAction extends MyScrollingAction {
+    private @NotNull final JTable myTable;
+    private final boolean myCycleScrolling;
+    private final JComponent myTarget;
+
+    private TableMoveUpAction(@NotNull JTable table, boolean cycleScrolling, JComponent target) {
+      super(table);
+      myTable = table;
+      myCycleScrolling = cycleScrolling;
+      myTarget = target;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      moveUp(myTable, e.getModifiers(), myCycleScrolling);
+    }
+
+    @Override
+    protected boolean isEnabled() {
+      return super.isEnabled() && !isMultiline(myTarget);
+    }
+  }
+
+  private static class TableMovePageUpAction extends MyScrollingAction {
+    private @NotNull final JTable myTable;
+
+    private TableMovePageUpAction(@NotNull JTable table) {
+      super(table);
+      myTable = table;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      movePageUp(myTable);
+    }
+  }
+
+  private static class TableMovePageDownAction extends MyScrollingAction {
+    private @NotNull final JTable myTable;
+
+    public TableMovePageDownAction(@NotNull JTable table) {
+      super(table);
+      myTable = table;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      movePageDown(myTable);
     }
   }
 }

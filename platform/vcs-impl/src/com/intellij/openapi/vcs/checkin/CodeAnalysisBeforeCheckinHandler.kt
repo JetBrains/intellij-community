@@ -3,8 +3,13 @@ package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.codeInsight.CodeSmellInfo
+import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.ide.nls.NlsMessages.formatAndList
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -16,6 +21,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
@@ -37,12 +43,17 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ExceptionUtil.rethrowUnchecked
 import com.intellij.util.PairConsumer
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.swing.JComponent
 
 private val LOG = logger<CodeAnalysisBeforeCheckinHandler>()
 
@@ -93,8 +104,38 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
     CodeSmellDetector.getInstance(project).showCodeSmellErrors(problem.codeSmells)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    BooleanCommitOption(commitPanel, message("before.checkin.standard.options.check.smells"), true,
-                        settings::CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT)
+    object : BooleanCommitOption(commitPanel, message("before.checkin.standard.options.check.smells"), true,
+                                 settings::CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
+      override fun getComponent(): JComponent {
+        setProfileText(if (settings.CODE_SMELLS_PROFILE != null) InspectionProjectProfileManager.getInstance(project).getProfile(settings.CODE_SMELLS_PROFILE) else null)
+
+        val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
+          JBPopupMenu.showBelow(sourceLink, ActionPlaces.CODE_INSPECTION, createProfileChooser())
+        }
+        val configureFilterLink = LinkLabel(message("settings.filter.configure.link"), null, showFiltersPopup)
+
+        return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
+      }
+
+      private fun setProfileText(profile: InspectionProfileImpl?) {
+        checkBox.text = if (profile == null || profile == InspectionProjectProfileManager.getInstance(project).currentProfile)
+          message("before.checkin.standard.options.check.smells")
+          else message("before.checkin.options.check.smells.profile", profile.displayName)
+      }
+
+      private fun createProfileChooser(): DefaultActionGroup {
+        val group = DefaultActionGroup()
+        for (profile in InspectionProjectProfileManager.getInstance(project).profiles) {
+          group.add(object : AnAction(profile.displayName) {
+            override fun actionPerformed(e: AnActionEvent) {
+              settings.CODE_SMELLS_PROFILE = profile.name
+              setProfileText(profile)
+            }
+          })
+        }
+        return group
+      }
+    }
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT

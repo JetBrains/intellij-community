@@ -41,7 +41,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibrary("junit3", JavaSdkUtil.getJunit3JarPath());
+    moduleBuilder.addLibrary("junit4", JavaSdkUtil.getJunit4JarPath());
   }
 
 

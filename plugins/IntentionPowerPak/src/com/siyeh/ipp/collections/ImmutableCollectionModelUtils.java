@@ -30,7 +30,7 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-class ImmutableCollectionModelUtils {
+final class ImmutableCollectionModelUtils {
 
   private static final CallMatcher MAP_ENTRY_CALL = staticCall(JAVA_UTIL_MAP, "entry").parameterCount(2);
 

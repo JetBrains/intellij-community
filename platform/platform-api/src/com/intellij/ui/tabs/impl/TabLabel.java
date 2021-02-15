@@ -21,6 +21,7 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -184,10 +185,10 @@ public class TabLabel extends JPanel implements Accessible {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
       public Font getFont() {
-        if (isFontSet() || !myTabs.useSmallLabels()) {
-          return super.getFont();
-        }
-        return UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
+        Font font = super.getFont();
+
+        return (isFontSet() || !myTabs.useSmallLabels()) ? font :
+               RelativeFont.NORMAL.fromResource("EditorTabs.fontSizeOffset", -2, JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont());
       }
 
       @Override

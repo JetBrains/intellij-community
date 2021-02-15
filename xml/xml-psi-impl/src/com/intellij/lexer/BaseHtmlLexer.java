@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.intellij.psi.xml.XmlTokenType.*;
@@ -74,8 +73,6 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
         "Cannot restore HTML Lexer to a position, in which an embedded content provider has state. Use restoreLocation() method.");
     }
     isWithinTag = (initialState & IS_WITHIN_TAG_STATE) != 0;
-    lexerOfCacheBufferSequence = null;
-    cachedBufferSequence = null;
     myHtmlEmbedmentInfo = null;
     myEmbeddedContentProviders.forEach(provider -> provider.restoreState(null));
     broadcastToken();
@@ -334,27 +331,6 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     return null;
   }
 
-  private CharSequence cachedBufferSequence;
-  private Lexer lexerOfCacheBufferSequence;
-
-  /**
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected char getFirstChar(Lexer lexer) {
-    final CharSequence buffer;
-    if (lexerOfCacheBufferSequence == lexer) {
-      buffer = cachedBufferSequence;
-    }
-    else {
-      cachedBufferSequence = lexer.getBufferSequence();
-      buffer = cachedBufferSequence;
-      lexerOfCacheBufferSequence = lexer;
-    }
-    return buffer.charAt(lexer.getTokenStart());
-  }
-
   /**
    * This API does no longer work.
    *
@@ -366,7 +342,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     void handleElement(Lexer lexer);
   }
 
-  private static final Set<Class<? extends BaseHtmlLexer>> ourLegacyLexers = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<Class<? extends BaseHtmlLexer>> ourLegacyLexers = ContainerUtil.newConcurrentSet();
   private static final Logger LOG = Logger.getInstance(BaseHtmlLexer.class);
 
   void logLegacyLexer() {

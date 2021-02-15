@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.util.PlatformIcons
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 
 class PyMarkAsNamespacePackageAction : AnAction() {
   override fun update(e: AnActionEvent) {
@@ -17,6 +19,10 @@ class PyMarkAsNamespacePackageAction : AnAction() {
 
     val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
     if (virtualFiles.isEmpty()) return
+    val project = e.project ?: return
+    if (virtualFiles.any { PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(project, it).isOlderThan(LanguageLevel.PYTHON34) }) {
+      return
+    }
 
     val module = e.getData(LangDataKeys.MODULE) ?: return
     val service = PyNamespacePackagesService.getInstance(module)

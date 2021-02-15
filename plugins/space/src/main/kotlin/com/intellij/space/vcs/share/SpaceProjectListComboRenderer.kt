@@ -14,7 +14,7 @@ class SpaceProjectListComboRenderer : ColoredListCellRenderer<PR_Project>() {
                                      selected: Boolean,
                                      hasFocus: Boolean) {
     project ?: return
-    append(project.name)
+    append(project.name) // NON-NLS
     append("  ")
     append(SpaceBundle.message("project.list.project.key.description", project.key.key), SimpleTextAttributes.GRAY_SMALL_ATTRIBUTES)
   }

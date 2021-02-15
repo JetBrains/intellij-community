@@ -86,7 +86,7 @@ public final class EditorPainter implements TextDrawingCallback {
   }
 
   @Override
-  public void drawChars(@NotNull Graphics g, char @NotNull [] data, int start, int end, int x, int y, Color color, FontInfo fontInfo) {
+  public void drawChars(@NotNull Graphics g, char @NotNull [] data, int start, int end, int x, int y, @NotNull Color color, @NotNull FontInfo fontInfo) {
     g.setFont(fontInfo.getFont());
     g.setColor(color);
     g.drawChars(data, start, end - start, x, y);
@@ -112,6 +112,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final XCorrector myCorrector;
     private final Graphics2D myGraphics;
     private final Rectangle myClip;
+    private final Insets myInsets;
     private final int myYShift;
     private final int myStartVisualLine;
     private final int myEndVisualLine;
@@ -142,7 +143,8 @@ public final class EditorPainter implements TextDrawingCallback {
       myText = myDocument.getImmutableCharSequence();
       myDocMarkup = myEditor.getFilteredDocumentMarkupModel();
       myEditorMarkup = myEditor.getMarkupModel();
-      myCorrector = XCorrector.create(myView);
+      myInsets = myView.getInsets();
+      myCorrector = XCorrector.create(myView, myInsets);
       myGraphics = g;
       myClip = myGraphics.getClipBounds();
       myYShift = -myClip.y;
@@ -224,7 +226,7 @@ public final class EditorPainter implements TextDrawingCallback {
       String toDisplay = SwingUtilities.layoutCompoundLabel(myGraphics.getFontMetrics(), hintString, null, 0, 0, 0, 0,
                                                     SwingUtilities.calculateInnerArea(editorComponent, null), // account for insets
                                                     new Rectangle(), new Rectangle(), 0);
-      myGraphics.drawString(toDisplay, myView.getInsets().left, myView.getInsets().top + myAscent + myYShift);
+      myGraphics.drawString(toDisplay, myInsets.left, myInsets.top + myAscent + myYShift);
       return true;
     }
 
@@ -329,9 +331,9 @@ public final class EditorPainter implements TextDrawingCallback {
         });
       }
 
-      int startX = myView.getInsets().left;
+      int startX = myInsets.left;
       int endX = myClip.x + myClip.width;
-      int prevY = Math.max(myView.getInsets().top, myClip.y) + myYShift;
+      int prevY = Math.max(myInsets.top, myClip.y) + myYShift;
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, myStartVisualLine);
       while (!visLinesIterator.atEnd()) {
         int visualLine = visLinesIterator.getVisualLine();
@@ -934,14 +936,14 @@ public final class EditorPainter implements TextDrawingCallback {
       boolean rounded = borderDescriptor.effectType == EffectType.ROUNDED_BOX;
       int margin = borderDescriptor.effectType == EffectType.SLIGHTLY_WIDER_BOX ? 1 : 0;
       myGraphics.setColor(borderDescriptor.effectColor);
-      VisualPosition startPosition = myView.offsetToVisualPosition(startOffset, true, false);
-      VisualPosition endPosition = myView.offsetToVisualPosition(endOffset, false, true);
-      if (startPosition.line == endPosition.line) {
-        int y = myView.visualLineToY(startPosition.line) + myYShift;
+      int startVisualLine = myView.offsetToVisualLine(startOffset, false);
+      int endVisualLine = myView.offsetToVisualLine(endOffset, true);
+      if (startVisualLine == endVisualLine) {
+        int y = myView.visualLineToY(startVisualLine) + myYShift;
         FloatList ranges = adjustedLogicalRangeToVisualRanges(startOffset, endOffset);
         for (int i = 0; i < ranges.size() - 1; i += 2) {
           float startX = myCorrector.singleLineBorderStart(ranges.getFloat(i));
-          if (startX - margin >= myCorrector.startX(startPosition.line)) {
+          if (startX - margin >= myCorrector.startX(startVisualLine)) {
             startX -= margin;
           }
           float endX = myCorrector.singleLineBorderEnd(ranges.getFloat(i + 1)) + margin;
@@ -950,17 +952,17 @@ public final class EditorPainter implements TextDrawingCallback {
       }
       else {
         FloatList leadingRanges = adjustedLogicalRangeToVisualRanges(
-          startOffset, myView.visualPositionToOffset(new VisualPosition(startPosition.line, Integer.MAX_VALUE, true)));
+          startOffset, myView.visualPositionToOffset(new VisualPosition(startVisualLine, Integer.MAX_VALUE, true)));
         FloatList trailingRanges = adjustedLogicalRangeToVisualRanges(
-          myView.visualPositionToOffset(new VisualPosition(endPosition.line, 0)), endOffset);
+          myView.visualPositionToOffset(new VisualPosition(endVisualLine, 0)), endOffset);
         if (!leadingRanges.isEmpty() && !trailingRanges.isEmpty()) {
-          int minX = Math.min(myCorrector.minX(startPosition.line, endPosition.line), (int)leadingRanges.getFloat(0));
-          int maxX = Math.max(myCorrector.maxX(startPosition.line, endPosition.line), (int)trailingRanges.getFloat(trailingRanges.size() - 1));
-          boolean containsInnerLines = endPosition.line > startPosition.line + 1;
+          int minX = Math.min(myCorrector.minX(startVisualLine, endVisualLine), (int)leadingRanges.getFloat(0));
+          int maxX = Math.max(myCorrector.maxX(startVisualLine, endVisualLine), (int)trailingRanges.getFloat(trailingRanges.size() - 1));
+          boolean containsInnerLines = endVisualLine > startVisualLine + 1;
           int lineHeight = myLineHeight - 1;
-          int leadingTopY = myView.visualLineToY(startPosition.line) + myYShift;
+          int leadingTopY = myView.visualLineToY(startVisualLine) + myYShift;
           int leadingBottomY = leadingTopY + lineHeight;
-          int trailingTopY = myView.visualLineToY(endPosition.line) + myYShift;
+          int trailingTopY = myView.visualLineToY(endVisualLine) + myYShift;
           int trailingBottomY = trailingTopY + lineHeight;
           float start = 0;
           float end = 0;
@@ -1160,7 +1162,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private void paintBlockInlays() {
       if (!myEditor.getInlayModel().hasBlockElements()) return;
-      int startX = myView.getInsets().left;
+      int startX = myInsets.left;
       int lineCount = myEditor.getVisibleLineCount();
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, myStartVisualLine);
       while (!visLinesIterator.atEnd()) {
@@ -1263,7 +1265,7 @@ public final class EditorPainter implements TextDrawingCallback {
       EditorSettings settings = myEditor.getSettings();
       Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
       if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
-      int minX = myView.getInsets().left;
+      int minX = myInsets.left;
       for (EditorImpl.CaretRectangle location : locations) {
         float x = (float)location.myPoint.getX();
         int y = (int)location.myPoint.getY() - topOverhang + myYShift;
@@ -1538,17 +1540,17 @@ public final class EditorPainter implements TextDrawingCallback {
     List<Integer> softMarginsX();
 
     @NotNull
-    static XCorrector create(@NotNull EditorView view) {
-      return view.getEditor().isRightAligned() ? new RightAligned(view) : new LeftAligned(view);
+    static XCorrector create(@NotNull EditorView view, @NotNull Insets insets) {
+      return view.getEditor().isRightAligned() ? new RightAligned(view) : new LeftAligned(view, insets);
     }
 
     final class LeftAligned implements XCorrector {
       private final EditorView myView;
       private final int myLeftInset;
 
-      private LeftAligned(@NotNull EditorView view) {
+      private LeftAligned(@NotNull EditorView view, @NotNull Insets insets) {
         myView = view;
-        myLeftInset = myView.getInsets().left;
+        myLeftInset = insets.left;
       }
 
       @Override

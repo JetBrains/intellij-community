@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -218,12 +219,12 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
 
   private static boolean leavesEmptyRangeAtEdge(TreeChangeImpl treeChange, ASTNode child) {
     ChangeInfoImpl info = treeChange.getChangeByChild(child);
-    TreeElement newChild = info.getNewChild();
-    return (newChild == null || newChild.getTextLength() == 0) && wasEdgeChild(treeChange, info.getOldChild());
+    ASTNode newChild = info.getNewChild();
+    return (newChild == null || newChild.getTextLength() == 0) && wasEdgeChild(treeChange, info.getOldChildNode());
   }
 
-  private static boolean wasEdgeChild(TreeChangeImpl treeChange, TreeElement oldChild) {
-    List<TreeElement> initial = treeChange.getInitialChildren();
+  private static boolean wasEdgeChild(TreeChangeImpl treeChange, ASTNode oldChild) {
+    List<ASTNode> initial = treeChange.getInitialChildren();
     return initial.size() > 0 && (oldChild == initial.get(0) || oldChild == initial.get(initial.size() - 1));
   }
 
@@ -634,8 +635,8 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     if (document == null) {
       return;
     }
-    for (final FileElement fileElement : ((AbstractFileViewProvider)key).getKnownTreeRoots()) {
-      fileElement.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    for (final FileASTNode fileElement : ((AbstractFileViewProvider)key).getKnownTreeRoots()) {
+      ((TreeElement) fileElement).acceptTree(new RecursiveTreeElementWalkingVisitor() {
         @Override
         protected void visitNode(TreeElement element) {
           if (CodeEditUtil.isMarkedToReformatBefore(element)) {

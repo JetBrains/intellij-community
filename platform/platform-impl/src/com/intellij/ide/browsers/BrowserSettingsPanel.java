@@ -39,7 +39,7 @@ final class BrowserSettingsPanel {
   private static final FileChooserDescriptor APP_FILE_CHOOSER_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
 
   private static final EditableColumnInfo<ConfigurableWebBrowser, String> PATH_COLUMN_INFO =
-    new EditableColumnInfo<ConfigurableWebBrowser, String>(IdeBundle.message("settings.browsers.column.path")) {
+    new EditableColumnInfo<>(IdeBundle.message("settings.browsers.column.path")) {
       @Override
       public String valueOf(ConfigurableWebBrowser item) {
         return PathUtil.toSystemDependentName(item.getPath());
@@ -57,7 +57,7 @@ final class BrowserSettingsPanel {
       }
     };
 
-  private static final EditableColumnInfo<ConfigurableWebBrowser, Boolean> ACTIVE_COLUMN_INFO = new EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
+  private static final EditableColumnInfo<ConfigurableWebBrowser, Boolean> ACTIVE_COLUMN_INFO = new EditableColumnInfo<>() {
     @Override
     public Class getColumnClass() {
       return Boolean.class;
@@ -187,7 +187,7 @@ final class BrowserSettingsPanel {
   }
 
   private void createUIComponents() {
-    TableModelEditor.DialogItemEditor<ConfigurableWebBrowser> itemEditor = new TableModelEditor.DialogItemEditor<ConfigurableWebBrowser>() {
+    TableModelEditor.DialogItemEditor<ConfigurableWebBrowser> itemEditor = new TableModelEditor.DialogItemEditor<>() {
       @NotNull
       @Override
       public Class<ConfigurableWebBrowser> getItemClass() {
@@ -202,7 +202,9 @@ final class BrowserSettingsPanel {
       }
 
       @Override
-      public void edit(@NotNull ConfigurableWebBrowser browser, @NotNull Function<ConfigurableWebBrowser, ConfigurableWebBrowser> mutator, boolean isAdd) {
+      public void edit(@NotNull ConfigurableWebBrowser browser,
+                       @NotNull Function<ConfigurableWebBrowser, ConfigurableWebBrowser> mutator,
+                       boolean isAdd) {
         BrowserSpecificSettings settings = cloneSettings(browser);
         if (settings != null && ShowSettingsUtil.getInstance().editConfigurable(browsersTable, settings.createConfigurable())) {
           mutator.fun(browser).setSpecificSettings(settings);
@@ -238,7 +240,7 @@ final class BrowserSettingsPanel {
       }
     };
     browsersEditor = new TableModelEditor<>(COLUMNS, itemEditor, IdeBundle.message("settings.browsers.no.web.browsers.configured"))
-      .modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
+      .modelListener(new TableModelEditor.DataChangedListener<>() {
         @Override
         public void tableChanged(@NotNull TableModelEvent event) {
           update();

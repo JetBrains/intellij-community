@@ -594,28 +594,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @NotNull
   TextAttributes convertAttributes(TextAttributesKey @NotNull [] keys) {
-    return convertAttributes(myScheme, keys);
-  }
-
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  public static @NotNull TextAttributes convertAttributes(@NotNull EditorColorsScheme scheme, TextAttributesKey @NotNull [] keys) {
-    TextAttributes resultAttributes = new TextAttributes();
-    boolean firstPass = true;
-    for (TextAttributesKey key : keys) {
-      TextAttributes attributesByKey = scheme.getAttributes(key);
-      if (attributesByKey == null) {
-        continue;
-      }
-      if (firstPass) {
-        resultAttributes.copyFrom(attributesByKey);
-        firstPass = false;
-      }
-      else {
-        resultAttributes = TextAttributes.merge(resultAttributes, attributesByKey);
-      }
-    }
-    return resultAttributes;
+    return LayeredTextAttributes.create(myScheme, keys);
   }
 
   @Override

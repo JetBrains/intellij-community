@@ -16,6 +16,7 @@ public final class AnnotationProcessorProfileSerializer {
   private static final String NAME = "name";
   private static final String VALUE = "value";
   private static final String ENABLED = "enabled";
+  private static final String PROC_ONLY = "procOnly";
   private static final String OPTION = "option";
   private static final String MODULE = "module";
   private static final String USE_CLASSPATH = "useClasspath";
@@ -24,6 +25,7 @@ public final class AnnotationProcessorProfileSerializer {
   public static void readExternal(ProcessorConfigProfile profile, Element element) {
     profile.setName(element.getAttributeValue(NAME, ""));
     profile.setEnabled(Boolean.valueOf(element.getAttributeValue(ENABLED, "false")));
+    profile.setProcOnly(Boolean.valueOf(element.getAttributeValue(PROC_ONLY, "false")));
 
     final Element srcOutput = element.getChild("sourceOutputDir");
     final String out = srcOutput != null ? srcOutput.getAttributeValue(NAME) : null;
@@ -87,7 +89,9 @@ public final class AnnotationProcessorProfileSerializer {
     if (profile.isEnabled()) {
       element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
     }
-
+    if (profile.isProcOnly()) {
+      element.setAttribute(PROC_ONLY, Boolean.toString(profile.isProcOnly()));
+    }
     final String srcDirName = profile.getGeneratedSourcesDirectoryName(false);
     if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_PRODUCTION_DIR_NAME, srcDirName)) {
       addChild(element, "sourceOutputDir").setAttribute(NAME, FileUtil.toSystemIndependentName(srcDirName));

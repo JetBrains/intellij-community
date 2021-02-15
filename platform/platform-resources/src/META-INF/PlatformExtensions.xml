@@ -15,6 +15,7 @@
     <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
     <appStarter implementation="com.intellij.ide.plugins.JarOrderStarter"/>
+    <appStarter implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
     <appStarter implementation="com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilderAppStarter"/>
 
     <groupConfigurable id="appearance" weight="70"
@@ -120,6 +121,8 @@
     <experimentalFeature id="wsl.execute.with.wsl.exe" percentOfUsers="100">
       <description>Run WSL commands using wsl.exe, e.g. "wsl.exe --distribution Ubuntu-20.04" (available since Windows 10 update 1903).</description>
     </experimentalFeature>
+    <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
+                        serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl" key="file" physical="true"/>
@@ -188,12 +191,10 @@
     <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
-    <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.FileOffsetsManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.ex.QuickListsManager"/>
     <actionConfigurationCustomizer implementation="com.intellij.openapi.actionSystem.ex.QuickListsManager$QuickListActionCustomizer"/>
 
     <applicationService serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
@@ -247,11 +248,6 @@
                              key="title.path.variables"
                              bundle="messages.ApplicationBundle"
                              instance="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
-    <applicationConfigurable id="trusted.hosts"
-                             bundle="messages.IdeBundle"
-                             key="configurable.trusted.hosts.display.name"
-                             instance="com.intellij.ide.impl.TrustedHostsConfigurable"
-                             groupId="build" />
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
@@ -268,6 +264,7 @@
                                         implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightingSettingProvider"/>
 
     <fileEditorProvider implementation="com.intellij.diff.editor.DiffEditorProvider"/>
+    <fileEditorProvider implementation="com.intellij.ide.browsers.actions.WebPreviewEditorProvider"/>
 
     <editorTabColorProvider implementation="com.intellij.diff.editor.VcsEditorTabColorProvider" order="first"/>
 
@@ -428,6 +425,8 @@
     <projectService serviceInterface="com.intellij.openapi.project.DumbUtil" serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>
 
     <projectService serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
+    <registryKey key="scroll.to.first.trace" defaultValue="true"
+                 description="In tests view: if 'scrollToStackTrace' is enabled and node with multiple children is selected, scroll to the trace of the first child"/>
 
     <projectService serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
 
@@ -450,7 +449,7 @@
     <welcomeTabFactory id="PluginsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory"
                        order="after CustomizeWelcomeTab"/>
     <welcomeTabFactory id="LearnIdeWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.LearnIdeTabFactory"
-                       order="after PluginsWelcomeTab'"/>
+                       order="after PluginsWelcomeTab"/>
     <welcomeScreenCustomization id="defaultCustomization"
                                 implementation="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenDefaultCustomization"/>
 
@@ -600,7 +599,7 @@
     <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectService serviceImplementation="com.intellij.execution.impl.IprRunManagerImpl"/>
     <projectServiceContainerInitializedListener implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="last"/>
-    <filePropertyPusher implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
+    <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
     <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
     <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
     <backgroundPostStartupActivity implementation="com.intellij.execution.impl.RunConfigurationFeatureCollector"/>
@@ -618,7 +617,9 @@
     <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"
                          id="delete.in.column.mode"/>
 
-    <editorFloatingToolbarProvider implementation="com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider"/>
+    <editorFloatingToolbarProvider
+      implementation="com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider"
+      id="DefaultFloatingToolbarProvider"/>
 
     <bundledKeymap file="$default.xml"/>
     <bundledKeymap file="Mac OS X 10.5+.xml"/>
@@ -643,7 +644,7 @@
     <statistics.validation.customValidationRule implementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl$ProductivityUtilValidator" />
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator" />
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.openapi.updateSettings.impl.UpdateDialogURLValidationRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector$UrlValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ui.GotItIDValidator"/>
@@ -679,7 +680,7 @@
     <statistics.counterUsagesCollector groupId="file.editor" version="2"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
-    <statistics.counterUsagesCollector groupId="inspection.widget" version="1"/>
+    <statistics.counterUsagesCollector groupId="inspection.widget" version="2"/>
 
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="2"/>
 
@@ -694,7 +695,7 @@
     <statistics.counterUsagesCollector groupId="editor.notification.panel" version="1"/>
     <statistics.counterUsagesCollector groupId="customize.wizard" version="1"/>
 
-    <statistics.counterUsagesCollector groupId="ide.update.dialog" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector"/>
 
     <statistics.counterUsagesCollector groupId="light.edit" version="1"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger"/>
@@ -709,6 +710,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="settings.changes" version="57"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.ReaderModeStatsCollector"/>
 
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
     <statistics.collectorExtension implementation="com.intellij.ide.actions.DragEditorTabsFusEventFields"/>
@@ -723,11 +725,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.featureStatistics.fusCollectors.SystemStateMonitor"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.WSLInstallationsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.impl.TrustedProjectsStatistics" />
-
-    <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsLocalSummary" />
-
-    <registryKey key="usage.statistics.test.action.recorder.id" defaultValue="FUS" description="The data from the recorder with selected id will be sent"/>
 
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.wsl.WslFileWatcher" />
@@ -756,7 +753,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <postStartupActivity implementation="com.intellij.ide.util.TipsOrderUtil$RecommendationsStartupActivity"/>
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
-    <postStartupActivity id="CodeWithMe203StartupActivity" implementation="com.intellij.ide.CodeWithMe203StartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
@@ -772,6 +768,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
     Android Studio: don't register IntelliJ fork -->
 
+    <preloadingActivity implementation="com.intellij.codeInsight.editorActions.TypedHandler$TypedHandlerDelegatePreloader"/>
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
 
@@ -805,19 +802,21 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <search.projectOptionsTopHitProvider implementation="com.intellij.ide.ui.InspectionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.RegistryOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.PluginOptionsTopHitProvider"/>
-    <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <search.topHitProvider implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsOptionProvider"/>
-    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.marketplace.PluginModulesHelper"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService" />
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsGlobalSummaryManager"/>
 
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
     <statusBarWidgetFactory implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelIndicator"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
 
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.impl.FontFamilyService"
+                        serviceImplementation="com.intellij.openapi.editor.impl.FontFamilyServiceImpl"
+                        preload="notHeadless"/>
 
     <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
     <jbProtocolCommand implementation="com.intellij.openapi.application.JBProtocolShutdownCommand"/>
@@ -861,9 +860,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <registryKey key="java.detector.include.embedded" defaultValue="false" description="Include embedded JetBrains Runtime" />
 
     <sdkDownload implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader" />
-    <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader"/>
-    <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller"/>
-    <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore"/>
     <unknownSdkResolver implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAuto"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAutoHintService"
                     configurationSchemaKey="java"
@@ -873,7 +869,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" />
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup" />
-    <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterState"/>
 
     <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
     <registryKey key="jdk.updater" defaultValue="true" description="Check for JDK updates and suggest actions in notifications"/>
@@ -881,6 +876,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
     <registryKey key="jdk.downloader.reuse.installed" defaultValue="true" description="Allow to reuse locally installed with the JDK Downloader JDK instead of download it again"/>
     <registryKey key="jdk.downloader.reuse.downloading" defaultValue="true" description="Allow to reuse currently downloading with the JDK Downloader JDK instead of downloading it again"/>
+    <registryKey key="jdk.downloader.assume.m1" defaultValue="false" description="Makes IntelliJ tryly believe it's running on Apple Silicon compatible hardware"/>
     <registryKey key="jdk.auto.run.configurations" defaultValue="true" description="Tries to find an SDK for a run configuration" />
 
 
@@ -891,6 +887,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <statistics.gotItTooltipAllowlist prefix="extract.method.gotit.navigate"/>
     <statistics.gotItTooltipAllowlist prefix="extract.method.signature.change"/>
     <statistics.gotItTooltipAllowlist prefix="changes.view.toolwindow"/>
+    <statistics.gotItTooltipAllowlist prefix="show.diff.in.editor"/>
     <statistics.gotItTooltipAllowlist prefix="reader.mode.got.it"/>
     <statistics.gotItTooltipAllowlist prefix="fragment.hidden"/>
 
@@ -940,6 +937,11 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
 
+    <obsoleteStorage file="pluginAdvertiser.xml">
+      <components>
+        <component>PluginAdvertiserExtensions</component>
+      </components>
+    </obsoleteStorage>
     <obsoleteStorage file="menu.item.text.update.xml">
       <components>
         <component>ActionMenuItemUpdateCollector</component>
@@ -1063,6 +1065,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ProductTitleInfoProvider"/>
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ProductVersionTitleInfoProvider"/>
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.SuperUserSuffixTitleInfoProvider"/>
+    <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ConfigFolderTitleInfoProvider"/>
 
     <preloadingActivity implementation="com.intellij.ide.plugins.DynamicPluginVfsListenerInitializer"/>
     <vfs.asyncListener implementation="com.intellij.ide.plugins.DynamicPluginVfsListener"/>
@@ -1094,7 +1097,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <notificationGroup id="Test Sticky Notification" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Test Notification" displayType="BALLOON"/>
     <notificationGroup id="Editor notifications" displayType="BALLOON"/>
-    <notificationGroup id="Error Copying File" displayType="BALLOON" bundle="messages.IdeBundle" key="jar.copy.error.title"/>
     <notificationGroup id="Test Runner" displayType="NONE"/>
     <notificationGroup id="System Messages" displayType="BALLOON"/>
     <notificationGroup id="Merge" displayType="BALLOON"/>
@@ -1106,7 +1108,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <notificationGroup id="Collect Zipped Logs" displayType="BALLOON"/>
     <notificationGroup id="Dump Threads Group" displayType="BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Plugins AutoSwitch" displayType="BALLOON"/>
-    <notificationGroup id="Cached value profiling" displayType="BALLOON" isLogByDefault="false"/>
+    <notificationGroup id="Cached value profiling" displayType="BALLOON"/>
     <notificationGroup id="Plugins Suggestion" displayType="STICKY_BALLOON"/>
     <notificationGroup id="File Watcher Messages" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Memory" displayType="BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.memory"/>
@@ -1121,10 +1123,14 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <notificationGroup id="External Executable Critical Failures" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Dynamic plugin installation" displayType="BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Keymap" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="IDE and Plugin Updates" displayType="STICKY_BALLOON" notificationIds="plugins.updated.suggest.restart;
-        plugins.updated.without.restart;ide.update.installed;ide.update.channel.switched;ide.updated.by.snap;plugins.updated.after.restart;
-        ide.patch.download.failed;ide.update.suggest.restart;ide.update.available;plugins.update.available;external.components.available;
-        no.updates.available"/>
+    <notificationGroup id="IDE and Plugin Updates" displayType="STICKY_BALLOON"
+                       bundle="messages.IdeBundle" key="notification.group.ide.and.plugin.updates"
+                       notificationIds="plugins.updated.suggest.restart;ide.update.installed;ide.update.channel.switched;
+                       ide.updated.by.snap;ide.patch.download.failed;ide.update.suggest.restart;ide.update.available;
+                       plugins.update.available;external.components.available;no.updates.available"/>
+    <notificationGroup id="Plugin Update Results" displayType="BALLOON"
+                       bundle="messages.IdeBundle" key="notification.group.plugin.update.results"
+                       notificationIds="plugins.updated.without.restart;plugins.updated.after.restart;"/>
     <notificationGroup id="Built-in Server" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Password Safe" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Tutorials" displayType="BALLOON"/>
@@ -1143,6 +1149,12 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
+    <startupActivity implementation="com.intellij.ide.LanguageDetector"/>
+    <experimentalFeature id="language.detect.notification" percentOfUsers="0"/>
+    <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
+
+    <search.topHitProvider implementation="com.intellij.openapi.wm.impl.ToolwindowSidebarPositionProvider"/>
+    <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowSidebarProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

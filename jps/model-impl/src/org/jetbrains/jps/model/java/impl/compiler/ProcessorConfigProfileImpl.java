@@ -7,9 +7,6 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
 import java.util.*;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile {
   private String myName = "";
   private boolean myEnabled = false;
@@ -21,6 +18,7 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
   private String myGeneratedProductionDirectoryName = DEFAULT_PRODUCTION_DIR_NAME;
   private String myGeneratedTestsDirectoryName = DEFAULT_TESTS_DIR_NAME;
   private boolean myOutputRelativeToContentRoot = false;
+  private boolean myIsProcOnly = false;
 
   private final Set<String> myModuleNames = new HashSet<>(1);
 
@@ -36,6 +34,7 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
   public final void initFrom(ProcessorConfigProfile other) {
     myName = other.getName();
     myEnabled = other.isEnabled();
+    myIsProcOnly = other.isProcOnly();
     myObtainProcessorsFromClasspath = other.isObtainProcessorsFromClasspath();
     myProcessorPath = other.getProcessorPath();
     myUseProcessorModulePath = other.isUseProcessorModulePath();
@@ -128,6 +127,16 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
   }
 
   @Override
+  public boolean isProcOnly() {
+    return myIsProcOnly;
+  }
+
+  @Override
+  public void setProcOnly(boolean value) {
+    myIsProcOnly = value;
+  }
+
+  @Override
   @NotNull
   public Set<String> getModuleNames() {
     return myModuleNames;
@@ -209,6 +218,7 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
     ProcessorConfigProfileImpl profile = (ProcessorConfigProfileImpl)o;
 
     if (myEnabled != profile.myEnabled) return false;
+    if (myIsProcOnly != profile.myIsProcOnly) return false;
     if (myObtainProcessorsFromClasspath != profile.myObtainProcessorsFromClasspath) return false;
     if (myGeneratedProductionDirectoryName != null
         ? !myGeneratedProductionDirectoryName.equals(profile.myGeneratedProductionDirectoryName)
@@ -235,6 +245,7 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
   public int hashCode() {
     int result = myName.hashCode();
     result = 31 * result + (myEnabled ? 1 : 0);
+    result = 31 * result + (myIsProcOnly ? 1 : 0);
     result = 31 * result + (myObtainProcessorsFromClasspath ? 1 : 0);
     result = 31 * result + (myProcessorPath != null ? myProcessorPath.hashCode() : 0);
     result = 31 * result + myProcessors.hashCode();

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -10,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -25,7 +25,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.*;
 import java.nio.file.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * A data structure to store key hashes to virtual file id mappings.
@@ -41,7 +40,7 @@ class KeyHashLog<Key> implements Closeable {
   @NotNull
   private final AppendableObjectStorage<int[]> myKeyHashToVirtualFileMapping;
   @NotNull
-  private final ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private volatile int myLastScannedId;
 
@@ -128,6 +127,7 @@ class KeyHashLog<Key> implements Closeable {
   }
 
   private void appendKeyHashToVirtualFileMappingToLog(Key key, int inputId) throws StorageException {
+    if (inputId == 0) return;
     try {
       withLock(() -> myKeyHashToVirtualFileMapping.append(new int[]{myKeyDescriptor.getHashCode(key), inputId}), false);
     }
@@ -209,13 +209,15 @@ class KeyHashLog<Key> implements Closeable {
         oldMapping.processAll(key -> {
           int inputId = key[1];
           int keyHash = key[0];
+          int absInputId = Math.abs(inputId);
+
           if (inputId > 0) {
-            data.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(inputId);
+            data.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(absInputId);
           }
           else {
             IntSet associatedInputIds = data.get(keyHash);
             if (associatedInputIds != null) {
-              associatedInputIds.remove(inputId);
+              associatedInputIds.remove(absInputId);
             }
           }
           return true;
@@ -384,7 +386,7 @@ class KeyHashLog<Key> implements Closeable {
     return myBaseStorageFile.resolveSibling(myBaseStorageFile.getFileName() + ".project");
   }
 
-  private static class IntPairInArrayKeyDescriptor implements KeyDescriptor<int[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  private static class IntPairInArrayKeyDescriptor implements DataExternalizer<int[]> {
     private static final IntPairInArrayKeyDescriptor INSTANCE = new IntPairInArrayKeyDescriptor();
     @Override
     public void save(@NotNull DataOutput out, int[] value) throws IOException {
@@ -395,16 +397,6 @@ class KeyHashLog<Key> implements Closeable {
     @Override
     public int[] read(@NotNull DataInput in) throws IOException {
       return new int[] {DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in)};
-    }
-
-    @Override
-    public int getHashCode(int[] value) {
-      return value[0] * 31 + value[1];
-    }
-
-    @Override
-    public boolean isEqual(int[] val1, int[] val2) {
-      return val1[0] == val2[0] && val1[1] == val2[1];
     }
   }
 

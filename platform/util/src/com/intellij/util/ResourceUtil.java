@@ -1,15 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.io.InputStreamEx;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -20,22 +22,35 @@ public final class ResourceUtil {
   private ResourceUtil() {
   }
 
+  /**
+   * @deprecated Use {@link #getResourceAsStream(ClassLoader, String, String)}
+   */
+  @Deprecated
   public static URL getResource(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResource(loaderClass.getClassLoader(), basePath, fileName);
   }
 
+  /**
+   * @deprecated Use {@link #getResourceAsStream(ClassLoader, String, String)}
+   */
+  @Deprecated
   public static InputStream getResourceAsStream(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResourceAsStream(loaderClass.getClassLoader(), basePath, fileName);
   }
 
   public static InputStream getResourceAsStream(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    String fixedPath = StringUtil.trimStart(StringUtil.trimEnd(basePath, "/"), "/");
+    String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
+
+    if (fixedPath.isEmpty()) {
+      return loader.getResourceAsStream(fileName);
+    }
 
     List<String> bundles = calculateBundleNames(fixedPath, Locale.getDefault());
     for (String bundle : bundles) {
       InputStream stream = loader.getResourceAsStream(bundle + "/" + fileName);
-      if (stream == null) continue;
-
+      if (stream == null) {
+        continue;
+      }
       return stream;
     }
 
@@ -43,12 +58,14 @@ public final class ResourceUtil {
   }
 
   public static URL getResource(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    String fixedPath = StringUtil.trimStart(StringUtil.trimEnd(basePath, "/"), "/");
+    String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
 
     List<String> bundles = calculateBundleNames(fixedPath, Locale.getDefault());
     for (String bundle : bundles) {
       URL url = loader.getResource(bundle + "/" + fileName);
-      if (url == null) continue;
+      if (url == null) {
+        continue;
+      }
 
       try {
         url.openConnection();
@@ -66,8 +83,7 @@ public final class ResourceUtil {
   /**
    * Copied from java.util.ResourceBundle implementation
    */
-  @NotNull
-  private static List<String> calculateBundleNames(@NotNull String baseName, @NotNull Locale locale) {
+  private static @NotNull List<String> calculateBundleNames(@NotNull String baseName, @NotNull Locale locale) {
     final List<String> result = new ArrayList<>(3);
 
     result.add(0, baseName);
@@ -110,24 +126,27 @@ public final class ResourceUtil {
     return result;
   }
 
-  @NotNull
-  public static String loadText(@NotNull URL url) throws IOException {
+  /**
+   * @deprecated Use {@link #loadText(InputStream)}
+   */
+  @Deprecated
+  public static @NotNull String loadText(@NotNull URL url) throws IOException {
     return loadText(URLUtil.openStream(url));
   }
 
-  @NotNull
-  public static String loadText(@NotNull InputStream in) throws IOException {
-    InputStream inputStream = in instanceof BufferedInputStream ? in : new BufferedInputStream(in);
-
-    try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-      StringBuilder text = new StringBuilder();
-      char[] buf = new char[5000];
-      while (reader.ready()) {
-        final int length = reader.read(buf);
-        if (length == -1) break;
-        text.append(buf, 0, length);
+  public static @NotNull String loadText(@NotNull InputStream in) throws IOException {
+    try {
+      if (in instanceof InputStreamEx) {
+        return new String(((InputStreamEx)in).readAllBytes(), StandardCharsets.UTF_8);
       }
-      return text.toString();
+      else {
+        BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
+        FileUtilRt.copy(in, buffer);
+        return new String(buffer.getInternalBuffer(), 0, buffer.size(), StandardCharsets.UTF_8);
+      }
+    }
+    finally {
+      in.close();
     }
   }
 }

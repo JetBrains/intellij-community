@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
@@ -16,15 +16,12 @@ class GradleConventionsTest extends GradleHighlightingBaseTest implements Resolv
   @Test
   void test() {
     importProject("apply plugin: 'java'")
-    new RunAll().append {
-      'property read'()
-    } append {
-      'property read via project'()
-    } append {
-      'property write'()
-    } append {
-      'setter method'()
-    } run()
+    new RunAll(
+      { 'property read'() },
+      { 'property read via project'() },
+      { 'property write'() },
+      { 'setter method'() }
+    ).run()
   }
 
   void 'property read'() {

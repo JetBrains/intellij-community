@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.util;
 
@@ -249,17 +249,13 @@ public abstract class TestUtils {
     PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, parent);
   }
 
-  @SuppressWarnings("unchecked")
-  @NotNull
-  public static <T> RunAll runAll(@NotNull Collection<? extends T> input,
-                                  @NotNull ThrowableConsumer<? super T, Throwable> action) {
-    List<ThrowableRunnable<Throwable>> runnables = ContainerUtil.map(input, it -> () -> action.consume(it));
-    return new RunAll(runnables.toArray(new ThrowableRunnable[0]));
+  public static <T> void runAll(@NotNull Collection<? extends T> input,
+                                @NotNull ThrowableConsumer<? super T, Throwable> action) {
+    new RunAll(ContainerUtil.map(input, it -> () -> action.consume(it))).run();
   }
 
-  @NotNull
-  public static <K, V> RunAll runAll(@NotNull Map<? extends K, ? extends V> input,
-                                     @NotNull ThrowablePairConsumer<? super K, ? super V, Throwable> action) {
-    return runAll(input.entrySet(), e -> action.consume(e.getKey(), e.getValue()));
+  public static <K, V> void runAll(@NotNull Map<? extends K, ? extends V> input,
+                                   @NotNull ThrowablePairConsumer<? super K, ? super V, Throwable> action) {
+    runAll(input.entrySet(), e -> action.consume(e.getKey(), e.getValue()));
   }
 }

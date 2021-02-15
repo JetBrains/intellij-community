@@ -16,7 +16,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   private final AbstractEditor myEditor;
   private final boolean myApplyButtonNeeded;
   private boolean myResetButtonNeeded;
+  private final JLabel myHintLabel = new JLabel();
 
   public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(project, true);
@@ -81,11 +84,9 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   private void init(@Nullable Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
-    String title = CommonBundle.settingsTitle();
-    if (project != null && project.isDefault()) {
-      title = IdeUICustomization.getInstance().projectMessage("title.for.new.projects", title);
-    }
-    setTitle(name == null ? title : name.replace('\n', ' '));
+    String hint = project != null && project.isDefault() ? IdeUICustomization.getInstance().projectMessage("template.settings.hint") : null;
+    myHintLabel.setText(hint);
+    setTitle(name == null ? CommonBundle.settingsTitle() : name.replace('\n', ' '));
 
     ShortcutSet set = getFindActionShortcutSet();
     if (set != null) {
@@ -140,6 +141,16 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   protected JComponent createCenterPanel() {
     return myEditor;
+  }
+
+  @Nullable
+  @Override
+  protected JPanel createSouthAdditionalPanel() {
+    JPanel panel = new NonOpaquePanel(new BorderLayout());
+    panel.setBorder(JBUI.Borders.emptyLeft(10));
+    panel.add(myHintLabel);
+    myHintLabel.setEnabled(false);
+    return panel;
   }
 
   @SuppressWarnings("unused") // used in Rider

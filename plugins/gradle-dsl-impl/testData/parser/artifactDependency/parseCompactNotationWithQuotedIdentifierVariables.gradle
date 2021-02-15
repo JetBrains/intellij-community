@@ -1,0 +1,12 @@
+ext {
+  versions = ['one':'1.0.0', 'two':'2.0.0', 'three':'3.0.0', 'four':'4.0.0', 'five':'5.0.0', 'six':'6.0.0']
+}
+
+dependencies {
+  implementation "com.google.a:a:${versions.'one'}"
+  implementation "com.google.b:b:${versions."two"}"
+  implementation "com.google.c:c:${versions.'''three'''}"
+  implementation "com.google.d:d:${versions."""four"""}"
+  implementation "com.google.e:e:${versions./five/}"
+  implementation "com.google.f:f:${versions.$/six/$}"
+}

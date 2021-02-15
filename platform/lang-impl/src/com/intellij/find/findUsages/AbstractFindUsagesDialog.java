@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
@@ -187,7 +188,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return cb != null && cb.getParent() != null && cb.isSelected();
   }
 
-  protected StateRestoringCheckBox addCheckboxToPanel(String name, boolean toSelect, JPanel panel, boolean toUpdate) {
+  protected StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, JPanel panel, boolean toUpdate) {
     StateRestoringCheckBox cb = new StateRestoringCheckBox(name);
     cb.setSelected(toSelect);
     panel.add(cb);

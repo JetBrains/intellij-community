@@ -33,16 +33,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dennis.Ushakov
  */
-public abstract class BaseMoveHandler extends EditorWriteActionHandler {
+public abstract class BaseMoveHandler extends EditorWriteActionHandler.ForEachCaret {
   protected final boolean isDown;
 
   public BaseMoveHandler(boolean down) {
-    super(true);
     isDown = down;
   }
 
   @Override
-  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     final Project project = editor.getProject();
     assert project != null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);

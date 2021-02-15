@@ -77,10 +77,9 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_K
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindow;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.vcs.commit.ToggleChangesViewCommitUiActionKt.isToggleCommitUi;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 
@@ -114,6 +113,10 @@ public class ChangesViewManager implements ChangesViewEx,
   public ChangesViewManager(@NotNull Project project) {
     myProject = project;
     ChangesViewModifier.KEY.addChangeListener(project, this::refreshImmediately, this);
+
+    project.getMessageBus().connect(this).subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateCommitWorkflow());
+    // invokeLater to avoid potential cyclic dependency with ChangesViewCommitPanel constructor
+    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow(), myProject.getDisposed());
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
@@ -133,10 +136,8 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull
     @Override
     public Boolean fun(Project project) {
-      ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-      if (!vcsManager.hasActiveVcss()) return false;
-      AbstractVcs singleVcs = vcsManager.getSingleVCS();
-      if (singleVcs != null && singleVcs.isWithCustomLocalChanges()) return false;
+      if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return false;
+      if (CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab()) return false;
       return true;
     }
   }
@@ -150,7 +151,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Override
     public String get() {
-      return isCommitToolWindow(myProject) ? VcsBundle.message("tab.title.commit") : VcsBundle.message("local.changes.tab");
+      return isCommitToolWindowShown(myProject) ? VcsBundle.message("tab.title.commit") : VcsBundle.message("local.changes.tab");
     }
   }
 
@@ -261,9 +262,9 @@ public class ChangesViewManager implements ChangesViewEx,
     myToolWindowPanel.setGrouping(groupingKey);
   }
 
-  @Override
-  public void updateCommitWorkflow() {
-    boolean isNonModal = CommitWorkflowManager.getInstance(myProject).isNonModal();
+  @RequiresEdt
+  private void updateCommitWorkflow() {
+    boolean isNonModal = CommitModeManager.getInstance(myProject).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode;
     if (myToolWindowPanel != null) {
       myToolWindowPanel.updateCommitWorkflow(isNonModal);
     }
@@ -310,7 +311,7 @@ public class ChangesViewManager implements ChangesViewEx,
     myToolWindowPanel.closeEditorPreview(onlyIfEmpty);
   }
 
-  public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
+  public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
     @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
@@ -344,8 +345,8 @@ public class ChangesViewManager implements ChangesViewEx,
       super(false, true);
       myProject = project;
       myChangesViewManager = changesViewManager;
-      CommitWorkflowManager commitWorkflowManager = CommitWorkflowManager.getInstance(myProject);
 
+      MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
       myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
@@ -360,16 +361,13 @@ public class ChangesViewManager implements ChangesViewEx,
       ChangesViewDnDSupport.install(myProject, myView, this);
 
       myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
-      myChangesPanel.setToolbarHorizontal(commitWorkflowManager.isNonModal() && isToolbarHorizontalSetting.asBoolean());
       registerShortcuts(this);
 
+      configureToolbars();
       isToolbarHorizontalSetting.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
-          boolean isToolbarHorizontal = value.asBoolean() && commitWorkflowManager.isNonModal();
-
-          myChangesPanel.setToolbarHorizontal(isToolbarHorizontal);
-          if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
+          configureToolbars();
         }
       }, this);
 
@@ -401,32 +399,17 @@ public class ChangesViewManager implements ChangesViewEx,
           if (!isSplitterPreview()) setDiffPreview(true);
         }
       }, this);
-      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
+      busConnection.subscribe(ChangesViewContentManagerListener.TOPIC, () -> setDiffPreview());
 
       setContent(myMainPanel.addToBottom(myProgressLabel));
 
-      project.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+      busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
         @Override
         public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
           setCommitSplitOrientation();
         }
       });
 
-      isToggleCommitUi().addListener(new RegistryValueListener() {
-        @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
-          if (myCommitWorkflowHandler == null) return;
-
-          if (value.asBoolean()) {
-            myCommitWorkflowHandler.deactivate(false);
-          }
-          else {
-            myCommitWorkflowHandler.activate();
-          }
-        }
-      }, this);
-
-      MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
       busConnection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
         @Override
@@ -458,11 +441,6 @@ public class ChangesViewManager implements ChangesViewEx,
       }
     }
 
-    @Override
-    public void toolWindowMappingChanged() {
-      setDiffPreview();
-    }
-
     private void setDiffPreview() {
       setDiffPreview(false);
     }
@@ -470,7 +448,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private void setDiffPreview(boolean force) {
       if (myDisposed) return;
 
-      boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
+      boolean isEditorPreview = isCommitToolWindowShown(myProject) || isEditorDiffPreview.asBoolean();
       if (!force) {
         if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
         if (!isEditorPreview && isSplitterPreview()) return;
@@ -483,7 +461,7 @@ public class ChangesViewManager implements ChangesViewEx,
       Disposer.register(this, myChangeProcessor);
 
       myDiffPreview = isEditorPreview ? installEditorPreview(myChangeProcessor) : installSplitterPreview(myChangeProcessor);
-      configurePreview();
+      configureDiffPreview();
     }
 
     @NotNull
@@ -596,38 +574,41 @@ public class ChangesViewManager implements ChangesViewEx,
 
       if (isNonModal) {
         if (myCommitPanel == null) {
-          myChangesPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitPanel = new ChangesViewCommitPanel(myChangesPanel, this);
-          myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
-          if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate(false);
           Disposer.register(this, myCommitPanel);
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
 
-          configurePreview();
-          myCommitWorkflowHandler.addActivityListener(() -> configurePreview(), myCommitWorkflowHandler);
+          myCommitWorkflowHandler.addActivityListener(() -> configureDiffPreview(), myCommitWorkflowHandler);
         }
       }
       else {
-        myChangesPanel.setToolbarHorizontal(false);
         if (myCommitPanel != null) {
           myCommitPanelSplitter.setSecondComponent(null);
           Disposer.dispose(myCommitPanel);
 
           myCommitPanel = null;
           myCommitWorkflowHandler = null;
-
-          configurePreview();
         }
       }
+
+      configureDiffPreview();
+      configureToolbars();
     }
 
     public boolean isAllowExcludeFromCommit() {
       return myCommitWorkflowHandler != null && myCommitWorkflowHandler.isActive();
     }
 
-    private void configurePreview() {
+    private void configureDiffPreview() {
       myChangeProcessor.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
+    }
+
+    private void configureToolbars() {
+      boolean isToolbarHorizontal = CommitModeManager.getInstance(myProject).getCurrentCommitMode().useCommitToolWindow() &&
+                                    isToolbarHorizontalSetting.asBoolean();
+      myChangesPanel.setToolbarHorizontal(isToolbarHorizontal);
+      if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
     }
 
     private void setCommitSplitOrientation() {

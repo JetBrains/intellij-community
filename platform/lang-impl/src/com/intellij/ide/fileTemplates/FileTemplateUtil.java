@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
 import com.intellij.model.ModelBranch;
+import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +32,6 @@ import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.Token;
 import org.apache.velocity.runtime.parser.node.*;
 import org.apache.velocity.util.StringUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -320,7 +320,7 @@ public final class FileTemplateUtil {
       propsMap.put(dummyRef, "");
     }
 
-    handler.prepareProperties(propsMap, fileName, template);
+    handler.prepareProperties(propsMap, fileName, template, project);
     handler.prepareProperties(propsMap);
 
     Map<String, Object> props_ = propsMap;
@@ -341,9 +341,10 @@ public final class FileTemplateUtil {
   }
 
   @Nullable
-  private static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
+  public static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
+    VirtualFile dirVfile = directory.getVirtualFile();
     VirtualFile baseDir = directory.getProject().getBaseDir();
-    return baseDir != null ? VfsUtilCore.getRelativePath(directory.getVirtualFile(), baseDir) : null;
+    return baseDir != null ? VfsUtilCore.getRelativePath(dirVfile, ModelBranchUtil.obtainCopyFromTheSameBranch(dirVfile, baseDir)) : null;
   }
 
   @NotNull

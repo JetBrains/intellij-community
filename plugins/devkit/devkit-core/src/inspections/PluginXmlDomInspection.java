@@ -373,7 +373,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (!ideaPlugin.hasRealPluginId()) return;
 
     MultiMap<String, Dependency> dependencies = MultiMap.create();
-    ideaPlugin.getDependencies().forEach(dependency -> {
+    ideaPlugin.getDepends().forEach(dependency -> {
       if (DomUtil.hasXml(dependency.getConfigFile())) {
         dependencies.putValue(dependency.getConfigFile().getStringValue(), dependency);
       }
@@ -772,13 +772,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       }
     }
 
-    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName) && extension.exists()) {
+    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName)) {
       String implementation = extension.getXmlTag().getAttributeValue("implementation");
       if (ITNReporter.class.getName().equals(implementation)) {
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
         if (plugin != null) {
           Vendor vendor = plugin.getVendor();
-          vendor.getValue();
           if (DomUtil.hasXml(vendor) && PluginManager.getInstance().isDevelopedByJetBrains(vendor.getValue())) {
             highlightRedundant(extension,
                                DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),

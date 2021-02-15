@@ -2,6 +2,8 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +40,12 @@ final class ProjectData {
 
   ProjectData(@NotNull Project project) {
     myProject = project;
-
+    myProject.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        reloadAll();
+      }
+    });
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {

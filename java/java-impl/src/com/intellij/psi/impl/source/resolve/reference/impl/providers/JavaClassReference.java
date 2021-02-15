@@ -37,7 +37,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -261,13 +260,6 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return contextRef.resolve();
   }
 
-  /** @deprecated use {@link #getSuperClasses()} instead */
-  @Deprecated
-  public String @Nullable [] getExtendClassNames() {
-    List<String> result = getSuperClasses();
-    return result.isEmpty() ? null : ArrayUtilRt.toStringArray(result);
-  }
-
   @NotNull
   public List<String> getSuperClasses() {
     List<String> values = JavaClassReferenceProvider.SUPER_CLASSES.getValue(getOptions());
@@ -489,8 +481,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private List<? extends LocalQuickFix> registerFixes() {
     final List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(null), this);
 
-    final String[] extendClasses = getExtendClassNames();
-    final String extendClass = extendClasses != null && extendClasses.length > 0 ? extendClasses[0] : null;
+    final String extendClass = ContainerUtil.getFirstItem(getSuperClasses());
 
     final JavaClassReference[] references = getJavaClassReferenceSet().getAllReferences();
     PsiPackage contextPackage = null;

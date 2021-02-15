@@ -41,6 +41,7 @@ final class ConcurrentSoftKeySoftValueHashMap<K, V> extends ConcurrentWeakKeySof
       if (this == o) return true;
       if (!(o instanceof KeyReference)) return false;
       K t = get();
+      //noinspection unchecked
       K other = ((KeyReference<K,V>)o).get();
       if (t == null || other == null) return false;
       if (t == other) return true;

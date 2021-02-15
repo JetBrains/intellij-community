@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.COULD_NOT_COMPARE_WITH_BRANCH;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static com.intellij.util.containers.UtilKt.getIfSingle;
 
 /**
  * Compares selected file/folder with itself in another branch.
@@ -39,7 +40,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = Objects.requireNonNull(getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
+    VirtualFile file = Objects.requireNonNull(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single());
 
     T repository = Objects.requireNonNull(getRepositoryManager(project).getRepositoryForFileQuick(file));
     assert !repository.isFresh();
@@ -64,7 +65,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
-    VirtualFile file = getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
+    VirtualFile file = JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single();
 
     presentation.setVisible(project != null);
     presentation.setEnabled(project != null && file != null && isEnabled(getRepositoryManager(project).getRepositoryForFileQuick(file)));
@@ -97,7 +98,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
         }
         catch (VcsException e) {
           VcsNotifier.getInstance(project).notifyImportantWarning(
-            "vcs.could.not.compare.with.branch",
+            COULD_NOT_COMPARE_WITH_BRANCH,
             DvcsBundle.message("notification.title.couldn.t.compare.with.branch"),
             DvcsBundle.message("notification.message.couldn.t.compare.with.branch",
                                file.isDirectory() ? 1 : 0, file.getPresentableUrl(), compare, e.getMessage()));

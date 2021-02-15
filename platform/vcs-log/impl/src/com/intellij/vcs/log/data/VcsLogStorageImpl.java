@@ -44,7 +44,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   private static final int REFS_VERSION = 2;
 
   @NotNull private final MyPersistentBTreeEnumerator myCommitIdEnumerator;
-  @NotNull private final PersistentEnumeratorBase<VcsRef> myRefsEnumerator;
+  @NotNull private final PersistentEnumerator<VcsRef> myRefsEnumerator;
   @NotNull private final FatalErrorHandler myExceptionReporter;
   private volatile boolean myDisposed = false;
 
@@ -65,9 +65,9 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
     VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
     StorageId refsStorageId = new StorageId(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
-    myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(refsStorageId.getStorageFile(STORAGE),
-                                                                                           refsKeyDescriptor, Page.PAGE_SIZE,
-                                                                                           null, refsStorageId.getVersion()),
+    myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<>(refsStorageId.getStorageFile(STORAGE),
+                                                                                      refsKeyDescriptor, Page.PAGE_SIZE,
+                                                                                      null, refsStorageId.getVersion()),
                                                      refsStorageId.getStorageFile(STORAGE).toFile());
     Disposer.register(parent, this);
   }
@@ -135,7 +135,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   public void iterateCommits(@NotNull Predicate<? super CommitId> consumer) {
     checkDisposed();
     try {
-      myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
+      myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<>() {
         @Override
         protected boolean accept(CommitId commitId) {
           return !consumer.test(commitId);

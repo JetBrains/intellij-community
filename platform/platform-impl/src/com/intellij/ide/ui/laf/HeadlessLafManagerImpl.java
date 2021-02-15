@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class HeadlessLafManagerImpl extends LafManager {
-  public HeadlessLafManagerImpl() {
+final class HeadlessLafManagerImpl extends LafManager {
+  HeadlessLafManagerImpl() {
     UIDefaults defaults = UIManager.getLookAndFeelDefaults();
     defaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
     defaults.put("LinkButtonUI", DefaultLinkButtonUI.class.getName());
@@ -77,6 +77,12 @@ public class HeadlessLafManagerImpl extends LafManager {
   public boolean getAutodetectSupported() {
     return false;
   }
+
+  @Override
+  public void setPreferredDarkLaf(UIManager.@NotNull LookAndFeelInfo myPreferredDarkLaf) { }
+
+  @Override
+  public void setPreferredLightLaf(UIManager.@NotNull LookAndFeelInfo myPreferredLightLaf) { }
 
   @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) { }

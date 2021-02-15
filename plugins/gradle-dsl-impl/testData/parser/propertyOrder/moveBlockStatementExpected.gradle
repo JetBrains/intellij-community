@@ -5,7 +5,7 @@ ext {
 android {
   buildTypes {
     debug {
-      def var = sneaky
+      def var1 = sneaky
     }
   }
 }

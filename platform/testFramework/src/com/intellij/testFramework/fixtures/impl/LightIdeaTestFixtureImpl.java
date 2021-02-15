@@ -54,38 +54,38 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll()
-      .append(() -> {
+    new RunAll(
+      () -> {
         if (myCodeStyleSettingsTracker != null) {
           myCodeStyleSettingsTracker.checkForSettingsDamage();
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         if (project != null) {
           TestApplicationManagerKt.waitForProjectLeakingThreads(project);
         }
-      })
-      .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
-      .append(() -> {
+      },
+      () -> super.tearDown(), // call all disposables' dispose() while the project is still open
+      () -> {
         myProject = null;
         myModule = null;
         if (project != null) {
           TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
-      })
-      .append(() -> LightPlatformTestCase.checkEditorsReleased())
-      .append(() -> {
+      },
+      () -> LightPlatformTestCase.checkEditorsReleased(),
+      () -> {
         SdkLeakTracker oldSdks = myOldSdks;
         if (oldSdks != null) {
           oldSdks.checkForJdkTableLeaks();
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         Application app = ApplicationManager.getApplication();
         if (app != null) {
           ManagingFS managingFS = app.getServiceIfCreated(ManagingFS.class);
@@ -93,9 +93,9 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
             ((PersistentFS)managingFS).clearIdCache();
           }
         }
-      })
-      .append(() -> HeavyPlatformTestCase.cleanupApplicationCaches(project))
-      .run();
+      },
+      () -> HeavyPlatformTestCase.cleanupApplicationCaches(project)
+    ).run();
   }
 
   @Override

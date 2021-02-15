@@ -9,14 +9,12 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +27,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
   private static final Logger LOG = Logger.getInstance(RedundantSuppressInspection.class);
   public static final String SHORT_NAME = "RedundantSuppression";
   public boolean IGNORE_ALL;
-  private BidirectionalMap<String, QuickFix> myQuickFixes;
+  private BidirectionalMap<String, QuickFix<?>> myQuickFixes;
 
   @Override
   public @NotNull String getGroupDisplayName() {
@@ -95,7 +93,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
                                                     RedundantSuppressionDetector extension,
                                                     final @NotNull InspectionManager manager,
                                                     @NotNull InspectionProfile profile) {
-    final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<>();
+    final Map<PsiElement, Collection<String>> suppressedScopes = new HashMap<>();
     psiElement.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -106,7 +104,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
 
     if (suppressedScopes.values().isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
     // have to visit all file from scratch since inspections can be written in any pervasive way including checkFile() overriding
-    Map<InspectionToolWrapper<?, ?>, String> suppressedTools = new THashMap<>();
+    Map<InspectionToolWrapper<?, ?>, String> suppressedTools = new HashMap<>();
     List<InspectionToolWrapper<?, ?>> toolWrappers = getInspectionTools(psiElement, profile);
     Language language = psiElement.getLanguage();
     for (Collection<String> ids : suppressedScopes.values()) {
@@ -140,7 +138,9 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
         final Collection<CommonProblemDescriptor> descriptors;
         if (toolWrapper instanceof LocalInspectionToolWrapper) {
           LocalInspectionToolWrapper local = (LocalInspectionToolWrapper)toolWrapper;
-          if (local.isUnfair()) continue; //cant't work with passes other than LocalInspectionPass
+          if (local.isUnfair()) {
+            continue; // can't work with passes other than LocalInspectionPass
+          }
           List<ProblemDescriptor> results = local.getTool().processFile(file, manager);
           descriptors = new ArrayList<>(results);
         }
@@ -177,7 +177,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
           if (documentedElement != null && documentedElement.isValid()) {
             if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<>();
             String key = toolId + ";" + suppressedScope.getLanguage().getID();
-            QuickFix fix = myQuickFixes.get(key);
+            QuickFix<?> fix = myQuickFixes.get(key);
             if (fix == null) {
               fix = createQuickFix(key);
               myQuickFixes.put(key, fix);
@@ -281,7 +281,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
   }
 
   @Override
-  public @Nullable QuickFix getQuickFix(final String hint) {
+  public @Nullable QuickFix<?> getQuickFix(final String hint) {
     return myQuickFixes != null ? myQuickFixes.get(hint) : createQuickFix(hint);
   }
 
@@ -335,16 +335,6 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
           HashMap<PsiElement, Collection<String>> scopes = new HashMap<>();
           boolean suppressAll = collectSuppressions(element, scopes, IGNORE_ALL, mySuppressor);
           if (suppressAll) {
-            for (String suppressId : myActiveTools) {
-              if (isSuppressedFor(element, suppressId, myToolToSuppressScopes.get(suppressId))) {
-                return;
-              }
-            }
-            TextRange range = mySuppressor.getHighlightingRange(element, SuppressionUtil.ALL);
-            String allSuppression = range.substring(element.getText());
-            holder.registerProblem(element, range,
-                                   InspectionsBundle.message("inspection.redundant.suppression.description"),
-                                   mySuppressor.createRemoveRedundantSuppressionFix(allSuppression));
             return;
           }
           Collection<String> suppressIds = scopes.get(element);

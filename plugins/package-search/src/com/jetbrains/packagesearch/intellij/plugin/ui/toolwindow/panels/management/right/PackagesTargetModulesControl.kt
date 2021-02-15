@@ -129,7 +129,7 @@ class PackagesTargetModulesControl(private val viewModel: PackageSearchToolWindo
             if (value is PackageOperationTargetScope) {
                 comboBox.isEditable = true
                 comboBox.model = value.scopesModel
-                comboBox.selectedItem = value.getSelectedValue()
+                comboBox.selectedItem = value.getSelectedScope()
             }
 
             return comboBox
@@ -303,6 +303,7 @@ class PackagesTargetModulesControl(private val viewModel: PackageSearchToolWindo
                 else -> PackageSearchBundle.message("packagesearch.ui.toolwindow.selectedModules").toLowerCase()
             }
 
+            @Suppress("HardCodedStringLiteral") // Formatting into a non-locale-specific format
             val message = it.htmlDescription.replace("</html>", " - <b>$projectsMessage</b></html>")
             add(RiderUI.menuItem(message, it.icon) { packageOperationUtility.doOperation(it, items, operationTargetVersion) })
         }

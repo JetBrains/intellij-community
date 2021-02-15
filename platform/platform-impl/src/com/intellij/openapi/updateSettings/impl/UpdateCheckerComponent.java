@@ -64,7 +64,6 @@ final class UpdateCheckerComponent {
   private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
 
   private volatile ScheduledFuture<?> myScheduledCheck;
-  private volatile String myLastCheckedBuild;  // [r.sh] for 203; drop in master after backporting
 
   static final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
@@ -87,7 +86,6 @@ final class UpdateCheckerComponent {
 
   private void appStarted() {
     UpdateSettings settings = UpdateSettings.getInstance();
-    myLastCheckedBuild = settings.getLastBuildChecked();
     updateDefaultChannel(settings);
     if (settings.isCheckNeeded()) {
       scheduleFirstCheck(settings);
@@ -151,9 +149,6 @@ final class UpdateCheckerComponent {
 
         PropertiesComponent properties = PropertiesComponent.getInstance();
         BuildNumber previous = BuildNumber.fromString(properties.getValue(PREVIOUS_BUILD_NUMBER_PROPERTY));
-        if (previous == null && !ConfigImportHelper.isFirstSession()) {
-          previous = BuildNumber.fromString(getInstance().myLastCheckedBuild);
-        }
         BuildNumber current = ApplicationInfo.getInstance().getBuild();
         properties.setValue(PREVIOUS_BUILD_NUMBER_PROPERTY, current.asString());
         showWhatsNew(project, previous, current);
@@ -282,7 +277,8 @@ final class UpdateCheckerComponent {
       .appendWithSeparators(HtmlChunk.text(", "), ContainerUtil.map(descriptors, d -> HtmlChunk.link(d.getPluginId().getIdString(), d.getName())))
       .wrapWith("html").toString();
 
-    UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, (notification, event) -> {
+    UpdateChecker.getNotificationGroupForUpdateResults().createNotification(title, message, NotificationType.INFORMATION,
+                                                                            (notification, event) -> {
       String id = event.getDescription();
       if (id == null) return;
 

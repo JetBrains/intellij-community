@@ -4,6 +4,6 @@
 <VBox xmlns="http://javafx.com/javafx/8.0.91">
   <Label text="${null}" textAlignment="$null "/>
   <Button text="$null " tooltip="$null" textAlignment="${null}"/>
-  <Label text=<error descr="Spaces aren't allowed before property or expression">" ${null}"</error>/>
-  <Label text=<error descr="Spaces aren't allowed before property or expression">" $null"</error>/>
+  <Label text=<error descr="Spaces aren't allowed before a property or an expression">" ${null}"</error>/>
+  <Label text=<error descr="Spaces aren't allowed before a property or an expression">" $null"</error>/>
 </VBox>

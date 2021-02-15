@@ -118,7 +118,7 @@ public class ToolWindowEP implements PluginAware {
 
       try {
         //noinspection NonPrivateFieldAccessedInSynchronizedContext
-        factory = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(factoryClass, pluginDescriptor);
+        factory = ApplicationManager.getApplication().instantiateClass(factoryClass, pluginDescriptor);
         myFactory = factory;
       }
       catch (Exception e) {
@@ -162,7 +162,7 @@ public class ToolWindowEP implements PluginAware {
     }
 
     try {
-      return ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(conditionClass, pluginDescriptor);
+      return ApplicationManager.getApplication().instantiateClass(conditionClass, pluginDescriptor);
     }
     catch (Exception e) {
       LOG.error(e);

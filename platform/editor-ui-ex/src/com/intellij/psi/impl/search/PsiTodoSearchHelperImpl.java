@@ -27,14 +27,6 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     myManager = PsiManagerEx.getInstanceEx(project);
   }
 
-  /**
-   * @deprecated Use {@link #PsiTodoSearchHelperImpl(Project)}
-   */
-  @Deprecated
-  public PsiTodoSearchHelperImpl(@NotNull PsiManagerEx psiManager) {
-    myManager = psiManager;
-  }
-
   @Override
   public PsiFile @NotNull [] findFilesWithTodoItems() {
     return TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();

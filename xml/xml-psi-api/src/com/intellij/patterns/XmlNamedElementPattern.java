@@ -45,7 +45,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
   }
 
   public Self withLocalName(final ElementPattern<String> localName) {
-    return with(new PsiNamePatternCondition<T>("withLocalName", localName) {
+    return with(new PsiNamePatternCondition<>("withLocalName", localName) {
       @Override
       public String getPropertyValue(@NotNull final Object o) {
         return o instanceof XmlElement ? getLocalName((T)o) : null;
@@ -74,7 +74,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
 
   public static class XmlAttributePattern extends XmlNamedElementPattern<XmlAttribute, XmlAttributePattern> {
     protected XmlAttributePattern() {
-      super(new InitialPatternCondition<XmlAttribute>(XmlAttribute.class) {
+      super(new InitialPatternCondition<>(XmlAttribute.class) {
         @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlAttribute;

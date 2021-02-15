@@ -9,19 +9,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class JavaHomeFinder {
-
   /**
    * Tries to find existing Java SDKs on this computer.
-   * If no JDK found, returns possible folders to start file chooser.
+   * If no JDK found, returns possible directories to start file chooser.
    * @return suggested sdk home paths (sorted)
    */
-  @NotNull
-  public static List<String> suggestHomePaths() {
+  public static @NotNull List<String> suggestHomePaths() {
     return suggestHomePaths(false);
   }
 
@@ -30,13 +27,11 @@ public abstract class JavaHomeFinder {
    * for using in tests that are performed when the registry is not properly initialized
    * or that need the embedded JetBrains Runtime.
    */
-  @NotNull
-  public static List<String> suggestHomePaths(boolean forceEmbeddedJava) {
+  public static @NotNull List<String> suggestHomePaths(boolean forceEmbeddedJava) {
     JavaHomeFinderBasic javaFinder = getFinder(forceEmbeddedJava);
     if (javaFinder == null) return Collections.emptyList();
 
-    Collection<String> foundPaths = javaFinder.findExistingJdks();
-    ArrayList<String> paths = new ArrayList<>(foundPaths);
+    ArrayList<String> paths = new ArrayList<>(javaFinder.findExistingJdks());
     paths.sort((o1, o2) -> Comparing.compare(JavaVersion.tryParse(o2), JavaVersion.tryParse(o1)));
     return paths;
   }
@@ -55,7 +50,7 @@ public abstract class JavaHomeFinder {
       return new JavaHomeFinderMac(forceEmbeddedJava);
     }
     if (SystemInfo.isLinux) {
-      return new JavaHomeFinderBasic(forceEmbeddedJava, "/usr/java", "/opt/java", "/usr/lib/jvm");
+      return new JavaHomeFinderBasic(forceEmbeddedJava, DEFAULT_JAVA_LINUX_PATHS);
     }
     if (SystemInfo.isSolaris) {
       return new JavaHomeFinderBasic(forceEmbeddedJava, "/usr/jdk");
@@ -64,23 +59,21 @@ public abstract class JavaHomeFinder {
     return new JavaHomeFinderBasic(forceEmbeddedJava);
   }
 
-  @Nullable
-  public static String defaultJavaLocation() {
+  public static @Nullable String defaultJavaLocation() {
     if (SystemInfo.isWindows) {
       return JavaHomeFinderWindows.defaultJavaLocation;
     }
     if (SystemInfo.isMac) {
       return JavaHomeFinderMac.defaultJavaLocation;
     }
-
     if (SystemInfo.isLinux) {
       return "/opt/java";
     }
-
     if (SystemInfo.isSolaris) {
       return "/usr/jdk";
     }
-
     return null;
   }
+
+  public static final String[] DEFAULT_JAVA_LINUX_PATHS = {"/usr/java", "/opt/java", "/usr/lib/jvm"};
 }

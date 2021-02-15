@@ -37,7 +37,7 @@ public final class GenerateDependencyUtil {
     MavenDomProjectModelMember[] memberCandidates =
       ContainerUtil.map2Array(candidates, MavenDomProjectModelMember.class, dependency -> new MavenDomProjectModelMember(dependency));
     MemberChooser<MavenDomProjectModelMember> chooser =
-      new MemberChooser<MavenDomProjectModelMember>(memberCandidates, true, true, project) {
+      new MemberChooser<>(memberCandidates, true, true, project) {
         @Override
         protected ShowContainersAction getShowContainersAction() {
           return new ShowContainersAction(MavenDomBundle.messagePointer("chooser.show.project.files"), MavenIcons.MavenProject);

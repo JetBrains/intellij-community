@@ -6,7 +6,7 @@ import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.SimpleTextAttributes
 
 @Suppress("EqualsOrHashCode")
-class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(userObject) {
+internal class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(userObject) {
   val nodeText: String
     get() = when (val meta = userObject) {
       is RuleWithLang -> meta.rule.description

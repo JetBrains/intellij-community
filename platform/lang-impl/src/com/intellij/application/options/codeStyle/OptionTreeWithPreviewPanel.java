@@ -14,7 +14,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +39,8 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   private final Set<String> myAllowedOptions = new HashSet<>();
   protected MultiMap<@Nls String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
-  private final Map<String, @NlsContexts.Label String> myRenamedFields = new THashMap<>();
-  private final Map<String, @NlsContexts.Label String> myRemappedGroups = new THashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRenamedFields = new HashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRemappedGroups = new HashMap<>();
 
   private SpeedSearchHelper mySearchHelper;
 

@@ -32,7 +32,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
 
   public static VirtualFile @NotNull [] getFiles(@NotNull OrderEntry entry) {
     List<VirtualFile> result = new ArrayList<>();
-    RootPolicy<List<VirtualFile>> policy = new RootPolicy<List<VirtualFile>>() {
+    RootPolicy<List<VirtualFile>> policy = new RootPolicy<>() {
       @Override
       public List<VirtualFile> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<VirtualFile> value) {
         Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
@@ -48,7 +48,8 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
       @Override
       public List<VirtualFile> visitModuleSourceOrderEntry(@NotNull final ModuleSourceOrderEntry orderEntry,
                                                            final List<VirtualFile> value) {
-        Collections.addAll(value, orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsRoots());
+        Collections
+          .addAll(value, orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsRoots());
         return value;
       }
     };
@@ -58,7 +59,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
 
   public static String @NotNull [] getUrls(@NotNull OrderEntry entry) {
     List<String> result = new ArrayList<>();
-    RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
+    RootPolicy<List<String>> policy = new RootPolicy<>() {
       @Override
       public List<String> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<String> value) {
         Collections.addAll(value, orderEntry.getRootUrls(getInstance()));

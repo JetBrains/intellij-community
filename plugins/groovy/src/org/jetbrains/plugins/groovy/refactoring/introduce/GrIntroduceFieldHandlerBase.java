@@ -42,7 +42,7 @@ public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSe
 
   @Override
   protected void showScopeChooser(PsiClass[] scopes, final Pass<PsiClass> callback, Editor editor) {
-    PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
+    PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<>() {
       @Override
       public boolean execute(@NotNull PsiClass element) {
         callback.pass(element);

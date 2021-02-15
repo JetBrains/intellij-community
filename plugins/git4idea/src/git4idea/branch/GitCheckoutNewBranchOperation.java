@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+import static git4idea.GitNotificationIdsHolder.CHECKOUT_NEW_BRANCH_OPERATION_ROLLBACK_ERROR;
+import static git4idea.GitNotificationIdsHolder.CHECKOUT_NEW_BRANCH_OPERATION_ROLLBACK_SUCCESSFUL;
 import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
@@ -126,7 +128,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
                  code(myNewBranchName),
                  repositories.size(),
                  successfulRepositoriesJoined());
-      VcsNotifier.getInstance(myProject).notifySuccess("git.checkout.new.branch.operation.rollback.successful",
+      VcsNotifier.getInstance(myProject).notifySuccess(CHECKOUT_NEW_BRANCH_OPERATION_ROLLBACK_SUCCESSFUL,
                                                        GitBundle.message("checkout.new.branch.operation.rollback.successful"), message);
     }
     else {
@@ -140,7 +142,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
       VcsNotifier.getInstance(myProject)
-        .notifyError("git.checkout.new.branch.operation.rollback.error",
+        .notifyError(CHECKOUT_NEW_BRANCH_OPERATION_ROLLBACK_ERROR,
                      GitBundle.message("checkout.new.branch.operation.error.during.rollback"),
                      message.toString(),
                      true);

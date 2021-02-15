@@ -54,13 +54,9 @@ final class EventLogConsole {
 
   private final EditorEx myLogEditor;
 
-  private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = new NotNullLazyValue<>() {
-    @NotNull
-    @Override
-    protected EditorHyperlinkSupport compute() {
-      return EditorHyperlinkSupport.get(getConsoleEditor());
-    }
-  };
+  private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = NotNullLazyValue.createValue(() -> {
+    return EditorHyperlinkSupport.get(getConsoleEditor());
+  });
 
   private final LogModel myProjectModel;
 
@@ -260,7 +256,7 @@ final class EventLogConsole {
     final NotificationType type = notification.getType();
     TextAttributesKey key = type == NotificationType.ERROR
                             ? ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY
-                            : type == NotificationType.INFORMATION
+                            : type == NotificationType.INFORMATION || type == NotificationType.IDE_UPDATE
                               ? ConsoleViewContentType.NORMAL_OUTPUT_KEY
                               : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 

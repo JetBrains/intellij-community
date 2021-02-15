@@ -8161,6 +8161,31 @@ public final class CmdlineRemoteProto {
          * @return The done.
          */
         float getDone();
+
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @return A list containing the moduleNames.
+         */
+        java.util.List<java.lang.String>
+            getModuleNamesList();
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @return The count of moduleNames.
+         */
+        int getModuleNamesCount();
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @param index The index of the element to return.
+         * @return The moduleNames at the given index.
+         */
+        java.lang.String getModuleNames(int index);
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @param index The index of the element to return.
+         * @return The moduleNames at the given index.
+         */
+        com.google.protobuf.ByteString
+            getModuleNamesBytes(int index);
       }
       /**
        * Protobuf type {@code org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage}
@@ -8174,6 +8199,7 @@ public final class CmdlineRemoteProto {
           kind_ = 1;
           text_ = "";
           sourceFilePath_ = "";
+          moduleNames_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
         }
         /**
          * Protobuf enum {@code org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind}
@@ -8652,6 +8678,98 @@ public final class CmdlineRemoteProto {
           done_ = 0F;
         }
 
+        public static final int MODULE_NAMES_FIELD_NUMBER = 10;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> moduleNames_;
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @return A list containing the moduleNames.
+         */
+        @java.lang.Override
+        public java.util.List<java.lang.String> getModuleNamesList() {
+          return moduleNames_;
+        }
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @return The count of moduleNames.
+         */
+        @java.lang.Override
+        public int getModuleNamesCount() {
+          return moduleNames_.size();
+        }
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @param index The index of the element to return.
+         * @return The moduleNames at the given index.
+         */
+        @java.lang.Override
+        public java.lang.String getModuleNames(int index) {
+          return moduleNames_.get(index);
+        }
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @param index The index of the value to return.
+         * @return The bytes of the moduleNames at the given index.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getModuleNamesBytes(int index) {
+          return com.google.protobuf.ByteString.copyFromUtf8(
+              moduleNames_.get(index));
+        }
+        private void ensureModuleNamesIsMutable() {
+          com.google.protobuf.Internal.ProtobufList<java.lang.String> tmp =
+              moduleNames_;  if (!tmp.isModifiable()) {
+            moduleNames_ =
+                com.google.protobuf.GeneratedMessageLite.mutableCopy(tmp);
+           }
+        }
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @param index The index to set the value at.
+         * @param value The moduleNames to set.
+         */
+        private void setModuleNames(
+            int index, java.lang.String value) {
+          value.getClass();
+  ensureModuleNamesIsMutable();
+          moduleNames_.set(index, value);
+        }
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @param value The moduleNames to add.
+         */
+        private void addModuleNames(
+            java.lang.String value) {
+          value.getClass();
+  ensureModuleNamesIsMutable();
+          moduleNames_.add(value);
+        }
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @param values The moduleNames to add.
+         */
+        private void addAllModuleNames(
+            java.lang.Iterable<java.lang.String> values) {
+          ensureModuleNamesIsMutable();
+          com.google.protobuf.AbstractMessageLite.addAll(
+              values, moduleNames_);
+        }
+        /**
+         * <code>repeated string module_names = 10;</code>
+         */
+        private void clearModuleNames() {
+          moduleNames_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
+        }
+        /**
+         * <code>repeated string module_names = 10;</code>
+         * @param value The bytes of the moduleNames to add.
+         */
+        private void addModuleNamesBytes(
+            com.google.protobuf.ByteString value) {
+          ensureModuleNamesIsMutable();
+          moduleNames_.add(value.toStringUtf8());
+        }
+
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage parseFrom(
             java.nio.ByteBuffer data)
             throws com.google.protobuf.InvalidProtocolBufferException {
@@ -9113,6 +9231,98 @@ public final class CmdlineRemoteProto {
             return this;
           }
 
+          /**
+           * <code>repeated string module_names = 10;</code>
+           * @return A list containing the moduleNames.
+           */
+          @java.lang.Override
+          public java.util.List<java.lang.String>
+              getModuleNamesList() {
+            return java.util.Collections.unmodifiableList(
+                instance.getModuleNamesList());
+          }
+          /**
+           * <code>repeated string module_names = 10;</code>
+           * @return The count of moduleNames.
+           */
+          @java.lang.Override
+          public int getModuleNamesCount() {
+            return instance.getModuleNamesCount();
+          }
+          /**
+           * <code>repeated string module_names = 10;</code>
+           * @param index The index of the element to return.
+           * @return The moduleNames at the given index.
+           */
+          @java.lang.Override
+          public java.lang.String getModuleNames(int index) {
+            return instance.getModuleNames(index);
+          }
+          /**
+           * <code>repeated string module_names = 10;</code>
+           * @param index The index of the value to return.
+           * @return The bytes of the moduleNames at the given index.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString
+              getModuleNamesBytes(int index) {
+            return instance.getModuleNamesBytes(index);
+          }
+          /**
+           * <code>repeated string module_names = 10;</code>
+           * @param index The index to set the value at.
+           * @param value The moduleNames to set.
+           * @return This builder for chaining.
+           */
+          public Builder setModuleNames(
+              int index, java.lang.String value) {
+            copyOnWrite();
+            instance.setModuleNames(index, value);
+            return this;
+          }
+          /**
+           * <code>repeated string module_names = 10;</code>
+           * @param value The moduleNames to add.
+           * @return This builder for chaining.
+           */
+          public Builder addModuleNames(
+              java.lang.String value) {
+            copyOnWrite();
+            instance.addModuleNames(value);
+            return this;
+          }
+          /**
+           * <code>repeated string module_names = 10;</code>
+           * @param values The moduleNames to add.
+           * @return This builder for chaining.
+           */
+          public Builder addAllModuleNames(
+              java.lang.Iterable<java.lang.String> values) {
+            copyOnWrite();
+            instance.addAllModuleNames(values);
+            return this;
+          }
+          /**
+           * <code>repeated string module_names = 10;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearModuleNames() {
+            copyOnWrite();
+            instance.clearModuleNames();
+            return this;
+          }
+          /**
+           * <code>repeated string module_names = 10;</code>
+           * @param value The bytes of the moduleNames to add.
+           * @return This builder for chaining.
+           */
+          public Builder addModuleNamesBytes(
+              com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.addModuleNamesBytes(value);
+            return this;
+          }
+
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage)
         }
         private byte memoizedIsInitialized = 2;
@@ -9141,11 +9351,12 @@ public final class CmdlineRemoteProto {
                   "line_",
                   "column_",
                   "done_",
+                  "moduleNames_",
                 };
                 java.lang.String info =
-                    "\u0001\t\u0000\u0001\u0001\t\t\u0000\u0000\u0001\u0001\u150c\u0000\u0002\u1008\u0001" +
+                    "\u0001\n\u0000\u0001\u0001\n\n\u0000\u0001\u0001\u0001\u150c\u0000\u0002\u1008\u0001" +
                     "\u0003\u1008\u0002\u0004\u1003\u0003\u0005\u1003\u0004\u0006\u1003\u0005\u0007\u1003" +
-                    "\u0006\b\u1003\u0007\t\u1001\b";
+                    "\u0006\b\u1003\u0007\t\u1001\b\n\u001a";
                 return newMessageInfo(DEFAULT_INSTANCE, info, objects);
             }
             // fall through

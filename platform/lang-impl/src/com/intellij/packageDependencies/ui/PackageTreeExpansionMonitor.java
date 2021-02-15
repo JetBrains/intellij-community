@@ -14,23 +14,23 @@ public final class PackageTreeExpansionMonitor {
   }
 
   public static TreeExpansionMonitor<PackageDependenciesNode> install(final JTree tree, final Project project) {
-    return new TreeExpansionMonitor<PackageDependenciesNode>(tree) {
+    return new TreeExpansionMonitor<>(tree) {
       @Override
       protected TreePath findPathByNode(final PackageDependenciesNode node) {
-         if (node.getPsiElement() == null){
-           return new TreePath(node.getPath());
-         }
-          Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
-          while (enumeration.hasMoreElements()) {
-            final Object nextElement = enumeration.nextElement();
-            if (nextElement instanceof PackageDependenciesNode) { //do not include root
-              PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
-              if (child.equals(node)) {
-                return new TreePath(child.getPath());
-              }
+        if (node.getPsiElement() == null) {
+          return new TreePath(node.getPath());
+        }
+        Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
+        while (enumeration.hasMoreElements()) {
+          final Object nextElement = enumeration.nextElement();
+          if (nextElement instanceof PackageDependenciesNode) { //do not include root
+            PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
+            if (child.equals(node)) {
+              return new TreePath(child.getPath());
             }
           }
-          return null;
+        }
+        return null;
       }
     };
   }

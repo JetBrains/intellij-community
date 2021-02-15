@@ -19,6 +19,7 @@ import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
@@ -65,7 +66,10 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @NotNull Condition<? super AnAction> preselectActionCondition,
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey) {
-    super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.getProjectContext(project),
+    super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.builder()
+            .add(CommonDataKeys.PROJECT, project)
+            .add(PlatformDataKeys.CONTEXT_COMPONENT, IdeFocusManager.getInstance(project).getFocusOwner())
+            .build(),
           preselectActionCondition, true);
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;

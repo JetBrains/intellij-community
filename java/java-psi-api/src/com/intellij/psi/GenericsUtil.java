@@ -279,10 +279,6 @@ public final class GenericsUtil {
     return null;
   }
 
-  public static boolean isFromExternalTypeLanguage(@NotNull PsiType type) {
-    return type.getInternalCanonicalText().equals(type.getCanonicalText());
-  }
-
   @Contract("null -> null; !null->!null")
   public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type) {
     return type == null ? null : getVariableTypeByExpressionType(type, true);

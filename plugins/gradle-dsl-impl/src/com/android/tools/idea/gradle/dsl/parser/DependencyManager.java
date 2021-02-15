@@ -18,14 +18,15 @@ package com.android.tools.idea.gradle.dsl.parser;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleDslElement;
 import com.android.tools.idea.gradle.dsl.parser.files.GradleDslFile;
 import com.intellij.util.containers.HashSetQueue;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Class to manage unresolved dependencies.
@@ -104,7 +105,7 @@ public final class DependencyManager {
     List<GradleReferenceInjection> injections = myUnresolvedReferences.getOrDefault(dslFile, new ArrayList<>());
     for (Iterator<GradleReferenceInjection> it = injections.iterator(); it.hasNext(); ) {
       GradleReferenceInjection injection = it.next();
-      GradleDslElement newElement = injection.getOriginElement().resolveReference(injection.getName(), true);
+      GradleDslElement newElement = injection.getOriginElement().resolveExternalSyntaxReference(injection.getName(), true);
       if (newElement != null) {
         injection.resolveWith(newElement);
         newElement.registerDependent(injection);

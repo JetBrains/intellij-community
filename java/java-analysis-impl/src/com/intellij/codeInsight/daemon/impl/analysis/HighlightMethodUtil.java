@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -497,7 +498,7 @@ public final class HighlightMethodUtil {
         toolTip = createOneArgMismatchTooltip(candidateInfo, mismatchedExpressions, expressions, parameters);
       }
       else if (mismatchedExpressions.isEmpty()) {
-        toolTip = description;
+        toolTip = StringUtil.escapeXmlEntities(description);
       }
       if (toolTip == null) {
         toolTip = createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
@@ -2039,7 +2040,7 @@ public final class HighlightMethodUtil {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(typeParameterList.getTypeParameters()));
       return info;
     }
-    if (method.isConstructor() && PsiUtil.getLanguageLevel(method) != LanguageLevel.JDK_14_PREVIEW) {
+    if (method.isConstructor()) {
       AccessModifier modifier = AccessModifier.fromModifierList(method.getModifierList());
       PsiModifierList classModifierList = Objects.requireNonNull(method.getContainingClass()).getModifierList();
       if (classModifierList != null) {

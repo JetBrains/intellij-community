@@ -1,18 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.util.ErrorKt;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Runs all given runnables and throws all the caught exceptions at the end.
@@ -20,6 +18,22 @@ import java.util.List;
  * @author peter
  */
 public final class RunAll implements Runnable {
+
+  @SafeVarargs
+  public static void runAll(ThrowableRunnable<Throwable> @NotNull ... actions) {
+    new RunAll(actions).run();
+  }
+
+  public static <T> void runAll(@NotNull Collection<? extends T> input,
+                                @NotNull ThrowableConsumer<? super T, Throwable> action) {
+    new RunAll(ContainerUtil.map(input, it -> () -> action.consume(it))).run();
+  }
+
+  public static <K, V> void runAll(@NotNull Map<? extends K, ? extends V> input,
+                                   @NotNull ThrowablePairConsumer<? super K, ? super V, Throwable> action) {
+    runAll(input.entrySet(), e -> action.consume(e.getKey(), e.getValue()));
+  }
+
   private final List<? extends ThrowableRunnable<?>> myActions;
 
   @SafeVarargs
@@ -31,45 +45,31 @@ public final class RunAll implements Runnable {
     myActions = actions;
   }
 
-  @SafeVarargs
-  public static void runAll(ThrowableRunnable<Throwable> @NotNull ... actions) {
-    ErrorKt.throwIfNotEmpty(collectExceptions(Arrays.asList(actions)));
-  }
-
-  @SafeVarargs
-  @Contract(pure=true)
-  public final RunAll append(ThrowableRunnable<Throwable> @NotNull ... actions) {
-    return new RunAll(ContainerUtil.concat(myActions, actions.length == 1 ? Collections.singletonList(actions[0]) : Arrays.asList(actions)));
-  }
-
   @Override
   public void run() {
-    run(Collections.emptyList());
+    run(null);
   }
 
-  public void run(@NotNull List<? extends Throwable> suppressedExceptions) {
-    ErrorKt.throwIfNotEmpty(ContainerUtil.concat(suppressedExceptions, collectExceptions(myActions)));
-  }
+  public void run(@Nullable List<Throwable> earlierExceptions) {
+    List<Throwable> exceptions = earlierExceptions != null ? new SmartList<>(earlierExceptions) : new SmartList<>();
 
-  private static @NotNull List<Throwable> collectExceptions(@NotNull List<? extends ThrowableRunnable<?>> actions) {
-    List<Throwable> result = null;
-    for (ThrowableRunnable<?> action : actions) {
+    for (ThrowableRunnable<?> action : myActions) {
       try {
         action.run();
       }
       catch (CompoundRuntimeException e) {
-        if (result == null) {
-          result = new ArrayList<>();
-        }
-        result.addAll(e.getExceptions());
+        exceptions.addAll(e.getExceptions());
       }
       catch (Throwable e) {
-        if (result == null) {
-          result = new SmartList<>();
-        }
-        result.add(e);
+        exceptions.add(e);
       }
     }
-    return ContainerUtil.notNullize(result);
+
+    if (exceptions.size() == 1) {
+      ExceptionUtil.rethrow(exceptions.get(0));
+    }
+    else if (exceptions.size() > 0) {
+      throw new CompoundRuntimeException(exceptions);
+    }
   }
 }

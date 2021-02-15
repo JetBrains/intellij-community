@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.ui.preview
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.util.ui.UIUtil
@@ -28,7 +27,6 @@ internal object PreviewLAFThemeStyles {
 
       val panelBackground = UIUtil.getPanelBackground()
 
-      val labelForeground = UIUtil.getLabelForeground()
       val linkActiveForeground = namedColor("Link.activeForeground", getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).foregroundColor)
       val separatorColor = namedColor("Group.separatorColor", panelBackground)
       val infoForeground = namedColor("Component.infoForeground", contrastedForeground)
@@ -52,7 +50,7 @@ internal object PreviewLAFThemeStyles {
               }
               
               body, p, blockquote, ul, ol, dl, table, pre, code, tr  {
-                  color: ${labelForeground.webRgba()};
+                  color: ${defaultForeground.webRgba()};
               }
               
               a {

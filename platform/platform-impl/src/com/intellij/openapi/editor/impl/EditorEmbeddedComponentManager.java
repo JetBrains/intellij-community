@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
@@ -51,7 +52,7 @@ public final class EditorEmbeddedComponentManager {
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
     return inlays.add(component, properties.resizePolicy, properties.rendererFactory,
-                      properties.relatesToPrecedingText, properties.showAbove,
+                      properties.relatesToPrecedingText, properties.showAbove, properties.showWhenFolded,
                       properties.priority, properties.offset);
   }
 
@@ -101,15 +102,22 @@ public final class EditorEmbeddedComponentManager {
     final RendererFactory rendererFactory;
     final boolean relatesToPrecedingText;
     final boolean showAbove;
+    final boolean showWhenFolded;
     final int priority;
     final int offset;
 
     public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
                       boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+      this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, priority, offset);
+    }
+
+    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, int priority, int offset) {
       this.resizePolicy = resizePolicy;
       this.rendererFactory = rendererFactory;
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.showAbove = showAbove;
+      this.showWhenFolded = showWhenFolded;
       this.priority = priority;
       this.offset = offset;
     }
@@ -198,6 +206,7 @@ public final class EditorEmbeddedComponentManager {
   }
 
   private static class ComponentInlays implements Disposable {
+    private static final Logger LOG = Logger.getInstance(ComponentInlays.class);
     private final EditorEx myEditor;
     private final List<Inlay<? extends MyRenderer>> myInlays;
     private final ResizeListener myResizeListener;
@@ -212,9 +221,20 @@ public final class EditorEmbeddedComponentManager {
 
     @Nullable
     Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, @Nullable Properties.RendererFactory rendererFactory,
-                          boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+                          boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, int priority, int offset) {
       MyRenderer renderer = new MyRenderer(component, policy, rendererFactory);
-      Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, priority, renderer);
+      final InlayModel inlayModel = myEditor.getInlayModel();
+      Inlay<MyRenderer> inlay;
+      if (inlayModel instanceof InlayModelImpl) {
+        inlay = ((InlayModelImpl)inlayModel).addBlockElement(offset, relatesToPrecedingText, showAbove, showWhenFolded, priority, renderer);
+      }
+      else {
+        inlay = inlayModel.addBlockElement(offset, relatesToPrecedingText, showAbove, priority, renderer);
+        if (showWhenFolded) {
+          LOG.error("Attempt to add inlay that is shown when collapsed using model that doesn't support that");
+        }
+      }
+
       if (inlay == null) return null;
 
       renderer.addComponentListener(new ComponentAdapter() {
@@ -330,7 +350,7 @@ public final class EditorEmbeddedComponentManager {
       JScrollPane scrollPane = myEditor.getScrollPane();
       int visibleWidth = scrollPane.getViewport().getWidth() - scrollPane.getVerticalScrollBar().getWidth();
       int minWidth = renderer.isWidthSet() ? componentWidth : visibleWidth;
-      int width =  Math.min(componentWidth, minWidth);
+      int width = Math.min(componentWidth, minWidth);
       Dimension newSize = new Dimension(Math.max(width, 0), Math.max(componentHeight, 0));
       if (!renderer.getSize().equals(newSize)) renderer.setSize(newSize);
     }
@@ -473,7 +493,7 @@ public final class EditorEmbeddedComponentManager {
                                       null;
           return direction == null ? null : new ResizeInfo(inlay, direction);
         }));
-    }
+      }
 
       private boolean isNearTo(int value, int coordinate) {
         return isInside(value, coordinate, coordinate);

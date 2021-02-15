@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
@@ -21,6 +23,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
+import com.intellij.openapi.diff.impl.patch.PatchEP;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.apply.PlainSimplePatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -30,6 +37,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -62,6 +70,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,12 +91,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_UNDO;
 import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindow;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
@@ -153,6 +163,7 @@ public class ShelvedChangesViewManager implements Disposable {
         myContent.setTabName(SHELF); //NON-NLS overridden by displayName above
         MyDnDTarget dnDTarget = new MyDnDTarget(myPanel.myProject, myContent);
         myContent.putUserData(Content.TAB_DND_TARGET_KEY, dnDTarget);
+        myContent.putUserData(IS_IN_COMMIT_TOOLWINDOW_KEY, true);
 
         myContent.setCloseable(false);
         myContent.setDisposer(myPanel);
@@ -561,7 +572,7 @@ public class ShelvedChangesViewManager implements Disposable {
         myListDateMap.forEach((l, d) -> manager.restoreList(l, d));
         notification.expire();
         if (!cantRestoreList.isEmpty()) {
-          VcsNotifier.getInstance(myProject).notifyMinorWarning("vcs.shelve.deletion.undo",
+          VcsNotifier.getInstance(myProject).notifyMinorWarning(SHELVE_DELETION_UNDO,
                                                                 VcsBundle.message("shelve.undo.deletion"),
                                                                 VcsBundle.message("shelve.changes.restore.error", cantRestoreList.size()));
         }
@@ -691,7 +702,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myToolbar.setTargetComponent(myTree);
       myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
       myRootPanel.add(myTreeScrollPane, BorderLayout.CENTER);
-      addToolbar(isCommitToolWindow(myProject));
+      addToolbar(isCommitToolWindowShown(myProject));
       setDiffPreview();
       isEditorDiffPreview.addListener(new RegistryValueListener() {
         @Override
@@ -718,7 +729,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void toolWindowMappingChanged() {
-      addToolbar(isCommitToolWindow(myProject));
+      addToolbar(isCommitToolWindowShown(myProject));
       setDiffPreview();
     }
 
@@ -738,7 +749,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void setDiffPreview(boolean force) {
-      boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
+      boolean isEditorPreview = isCommitToolWindowShown(myProject) || isEditorDiffPreview.asBoolean();
       if (!force) {
         if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
         if (!isEditorPreview && isSplitterPreview()) return;
@@ -946,26 +957,89 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     protected DiffRequest loadRequest(@NotNull ShelvedWrapper provider, @NotNull ProgressIndicator indicator)
       throws ProcessCanceledException, DiffRequestProducerException {
+      String title = getRequestName(provider);
       try {
         ShelvedChange shelvedChange = provider.getShelvedChange();
         if (shelvedChange != null) {
-          return new PatchDiffRequest(createAppliedTextPatch(myPreloader.getPatch(shelvedChange, null)));
+          return createTextShelveRequest(shelvedChange, title);
         }
 
-        DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
-        ShelvedBinaryFile binaryFile = requireNonNull(provider.getBinaryFile());
-        if (binaryFile.AFTER_PATH == null) {
-          throw new DiffRequestProducerException(VcsBundle.message("changes.error.content.for.0.was.removed", getRequestName(provider)));
+        ShelvedBinaryFile binaryFile = provider.getBinaryFile();
+        if (binaryFile != null) {
+          return createBinaryShelveRequest(binaryFile, title);
         }
-        //
-        byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
-        FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
-        return new SimpleDiffRequest(getRequestName(provider), factory.createEmpty(),
-                                     factory.createBinary(myProject, binaryContent, fileType, getRequestName(provider)), null, null);
+
+        throw new IllegalStateException("Empty shelved wrapper: " + provider);
       }
       catch (VcsException | IOException e) {
-        throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", getRequestName(provider)), e);
+        throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", title), e);
       }
+    }
+
+    @NotNull
+    private DiffRequest createTextShelveRequest(@NotNull ShelvedChange shelvedChange, @Nullable @Nls String title)
+      throws VcsException {
+      DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
+      Pair<TextFilePatch, CommitContext> pair = myPreloader.getPatchWithContext(shelvedChange);
+      TextFilePatch patch = pair.first;
+      CommitContext commitContext = pair.second;
+
+      FilePath contextFilePath = getContextFilePath(shelvedChange);
+
+      if (patch.isDeletedFile() || patch.isNewFile()) {
+        DiffContent shelfContent = factory.create(myProject, patch.getSingleHunkPatchText(), contextFilePath);
+        DiffContent emptyContent = factory.createEmpty();
+
+        DiffContent leftContent = patch.isDeletedFile() ? shelfContent : emptyContent;
+        DiffContent rightContent = !patch.isDeletedFile() ? shelfContent : emptyContent;
+        String leftTitle = DiffBundle.message("merge.version.title.base");
+        String rightTitle = VcsBundle.message("shelve.shelved.version");
+        return new SimpleDiffRequest(title, leftContent, rightContent, leftTitle, rightTitle);
+      }
+
+      String path = chooseNotNull(patch.getAfterName(), patch.getBeforeName());
+      CharSequence baseContents = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class)
+        .provideContent(myProject, path, commitContext);
+      if (baseContents != null) {
+        String patchedContent = PlainSimplePatchApplier.apply(baseContents, patch.getHunks());
+        if (patchedContent != null) {
+          DiffContent leftContent = factory.create(myProject, baseContents.toString(), contextFilePath);
+          DiffContent rightContent = factory.create(myProject, patchedContent, contextFilePath);
+
+          String leftTitle = DiffBundle.message("merge.version.title.base");
+          String rightTitle = VcsBundle.message("shelve.shelved.version");
+          return new SimpleDiffRequest(title, leftContent, rightContent, leftTitle, rightTitle);
+        }
+      }
+
+      return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
+    }
+
+    @NotNull
+    private static FilePath getContextFilePath(@NotNull ShelvedChange shelvedChange) {
+      Change change = shelvedChange.getChange();
+      if (change.getType() == Change.Type.MOVED) {
+        FilePath bPath = requireNonNull(ChangesUtil.getBeforePath(change));
+        FilePath aPath = requireNonNull(ChangesUtil.getAfterPath(change));
+        if (bPath.getVirtualFile() != null) return bPath;
+        if (aPath.getVirtualFile() != null) return aPath;
+        return bPath;
+      }
+      return ChangesUtil.getFilePath(change);
+    }
+
+    @NotNull
+    private SimpleDiffRequest createBinaryShelveRequest(@NotNull ShelvedBinaryFile binaryFile, @Nullable @Nls String title)
+      throws DiffRequestProducerException, VcsException, IOException {
+      DiffContentFactory factory = DiffContentFactory.getInstance();
+      if (binaryFile.AFTER_PATH == null) {
+        throw new DiffRequestProducerException(VcsBundle.message("changes.error.content.for.0.was.removed", title));
+      }
+
+      byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
+      FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
+      DiffContent shelfContent = factory.createBinary(myProject, binaryContent, fileType, title);
+      return new SimpleDiffRequest(title, factory.createEmpty(), shelfContent, null, null);
     }
   }
 
@@ -1007,17 +1081,22 @@ public class ShelvedChangesViewManager implements Disposable {
       String date = DateFormatUtil.formatPrettyDateTime(myList.DATE);
       renderer.append(", " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
+
+    @Override
+    public @Nls String getTextPresentation() {
+      return getUserObject().toString();
+    }
   }
 
   private static class ShelvedChangeNode extends ChangesBrowserNode<ShelvedWrapper> implements Comparable<ShelvedChangeNode> {
 
     @NotNull private final ShelvedWrapper myShelvedChange;
     @NotNull private final FilePath myFilePath;
-    @Nullable private final String myAdditionalText;
+    @Nullable @Nls private final String myAdditionalText;
 
     protected ShelvedChangeNode(@NotNull ShelvedWrapper shelvedChange,
                                 @NotNull FilePath filePath,
-                                @Nullable String additionalText) {
+                                @Nullable @Nls String additionalText) {
       super(shelvedChange);
       myShelvedChange = shelvedChange;
       myFilePath = filePath;

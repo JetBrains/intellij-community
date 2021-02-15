@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.exists
 import java.awt.Component
 import java.io.File
 import java.io.FileOutputStream
@@ -106,8 +107,11 @@ internal class AnalyzePendingSnapshotActivity: StartupActivity.DumbAware {
     }
 
     path?.let {
-      val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "")
-      AnalysisRunnable(Paths.get(it), heapProperties, true).run()
+      val hprofPath = Paths.get(it)
+      if (hprofPath.exists()) {
+        val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "")
+        AnalysisRunnable(hprofPath, heapProperties, true).run()
+      }
     }
   }
 }

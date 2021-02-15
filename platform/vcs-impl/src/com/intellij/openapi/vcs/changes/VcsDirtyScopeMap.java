@@ -3,16 +3,18 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl.getDirtyScopeHashingStrategy;
 
-public class VcsDirtyScopeMap {
+public final class VcsDirtyScopeMap {
   private final Map<AbstractVcs, Set<FilePath>> myMap = new HashMap<>();
 
   @NotNull
@@ -32,9 +34,11 @@ public class VcsDirtyScopeMap {
     }
   }
 
-  @NotNull
-  private Set<FilePath> getVcsPathsSet(@NotNull AbstractVcs vcs) {
-    return myMap.computeIfAbsent(vcs, key -> new THashSet<>(getDirtyScopeHashingStrategy(key)));
+  private @NotNull Set<FilePath> getVcsPathsSet(@NotNull AbstractVcs vcs) {
+    return myMap.computeIfAbsent(vcs, key -> {
+      Hash.Strategy<FilePath> strategy = getDirtyScopeHashingStrategy(key);
+      return strategy == null ? new HashSet<>() : new ObjectOpenCustomHashSet<>(strategy);
+    });
   }
 
   public boolean isEmpty() {

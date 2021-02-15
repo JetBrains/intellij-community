@@ -11,7 +11,7 @@ import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField.Com
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 
 class GHSubmittableTextFieldFactory(private val model: SubmittableTextFieldModel) {

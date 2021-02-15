@@ -7,7 +7,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
@@ -53,10 +52,6 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    * List of all the volume types defined in the volume runtime
    */
   open fun volumeDescriptors(): List<VolumeDescriptor> = emptyList()
-
-  @Deprecated(message = "Use createConfigurable(Project, C, Supplier)")
-  @ApiStatus.ScheduledForRemoval(inVersion = "21.1")
-  abstract fun createConfigurable(project: Project, config: C, target: TargetEnvironmentConfiguration): Configurable
 
   abstract fun createConfigurable(
     project: Project,

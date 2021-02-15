@@ -2,12 +2,9 @@ package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.light.LightPsiClassBuilder;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.icons.RowIcon;
-import icons.LombokIcons;
+import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +33,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     super(context, simpleName);
     myIsEnum = false;
     myQualifiedName = qualifiedName;
-    myBaseIcon = LombokIcons.Nodes.LombokClass;
+    myBaseIcon = LombokIcons.CLASS_ICON;
     myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage());
   }
 
@@ -67,9 +64,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
 
   @Override
   public Icon getElementIcon(final int flags) {
-    RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(this, myBaseIcon,
-                                                                   ElementPresentationUtil.getFlags(this, false));
-    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+    return myBaseIcon;
   }
 
   @Override

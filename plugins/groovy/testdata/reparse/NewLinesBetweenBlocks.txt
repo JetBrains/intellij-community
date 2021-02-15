@@ -47,7 +47,7 @@ Groovy script
                     PsiElement(identifier)('id2')
                   PsiElement(new line)('\n  ')
                   PsiElement(})('}')
-                PsiWhiteSpace('\n\n   ')
+                PsiElement(new line)('\n\n   ')
                 Closable block
                   PsiElement({)('{')
                   PsiWhiteSpace('\n    ')
@@ -58,17 +58,14 @@ Groovy script
                       PsiElement(identifier)('id3')
                     Arguments
                       PsiElement(()('(')
-                      PsiErrorElement:<expression> expected, got '}'
+                      PsiErrorElement:')' expected, got '}'
                         <empty list>
                   PsiElement(})('}')
-              PsiErrorElement:unmatched input
-                PsiElement(new line)('\n  ')
-              PsiErrorElement:')', ',' or <expression> expected, got '}'
+              PsiErrorElement:')' or ',' expected
                 <empty list>
+          PsiElement(new line)('\n  ')
           PsiElement(})('}')
-      PsiErrorElement:';', new line or '}' expected, got 'void'
-        <empty list>
-      PsiWhiteSpace('\n\n  ')
+      PsiElement(new line)('\n\n  ')
       Method
         Modifiers
           <empty list>
@@ -85,7 +82,7 @@ Groovy script
         Open block
           PsiElement({)('{')
           PsiElement(})('}')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(})('}')
   PsiElement(new line)('\n')
 ---
@@ -138,9 +135,9 @@ Groovy script
                     PsiElement(identifier)('id2')
                   PsiElement(new line)('\n  ')
                   PsiElement(})('}')
-              PsiErrorElement:')' or ',' expected, got '}'
+              PsiErrorElement:')' or ',' expected
                 <empty list>
-          PsiWhiteSpace('\n\n  \n  ')
+          PsiElement(new line)('\n\n  \n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n\n  ')
       Method

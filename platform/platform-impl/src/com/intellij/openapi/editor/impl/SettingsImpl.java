@@ -5,6 +5,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -23,7 +24,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.PatternUtil;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -524,7 +524,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isAnimatedScrolling() {
-    return !SystemProperties.isTrueSmoothScrollingEnabled() && // uses its own interpolation
+    return !EditorCoreUtil.isTrueSmoothScrollingEnabled() && // uses its own interpolation
            myIsAnimatedScrolling != null
            ? myIsAnimatedScrolling.booleanValue()
            : EditorSettingsExternalizable.getInstance().isSmoothScrolling();

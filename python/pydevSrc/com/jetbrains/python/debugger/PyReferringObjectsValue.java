@@ -57,7 +57,7 @@ public class PyReferringObjectsValue extends PyDebugValue {
       LOG.error("Failed to load Referring Objects. Frame accessor: " + getFrameAccessor());
       return;
     }
-    myReferrersLoader.loadReferrers(this, new PyDebugCallback<XValueChildrenList>() {
+    myReferrersLoader.loadReferrers(this, new PyDebugCallback<>() {
       @Override
       public void ok(XValueChildrenList value) {
         if (!node.isObsolete()) {

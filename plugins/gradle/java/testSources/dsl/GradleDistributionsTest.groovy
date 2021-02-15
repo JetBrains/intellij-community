@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
@@ -19,31 +19,20 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Expr
   @Test
   void distributionsTest() {
     importProject("apply plugin: 'distribution'")
-    new RunAll().append {
-      'distributions container'()
-    } append {
-      'distributions call'()
-    } append {
-      'distributions closure delegate'()
-    } append {
-      'distribution via unqualified property reference'()
-    } append {
-      'distribution via unqualified method call'()
-    } append {
-      'distribution closure delegate in unqualified method call'()
-    } append {
-      'distribution member via unqualified method call closure delegate'()
-    } append {
-      'distribution via qualified property reference'()
-    } append {
-      'distribution via qualified method call'()
-    } append {
-      'distribution closure delegate in qualified method call'()
-    } append {
-      'distribution member via qualified method call closure delegate'()
-    } append {
-      'distribution contents closure delegate'()
-    } run()
+    new RunAll(
+      { 'distributions container'() },
+      { 'distributions call'() },
+      { 'distributions closure delegate'() },
+      { 'distribution via unqualified property reference'() },
+      { 'distribution via unqualified method call'() },
+      { 'distribution closure delegate in unqualified method call'() },
+      { 'distribution member via unqualified method call closure delegate'() },
+      { 'distribution via qualified property reference'() },
+      { 'distribution via qualified method call'() },
+      { 'distribution closure delegate in qualified method call'() },
+      { 'distribution member via qualified method call closure delegate'() },
+      { 'distribution contents closure delegate'() }
+    ).run()
   }
 
   @Override

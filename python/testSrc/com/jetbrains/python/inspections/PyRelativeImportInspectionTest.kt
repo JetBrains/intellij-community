@@ -52,9 +52,27 @@ class PyRelativeImportInspectionTest: PyInspectionTestCase() {
     assertTrue(service.isNamespacePackage(nestedPlainDirVirtualFile))
   }
 
+  fun testNestedPlainDirectoryNoQuickFixChangeImportIfRelativeLevelMoreThanOne() {
+    myFixture.copyDirectoryToProject(testDirectoryPath, "")
+    val currentFile = myFixture.configureFromTempProjectFile("$PLAIN_DIR/nestedPlainDirectory/script.py")
+    configureInspection()
+    assertProjectFilesNotParsed(currentFile)
+    assertSdkRootsNotParsed(currentFile)
+    assertEmpty(myFixture.filterAvailableIntentions(PyBundle.message("QFIX.change.to.same.directory.import")))
+    assertOneElement(myFixture.filterAvailableIntentions(PyBundle.message("QFIX.mark.as.namespace.package", PLAIN_DIR)))
+  }
+
   fun testPlainDirectoryDottedImportRegistryOffNoInspection() {
     RegistryManager.getInstance()["python.explicit.namespace.packages"].setValue(false)
     doMultiFileTest("$PLAIN_DIR/dottedImport.py")
+  }
+
+  fun testPlainDirectoryDottedImportFromDotTwoElementsWithAs() {
+    doRelativeImportInspectionTest("$PLAIN_DIR/script.py", PyBundle.message("QFIX.change.to.same.directory.import"))
+  }
+
+  fun testPlainDirectoryDottedImportFromTwoElementsWithAs() {
+    doRelativeImportInspectionTest("$PLAIN_DIR/script.py", PyBundle.message("QFIX.change.to.same.directory.import"))
   }
 
   fun testSourceRootDottedImportInspectionWithoutQuickFixes() {
@@ -110,7 +128,6 @@ class PyRelativeImportInspectionTest: PyInspectionTestCase() {
     doMultiFileTest(filename)
     if (hint != null) {
       val intentionAction = myFixture.findSingleIntention(hint)
-      assertNotNull(intentionAction)
       myFixture.launchAction(intentionAction)
       myFixture.checkHighlighting(isWarning, isInfo, isWeakWarning)
       myFixture.checkResultByFile(filename, getExpectedFilePathAfterFix(filename), true)
@@ -126,7 +143,6 @@ class PyRelativeImportInspectionTest: PyInspectionTestCase() {
     assertSdkRootsNotParsed(currentFile)
     if (hint != null) {
       val intentionAction = myFixture.findSingleIntention(hint)
-      assertNotNull(intentionAction)
       myFixture.launchAction(intentionAction)
       myFixture.checkResultByFile(filename, getExpectedFilePathAfterFix(filename), true)
     }

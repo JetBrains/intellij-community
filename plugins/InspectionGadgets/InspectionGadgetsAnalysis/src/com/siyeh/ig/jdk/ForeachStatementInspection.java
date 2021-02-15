@@ -18,7 +18,7 @@ package com.siyeh.ig.jdk;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -65,7 +65,7 @@ public class ForeachStatementInspection extends BaseInspection {
       CommentTracker tracker = new CommentTracker();
       @NonNls final StringBuilder newStatement = new StringBuilder();
       final PsiParameter iterationParameter = statement.getIterationParameter();
-      boolean generateFinalLocals = JavaCodeStyleSettingsFacade.getInstance(project).isGenerateFinalLocals();
+      boolean generateFinalLocals = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isGenerateFinalLocals();
       tracker.markUnchanged(iteratedValue);
       if (iteratedValue.getType() instanceof PsiArrayType) {
         final PsiType type = iterationParameter.getType();

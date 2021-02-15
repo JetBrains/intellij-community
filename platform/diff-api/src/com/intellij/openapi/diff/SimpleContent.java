@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,7 +180,7 @@ public class SimpleContent extends DiffContent {
       DiffString[] lines = lineTokenizer.execute();
       mySeparator = lineTokenizer.getLineSeparator();
       LOG.assertTrue(mySeparator == null || !mySeparator.isEmpty());
-      if (mySeparator == null) mySeparator = SystemProperties.getLineSeparator();
+      if (mySeparator == null) mySeparator = System.lineSeparator();
       return DiffString.concatenate(lines).toString();
     }
 

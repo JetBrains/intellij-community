@@ -17,6 +17,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.createOrCheckoutNewBranch
+import org.jetbrains.annotations.Nls
 
 internal class GitCreateNewBranchAction : DumbAwareAction() {
 
@@ -44,7 +45,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
 
   private sealed class Data {
     object Invisible : Data()
-    class Disabled(val description : String) : Data()
+    class Disabled(val description : @Nls String) : Data()
     class WithCommit(val repository: GitRepository, val hash: Hash, val name: String?) : Data()
     class NoCommit(val project: Project, val repositories: List<GitRepository>) : Data()
   }

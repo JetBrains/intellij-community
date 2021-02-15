@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig;
 
-import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +28,6 @@ import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.language.messages.EditorConfigBundle;
-import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +36,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class Utils {
@@ -84,15 +85,13 @@ public final class Utils {
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {
+    Object @NotNull [] params = new Object[]{configValue, !configKey.isEmpty() ? configKey : "?", filePath};
     final String message = configValue != null ?
-                           AbstractBundle.message(EditorConfigBundle.INSTANCE.getResourceBundle(),
-                                                  "invalid.config.value",
-                                                  configValue,
-                                                  !configKey.isEmpty() ? configKey : "?",
-                                                  filePath) :
+                           BundleBase
+                             .messageOrDefault(EditorConfigBundle.INSTANCE.getResourceBundle(), "invalid.config.value", null, params) :
                            EditorConfigBundle.message("read.failure");
     configValue = configValue != null ? configValue : "ioError";
-    EditorConfigNotifier.getInstance().error(project, configValue, message);
+    EditorConfigNotifier.error(project, configValue, message);
   }
 
   public static String getFilePath(Project project, VirtualFile file) {
@@ -184,13 +183,8 @@ public final class Utils {
 
   @Nullable
   public static String getEncoding(@NotNull Project project) {
-    final Charset charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-    for (Map.Entry<String, Charset> entry : ConfigEncodingManager.encodingMap.entrySet()) {
-      if (entry.getValue() == charset) {
-        return entry.getKey();
-      }
-    }
-    return null;
+    EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(project);
+    return ConfigEncodingManager.toString(encodingManager.getDefaultCharset(), encodingManager.shouldAddBOMForNewUtf8File());
   }
 
   @NotNull
@@ -271,5 +265,13 @@ public final class Utils {
       }
     }
     return files;
+  }
+
+  public static boolean isApplicableTo(@NotNull VirtualFile virtualFile) {
+    return virtualFile.isInLocalFileSystem() && virtualFile.isValid();
+  }
+
+  public static boolean isEditorConfigFile(@NotNull VirtualFile virtualFile) {
+    return EDITOR_CONFIG_FILE_NAME.equalsIgnoreCase(virtualFile.getName());
   }
 }

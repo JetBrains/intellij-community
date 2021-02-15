@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -12,8 +13,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
@@ -111,7 +112,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @Override
   public void updateUI() {
-    UISettings.setupComponentAntialiasing(this);
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
     if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
@@ -219,6 +220,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   public void appendTextPadding(int padding) {
     appendTextPadding(padding, SwingConstants.LEFT);
+  }
+
+  /**
+   * Convert HTML text to colored fragments and add all this fragments to current component.
+   * @param html html string for supported html tags see {@link HtmlToSimpleColoredComponentConverter}
+   * @param baseAttributes attributes which will be base for parsed fragments
+   */
+  public void appendHTML(@Nls String html, SimpleTextAttributes baseAttributes) {
+    new HtmlToSimpleColoredComponentConverter().appendHtml(this, html, baseAttributes);
   }
 
   /**
@@ -990,6 +1000,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     if (attributes.isUnderline()) {
+      if (attributes.useEffectColor() && attributes.getWaveColor() != null) {
+        g.setColor(attributes.getWaveColor());
+      }
       EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), font);
     }
 
@@ -997,6 +1010,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       final int dottedAt = SystemInfo.isMac ? textBaseline : textBaseline + 1;
       final Color lineColor = attributes.getWaveColor();
       UIUtil.drawBoldDottedLine(g, offset, offset + fragmentWidth, dottedAt, attributes.getBgColor(), lineColor, isOpaque());
+    }
+
+    if (attributes.isBoldUnderline()) {
+      if (attributes.useEffectColor() && attributes.getWaveColor() != null) {
+        g.setColor(attributes.getWaveColor());
+      }
+      EffectPainter.BOLD_LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), font);
     }
   }
 
@@ -1045,12 +1065,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     Rectangle area = computePaintArea();
     //noinspection UnnecessaryLocalVariable
     int x = offset;
-    int y = area.y + (area.height - icon.getIconHeight() + 1) / 2;
-    if (isSelection()) {
-      SVGLoader.paintIconWithSelection(icon, this, g, x, y);
-    } else {
-      icon.paintIcon(this, g, x, y);
-    }
+    int y = area.y + (area.height - icon.getIconHeight()) / 2;
+    IconUtil.paintSelectionAwareIcon(icon, this, g, x, y, isSelection());
   }
 
   private boolean isSelection() {

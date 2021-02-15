@@ -4,6 +4,8 @@ package com.intellij.openapi.externalSystem.service.remote
 import com.intellij.execution.rmi.RemoteObject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -84,8 +86,10 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
   }
 
   private fun forEachListener(action: (ExternalSystemTaskNotificationListener) -> Unit) {
-    action.invoke(dispatcher.multicaster)
-    ExternalSystemTaskNotificationListener.EP_NAME.forEachExtensionSafe(action::invoke)
+    LOG.runAndLogException {
+      action.invoke(dispatcher.multicaster)
+      ExternalSystemTaskNotificationListener.EP_NAME.forEachExtensionSafe(action::invoke)
+    }
   }
 
   private class TaskListenerWrapper(
@@ -155,6 +159,8 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
   }
 
   companion object {
+    private val LOG = logger<ExternalSystemProgressNotificationManager>()
+
     private val ALL_TASKS_KEY = Any()
 
     @JvmStatic

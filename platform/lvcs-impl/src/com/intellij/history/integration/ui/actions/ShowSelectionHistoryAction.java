@@ -7,7 +7,6 @@ import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
@@ -48,6 +47,6 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
 
   @Nullable
   private static VcsSelection getSelection(@NotNull AnActionEvent e) {
-    return VcsSelectionUtil.getSelection(VcsContextWrapper.createInstanceOn(e));
+    return VcsSelectionUtil.getSelection(e.getDataContext());
   }
 }

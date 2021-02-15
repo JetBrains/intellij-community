@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TestDataGuessByTestDiscoveryUtil {
+public final class TestDataGuessByTestDiscoveryUtil {
   @NonNls public static final String COMMUNITY_PREFIX = "/community";
 
   @NotNull

@@ -6,7 +6,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker.RangeState
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -26,7 +25,17 @@ class PartialLineStatusTrackerManagerState(private val project: Project) : Persi
 
   override fun getState(): Element {
     val element = Element("state")
-    writeState(project, element)
+
+    val areChangeListsEnabled = ChangeListManager.getInstance(project).areChangeListsEnabled()
+    val fileStates = when {
+      areChangeListsEnabled -> LineStatusTrackerManager.getInstanceImpl(project).collectPartiallyChangedFilesStates()
+      storedFileStates.size < DISABLED_FILES_THRESHOLD -> storedFileStates
+      else -> emptyList()
+    }
+    for (state in fileStates) {
+      element.addContent(writePartialFileState(state))
+    }
+
     return element
   }
 
@@ -43,6 +52,8 @@ class PartialLineStatusTrackerManagerState(private val project: Project) : Persi
   }
 
   companion object {
+    private const val DISABLED_FILES_THRESHOLD = 20
+
     private const val NODE_PARTIAL_FILE = "file"
     private const val ATT_PATH = "path"
 
@@ -59,32 +70,21 @@ class PartialLineStatusTrackerManagerState(private val project: Project) : Persi
     private const val ATT_CHANGELIST_ID = "changelist"
 
     @JvmStatic
-    fun restoreState(project: Project) {
-      val states = project.service<PartialLineStatusTrackerManagerState>().getStatesAndClear()
-      restoreState(project, states)
-    }
+    internal fun restoreState(project: Project) {
+      if (!ChangeListManager.getInstance(project).areChangeListsEnabled()) return
 
-    @JvmStatic
-    fun restoreState(project: Project, element: Element) {
-      val states = parseStates(element)
-      restoreState(project, states)
-    }
+      val fileStates = project.service<PartialLineStatusTrackerManagerState>().getStatesAndClear()
+      if (fileStates.isEmpty()) return
 
-    @JvmStatic
-    private fun restoreState(project: Project, states: List<TrackerState>) {
-      if (states.isNotEmpty()) {
-        ChangeListManager.getInstance(project).invokeAfterUpdate(
-          { LineStatusTrackerManager.getInstanceImpl(project).restoreTrackersForPartiallyChangedFiles(states) },
-          InvokeAfterUpdateMode.SILENT, null, null)
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true) {
+        LineStatusTrackerManager.getInstanceImpl(project).restoreTrackersForPartiallyChangedFiles(fileStates)
       }
     }
 
     @JvmStatic
-    fun writeState(project: Project, element: Element) {
-      val fileStates = LineStatusTrackerManager.getInstanceImpl(project).collectPartiallyChangedFilesStates()
-      for (state in fileStates) {
-        element.addContent(writePartialFileState(state))
-      }
+    internal fun saveCurrentState(project: Project, fileStates: List<TrackerState>) {
+      val stateService = project.service<PartialLineStatusTrackerManagerState>()
+      stateService.storedFileStates = fileStates
     }
 
     private fun parseStates(element: Element): List<TrackerState> {
@@ -96,11 +96,11 @@ class PartialLineStatusTrackerManagerState(private val project: Project) : Persi
       return fileStates
     }
 
-    private fun writePartialFileState(state: FullTrackerState): Element {
+    private fun writePartialFileState(state: TrackerState): Element {
       val element = Element(NODE_PARTIAL_FILE)
       element.setAttribute(ATT_PATH, state.virtualFile.path)
 
-      if (Registry.`is`("vcs.enable.partial.changelists.persist.file.contents")) {
+      if (state is FullTrackerState && Registry.`is`("vcs.enable.partial.changelists.persist.file.contents")) {
         // TODO: should not be stored in workspace.xml; Project.getProjectCachePath ?
         element.addContent(Element(NODE_VCS).setAttribute(ATT_CONTENT, XmlStringUtil.escapeIllegalXmlChars(state.vcsContent)))
         element.addContent(Element(NODE_CURRENT).setAttribute(ATT_CONTENT, XmlStringUtil.escapeIllegalXmlChars(state.currentContent)))

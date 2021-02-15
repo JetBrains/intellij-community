@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -10,7 +11,9 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImplKt;
+import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +31,14 @@ public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
     for (Keymap keymap : list) {
       addKeymapAction(group, manager, current, keymap);
     }
+    group.addSeparator();
+    group.add(new DumbAwareAction(IdeBundle.message("keymap.action.configure.keymap")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), KeymapPanel.class);
+      }
+    });
+    group.add(new ShowPluginsWithSearchOptionAction(IdeBundle.message("keymap.action.install.keymap"), "/tag:Keymap"));
   }
 
   @NotNull

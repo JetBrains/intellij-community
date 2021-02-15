@@ -609,11 +609,11 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON35,
       () -> doTestByText("from typing_extensions import Final\n" +
                          "\n" +
-                         "def foo1() <warning descr=\"'Final' could not be used in annotation for function return value\">-> Final[int]</warning>:\n" +
+                         "def foo1() <warning descr=\"'Final' could not be used in annotation for a function return value\">-> Final[int]</warning>:\n" +
                          "    pass\n" +
                          "\n" +
                          "def foo2():\n" +
-                         "    <warning descr=\"'Final' could not be used in annotation for function return value\"># type: () -> Final[int]</warning>\n" +
+                         "    <warning descr=\"'Final' could not be used in annotation for a function return value\"># type: () -> Final[int]</warning>\n" +
                          "    pass")
     );
   }

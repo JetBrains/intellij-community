@@ -2,17 +2,14 @@
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import com.intellij.refactoring.ui.YesNoPreviewUsagesDialog;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -50,22 +47,6 @@ public final class ExtractClassUtil {
         new TurnRefsToSuperProcessor(subClass.getProject(), subClass, superClass, false);
       processor.setPreviewUsages(isPreviewUsages);
       processor.run();
-    }
-  }
-
-  /**
-   * @deprecated call {@link #askAndTurnRefsToSuper} directly outside command and write action.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static void suggestToTurnRefsToSuper(Project project, PsiClass superClassOrInterface, PsiClass sourceClass) {
-    if (superClassOrInterface != null) {
-      final SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager
-        .getInstance(project).createSmartPsiElementPointer(sourceClass);
-      final SmartPsiElementPointer<PsiClass> interfacePointer = SmartPointerManager.getInstance(
-        project).createSmartPsiElementPointer(superClassOrInterface);
-      ApplicationManager.getApplication().invokeLater(() -> askAndTurnRefsToSuper(project, classPointer, interfacePointer),
-                                                      project.getDisposed());
     }
   }
 }

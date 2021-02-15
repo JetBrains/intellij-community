@@ -54,7 +54,7 @@ class OperationPanel(private val model: ColorPickerModel,
       add(cancelButton, BorderLayout.WEST)
     }
     if (ok != null) {
-      val okButton = MyButton("OK")
+      val okButton = MyButton(CommonBundle.getOkButtonText())
       okButton.border = BUTTON_BORDER
       okButton.addActionListener { ok(model.color) }
       add(okButton, BorderLayout.EAST)

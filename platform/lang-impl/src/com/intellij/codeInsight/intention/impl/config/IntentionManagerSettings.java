@@ -52,7 +52,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
 
     IntentionManagerImpl.EP_INTENTION_ACTIONS.forEachExtensionSafe(extension -> registerMetaDataForEp(extension));
 
-    IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
+    IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull IntentionActionBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         // on each plugin load/unload SearchableOptionsRegistrarImpl drops the cache, so, it will be recomputed later on demand

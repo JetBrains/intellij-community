@@ -13,12 +13,12 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.Component
 import javax.swing.*
 
-class GHPRListCellRenderer(private val avatarIconsProvider: CachingGithubAvatarIconsProvider,
+class GHPRListCellRenderer(private val avatarIconsProvider: GHAvatarIconsProvider,
                            private val openButtonViewModel: OpenReviewButtonViewModel)
   : ListCellRenderer<GHPullRequestShort>, JPanel() {
 
@@ -84,8 +84,8 @@ class GHPRListCellRenderer(private val avatarIconsProvider: CachingGithubAvatarI
     val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
 
     stateIcon.apply {
-      icon = GithubUIUtil.getPullRequestStateIcon(value.state, value.isDraft)
-      toolTipText = GithubUIUtil.getPullRequestStateText(value.state, value.isDraft)
+      icon = GHUIUtil.getPullRequestStateIcon(value.state, value.isDraft)
+      toolTipText = GHUIUtil.getPullRequestStateText(value.state, value.isDraft)
     }
     title.apply {
       text = value.title
@@ -99,7 +99,7 @@ class GHPRListCellRenderer(private val avatarIconsProvider: CachingGithubAvatarI
     labels.apply {
       removeAll()
       for (label in value.labels) {
-        add(GithubUIUtil.createIssueLabelLabel(label))
+        add(GHUIUtil.createIssueLabelLabel(label))
         add(Box.createRigidArea(JBDimension(4, 0)))
       }
     }

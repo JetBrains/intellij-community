@@ -65,7 +65,11 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Name of the root directory in Windows .zip archive
    */
-  String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "" }
+  @SuppressWarnings('GrMethodMayBeStatic')
+  // method is used by AndroidStudioProperties.groovy (https://bit.ly/3heXKlQ)
+  String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+    return ""
+  }
 
   /**
    * Name of the root product windows installation directory and Desktop ShortCut

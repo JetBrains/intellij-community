@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
   </component>
 </module>

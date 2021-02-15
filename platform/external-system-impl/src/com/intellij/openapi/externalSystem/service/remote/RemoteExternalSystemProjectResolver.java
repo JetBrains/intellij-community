@@ -39,7 +39,7 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
 
   /** <a href="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link RemoteExternalSystemProjectResolverImpl}. */
   RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings> NULL_OBJECT
-    = new RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings>() {
+    = new RemoteExternalSystemProjectResolver<>() {
     @Nullable
     @Override
     public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
@@ -47,8 +47,7 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
                                                     boolean isPreviewMode,
                                                     @Nullable ExternalSystemExecutionSettings settings,
                                                     @Nullable ProjectResolverPolicy resolverPolicy)
-      throws ExternalSystemException, IllegalArgumentException, IllegalStateException
-    {
+      throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
       return null;
     }
 

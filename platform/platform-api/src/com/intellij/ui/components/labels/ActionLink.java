@@ -44,7 +44,7 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
                     @Nullable Runnable onDone,
                     @NotNull String place) {
     super(text, icon);
-    setListener(new LinkListener<Object>() {
+    setListener(new LinkListener<>() {
       @Override
       public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
         ActionUtil.invokeAction(myAction, ActionLink.this, place, myEvent, onDone);

@@ -4,6 +4,7 @@ package com.intellij.rt.debugger;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+@Deprecated
 public final class DefaultMethodInvoker {
 
   // only methods without arguments for now

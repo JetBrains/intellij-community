@@ -83,7 +83,6 @@ public class FindByXPathAction extends AnAction {
         presentation.setCodeUsagesString(XPathBundle.message("list.item.found.matches.in", scope.getName()));
         presentation.setNonCodeUsagesString(XPathBundle.message("list.item.result"));
         presentation.setUsagesString("results matching '" + expression + '\'');
-        presentation.setUsagesWord(XPathBundle.message("match"));
         presentation.setTabText(StringUtil.shortenTextWithEllipsis(XPathBundle.message("tab.title.xpath", expression), 60, 0, true));
         presentation.setScopeText(scope.getName());
 

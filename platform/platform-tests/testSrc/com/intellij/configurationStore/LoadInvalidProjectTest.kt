@@ -11,12 +11,14 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.loadProjectAndCheckResults
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.util.io.div
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.*
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.nio.file.Paths
 
 class LoadInvalidProjectTest {
@@ -69,7 +71,7 @@ class LoadInvalidProjectTest {
 
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
-    val testDataRoot = Paths.get(PathManagerEx.getCommunityHomePath()) / "platform/platform-tests/testData/configurationStore/invalid"
-    return loadProjectAndCheckResults(listOf(testDataRoot / "common", testDataRoot / testDataDirName), tempDirectory, checkProject)
+    val testDataRoot = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("platform/platform-tests/testData/configurationStore/invalid")
+    return loadProjectAndCheckResults(listOf(testDataRoot.resolve("common"), testDataRoot.resolve(testDataDirName)), tempDirectory, checkProject)
   }
 }

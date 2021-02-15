@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
@@ -17,11 +17,11 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractCodeStylePropertyMapper {
   private @NotNull final CodeStyleSettings myRootSettings;
-  private final AtomicNotNullLazyValue<Map<String,CodeStylePropertyAccessor<?>>> myAccessorMap;
+  private final NotNullLazyValue<Map<String, CodeStylePropertyAccessor<?>>> myAccessorMap;
 
   public AbstractCodeStylePropertyMapper(@NotNull CodeStyleSettings settings) {
     myRootSettings = settings;
-    myAccessorMap = AtomicNotNullLazyValue.createValue(() -> createMap());
+    myAccessorMap = NotNullLazyValue.atomicLazy(() -> createMap());
   }
 
   public List<String> enumProperties() {
@@ -130,11 +130,6 @@ public abstract class AbstractCodeStylePropertyMapper {
 
   @NotNull
   public abstract String getLanguageDomainId();
-
-  @Deprecated
-  public boolean containsProperty(@NotNull String name) {
-    return getAccessorMap().containsKey(name);
-  }
 
   @Nullable
   public abstract String getPropertyDescription(@NotNull String externalName);

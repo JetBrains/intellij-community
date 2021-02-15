@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 
 import com.intellij.psi.PsiType
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDe
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.getControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.isNestedFlowProcessingAllowed
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 /**
@@ -97,7 +97,7 @@ class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
 
   @Suppress("UnnecessaryVariable")
   private fun doGetSharedVariables(mergedInnerFlows: List<ReadWriteVariableInstruction>): Set<VariableDescriptor> {
-    if (!PsiUtil.isCompileStatic(scope)) {
+    if (!isCompileStatic(scope)) {
       return emptySet()
     }
     val flow = scope.controlFlow

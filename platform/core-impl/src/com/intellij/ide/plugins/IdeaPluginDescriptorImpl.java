@@ -16,10 +16,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.*;
@@ -41,8 +37,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   final Path basePath;
 
   private final boolean isBundled;
+
   String name;
   PluginId id;
+
+  // only for sub descriptors
+  String descriptorPath;
+
   private volatile String myDescription;
   private @Nullable String myProductCode;
   private @Nullable Date myReleaseDate;
@@ -69,19 +70,23 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   final ContainerDescriptor projectContainerDescriptor = new ContainerDescriptor();
   final ContainerDescriptor moduleContainerDescriptor = new ContainerDescriptor();
 
-  private List<PluginId> myModules;
+  PluginContentDescriptor contentDescriptor;
+  ModuleDependenciesDescriptor dependenciesDescriptor;
+
+  private List<PluginId> modules;
   private ClassLoader classLoader;
-  private @NlsSafe String myDescriptionChildText;
-  boolean myUseIdeaClassLoader;
-  private boolean myUseCoreClassLoader;
-  boolean myAllowBundledUpdate;
-  boolean myImplementationDetail;
-  boolean myRequireRestart;
+  private @NlsSafe String descriptionChildText;
+  boolean useIdeaClassLoader;
+  private boolean useCoreClassLoader;
+  boolean allowBundledUpdate;
+  boolean implementationDetail;
+  boolean requireRestart;
+  String packagePrefix;
   private String mySinceBuild;
   private String myUntilBuild;
 
-  private boolean myEnabled = true;
-  private boolean myDeleted;
+  private boolean isEnabled = true;
+  private boolean isDeleted;
 
   boolean incomplete;
 
@@ -89,6 +94,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     this.path = path;
     this.basePath = basePath;
     this.isBundled = isBundled;
+  }
+
+  @Override
+  public @Nullable String getDescriptorPath() {
+    return descriptorPath;
   }
 
   @ApiStatus.Internal
@@ -165,6 +175,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myVersion == null) {
       myVersion = context.getDefaultVersion();
     }
+    if (myVendor == null) {
+      myVendor = mainDescriptor.myVendor;
+    }
+    if (myResourceBundleBaseName == null) {
+      myResourceBundleBaseName = mainDescriptor.myResourceBundleBaseName;
+    }
 
     if (pluginDependencies != null) {
       XmlReader.readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies);
@@ -174,8 +190,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   private void readEssentialPluginInformation(@NotNull Element element, @NotNull DescriptorListLoadingContext context) {
-    if (myDescriptionChildText == null) {
-      myDescriptionChildText = element.getChildTextTrim("description");
+    if (descriptionChildText == null) {
+      descriptionChildText = element.getChildTextTrim("description");
     }
     if (myCategory == null) {
       myCategory = element.getChildTextTrim("category");
@@ -196,7 +212,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (productElement != null) {
       readProduct(context, productElement);
     }
-    if (myModules == null) {
+    if (modules == null) {
       List<Element> moduleElements = element.getChildren("module");
       for (Element moduleElement : moduleElements) {
         readModule(moduleElement);
@@ -206,6 +222,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @TestOnly
   public void readForTest(@NotNull Element element) {
+    id = PluginManagerCore.CORE_ID;
     doRead(element, DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet()), this);
   }
 
@@ -267,6 +284,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           XmlReader.readListeners(child, projectContainerDescriptor, mainDescriptor);
           break;
 
+        case "content":
+          XmlReader.readContent(child, this);
+          break;
+
+        case "dependencies":
+          XmlReader.readNewDependencies(child, this);
+          break;
+
         case "depends":
           if (!readPluginDependency(basePath, context, child)) {
             return true;
@@ -290,7 +315,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "description":
-          myDescriptionChildText = Strings.nullize(child.getTextTrim());
+          descriptionChildText = Strings.nullize(child.getTextTrim());
           break;
 
         case "resource-bundle":
@@ -320,8 +345,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         case "idea-version":
           mySinceBuild = Strings.nullize(child.getAttributeValue("since-build"));
           myUntilBuild = Strings.nullize(child.getAttributeValue("until-build"));
-          if (!checkCompatibility(context)) {
-            readEssentialPluginInformation(element, context);
+          if (!checkCompatibility(context, () -> readEssentialPluginInformation(element, context))) {
             return true;
           }
           break;
@@ -340,16 +364,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return;
     }
 
-    if (myModules == null) {
-      myModules = Collections.singletonList(PluginId.getId(moduleName));
+    if (modules == null) {
+      modules = Collections.singletonList(PluginId.getId(moduleName));
     }
     else {
-      if (myModules.size() == 1) {
-        List<PluginId> singleton = myModules;
-        myModules = new ArrayList<>(4);
-        myModules.addAll(singleton);
+      if (modules.size() == 1) {
+        List<PluginId> singleton = modules;
+        modules = new ArrayList<>(4);
+        modules.addAll(singleton);
       }
-      myModules.add(PluginId.getId(moduleName));
+      modules.add(PluginId.getId(moduleName));
     }
   }
 
@@ -430,14 +454,15 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return true;
   }
 
-  private boolean checkCompatibility(@NotNull DescriptorListLoadingContext context) {
+  private boolean checkCompatibility(@NotNull DescriptorListLoadingContext context, Runnable beforeCreateErrorCallback) {
     String since = mySinceBuild;
     String until = myUntilBuild;
     if (isBundled() || (since == null && until == null)) {
       return true;
     }
 
-    @Nullable PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get());
+    @Nullable PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get(),
+                                                                                         beforeCreateErrorCallback);
     if (error == null) {
       return true;
     }
@@ -639,10 +664,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (bundle == null) {
-      result = myDescriptionChildText;
+      result = descriptionChildText;
     }
     else {
-      result = AbstractBundle.messageOrDefault(bundle, "plugin." + id + ".description", Strings.notNullize(myDescriptionChildText));
+      result = AbstractBundle.messageOrDefault(bundle, "plugin." + id + ".description", Strings.notNullize(descriptionChildText));
     }
     myDescription = result;
     return result;
@@ -703,6 +728,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getVendor() {
     return myVendor;
+  }
+
+  @Override
+  public String getOrganization() {
+    //TODO[ivan.chirkov]: support organizations for installed plugins
+    return "";
   }
 
   @Override
@@ -770,52 +801,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return result;
   }
 
-  @NotNull List<Path> collectClassPath(@NotNull Map<String, String[]> additionalLayoutMap) {
-    if (!Files.isDirectory(path)) {
-      return Collections.singletonList(path);
-    }
-
-    List<Path> result = new ArrayList<>();
-    Path classesDir = path.resolve("classes");
-    if (Files.exists(classesDir)) {
-      result.add(classesDir);
-    }
-
-    if (PluginManagerCore.usePluginClassLoader) {
-      Path productionDirectory = path.getParent();
-      if (productionDirectory.endsWith("production")) {
-        result.add(path);
-        String moduleName = path.getFileName().toString();
-        String[] additionalPaths = additionalLayoutMap.get(moduleName);
-        if (additionalPaths != null) {
-          for (String path : additionalPaths) {
-            result.add(productionDirectory.resolve(path));
-          }
-        }
-      }
-    }
-
-    try (DirectoryStream<Path> childStream = Files.newDirectoryStream(path.resolve("lib"))) {
-      for (Path f : childStream) {
-        if (Files.isRegularFile(f)) {
-          String name = f.getFileName().toString();
-          if (Strings.endsWithIgnoreCase(name, ".jar") || Strings.endsWithIgnoreCase(name, ".zip")) {
-            result.add(f);
-          }
-        }
-        else {
-          result.add(f);
-        }
-      }
-    }
-    catch (NoSuchFileException ignore) {
-    }
-    catch (IOException e) {
-      PluginManagerCore.getLogger().debug(e);
-    }
-    return result;
-  }
-
   public @Nullable List<Element> getActionDescriptionElements() {
     return actionElements;
   }
@@ -840,11 +825,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public boolean isDeleted() {
-    return myDeleted;
+    return isDeleted;
   }
 
   public void setDeleted(boolean deleted) {
-    myDeleted = deleted;
+    isDeleted = deleted;
   }
 
   @Nullable ClassLoader getClassLoader() {
@@ -866,25 +851,25 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public boolean isUseIdeaClassLoader() {
-    return myUseIdeaClassLoader;
+    return useIdeaClassLoader;
   }
 
   boolean isUseCoreClassLoader() {
-    return myUseCoreClassLoader;
+    return useCoreClassLoader;
   }
 
   void setUseCoreClassLoader() {
-    myUseCoreClassLoader = true;
+    useCoreClassLoader = true;
   }
 
   @Override
   public boolean isEnabled() {
-    return myEnabled;
+    return isEnabled;
   }
 
   @Override
   public void setEnabled(final boolean enabled) {
-    myEnabled = enabled;
+    isEnabled = enabled;
   }
 
   @Override
@@ -911,21 +896,21 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public boolean allowBundledUpdate() {
-    return myAllowBundledUpdate;
+    return allowBundledUpdate;
   }
 
   @Override
   public boolean isImplementationDetail() {
-    return myImplementationDetail;
+    return implementationDetail;
   }
 
   @Override
   public boolean isRequireRestart() {
-    return myRequireRestart;
+    return requireRestart;
   }
 
   public @NotNull List<PluginId> getModules() {
-    return myModules == null ? Collections.emptyList() : myModules;
+    return modules == null ? Collections.emptyList() : modules;
   }
 
   @Override
@@ -940,6 +925,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String toString() {
-    return "PluginDescriptor(name=" + name + ", id=" + id + ", path=" + path + ", version=" + myVersion + ")";
+    // don't expose user home in error messages
+    String pathString = path.toString().replace(System.getProperty("user.home") + File.separatorChar, "~" + File.separatorChar);
+    return "PluginDescriptor(name=" + name +
+           ", id=" + id +
+           ", descriptorPath=" + (descriptorPath == null ? "plugin.xml" : descriptorPath) +
+           ", path=" + pathString +
+           ", version=" + myVersion +
+           ", package=" + packagePrefix +
+           ")";
   }
 }

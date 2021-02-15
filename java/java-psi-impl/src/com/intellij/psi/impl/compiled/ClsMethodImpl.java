@@ -4,7 +4,6 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
@@ -42,13 +41,9 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   public ClsMethodImpl(final PsiMethodStub stub) {
     super(stub);
 
-    myReturnType = isConstructor() ? null : new AtomicNotNullLazyValue<PsiTypeElement>() {
-      @NotNull
-      @Override
-      protected PsiTypeElement compute() {
-        return new ClsTypeElementImpl(ClsMethodImpl.this, getStub().getReturnTypeText(false));
-      }
-    };
+    myReturnType = isConstructor() ? null : NotNullLazyValue.atomicLazy(() -> {
+      return new ClsTypeElementImpl(ClsMethodImpl.this, getStub().getReturnTypeText());
+    });
 
     final String text = getStub().getDefaultValueText();
     myDefaultValue = StringUtil.isEmptyOrSpaces(text) ? null : new VolatileNullableLazyValue<PsiAnnotationMemberValue>() {

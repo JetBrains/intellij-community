@@ -29,6 +29,7 @@ fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint, extens
 
 internal fun processExtensionDeclarations(name: String, project: Project, strictMatch: Boolean = true, callback: (Extension, XmlTag) -> Boolean) {
   val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
+  val searchWord = name.substringBeforeLast('$')
   PsiSearchHelper.getInstance(project).processElementsWithWord(
     { element, offsetInElement ->
       val elementAtOffset = (element as? XmlTag)?.findElementAt(offsetInElement) ?: return@processElementsWithWord true
@@ -43,7 +44,7 @@ internal fun processExtensionDeclarations(name: String, project: Project, strict
 
       val extension = DomManager.getDomManager(project).getDomElement(element) as? Extension ?: return@processElementsWithWord true
       callback(extension, element)
-    }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, /* case-sensitive = */ true)
+    }, scope, searchWord, UsageSearchContext.IN_FOREIGN_LANGUAGES, /* case-sensitive = */ true)
 }
 
 private fun findExtensionsByClassName(project: Project, className: String): List<ExtensionCandidate> {

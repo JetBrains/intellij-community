@@ -6,9 +6,7 @@ import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Computable;
@@ -46,12 +44,6 @@ public final class MacrosDialog extends DialogWrapper {
   private final DefaultListModel<Item> myMacrosModel = new DefaultListModel<>();
   private final JBList<Item> myMacrosList = new JBList<>(myMacrosModel);
   private final JTextArea myPreviewTextarea = new JTextArea();
-
-  public MacrosDialog(Project project) {
-    super(project, true);
-    MacroManager.getInstance().cacheMacrosPreview(SimpleDataContext.getProjectContext(project));
-    init();
-  }
 
   public MacrosDialog(@NotNull Component parent,
                       @NotNull Predicate<? super Macro> filter,
@@ -124,7 +116,7 @@ public final class MacrosDialog extends DialogWrapper {
 
     List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(),
                                               macro -> MacroFilter.GLOBAL.accept(macro) && filter.test(macro));
-    macros.sort(new Comparator<Macro>() {
+    macros.sort(new Comparator<>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {
         String name1 = macro1.getName();
@@ -156,10 +148,10 @@ public final class MacrosDialog extends DialogWrapper {
     }
 
     final Item finalFirstMacro = firstMacro;
-    myMacrosList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<Item>() {
+    myMacrosList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
       @Override
       public String getTextFor(Item value) {
-        return value.toString();
+        return value.toString(); //NON-NLS
       }
 
       @Override

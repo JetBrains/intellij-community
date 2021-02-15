@@ -17,7 +17,8 @@ class TestNGExpectedPatterns extends AbstractExpectedPatterns {
     "expected \\[(.*)\\] but got \\[(.*)\\]",
     "expected not same with:\\<(.*)\\> but was same:\\<(.*)\\>",
     "expected \\[(.*)\\] but found \\[(.*)\\]",
-    "\nexpected: .*?\"(.*)\"\n\\s*but: .*?\"(.*)\""
+    "\nexpected: .*?\"(.*)\"\n\\s*but: .*?\"(.*)\"",
+    "assertion failed: expected (.*), found (.*)"
     };
 
   static {

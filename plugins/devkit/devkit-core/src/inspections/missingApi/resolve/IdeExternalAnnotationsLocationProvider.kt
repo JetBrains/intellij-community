@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.BuildNumber
 
 /**
- * Provides coordinates of IntelliJ API external annotations artifacts.
+ * Provides coordinates of external annotations artifacts for IntelliJ SDK.
  */
 class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
 
@@ -41,8 +41,8 @@ class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
       "com.jetbrains.intellij.idea",
       "ideaIU",
       annotationsVersion,
-      PublicIdeExternalAnnotationsRepository.RELEASES_REPO_URL,
-      PublicIdeExternalAnnotationsRepository.SNAPSHOTS_REPO_URL
+      PublicIntelliJSdkExternalAnnotationsRepository.RELEASES_REPO_URL,
+      PublicIntelliJSdkExternalAnnotationsRepository.SNAPSHOTS_REPO_URL
     ))
   }
 }

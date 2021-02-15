@@ -24,8 +24,8 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -49,9 +49,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * @author Dmitry Avdeev
- * @link http://www.jetbrains.org/intellij/sdk/docs/basics/testing_plugins.html
+ * @see <a href="https://jetbrains.org/intellij/sdk/docs/basics/testing_plugins/testing_plugins.html">Testing Plugins</a>.
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
+ * @author Dmitry Avdeev
  */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   String CARET_MARKER = EditorTestUtil.CARET_TAG;
@@ -578,7 +578,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @param newName new name for the element.
    * @apiNote if the handler suggest some substitutions for the element with a dialog
-   * you can use {@link Messages#setTestDialog(TestDialog)} to provide YES/NO answer.
+   * you can use {@link TestDialogManager#setTestDialog(TestDialog)} to provide YES/NO answer.
    * Also makes sure that your rename handler properly processing name from {@link PsiElementRenameHandler#DEFAULT_NAME}
    * @see CodeInsightTestUtil#doInlineRename for more sophisticated in-place refactorings
    */

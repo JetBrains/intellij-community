@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="commons-codec" type="repository">
-    <properties maven-id="commons-codec:commons-codec:1.14" />
+    <properties maven-id="commons-codec:commons-codec:1.15" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.14/commons-codec-1.14.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.15/commons-codec-1.15.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.14/commons-codec-1.14-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.15/commons-codec-1.15-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

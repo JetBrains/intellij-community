@@ -158,10 +158,6 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
     continueVm(vm, StepAction.CONTINUE)
   }
 
-  @Suppress("unused")
-  @Deprecated("Pass vm explicitly", ReplaceWith("continueVm(vm!!, stepAction)"))
-  protected open fun continueVm(stepAction: StepAction): Promise<*>? = continueVm(activeOrMainVm!!, stepAction)
-
   /**
    * You can override this method to avoid SuspendContextManager implementation, but it is not recommended.
    */

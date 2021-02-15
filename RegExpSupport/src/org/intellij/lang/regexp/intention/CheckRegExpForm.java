@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -35,7 +36,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
@@ -82,11 +82,11 @@ public final class CheckRegExpForm {
   private final List<RangeHighlighter> mySampleHighlights = new SmartList<>();
   private RangeHighlighter myRegExpHighlight = null;
 
-  public CheckRegExpForm(@NotNull PsiFile regexpFile) {
-    final Project project = regexpFile.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(regexpFile);
+  public CheckRegExpForm(@NotNull PsiFile regExpFile) {
+    final Project project = regExpFile.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(regExpFile);
 
-    final Language language = regexpFile.getLanguage();
+    final Language language = regExpFile.getLanguage();
     final LanguageFileType fileType;
     if (language instanceof RegExpLanguage) {
       fileType = RegExpLanguage.INSTANCE.getAssociatedFileType();
@@ -109,16 +109,16 @@ public final class CheckRegExpForm {
           @Override
           public void caretPositionChanged(@NotNull CaretEvent event) {
             final int offset = editor.logicalPositionToOffset(event.getNewPosition());
-            final RegExpGroup group = findCapturingGroupAtOffset(regexpFile, offset);
-            final HighlightManager highlightManager = HighlightManager.getInstance(regexpFile.getProject());
+            final RegExpGroup group = findCapturingGroupAtOffset(regExpFile, offset);
+            final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
             removeHighlights(highlightManager);
             if (group != null) {
-              final int index = SyntaxTraverser.psiTraverser(regexpFile).filter(RegExpGroup.class).indexOf(e -> e == group) + 1;
+              final int index = SyntaxTraverser.psiTraverser(regExpFile).filter(RegExpGroup.class).indexOf(e -> e == group) + 1;
               highlightRegExpGroup(group, highlightManager);
-              highlightMatchGroup(highlightManager, getMatches(regexpFile), index);
+              highlightMatchGroup(highlightManager, getMatches(regExpFile), index);
             }
             else {
-              highlightMatchGroup(highlightManager , getMatches(regexpFile), 0);
+              highlightMatchGroup(highlightManager , getMatches(regExpFile), 0);
             }
           }
         }, disposable);
@@ -127,7 +127,7 @@ public final class CheckRegExpForm {
       @Override
       public void removeNotify() {
         super.removeNotify();
-        removeHighlights(HighlightManager.getInstance(regexpFile.getProject()));
+        removeHighlights(HighlightManager.getInstance(regExpFile.getProject()));
         Disposer.dispose(disposable);
       }
 
@@ -163,14 +163,14 @@ public final class CheckRegExpForm {
           @Override
           public void caretPositionChanged(@NotNull CaretEvent event) {
             final int offset = editor.logicalPositionToOffset(event.getNewPosition());
-            final HighlightManager highlightManager = HighlightManager.getInstance(regexpFile.getProject());
+            final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
             removeHighlights(highlightManager);
 
-            final List<RegExpMatch> matches = getMatches(regexpFile);
+            final List<RegExpMatch> matches = getMatches(regExpFile);
             int index = indexOfGroupAtOffset(matches, offset);
             if (index > 0) {
               @Nullable RegExpGroup group =
-                SyntaxTraverser.psiTraverser(regexpFile)
+                SyntaxTraverser.psiTraverser(regExpFile)
                   .filter(RegExpGroup.class)
                   .filter(RegExpGroup::isCapturing)
                   .get(index - 1);
@@ -187,7 +187,7 @@ public final class CheckRegExpForm {
       @Override
       public void removeNotify() {
         super.removeNotify();
-        removeHighlights(HighlightManager.getInstance(regexpFile.getProject()));
+        removeHighlights(HighlightManager.getInstance(regExpFile.getProject()));
         Disposer.dispose(disposable);
       }
 
@@ -260,12 +260,12 @@ public final class CheckRegExpForm {
         updater.cancelAllRequests();
         if (!updater.isDisposed()) {
           updater.addRequest(() -> {
-            final RegExpMatchResult result = isMatchingText(regexpFile, myRegExp.getText(), mySampleText.getText());
-            regexpFile.putUserData(RESULT, result);
+            final RegExpMatchResult result = isMatchingText(regExpFile, myRegExp.getText(), mySampleText.getText());
+            regExpFile.putUserData(RESULT, result);
             if (result != RegExpMatchResult.MATCHES && result != RegExpMatchResult.FOUND) {
-              setMatches(regexpFile, null);
+              setMatches(regExpFile, null);
             }
-            ApplicationManager.getApplication().invokeLater(() -> reportResult(result, regexpFile), ModalityState.any(), __ -> updater.isDisposed());
+            ApplicationManager.getApplication().invokeLater(() -> reportResult(result, regExpFile), ModalityState.any(), __ -> updater.isDisposed());
           }, 0);
         }
       }
@@ -311,8 +311,8 @@ public final class CheckRegExpForm {
     return index;
   }
 
-  private static RegExpGroup findCapturingGroupAtOffset(@NotNull PsiFile regexpFile, int offset) {
-    PsiElement element = regexpFile.findElementAt(offset);
+  private static RegExpGroup findCapturingGroupAtOffset(@NotNull PsiFile regExpFile, int offset) {
+    PsiElement element = regExpFile.findElementAt(offset);
     RegExpGroup group = null;
     while (element != null) {
       if (element instanceof RegExpGroup) {
@@ -391,7 +391,7 @@ public final class CheckRegExpForm {
     });
   }
 
-  void reportResult(RegExpMatchResult result, @NotNull PsiFile regexpFile) {
+  void reportResult(RegExpMatchResult result, @NotNull PsiFile regExpFile) {
     switch (result) {
       case NO_MATCH:
         setIconAndTooltip(mySampleIcon, AllIcons.General.BalloonError, RegExpBundle.message("tooltip.no.match"));
@@ -402,11 +402,11 @@ public final class CheckRegExpForm {
         setIconAndTooltip(myRegExpIcon, null, null);
         break;
       case FOUND:
-        final List<RegExpMatch> matches = getMatches(regexpFile);
+        final List<RegExpMatch> matches = getMatches(regExpFile);
         final Editor editor = mySampleText.getEditor();
         if (editor != null) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            final HighlightManager highlightManager = HighlightManager.getInstance(regexpFile.getProject());
+            final HighlightManager highlightManager = HighlightManager.getInstance(regExpFile.getProject());
             removeHighlights(highlightManager);
             highlightMatchGroup(highlightManager, matches, 0);
           });
@@ -450,32 +450,32 @@ public final class CheckRegExpForm {
   }
 
   @ApiStatus.Internal
-  public static @NotNull List<RegExpMatch> getMatches(@NotNull PsiFile regexpFile) {
-    return ObjectUtils.notNull(regexpFile.getUserData(LATEST_MATCHES), Collections.emptyList());
+  public static @NotNull List<RegExpMatch> getMatches(@NotNull PsiFile regExpFile) {
+    return ObjectUtils.notNull(regExpFile.getUserData(LATEST_MATCHES), Collections.emptyList());
   }
 
-  public static void setMatches(@NotNull PsiFile regexpFile, @Nullable List<RegExpMatch> matches) {
-    regexpFile.putUserData(LATEST_MATCHES, matches);
-  }
-
-  @TestOnly
-  public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    return getMatchResult(regexpFile, sampleText) == RegExpMatchResult.MATCHES;
+  public static void setMatches(@NotNull PsiFile regExpFile, @Nullable List<RegExpMatch> matches) {
+    regExpFile.putUserData(LATEST_MATCHES, matches);
   }
 
   @TestOnly
-  public static RegExpMatchResult getMatchResult(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    return isMatchingText(regexpFile, regexpFile.getText(), sampleText);
+  public static boolean isMatchingTextTest(@NotNull PsiFile regExpFile, @NotNull String sampleText) {
+    return getMatchResult(regExpFile, sampleText) == RegExpMatchResult.MATCHES;
   }
 
-  static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, String regexpText, @NotNull String sampleText) {
-    final Language regexpFileLanguage = regexpFile.getLanguage();
-    final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regexpFileLanguage);
+  @TestOnly
+  public static RegExpMatchResult getMatchResult(@NotNull PsiFile regExpFile, @NotNull String sampleText) {
+    return isMatchingText(regExpFile, regExpFile.getText(), sampleText);
+  }
+
+  static RegExpMatchResult isMatchingText(@NotNull final PsiFile regExpFile, String regExpText, @NotNull String sampleText) {
+    final Language regExpFileLanguage = regExpFile.getLanguage();
+    final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regExpFileLanguage);
     if (matcherProvider != null) {
       final RegExpMatchResult result = ReadAction.compute(() -> {
-        final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
+        final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(regExpFile.getProject()).getInjectionHost(regExpFile);
         if (host != null) {
-          return matcherProvider.matches(regexpText, regexpFile, host, sampleText, 1000L);
+          return matcherProvider.matches(regExpText, regExpFile, host, sampleText, 1000L);
         }
         return null;
       });
@@ -485,11 +485,11 @@ public final class CheckRegExpForm {
     }
 
     final Integer patternFlags = ReadAction.compute(() -> {
-      final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
+      final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(regExpFile.getProject()).getInjectionHost(regExpFile);
       int flags = 0;
       if (host != null) {
         for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
-          flags = provider.getFlags(host, regexpFile);
+          flags = provider.getFlags(host, regExpFile);
           if (flags > 0) break;
         }
       }
@@ -498,17 +498,17 @@ public final class CheckRegExpForm {
 
     try {
       //noinspection MagicConstant
-      final Matcher matcher = Pattern.compile(regexpText, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000));
+      final Matcher matcher = Pattern.compile(regExpText, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000));
       if (matcher.matches()) {
-        setMatches(regexpFile, collectMatches(matcher));
+        setMatches(regExpFile, collectMatches(matcher));
         return RegExpMatchResult.MATCHES;
+      }
+      else if (matcher.find()) {
+        setMatches(regExpFile, collectMatches(matcher));
+        return RegExpMatchResult.FOUND;
       }
       else if (matcher.hitEnd()) {
         return RegExpMatchResult.INCOMPLETE;
-      }
-      else if (matcher.find()) {
-        setMatches(regexpFile, collectMatches(matcher));
-        return RegExpMatchResult.FOUND;
       }
       else {
         return RegExpMatchResult.NO_MATCH;

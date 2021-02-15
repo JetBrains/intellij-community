@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -61,14 +63,13 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     return true;
   }
 
-  @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum) {
-    addMessage(category, message, url, lineNum, columnNum, null);
-  }
 
   @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum, Navigatable navigatable) {
-    createAndAddMessage(category, message, url, lineNum, columnNum, navigatable);
+  public void addMessage(@NotNull CompilerMessageCategory category,
+                         @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                         @Nullable String url, int lineNum, int columnNum, @Nullable Navigatable navigatable,
+                         Collection<String> moduleNames) {
+    createAndAddMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
   }
 
   @Override
@@ -79,11 +80,9 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   @Nullable
   CompilerMessage createAndAddMessage(CompilerMessageCategory category,
                                       @Nls String message,
-                                      @Nullable String url,
-                                      int lineNum,
-                                      int columnNum,
-                                      Navigatable navigatable) {
-    return myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
+                                      @Nullable String url, int lineNum, int columnNum, Navigatable navigatable,
+                                      final Collection<String> moduleNames) {
+    return myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
   }
 
   @Override

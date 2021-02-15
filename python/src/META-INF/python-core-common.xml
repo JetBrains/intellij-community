@@ -285,9 +285,6 @@
 
     <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider" id="pyDirectoryDefault"/>
 
-    <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
-                    serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
-
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
     <applicationService serviceImplementation="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache"/>
@@ -555,6 +552,7 @@
     <packageManagerProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipenvPackageManagerProvider"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.PyInterpreterInspectionSuppressor"/>
+    <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
   </extensions>
 
   <actions>
@@ -666,6 +664,4 @@
   <applicationListeners>
     <listener activeInTestMode="false" class="com.jetbrains.python.testing.VFSTestFrameworkListenerImpl$Listener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
-
-  <depends optional="true" config-file="python-features-trainer.xml">training</depends>
 </idea-plugin>

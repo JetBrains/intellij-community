@@ -5,9 +5,12 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.indexing.ID
 
 class FileIndexingStatistics(
-  val indexingTime: TimeNano,
   val fileType: FileType,
   val indexesProvidedByExtensions: Set<ID<*, *>>,
   val wasFullyIndexedByExtensions: Boolean,
-  val perIndexerTimes: Map<ID<*, *>, TimeNano>
-) 
+  val perIndexerUpdateTimes: Map<ID<*, *>, TimeNano>,
+  val perIndexerDeleteTimes: Map<ID<*, *>, TimeNano>
+) {
+  val indexingTime: TimeNano
+    get() = perIndexerUpdateTimes.values.sum() + perIndexerDeleteTimes.values.sum()
+}

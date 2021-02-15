@@ -38,10 +38,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.JdomKt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +82,24 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
 
   @Nullable
   public Module getModule() {
-    return ObjectUtils.chooseNotNull(getConfigurationModule().getModule(), ContainerUtil.getFirstItem(getValidModules()));
+    Module module = getConfigurationModule().getModule();
+    if (module != null) return module;
+    return getFirstValidModule();
+  }
+
+  @Nullable
+  private Module getFirstValidModule() {
+    final GroovyScriptRunner scriptRunner = getScriptRunner();
+    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+    if (scriptRunner == null) {
+      return modules[0];
+    }
+    for (Module module : modules) {
+      if (scriptRunner.isValidModule(module)) {
+        return module;
+      }
+    }
+    return null;
   }
 
   @Override

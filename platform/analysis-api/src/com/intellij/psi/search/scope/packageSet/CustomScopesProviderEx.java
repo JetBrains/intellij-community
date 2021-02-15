@@ -52,7 +52,7 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     @NotNull
     private static final NamedScope ALL = new NamedScope("All", () -> AnalysisBundle.message("all.scope.name"), AllIcons.Ide.LocalScope, new AbstractPackageSet(TEXT, 0) {
       @Override
-      public boolean contains(@NotNull final VirtualFile file, NamedScopesHolder scopesHolder) {
+      public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         return true;
       }
     });

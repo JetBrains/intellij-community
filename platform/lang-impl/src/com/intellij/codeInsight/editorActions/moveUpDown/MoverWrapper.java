@@ -146,7 +146,7 @@ class MoverWrapper {
           }
         }
 
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        PsiDocumentManager.getInstance(project).commitDocument(document);
 
         // Swap fold regions status if necessary.
         if (topRegion != null && bottomRegion != null) {

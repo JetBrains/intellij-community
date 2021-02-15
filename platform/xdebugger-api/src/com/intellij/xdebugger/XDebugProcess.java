@@ -96,14 +96,6 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * @deprecated Use {@link #startForceStepInto(XSuspendContext)} instead
-   */
-  @Deprecated
-  public void startForceStepInto(){
-    startStepInto();
-  }
-
-  /**
    * Steps into suppressed call
    * <p>
    * Resume execution and call {@link XDebugSession#positionReached}

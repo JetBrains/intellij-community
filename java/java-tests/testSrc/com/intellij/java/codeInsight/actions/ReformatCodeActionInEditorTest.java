@@ -21,7 +21,7 @@ import com.intellij.codeInsight.actions.FileInEditorProcessor;
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.codeInsight.actions.LayoutCodeOptions;
 import com.intellij.codeInsight.actions.ReformatCodeRunOptions;
-import com.intellij.formatting.fileSet.NamedScopeDescriptor;
+import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;

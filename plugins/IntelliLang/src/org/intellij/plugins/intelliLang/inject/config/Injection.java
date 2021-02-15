@@ -15,9 +15,9 @@
  */
 package org.intellij.plugins.intelliLang.inject.config;
 
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,17 +33,8 @@ import java.util.List;
  * <li>friendly name for displaying the entry
  * </ul>
  */
-public interface Injection {
-
-  @NotNull
-  @NlsSafe
-  String getInjectedLanguageId();
-
-  @NotNull
-  String getPrefix();
-
-  @NotNull
-  String getSuffix();
+@ApiStatus.Internal
+public interface Injection extends com.intellij.lang.injection.general.Injection {
 
   @NotNull
   List<TextRange> getInjectedArea(PsiElement element);

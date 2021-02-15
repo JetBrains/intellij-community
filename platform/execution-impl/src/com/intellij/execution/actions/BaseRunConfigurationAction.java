@@ -8,10 +8,12 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
@@ -20,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +48,17 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   private AnAction[] getChildren(DataContext dataContext) {
+    if (dataContext.getData(ExecutorAction.getOrderKey()) != null) return EMPTY_ARRAY;
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    if (!Registry.is("suggest.all.run.configurations.from.context") && context.findExisting() != null) {
+    if (!Registry.is("suggest.all.run.configurations.from.context") && findExisting(context) != null) {
       return EMPTY_ARRAY;
     }
     return createChildActions(context, getConfigurationsFromContext(context)).toArray(EMPTY_ARRAY);
+  }
+
+  @Nullable
+  protected RunnerAndConfigurationSettings findExisting(ConfigurationContext context) {
+    return context.findExisting();
   }
 
   @NotNull
@@ -62,6 +71,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     for (final ConfigurationFromContext fromContext : configurations) {
       final ConfigurationType configurationType = fromContext.getConfigurationType();
       final String actionName = childActionName(fromContext);
+      //noinspection DialogTitleCapitalization
       final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), fromContext.getConfiguration().getIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -83,7 +93,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
     final List<ConfigurationFromContext> enabledConfigurations = new ArrayList<>();
     for (ConfigurationFromContext configurationFromContext : fromContext) {
-      if (isEnabledFor(configurationFromContext.getConfiguration())) {
+      if (isEnabledFor(configurationFromContext.getConfiguration(), context)) {
         enabledConfigurations.add(configurationFromContext);
       }
     }
@@ -92,6 +102,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   protected boolean isEnabledFor(RunConfiguration configuration) {
     return true;
+  }
+  
+  protected boolean isEnabledFor(RunConfiguration configuration, ConfigurationContext context) {
+    return isEnabledFor(configuration);
   }
 
   @Override
@@ -102,10 +116,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     }
 
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    final RunnerAndConfigurationSettings existing = context.findExisting();
+    final RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null) {
       final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
-      return fromContext.size() <= 1;
+      return fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null;
     }
     return true;
   }
@@ -115,11 +129,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     final DataContext dataContext = e.getDataContext();
     MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    final RunnerAndConfigurationSettings existing = context.findExisting();
-    if (existing == null) {
+    final RunnerAndConfigurationSettings existing = findExisting(context);
+    if (existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
       if (producers.isEmpty()) return;
-      perform(producers.get(0), context);
+      perform(getOrderedConfiguration(dataContext, producers), context);
       return;
     }
 
@@ -128,6 +142,14 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       LOG.debug(String.format("Use existing run configuration: %s", configurationClass));
     }
     perform(context);
+  }
+
+  private static ConfigurationFromContext getOrderedConfiguration(DataContext dataContext, List<ConfigurationFromContext> producers) {
+    Integer order = dataContext.getData(ExecutorAction.getOrderKey());
+    if (order != null && order < producers.size()) {
+      return producers.get(order);
+    }
+    return producers.get(0);
   }
 
   private void perform(final ConfigurationFromContext configurationFromContext, final ConfigurationContext context) {
@@ -140,8 +162,12 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
         String configurationClass = configuration == null ? null : configuration.getClass().getName();
         LOG.debug(String.format("Create run configuration: %s", configurationClass));
       }
-      perform(context);
+      perform(configurationSettings, context);
     });
+  }
+
+  protected void perform(RunnerAndConfigurationSettings configurationSettings, ConfigurationContext context) {
+    perform(context);
   }
 
   protected abstract void perform(ConfigurationContext context);
@@ -155,9 +181,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
+    boolean doFullUpdate = !ApplicationManager.getApplication().isDispatchThread() ||
+                           ApplicationManager.getApplication().isUnitTestMode();
     VirtualFile vFile = event.getDataContext().getData(CommonDataKeys.VIRTUAL_FILE);
     ThreeState hadAnythingRunnable = vFile == null ? ThreeState.UNSURE : RunLineMarkerProvider.hadAnythingRunnable(vFile);
-    if (hadAnythingRunnable == ThreeState.UNSURE) {
+    if (doFullUpdate || hadAnythingRunnable == ThreeState.UNSURE) {
       fullUpdate(event);
       return;
     }
@@ -189,9 +217,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   protected void fullUpdate(@NotNull AnActionEvent event) {
-    final ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
+    DataContext dataContext = event.getDataContext();
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final Presentation presentation = event.getPresentation();
-    final RunnerAndConfigurationSettings existing = context.findExisting();
+    final RunnerAndConfigurationSettings existing = findExisting(context);
     RunnerAndConfigurationSettings configuration = existing;
     if (configuration == null) {
       configuration = context.getConfiguration();
@@ -201,17 +230,22 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     }
     else{
       presentation.setEnabledAndVisible(true);
-      VirtualFile vFile = event.getDataContext().getData(CommonDataKeys.VIRTUAL_FILE);
+      VirtualFile vFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
       if (vFile != null) {
         RunLineMarkerProvider.markRunnable(vFile, true);
       }
       final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
-      if (existing == null && !fromContext.isEmpty()) {
-        //todo[nik,anna] it's dirty fix. Otherwise wrong configuration will be returned from context.getConfiguration()
-        context.setConfiguration(fromContext.get(0).getConfigurationSettings());
+      if (fromContext.isEmpty()) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+      if ((existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) && !fromContext.isEmpty()) {
+        ConfigurationFromContext configurationFromContext = getOrderedConfiguration(dataContext, fromContext);
+        configuration = configurationFromContext.getConfigurationSettings();
+        context.setConfiguration(configurationFromContext.getConfigurationSettings());
       }
       final String name = suggestRunActionName(configuration.getConfiguration());
-      updatePresentation(presentation, existing != null || fromContext.size() <= 1 ? name : "", context);
+      updatePresentation(presentation, existing != null || fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null ? name : "", context);
     }
   }
 
@@ -221,6 +255,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @NotNull
+  @Nls
   public static String suggestRunActionName(@NotNull RunConfiguration configuration) {
     if (configuration instanceof LocatableConfigurationBase && ((LocatableConfigurationBase<?>)configuration).isGeneratedName()) {
       String actionName = ((LocatableConfigurationBase<?>)configuration).getActionName();
@@ -237,6 +272,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @NotNull
+  @Nls
   private static String childActionName(ConfigurationFromContext configurationFromContext) {
     RunConfiguration configuration = configurationFromContext.getConfiguration();
     if (!(configuration instanceof LocatableConfiguration)) {

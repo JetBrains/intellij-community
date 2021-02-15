@@ -22,6 +22,6 @@ public interface JpsServerClient {
   List<OutputLoadResult> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
                                                  @NotNull List<AffectedModule> affectedModules);
   static JpsServerClient getServerClient() {
-    return TemporaryCacheServerClient.INSTANCE;
+    return JpsServerClientImpl.INSTANCE;
   }
 }

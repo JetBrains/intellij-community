@@ -43,7 +43,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -601,7 +600,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     @Override
     protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
-      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
         try {
           return TestClassFilter.create(SourceScope.wholeProject(getProject()), null);
         }

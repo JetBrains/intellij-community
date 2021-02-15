@@ -28,7 +28,7 @@ public class GroovyAssignmentExpressionPattern extends GroovyExpressionPattern<G
   }
 
   public GroovyAssignmentExpressionPattern left(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<GrAssignmentExpression>("left") {
+    return with(new PatternCondition<>("left") {
       @Override
       public boolean accepts(@NotNull final GrAssignmentExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.accepts(psiBinaryExpression.getLValue(), context);
@@ -37,7 +37,7 @@ public class GroovyAssignmentExpressionPattern extends GroovyExpressionPattern<G
   }
 
   public GroovyAssignmentExpressionPattern right(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<GrAssignmentExpression>("right") {
+    return with(new PatternCondition<>("right") {
       @Override
       public boolean accepts(@NotNull final GrAssignmentExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.accepts(psiBinaryExpression.getRValue(), context);
@@ -46,7 +46,7 @@ public class GroovyAssignmentExpressionPattern extends GroovyExpressionPattern<G
   }
 
   public GroovyAssignmentExpressionPattern operation(final IElementType pattern) {
-    return with(new PatternCondition<GrAssignmentExpression>("operation") {
+    return with(new PatternCondition<>("operation") {
       @Override
       public boolean accepts(@NotNull final GrAssignmentExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern == psiBinaryExpression.getOperationTokenType();

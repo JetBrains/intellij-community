@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-@ApiStatus.Experimental
 public class KeyCollectionForwardIndexAccessor<Key, Value> extends AbstractForwardIndexAccessor<Key, Value, Collection<Key>> {
   public KeyCollectionForwardIndexAccessor(@NotNull DataExternalizer<Collection<Key>> externalizer) {
     super(externalizer);

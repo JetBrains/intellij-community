@@ -45,7 +45,6 @@ import java.util.Set;
  */
 @SuppressWarnings({"UnusedDeclaration"})
 public class TaskConfigurable extends BindableConfigurable implements SearchableConfigurable.Parent, Configurable.NoScroll {
-
   private JPanel myPanel;
 
   @BindControl("updateEnabled")
@@ -77,13 +76,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
 
   private final Project myProject;
   private Configurable[] myConfigurables;
-  private final NotNullLazyValue<ControlBinder> myControlBinder = new NotNullLazyValue<ControlBinder>() {
-    @NotNull
-    @Override
-    protected ControlBinder compute() {
-      return new ControlBinder(getConfig());
-    }
-  };
+  private final NotNullLazyValue<ControlBinder> myControlBinder;
 
   public TaskConfigurable(Project project) {
     super();
@@ -94,6 +87,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
         enableCachePanel();
       }
     });
+    myControlBinder = NotNullLazyValue.lazy(() -> new ControlBinder(getConfig()));
   }
 
   private TaskManagerImpl.Config getConfig() {
@@ -215,8 +209,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
           for (CommitPlaceholderProvider provider : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
             placeholders.addAll(Arrays.asList(provider.getPlaceholders(null)));
           }
-          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(TaskBundle.message("settings.placeholders"),
-                                                                                     ArrayUtilRt.toStringArray(placeholders)) {
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(TaskBundle.message("settings.placeholders"),
+                                                                               ArrayUtilRt.toStringArray(placeholders)) {
             @Override
             public PopupStep onChosen(String selectedValue, boolean finalChoice) {
               WriteCommandAction.runWriteCommandAction(myProject, () -> editor.getDocument()

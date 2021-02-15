@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.util.RecursionManager
@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Same as [SafePublicationLazyImpl], but returns `null` in case of computation recursion occurred.
  */
-class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer: () -> T) : Lazy<T?> {
+internal class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer: () -> T) : Lazy<T?> {
 
   @Volatile
   private var initializer: (() -> T)? = { ourNotNullizer.notNullize(initializer()) }
-  private val valueRef: AtomicReference<T> = AtomicReference()
+  private val valueRef: AtomicReference<T?> = AtomicReference()
   private val recursionKey: Any = recursionKey ?: this
 
   override val value: T?
@@ -24,7 +24,7 @@ class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer:
       val initializerValue = initializer
       if (initializerValue === null) {
         // Some thread managed to clear the initializer => it managed to set the value.
-        return ourNotNullizer.nullize(valueRef.get())
+        return ourNotNullizer.nullize(requireNotNull(valueRef.get()))
       }
 
       val stamp = RecursionManager.markStack()
@@ -41,7 +41,7 @@ class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer:
 
       if (!valueRef.compareAndSet(null, newValue)) {
         // Some thread managed to set the value.
-        return ourNotNullizer.nullize(valueRef.get())
+        return ourNotNullizer.nullize(requireNotNull(valueRef.get()))
       }
 
       initializer = null

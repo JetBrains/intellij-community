@@ -63,7 +63,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final @NonNls String TASK_NAME_RUN_IDE = ":runIde";
   private static final @NonNls String META_INF_PATH = "/src/main/resources/META-INF";
 
-  private static class Lazy {
+  private static final class Lazy {
     static final ExecutorService EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("UPDATE_GRADLE_PLUGIN_VERSIONS");
   }
 

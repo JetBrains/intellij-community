@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.SplitAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -109,6 +110,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(FileEditorManagerImpl.class);
   protected static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
+  public static final Key<Boolean> NOTHING_WAS_OPENED_ON_START = Key.create("NOTHING_WAS_OPENED_ON_START");
 
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
@@ -664,14 +666,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     }
+
+    FileEditor selectedEditor = getSelectedEditor();
+    EditorsSplitters splitters;
+    if (FileEditorManager.USE_MAIN_WINDOW.isIn(selectedEditor)) {
+      boolean useCurrentWindow = selectedEditor != null && !FileEditorManager.USE_MAIN_WINDOW.get(selectedEditor, false);
+      splitters = useCurrentWindow ? getSplitters() : getMainSplitters();
+    }
     else {
-      wndToOpenIn = getSplitters().getCurrentWindow();
+      splitters = UISettings.getInstance().getOpenTabsInMainWindow() ? getMainSplitters() : getSplitters();
     }
 
-    EditorsSplitters splitters = getSplitters();
-
     if (wndToOpenIn == null) {
-      wndToOpenIn = splitters.getOrCreateCurrentWindow(file);
+      EditorWindow currentWindow = splitters.getCurrentWindow();
+      wndToOpenIn = currentWindow != null ? currentWindow : splitters.getOrCreateCurrentWindow(file);
     }
 
     openAssociatedFile(file, wndToOpenIn, splitters);
@@ -679,6 +687,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(@NotNull VirtualFile file) {
+    if (forbidSplitFor(file)) {
+      closeFile(file);
+    }
     return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
   }
 
@@ -764,6 +775,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     }
+  }
+
+  public static boolean forbidSplitFor(@NotNull VirtualFile file) {
+    return Boolean.TRUE.equals(file.getUserData(SplitAction.FORBID_TAB_SPLIT));
   }
 
   @Override
@@ -1464,11 +1479,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
     myListenerList.add(listener);
-  }
-
-  @Override
-  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable) {
-    myProject.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
   }
 
   @Override

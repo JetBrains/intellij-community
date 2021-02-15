@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 import org.jetbrains.jps.model.serialization.impl.JpsSerializationFormatException;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
@@ -48,7 +49,7 @@ public final class JpsModuleRootModelSerializer {
   public static final String JAVA_TEST_ROOT_TYPE_ID = "java-test";
   private static final String GENERATED_LIBRARY_NAME_PREFIX = "#";
 
-  public static void loadRootModel(JpsModule module, @Nullable Element rootModelComponent, @Nullable JpsSdkType<?> projectSdkType) {
+  public static void loadRootModel(JpsModule module, @Nullable Element rootModelComponent, @Nullable JpsSdkType<?> projectSdkType, @NotNull JpsPathMapper pathMapper) {
     if (rootModelComponent == null) return;
 
     for (Element contentElement : getChildren(rootModelComponent, CONTENT_TAG)) {
@@ -108,7 +109,7 @@ public final class JpsModuleRootModelSerializer {
             name = GENERATED_LIBRARY_NAME_PREFIX;
           }
           String uniqueName = nameGenerator.generateUniqueName(name);
-          final JpsLibrary library = JpsLibraryTableSerializer.loadLibrary(moduleLibraryElement, uniqueName);
+          final JpsLibrary library = JpsLibraryTableSerializer.loadLibrary(moduleLibraryElement, uniqueName, pathMapper);
           module.addModuleLibrary(library);
 
           final JpsLibraryDependency dependency = dependenciesList.addLibraryDependency(library);

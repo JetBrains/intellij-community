@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
@@ -150,6 +151,10 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     if (!FileColorManagerImpl._isEnabledForTabs()) {
       set.add(newBooleanMetric("fileColorsEnabledForTabs", false));
     }
+
+    UISettings uiSettings = UISettings.getInstance();
+    UISettings uiSettingsDefault = new UISettings();
+    addBoolIfDiffers(set, uiSettings, uiSettingsDefault, s -> s.getOpenTabsInMainWindow(), "openTabsInMainWindow");
 
     return set;
   }

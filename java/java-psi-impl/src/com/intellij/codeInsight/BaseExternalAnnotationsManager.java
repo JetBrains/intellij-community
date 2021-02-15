@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.java.parser.JavaParser;
@@ -20,7 +20,6 @@ import com.intellij.util.containers.ConcurrentMostlySingularMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.text.CharSequenceReader;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,10 +104,14 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @NotNull
   private List<PsiAnnotation> filterAnnotations(@NotNull List<AnnotationData> result, @NotNull String annotationFQN) {
-    return StreamEx.of(result)
-      .filter(data -> data.annotationClassFqName.equals(annotationFQN))
-      .map(data -> data.getAnnotation(this))
-      .toCollection(SmartList::new);
+    SmartList<PsiAnnotation> annotations = new SmartList<>();
+    for (AnnotationData data : result) {
+      if (data.annotationClassFqName.equals(annotationFQN)) {
+        PsiAnnotation annotation = data.getAnnotation(this);
+        annotations.add(annotation);
+      }
+    }
+    return annotations;
   }
 
   @Nullable
@@ -300,7 +303,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       }
     }
 
-    Set<PsiFile> possibleAnnotationXmls = new THashSet<>();
+    Set<PsiFile> possibleAnnotationXmls = new HashSet<>();
 
     String relativePath = packageName.replace('.', '/') + '/' + ANNOTATIONS_XML;
     for (VirtualFile root : rootGetter.apply(key)) {

@@ -110,11 +110,6 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     this(null, project, new TestData(), TestNGConfigurationType.getInstance());
   }
 
-  @Deprecated
-  public TestNGConfiguration(@Nullable String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
-    this(name, project, new TestData(), factory);
-  }
-
   protected TestNGConfiguration(String s, Project project, TestData data, ConfigurationFactory factory) {
     super(s, new JavaRunConfigurationModule(project, false), factory);
     this.data = data;

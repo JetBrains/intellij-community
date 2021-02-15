@@ -74,7 +74,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
   private fun createFilter(project: Project, model: StatisticsLogFilterModel): FilterComponent {
     return object : FilterComponent("STATISTICS_EVENT_LOG_FILTER_HISTORY", 5) {
       override fun filter() {
-        val task = object : Task.Backgroundable(project, LogConsoleBase.APPLYING_FILTER_TITLE) {
+        val task = object : Task.Backgroundable(project, LogConsoleBase.getApplyingFilterTitle()) {
           override fun run(indicator: ProgressIndicator) {
             model.updateCustomFilter(filter)
           }

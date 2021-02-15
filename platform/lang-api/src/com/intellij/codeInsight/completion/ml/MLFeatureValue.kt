@@ -23,6 +23,10 @@ import org.jetbrains.annotations.ApiStatus
  * Q: I noticed weird case when items inside lookup are ordered in a non-sense way. Can we fix that?
  * A: Probably, yes. If the case if quite frequent we can describe both items (relevant and non-relevant) to distinguish when while ranking.
  * If non-relevant item is chosen less frequently then it will have much less score than the relevant one.
+ *
+ * Q: How can I see what feature-values are used by ml ranking procedure?
+ * A: There's "Copy ML Completion Features To Clipboard" action (default shortcut - ctrl shift alt 0). It saves element-wise features
+ * values to the clipboard.
  */
 @ApiStatus.Internal
 sealed class MLFeatureValue {

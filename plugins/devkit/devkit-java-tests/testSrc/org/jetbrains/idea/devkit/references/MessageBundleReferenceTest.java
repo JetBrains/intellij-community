@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
-import com.intellij.codeInspection.unused.UnusedPropertyInspection;
+import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
 import com.intellij.openapi.components.State;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;

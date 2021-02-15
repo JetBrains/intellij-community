@@ -66,7 +66,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
     }
 
     BaseListPopupStep<ConfigurableUsageTarget> step =
-      new BaseListPopupStep<ConfigurableUsageTarget>(FindBundle.message("recent.find.usages.action.title"), history) {
+      new BaseListPopupStep<>(FindBundle.message("recent.find.usages.action.title"), history) {
         @Override
         public Icon getIconFor(final ConfigurableUsageTarget data) {
           return null;

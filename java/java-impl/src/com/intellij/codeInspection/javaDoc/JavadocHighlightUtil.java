@@ -45,6 +45,7 @@ public final class JavadocHighlightUtil {
     LocalQuickFix addMissingTagFix(@NotNull String tag, @NotNull String value);
     LocalQuickFix addMissingParamTagFix(@NotNull String name);
     LocalQuickFix registerTagFix(@NotNull String tag);
+    LocalQuickFix removeTagFix(@NotNull String tag);
   }
 
   static boolean isJavaDocRequired(@NotNull JavaDocLocalInspection inspection, @NotNull PsiModifierListOwner element) {
@@ -239,7 +240,8 @@ public final class JavadocHighlightUtil {
     PsiElement nameElement = tag.getNameElement();
     if (nameElement != null) {
       String key = tagInfo == null ? "inspection.javadoc.problem.wrong.tag" : "inspection.javadoc.problem.disallowed.tag";
-      holder.problem(nameElement, JavaBundle.message(key, "<code>" + tagName + "</code>"), holder.registerTagFix(tagName));
+      LocalQuickFix fix = tagInfo == null ? holder.registerTagFix(tagName) : holder.removeTagFix(tagName);
+      holder.problem(nameElement, JavaBundle.message(key, "<code>" + tagName + "</code>"), fix);
     }
 
     return false;
@@ -437,29 +439,34 @@ public final class JavadocHighlightUtil {
     }
   }
 
-  static void checkEmptyMethodTagsDescription(PsiDocTag @NotNull [] tags, @NotNull ProblemHolder holder) {
+  static void checkEmptyMethodTagsDescription(PsiDocTag @NotNull [] tags,
+                                              @NotNull PsiMethod psiMethod,
+                                              @NotNull ProblemHolder holder) {
     for (PsiDocTag tag : tags) {
       if (ContainerUtil
         .exists(tag.getChildren(), e -> e instanceof PsiInlineDocTag && ((PsiInlineDocTag)e).getName().equals("inheritDoc"))) {
         continue;
       }
       if ("return".equals(tag.getName())) {
-        if (emptyTag(tag)) {
+        if (!PsiType.VOID.equals(psiMethod.getReturnType()) && emptyTag(tag)) {
           String tagText = "<code>@return</code>";
-          holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
+          LocalQuickFix fix = holder.removeTagFix("return");
+          holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), fix);
         }
       }
       else if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
         if (emptyThrowsTag(tag)) {
-          String tagText = "<code>" + tag.getName() + "</code>";
-          holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
+          String tagText = "<code>@" + tag.getName() + "</code>";
+          LocalQuickFix fix = holder.removeTagFix(tag.getName());
+          holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), fix);
         }
       }
       else if ("param".equals(tag.getName())) {
         PsiDocTagValue valueElement = tag.getValueElement();
         if (valueElement != null && emptyParamTag(tag, valueElement)) {
           String tagText = "<code>@param " + valueElement.getText() + "</code>";
-          holder.problem(valueElement, JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
+          LocalQuickFix fix = holder.removeTagFix("param " + valueElement.getText());
+          holder.problem(valueElement, JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), fix);
         }
       }
     }

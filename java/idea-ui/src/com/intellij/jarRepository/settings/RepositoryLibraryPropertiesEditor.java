@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.settings;
 
 import com.google.common.base.Strings;
@@ -17,8 +17,8 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
-import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class RepositoryLibraryPropertiesEditor {
+public final class RepositoryLibraryPropertiesEditor {
   private static final Logger LOG = Logger.getInstance(RepositoryLibraryPropertiesEditor.class);
   @NotNull private final Project project;
   State currentState;
@@ -93,7 +93,7 @@ public class RepositoryLibraryPropertiesEditor {
     myManageDependenciesLink = new ActionLink(CommonBundle.message("action.text.configure.ellipsis"), e -> {
       configureTransitiveDependencies();
     });
-    myManageDependenciesLink.setBorder(UI.Borders.emptyLeft(10));
+    myManageDependenciesLink.setBorder(JBUI.Borders.emptyLeft(10));
     myTransitiveDependenciesPanel.add(myManageDependenciesLink);
     myTransitiveDependenciesPanel.setVisible(allowExcludingTransitiveDependencies);
     myReloadButton.addActionListener(new ActionListener() {

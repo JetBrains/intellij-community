@@ -20,19 +20,19 @@ import org.jetbrains.annotations.Nullable;
 public class DefaultFileTemplateUsageInspection extends AbstractBaseJavaLocalInspectionTool {
 
   /**
-   * @deprecated unused, left for compatibility
+   * @deprecated unused, left to avoid modifications in config files
    */
   @Deprecated
   public boolean CHECK_FILE_HEADER = true;
 
   /**
-   * @deprecated unused, left for compatibility
+   * @deprecated unused, left to avoid modifications in config files
    */
   @Deprecated
   public boolean CHECK_TRY_CATCH_SECTION = true;
 
   /**
-   * @deprecated unused, left for compatibility
+   * @deprecated unused, left to avoid modifications in config files
    */
   @Deprecated
   public boolean CHECK_METHOD_BODY = true;

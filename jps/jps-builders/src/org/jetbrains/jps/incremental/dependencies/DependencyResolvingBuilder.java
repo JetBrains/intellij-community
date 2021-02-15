@@ -251,7 +251,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
 
     static void init(CompileContext context) {
-      context.putUserData(CONTEXT_KEY, new ConcurrentHashMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard>());
+      context.putUserData(CONTEXT_KEY, new ConcurrentHashMap<>());
     }
 
     static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
