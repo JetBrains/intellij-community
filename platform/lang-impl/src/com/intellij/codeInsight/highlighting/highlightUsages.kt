@@ -39,7 +39,7 @@ internal fun highlightUsages(project: Project, editor: Editor, file: PsiFile): B
 
 private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFile, symbol: Symbol, clearHighlights: Boolean) {
   val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = getUsageRanges(file, symbol)
+  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = getUsageRanges(file, symbol) ?: return
   HighlightUsagesHandler.highlightUsages(
     project, hostEditor,
     readRanges + readDeclarationRanges,
@@ -49,7 +49,7 @@ private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFil
   HighlightUsagesHandler.setStatusText(project, null, readRanges.size + writeRanges.size, clearHighlights)
 }
 
-internal fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges {
+internal fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
   val psiTarget: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
   if (psiTarget != null) {
     return getPsiUsageRanges(file, psiTarget)
@@ -102,7 +102,7 @@ private fun getPsiUsageRanges(file: PsiFile, psiTarget: PsiElement): UsageRanges
   return UsageRanges(readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges)
 }
 
-private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges {
+private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
   val project: Project = file.project
   val searchScope: SearchScope = LocalSearchScope(file)
 

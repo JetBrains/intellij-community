@@ -256,6 +256,9 @@ public class IdentifierHighlighterPass {
   private void highlightTargetUsages(@NotNull Symbol target) {
     AstLoadingFilter.disallowTreeLoading(() -> {
       UsageRanges ranges = getUsageRanges(myFile, target);
+      if (ranges == null) {
+        return;
+      }
       myReadAccessRanges.addAll(ranges.getReadRanges());
       myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
       myWriteAccessRanges.addAll(ranges.getWriteRanges());
