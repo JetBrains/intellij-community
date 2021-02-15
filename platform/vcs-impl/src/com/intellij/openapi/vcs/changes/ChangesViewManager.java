@@ -81,7 +81,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.is
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static java.util.Arrays.asList;
-import static java.util.Objects.requireNonNull;
 
 @State(
   name = "ChangesViewManager",
@@ -613,9 +612,11 @@ public class ChangesViewManager implements ChangesViewEx,
 
     private void setCommitSplitOrientation() {
       boolean hasPreviewPanel = myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && isSplitterPreview();
-      ToolWindow tw = requireNonNull(getToolWindowFor(myProject, LOCAL_CHANGES));
-      boolean toolwindowIsHorizontal = tw.getAnchor().isHorizontal();
-      myCommitPanelSplitter.setOrientation(hasPreviewPanel || !toolwindowIsHorizontal);
+      ToolWindow tw = getToolWindowFor(myProject, LOCAL_CHANGES);
+      if (tw != null) {
+        boolean toolwindowIsHorizontal = tw.getAnchor().isHorizontal();
+        myCommitPanelSplitter.setOrientation(hasPreviewPanel || !toolwindowIsHorizontal);
+      }
     }
 
     @NotNull
