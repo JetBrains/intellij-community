@@ -441,6 +441,8 @@
                  description="Show toolwindow tab with stashes"/>
     <registryKey key="git.can.use.restore.command" defaultValue="true"
                  description="Use 'git restore --staged --worktree --source=HEAD -- paths' instead of 'git reset --hard' to speedup worktree cleanup."/>
+    <registryKey key="git.stage.separate.undo.stack" defaultValue="true"
+                 description="Do not record stage operations in the undo stack of the document" />
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
