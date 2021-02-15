@@ -115,7 +115,7 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
                                    (t, c) -> comboBox.setItem(configuration.getCoverageRunner()),
                                    (t, c) -> configuration
                                      .setCoverageRunner(isSelected() && component.isVisible() ? comboBox.getItem() : model.getElementAt(0)),
-                                   t -> configuration.getCoverageRunner() != CoverageRunner.getInstance(IDEACoverageRunner.class));
+                                   t -> !(configuration.getCoverageRunner() instanceof IDEACoverageRunner));
     fragment.setEditorGetter(c -> comboBox);
     fragment.setActionHint(JavaCoverageBundle.message("select.to.use.a.code.coverage.runner.other.than.the.built.in.one"));
     return fragment;
