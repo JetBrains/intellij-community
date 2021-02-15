@@ -62,11 +62,17 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
       .reversed() // to have the same order as when wrapping meta handlers into each other
       .forEach { runMetaHandler(it) }
 
-  private suspend fun runMetaHandler(metaHandler: CheckinMetaHandler) =
-    suspendCancellableCoroutine<Unit> { continuation ->
-      val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
-      handlerCall.run()
+  private suspend fun runMetaHandler(metaHandler: CheckinMetaHandler) {
+    if (metaHandler is CommitCheck<*>) {
+      runCommitCheck(metaHandler)
     }
+    else {
+      suspendCancellableCoroutine<Unit> { continuation ->
+        val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
+        handlerCall.run()
+      }
+    }
+  }
 
   fun runHandlers(executor: CommitExecutor?): CheckinHandler.ReturnResult {
     val handlers = commitHandlers.filterNot { it is CommitCheck<*> }

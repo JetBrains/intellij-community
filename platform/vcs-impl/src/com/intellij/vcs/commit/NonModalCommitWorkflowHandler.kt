@@ -13,20 +13,22 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CommitCheck
-import com.intellij.openapi.vcs.checkin.CommitProblem
-import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
 import java.lang.Runnable
 
 private val LOG = logger<NonModalCommitWorkflowHandler<*, *>>()
+
+private val isBackgroundCommitChecksValue: RegistryValue get() = Registry.get("vcs.background.commit.checks")
+internal fun isBackgroundCommitChecks(): Boolean = isBackgroundCommitChecksValue.asBoolean()
 
 abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : NonModalCommitWorkflowUi> :
   AbstractCommitWorkflowHandler<W, U>(),
@@ -44,6 +46,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     CoroutineScope(CoroutineName("commit workflow") + uiDispatcher + SupervisorJob() + exceptionHandler)
 
   protected fun setupCommitHandlersTracking() {
+    isBackgroundCommitChecksValue.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) = commitHandlersChanged()
+    }, this)
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
     VcsCheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
   }
@@ -108,7 +113,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
 
   override fun doExecuteDefault(executor: CommitExecutor?): Boolean {
-    if (!Registry.`is`("vcs.background.commit.checks")) return super.doExecuteDefault(executor)
+    if (!isBackgroundCommitChecks()) return super.doExecuteDefault(executor)
 
     coroutineScope.launch {
       workflow.executeDefault {
@@ -138,7 +143,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   private suspend fun runCommitChecks(): ReturnResult {
     var result = ReturnResult.COMMIT
 
-    for (commitCheck in commitHandlers.filterIsInstance<CommitCheck<*>>()) {
+    for (commitCheck in commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()) {
       val problem = runCommitCheck(commitCheck)
       if (problem != null) result = ReturnResult.CANCEL
     }
