@@ -80,6 +80,10 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
 
   public abstract void clearSideStack();
 
+  public boolean shouldUpdateToolWindowContent(@NotNull ToolWindow toolWindow) {
+    return toolWindow.isVisible();
+  }
+
   public abstract void hideToolWindow(@NotNull String id, boolean hideSide);
 
   public abstract @NotNull List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);

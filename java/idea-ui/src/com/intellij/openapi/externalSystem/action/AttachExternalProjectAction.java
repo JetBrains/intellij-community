@@ -34,6 +34,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
   public AttachExternalProjectAction() {
     getTemplatePresentation().setText(JavaUiBundle.messagePointer("action.attach.external.project.text", "External"));
     getTemplatePresentation().setDescription(JavaUiBundle.messagePointer("action.attach.external.project.description", "external"));
+    getTemplatePresentation().setIcon(AllIcons.General.Add);
   }
 
   @Override

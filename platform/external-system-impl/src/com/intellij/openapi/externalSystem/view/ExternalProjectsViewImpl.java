@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
@@ -198,7 +199,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
           return;
         }
 
-        boolean visible = myToolWindow.isVisible();
+        boolean visible = ToolWindowManagerEx.getInstanceEx(myProject).shouldUpdateToolWindowContent(myToolWindow);
         if (!visible || wasVisible) {
           wasVisible = visible;
           if (!visible) {
@@ -542,7 +543,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   private void scheduleStructureRequest(final Runnable r) {
     invokeLater(myProject, () -> {
-      if (!myToolWindow.isVisible()) return;
+      if (!ToolWindowManagerEx.getInstanceEx(myProject).shouldUpdateToolWindowContent(myToolWindow)) return;
 
       boolean shouldCreate = myStructure == null;
       if (shouldCreate) {
