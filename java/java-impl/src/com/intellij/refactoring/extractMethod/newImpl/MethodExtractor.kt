@@ -29,14 +29,14 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.wrapWi
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
-import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.IncorrectOperationException
+import java.util.*
 
 class MethodExtractor {
 
@@ -91,7 +91,10 @@ class MethodExtractor {
       val guessedMethodNames = guessMethodName(options).ifEmpty { listOf("extracted") }
       val methodName = guessedMethodNames.first()
       val suggestions = guessedMethodNames.drop(1)
-      InplaceMethodExtractor(editor, options.copy(methodName = methodName), defaultPanel)
+
+      val range = TextRange(options.elements.first().textRange.startOffset, options.elements.last().textRange.endOffset)
+      val parameters = ExtractParameters(options.anchor.containingClass!!, range, methodName, false, false)
+      InplaceMethodExtractor(editor, parameters, DefaultMethodExtractor(), defaultPanel)
         .performInplaceRefactoring(LinkedHashSet(suggestions))
     }
   }
