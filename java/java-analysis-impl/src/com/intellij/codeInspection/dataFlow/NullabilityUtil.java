@@ -10,16 +10,13 @@ import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,23 +102,9 @@ public final class NullabilityUtil {
   }
 
   private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
-    String name = field.getName();
-    if (field.getInitializer() != null) return false;
-
-    if (!isCheapEnoughToSearch(field, name)) return false;
-
-    return ReferencesSearch.search(field).allMatch(
-        reference -> reference instanceof PsiReferenceExpression && !PsiUtil.isAccessedForWriting((PsiReferenceExpression)reference));
-  }
-
-  private static boolean isCheapEnoughToSearch(PsiField field, String name) {
-    SearchScope scope = field.getUseScope();
-    if (!(scope instanceof GlobalSearchScope)) return true;
-
-    PsiSearchHelper helper = PsiSearchHelper.getInstance(field.getProject());
-    PsiSearchHelper.SearchCostResult result =
-      helper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, field.getContainingFile(), null);
-    return result != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+    if (field.hasInitializer()) return false;
+    if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    return !VariableAccessUtils.variableIsAssigned(field);
   }
 
   public static Nullability getExpressionNullability(@Nullable PsiExpression expression) {

@@ -1,6 +1,6 @@
 class Foo {
-  String field;
-  String field2;
+  private String field;
+  private String field2;
   int hash = field.<warning descr="Method invocation 'hashCode' will produce 'NullPointerException'">hashCode</warning>();
 
   Foo(String f2) {
