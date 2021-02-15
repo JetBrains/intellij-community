@@ -29,7 +29,6 @@ import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -152,7 +151,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
 
     private fun findCommitsList(parent: JComponent): JList<GHCommit>? {
-      UIUtil.getClientProperty(parent, GHPRCommitsBrowserComponent.COMMITS_LIST_KEY)?.run {
+      UIUtil.getClientProperty(parent, GHPRCommitsBrowserComponentFactory.COMMITS_LIST_KEY)?.run {
         return this
       }
 
@@ -232,7 +231,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     null, GithubBundle.message("cannot.load.commits"),
                                                     changesLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
-        GHPRCommitsBrowserComponent.create(model, commitSelectionListener)
+        GHPRCommitsBrowserComponentFactory().create(model, commitSelectionListener)
       }
 
     val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,
