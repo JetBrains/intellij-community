@@ -198,11 +198,27 @@ class PrefixMatchingUtilTest {
     checkScores(prefix, snakeCaseLookupString, checks)
   }
 
+  @Test
+  fun testCapitalizedPrefix() {
+    val prefix = "Dir"
+
+    val lowerCase = scores(prefix, "directory")
+    val sameCase = scores(prefix, "Directory")
+    assert(lowerCase.start == 0)
+    assert(sameCase.start == prefix.length)
+    assert(lowerCase.type != PrefixMatchingType.START_WITH)
+    assert(sameCase.type == PrefixMatchingType.START_WITH)
+  }
+
   private data class ScoreCheck<out T>(val expected: T, val accessor: (PrefixMatchingUtil.PrefixMatchingScores) -> T)
 
   private fun <T> checkScores(prefix: String, lookupString: String, checks: List<ScoreCheck<T>>) {
-    val actual = PrefixMatchingUtil.PrefixMatchingScores.Builder().build(prefix, lookupString)
+    val actual = scores(prefix, lookupString)
     for (check in checks)
       Assertions.assertThat(check.accessor(actual)).isEqualTo(check.expected)
+  }
+
+  private fun scores(prefix: String, lookupString: String): PrefixMatchingUtil.PrefixMatchingScores {
+    return PrefixMatchingUtil.PrefixMatchingScores.Builder().build(prefix, lookupString)
   }
 }

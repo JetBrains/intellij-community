@@ -6,12 +6,8 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.*;
@@ -174,10 +170,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
    * supported for execution on targets other than the local machine.
    */
   private static boolean isExecutorSupportedOnTarget(@NotNull ExecutionEnvironment env) {
-    String executorId = env.getExecutor().getId();
-    return env.getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory
-           || DefaultDebugExecutor.EXECUTOR_ID.equalsIgnoreCase(executorId)
-           || DefaultRunExecutor.EXECUTOR_ID.equalsIgnoreCase(executorId);
+    Executor executor = env.getExecutor();
+    return env.getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory || executor.isSupportedOnTarget();
   }
 
   private @Nullable RunContentDescriptor executeJavaState(@NotNull RunProfileState state,

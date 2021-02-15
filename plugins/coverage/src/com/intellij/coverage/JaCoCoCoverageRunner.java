@@ -5,6 +5,7 @@ import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.target.java.JavaTargetParameter;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jacoco.agent.AgentJar;
 import org.jacoco.core.analysis.*;
 import org.jacoco.core.tools.ExecFileLoader;
@@ -203,17 +205,40 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
     final String agentPath = handleSpacesInAgentPath(path);
     if (agentPath == null) return;
-    argument.append(agentPath);
-    argument.append("=");
-    argument.append("destfile=").append(sessionDataFilePath);
-    argument.append(",append=false");
+    javaParameters.getTargetDependentParameters().asTargetParameters().add(request -> {
+      return createArgumentTargetValue(agentPath, sessionDataFilePath, patterns, excludePatterns);
+    });
+  }
+
+  public JavaTargetParameter createArgumentTargetValue(String agentPath,
+                                                       String sessionDataFilePath,
+                                                       String @Nullable [] patterns,
+                                                       String[] excludePatterns) {
+    HashSet<String> uploadPaths = ContainerUtil.newHashSet(sessionDataFilePath, agentPath);
+    HashSet<String> downloadPaths = ContainerUtil.newHashSet(sessionDataFilePath);
+    var builder = new JavaTargetParameter.Builder(uploadPaths, downloadPaths);
+    return doCreateCoverageArgument(builder, patterns, excludePatterns, sessionDataFilePath, agentPath);
+  }
+
+  @NotNull
+  private static JavaTargetParameter doCreateCoverageArgument(@NotNull JavaTargetParameter.Builder builder,
+                                                              String @Nullable [] patterns,
+                                                              String[] excludePatterns,
+                                                              String sessionDataFilePath,
+                                                              String agentPath) {
+    builder
+      .fixed("-javaagent:")
+      .resolved(agentPath)
+      .fixed("=destfile=")
+      .resolved(sessionDataFilePath)
+      .fixed(",append=false");
     if (patterns != null) {
-      argument.append(",includes=").append(StringUtil.join(patterns, ":"));
+      builder.fixed(",includes=").fixed(StringUtil.join(patterns, ":"));
     }
     if (excludePatterns != null) {
-      argument.append(",excludes=").append(StringUtil.join(excludePatterns, ":"));
+      builder.fixed(",excludes=").fixed(StringUtil.join(excludePatterns, ":"));
     }
-    javaParameters.getVMParametersList().add(argument.toString());
+    return builder.build();
   }
 
   @Override

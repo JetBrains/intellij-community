@@ -21,7 +21,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
                            private val distribution: WSLDistribution) : TargetEnvironment(wslRequest) {
 
   private val myUploadVolumes: MutableMap<UploadRoot, UploadableVolume> = HashMap()
-  private val myDownloadVolumes: Map<DownloadRoot, DownloadableVolume> = HashMap()
+  private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
   private val myTargetPortBindings: MutableMap<TargetPortBinding, Int> = HashMap()
   private val myLocalPortBindings: MutableMap<LocalPortBinding, HostPort> = HashMap()
 
@@ -42,6 +42,13 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
       val targetRoot: String? = toLinuxPath(uploadRoot.localRootPath.toAbsolutePath().toString())
       if (targetRoot != null) {
         myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot)
+      }
+    }
+    for (downloadRoot in wslRequest.downloadVolumes) {
+      val localRootPath = downloadRoot.localRootPath ?: continue
+      val targetRoot: String? = toLinuxPath(localRootPath.toAbsolutePath().toString())
+      if (targetRoot != null) {
+        myDownloadVolumes[downloadRoot] = Volume(localRootPath, targetRoot)
       }
     }
     for (targetPortBinding in wslRequest.targetPortBindings) {
@@ -94,7 +101,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
 
   override fun shutdown() {}
 
-  private inner class Volume(override val localRoot: Path, override val targetRoot: String) : UploadableVolume {
+  private inner class Volume(override val localRoot: Path, override val targetRoot: String) : UploadableVolume, DownloadableVolume {
 
     @Throws(IOException::class)
     override fun resolveTargetPath(relativePath: String): String {
@@ -104,6 +111,10 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
 
     @Throws(IOException::class)
     override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
+    }
+
+    @Throws(IOException::class)
+    override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
     }
   }
 }
