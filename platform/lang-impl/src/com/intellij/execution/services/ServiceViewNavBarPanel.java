@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -86,7 +87,11 @@ final class ServiceViewNavBarPanel extends NavBarPanel {
     }
 
     @Override
-    public void updateModelAsync(DataContext dataContext) {
+    public void updateModel(DataContext dataContext) {
+    }
+
+    @Override
+    public void updateModelAsync(DataContext dataContext, @Nullable Runnable callback) {
     }
 
     @Override
