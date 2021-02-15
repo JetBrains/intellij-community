@@ -993,7 +993,7 @@
         <option name="CONSOLE_BLACK_OUTPUT">
           <value>
             <option name="FOREGROUND" value="000000" />
-            <option name="BACKGROUND" />
+            <option name="BACKGROUND" value="000000" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1002,8 +1002,8 @@
         </option>
         <option name="CONSOLE_BLUE_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="0000ee" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="063FDB" />
+            <option name="BACKGROUND" value="C4DBFA" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1012,8 +1012,8 @@
         </option>
         <option name="CONSOLE_BLUE_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="5c5cff" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="2D61F0" />
+            <option name="BACKGROUND" value="95C2FF" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1022,8 +1022,8 @@
         </option>
         <option name="CONSOLE_CYAN_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="00cccc" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="028E8E" />
+            <option name="BACKGROUND" value="BFEEEE" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1032,8 +1032,8 @@
         </option>
         <option name="CONSOLE_CYAN_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="00ffff" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="15C1C1" />
+            <option name="BACKGROUND" value="8CF1F1" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1042,8 +1042,8 @@
         </option>
         <option name="CONSOLE_DARKGRAY_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="555555" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="656565" />
+            <option name="BACKGROUND" value="B7B7B7" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1052,8 +1052,8 @@
         </option>
         <option name="CONSOLE_GRAY_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="aaaaaa" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="929292" />
+            <option name="BACKGROUND" value="E6E6E6" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1062,8 +1062,8 @@
         </option>
         <option name="CONSOLE_GREEN_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="00cd00" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="067D17" />
+            <option name="BACKGROUND" value="B5E7BE" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1072,8 +1072,8 @@
         </option>
         <option name="CONSOLE_GREEN_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="00ff00" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="16B42C" />
+            <option name="BACKGROUND" value="85F399" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1082,8 +1082,8 @@
         </option>
         <option name="CONSOLE_MAGENTA_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="cd00cd" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="B309B3" />
+            <option name="BACKGROUND" value="F3D2F3" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1092,8 +1092,8 @@
         </option>
         <option name="CONSOLE_MAGENTA_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="ff00ff" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="E617E6" />
+            <option name="BACKGROUND" value="FBACFB" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1102,8 +1102,8 @@
         </option>
         <option name="CONSOLE_RED_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="cd0000" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="CE0505" />
+            <option name="BACKGROUND" value="FCA4A7" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1112,8 +1112,8 @@
         </option>
         <option name="CONSOLE_RED_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="ff0000" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="FF1616" />
+            <option name="BACKGROUND" value="FE7277" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1122,8 +1122,8 @@
         </option>
         <option name="CONSOLE_YELLOW_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="C4A000" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="B28C00" />
+            <option name="BACKGROUND" value="F7E79F" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1132,8 +1132,8 @@
         </option>
         <option name="CONSOLE_YELLOW_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="eaea00" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="ECC32C" />
+            <option name="BACKGROUND" value="FFE055" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1142,8 +1142,8 @@
         </option>
         <option name="CONSOLE_WHITE_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="ffffff" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="FFFFFF" />
+            <option name="BACKGROUND" value="FFFFFF" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
