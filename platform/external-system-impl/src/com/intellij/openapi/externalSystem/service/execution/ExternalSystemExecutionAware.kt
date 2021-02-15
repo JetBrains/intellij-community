@@ -56,14 +56,11 @@ interface ExternalSystemExecutionAware {
       return EP_COLLECTOR.forKey(systemId)
     }
 
-    @JvmStatic
     fun ExternalSystemExecutionSettings.getEnvironmentConfiguration() = getUserData(TARGET_ENVIRONMENT_CONFIGURATION)
 
-    @JvmStatic
     fun ExternalSystemExecutionSettings.getTargetPathMapper() = getUserData(TARGET_PATH_MAPPER)
 
     @ApiStatus.Internal
-    @JvmStatic
     fun ExternalSystemExecutionSettings.setEnvironmentConfiguration(configuration: TargetEnvironmentConfiguration?,
                                                                     targetPathMapper: PathMapper?) {
       putUserData(TARGET_ENVIRONMENT_CONFIGURATION, configuration)

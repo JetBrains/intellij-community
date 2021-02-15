@@ -465,7 +465,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private static void maybeConvertTargetPaths(GradleExecutionSettings executionSettings, ProjectImportAction.AllModels allModels) {
-    PathMapper targetPathMapper = ExternalSystemExecutionAware.getTargetPathMapper(executionSettings);
+    PathMapper targetPathMapper = ExternalSystemExecutionAware.Companion.getTargetPathMapper(executionSettings);
     if (targetPathMapper == null) return;
     allModels.convertPaths(rootObject -> {
       ReflectionTraverser.traverse(rootObject, new ReflectionTraverser.Visitor() {

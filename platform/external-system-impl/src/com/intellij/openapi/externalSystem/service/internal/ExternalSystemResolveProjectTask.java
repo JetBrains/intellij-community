@@ -105,7 +105,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       if (StringUtil.isNotEmpty(myArguments)) {
         settings.withArguments(ParametersListUtil.parse(myArguments));
       }
-      ExternalSystemExecutionAware.setEnvironmentConfiguration(settings, environmentConfiguration, targetPathMapper);
+      ExternalSystemExecutionAware.Companion.setEnvironmentConfiguration(settings, environmentConfiguration, targetPathMapper);
     }
     catch (Exception e) {
       progressNotificationManager.onFailure(id, e);

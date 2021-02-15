@@ -113,7 +113,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       for (Key key : keyFMap.getKeys()) {
         settings.putUserData(key, keyFMap.get(key));
       }
-      ExternalSystemExecutionAware.setEnvironmentConfiguration(settings, environmentConfiguration, targetPathMapper);
+      ExternalSystemExecutionAware.Companion.setEnvironmentConfiguration(settings, environmentConfiguration, targetPathMapper);
 
       RemoteExternalSystemFacade facade = manager.getFacade(project, projectPath, projectSystemId);
       taskManager = facade.getTaskManager();
