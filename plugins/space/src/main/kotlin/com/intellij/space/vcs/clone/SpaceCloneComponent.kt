@@ -35,6 +35,7 @@ import com.intellij.space.vcs.SpaceHttpPasswordState
 import com.intellij.space.vcs.SpaceKeysState
 import com.intellij.space.vcs.SpaceSetGitHttpPasswordDialog
 import com.intellij.ui.*
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
@@ -184,6 +185,20 @@ private class CloneView(
     iconTextGap = 0
   }
 
+  private val useSshLinkLabel = ActionLink(SpaceBundle.message("clone.dialog.link.label.use.ssh")) {
+    SpaceSettings.getInstance().cloneType = CloneType.SSH
+    cloneViewModel.cloneType.value = SpaceSettings.getInstance().cloneType
+  }.apply {
+    isVisible = false
+  }
+
+  private val useHttpLinkLabel = ActionLink(SpaceBundle.message("clone.dialog.link.label.use.http")) {
+    SpaceSettings.getInstance().cloneType = CloneType.HTTPS
+    cloneViewModel.cloneType.value = SpaceSettings.getInstance().cloneType
+  }.apply {
+    isVisible = false
+  }
+
   var createDirectoryError: ValidationInfo? = null
 
   init {
@@ -229,6 +244,8 @@ private class CloneView(
 
         passwordStatus.isVisible = it is SpaceHttpPasswordState.NotSet
         linkLabel.isVisible = it is SpaceHttpPasswordState.NotSet
+        useSshLinkLabel.isVisible = it is SpaceHttpPasswordState.NotSet
+        useHttpLinkLabel.isVisible = false
       }
     }
 
@@ -242,6 +259,8 @@ private class CloneView(
 
         passwordStatus.isVisible = it is SpaceKeysState.NotSet
         linkLabel.isVisible = it is SpaceKeysState.NotSet
+        useSshLinkLabel.isVisible = false
+        useHttpLinkLabel.isVisible = it is SpaceKeysState.NotSet
       }
     }
 
@@ -315,6 +334,8 @@ private class CloneView(
         cell(isFullWidth = true) {
           passwordStatus()
           linkLabel()
+          useHttpLinkLabel()
+          useSshLinkLabel()
         }
       }
     }
