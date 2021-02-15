@@ -75,7 +75,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     });
     myPopup = aPopup;
 
-    Dimension preferredSize = new JLabel("W").getPreferredSize();
+    Dimension preferredSize = new JLabel("A").getPreferredSize();
     Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
     preferredSize.width += insets.left + insets.right;
     myMnemonicLabel.setPreferredSize(preferredSize);

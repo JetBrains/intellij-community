@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class PopupListElementRendererWithIcon extends PopupListElementRenderer<Object> implements IconListPopupRenderer {
@@ -56,5 +57,13 @@ public class PopupListElementRendererWithIcon extends PopupListElementRenderer<O
   }
 
   public static class IconComponent extends JLabel {
+
+    public IconComponent(Border border) {
+      setBorder(border);
+    }
+
+    public IconComponent() {
+      this(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+    }
   }
 }

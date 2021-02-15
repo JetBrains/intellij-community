@@ -407,7 +407,17 @@ public class JBUI {
 
       @NotNull
       public static Insets numberMnemonicInsets() {
-        return insets("ActionsList.mnemonics.insets", insets(0, 6, 0, 8));
+        return insets("ActionsList.mnemonicsBorderInsets", insets(0, 8, 0, 6));
+      }
+
+      @NotNull
+      public static Insets cellPadding() {
+        return insets("ActionsList.cellBorderInsets", insets(1, 12, 1, 12));
+      }
+
+      @NotNull
+      public static int elementIconGap() {
+        return new JBValue.UIInteger("ActionsList.icon.gap", scale(8)).get();
       }
 
       @NotNull
