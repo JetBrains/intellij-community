@@ -54,13 +54,13 @@ class PluginModelTest {
 
     val moduleNameToFileInfo = LinkedHashMap<String, ModuleDescriptorPath>()
     for (module in modules) {
-      // platform/rdserver-plugin/resources/META-INF/plugin.xml doesn't have id - ignore for now
+      // platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have id - ignore for now
       if (module.name.startsWith("fleet.") ||
           module.name == "fleet" ||
           module.name == "intellij.idea.ultimate.resources" ||
           module.name == "intellij.lightEdit" ||
           module.name == "intellij.webstorm" ||
-          module.name == "intellij.codeWithMe.plugin") {
+          module.name == "intellij.cwm.plugin") {
         continue
       }
 
