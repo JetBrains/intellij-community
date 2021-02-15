@@ -786,12 +786,11 @@ public class ExtractMethodProcessor implements MatchProvider {
   @TestOnly
   public void testRun() throws IncorrectOperationException {
     testPrepare();
-    testNullability();
+    prepareNullability();
     ExtractMethodHandler.extractMethod(myProject, this);
   }
 
-  @TestOnly
-  public void testNullability() {
+  public void prepareNullability() {
     myNullability = initNullability();
   }
 
@@ -800,7 +799,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     prepareVariablesAndName();
   }
 
-  protected void prepareVariablesAndName(){
+  public void prepareVariablesAndName(){
     myInputVariables.setFoldingAvailable(myInputVariables.isFoldingSelectedByDefault());
     myMethodName = myInitialMethodName;
     myVariableDatum = new VariableData[myInputVariables.getInputVariables().size()];
@@ -809,8 +808,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  @TestOnly
-  public void testTargetClass(PsiClass targetClass) {
+  public void setTargetClass(@Nullable PsiClass targetClass) {
     if (targetClass != null) {
       myTargetClass = targetClass;
       myNeedChangeContext = true;
@@ -2178,6 +2176,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myExtractedMethod;
   }
 
+  public void setExtractedMethod(PsiMethod method){
+    myExtractedMethod = method;
+  }
+
   public void setMethodName(String methodName) {
     myMethodName = methodName;
   }
@@ -2336,6 +2338,10 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public boolean isStatic() {
     return myStatic;
+  }
+
+  public void setStatic(boolean shouldBeStatic){
+    myStatic = shouldBeStatic;
   }
 
   public boolean isCanBeStatic() {

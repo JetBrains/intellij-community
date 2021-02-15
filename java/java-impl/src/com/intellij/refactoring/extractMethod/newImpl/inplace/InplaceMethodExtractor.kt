@@ -88,7 +88,7 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
 
     val rangeToExtract = document.createGreedyRangeMarker(context.range)
 
-    val (method, callExpression) = extractor.extract(context)
+    val (method, callExpression) = extractMethod(extractor, context)
     methodCallExpressionRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
     Disposer.register(disposable, { methodCallExpressionRange.dispose() })
     methodNameRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
@@ -105,6 +105,20 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
 
     val methodLines = findLines(document, method.textRange).trimToLength(4)
     preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
+  }
+
+  fun extractMethod(extractor: InplaceExtractMethodProvider, parameters: ExtractParameters): Pair<PsiMethod, PsiMethodCallExpression> {
+    val project = parameters.targetClass.project
+    val file = parameters.targetClass.containingFile
+    val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: throw IllegalStateException()
+
+    val (method, call) = extractor.extract(parameters)
+    val methodPointer = SmartPointerManager.createPointer(method)
+    val callPointer = SmartPointerManager.createPointer(call)
+    val manager = PsiDocumentManager.getInstance(project)
+    manager.doPostponedOperationsAndUnblockDocument(document)
+    manager.commitDocument(document)
+    return Pair(methodPointer.element!!, callPointer.element!!)
   }
 
   private fun createChangeBasedDisposable(editor: Editor): Disposable {
@@ -239,7 +253,7 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
   }
 
   private fun afterTemplateFinished(brokenOff: Boolean) {
-    if (! brokenOff){
+    if (! brokenOff && validationPassed){
       InplaceExtractMethodCollector.executed.log(context.methodName != getMethodName())
       installGotItTooltips()
       PsiDocumentManager.getInstance(myProject).commitAllDocuments()
@@ -292,6 +306,8 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
 
   private fun getMethodName() = editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
 
+  var validationPassed = false
+
   private fun installMethodNameValidation(templateState: TemplateState) {
     templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
 
@@ -314,6 +330,8 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
         if (errorMessage != null) {
           errorMethodName = getMethodName()
           performCleanup()
+        } else {
+          validationPassed = true
         }
       }
 
