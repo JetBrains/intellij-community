@@ -31,6 +31,7 @@ class GitStageCommitWorkflowHandler(
 
     setupDumbModeTracking()
     setupCommitHandlersTracking()
+    setupCommitChecksResultTracking()
     vcsesChanged()
     initCommitMessage(false)
 

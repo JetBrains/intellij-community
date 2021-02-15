@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationListener
+import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -15,7 +17,7 @@ import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
@@ -25,6 +27,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
 import java.lang.Runnable
+import kotlin.properties.Delegates.observable
 
 private val LOG = logger<NonModalCommitWorkflowHandler<*, *>>()
 
@@ -45,6 +48,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
   private val coroutineScope =
     CoroutineScope(CoroutineName("commit workflow") + uiDispatcher + SupervisorJob() + exceptionHandler)
+
+  private var isCommitChecksResultUpToDate: Boolean by observable(false) { _, oldValue, newValue ->
+    if (oldValue == newValue) return@observable
+    updateDefaultCommitActionName()
+  }
 
   protected fun setupCommitHandlersTracking() {
     isBackgroundCommitChecksValue.addListener(object : RegistryValueListener {
@@ -91,8 +99,14 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   override fun updateDefaultCommitActionName() {
     val commitText = getCommitActionName()
     val isAmend = amendCommitHandler.isAmendCommitMode
+    val isSkipCommitChecks = isSkipCommitChecks()
 
-    ui.defaultCommitActionName = if (isAmend) VcsBundle.message("amend.action.name", commitText) else commitText
+    ui.defaultCommitActionName = when {
+      isAmend && isSkipCommitChecks -> message("action.amend.commit.anyway.text", commitText)
+      isAmend && !isSkipCommitChecks -> message("amend.action.name", commitText)
+      !isAmend && isSkipCommitChecks -> message("action.commit.anyway.text", commitText)
+      else -> commitText
+    }
   }
 
   fun updateDefaultCommitActionEnabled() {
@@ -120,11 +134,29 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       !isEmptyChanges && !isEmptyMessage
     }
 
+  protected fun setupCommitChecksResultTracking() =
+    getApplication().addApplicationListener(object : ApplicationListener {
+      override fun writeActionStarted(action: Any) {
+        isCommitChecksResultUpToDate = false
+      }
+    }, this)
+
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: ReturnResult) {
+    super.beforeCommitChecksEnded(isDefaultCommit, result)
+    if (result == ReturnResult.COMMIT) {
+      ui.commitProgressUi.clearCommitCheckFailures()
+    }
+  }
+
+  fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
+
   override fun doExecuteDefault(executor: CommitExecutor?): Boolean {
     if (!isBackgroundCommitChecks()) return super.doExecuteDefault(executor)
 
     coroutineScope.launch {
       workflow.executeDefault {
+        if (isSkipCommitChecks()) return@executeDefault ReturnResult.COMMIT
+
         ui.commitProgressUi.startProgress()
         try {
           runAllHandlers(executor)
@@ -145,7 +177,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     val handlersResult = workflow.runHandlers(executor)
     if (handlersResult != ReturnResult.COMMIT) return handlersResult
 
-    return runCommitChecks()
+    val checksResult = runCommitChecks()
+    if (checksResult != ReturnResult.COMMIT) isCommitChecksResultUpToDate = true
+    return checksResult
   }
 
   private suspend fun runCommitChecks(): ReturnResult {
@@ -210,6 +244,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       workflow.clearCommitContext()
       initCommitHandlers()
 
+      isCommitChecksResultUpToDate = false
       updateDefaultCommitActionName()
     }
   }

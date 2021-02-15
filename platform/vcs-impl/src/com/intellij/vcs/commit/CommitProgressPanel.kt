@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.util.text.HtmlChunk.link
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.ui.AnimatedIcon
@@ -16,7 +15,8 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
-import com.intellij.util.ui.SwingHelper.*
+import com.intellij.util.ui.SwingHelper.createHtmlViewer
+import com.intellij.util.ui.SwingHelper.setHtml
 import com.intellij.util.ui.UIUtil.getErrorForeground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
@@ -72,13 +72,15 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
 
   override fun startProgress() {
     progress.isVisible = true
-    failuresPanel.startProgress()
+    failuresPanel.clearFailures()
   }
 
   override fun addCommitCheckFailure(text: String, detailsViewer: () -> Unit) {
     progress.isVisible = false
     failuresPanel.addFailure(CommitCheckFailure(text, detailsViewer))
   }
+
+  override fun clearCommitCheckFailures() = failuresPanel.clearFailures()
 
   override fun endProgress() {
     progress.isVisible = false
@@ -140,7 +142,7 @@ private class FailuresPanel : BorderLayoutPanel() {
     failure.detailsViewer()
   }
 
-  fun startProgress() {
+  fun clearFailures() {
     isVisible = false
     iconLabel.icon = null
     failures.clear()
@@ -164,7 +166,7 @@ private class FailuresPanel : BorderLayoutPanel() {
   private fun buildDescription(): HtmlChunk {
     if (failures.isEmpty()) return HtmlChunk.empty()
 
-    val failuresLinks = formatNarrowAndList(failures.map { link(it.key.toString(), it.value.text) })
+    val failuresLinks = formatNarrowAndList(failures.map { HtmlChunk.link(it.key.toString(), it.value.text) })
     return HtmlChunk.raw(message("label.commit.checks.failed", failuresLinks))
   }
 }

@@ -74,6 +74,7 @@ internal class ChangesViewCommitWorkflowHandler(
     setupDumbModeTracking()
     ProjectManager.TOPIC.subscribe(this, this)
     setupCommitHandlersTracking()
+    setupCommitChecksResultTracking()
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
     currentChangeList = workflow.getAffectedChangeList(emptySet())
