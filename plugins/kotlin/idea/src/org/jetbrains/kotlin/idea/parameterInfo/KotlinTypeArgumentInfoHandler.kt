@@ -93,14 +93,6 @@ abstract class KotlinTypeArgumentInfoHandlerBase<TParameterOwner : DeclarationDe
     override fun getArgListStopSearchClasses() =
         setOf(KtNamedFunction::class.java, KtVariableDeclaration::class.java, KtClassOrObject::class.java)
 
-    override fun getParameterCloseChars() = ParameterInfoUtils.DEFAULT_PARAMETER_CLOSE_CHARS
-
-    override fun tracksParameterIndex() = true
-
-    override fun couldShowInLookup() = false
-    override fun getParametersForLookup(item: LookupElement?, context: ParameterInfoContext?) = emptyArray<Any>()
-    override fun getParametersForDocumentation(p: TParameterOwner, context: ParameterInfoContext?) = emptyArray<Any>()
-
     override fun showParameterInfo(element: KtTypeArgumentList, context: CreateParameterInfoContext) {
         context.showHint(element, element.textRange.startOffset, this)
     }

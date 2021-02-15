@@ -10,6 +10,7 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableModelsProvider
@@ -59,11 +60,11 @@ abstract class GradleKotlinFrameworkSupportProvider(
         }
     }
 
-    override fun addSupport(
-        module: Module,
-        rootModel: ModifiableRootModel,
-        modifiableModelsProvider: ModifiableModelsProvider,
-        buildScriptData: BuildScriptDataBuilder
+    override fun addSupport(projectId: ProjectId,
+                            module: Module,
+                            rootModel: ModifiableRootModel,
+                            modifiableModelsProvider: ModifiableModelsProvider,
+                            buildScriptData: BuildScriptDataBuilder
     ) {
         addSupport(buildScriptData, module, rootModel.sdk, true)
     }

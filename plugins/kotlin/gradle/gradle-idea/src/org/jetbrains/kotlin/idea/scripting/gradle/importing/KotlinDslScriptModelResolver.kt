@@ -17,8 +17,6 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.project.ToolingModelsProvider
 
 class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
-    override fun requiresTaskRunning() = true
-
     override fun getModelProvider() = KotlinDslScriptModelProvider()
 
     override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider {

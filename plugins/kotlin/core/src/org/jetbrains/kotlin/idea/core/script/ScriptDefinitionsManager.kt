@@ -6,10 +6,10 @@
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.execution.console.IdeConsoleRootType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.ide.script.IdeConsoleRootType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction

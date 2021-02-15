@@ -42,9 +42,6 @@ object PlatformUnresolvedProvider : KotlinIntentionActionFactoryWithDelegate<KtN
                 override fun register(fixRange: TextRange, action: IntentionAction, key: HighlightDisplayKey?) {
                     register(action)
                 }
-
-                override fun unregister(condition: Condition<in IntentionAction>) {
-                }
             })
         }
 

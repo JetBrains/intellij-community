@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.j2k
 
 
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
@@ -511,7 +512,7 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
                     codeConverter.convertExpressionsInList(expression.arrayDimensions.asList()))
         }
         else {
-            if (type?.canonicalText in PsiPrimitiveType.getAllBoxedTypeNames()) {
+            if (type?.canonicalText in JvmPrimitiveTypeKind.getBoxedFqns()) {
                 val argument = expression.argumentList?.expressions?.singleOrNull()
                 if (argument != null && argument.type is PsiPrimitiveType) {
                     result = codeConverter.convertExpression(argument)

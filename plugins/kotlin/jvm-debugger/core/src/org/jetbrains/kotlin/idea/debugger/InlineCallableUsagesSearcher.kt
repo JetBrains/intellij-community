@@ -68,7 +68,7 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
             }
 
             if (!isSuccess) {
-                XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
+                XDebuggerManagerImpl.getNotificationGroup().createNotification(
                     KotlinDebuggerCoreBundle.message("find.inline.calls.task.cancelled", declarationName),
                     MessageType.WARNING
                 ).notify(project)

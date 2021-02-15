@@ -181,7 +181,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
             @NotNull List<KtNamedDeclaration> declarations
     ) {
         //KotlinMemberInfo run resolve on declaration so it is good to place it to the process
-        List<KotlinMemberInfo> memberInfos = MoveUtilsKt.mapWithReadActionInProcess(declarations, myProject, MoveHandler.REFACTORING_NAME, (declaration) -> {
+        List<KotlinMemberInfo> memberInfos = MoveUtilsKt.mapWithReadActionInProcess(declarations, myProject, MoveHandler.getRefactoringName(), (declaration) -> {
             KotlinMemberInfo memberInfo = new KotlinMemberInfo(declaration, false);
             memberInfo.setChecked(elementsToMove.contains(declaration));
             return memberInfo;

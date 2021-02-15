@@ -39,9 +39,8 @@ import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
 fun KotlinPsiRange.highlight(project: Project, editor: Editor): RangeHighlighter? {
     val textRange = getPhysicalTextRange()
     val highlighters = ArrayList<RangeHighlighter>()
-    val attributes = EditorColorsManager.getInstance().globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES)!!
     HighlightManager.getInstance(project).addRangeHighlight(
-        editor, textRange.startOffset, textRange.endOffset, attributes, true, highlighters
+        editor, textRange.startOffset, textRange.endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters
     )
     return highlighters.firstOrNull()
 }
@@ -119,12 +118,12 @@ fun processDuplicates(
         }
 
         highlighter?.let { HighlightManager.getInstance(project).removeSegmentHighlighter(editor, it) }
-        project.executeWriteCommand(MethodDuplicatesHandler.REFACTORING_NAME, replacer)
+        project.executeWriteCommand(MethodDuplicatesHandler.getRefactoringName(), replacer)
     }
 }
 
 fun processDuplicatesSilently(duplicateReplacers: Map<KotlinPsiRange, () -> Unit>, project: Project) {
-    project.executeWriteCommand(MethodDuplicatesHandler.REFACTORING_NAME) {
+    project.executeWriteCommand(MethodDuplicatesHandler.getRefactoringName()) {
         duplicateReplacers.values.forEach { it() }
     }
 }

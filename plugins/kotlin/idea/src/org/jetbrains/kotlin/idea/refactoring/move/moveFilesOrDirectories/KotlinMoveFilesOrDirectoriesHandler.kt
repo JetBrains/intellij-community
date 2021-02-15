@@ -71,7 +71,7 @@ class KotlinMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
                 searchReferences = true,
                 moveCallback = callback
             ).run {
-                project.executeCommand(MoveHandler.REFACTORING_NAME) {
+                project.executeCommand(MoveHandler.getRefactoringName()) {
                     with(computeModelResult()) {
                         if (!isTestUnitMode) {
                             logFusForMoveRefactoring(

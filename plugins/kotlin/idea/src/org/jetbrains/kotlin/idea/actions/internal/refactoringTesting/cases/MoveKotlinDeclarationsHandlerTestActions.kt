@@ -227,7 +227,7 @@ internal class MoveKotlinDeclarationsHandlerTestActions(private val caseDataKeep
 
         caseDataKeeper.caseData = model.testDataString()
 
-        project.executeCommand(MoveHandler.REFACTORING_NAME) {
+        project.executeCommand(MoveHandler.getRefactoringName()) {
             model.computeModelResult().processor.run()
         }
     }

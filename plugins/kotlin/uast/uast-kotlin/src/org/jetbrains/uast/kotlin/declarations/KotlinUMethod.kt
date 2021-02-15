@@ -32,7 +32,7 @@ open class KotlinUMethod(
     psi: PsiMethod,
     final override val sourcePsi: KtDeclaration?,
     givenParent: UElement?
-) : KotlinAbstractUElement(givenParent), UMethodTypeSpecific, UAnchorOwner, JavaUElementWithComments, PsiMethod by psi {
+) : KotlinAbstractUElement(givenParent), UMethod, UAnchorOwner, JavaUElementWithComments, PsiMethod by psi {
 
     constructor(psi: KtLightMethod, givenParent: UElement?) : this(psi, getKotlinMemberOrigin(psi), givenParent)
 

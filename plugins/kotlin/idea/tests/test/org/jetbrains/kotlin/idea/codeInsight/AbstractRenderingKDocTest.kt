@@ -24,7 +24,7 @@ abstract class AbstractRenderingKDocTest : KotlinLightCodeInsightFixtureTestCase
 
         val comments = mutableListOf<String>()
         kDocProvider.collectDocComments(file) {
-            val rendered = it.owner?.let { owner -> kDocProvider.generateRenderedDoc(owner) }
+            val rendered = kDocProvider.generateRenderedDoc(it)
             if (rendered != null) {
                 comments.add(rendered.replace("\n", ""))
             }

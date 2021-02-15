@@ -106,8 +106,7 @@ class KotlinCreateTestIntention : SelfTargetingRangeIntention<KtNamedDeclaration
             override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
                 val srcModule = ModuleUtilCore.findModuleForPsiElement(element) ?: return
                 val propertiesComponent = PropertiesComponent.getInstance()
-                val testFolders = HashSet<VirtualFile>()
-                checkForTestRoots(srcModule, testFolders)
+                val testFolders = computeTestRoots(srcModule)
                 if (testFolders.isEmpty() && !propertiesComponent.getBoolean("create.test.in.the.same.root")) {
                     if (Messages.showOkCancelDialog(
                             project,

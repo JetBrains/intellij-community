@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.
 import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 /**
  * Gradle IDE plugin creates [LibraryData] nodes with internal name consisting of two parts:
@@ -30,14 +31,14 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
  * as project-level libraries. This is necessary until the appropriate fix in IDEA will be implemented (for details see IDEA-211451).
  */
 internal object KotlinNativeLibrariesFixer {
-    fun applyTo(ownerNode: DataNode<GradleSourceSetData>, ideProject: DataNode<ProjectData>) {
+    fun applyTo(ownerNode: DataNode<GradleSourceSetData>, ideProject: DataNode<ProjectData>, resolverCtx: ProjectResolverContext) {
         for (libraryDependencyNode in ExternalSystemApiUtil.findAll(ownerNode, ProjectKeys.LIBRARY_DEPENDENCY)) {
             val libraryData = libraryDependencyNode.data.target
 
             // Only KLIBs from Kotlin/Native distribution can have such prefix:
             if (libraryData.internalName.startsWith("$GRADLE_LIBRARY_PREFIX$KOTLIN_NATIVE_LIBRARY_PREFIX")) {
                 fixLibraryName(libraryData)
-                addLibraryToProjectModel(libraryData, ideProject)
+                GradleProjectResolverUtil.linkProjectLibrary(resolverCtx, ideProject, libraryData)
                 fixLibraryDependencyLevel(libraryDependencyNode)
             }
         }
@@ -45,10 +46,6 @@ internal object KotlinNativeLibrariesFixer {
 
     private fun fixLibraryName(libraryData: LibraryData) {
         libraryData.internalName = libraryData.internalName.substringAfter(GRADLE_LIBRARY_PREFIX)
-    }
-
-    private fun addLibraryToProjectModel(libraryData: LibraryData, ideProject: DataNode<ProjectData>) {
-        GradleProjectResolverUtil.linkProjectLibrary(ideProject, libraryData)
     }
 
     private fun fixLibraryDependencyLevel(oldDependencyNode: DataNode<LibraryDependencyData>) {

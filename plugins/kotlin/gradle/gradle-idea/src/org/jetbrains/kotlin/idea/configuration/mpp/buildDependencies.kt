@@ -23,5 +23,5 @@ internal fun KotlinMPPGradleProjectResolver.Companion.buildDependencies(
     GradleProjectResolverUtil.buildDependencies(
         resolverCtx, sourceSetMap, artifactsMap, ownerDataNode, dependencies, ideProject
     )
-    KotlinNativeLibrariesFixer.applyTo(ownerDataNode, ideProject)
+    KotlinNativeLibrariesFixer.applyTo(ownerDataNode, ideProject, resolverCtx)
 }

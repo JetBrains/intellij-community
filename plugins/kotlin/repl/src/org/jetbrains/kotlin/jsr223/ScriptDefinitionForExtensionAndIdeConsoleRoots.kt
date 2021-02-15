@@ -5,10 +5,10 @@
 
 package org.jetbrains.kotlin.jsr223
 
-import com.intellij.execution.console.IdeConsoleRootType
 import com.intellij.ide.extensionResources.ExtensionsRootType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.scratch.RootType
+import com.intellij.ide.script.IdeConsoleRootType
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource

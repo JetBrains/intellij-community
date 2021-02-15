@@ -95,7 +95,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
                         Change(d.getLeftContentRevision(gateway), d.getRightContentRevision(gateway))
                     }
 
-                    PatchCreator.create(project, changes, patchFile.path, false, null)
+                    PatchCreator.create(project, changes, patchFile.toPath(), false, null)
 
                     if (++patchesCreated >= PATCHES_TO_CREATE) {
                         break

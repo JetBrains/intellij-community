@@ -57,7 +57,7 @@ class KotlinAddRequiredModuleFix(module: PsiJavaModule, private val requiredName
             if (findRequireDirective(module, requiredName) != null) return false
 
             val parserFacade = JavaPsiFacade.getInstance(module.project).parserFacade
-            val tempModule = parserFacade.createModuleFromText("module TempModuleName { requires $requiredName; }")
+            val tempModule = parserFacade.createModuleFromText("module TempModuleName { requires $requiredName; }", module)
             val requiresStatement = tempModule.requires.first()
 
             val addingPlace = findAddingPlace(module) ?: return false

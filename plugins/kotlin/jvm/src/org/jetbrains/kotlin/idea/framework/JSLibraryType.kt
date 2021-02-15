@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.*
+import com.intellij.openapi.roots.libraries.ui.DescendentBasedRootFilter
 import com.intellij.openapi.roots.libraries.ui.FileTypeBasedRootFilter
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent
 import com.intellij.openapi.roots.libraries.ui.RootDetector
@@ -63,17 +64,11 @@ class JSLibraryType : LibraryType<DummyLibraryProperties>(JSLibraryKind) {
         override fun getRootTypes() = arrayOf(OrderRootType.CLASSES, OrderRootType.SOURCES)
 
         override fun getRootDetectors(): List<RootDetector> = arrayListOf(
-            JSRootFilter,
-            FileTypeBasedRootFilter(OrderRootType.SOURCES, false, KotlinFileType.INSTANCE, "sources")
+            DescendentBasedRootFilter(OrderRootType.CLASSES, false, KotlinJvmBundle.message("presentable.type.js.files")) {
+                isAcceptedForJsLibrary(it.extension)
+            },
+            DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.SOURCES, false, KotlinFileType.INSTANCE, "sources")
         )
-    }
-
-    object JSRootFilter : FileTypeBasedRootFilter(
-        OrderRootType.CLASSES, false, PlainTextFileType.INSTANCE,
-        KotlinJvmBundle.message("presentable.type.js.files")
-    ) {
-        override fun isFileAccepted(virtualFile: VirtualFile) = isAcceptedForJsLibrary(virtualFile.extension)
-
     }
 }
 

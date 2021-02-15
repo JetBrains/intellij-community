@@ -261,14 +261,14 @@ fun <T, E : PsiElement> getPsiElementPopup(
 
     return with(PopupChooserBuilder<E>(list)) {
         title?.let { setTitle(it) }
-        renderer.installSpeedSearch(this, true)
+        renderer.installSpeedSearch(this as IPopupChooserBuilder<E>, true)
         setItemChoosenCallback {
             val index = list.selectedIndex
             if (index >= 0) {
                 processor(elements[index])
             }
         }
-        addListener(object : JBPopupAdapter() {
+        addListener(object : JBPopupListener {
             override fun onClosed(event: LightweightWindowEvent) {
                 highlighter?.dropHighlight()
             }

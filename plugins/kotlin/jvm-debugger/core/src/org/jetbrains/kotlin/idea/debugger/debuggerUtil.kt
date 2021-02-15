@@ -87,8 +87,8 @@ fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) ->
 fun <T : Any> SuspendContextImpl.invokeInSuspendManagerThread(debugProcessImpl: DebugProcessImpl, f: (SuspendContextImpl) -> T?): T? {
     var result: T? = null
     val command: SuspendContextCommandImpl = object : SuspendContextCommandImpl(this) {
-        override fun contextAction() {
-            result = runReadAction { f(this@invokeInSuspendManagerThread) }
+        override fun contextAction(suspendContext: SuspendContextImpl) {
+            result = runReadAction { f(suspendContext) }
         }
     }
 

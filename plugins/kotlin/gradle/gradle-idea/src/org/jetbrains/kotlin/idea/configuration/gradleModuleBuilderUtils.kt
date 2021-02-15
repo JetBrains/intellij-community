@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider
+import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -198,10 +199,10 @@ class KotlinGradleFrameworkSupportInModuleConfigurable(
         rootModel: ModifiableRootModel,
         modifiableModelsProvider: ModifiableModelsProvider
     ) {
-        val buildScriptData = GradleModuleBuilder.getBuildScriptData(module)
+        val buildScriptData = AbstractGradleModuleBuilder.getBuildScriptData(module)
         if (buildScriptData != null) {
             val builder = model.moduleBuilder
-            val projectId = (builder as? GradleModuleBuilder)?.projectId ?: ProjectId(null, module.name, null)
+            val projectId = (builder as? AbstractGradleModuleBuilder)?.projectId ?: ProjectId(null, module.name, null)
             try {
                 module.gradleModuleBuilder = builder as? AbstractExternalModuleBuilder<*>
                 supportProvider.addSupport(projectId, module, rootModel, modifiableModelsProvider, buildScriptData)

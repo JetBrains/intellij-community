@@ -16,8 +16,7 @@
 
 package org.jetbrains.kotlin.idea.editor;
 
-import com.intellij.codeInsight.editorActions.JavaBackspaceHandler;
-import com.intellij.codeInsight.editorActions.JavaTypedHandler;
+import com.intellij.codeInsight.editorActions.TypedHandlerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -32,15 +31,15 @@ final class LtGtTypingUtils {
     }
 
     static void handleKotlinAutoCloseLT(Editor editor) {
-        JavaTypedHandler.handleAfterJavaLT(editor, KtTokens.LT, KtTokens.GT, INVALID_INSIDE_REFERENCE);
+        TypedHandlerUtil.handleAfterGenericLT(editor, KtTokens.LT, KtTokens.GT, INVALID_INSIDE_REFERENCE);
     }
 
     static boolean handleKotlinGTInsert(Editor editor) {
-        return JavaTypedHandler.handleJavaGT(editor, KtTokens.LT, KtTokens.GT, INVALID_INSIDE_REFERENCE);
+        return TypedHandlerUtil.handleGenericGT(editor, KtTokens.LT, KtTokens.GT, INVALID_INSIDE_REFERENCE);
     }
 
     static void handleKotlinLTDeletion(Editor editor, int offset) {
-        JavaBackspaceHandler.handleLTDeletion(editor, offset, KtTokens.LT, KtTokens.GT, INVALID_INSIDE_REFERENCE);
+        TypedHandlerUtil.handleGenericLTDeletion(editor, offset, KtTokens.LT, KtTokens.GT, INVALID_INSIDE_REFERENCE);
     }
 
     static boolean shouldAutoCloseAngleBracket(int offset, Editor editor) {
@@ -57,7 +56,7 @@ final class LtGtTypingUtils {
             iterator.retreat();
         }
 
-        return JavaTypedHandler.isClassLikeIdentifier(offset, editor, iterator, KtTokens.IDENTIFIER);
+        return TypedHandlerUtil.isClassLikeIdentifier(offset, editor, iterator, KtTokens.IDENTIFIER);
     }
 
     static boolean isAfterToken(int offset, Editor editor, KtToken tokenType) {

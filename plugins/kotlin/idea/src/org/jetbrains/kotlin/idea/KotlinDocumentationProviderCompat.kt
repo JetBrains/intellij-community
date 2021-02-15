@@ -10,11 +10,11 @@ import com.intellij.psi.PsiDocCommentBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.function.Consumer
 
-// FIX ME WHEN BUNCH 201 REMOVED
 class KotlinDocumentationProvider : KotlinDocumentationProviderCompatBase() {
 
     override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {
@@ -27,8 +27,8 @@ class KotlinDocumentationProvider : KotlinDocumentationProviderCompatBase() {
         }
     }
 
-    override fun generateRenderedDoc(element: PsiElement): String? {
-        val docComment = (element as? KtDeclaration)?.docComment ?: return null
+    override fun generateRenderedDoc(comment: PsiDocCommentBase): String? {
+        val docComment = comment as? KDoc ?: return null
 
         val result = StringBuilder().also {
             it.renderKDoc(docComment.getDefaultSection(), docComment.getAllSections())

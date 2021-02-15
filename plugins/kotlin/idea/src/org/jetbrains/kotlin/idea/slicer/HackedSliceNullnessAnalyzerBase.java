@@ -19,6 +19,7 @@ import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -138,7 +139,7 @@ public abstract class HackedSliceNullnessAnalyzerBase {
   }
 
   public static Map<SliceNode, NullAnalysisResult> createMap() {
-    return FactoryMap.createMap(k->new NullAnalysisResult(), ContainerUtil::newIdentityTroveMap);
+    return FactoryMap.createMap(k->new NullAnalysisResult(), () -> new Reference2ObjectOpenHashMap<>());
   }
 
   private static NullAnalysisResult node(@NotNull SliceNode node, @NotNull Map<SliceNode, NullAnalysisResult> nulls) {

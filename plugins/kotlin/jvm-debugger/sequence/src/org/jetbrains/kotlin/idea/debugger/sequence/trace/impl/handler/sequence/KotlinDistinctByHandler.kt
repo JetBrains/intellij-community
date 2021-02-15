@@ -112,7 +112,7 @@ class KotlinDistinctByHandler(callNumber: Int, private val call: IntermediateStr
             doReturn(time2ValueAfter.set(dsl.currentTime(), lambdaArg))
         }
 
-        callsAfter.add(dsl.createPeekCall(call.typeAfter, lambda.toCode()))
+        callsAfter.add(dsl.createPeekCall(call.typeAfter, lambda))
         return callsAfter
     }
 

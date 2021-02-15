@@ -10,8 +10,6 @@ import org.jetbrains.plugins.gradle.model.ClassSetProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
 class KotlinCommonizerModelResolver : AbstractProjectResolverExtension() {
-    override fun requiresTaskRunning() = true
-
     override fun getProjectsLoadedModelProvider() = ClassSetProjectImportModelProvider(
         setOf(EnableCommonizerTask::class.java)
     )

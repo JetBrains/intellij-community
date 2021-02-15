@@ -163,8 +163,6 @@ class CoroutineDumpPanel(
 
     internal fun highlightOccurrences(filter: String, project: Project, editor: Editor) {
         val highlightManager = HighlightManager.getInstance(project)
-        val colorManager = EditorColorsManager.getInstance()
-        val attributes = colorManager.globalScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES)
         val documentText = editor.document.text
         var i = -1
         while (true) {
@@ -174,8 +172,8 @@ class CoroutineDumpPanel(
             }
             i = nextOccurrence
             highlightManager.addOccurrenceHighlight(
-                editor, i, i + filter.length, attributes,
-                HighlightManager.HIDE_BY_TEXT_CHANGE, null, null
+                editor, i, i + filter.length, EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES,
+                HighlightManager.HIDE_BY_TEXT_CHANGE, null
             )
         }
     }

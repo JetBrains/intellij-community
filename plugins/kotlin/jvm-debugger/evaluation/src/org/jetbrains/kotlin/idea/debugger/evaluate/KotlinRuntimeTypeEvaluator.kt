@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.DebuggerInvocationUtil
 import com.intellij.debugger.engine.ContextUtil
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -46,8 +47,7 @@ abstract class KotlinRuntimeTypeEvaluator(
     context: DebuggerContextImpl,
     indicator: ProgressIndicator
 ) : EditorEvaluationCommand<KotlinType>(editor, expression, context, indicator) {
-
-    override fun threadAction() {
+    override fun threadAction(suspendContext: SuspendContextImpl) {
         var type: KotlinType? = null
         try {
             type = evaluate()

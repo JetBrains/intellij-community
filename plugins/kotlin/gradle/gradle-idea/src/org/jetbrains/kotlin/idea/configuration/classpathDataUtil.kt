@@ -17,7 +17,7 @@ fun buildClasspathData(
 ): BuildScriptClasspathData {
     val classpathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel::class.java)
     val classpathEntries = classpathModel?.classpath?.map {
-        BuildScriptClasspathData.ClasspathEntry(it.classes, it.sources, it.javadoc)
+        BuildScriptClasspathData.ClasspathEntry.create(it.classes, it.sources, it.javadoc)
     } ?: emptyList()
     return BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries).also {
         it.gradleHomeDir = classpathModel?.gradleHomeDir

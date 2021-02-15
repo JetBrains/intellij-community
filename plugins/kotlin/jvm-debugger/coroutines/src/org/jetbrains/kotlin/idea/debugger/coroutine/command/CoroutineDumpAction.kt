@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.command
 
 import com.intellij.debugger.DebuggerManagerEx
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.execution.filters.ExceptionFilters
@@ -38,8 +39,8 @@ class CoroutineDumpAction : AnAction(), AnAction.TransparentUpdate {
         if (session != null && session.isAttached) {
             val process = context.debugProcess ?: return
             process.managerThread.schedule(object : SuspendContextCommandImpl(context.suspendContext) {
-                override fun contextAction() {
-                    val states = CoroutineDebugProbesProxy(context.suspendContext ?: return)
+                override fun contextAction(suspendContext: SuspendContextImpl) {
+                    val states = CoroutineDebugProbesProxy(suspendContext)
                         .dumpCoroutines()
                     if (states.isOk()) {
                         val f = fun() {
@@ -49,7 +50,7 @@ class CoroutineDumpAction : AnAction(), AnAction.TransparentUpdate {
                         ApplicationManager.getApplication().invokeLater(f, ModalityState.NON_MODAL)
                     } else {
                         val message = KotlinDebuggerCoroutinesBundle.message("coroutine.dump.failed")
-                        XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.ERROR).notify(project)
+                        XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.ERROR).notify(project)
                     }
                 }
             })

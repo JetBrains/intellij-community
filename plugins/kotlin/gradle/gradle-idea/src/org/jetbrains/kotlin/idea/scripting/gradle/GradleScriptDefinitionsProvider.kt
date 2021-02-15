@@ -280,12 +280,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
         javaHome: String?,
         gradleExeSettings: GradleExecutionSettings
     ): ScriptingHostConfiguration {
-        val gradleJvmOptions = gradleExeSettings.daemonVmOptions?.let { vmOptions ->
-            CommandLineTokenizer(vmOptions).toList()
-                .mapNotNull { it?.let { it as? String } }
-                .filterNot(String::isBlank)
-                .distinct()
-        } ?: emptyList()
+        val gradleJvmOptions = gradleExeSettings.jvmArguments
 
         val environment = mapOf(
             "gradleHome" to gradleHome?.let(::File),

@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.impl.InheritanceImplUtil
 import com.intellij.psi.impl.PsiClassImplUtil
-import com.intellij.psi.impl.PsiSubstitutorImpl.createSubstitutor
 import com.intellij.psi.impl.PsiSuperMethodImplUtil
 import com.intellij.psi.impl.light.*
 import com.intellij.psi.impl.source.ClassInnerStuffCache
@@ -328,7 +327,7 @@ abstract class KtAbstractContainerWrapper(internal val fqName: FqName, private v
         }
         .toMap()
 
-    internal val substitutor = createSubstitutor(superClassTypeParametersToMyTypeParameters.mapValues {
+    internal val substitutor = PsiSubstitutor.createSubstitutor(superClassTypeParametersToMyTypeParameters.mapValues {
         it.value.asType()
     })
 

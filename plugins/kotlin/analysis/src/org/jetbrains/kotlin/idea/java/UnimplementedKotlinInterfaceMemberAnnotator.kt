@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.java
 
 import com.intellij.codeInsight.ClassUtil.getAnyMethodToImplement
+import com.intellij.codeInsight.daemon.JavaErrorBundle
 import com.intellij.codeInsight.daemon.JavaErrorMessages
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil.getClassDeclarationTextRange
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
@@ -60,7 +61,7 @@ class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
 
     private fun report(method: KtLightMethod, holder: AnnotationHolder, psiClass: PsiClass) {
         val key = if (psiClass is PsiEnumConstantInitializer) "enum.constant.should.implement.method" else "class.must.be.abstract"
-        val message = JavaErrorMessages.message(
+        val message = JavaErrorBundle.message(
             key, HighlightUtil.formatClass(psiClass, false), JavaHighlightUtil.formatMethod(method),
             HighlightUtil.formatClass(method.containingClass, false)
         )

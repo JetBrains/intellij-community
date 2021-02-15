@@ -214,7 +214,7 @@ class KotlinAwareMoveFilesOrDirectoriesDialog(
             return
         }
 
-        project.executeCommand(MoveHandler.REFACTORING_NAME) {
+        project.executeCommand(MoveHandler.getRefactoringName()) {
             with(modelResult) {
                 logFusForMoveRefactoring(
                     numberOfEntities = elementsCount,

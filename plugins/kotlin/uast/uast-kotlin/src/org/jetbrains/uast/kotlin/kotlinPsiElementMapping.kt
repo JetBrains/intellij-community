@@ -251,12 +251,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtClassLiteralExpression::class.java,
         KtWhenConditionWithExpression::class.java
     ),
-    UClassTypeSpecific::class.java to classSetOf<PsiElement>(
-        KtClass::class.java,
-        KtFile::class.java,
-        KtLightClass::class.java,
-        KtObjectDeclaration::class.java
-    ),
     UComment::class.java to classSetOf<PsiElement>(
         PsiComment::class.java
     ),
@@ -601,18 +595,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
         KtWhileExpression::class.java
     ),
     UMethod::class.java to classSetOf<PsiElement>(
-        KtClass::class.java,
-        KtLightDeclaration::class.java,
-        KtNamedFunction::class.java,
-        KtParameter::class.java,
-        KtPrimaryConstructor::class.java,
-        KtProperty::class.java,
-        KtPropertyAccessor::class.java,
-        KtSecondaryConstructor::class.java,
-        UastFakeLightMethod::class.java,
-        UastFakeLightPrimaryConstructor::class.java
-    ),
-    UMethodTypeSpecific::class.java to classSetOf<PsiElement>(
         KtClass::class.java,
         KtLightDeclaration::class.java,
         KtNamedFunction::class.java,

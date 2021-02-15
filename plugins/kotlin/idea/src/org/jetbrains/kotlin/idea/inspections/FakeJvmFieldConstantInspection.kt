@@ -43,8 +43,9 @@ class FakeJvmFieldConstantInspection : AbstractKotlinInspection() {
             override fun visitSwitchLabelStatement(statement: PsiSwitchLabelStatement) {
                 super.visitSwitchLabelStatement(statement)
 
-                val valueExpression = statement.caseValue ?: return
-                checkExpression(valueExpression, holder)
+                statement.caseValues?.expressions?.forEach {
+                    checkExpression(it, holder)
+                }
             }
 
             override fun visitAssignmentExpression(expression: PsiAssignmentExpression) {

@@ -131,9 +131,7 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     }
 
     fun keepReference(reference: ObjectReference) {
-        // Not available in older IDEA versions
-        @Suppress("DEPRECATION")
-        DebuggerUtilsEx.keep(reference, evaluationContext)
+        evaluationContext.keep(reference)
     }
 
     fun findClassSafe(className: String): ClassType? =

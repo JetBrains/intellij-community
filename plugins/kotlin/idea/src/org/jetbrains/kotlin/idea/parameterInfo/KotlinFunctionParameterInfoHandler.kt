@@ -319,11 +319,6 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
         return true
     }
 
-    //TODO
-    override fun couldShowInLookup() = false
-
-    override fun getParametersForLookup(item: LookupElement, context: ParameterInfoContext) = emptyArray<Any>()
-
     private fun renderParameter(parameter: ValueParameterDescriptor, includeName: Boolean, named: Boolean, project: Project): String {
         return buildString {
             if (named) append("[")

@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.Editor
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.template.impl.TemplateContext
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import com.intellij.psi.util.PsiUtilBase
@@ -49,5 +50,5 @@ class KotlinShortenFQNamesProcessor : TemplateOptionalProcessor {
     override fun setEnabled(template: Template, value: Boolean) {
     }
 
-    override fun isVisible(template: Template) = false
+    override fun isVisible(template: Template, context: TemplateContext) = false
 }

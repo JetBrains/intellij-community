@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(
     name = "KotlinCompilerWorkspaceSettings",
-    storages = [Storage(file = StoragePathMacros.WORKSPACE_FILE)]
+    storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
 class KotlinCompilerWorkspaceSettings : PersistentStateComponent<KotlinCompilerWorkspaceSettings> {
     /**
