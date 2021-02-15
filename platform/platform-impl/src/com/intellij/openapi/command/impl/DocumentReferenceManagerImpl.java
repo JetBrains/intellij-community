@@ -99,7 +99,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
     assertIsWriteThread();
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file == null ? createFromDocument(document) : create(file);
+    return file == null || !file.isValid() ? createFromDocument(document) : create(file);
   }
 
   @NotNull

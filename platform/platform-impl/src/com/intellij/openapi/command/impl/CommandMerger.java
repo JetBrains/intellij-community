@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -14,7 +13,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,14 +91,21 @@ public final class CommandMerger {
   // remove all references to document to avoid memory leaks
   void clearDocumentReferences(@NotNull Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    myCurrentActions.removeIf(action -> ContainerUtil.exists(ObjectUtils.notNull(action.getAffectedDocuments(), DocumentReference.EMPTY_ARRAY), ref -> refMatch(document, file, ref)));
-    myAllAffectedDocuments.removeIf(ref -> refMatch(document, file, ref));
-    myAdditionalAffectedDocuments.removeIf(ref -> refMatch(document, file, ref));
+    // DocumentReference for document is not equal to the DocumentReference from the file of that doc, so try both
+    DocumentReference refByFile = DocumentReferenceManager.getInstance().create(document);
+    DocumentReference refByDoc = new DocumentReferenceByDocument(document);
+    myCurrentActions.removeIf(action -> {
+      DocumentReference[] refs = ObjectUtils.notNull(action.getAffectedDocuments(), DocumentReference.EMPTY_ARRAY);
+      return ArrayUtil.contains(refByFile, refs) || ArrayUtil.contains(refByDoc, refs);
+    });
+    myAllAffectedDocuments.remove(refByFile);
+    myAllAffectedDocuments.remove(refByDoc);
+    myAdditionalAffectedDocuments.remove(refByFile);
+    myAdditionalAffectedDocuments.remove(refByDoc);
   }
 
   private static boolean refMatch(@NotNull Document document, VirtualFile file, @NotNull DocumentReference ref) {
-    return ref.getDocument() == document || file != null && file.equals(ref.getFile());
+    return file != null && file.equals(ref.getFile()) || ref.getDocument() == document;
   }
 
   public static boolean canMergeGroup(Object groupId, Object lastGroupId) {
