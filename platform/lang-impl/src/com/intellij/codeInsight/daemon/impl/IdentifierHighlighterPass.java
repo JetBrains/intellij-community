@@ -27,8 +27,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
@@ -87,56 +89,7 @@ public class IdentifierHighlighterPass {
     }
 
     collectCodeBlockMarkerRanges();
-    if (Registry.is("ide.symbol.identifier.highlighting")) {
-      highlightReferencesAndDeclarations();
-    }
-    else {
-      highlightReferencesAndDeclarationsOld();
-    }
-  }
-
-  private void highlightReferencesAndDeclarationsOld() {
-    int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
-    PsiElement myTarget;
-    try {
-      myTarget = TargetElementUtil.getInstance().findTargetElement(myEditor, flags, myCaretOffset);
-    }
-    catch (IndexNotReadyException e) {
-      return;
-    }
-
-    if (myTarget == null) {
-      if (!PsiDocumentManager.getInstance(myFile.getProject()).isUncommited(myEditor.getDocument())) {
-        // when document is committed, try to check injected stuff - it's fast
-        Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
-        myTarget = TargetElementUtil.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset());
-      }
-    }
-
-    if (myTarget != null) {
-      highlightTargetUsages(myTarget);
-    }
-    else {
-      PsiReference ref = TargetElementUtil.findReference(myEditor);
-      if (ref instanceof PsiPolyVariantReference) {
-        if (!ref.getElement().isValid()) {
-          throw new PsiInvalidElementAccessException(ref.getElement(), "Invalid element in " + ref + " of " + ref.getClass() + "; editor=" + myEditor);
-        }
-        ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
-        if (results.length > 0) {
-          for (ResolveResult result : results) {
-            PsiElement target = result.getElement();
-            if (target != null) {
-              if (!target.isValid()) {
-                throw new PsiInvalidElementAccessException(target, "Invalid element returned from " + ref + " of " + ref.getClass() + "; editor=" + myEditor);
-              }
-              highlightTargetUsages(target);
-            }
-          }
-        }
-      }
-
-    }
+    highlightReferencesAndDeclarations();
   }
 
   /**
@@ -213,18 +166,6 @@ public class IdentifierHighlighterPass {
         }
       }
     }
-  }
-
-  private void highlightTargetUsages(@NotNull PsiElement target) {
-    AstLoadingFilter.disallowTreeLoading(
-      () -> {
-        getHighlightUsages(target, myFile, true, myReadAccessRanges, myWriteAccessRanges);
-        return null;
-      },
-      () -> "Currently highlighted file: \n" +
-            "psi file: " + myFile + ";\n" +
-            "virtual file: " + myFile.getVirtualFile()
-    );
   }
 
   private void highlightReferencesAndDeclarations() {
