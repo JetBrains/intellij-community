@@ -107,7 +107,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   private final long myCreatedTimestamp;
   private long myStampShown = 0;
-  private boolean myShown = false;
+  protected boolean myShown = false;
   private boolean myHidden = false;
   private boolean mySelectionTouched;
   private LookupFocusDegree myLookupFocusDegree = LookupFocusDegree.FOCUSED;
