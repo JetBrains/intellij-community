@@ -74,6 +74,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   fun getCommitActionName() = getDefaultCommitActionName(workflow.vcses)
 
+  open fun updateDefaultCommitActionName() {
+    ui.defaultCommitActionName = getCommitActionName()
+  }
+
   protected open fun createDataProvider() = DataProvider { dataId ->
     when {
       COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this

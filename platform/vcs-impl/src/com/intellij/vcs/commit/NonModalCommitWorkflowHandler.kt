@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
@@ -67,7 +68,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
 
     updateDefaultCommitActionEnabled()
-    ui.defaultCommitActionName = getCommitActionName()
+    updateDefaultCommitActionName()
     ui.setCustomCommitActions(createCommitExecutorActions())
   }
 
@@ -86,6 +87,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun executionStarted() = updateDefaultCommitActionEnabled()
   override fun executionEnded() = updateDefaultCommitActionEnabled()
+
+  override fun updateDefaultCommitActionName() {
+    val commitText = getCommitActionName()
+    val isAmend = amendCommitHandler.isAmendCommitMode
+
+    ui.defaultCommitActionName = if (isAmend) VcsBundle.message("amend.action.name", commitText) else commitText
+  }
 
   fun updateDefaultCommitActionEnabled() {
     ui.isDefaultCommitActionEnabled = isReady()
@@ -201,6 +209,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       workflow.clearCommitContext()
       initCommitHandlers()
+
+      updateDefaultCommitActionName()
     }
   }
 }
