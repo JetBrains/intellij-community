@@ -2,6 +2,9 @@
 package com.intellij.internal.statistic.eventLog.events
 
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonElement
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
@@ -10,11 +13,12 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
-import java.lang.IllegalStateException
+import java.lang.reflect.Type
 import kotlin.system.exitProcess
 
 object EventsSchemeBuilder {
-  data class FieldDescriptor(val path: String, val value: Set<String>)
+  enum class FieldDataType { ARRAY, PRIMITIVE }
+  data class FieldDescriptor(val path: String, val value: Set<String>, val dataType: FieldDataType = FieldDataType.PRIMITIVE)
   data class EventDescriptor(val event: String, val fields: Set<FieldDescriptor>)
   data class GroupDescriptor(val id: String,
                              val type: String,
@@ -35,6 +39,9 @@ object EventsSchemeBuilder {
     return when (field) {
       is ObjectEventField -> buildObjectEvenScheme(fieldName, field.fields)
       is ObjectListEventField -> buildObjectEvenScheme(fieldName, field.fields)
+      is ListEventField<*> -> {
+        hashSetOf(FieldDescriptor(fieldName, field.validationRule.toHashSet(), FieldDataType.ARRAY))
+      }
       is PrimitiveEventField -> hashSetOf(FieldDescriptor(fieldName, field.validationRule.toHashSet()))
     }
   }
@@ -64,7 +71,7 @@ object EventsSchemeBuilder {
       validateGroupId(collector)
       val group = collector.group ?: continue
       val eventsDescriptors = group.events.groupBy { it.eventId }
-        .map { (name, events) -> EventDescriptor(name, buildFields(events)) }
+        .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id )) }
         .toHashSet()
       val groupDescriptor = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name)
       result.add(groupDescriptor)
@@ -82,12 +89,24 @@ object EventsSchemeBuilder {
     }
   }
 
-  private fun buildFields(events: List<BaseEventId>): HashSet<FieldDescriptor> {
+  private fun buildFields(events: List<BaseEventId>, eventName: String, groupId: String): HashSet<FieldDescriptor> {
     return events.flatMap { it.getFields() }
       .flatMap { field -> fieldSchema(field, field.name) }
       .groupBy { it.path }
-      .map { (name, values) -> FieldDescriptor(name, values.flatMap { it.value }.toHashSet()) }
+      .map { (name, values) ->
+        val type = defineDataType(values, name, eventName, groupId)
+        FieldDescriptor(name, values.flatMap { it.value }.toHashSet(), type)
+      }
       .toHashSet()
+  }
+
+  private fun defineDataType(values: List<FieldDescriptor>, name: String, eventName: String, groupId: String): FieldDataType {
+    val dataType = values.first().dataType
+    return if (values.any { it.dataType != dataType })
+      throw IllegalStateException("Field couldn't have multiple types (group=$groupId, event=$eventName, field=$name)")
+    else {
+      dataType
+    }
   }
 }
 
@@ -99,7 +118,11 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
     val pluginsFile = args.getOrNull(2)
     val eventsScheme = EventsSchemeBuilder.EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
                                                         EventsSchemeBuilder.buildEventsScheme())
-    val text = GsonBuilder().setPrettyPrinting().create().toJson(eventsScheme)
+    val text = GsonBuilder()
+      .registerTypeAdapter(EventsSchemeBuilder.FieldDataType::class.java, FieldDataTypeSerializer)
+      .setPrettyPrinting()
+      .create()
+      .toJson(eventsScheme)
     logEnabledPlugins(pluginsFile)
     if (outputFile != null) {
       FileUtil.writeToFile(File(outputFile), text)
@@ -124,6 +147,15 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
     else {
       println("Enabled plugins:")
       println(text)
+    }
+  }
+
+  object FieldDataTypeSerializer : JsonSerializer<EventsSchemeBuilder.FieldDataType> {
+    override fun serialize(src: EventsSchemeBuilder.FieldDataType?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
+      if (src == EventsSchemeBuilder.FieldDataType.PRIMITIVE || src == null) {
+        return context!!.serialize(null)
+      }
+      return context!!.serialize(src.name)
     }
   }
 }
