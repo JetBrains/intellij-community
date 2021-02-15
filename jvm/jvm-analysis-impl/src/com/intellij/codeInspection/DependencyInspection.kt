@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -11,7 +11,7 @@ import com.intellij.packageDependencies.DependenciesBuilder
 import com.intellij.packageDependencies.DependencyRule
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.packageDependencies.ui.DependencyConfigurable
-import com.intellij.psi.*
+import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import com.intellij.util.containers.FactoryMap
 import java.awt.FlowLayout
@@ -30,10 +30,6 @@ class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
     })
   }
 
-  override fun getGroupDisplayName() = InspectionsBundle.message("group.names.dependency.issues")
-
-  private fun createEditDependencyFixes(dependencyRule: DependencyRule) = arrayOf(EditDependencyRulesAction(dependencyRule))
-
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val validationManager = DependencyValidationManager.getInstance(file.project)
     if (!validationManager.hasRules() || validationManager.getApplicableRules(file).isEmpty()) return null
@@ -46,7 +42,7 @@ class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
       if (dependencyFile != null && dependencyFile.isPhysical && dependencyFile.virtualFile != null) {
         for (dependencyRule in violations[dependencyFile]!!) {
           val message = JvmAnalysisBundle.message("jvm.inspections.dependency.violator.problem.descriptor", dependencyRule.displayText)
-          val fixes = createEditDependencyFixes(dependencyRule)
+          val fixes = arrayOf(EditDependencyRulesAction(dependencyRule))
           problems.add(manager.createProblemDescriptor(place, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
         }
       }
