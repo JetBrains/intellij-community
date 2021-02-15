@@ -6,6 +6,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorNameConverter;
 
 import java.util.List;
@@ -47,10 +48,11 @@ public interface DependencyDescriptor extends DomElement {
 
   @Presentation(icon = "AllIcons.Nodes.Plugin")
   interface PluginDescriptor extends DomElement {
+
     @NotNull
     @Required
     @Stubbed
-    @NameValue
+    @Convert(IdeaPluginConverter.class)
     GenericAttributeValue<String> getId();
   }
 }
