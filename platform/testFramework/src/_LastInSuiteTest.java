@@ -14,6 +14,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManagerKt;
@@ -26,6 +27,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
 import org.junit.FixMethodOrder;
+import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
 import java.lang.ref.WeakReference;
@@ -40,6 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr"})
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class _LastInSuiteTest extends TestCase {
   private static final Set<String> EXTENSION_POINTS_WHITE_LIST = Collections.emptySet();
 
