@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -27,10 +27,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
@@ -372,7 +372,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JBScrollPane myJBScrollPane;
 
     private ComboBox myRunOnComboBox;
-    private JLabel myManageTargetsLabel;
+    private ActionLink myManageTargetsLabel;
     private JPanel myRunOnPanel;
     private JPanel myRunOnPanelInner;
 
@@ -530,7 +530,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myComponentPlace = new NonOpaquePanel();
       myRunOnComboBox = new RunOnTargetComboBox(myProject);
       myManageTargetsLabel =
-        LinkLabel.create(ExecutionBundle.message("edit.run.configuration.run.configuration.manage.targets.label"), () -> {
+        new ActionLink(ExecutionBundle.message("edit.run.configuration.run.configuration.manage.targets.label"), e -> {
           String selectedName = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
           LanguageRuntimeType<?> languageRuntime = ((RunOnTargetComboBox)myRunOnComboBox).getDefaultLanguageRuntimeType();
           TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);

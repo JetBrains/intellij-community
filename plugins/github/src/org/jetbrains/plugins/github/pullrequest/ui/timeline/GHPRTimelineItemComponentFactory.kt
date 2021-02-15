@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalBox
@@ -81,7 +82,7 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
     val titlePanel = NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
       add(userAvatar(gitCommit.author))
       add(HtmlEditorPane(gitCommit.messageHeadlineHTML))
-      add(LinkLabel<Any?>(gitCommit.abbreviatedOid, null) { _, _ ->
+      add(ActionLink(gitCommit.abbreviatedOid) {
         selectInToolWindowHelper.selectCommit(gitCommit.abbreviatedOid)
       })
     }

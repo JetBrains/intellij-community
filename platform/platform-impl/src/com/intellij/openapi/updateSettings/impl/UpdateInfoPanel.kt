@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -15,8 +15,8 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -94,7 +94,7 @@ internal object UpdateInfoPanel {
     infoLabel.text = infoLabelText(newBuild, patches, testPatch, appInfo)
     infoRow.add(infoLabel)
     if (enableLink) {
-      val link = LinkLabel.create(IdeBundle.message("updates.configure.updates.label")) {
+      val link = ActionLink(IdeBundle.message("updates.configure.updates.label")) {
         ShowSettingsUtil.getInstance().editConfigurable(infoRow, UpdateSettingsConfigurable(false))
       }
       link.border = JBUI.Borders.empty(0, 4, 0, 0)

@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
@@ -124,7 +124,7 @@ internal object GHPRListComponent {
       background = UIUtil.getPanelBackground()
       border = JBUI.Borders.empty(4, 0)
       add(JLabel(GithubBundle.message("pull.request.list.outdated")))
-      add(LinkLabel<Any?>(GithubBundle.message("pull.request.list.refresh"), null) { _, _ ->
+      add(ActionLink(GithubBundle.message("pull.request.list.refresh")) {
         listLoader.reset()
       })
 

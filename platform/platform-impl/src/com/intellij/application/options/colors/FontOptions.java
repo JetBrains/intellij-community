@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -14,8 +14,7 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -135,12 +134,9 @@ public class FontOptions extends AbstractFontOptionsPanel {
   }
 
   @NotNull
-  private JLabel createHyperlinkLabel() {
-    return new LinkLabel<>(getInheritedFontTitle(), null, new LinkListener<>() {
-      @Override
-      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
+  private ActionLink createHyperlinkLabel() {
+    return new ActionLink(getInheritedFontTitle(), e -> {
         navigateToParentFontConfigurable();
-      }
     });
   }
 

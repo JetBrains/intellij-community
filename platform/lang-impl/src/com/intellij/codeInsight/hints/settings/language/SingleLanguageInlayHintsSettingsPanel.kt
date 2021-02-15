@@ -26,9 +26,9 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBSplitter
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -236,7 +236,7 @@ class SingleLanguageInlayHintsSettingsPanel(
     myWarningContainer.removeAll()
     if (!config.hintsEnabled(myLanguage)) {
       myWarningContainer.add(JLabel(CodeInsightBundle.message("settings.inlay.hints.warning.hints.for.language.disabled", myLanguage.displayName)))
-      myWarningContainer.add(LinkLabel.create(CodeInsightBundle.message("settings.inlay.hints.warning.configure.settings", myLanguage.displayName)) {
+      myWarningContainer.add(ActionLink(CodeInsightBundle.message("settings.inlay.hints.warning.configure.settings", myLanguage.displayName)) {
         val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(this))
         if (settings != null) {
           val mainConfigurable = settings.find(InlayHintsConfigurable::class.java)

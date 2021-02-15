@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
@@ -12,9 +10,9 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.BrowserLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBDimension;
 import org.editorconfig.language.messages.EditorConfigBundle;
@@ -38,7 +36,7 @@ public class CreateEditorConfigForm {
   private JBCheckBox       myCommentProperties;
   private JBLabel          myAddPropertiesForLabel;
   @SuppressWarnings("unused")
-  private JLabel           myAboutEditorConfigLink;
+  private BrowserLink myAboutEditorConfigLink;
   @SuppressWarnings("unused")
   private ContextHelpLabel myContextHelpLabel;
   private JBLabel myIntelliJPropertiesLabel;
@@ -133,10 +131,9 @@ public class CreateEditorConfigForm {
 
   private void createUIComponents() {
     myAboutEditorConfigLink =
-      new LinkLabel<>(
+      new BrowserLink(
         EditorConfigBundle.message("export.editor.config.about"),
-        AllIcons.Ide.External_link_arrow,
-        (_0, _1) -> BrowserUtil.browse("http://www.editorconfig.org"));
+        "http://www.editorconfig.org");
     myAboutEditorConfigLink.setIconTextGap(0);
     myAboutEditorConfigLink.setHorizontalTextPosition(SwingConstants.LEFT);
     myContextHelpLabel = ContextHelpLabel.create("", EditorConfigBundle.message("export.editor.config.root.help"));

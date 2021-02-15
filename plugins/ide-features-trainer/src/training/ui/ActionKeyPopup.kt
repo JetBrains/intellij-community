@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
 import com.intellij.execution.target.TargetEnvironmentWizardStepKt
@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import training.learn.LearnBundle
@@ -46,11 +46,11 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
     }
   }
 
-  jPanel.add(LinkLabel<Any>(LearnBundle.message("shortcut.balloon.apply.this.action"), null) { _, _ ->
+  jPanel.add(ActionLink(LearnBundle.message("shortcut.balloon.apply.this.action")) {
     invokeActionForFocusContext(action)
     balloon.hide()
   })
-  jPanel.add(LinkLabel<Any>(LearnBundle.message("shortcut.balloon.add.shortcut"), null) { _, _ ->
+  jPanel.add(ActionLink(LearnBundle.message("shortcut.balloon.add.shortcut")) {
     KeymapPanel.addKeyboardShortcut(actionId, ActionShortcutRestrictions.getInstance().getForActionId(actionId),
                                     KeymapManager.getInstance().activeKeymap, parent)
     balloon.hide()

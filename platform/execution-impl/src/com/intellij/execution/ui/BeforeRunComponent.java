@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.BeforeRunTask;
@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -44,7 +44,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   private final List<TaskButton> myTags = new ArrayList<>();
   private final InplaceButton myAddButton;
   private final JPanel myAddPanel;
-  private final LinkLabel<Object> myAddLabel;
+  private final ActionLink myAddLabel;
   private final JLabel myDropFirst = new JLabel(AllIcons.General.DropPlace);
 
   Runnable myChangeListener;
@@ -66,7 +66,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     myAddPanel = new JPanel();
     myAddPanel.setBorder(border);
     myAddPanel.add(myAddButton);
-    myAddLabel = new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
+    myAddLabel = new ActionLink(ExecutionBundle.message("run.configuration.before.run.add.task"), e -> { showPopup(); });
     myAddLabel.setBorder(border);
     DnDManager.getInstance().registerTarget(this, this, this);
   }

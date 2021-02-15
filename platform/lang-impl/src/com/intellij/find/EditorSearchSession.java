@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find;
 
@@ -32,7 +32,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -77,7 +77,7 @@ public class EditorSearchSession implements SearchSession,
   private String myStartSelectedText;
   private boolean mySelectionUpdatedFromSearchResults;
 
-  private final LinkLabel<Object> myClickToHighlightLabel = new LinkLabel<>(FindBundle.message("link.click.to.highlight"), null, (__, ___) -> {
+  private final ActionLink myClickToHighlightLabel = new ActionLink(FindBundle.message("link.click.to.highlight"), e -> {
     setMatchesLimit(Integer.MAX_VALUE);
     updateResults(true);
   });

@@ -21,6 +21,7 @@ import java.awt.event.InputEvent;
 
 /**
  * @author Konstantin Bulenkov
+ * @see https://jetbrains.github.io/ui/controls/link/
  * @deprecated use {@link com.intellij.ui.components.AnActionLink} instead
  */
 @Deprecated

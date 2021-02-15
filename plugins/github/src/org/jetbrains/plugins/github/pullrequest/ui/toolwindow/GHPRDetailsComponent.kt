@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -56,9 +56,9 @@ internal object GHPRDetailsComponent {
     }
     val directionPanel = GHPRDirectionPanel()
     val metadataPanel = GHPRMetadataPanelFactory(detailsModel, avatarIconsProvider).create()
-    val timelineLink = LinkLabel<Any>(GithubBundle.message("pull.request.view.conversations.action"), null) { label, _ ->
-      val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@LinkLabel
-      ActionUtil.invokeAction(action, label, ActionPlaces.UNKNOWN, null, null)
+    val timelineLink = ActionLink(GithubBundle.message("pull.request.view.conversations.action")) {
+      val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@ActionLink
+      ActionUtil.invokeAction(action, it.source as ActionLink, ActionPlaces.UNKNOWN, null, null)
     }
 
     with(panel) {

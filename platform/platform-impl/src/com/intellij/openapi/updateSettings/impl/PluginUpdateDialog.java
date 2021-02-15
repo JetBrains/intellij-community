@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -25,7 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -56,7 +56,7 @@ public class PluginUpdateDialog extends DialogWrapper {
   private final PluginDetailsPageComponent myDetailsPage;
   private final JLabel myTotalLabel = new JLabel();
 
-  private final JLabel myIgnoreAction;
+  private final ActionLink myIgnoreAction;
 
   private Runnable myFinishCallback;
 
@@ -68,7 +68,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
     myDownloaders = updatedPlugins;
 
-    myIgnoreAction = new LinkLabel<>(IdeBundle.message("updates.ignore.updates.button", updatedPlugins.size()), null, (__, ___) -> {
+    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updatedPlugins.size()), e -> {
       close(CANCEL_EXIT_CODE);
       ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, component -> component.getPluginDescriptor()));
     });

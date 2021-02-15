@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -46,10 +46,10 @@ import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.treetable.DefaultTreeTableExpander;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
@@ -1259,7 +1259,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private class ToolOptionsSeparator extends JPanel {
-    private final LinkLabel<?> myResetLink;
+    private final ActionLink myResetLink;
     @Nullable
     private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
 
@@ -1288,7 +1288,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       UserActivityWatcher userActivityWatcher = new UserActivityWatcher();
       userActivityWatcher.addUserActivityListener(() -> setupResetLinkVisibility());
       userActivityWatcher.register(options);
-      myResetLink = LinkLabel.create(IdeBundle.message("reset.action.text"), () -> {
+      myResetLink = new ActionLink(IdeBundle.message("reset.action.text"), e -> {
         ScopeToolState state = getSelectedState();
         if (state != null) {
           state.resetConfigPanel();
