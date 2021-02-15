@@ -4,20 +4,20 @@ package com.intellij.refactoring.rename.impl
 import com.intellij.refactoring.rename.api.FileOperation
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.PsiRenameUsage
+import com.intellij.refactoring.rename.api.TextReplacement
 import com.intellij.util.text.StringOperation
 
-/**
- * Updater which sets the new target name as the new text under the [range][PsiRenameUsage.range].
- * This updater may be returned only from [ModifiableRenameUsage]s which implement [PsiRenameUsage].
- */
-internal object DefaultPsiRenameUsageUpdater : ModifiableRenameUsage.FileUpdater {
+internal class PsiRenameUsageRangeUpdater(
+  val textReplacement: TextReplacement
+) : ModifiableRenameUsage.FileUpdater {
 
   override fun prepareFileUpdate(usage: ModifiableRenameUsage, newName: String): Collection<FileOperation> {
     usage as PsiRenameUsage
+    val newText = textReplacement(newName) ?: return emptyList()
     return listOf(
       FileOperation.modifyFile(
         usage.file,
-        StringOperation.replace(usage.range, newName)
+        StringOperation.replace(usage.range, newText)
       )
     )
   }

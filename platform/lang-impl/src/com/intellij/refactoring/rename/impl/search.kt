@@ -139,8 +139,9 @@ private fun Query<out TextOccurrence>.mapToUsages(
   searchString: String,
   textReplacement: TextReplacement
 ): Query<out RenameUsage> {
+  val fileUpdater = fileRangeUpdater(textReplacement)
   return mapping { occurrence: TextOccurrence ->
     val rangeInElement = TextRange.from(occurrence.offsetInElement, searchString.length)
-    TextRenameUsage(PsiUsage.textUsage(occurrence.element, rangeInElement), textReplacement)
+    TextRenameUsage(PsiUsage.textUsage(occurrence.element, rangeInElement), fileUpdater)
   }
 }

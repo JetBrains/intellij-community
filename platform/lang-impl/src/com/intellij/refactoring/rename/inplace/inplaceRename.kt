@@ -33,11 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.refactoring.InplaceRefactoringContinuation
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.api.ModifiableRenameUsage
-import com.intellij.refactoring.rename.api.PsiRenameUsage
-import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.api.RenameUsage
-import com.intellij.refactoring.rename.impl.DefaultPsiRenameUsageUpdater
+import com.intellij.refactoring.rename.api.*
 import com.intellij.refactoring.rename.impl.RenameOptions
 import com.intellij.refactoring.rename.impl.buildUsageQuery
 import com.intellij.refactoring.rename.impl.rename
@@ -92,7 +88,7 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
     // => fall back to rename with a dialog
     return false
   }
-  if (originUsage !is ModifiableRenameUsage || originUsage.fileUpdater !== DefaultPsiRenameUsageUpdater) {
+  if (originUsage !is ModifiableRenameUsage || originUsage.fileUpdater !== idFileRangeUpdater) {
     // the usage text will be the same as the new name
     // => usage text can be used as the new name
     //    for usages specifying DefaultPsiRenameUsageUpdater
@@ -163,7 +159,7 @@ private fun buildTemplate(
     if (psiUsage !is ModifiableRenameUsage) {
       continue // don't know how to update the usage
     }
-    if (psiUsage.fileUpdater !== DefaultPsiRenameUsageUpdater) {
+    if (psiUsage.fileUpdater !== idFileRangeUpdater) {
       continue // don't know how to update the usage yet, different updaters might be supported later
     }
     val usageRangeInHost: TextRange = usageRangeInHost(hostFile, psiUsage)
