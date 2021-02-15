@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.util.ui.JButtonAction
@@ -36,13 +34,6 @@ abstract class BaseCommitExecutorAction : JButtonAction(null) {
 
   protected open val executorId: String = ""
   protected open fun getCommitExecutor(handler: CommitWorkflowHandler?) = handler?.getExecutor(executorId)
-
-  companion object {
-    fun AnActionEvent.useAmendPrefixIfNeeded(templateText: @NlsActions.ActionText String?): @NlsActions.ActionText String {
-      val isAmend = getContextCommitWorkflowHandler()?.amendCommitHandler?.isAmendCommitMode == true
-      return if (isAmend) VcsBundle.message("amend.action.name", templateText) else "" + templateText
-    }
-  }
 }
 
 internal class DefaultCommitExecutorAction(private val executor: CommitExecutor) : BaseCommitExecutorAction() {
@@ -50,5 +41,5 @@ internal class DefaultCommitExecutorAction(private val executor: CommitExecutor)
     templatePresentation.text = executor.actionText
   }
 
-  override fun getCommitExecutor(handler: CommitWorkflowHandler?): CommitExecutor? = executor
+  override fun getCommitExecutor(handler: CommitWorkflowHandler?): CommitExecutor = executor
 }
