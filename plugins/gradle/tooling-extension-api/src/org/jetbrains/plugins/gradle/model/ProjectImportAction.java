@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import java.util.concurrent.ConcurrentHashMap;
+import com.intellij.util.Consumer;
+import com.intellij.util.ReflectionUtilRt;
 import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -14,19 +16,24 @@ import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier;
 import org.gradle.tooling.model.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.build.JavaEnvironment;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.BuildModelConsumer;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.ProjectModelConsumer;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment;
 
 import java.io.File;
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -89,11 +96,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
       long startTime = System.currentTimeMillis();
       myGradleBuild = controller.getBuildModel();
-      AllModels allModels = new AllModels(convert(myGradleBuild));
+      Build mainBuild = convert(myGradleBuild);
+      AllModels allModels = new AllModels(mainBuild);
       allModels.logPerformance("Get model GradleBuild", System.currentTimeMillis() - startTime);
       long startTimeBuildEnv = System.currentTimeMillis();
       BuildEnvironment buildEnvironment = controller.findModel(BuildEnvironment.class);
-      allModels.setBuildEnvironment(buildEnvironment);
+      allModels.setBuildEnvironment(convert(buildEnvironment));
       allModels.logPerformance("Get model BuildEnvironment", System.currentTimeMillis() - startTimeBuildEnv);
       myAllModels = allModels;
       myModelConverter = getToolingModelConverter(controller);
@@ -121,6 +129,33 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       wrappedController.getModel(TurnOffDefaultTasks.class);
     }
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
+  }
+
+  @Contract("null -> null")
+  private static BuildEnvironment convert(final @Nullable BuildEnvironment buildEnvironment) {
+    if (buildEnvironment == null) return null;
+    return buildEnvironment instanceof InternalBuildEnvironment ? buildEnvironment :
+           new InternalBuildEnvironment(
+             new Supplier<InternalBuildIdentifier>() {
+               @Override
+               public InternalBuildIdentifier get() {
+                 return new InternalBuildIdentifier(buildEnvironment.getBuildIdentifier().getRootDir());
+               }
+             },
+             new Supplier<InternalJavaEnvironment>() {
+               @Override
+               public InternalJavaEnvironment get() {
+                 JavaEnvironment java = buildEnvironment.getJava();
+                 return new InternalJavaEnvironment(java.getJavaHome(), java.getJvmArguments());
+               }
+             },
+             new Supplier<File>() {
+               @Override
+               public File get() {
+                 return buildEnvironment.getGradle().getGradleUserHome();
+               }
+             },
+             buildEnvironment.getGradle().getGradleVersion());
   }
 
   private interface GradleBuildConsumer {
@@ -178,38 +213,22 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   private void configureAdditionalTypes(BuildController controller) {
     if (myTargetTypes.isEmpty()) return;
-
     try {
-      Field adapterField;
-      try {
-        adapterField = controller.getClass().getDeclaredField("adapter");
-      }
-      catch (NoSuchFieldException e) {
-        // since v.4.4 there is a BuildControllerWithoutParameterSupport can be used
-        Field delegate = controller.getClass().getDeclaredField("delegate");
-        delegate.setAccessible(true);
-        Object wrappedController = delegate.get(controller);
-        adapterField = wrappedController.getClass().getDeclaredField("adapter");
-        controller = (BuildController)wrappedController;
-      }
-      adapterField.setAccessible(true);
-      ProtocolToModelAdapter adapter = (ProtocolToModelAdapter)adapterField.get(controller);
-
-      Field typeProviderField = adapter.getClass().getDeclaredField("targetTypeProvider");
-      typeProviderField.setAccessible(true);
-      TargetTypeProvider typeProvider = (TargetTypeProvider)typeProviderField.get(adapter);
-
-      Field targetTypesField = typeProvider.getClass().getDeclaredField("configuredTargetTypes");
-      targetTypesField.setAccessible(true);
+      ProtocolToModelAdapter modelAdapter =
+        ReflectionUtilRt.getField(controller.getClass(), controller, ProtocolToModelAdapter.class, "adapter");
+      if (modelAdapter == null) return;
+      TargetTypeProvider typeProvider =
+        ReflectionUtilRt.getField(ProtocolToModelAdapter.class, modelAdapter, TargetTypeProvider.class, "targetTypeProvider");
+      if (typeProvider == null) return;
       //noinspection unchecked
-      Map<String, Class<?>> targetTypes = (Map<String, Class<?>>)targetTypesField.get(typeProvider);
-
+      Map<String, Class<?>> targetTypes =
+        ReflectionUtilRt.getField(typeProvider.getClass(), typeProvider, Map.class, "configuredTargetTypes");
+      if (targetTypes == null) return;
       for (Class<?> targetType : myTargetTypes) {
         targetTypes.put(targetType.getCanonicalName(), targetType);
       }
     }
     catch (Exception ignore) {
-      // TODO handle error
     }
   }
 
@@ -335,9 +354,10 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   // Note: This class is NOT thread safe and it is supposed to be used from a single thread.
   //       Performance logging related methods are thread safe.
-  public static class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
+  public static final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
     @NotNull private final List<Build> includedBuilds = new ArrayList<Build>();
     private final Map<String, Long> performanceTrace = new ConcurrentHashMap<String, Long>();
+    private transient Map<String, String> myBuildsKeyPrefixesMapping;
 
     public AllModels(@NotNull Build mainBuild) {
       super(mainBuild);
@@ -387,6 +407,37 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     public Map<String, Long> getPerformanceTrace() {
       return performanceTrace;
+    }
+
+    @Override
+    public void convertPaths(@NotNull Consumer<Object> pathsConverter) {
+      super.convertPaths(pathsConverter);
+      BuildEnvironment buildEnvironment = getBuildEnvironment();
+      if (buildEnvironment != null) {
+        pathsConverter.consume(buildEnvironment);
+      }
+      myBuildsKeyPrefixesMapping = new HashMap<String, String>();
+      convertPaths(pathsConverter, getMainBuild());
+      for (Build includedBuild : includedBuilds) {
+        convertPaths(pathsConverter, includedBuild);
+      }
+    }
+
+    private void convertPaths(@NotNull Consumer<Object> fileMapper, @NotNull Build build) {
+      String originalKey = getBuildKeyPrefix(build.getBuildIdentifier());
+      fileMapper.consume(build);
+      String currentKey = getBuildKeyPrefix(build.getBuildIdentifier());
+      if (!originalKey.equals(currentKey)) {
+        myBuildsKeyPrefixesMapping.put(currentKey, originalKey);
+      }
+    }
+
+    @NotNull
+    @Override
+    protected String getBuildKeyPrefix(@NotNull BuildIdentifier buildIdentifier) {
+      String currentKey = super.getBuildKeyPrefix(buildIdentifier);
+      String originalKey = myBuildsKeyPrefixesMapping == null ? null : myBuildsKeyPrefixesMapping.get(currentKey);
+      return originalKey == null ? currentKey : originalKey;
     }
   }
 

@@ -44,7 +44,7 @@ public final class ProjectImportActionWithCustomSerializer extends ProjectImport
         Class<?> toolingSerializerClass = myModelBuildersClassLoader.loadClass(ToolingSerializer.class.getName());
         mySerializer = toolingSerializerClass.getDeclaredConstructor().newInstance();
         mySerializerWriteMethod = toolingSerializerClass.getMethod("write", Object.class, Class.class);
-        registerIdeaProjectSerializationService(toolingSerializerClass);
+        registerGradleBuiltinModelsSerializationService(toolingSerializerClass);
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -71,17 +71,23 @@ public final class ProjectImportActionWithCustomSerializer extends ProjectImport
       return object;
     }
 
-    // support custom serialization of the gradle built-in IdeaProject model
-    private void registerIdeaProjectSerializationService(Class<?> toolingSerializerClass)
+    // support custom serialization of the gradle built-in models
+    private void registerGradleBuiltinModelsSerializationService(Class<?> toolingSerializerClass)
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
       Class<?> serializationServiceClass = myModelBuildersClassLoader.loadClass(SerializationService.class.getName());
-      final IdeaProjectSerializationService ideaProjectService = new IdeaProjectSerializationService(getBuildGradleVersion());
       Method register = toolingSerializerClass.getMethod("register", serializationServiceClass);
+      registerSerializationService(serializationServiceClass, register, new IdeaProjectSerializationService(getBuildGradleVersion()));
+    }
+
+    private void registerSerializationService(Class<?> serializationServiceClass, Method register,
+                                              final SerializationService<?> serializationService)
+      throws IllegalAccessException, InvocationTargetException {
       Object proxyInstance =
         Proxy.newProxyInstance(myModelBuildersClassLoader, new Class<?>[]{serializationServiceClass}, new InvocationHandler() {
           @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            return ideaProjectService.getClass().getMethod(method.getName(), method.getParameterTypes()).invoke(ideaProjectService, args);
+            Method m = serializationService.getClass().getMethod(method.getName(), method.getParameterTypes());
+            return m.invoke(serializationService, args);
           }
         });
       register.invoke(mySerializer, proxyInstance);

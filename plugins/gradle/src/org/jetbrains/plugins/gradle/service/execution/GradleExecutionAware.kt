@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.build.events.impl.*
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
@@ -15,6 +17,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState.CA
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -25,6 +28,7 @@ import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ConcurrencyUtil
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -44,6 +48,28 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
   ) {
     if (!isPreviewMode) prepareJvmForExecution(task, externalProjectPath, taskNotificationListener, project)
   }
+
+  override fun getEnvironmentConfiguration(runConfiguration: ExternalSystemRunConfiguration,
+                                           taskNotificationListener: ExternalSystemTaskNotificationListener,
+                                           project: Project): TargetEnvironmentConfiguration? {
+    val gradleRunConfiguration = runConfiguration as? GradleRunConfiguration ?: return null
+    val targetName = gradleRunConfiguration.options.remoteTarget ?: return localEnvironment()
+    return TargetEnvironmentsManager.getInstance(project).targets.findByName(targetName) ?: return localEnvironment()
+  }
+
+  override fun getEnvironmentConfiguration(projectPath: String,
+                                           isPreviewMode: Boolean,
+                                           taskNotificationListener: ExternalSystemTaskNotificationListener,
+                                           project: Project): TargetEnvironmentConfiguration? {
+    return localEnvironment()
+  }
+
+  private fun localEnvironment(): TargetEnvironmentConfiguration? =
+    if (Registry.`is`("gradle.tooling.use.external.process", false))
+      object : TargetEnvironmentConfiguration("local") {
+        override var projectRootOnTarget: String = ""
+      }
+    else null
 
   private fun prepareJvmForExecution(
     task: ExternalSystemTask,

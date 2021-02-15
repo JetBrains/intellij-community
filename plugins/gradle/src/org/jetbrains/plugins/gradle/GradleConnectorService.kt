@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle
 
+import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -8,14 +9,18 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getEnvironmentConfiguration
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getTargetPathMapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathMapper
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.execution.target.TargetGradleConnector
 import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices
 import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt
 import org.jetbrains.plugins.gradle.settings.DistributionType
@@ -63,23 +68,25 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     connectorsMap.clear()
   }
 
-  private fun getConnection(connectorParams: ConnectorParams): ProjectConnection {
+  private fun getConnection(connectorParams: ConnectorParams,
+                            taskId: ExternalSystemTaskId?,
+                            listener: ExternalSystemTaskNotificationListener?): ProjectConnection {
     return connectorsMap.compute(connectorParams.projectPath) { _, conn ->
       if (conn != null) {
         if (canBeReused(conn, connectorParams)) return@compute conn
         else {
           // close obsolete connection, can not disconnect the connector here - it may cause build cancel for the new connection operations
-          val unwrappedConnection = conn.connection as WrappedConnection
+          val unwrappedConnection = conn.connection as NonClosableConnection
           unwrappedConnection.delegate.close()
         }
       }
-      val newConnector = createConnector(connectorParams)
+      val newConnector = createConnector(connectorParams, taskId, listener)
       val newConnection = newConnector.connect()
       check(newConnection != null) {
         "Can't create connection to the target project via gradle tooling api. Project path: '${connectorParams.projectPath}'"
       }
 
-      val wrappedConnection = WrappedConnection(newConnection)
+      val wrappedConnection = NonClosableConnection(newConnection)
       return@compute GradleProjectConnection(connectorParams, newConnector, wrappedConnection)
     }!!.connection
   }
@@ -87,6 +94,8 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
   private fun canBeReused(projectConnection: GradleProjectConnection, connectorParams: ConnectorParams): Boolean {
     // don't cache connections for not-yet-installed gradle versions
     if (connectorParams.gradleHome == null) return false
+    // don't cache TargetProjectConnection as it doesn't support it yet
+    if (projectConnection.connector is TargetGradleConnector) return false
     return connectorParams == projectConnection.params
   }
 
@@ -101,7 +110,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     }
   }
 
-  private class WrappedConnection(val delegate: ProjectConnection) : ProjectConnection by delegate {
+  private class NonClosableConnection(val delegate: ProjectConnection) : ProjectConnection by delegate {
     override fun close() {
       throw IllegalStateException("This connection should not be closed explicitly.")
     }
@@ -115,7 +124,9 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     val javaHome: String?,
     val wrapperPropertyFile: String?,
     val verboseProcessing: Boolean?,
-    val ttlMs: Int?
+    val ttlMs: Int?,
+    val environmentConfiguration: TargetEnvironmentConfiguration?,
+    val targetPathMapper: PathMapper?
   )
 
   companion object {
@@ -148,6 +159,8 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       cancellationToken: CancellationToken? = null,
       function: Function<ProjectConnection, R>
     ): R {
+      val targetEnvironmentConfiguration = executionSettings?.getEnvironmentConfiguration()
+      val targetPathMapper = executionSettings?.getTargetPathMapper()
       val connectionParams = ConnectorParams(
         projectPath,
         executionSettings?.serviceDirectory,
@@ -156,22 +169,37 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         executionSettings?.javaHome,
         executionSettings?.wrapperPropertyFile,
         executionSettings?.isVerboseProcessing,
-        executionSettings?.remoteProcessIdleTtlInMs?.toInt()
+        executionSettings?.remoteProcessIdleTtlInMs?.toInt(),
+        targetEnvironmentConfiguration,
+        targetPathMapper
       )
       val connectionService = getInstance(projectPath, taskId)
       if (connectionService != null) {
-        val connection = connectionService.getConnection(connectionParams)
-        return function.apply(connection)
+        val connection = connectionService.getConnection(connectionParams, taskId, listener)
+        return if (connection is NonClosableConnection) {
+          function.apply(connection)
+        }
+        else {
+          connection.use(function::apply)
+        }
       }
       else {
-        val newConnector = createConnector(connectionParams)
+        val newConnector = createConnector(connectionParams, taskId, listener)
         val connection = newConnector.connect()
         return connection.use(function::apply)
       }
     }
 
-    private fun createConnector(connectorParams: ConnectorParams): GradleConnector {
-      val connector = GradleConnector.newConnector()
+    private fun createConnector(connectorParams: ConnectorParams,
+                                taskId: ExternalSystemTaskId?,
+                                listener: ExternalSystemTaskNotificationListener?): GradleConnector {
+      val connector: GradleConnector
+      if (connectorParams.environmentConfiguration != null) {
+        connector = TargetGradleConnector(connectorParams.environmentConfiguration, connectorParams.targetPathMapper, taskId, listener)
+      }
+      else {
+        connector = GradleConnector.newConnector()
+      }
       val projectDir = File(connectorParams.projectPath)
       val gradleUserHome = if (connectorParams.serviceDirectory == null) null else File(connectorParams.serviceDirectory)
 

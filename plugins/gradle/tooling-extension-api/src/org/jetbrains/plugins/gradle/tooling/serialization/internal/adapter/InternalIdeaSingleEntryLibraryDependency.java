@@ -3,11 +3,13 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class InternalIdeaSingleEntryLibraryDependency extends InternalIdeaDependency implements IdeaSingleEntryLibraryDependency {
   @NotNull private final File myFile;
   @Nullable private File mySource;
