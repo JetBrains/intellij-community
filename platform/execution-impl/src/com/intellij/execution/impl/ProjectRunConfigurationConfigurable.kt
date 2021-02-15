@@ -49,7 +49,7 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
     val panel = JPanel(BorderLayout())
     panel.background = JBColor.background()
     panel.add(toolbarDecorator!!.createPanel(), BorderLayout.CENTER)
-    val actionLink = ActionLink("Edit Configuration Templates...") { showTemplatesDialog(project, selectedConfigurationType) }
+    val actionLink = ActionLink(ExecutionBundle.message("edit.configuration.templates")) { showTemplatesDialog(project, selectedConfigurationType) }
     actionLink.border = JBUI.Borders.empty(10)
     actionLink.background = JBColor.background()
     panel.add(actionLink, BorderLayout.SOUTH)
