@@ -9,6 +9,7 @@ public class StringToCharArray {
     if (s.startsWith("--")) {
       char[] arr = s.toCharArray();
       if (<warning descr="Condition 'arr.length > 1' is always 'true'">arr.length > 1</warning>) {}
+      if (<warning descr="Condition 'arr.length == s.length()' is always 'true'">arr.length == s.length()</warning>) {}
     }
   }
 }

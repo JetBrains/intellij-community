@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -66,57 +67,79 @@ public final class CustomMethodHandlers {
 
   interface CustomMethodHandler {
 
+    @Nullable
+    DfaValue getMethodResultValue(DfaCallArguments callArguments,
+                                  DfaMemoryState memState,
+                                  DfaValueFactory factory,
+                                  PsiMethod method);
+
+    default CustomMethodHandler compose(CustomMethodHandler other) {
+      if (other == null) return this;
+      return (args, memState, factory, method) -> {
+        DfaValue result = this.getMethodResultValue(args, memState, factory, method);
+        return result == null ? other.getMethodResultValue(args, memState, factory, method) : result;
+      };
+    }
+  }
+
+  interface DfTypeCustomMethodHandler extends CustomMethodHandler {
     @NotNull
     DfType getMethodResult(DfaCallArguments callArguments,
                            DfaMemoryState memState,
                            DfaValueFactory factory,
                            PsiMethod method);
 
-    default CustomMethodHandler compose(CustomMethodHandler other) {
-      if (other == null) return this;
-      return (args, memState, factory, method) -> {
-        DfType result = this.getMethodResult(args, memState, factory, method);
-        return result == TOP ? other.getMethodResult(args, memState, factory, method) : result;
-      };
+    @Override
+    @Nullable
+    default DfaValue getMethodResultValue(DfaCallArguments callArguments,
+                                  DfaMemoryState memState,
+                                  DfaValueFactory factory,
+                                  PsiMethod method) {
+      DfType dfType = getMethodResult(callArguments, memState, factory, method);
+      return dfType == TOP ? null : factory.fromDfType(dfType);
     }
+  }
+  
+  private static CustomMethodHandler toValue(DfTypeCustomMethodHandler handler) {
+    return handler;
   }
 
   private static final CallMapper<CustomMethodHandler> CUSTOM_METHOD_HANDLERS = new CallMapper<CustomMethodHandler>()
     .register(instanceCall(JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
-              (args, memState, factory, method) -> indexOf(args.myQualifier, memState, factory, STRING_LENGTH))
+              toValue((args, memState, factory, method) -> indexOf(args.myQualifier, memState, factory, STRING_LENGTH)))
     .register(instanceCall(JAVA_UTIL_LIST, "indexOf", "lastIndexOf"),
-              (args, memState, factory, method) -> indexOf(args.myQualifier, memState, factory, COLLECTION_SIZE))
+              toValue((args, memState, factory, method) -> indexOf(args.myQualifier, memState, factory, COLLECTION_SIZE)))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("int"),
-              (args, memState, factory, method) -> mathAbs(args.myArguments, memState, false))
+              toValue((args, memState, factory, method) -> mathAbs(args.myArguments, memState, false)))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
-              (args, memState, factory, method) -> mathAbs(args.myArguments, memState, true))
+              toValue((args, memState, factory, method) -> mathAbs(args.myArguments, memState, true)))
     .register(exactInstanceCall(JAVA_LANG_STRING, "substring"),
               (args, memState, factory, method) -> substring(args, memState, factory, method.getReturnType()))
     .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
-              (args, memState, factory, method) -> OPTIONAL_VALUE.asDfType(memState.getDfType(args.myArguments[0]), method.getReturnType()))
+              toValue((args, memState, factory, method) -> OPTIONAL_VALUE.asDfType(memState.getDfType(args.myArguments[0]))))
     .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
-              (args, memState, factory, method) -> calendarGet(args.myArguments, memState))
+              toValue((args, memState, factory, method) -> calendarGet(args.myArguments, memState)))
     .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
                     instanceCall("java.io.Reader", "skip").parameterTypes("long")),
-              (args, memState, factory, method) -> skip(args.myArguments, memState))
+              toValue((args, memState, factory, method) -> skip(args.myArguments, memState)))
     .register(staticCall(JAVA_LANG_INTEGER, "toHexString").parameterCount(1),
-              (args, memState, factory, method) -> numberAsString(args, memState, 4, Integer.SIZE))
+              toValue((args, memState, factory, method) -> numberAsString(args, memState, 4, Integer.SIZE)))
     .register(staticCall(JAVA_LANG_INTEGER, "toOctalString").parameterCount(1),
-              (args, memState, factory, method) -> numberAsString(args, memState, 3, Integer.SIZE))
+              toValue((args, memState, factory, method) -> numberAsString(args, memState, 3, Integer.SIZE)))
     .register(staticCall(JAVA_LANG_INTEGER, "toBinaryString").parameterCount(1),
-              (args, memState, factory, method) -> numberAsString(args, memState, 1, Integer.SIZE))
+              toValue((args, memState, factory, method) -> numberAsString(args, memState, 1, Integer.SIZE)))
     .register(staticCall(JAVA_LANG_LONG, "toHexString").parameterCount(1),
-              (args, memState, factory, method) -> numberAsString(args, memState, 4, Long.SIZE))
+              toValue((args, memState, factory, method) -> numberAsString(args, memState, 4, Long.SIZE)))
     .register(staticCall(JAVA_LANG_LONG, "toOctalString").parameterCount(1),
-              (args, memState, factory, method) -> numberAsString(args, memState, 3, Long.SIZE))
+              toValue((args, memState, factory, method) -> numberAsString(args, memState, 3, Long.SIZE)))
     .register(staticCall(JAVA_LANG_LONG, "toBinaryString").parameterCount(1),
-              (args, memState, factory, method) -> numberAsString(args, memState, 1, Long.SIZE))
+              toValue((args, memState, factory, method) -> numberAsString(args, memState, 1, Long.SIZE)))
     .register(instanceCall(JAVA_LANG_ENUM, "name").parameterCount(0),
-              (args, memState, factory, method) -> enumName(args.myQualifier, memState, method.getReturnType()))
+              toValue((args, memState, factory, method) -> enumName(args.myQualifier, memState, method.getReturnType())))
     .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyMap").parameterCount(0),
-              (args, memState, factory, method) -> getEmptyCollectionConstant(method))
+              toValue((args, memState, factory, method) -> getEmptyCollectionConstant(method)))
     .register(exactInstanceCall(JAVA_LANG_CLASS, "getName", "getSimpleName", "getCanonicalName").parameterCount(0),
-              (args, memState, factory, method) -> className(memState, args.myQualifier, method.getName(), method.getReturnType()))
+              toValue((args, memState, factory, method) -> className(memState, args.myQualifier, method.getName(), method.getReturnType())))
     .register(anyOf(
       staticCall(JAVA_UTIL_COLLECTIONS, "singleton", "singletonList", "singletonMap"),
       staticCall(JAVA_UTIL_LIST, "of"),
@@ -128,11 +151,11 @@ public final class CustomMethodHandlers {
       staticCall(JAVA_LANG_LONG, "compare").parameterTypes("long", "long"),
       staticCall(JAVA_LANG_BYTE, "compare").parameterTypes("byte", "byte"),
       staticCall(JAVA_LANG_SHORT, "compare").parameterTypes("short", "short")),
-              (args, state, factory, method) -> compareInteger(args, state))
+              toValue((args, state, factory, method) -> compareInteger(args, state)))
     .register(anyOf(
       instanceCall("java.util.Random", "nextInt").parameterTypes("int"),
       instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int"),
-      instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int", "int")), CustomMethodHandlers::randomNextInt)
+      instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int", "int")), toValue(CustomMethodHandlers::randomNextInt))
     .register(staticCall(JAVA_UTIL_ARRAYS, "copyOf"), CustomMethodHandlers::copyOfArray)
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterTypes("T[]"), CustomMethodHandlers::collectionToArray)
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterCount(0), CustomMethodHandlers::collectionToArray)
@@ -141,7 +164,7 @@ public final class CustomMethodHandlers {
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
     if (isConstantCall(method)) {
-      handler = (arguments, state, factory, m) -> handleConstantCall(arguments, state, m);
+      handler = toValue((arguments, state, factory, m) -> handleConstantCall(arguments, state, m));
     }
     CustomMethodHandler handler2 = CUSTOM_METHOD_HANDLERS.mapFirst(method);
     return handler == null ? handler2 : handler.compose(handler2);
@@ -256,32 +279,32 @@ public final class CustomMethodHandlers {
     return intRange(LongRangeSet.range(-1, range.max() - 1));
   }
 
-  private static @NotNull DfType copyOfArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
-    if (arguments.myArguments.length < 2) return TOP;
-    DfType size = state.getDfType(arguments.myArguments[1]).meet(intRange(LongRangeSet.indexRange()));
-    if (size == BOTTOM) return FAIL;
-    return typedObject(method.getReturnType(), Nullability.NOT_NULL).meet(ARRAY_LENGTH.asDfType(size)).meet(LOCAL_OBJECT);
+  private static @Nullable DfaValue copyOfArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
+    if (arguments.myArguments.length < 2) return null;
+    return factory.getBoxedFactory().createBoxed(typedObject(method.getReturnType(), Nullability.NOT_NULL).meet(LOCAL_OBJECT),
+      ARRAY_LENGTH, arguments.myArguments[1]);
   }
 
-  private static @NotNull DfType collectionFactory(DfaCallArguments args,
+  private static @Nullable DfaValue collectionFactory(DfaCallArguments args,
                                                    DfaMemoryState memState, DfaValueFactory factory,
                                                    PsiMethod method) {
     PsiType type = method.getReturnType();
-    if (!(type instanceof PsiClassType)) return TOP;
+    if (!(type instanceof PsiClassType)) return null;
     int factor = PsiTypesUtil.classNameEquals(type, JAVA_UTIL_MAP) ? 2 : 1;
-    DfType size;
+    DfaValue size;
     if (method.isVarArgs()) {
-      size = memState.getDfType(ARRAY_LENGTH.createValue(factory, args.myArguments[0]));
+      size = ARRAY_LENGTH.createValue(factory, args.myArguments[0]);
     }
     else {
-      size = intValue(args.myArguments.length / factor);
+      size = factory.fromDfType(intValue(args.myArguments.length / factor));
     }
     boolean asList = method.getName().equals("asList");
     Mutability mutability = asList ? Mutability.MUTABLE : Mutability.UNMODIFIABLE;
-    DfType result = typedObject(type, Nullability.NOT_NULL)
-      .meet(COLLECTION_SIZE.asDfType(size))
-      .meet(mutability.asDfType());
-    return asList ? result.meet(LOCAL_OBJECT) : result;
+    DfType result = typedObject(type, Nullability.NOT_NULL).meet(mutability.asDfType());
+    if (asList) {
+      result = result.meet(LOCAL_OBJECT);
+    }
+    return factory.getBoxedFactory().createBoxed(result, COLLECTION_SIZE, size);
   }
 
   private static DfType getEmptyCollectionConstant(PsiMethod method) {
@@ -293,21 +316,19 @@ public final class CustomMethodHandlers {
     return constant(field, field.getType());
   }
 
-  private static @NotNull DfType substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, PsiType stringType) {
-    if (stringType == null || !stringType.equalsToText(JAVA_LANG_STRING)) return TOP;
+  private static @Nullable DfaValue substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, PsiType stringType) {
+    if (stringType == null || !stringType.equalsToText(JAVA_LANG_STRING)) return null;
     DfaValue qualifier = args.myQualifier;
     DfaValue[] arguments = args.myArguments;
-    if (arguments.length < 1 || arguments.length > 2 || arguments[0] == null) return TOP;
+    if (arguments.length < 1 || arguments.length > 2 || arguments[0] == null) return null;
     DfaValue from = arguments[0];
     DfaValue lenVal = STRING_LENGTH.createValue(factory, qualifier);
     DfaValue to = arguments.length == 1 ? lenVal : arguments[1];
-    DfaValue resultLenVal = factory.getBinOpFactory().create(to, from, state, false, JavaTokenType.MINUS);
-    DfType resultLen = state.getDfType(resultLenVal);
-    if (!(resultLen instanceof DfIntType)) return FAIL;
-    resultLen = ((DfIntType)resultLen).meetRelation(RelationType.GE, intValue(0));
-    if (!(resultLen instanceof DfIntType)) return FAIL;
-    resultLen = ((DfIntType)resultLen).meetRelation(RelationType.LE, state.getDfType(lenVal));
-    return STRING_LENGTH.asDfType(resultLen, stringType);
+    DfaValue resultLen = factory.getBinOpFactory().create(to, from, state, false, JavaTokenType.MINUS);
+    if (resultLen instanceof DfaBinOpValue) {
+      resultLen = factory.fromDfType(state.getDfType(resultLen));
+    }
+    return factory.getBoxedFactory().createBoxed(typedObject(stringType, Nullability.NOT_NULL), STRING_LENGTH, resultLen);
   }
 
   private static @NotNull DfType mathAbs(DfaValue[] args, DfaMemoryState memState, boolean isLong) {
@@ -446,11 +467,12 @@ public final class CustomMethodHandlers {
     return TOP;
   }
 
-  private static @NotNull DfType collectionToArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
+  private static @NotNull DfaValue collectionToArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
     DfType result = NOT_NULL_OBJECT;
-    LongRangeSet finalRange;
     DfaValue collection = arguments.myQualifier;
-    LongRangeSet collectionSizeRange = DfIntType.extractRange(state.getDfType(COLLECTION_SIZE.createValue(factory, collection)));
+    DfaValue collectionSize = COLLECTION_SIZE.createValue(factory, collection);
+    LongRangeSet collectionSizeRange = DfIntType.extractRange(state.getDfType(collectionSize));
+    DfaValue finalSize = collectionSize;
     if (arguments.myArguments.length == 1) {
       DfaValue array = arguments.myArguments[0];
       DfType arrType = state.getDfType(array);
@@ -460,20 +482,20 @@ public final class CustomMethodHandlers {
       }
       // Array size is max of collection size and argument array size
       LongRangeSet arraySizeRange = DfIntType.extractRange(state.getDfType(ARRAY_LENGTH.createValue(factory, array)));
-      LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GE).intersect(arraySizeRange);
+      LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GT).intersect(arraySizeRange);
       LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).intersect(collectionSizeRange);
-      finalRange = biggerArrays.unite(biggerCollections);
-    } else {
-      finalRange = collectionSizeRange; 
+      if (!biggerArrays.isEmpty()) {
+        finalSize = factory.fromDfType(intRange(biggerArrays.unite(biggerCollections)));
+      }
     }
-    return result.meet(ARRAY_LENGTH.asDfType(intRange(finalRange)));
+    return factory.getBoxedFactory().createBoxed(result, ARRAY_LENGTH, finalSize);
   }
 
-  private static @NotNull DfType stringToCharArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, 
+  private static @NotNull DfaValue stringToCharArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, 
                                                    PsiMethod method) {
     DfaValue string = arguments.myQualifier;
-    DfType stringSizeRange = state.getDfType(STRING_LENGTH.createValue(factory, string));
-    return typedObject(PsiType.CHAR.createArrayType(), Nullability.NOT_NULL)
-      .meet(LOCAL_OBJECT).meet(ARRAY_LENGTH.asDfType(stringSizeRange));
+    DfaValue stringLength = STRING_LENGTH.createValue(factory, string);
+    return factory.getBoxedFactory().createBoxed(typedObject(PsiType.CHAR.createArrayType(), Nullability.NOT_NULL)
+      .meet(LOCAL_OBJECT), ARRAY_LENGTH, stringLength);
   }
 }

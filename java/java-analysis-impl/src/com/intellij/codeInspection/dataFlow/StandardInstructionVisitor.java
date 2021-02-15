@@ -660,9 +660,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (method != null) {
         CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(method);
         if (handler != null) {
-          DfType dfType = handler.getMethodResult(callArguments, state, factory, method);
-          if (dfType != TOP) {
-            return factory.fromDfType(dfType);
+          DfaValue value = handler.getMethodResultValue(callArguments, state, factory, method);
+          if (value != null) {
+            return value;
           }
         }
       }

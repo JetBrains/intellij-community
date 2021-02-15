@@ -75,4 +75,14 @@ public class CollectionToArray {
     assert arr.length == 0;
     return list.toArray(arr);
   }
+  
+  void testSizeEquality(List<String> list, int x) {
+    String[] arr = list.toArray(new String[0]);
+    if (<warning descr="Condition 'x == 1 && list.get(arr.length).isEmpty()' is always 'false'">x == 1 && list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(arr.length).isEmpty()</warning>) {
+    }
+    if (<warning descr="Condition 'x == 2 && arr[list.size()].isEmpty()' is always 'false'">x == 2 && arr[<warning descr="Array index is out of bounds">list.size()</warning>].isEmpty()</warning>) {
+    }
+    if (list.isEmpty()) return;
+    if (<warning descr="Condition 'arr.length == 0' is always 'false'">arr.length == 0</warning>) return;
+  }
 }

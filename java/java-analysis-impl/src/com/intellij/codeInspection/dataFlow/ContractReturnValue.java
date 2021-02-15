@@ -3,10 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
@@ -120,6 +117,9 @@ public abstract class ContractReturnValue {
     if (newValue instanceof DfaVariableValue) {
       memState.meetDfType(newValue, result);
       return newValue;
+    }
+    if (defaultValue instanceof DfaBoxedValue && newType.isSuperType(defaultValue.getDfType())) {
+      return defaultValue;
     }
     if (defaultValue instanceof DfaVariableValue) {
       memState.meetDfType(defaultValue, result);

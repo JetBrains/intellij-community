@@ -175,15 +175,6 @@ public enum SpecialField implements VariableDescriptor {
       return DfTypes.TOP;
     }
 
-    @NotNull
-    @Override
-    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
-      if (qualifier instanceof DfaBoxedValue) {
-        return ((DfaBoxedValue)qualifier).getWrappedValue();
-      }
-      return super.createValue(factory, qualifier, forAccessor);
-    }
-
     @Override
     boolean isMyQualifierType(PsiType type) {
       return TypeConversionUtil.isPrimitiveWrapper(type);
@@ -300,6 +291,9 @@ public enum SpecialField implements VariableDescriptor {
   @NotNull
   @Override
   public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+    if (qualifier instanceof DfaBoxedValue && ((DfaBoxedValue)qualifier).getSpecialField() == this) {
+      return ((DfaBoxedValue)qualifier).getWrappedValue();
+    }
     if (qualifier instanceof DfaVariableValue) {
       DfaVariableValue variableValue = (DfaVariableValue)qualifier;
       PsiModifierListOwner psiVariable = variableValue.getPsiVariable();

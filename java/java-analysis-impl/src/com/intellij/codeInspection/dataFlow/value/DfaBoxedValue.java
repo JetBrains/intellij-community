@@ -3,30 +3,45 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.HashMap;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 public final class DfaBoxedValue extends DfaValue {
   private final @NotNull DfaVariableValue myWrappedValue;
+  private final @NotNull SpecialField mySpecialField;
   private final @NotNull DfType myType;
 
-  private DfaBoxedValue(@NotNull DfaVariableValue valueToWrap, @NotNull DfaValueFactory factory, @NotNull DfType type) {
-    super(factory);
+  private DfaBoxedValue(@NotNull DfaVariableValue valueToWrap,
+                        @NotNull SpecialField field,
+                        @NotNull DfType type) {
+    super(valueToWrap.getFactory());
     myWrappedValue = valueToWrap;
+    mySpecialField = field;
     myType = type;
   }
 
   @NonNls
   public String toString() {
-    return "Boxed "+myWrappedValue.toString();
+    return myType + ";" + mySpecialField + "=" + myWrappedValue;
   }
 
   @NotNull
   public DfaVariableValue getWrappedValue() {
     return myWrappedValue;
+  }
+
+  @NotNull
+  public SpecialField getSpecialField() {
+    return mySpecialField;
   }
 
   @Nullable
@@ -42,7 +57,7 @@ public final class DfaBoxedValue extends DfaValue {
   }
 
   public static class Factory {
-    private final TIntObjectHashMap<DfaBoxedValue> cachedValues = new TIntObjectHashMap<>();
+    private final HashMap<Object, DfaBoxedValue> cachedValues = new HashMap<>();
 
     private final DfaValueFactory myFactory;
 
@@ -51,26 +66,31 @@ public final class DfaBoxedValue extends DfaValue {
     }
 
     @NotNull
-    public DfaValue createBoxed(@NotNull DfaValue valueToWrap, @NotNull DfType type) {
-      if (valueToWrap instanceof DfaVariableValue && ((DfaVariableValue)valueToWrap).getDescriptor() == SpecialField.UNBOX) {
-        DfaVariableValue qualifier = ((DfaVariableValue)valueToWrap).getQualifier();
-        if (qualifier != null && type.equals(qualifier.getDfType())) {
+    public DfaValue createBoxed(@NotNull DfType qualifierType,
+                                @NotNull SpecialField specialField, @NotNull DfaValue specialFieldValue) {
+      if (specialFieldValue instanceof DfaVariableValue && ((DfaVariableValue)specialFieldValue).getDescriptor() == specialField) {
+        DfaVariableValue qualifier = ((DfaVariableValue)specialFieldValue).getQualifier();
+        if (qualifier != null && qualifierType.isSuperType(qualifier.getDfType())) {
           return qualifier;
         }
       }
-      if (valueToWrap instanceof DfaTypeValue) {
-        DfType dfType = SpecialField.UNBOX.asDfType(valueToWrap.getDfType()).meet(type);
+      if (specialFieldValue instanceof DfaTypeValue) {
+        DfType dfType;
+        DfType fieldValue = specialFieldValue.getDfType();
+        if (specialField == SpecialField.STRING_LENGTH && fieldValue.isConst(0)) {
+          dfType = DfTypes.constant("", JavaPsiFacade.getElementFactory(specialFieldValue.getFactory().getProject())
+            .createTypeByFQClassName(JAVA_LANG_STRING));
+        }
+        else {
+          dfType = qualifierType.meet(specialField.asDfType(fieldValue));
+        }
         return myFactory.fromDfType(dfType);
       }
-      if (valueToWrap instanceof DfaVariableValue) {
-        int id = valueToWrap.getID();
-        DfaBoxedValue boxedValue = cachedValues.get(id);
-        if (boxedValue == null) {
-          cachedValues.put(id, boxedValue = new DfaBoxedValue((DfaVariableValue)valueToWrap, myFactory, type));
-        }
-        return boxedValue;
+      if (specialFieldValue instanceof DfaVariableValue) {
+        return cachedValues.computeIfAbsent(Arrays.asList(specialFieldValue, specialField, qualifierType),
+                                            k -> new DfaBoxedValue((DfaVariableValue)specialFieldValue, specialField, qualifierType));
       }
-      return myFactory.fromDfType(type);
+      return myFactory.fromDfType(qualifierType);
     }
   }
 }

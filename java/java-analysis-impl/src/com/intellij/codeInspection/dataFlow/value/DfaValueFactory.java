@@ -144,7 +144,7 @@ public class DfaValueFactory {
       Boolean boo = computeJavaLangBooleanFieldReference(variable);
       if (boo != null) {
         DfaValue unboxed = getConstant(boo, PsiType.BOOLEAN);
-        return getBoxedFactory().createBoxed(unboxed, DfTypes.typedObject(type, Nullability.NOT_NULL));
+        return getBoxedFactory().createBoxed(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, unboxed);
       }
       if (DfaUtil.isEmptyCollectionConstantField(variable)) {
         return getConstant(variable, type);

@@ -1219,7 +1219,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaBoxedValue) {
       DfaBoxedValue boxedValue = (DfaBoxedValue)value;
       DfaValue canonicalized = canonicalize(boxedValue.getWrappedValue());
-      return Objects.requireNonNull(myFactory.getBoxedFactory().createBoxed(canonicalized, boxedValue.getDfType()));
+      if (canonicalized == boxedValue.getWrappedValue()) return boxedValue;
+      return myFactory.getBoxedFactory().createBoxed(boxedValue.getDfType(), boxedValue.getSpecialField(), canonicalized);
     }
     return value;
   }
