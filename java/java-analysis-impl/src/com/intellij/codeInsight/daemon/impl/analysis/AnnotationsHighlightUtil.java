@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.MakeReceiverParameterFirstFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
@@ -715,7 +716,13 @@ public final class AnnotationsHighlightUtil {
     PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parameter);
     if (leftNeighbour != null && !PsiUtil.isJavaToken(leftNeighbour, JavaTokenType.LPARENTH)) {
       String text = JavaErrorBundle.message("receiver.wrong.position");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
+      HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
+      QuickFixAction.registerQuickFixAction(info, new MakeReceiverParameterFirstFix(parameter));
+      QuickFixAction.registerQuickFixAction(
+        info,
+        QUICK_FIX_FACTORY.createDeleteFix(parameter, QuickFixBundle.message("remove.receiver.parameter")));
+      return info;
     }
 
     return null;
