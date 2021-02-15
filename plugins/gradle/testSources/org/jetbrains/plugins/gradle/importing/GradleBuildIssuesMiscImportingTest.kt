@@ -39,7 +39,7 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
         {
           assertThat(it).isEqualTo("-\n" +
                                    " -failed\n" +
-                                   "  $oomMessage \n")
+                                   "  $oomMessage")
 
         }
       )
