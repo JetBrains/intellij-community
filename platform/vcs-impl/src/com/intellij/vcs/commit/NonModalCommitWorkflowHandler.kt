@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
@@ -111,24 +112,38 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
     coroutineScope.launch {
       workflow.executeDefault {
-        var result = ReturnResult.COMMIT
-
         ui.commitProgressUi.startProgress()
         try {
-          for (commitCheck in commitHandlers.filterIsInstance<CommitCheck<*>>()) {
-            val problem = runCommitCheck(commitCheck)
-            if (problem != null) result = ReturnResult.CANCEL
-          }
+          runAllHandlers(executor)
         }
         finally {
           ui.commitProgressUi.endProgress()
         }
-
-        result
       }
     }
 
     return true
+  }
+
+  private suspend fun runAllHandlers(executor: CommitExecutor?): ReturnResult {
+    workflow.runMetaHandlers()
+    FileDocumentManager.getInstance().saveAllDocuments()
+
+    val handlersResult = workflow.runHandlers(executor)
+    if (handlersResult != ReturnResult.COMMIT) return handlersResult
+
+    return runCommitChecks()
+  }
+
+  private suspend fun runCommitChecks(): ReturnResult {
+    var result = ReturnResult.COMMIT
+
+    for (commitCheck in commitHandlers.filterIsInstance<CommitCheck<*>>()) {
+      val problem = runCommitCheck(commitCheck)
+      if (problem != null) result = ReturnResult.CANCEL
+    }
+
+    return result
   }
 
   private suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>): P? {
@@ -137,7 +152,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return problem
   }
 
-  override fun dispose() = coroutineScope.cancel()
+  override fun dispose() {
+    coroutineScope.cancel()
+    super.dispose()
+  }
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
     ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)

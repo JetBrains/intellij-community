@@ -197,7 +197,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     var checks = Runnable {
       ProgressManager.checkCanceled()
       FileDocumentManager.getInstance().saveAllDocuments()
-      result = runBeforeCommitHandlersChecks(executor)
+      result = runBeforeCommitHandlersChecks(executor, commitHandlers)
     }
 
     commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
@@ -222,8 +222,8 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   protected open fun doRunBeforeCommitChecks(checks: Runnable) = checks.run()
 
-  private fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable {
-    return Runnable {
+  protected fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable =
+    Runnable {
       try {
         LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
         metaHandler.runCheckinHandlers(task)
@@ -237,10 +237,9 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         task.run()
       }
     }
-  }
 
-  private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    commitHandlers.forEachLoggingErrors(LOG) { handler ->
+  protected fun runBeforeCommitHandlersChecks(executor: CommitExecutor?, handlers: List<CheckinHandler>): CheckinHandler.ReturnResult {
+    handlers.forEachLoggingErrors(LOG) { handler ->
       try {
         val result = runBeforeCommitHandler(handler, executor)
         if (result != CheckinHandler.ReturnResult.COMMIT) return result

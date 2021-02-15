@@ -251,6 +251,8 @@ internal class ChangesViewCommitWorkflowHandler(
   override fun dispose() {
     saveStateBeforeDispose()
     disposeCommitOptions()
+
+    super.dispose()
   }
 
   private fun saveStateBeforeDispose() {
