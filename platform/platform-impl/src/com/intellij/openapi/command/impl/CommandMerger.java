@@ -90,6 +90,7 @@ public final class CommandMerger {
     return !myForcedGlobal && !nextCommandToMerge.myForcedGlobal && canMergeGroup(groupId, SoftReference.dereference(myLastGroupId));
   }
 
+  // remove all references to document to avoid memory leaks
   void clearDocumentReferences(@NotNull Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);

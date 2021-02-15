@@ -599,9 +599,8 @@ public class UndoManagerImpl extends UndoManager {
   @ApiStatus.Internal
   public void clearDocumentReferences(@NotNull Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    DocumentReference docRef = DocumentReferenceManager.getInstance().create(document);
-    myUndoStacksHolder.clearStacks(true, Collections.singleton(docRef));
-    myRedoStacksHolder.clearStacks(true, Collections.singleton(docRef));
+    myUndoStacksHolder.clearDocumentReferences(document);
+    myRedoStacksHolder.clearDocumentReferences(document);
     myMerger.clearDocumentReferences(document);
   }
 

@@ -175,6 +175,17 @@ final class UndoRedoStacksHolder {
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
   }
 
+  // remove all references to document to avoid memory leaks
+  void clearDocumentReferences(@NotNull Document document) {
+    myDocumentsWithStacks.remove(document);
+    // DocumentReference created from file is not equal to ref created from document from that file, so have to check for leaking both
+    DocumentReference referenceFile = DocumentReferenceManager.getInstance().create(document);
+    DocumentReference referenceDoc = new DocumentReferenceByDocument(document);
+    myDocumentStacks.remove(referenceFile);
+    myDocumentStacks.remove(referenceDoc);
+    myGlobalStack.removeIf(group -> group.getAffectedDocuments().contains(referenceFile) || group.getAffectedDocuments().contains(referenceDoc));
+  }
+
   private static void convertTemporaryActionsToPermanent(LinkedList<UndoableGroup> each) {
     for (int i = each.size() - 1; i >= 0; i--) {
       UndoableGroup group1 = each.get(i);
