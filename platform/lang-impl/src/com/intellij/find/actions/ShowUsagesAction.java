@@ -172,18 +172,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       return;
     }
 
-    RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
-    if (Registry.is("ide.symbol.find.usages")) {
-      showSymbolUsages(project, e.getDataContext());
-    }
-    else {
-      showPsiUsages(project, e, popupPosition);
-    }
-  }
-
-  private static void showSymbolUsages(@NotNull Project project, @NotNull DataContext dataContext) {
+    DataContext dataContext = e.getDataContext();
     showUsages(project, dataContext, ResolverKt.allTargets(dataContext));
   }
 
@@ -236,23 +227,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       project, searchScope, target,
       ShowUsagesParameters.initial(project, editor, popupPosition)
     );
-  }
-
-  private static void showPsiUsages(@NotNull Project project, @NotNull AnActionEvent e, @NotNull RelativePoint popupPosition) {
-    UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
-    Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (usageTargets == null) {
-      FindUsagesAction.chooseAmbiguousTargetAndPerform(project, editor, element -> {
-        startFindUsages(element, popupPosition, editor);
-        return false;
-      });
-    }
-    else if (ArrayUtil.getFirstElement(usageTargets) instanceof PsiElementUsageTarget) {
-      PsiElement element = ((PsiElementUsageTarget)usageTargets[0]).getElement();
-      if (element != null) {
-        startFindUsages(element, popupPosition, editor);
-      }
-    }
   }
 
   private static void hideHints() {

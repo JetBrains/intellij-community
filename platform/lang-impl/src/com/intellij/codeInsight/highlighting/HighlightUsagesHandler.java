@@ -3,15 +3,12 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.EditorSearchSession;
-import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -30,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.PomTarget;
@@ -38,9 +34,6 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageTargetUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,55 +66,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
-      if (Registry.is("ide.symbol.find.usages")) {
-        if (!HighlightUsagesKt.highlightUsages(project, editor, file)) {
-          handleNoUsageTargets(file, editor, selectionModel, project);
-        }
-        return;
-      }
-      UsageTarget[] usageTargets = getUsageTargets(editor, file);
-      if (usageTargets.length == 0) {
+      if (!HighlightUsagesKt.highlightUsages(project, editor, file)) {
         handleNoUsageTargets(file, editor, selectionModel, project);
-        return;
-      }
-
-      boolean clearHighlights = isClearHighlights(editor);
-      for (UsageTarget target : usageTargets) {
-        target.highlightUsages(file, editor, clearHighlights);
       }
     });
-  }
-
-  private static UsageTarget @NotNull[] getUsageTargets(@NotNull Editor editor, @NotNull PsiFile file) {
-    UsageTarget[] usageTargets = UsageTargetUtil.findUsageTargets(editor, file);
-
-    if (usageTargets.length == 0) {
-      PsiElement targetElement = getTargetElement(editor, file);
-      if (targetElement != null && targetElement != file) {
-        if (!(targetElement instanceof NavigationItem)) {
-          targetElement = targetElement.getNavigationElement();
-        }
-        if (targetElement instanceof NavigationItem) {
-          usageTargets = new UsageTarget[]{new PsiElement2UsageTargetAdapter(targetElement)};
-        }
-      }
-    }
-
-    if (usageTargets.length == 0) {
-      PsiReference ref = TargetElementUtil.findReference(editor);
-
-      if (ref instanceof PsiPolyVariantReference) {
-        ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
-
-        if (results.length > 0) {
-          usageTargets = ContainerUtil.mapNotNull(results, result -> {
-            PsiElement element = result.getElement();
-            return element == null ? null : new PsiElement2UsageTargetAdapter(element);
-          }, UsageTarget.EMPTY_ARRAY);
-        }
-      }
-    }
-    return usageTargets;
   }
 
   private static void handleNoUsageTargets(@NotNull PsiFile file,
@@ -164,19 +112,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       }
     }
     return null;
-  }
-
-  @Nullable
-  private static PsiElement getTargetElement(@NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().getReferenceSearchFlags());
-
-    if (target == null) {
-      int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-      PsiElement element = file.findElementAt(offset);
-      if (element == null) return null;
-    }
-
-    return target;
   }
 
   private static void doRangeHighlighting(@NotNull Editor editor, @NotNull Project project) {
