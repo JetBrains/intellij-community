@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -55,7 +56,6 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
 
   private fun resolveWslDistribution(path: String): WSLDistribution? {
     if (!WslDistributionManager.isWslPath(path)) return null
-    return WslDistributionManager.getInstance().distributionFromPath(path)
-
+    return WslPath.getDistributionByWindowsUncPath(path)
   }
 }
