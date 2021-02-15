@@ -6,7 +6,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.codeInsight.template.TemplateResultListener
 import com.intellij.codeInsight.template.TemplateResultListener.TemplateResult
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.injected.editor.DocumentWindow
@@ -175,30 +174,6 @@ private fun buildTemplate(
   return TemplateAndStateBefore(builder, stateBefore)
 }
 
-private fun usageRangeInHost(hostFile: PsiFile, usage: PsiRenameUsage): TextRange? {
-  return if (usage.file == hostFile) {
-    usage.range
-  }
-  else {
-    injectedToHost(hostFile.project, usage.file, usage.range)
-  }
-}
-
-private fun injectedToHost(project: Project, injectedFile: PsiFile, injectedRange: TextRange): TextRange? {
-  val injectedDocument: DocumentWindow = PsiDocumentManager.getInstance(project).getDocument(injectedFile) as? DocumentWindow
-                                         ?: return null
-  val startOffsetHostRange: TextRange = injectedDocument.getHostRange(injectedDocument.injectedToHost(injectedRange.startOffset))
-                                        ?: return null
-  val endOffsetHostRange: TextRange = injectedDocument.getHostRange(injectedDocument.injectedToHost(injectedRange.endOffset))
-                                      ?: return null
-  return if (startOffsetHostRange == endOffsetHostRange) {
-    injectedDocument.injectedToHost(injectedRange)
-  }
-  else {
-    null
-  }
-}
-
 private fun runLiveTemplate(
   project: Project,
   hostEditor: Editor,
@@ -298,10 +273,6 @@ private fun moveCaretForTemplate(editor: Editor): Runnable {
 
 fun TemplateState.getNewName(): String {
   return requireNotNull(getVariableValue(PRIMARY_VARIABLE_NAME)).text
-}
-
-private fun TemplateState.addTemplateResultListener(resultConsumer: (TemplateResult) -> Unit) {
-  return addTemplateStateListener(TemplateResultListener(resultConsumer))
 }
 
 private fun storeInplaceContinuation(editor: Editor, continuation: InplaceRefactoringContinuation): Disposable {
