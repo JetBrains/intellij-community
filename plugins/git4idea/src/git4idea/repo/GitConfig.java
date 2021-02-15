@@ -96,7 +96,7 @@ public final class GitConfig {
   @NotNull
   static GitConfig read(@NotNull File configFile) {
     GitConfig emptyConfig = new GitConfig(emptyList(), emptyList(), emptyList());
-    if (!configFile.exists()) {
+    if (!configFile.exists() || configFile.isDirectory()) {
       LOG.info("No .git/config file at " + configFile.getPath());
       return emptyConfig;
     }
@@ -106,6 +106,7 @@ public final class GitConfig {
       ini = GitConfigHelperKt.loadIniFile(configFile);
     }
     catch (IOException e) {
+      LOG.warn("Couldn't read .git/config at" + configFile.getPath(), e);
       return emptyConfig;
     }
 
