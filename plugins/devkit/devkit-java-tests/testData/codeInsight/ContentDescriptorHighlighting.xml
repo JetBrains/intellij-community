@@ -4,8 +4,9 @@
   <version>1.0</version>
 
   <content>
-    <module name="moduleName" package="java.lang"/>
+    <module name="<error descr="Cannot resolve module descriptor 'moduleName.xml' in source roots of module 'moduleName'">moduleName</error>" package="java.lang"/>
 
-    <module name=<error descr="Value must not be empty">""</error> package="<error descr="Cannot resolve package"></error>"/>
+    <module name="<error descr="Cannot resolve module descriptor 'moduleName.xml' in source roots of module 'moduleName'">moduleName</error>"
+            package="<error descr="Cannot resolve package"></error>"/>
   </content>
 </idea-plugin>

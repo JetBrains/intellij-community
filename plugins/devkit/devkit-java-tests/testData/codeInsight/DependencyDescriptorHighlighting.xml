@@ -4,8 +4,9 @@
   <version>1.0</version>
 
   <dependencies>
-    <module name="module.name" package="java.lang"/>
-    <module name=<error descr="Value must not be empty">""</error> package="<error descr="Cannot resolve package"></error>"/>
+    <module name="<error descr="Cannot resolve module descriptor 'module.name.xml' in source roots of module 'module.name'">module.name</error>" package="java.lang"/>
+    <module name="<error descr="Cannot resolve module descriptor 'INVALID_VALUE.xml' in source roots of module 'INVALID_VALUE'">INVALID_VALUE</error>"
+            package="<error descr="Cannot resolve package"></error>"/>
 
     <plugin id="plugin.id"/>
     <plugin id=<error descr="Value must not be empty">""</error>/>
