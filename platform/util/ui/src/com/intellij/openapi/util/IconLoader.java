@@ -1377,7 +1377,11 @@ public final class IconLoader {
       return getScaleContextSupport(((RetrievableIcon)icon).retrieveIcon());
     }
     if (icon instanceof CompositeIcon) {
-      return getScaleContextSupport(Objects.requireNonNull(((CompositeIcon)icon).getIcon(0)));
+      CompositeIcon compositeIcon = (CompositeIcon)icon;
+      if (compositeIcon.getIconCount() == 0) return null;
+      Icon innerIcon = compositeIcon.getIcon(0);
+      if (innerIcon == null) return null;
+      return getScaleContextSupport(innerIcon);
     }
     return null;
   }
