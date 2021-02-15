@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ComponentTreeEventDispatcher;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
@@ -77,7 +76,6 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private State myState = new State();
 
-
   public EditorColorsManagerImpl() {
     this(SchemeManagerFactory.getInstance());
   }
@@ -85,9 +83,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @NonInjectable
   public EditorColorsManagerImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
     final class EditorColorSchemeProcessor extends LazySchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl> implements SchemeExtensionProvider {
-      private final MultiMap<String, AdditionalTextAttributesEP> myAdditionalTextAttributes;
+      private final Map<String, List<AdditionalTextAttributesEP>> myAdditionalTextAttributes;
 
-      EditorColorSchemeProcessor(@NotNull MultiMap<String, AdditionalTextAttributesEP> additionalTextAttributes) {
+      EditorColorSchemeProcessor(@NotNull Map<String, List<AdditionalTextAttributesEP>> additionalTextAttributes) {
         myAdditionalTextAttributes = additionalTextAttributes;
       }
 
@@ -104,8 +102,14 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         // 1) it can be computed on demand later (because bundled scheme is not mutable)
         // 2) in the future user copy of bundled scheme will use bundled scheme as parent (not as full copy)
         if (isBundled ||
-            ApplicationManager.getApplication().isUnitTestMode() && Boolean.valueOf(scheme.getMetaProperties().getProperty("forceOptimize")) == Boolean.TRUE){
-          loadAdditionalTextAttributesForScheme(scheme.myParentScheme, myAdditionalTextAttributes);
+            (ApplicationManager.getApplication().isUnitTestMode() && Boolean.parseBoolean(scheme.getMetaProperties().getProperty("forceOptimize")))) {
+          if (scheme.myParentScheme instanceof AbstractColorsScheme) {
+            Collection<AdditionalTextAttributesEP> attributesEPs = myAdditionalTextAttributes.remove(scheme.myParentScheme.getName());
+            if (attributesEPs != null && !attributesEPs.isEmpty()) {
+              loadAdditionalTextAttributesForScheme((AbstractColorsScheme)scheme.myParentScheme, attributesEPs);
+            }
+          }
+
           scheme.optimizeAttributeMap();
         }
         return scheme;
@@ -167,7 +171,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         initEditableBundledSchemesCopies();
       }
     }
-    MultiMap<String, AdditionalTextAttributesEP> additionalTextAttributes = collectAdditionalTextAttributesEPs();
+
+    Map<String, List<AdditionalTextAttributesEP>> additionalTextAttributes = collectAdditionalTextAttributesEPs();
     mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor(additionalTextAttributes));
     initDefaultSchemes();
     loadBundledSchemes();
@@ -230,9 +235,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     }
 
     if (scheme == null) {
-      LafManager lm = LafManager.getInstance();
-      UIManager.LookAndFeelInfo laf = lm.getCurrentLookAndFeel();
-
+      UIManager.LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
       if (laf instanceof UIThemeBasedLookAndFeelInfo) {
         String schemeName = ((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName();
         if (schemeName != null) {
@@ -379,23 +382,22 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME).getAttributes(key);
   }
 
-  @NotNull
-  private static MultiMap<String, AdditionalTextAttributesEP> collectAdditionalTextAttributesEPs() {
-    MultiMap<String, AdditionalTextAttributesEP> schemeNameToAttributesFile = MultiMap.create();
+  private static @NotNull Map<String, List<AdditionalTextAttributesEP>> collectAdditionalTextAttributesEPs() {
+    Map<String, List<AdditionalTextAttributesEP>> result = new HashMap<>();
     ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.forEachExtensionSafe(attributesEP -> {
-      schemeNameToAttributesFile.putValue(attributesEP.scheme, attributesEP);
+      result.computeIfAbsent(attributesEP.scheme, __ -> new ArrayList<>()).add(attributesEP);
     });
-    return schemeNameToAttributesFile;
+    return result;
   }
 
-  private void loadRemainAdditionalTextAttributes(@NotNull MultiMap<String, AdditionalTextAttributesEP> additionalTextAttributes) {
-    for (Map.Entry<String, Collection<AdditionalTextAttributesEP>> entry : additionalTextAttributes.entrySet()) {
+  private void loadRemainAdditionalTextAttributes(@NotNull Map<String, List<AdditionalTextAttributesEP>> additionalTextAttributes) {
+    for (Map.Entry<String, List<AdditionalTextAttributesEP>> entry : additionalTextAttributes.entrySet()) {
       String schemeName = entry.getKey();
       EditorColorsScheme editorColorsScheme = mySchemeManager.findSchemeByName(schemeName);
       if (!(editorColorsScheme instanceof AbstractColorsScheme)) {
         if (!isUnitTestOrHeadlessMode()) {
           LOG.warn("Cannot find scheme: " + schemeName + " from plugins: " +
-                   StringUtil.join(entry.getValue(), ep -> ep.getPluginDescriptor().getPluginId().getIdString(), ";"));
+                   StringUtil.join(entry.getValue(), ep -> ep.pluginDescriptor.getPluginId().getIdString(), ";"));
         }
         continue;
       }
@@ -405,18 +407,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     additionalTextAttributes.clear();
   }
 
-  private static void loadAdditionalTextAttributesForScheme(@Nullable EditorColorsScheme scheme,
-                                                            @NotNull MultiMap<String, AdditionalTextAttributesEP> additionalTextAttributes) {
-    if (!(scheme instanceof AbstractColorsScheme)) return;
-    Collection<AdditionalTextAttributesEP> attributesEPs = additionalTextAttributes.remove(scheme.getName());
-    if (attributesEPs == null) return;
-    loadAdditionalTextAttributesForScheme((AbstractColorsScheme)scheme, attributesEPs);
-  }
-
   private static void loadAdditionalTextAttributesForScheme(@NotNull AbstractColorsScheme scheme,
-                                                            @NotNull Collection<? extends AdditionalTextAttributesEP> attributesEPs) {
-    for (AdditionalTextAttributesEP attributesEP : attributesEPs) {
-      InputStream resourceStream = attributesEP.getLoaderForClass().getResourceAsStream(StringUtil.trimStart(attributesEP.file, "/"));
+                                                            @NotNull Collection<AdditionalTextAttributesEP> attributeEps) {
+    for (AdditionalTextAttributesEP attributesEP : attributeEps) {
+      InputStream resourceStream = attributesEP.pluginDescriptor.getPluginClassLoader()
+        .getResourceAsStream(StringUtil.trimStart(attributesEP.file, "/"));
       if (resourceStream == null) {
         LOG.warn("resource not found: " + attributesEP.file);
         continue;
@@ -424,9 +419,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
       try {
         Element root = JDOMUtil.load(resourceStream);
-        Element attrs = Objects.requireNonNullElse(root.getChild("attributes"), root);
+        scheme.readAttributes(Objects.requireNonNullElse(root.getChild("attributes"), root));
         Element colors = root.getChild("colors");
-        scheme.readAttributes(attrs);
         if (colors != null) {
           scheme.readColors(colors);
         }
