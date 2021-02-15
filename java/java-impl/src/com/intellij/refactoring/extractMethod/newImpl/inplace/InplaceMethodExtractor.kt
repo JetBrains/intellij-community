@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -15,6 +16,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
@@ -24,6 +26,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
@@ -41,8 +44,11 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
+import com.intellij.util.SmartList
 import org.jetbrains.annotations.NonNls
 import java.awt.Point
 import java.awt.event.KeyEvent
@@ -89,6 +95,10 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
     val rangeToExtract = document.createGreedyRangeMarker(context.range)
 
     val (method, callExpression) = extractMethod(extractor, context)
+
+    val highlighting = createMethodHighlighting(method)
+    Disposer.register(disposable, highlighting)
+
     methodCallExpressionRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
     Disposer.register(disposable, { methodCallExpressionRange.dispose() })
     methodNameRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
@@ -105,6 +115,16 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
 
     val methodLines = findLines(document, method.textRange).trimToLength(4)
     preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
+  }
+
+  private fun createMethodHighlighting(method: PsiMethod): Disposable {
+    val project = method.project
+    val highlighters = SmartList<RangeHighlighter>()
+    val manager = HighlightManager.getInstance(project)
+    manager.addOccurrenceHighlight(editor, method.startOffset, method.endOffset, DiffColors.DIFF_INSERTED, 0, highlighters)
+    return Disposable {
+      highlighters.forEach { highlighter -> manager.removeSegmentHighlighter(editor, highlighter) }
+    }
   }
 
   fun extractMethod(extractor: InplaceExtractMethodProvider, parameters: ExtractParameters): Pair<PsiMethod, PsiMethodCallExpression> {
