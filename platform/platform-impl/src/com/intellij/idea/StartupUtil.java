@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
+import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
@@ -186,6 +187,9 @@ public final class StartupUtil {
     activity = activity.endAndStart("LaF init scheduling");
     // EndUserAgreement.Document type is not specified to avoid class loading
     Future<Object> euaDocument = loadEuaDocument(executorService);
+    if (Main.isHeadless()) {
+      enableHeadlessAwtGuard();
+    }
     CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument)
       .exceptionally(e -> {
         StartupAbortedException.processException(new StartupAbortedException("UI initialization failed", e));
@@ -308,6 +312,21 @@ public final class StartupUtil {
     finally {
       EdtInvocationManager.restoreEdtInvocationManager(edtInvocationManager, oldEdtInvocationManager);
     }
+  }
+
+  /**
+   * This method should make EDT to always persist in a headless environment. Otherwise, it's possible to have EDT being
+   * terminated by {@link AWTAutoShutdown}, which will have negative impact on a ReadMostlyRWLock instance.
+   * <p/>
+   * This method works by calling {@link AWTAutoShutdown#notifyThreadBusy(Thread)} from a non-EDT thread. This will put a
+   * thread into the thread map forever, and thus will effectively disable auto shutdown behavior for this application.
+   * <p/>
+   * This should never be called from a EDT, since a EDT could remove itself from the busy map while there're no events in
+   * the event queue.
+   */
+  private static void enableHeadlessAwtGuard() {
+    if (EventQueue.isDispatchThread()) throw new AssertionError("Should not be called from EDT");
+    AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
   }
 
   private static @NotNull CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args, @NotNull Executor executor, @NotNull Future<@Nullable Object> eulaDocument) {
