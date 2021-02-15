@@ -42,9 +42,6 @@ class JavaElementFeaturesProvider : ElementFeatureProvider {
         JavaCompletionFeatures.getChildClassTokensMatchingFeature(contextFeatures, element.lookupString)?.let {
           features["child_class_tokens_matches"] = it
         }
-        features["public_static_methods_count"] = MLFeatureValue.numerical(psi.allMethods.count {
-          it.hasModifier(JvmModifier.PUBLIC) && it.hasModifier(JvmModifier.STATIC)
-        })
         if (element.lookupString.toLowerCase().contains("util")) {
           features["util_in_class_name"] = MLFeatureValue.binary(true)
         }
