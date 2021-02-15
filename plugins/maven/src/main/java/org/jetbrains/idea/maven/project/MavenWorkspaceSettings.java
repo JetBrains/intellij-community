@@ -20,17 +20,16 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenWorkspaceSettings {
-  private transient Throwable created = new Throwable();
-  @Deprecated
   /**
-   * Do not use this public field
+   * @deprecated Do not use this public field
    */
+  @Deprecated
   public MavenGeneralSettings generalSettings = new MavenGeneralSettings();
 
-  @Deprecated
   /**
-   * Do not use this public field
+   * @deprecated Do not use this public field
    */
+  @Deprecated
   public MavenImportingSettings importingSettings = new MavenImportingSettings();
 
   public List<String> enabledProfiles = new ArrayList<>();
