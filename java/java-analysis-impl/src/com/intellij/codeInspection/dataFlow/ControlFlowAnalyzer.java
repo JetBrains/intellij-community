@@ -1455,7 +1455,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (unboxedType != null && !unboxedType.equals(actualType)) {
         addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
       }
-      addInstruction(new BoxingInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), SpecialField.UNBOX));
+      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), SpecialField.UNBOX));
     }
     else if (actualType != expectedType &&
              TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
@@ -1764,7 +1764,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
       }
       DfType arrayValue = TypeConstraints.exact(type).asDfType().meet(DfTypes.LOCAL_OBJECT);
-      addInstruction(new BoxingInstruction(arrayValue, SpecialField.ARRAY_LENGTH));
+      addInstruction(new WrapSpecialFieldInstruction(arrayValue, SpecialField.ARRAY_LENGTH));
 
       initializeSmallArray((PsiArrayType)type, expression, dimensions);
     }
@@ -1910,7 +1910,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
     }
     if (!(operand.getType() instanceof PsiPrimitiveType)) {
-      addInstruction(new BoxingInstruction(DfTypes.typedObject(operand.getType(), Nullability.NOT_NULL), SpecialField.UNBOX));
+      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(operand.getType(), Nullability.NOT_NULL), SpecialField.UNBOX));
     }
     addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
     return true;

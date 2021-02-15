@@ -281,8 +281,8 @@ public final class CustomMethodHandlers {
 
   private static @Nullable DfaValue copyOfArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
     if (arguments.myArguments.length < 2) return null;
-    return factory.getBoxedFactory().createBoxed(typedObject(method.getReturnType(), Nullability.NOT_NULL).meet(LOCAL_OBJECT),
-      ARRAY_LENGTH, arguments.myArguments[1]);
+    return factory.getWrapperFactory().createWrapper(typedObject(method.getReturnType(), Nullability.NOT_NULL).meet(LOCAL_OBJECT),
+                                                     ARRAY_LENGTH, arguments.myArguments[1]);
   }
 
   private static @Nullable DfaValue collectionFactory(DfaCallArguments args,
@@ -304,7 +304,7 @@ public final class CustomMethodHandlers {
     if (asList) {
       result = result.meet(LOCAL_OBJECT);
     }
-    return factory.getBoxedFactory().createBoxed(result, COLLECTION_SIZE, size);
+    return factory.getWrapperFactory().createWrapper(result, COLLECTION_SIZE, size);
   }
 
   private static DfType getEmptyCollectionConstant(PsiMethod method) {
@@ -328,7 +328,7 @@ public final class CustomMethodHandlers {
     if (resultLen instanceof DfaBinOpValue) {
       resultLen = factory.fromDfType(state.getDfType(resultLen));
     }
-    return factory.getBoxedFactory().createBoxed(typedObject(stringType, Nullability.NOT_NULL), STRING_LENGTH, resultLen);
+    return factory.getWrapperFactory().createWrapper(typedObject(stringType, Nullability.NOT_NULL), STRING_LENGTH, resultLen);
   }
 
   private static @NotNull DfType mathAbs(DfaValue[] args, DfaMemoryState memState, boolean isLong) {
@@ -491,14 +491,14 @@ public final class CustomMethodHandlers {
         }
       }
     }
-    return factory.getBoxedFactory().createBoxed(result, ARRAY_LENGTH, finalSize);
+    return factory.getWrapperFactory().createWrapper(result, ARRAY_LENGTH, finalSize);
   }
 
   private static @NotNull DfaValue stringToCharArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, 
                                                    PsiMethod method) {
     DfaValue string = arguments.myQualifier;
     DfaValue stringLength = STRING_LENGTH.createValue(factory, string);
-    return factory.getBoxedFactory().createBoxed(typedObject(PsiType.CHAR.createArrayType(), Nullability.NOT_NULL)
+    return factory.getWrapperFactory().createWrapper(typedObject(PsiType.CHAR.createArrayType(), Nullability.NOT_NULL)
       .meet(LOCAL_OBJECT), ARRAY_LENGTH, stringLength);
   }
 }

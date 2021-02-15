@@ -118,7 +118,7 @@ public abstract class ContractReturnValue {
       memState.meetDfType(newValue, result);
       return newValue;
     }
-    if (defaultValue instanceof DfaBoxedValue && newType.isSuperType(defaultValue.getDfType())) {
+    if (defaultValue instanceof DfaWrappedValue && newType.isSuperType(defaultValue.getDfType())) {
       return defaultValue;
     }
     if (defaultValue instanceof DfaVariableValue) {

@@ -145,9 +145,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (!(value instanceof DfaVariableValue)) {
       if (DfReferenceType.isLocal(value.getDfType())) {
         DfReferenceType dfType = ((DfReferenceType)value.getDfType()).dropLocality();
-        if (value instanceof DfaBoxedValue) {
-          return value.getFactory().getBoxedFactory()
-            .createBoxed(dfType, ((DfaBoxedValue)value).getSpecialField(), ((DfaBoxedValue)value).getWrappedValue());
+        if (value instanceof DfaWrappedValue) {
+          return value.getFactory().getWrapperFactory()
+            .createWrapper(dfType, ((DfaWrappedValue)value).getSpecialField(), ((DfaWrappedValue)value).getWrappedValue());
         }
         return value.getFactory().fromDfType(dfType);
       }

@@ -359,11 +359,11 @@ public final class DfaUtil {
   public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
     if (TypeConversionUtil.isPrimitiveWrapper(type)) {
       if (TypeConversionUtil.isPrimitiveAndNotNull(value.getType())) {
-        return value.getFactory().getBoxedFactory().createBoxed(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, value);
+        return value.getFactory().getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, value);
       }
     }
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
-      if (value instanceof DfaBoxedValue || TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
+      if (value instanceof DfaWrappedValue || TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
         return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
       if (value.getDfType() instanceof DfReferenceType) {

@@ -38,7 +38,7 @@ public class DfaValueFactory {
     myFieldChecker = new FieldChecker(context);
     myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
-    myBoxedFactory = new DfaBoxedValue.Factory(this);
+    myBoxedFactory = new DfaWrappedValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
     myBinOpFactory = new DfaBinOpValue.Factory(this);
     myTypeValueFactory = new DfaTypeValue.Factory(this);
@@ -144,7 +144,7 @@ public class DfaValueFactory {
       Boolean boo = computeJavaLangBooleanFieldReference(variable);
       if (boo != null) {
         DfaValue unboxed = getConstant(boo, PsiType.BOOLEAN);
-        return getBoxedFactory().createBoxed(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, unboxed);
+        return getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, unboxed);
       }
       if (DfaUtil.isEmptyCollectionConstantField(variable)) {
         return getConstant(variable, type);
@@ -194,7 +194,7 @@ public class DfaValueFactory {
     FactoryMap.create(p -> new DfaControlTransferValue(this, p.first, p.second));
 
   private final DfaVariableValue.Factory myVarFactory;
-  private final DfaBoxedValue.Factory myBoxedFactory;
+  private final DfaWrappedValue.Factory myBoxedFactory;
   private final DfaBinOpValue.Factory myBinOpFactory;
   private final DfaExpressionFactory myExpressionFactory;
   private final DfaTypeValue.Factory myTypeValueFactory;
@@ -211,7 +211,7 @@ public class DfaValueFactory {
   }
 
   @NotNull
-  public DfaBoxedValue.Factory getBoxedFactory() {
+  public DfaWrappedValue.Factory getWrapperFactory() {
     return myBoxedFactory;
   }
 
