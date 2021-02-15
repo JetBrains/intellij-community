@@ -1478,6 +1478,16 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("testData/basic/common/primitiveCompletion/classFieldsAndFunctionsFromInnerClassExplicitReceiver.kt");
             }
 
+            @TestMetadata("completionInLocalFunction.kt")
+            public void testCompletionInLocalFunction() throws Exception {
+                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/completionInLocalFunction.kt");
+            }
+
+            @TestMetadata("completionInPropertyLambdaInitializer.kt")
+            public void testCompletionInPropertyLambdaInitializer() throws Exception {
+                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/completionInPropertyLambdaInitializer.kt");
+            }
+
             @TestMetadata("defaultKotlinImports.kt")
             public void testDefaultKotlinImports() throws Exception {
                 runTest("testData/basic/common/primitiveCompletion/defaultKotlinImports.kt");
