@@ -200,7 +200,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                           @NotNull Dimension minimumSize) {
 
         ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
-
           @Override
           public void updateIcon() {
             super.updateIcon();
@@ -299,7 +298,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       public void mouseExited(MouseEvent event) {
         myPopupManager.scheduleHide();
       }
-
     });
     smallIconLabel.setOpaque(false);
     smallIconLabel.setBackground(new JBColor(() -> myEditor.getColorsScheme().getDefaultBackground()));
@@ -336,7 +334,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     });
     myStatusUpdates = new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
 
-    myErrorStripeMarkersModel = new ErrorStripeMarkersModel(myEditor);
+    myErrorStripeMarkersModel = new ErrorStripeMarkersModel(myEditor, resourcesDisposable);
   }
 
   @Override
@@ -593,7 +591,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         return true;
       }
       return false;
-    } else {
+    }
+    else {
       float rowRatio = (float)visualLine /(myEditor.getVisibleLineCount() - 1);
       int y = myRowAdjuster != 0 ? (int)(rowRatio * myEditor.getVerticalScrollBar().getHeight()) : me.getY();
       me = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(), me.getX(), y, me.getClickCount(), me.isPopupTrigger());
@@ -781,6 +780,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       Disposer.dispose((Disposable)myErrorStripeRenderer);
     }
     myErrorStripeRenderer = renderer;
+    if (renderer instanceof Disposable) {
+      Disposer.register(resourcesDisposable, (Disposable)renderer);
+    }
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
   }
@@ -792,12 +794,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   @Override
   public void dispose() {
-    myErrorStripeMarkersModel.dispose();
-    disposeErrorPanel();
+    Disposer.dispose(resourcesDisposable);
 
-    if (myErrorStripeRenderer instanceof Disposable) {
-      Disposer.dispose((Disposable)myErrorStripeRenderer);
-    }
+    disposeErrorPanel();
 
     statusToolbar.getComponent().removeComponentListener(toolbarComponentListener);
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(null);
@@ -809,8 +808,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     myPopupManager.hidePopup();
     myPopupManager = null;
     extensionActions.clear();
-
-    Disposer.dispose(resourcesDisposable);
 
     super.dispose();
   }
@@ -1333,7 +1330,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return getErrorPanel() != null;
   }
 
-  private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+  private static final class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     @Override
     public TooltipRenderer calcTooltipRenderer(final @NotNull Collection<? extends RangeHighlighter> highlighters) {
       LineTooltipRenderer bigRenderer = null;

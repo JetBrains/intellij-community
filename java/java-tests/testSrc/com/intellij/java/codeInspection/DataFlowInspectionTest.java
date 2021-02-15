@@ -690,4 +690,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testPresizedList() { doTest(); }
   public void testCollectionToArray() { doTest(); }
   public void testStringToCharArray() { doTest(); }
+  public void testFinalStaticFields() { doTest(); }
 }

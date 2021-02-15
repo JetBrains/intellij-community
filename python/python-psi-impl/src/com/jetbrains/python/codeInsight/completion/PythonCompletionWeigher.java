@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 public class PythonCompletionWeigher extends CompletionWeigher {
 
   public static final int PRIORITY_WEIGHT = 5;
+  public static final int WEIGHT_FOR_MULTIPLE_ARGUMENTS = 5;
   public static final int WEIGHT_FOR_KEYWORDS = 0;
   private static final Logger LOG = Logger.getInstance(PythonCompletionWeigher.class);
   public static final String COLLECTION_KEY = "dict key";
@@ -69,6 +70,10 @@ public class PythonCompletionWeigher extends CompletionWeigher {
 
     if (PyNames.isReserved(element.getLookupString())) {
       return WEIGHT_FOR_KEYWORDS;
+    }
+
+    if (element.getUserData(PyMultipleArgumentsCompletionContributor.Companion.getMULTIPLE_ARGUMENTS_VARIANT_KEY()) != null) {
+      return WEIGHT_FOR_MULTIPLE_ARGUMENTS;
     }
 
     return PyCompletionUtilsKt.FALLBACK_WEIGHT;

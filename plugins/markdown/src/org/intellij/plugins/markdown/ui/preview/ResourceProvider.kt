@@ -43,11 +43,16 @@ interface ResourceProvider {
 
     /**
      * Load resource using [cls]'s [ClassLoader].
+     * Note: You might want to explicitly set [contentType] for your resource
+     * if you *care about the encoding*.
      *
      * @param cls Java class to get the [ClassLoader] of.
      * @param path Path of the resource to load.
      * @param contentType Explicit type of content. If null, [PreviewStaticServer] will
-     * try to guess content type based on resource name.
+     * try to guess content type based on resource name. The [PreviewStaticServer] won't set
+     * any charset for guessed content type (except for types declared in [PreviewStaticServer.typesForExplicitUtfCharset]).
+     * You might want to [explicitly set](https://www.w3.org/International/articles/http-charset/index.en#charset)
+     * [contentType] if you *care about encoding*.
      * @return [Resource] with the contents of resource, or null in case
      * the resource could not be loaded.
      */
@@ -64,7 +69,7 @@ interface ResourceProvider {
      * @param cls Kotlin class to get the [ClassLoader] of.
      * @param path Path of the resource to load.
      * @param contentType Explicit type of content. If null, [PreviewStaticServer] will
-     * try to guess content type based on resource name.
+     * try to guess content type based on resource name. See [loadInternalResource].
      * @return [Resource] with the contents of resource, or null in case
      * the resource could not be loaded.
      */
@@ -86,7 +91,7 @@ interface ResourceProvider {
      *
      * @param file File to load.
      * @param contentType Explicit type of content. If null, [PreviewStaticServer] will
-     * try to guess content type based on resource name.
+     * try to guess content type based on resource name. See [loadInternalResource].
      * @return [Resource] with the contents of resource, or null in case
      * the resource could not be loaded.
      */

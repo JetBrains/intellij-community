@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -19,6 +20,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.text.NameUtilCore;
@@ -44,14 +47,14 @@ import static com.intellij.util.ReflectionUtil.getMethodDeclaringClass;
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
-  private static final Border BORDER = new CustomLineBorder(JBColor.namedColor("SpeedSearch.borderColor", JBColor.GRAY), JBUI.insets(1));
-  private static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(Gray.xFF, Gray._111));
-  private static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
+  protected static final Border BORDER = new CustomLineBorder(JBColor.namedColor("SpeedSearch.borderColor", JBColor.LIGHT_GRAY), JBUI.insets(1));
+  protected static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
+  protected static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(Gray.xFF, Gray._111));
+  protected static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
 
   private static final Key<String> SEARCH_TEXT_KEY = Key.create("SpeedSearch.searchText");
 
-  private SearchPopup mySearchPopup;
+  protected SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
   protected final Comp myComponent;
   private final ToolWindowManagerListener myWindowManagerListener = new ToolWindowManagerListener() {
@@ -260,7 +263,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   @Nullable
-  private Object findNextElement(String s) {
+  protected Object findNextElement(String s) {
     final int selectedIndex = getSelectedIndex();
     final ListIterator<?> it = getElementIterator(selectedIndex + 1);
     final Object current;
@@ -289,7 +292,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   @Nullable
-  private Object findPreviousElement(@NotNull String s) {
+  protected Object findPreviousElement(@NotNull String s) {
     final int selectedIndex = getSelectedIndex();
     if (selectedIndex < 0) return null;
     final ListIterator<?> it = getElementIterator(selectedIndex);
@@ -361,7 +364,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   public void showPopup(String searchText) {
-    manageSearchPopup(new SearchPopup(searchText));
+    manageSearchPopup(createPopup(searchText));
   }
 
   public void showPopup() {
@@ -387,10 +390,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
       char c = e.getKeyChar();
       if (Character.isLetterOrDigit(c) || !Character.isWhitespace(c) && SpeedSearch.PUNCTUATION_MARKS.indexOf(c) != -1) {
-        manageSearchPopup(new SearchPopup(String.valueOf(c)));
+        manageSearchPopup(createPopup(String.valueOf(c)));
         e.consume();
       }
     }
+  }
+
+  @NotNull
+  protected SpeedSearchBase<Comp>.SearchPopup createPopup(String s) {
+    return new SearchPopup(s);
   }
 
   public Comp getComponent() {
@@ -448,14 +456,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
 
-  private class SearchPopup extends JPanel {
-    private final SearchField mySearchField;
+  protected class SearchPopup extends JPanel {
+    protected final SearchField mySearchField;
 
-    SearchPopup(String initialString) {
+    protected SearchPopup(String initialString) {
       mySearchField = new SearchField();
-      final JLabel searchLabel = new JLabel(" " + UIBundle.message("search.popup.search.for.label") + " ");
-      searchLabel.setFont(searchLabel.getFont().deriveFont(Font.BOLD));
-      searchLabel.setForeground(FOREGROUND_COLOR);
       mySearchField.setBorder(null);
       mySearchField.setBackground(BACKGROUND_COLOR);
       mySearchField.setForeground(FOREGROUND_COLOR);
@@ -473,24 +478,28 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
-          if (findElement(newText) == null) {
-            mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
-          }
-          else {
-            mySearchField.setForeground(FOREGROUND_COLOR);
-          }
+          handleInsert(newText);
         }
       });
-      mySearchField.setText(initialString);
 
       setBorder(BORDER);
       setBackground(BACKGROUND_COLOR);
       setLayout(new BorderLayout());
-      add(searchLabel, BorderLayout.WEST);
-      add(mySearchField, BorderLayout.EAST);
+      add(mySearchField, BorderLayout.CENTER);
+      mySearchField.setText(initialString);
+
       onSearchFieldUpdated(initialString);
       Object element = findElement(mySearchField.getText());
       updateSelection(element);
+    }
+
+    protected void handleInsert(String newText) {
+      if (findElement(newText) == null) {
+        mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
+      }
+      else {
+        mySearchField.setForeground(FOREGROUND_COLOR);
+      }
     }
 
     @Override
@@ -540,9 +549,27 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected void onSearchFieldUpdated(String pattern) {
   }
 
-  private class SearchField extends JTextField {
+  protected class SearchField extends ExtendableTextField {
     SearchField() {
       setFocusable(false);
+      ExtendableTextField.Extension leftExtension = new Extension() {
+        @Override
+        public Icon getIcon(boolean hovered) {
+          return AllIcons.Actions.Search;
+        }
+
+        @Override
+        public boolean isIconBeforeText() {
+          return true;
+        }
+
+        @Override
+        public int getIconGap() {
+          return JBUIScale.scale(10);
+        }
+      };
+
+      addExtension(leftExtension);
     }
 
     @Override

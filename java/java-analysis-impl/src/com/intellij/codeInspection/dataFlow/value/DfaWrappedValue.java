@@ -12,17 +12,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-public final class DfaBoxedValue extends DfaValue {
+/**
+ * A reference value whose SpecialField value is equal to some variable.
+ * Exists on the stack only.
+ */
+public final class DfaWrappedValue extends DfaValue {
   private final @NotNull DfaVariableValue myWrappedValue;
   private final @NotNull SpecialField mySpecialField;
   private final @NotNull DfType myType;
 
-  private DfaBoxedValue(@NotNull DfaVariableValue valueToWrap,
-                        @NotNull SpecialField field,
-                        @NotNull DfType type) {
+  private DfaWrappedValue(@NotNull DfaVariableValue valueToWrap,
+                          @NotNull SpecialField field,
+                          @NotNull DfType type) {
     super(valueToWrap.getFactory());
     myWrappedValue = valueToWrap;
     mySpecialField = field;
@@ -31,7 +37,7 @@ public final class DfaBoxedValue extends DfaValue {
 
   @NonNls
   public String toString() {
-    return myType + ";" + mySpecialField + "=" + myWrappedValue;
+    return myType + " [with " + mySpecialField + "=" + myWrappedValue + "]";
   }
 
   @NotNull
@@ -57,7 +63,7 @@ public final class DfaBoxedValue extends DfaValue {
   }
 
   public static class Factory {
-    private final HashMap<Object, DfaBoxedValue> cachedValues = new HashMap<>();
+    private final Map<List<?>, DfaWrappedValue> cachedValues = new HashMap<>();
 
     private final DfaValueFactory myFactory;
 
@@ -66,8 +72,7 @@ public final class DfaBoxedValue extends DfaValue {
     }
 
     @NotNull
-    public DfaValue createBoxed(@NotNull DfType qualifierType,
-                                @NotNull SpecialField specialField, @NotNull DfaValue specialFieldValue) {
+    public DfaValue createWrapper(@NotNull DfType qualifierType, @NotNull SpecialField specialField, @NotNull DfaValue specialFieldValue) {
       if (specialFieldValue instanceof DfaVariableValue && ((DfaVariableValue)specialFieldValue).getDescriptor() == specialField) {
         DfaVariableValue qualifier = ((DfaVariableValue)specialFieldValue).getQualifier();
         if (qualifier != null && qualifierType.isSuperType(qualifier.getDfType())) {
@@ -88,7 +93,7 @@ public final class DfaBoxedValue extends DfaValue {
       }
       if (specialFieldValue instanceof DfaVariableValue) {
         return cachedValues.computeIfAbsent(Arrays.asList(specialFieldValue, specialField, qualifierType),
-                                            k -> new DfaBoxedValue((DfaVariableValue)specialFieldValue, specialField, qualifierType));
+                                            k -> new DfaWrappedValue((DfaVariableValue)specialFieldValue, specialField, qualifierType));
       }
       return myFactory.fromDfType(qualifierType);
     }

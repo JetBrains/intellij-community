@@ -2,8 +2,10 @@
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -31,13 +33,16 @@ public class GitRebase extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     Project project = e.getProject();
+    Presentation presentation = e.getPresentation();
     if (project == null || !hasGitRepositories(project) || !getRebasingRepositories(project).isEmpty()) {
-      e.getPresentation().setEnabledAndVisible(false);
+      presentation.setEnabledAndVisible(false);
+    }
+    else if (getRepositoriesInState(project, Repository.State.NORMAL).isEmpty()) {
+      presentation.setEnabled(false);
     }
     else {
-      e.getPresentation().setEnabledAndVisible(true);
+      presentation.setEnabledAndVisible(true);
     }
   }
 

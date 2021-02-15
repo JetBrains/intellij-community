@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-class InspectionPopupManager {
+final class InspectionPopupManager {
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
 

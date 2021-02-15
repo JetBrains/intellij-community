@@ -364,7 +364,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight) {
-    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaBoxedValue) && !(dfaLeft.getDfType() instanceof DfConstantType)) {
+    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaWrappedValue) && !(dfaLeft.getDfType() instanceof DfConstantType)) {
       return false;
     }
     return !isNull(dfaLeft) && !isNull(dfaRight) &&
@@ -1157,8 +1157,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public @NotNull DfType getUnboxedDfType(@NotNull DfaValue value) {
-    if (value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getSpecialField() == SpecialField.UNBOX) {
-      return getDfType(((DfaBoxedValue)value).getWrappedValue());
+    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
+      return getDfType(((DfaWrappedValue)value).getWrappedValue());
     }
     if (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
       return getDfType(SpecialField.UNBOX.createValue(myFactory, value));
@@ -1216,11 +1216,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue) {
       return canonicalize((DfaVariableValue)value);
     }
-    if (value instanceof DfaBoxedValue) {
-      DfaBoxedValue boxedValue = (DfaBoxedValue)value;
+    if (value instanceof DfaWrappedValue) {
+      DfaWrappedValue boxedValue = (DfaWrappedValue)value;
       DfaValue canonicalized = canonicalize(boxedValue.getWrappedValue());
       if (canonicalized == boxedValue.getWrappedValue()) return boxedValue;
-      return myFactory.getBoxedFactory().createBoxed(boxedValue.getDfType(), boxedValue.getSpecialField(), canonicalized);
+      return myFactory.getWrapperFactory().createWrapper(boxedValue.getDfType(), boxedValue.getSpecialField(), canonicalized);
     }
     return value;
   }

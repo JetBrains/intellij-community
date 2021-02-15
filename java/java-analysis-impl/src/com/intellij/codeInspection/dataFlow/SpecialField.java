@@ -291,8 +291,8 @@ public enum SpecialField implements VariableDescriptor {
   @NotNull
   @Override
   public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
-    if (qualifier instanceof DfaBoxedValue && ((DfaBoxedValue)qualifier).getSpecialField() == this) {
-      return ((DfaBoxedValue)qualifier).getWrappedValue();
+    if (qualifier instanceof DfaWrappedValue && ((DfaWrappedValue)qualifier).getSpecialField() == this) {
+      return ((DfaWrappedValue)qualifier).getWrappedValue();
     }
     if (qualifier instanceof DfaVariableValue) {
       DfaVariableValue variableValue = (DfaVariableValue)qualifier;
