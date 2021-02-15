@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -53,9 +54,14 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor.Kind
+import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
 import org.jetbrains.kotlin.idea.refactoring.validateElement
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -67,9 +73,10 @@ import javax.swing.*
 
 class KotlinChangeSignatureDialog(
     project: Project,
+    val editor: Editor?,
     methodDescriptor: KotlinMethodDescriptor,
     context: PsiElement,
-    @NlsContexts.Command private val commandName: String?
+    @NlsContexts.Command private val commandName: String?,
 ) : ChangeSignatureDialogBase<
         KotlinParameterInfo,
         PsiElement,
@@ -400,6 +407,12 @@ class KotlinChangeSignatureDialog(
         .withIndex()
         .firstOrNull { it.value.isNewParameter }
         ?.index
+        ?: editor?.let { editor ->
+            myDefaultValueContext.containingFile
+                .findElementForRename<KtParameter>(editor.caretModel.offset)
+                ?.parameterIndex()
+                ?.takeUnless { offset -> offset == -1 }
+        }
         ?: super.getSelectedIdx()
 
     companion object {

@@ -120,7 +120,7 @@ class KotlinChangeSignature(
 
     private fun runInteractiveRefactoring(descriptor: KotlinMethodDescriptor) {
         val dialog = when (val baseDeclaration = descriptor.baseDeclaration) {
-            is KtFunction, is KtClass -> KotlinChangeSignatureDialog(project, descriptor, defaultValueContext, commandName)
+            is KtFunction, is KtClass -> KotlinChangeSignatureDialog(project, editor, descriptor, defaultValueContext, commandName)
             is KtProperty, is KtParameter -> KotlinChangePropertySignatureDialog(project, descriptor, commandName)
             is PsiMethod -> {
                 // No changes are made from Kotlin side: just run foreign refactoring
