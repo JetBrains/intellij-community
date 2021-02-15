@@ -92,7 +92,7 @@ class ServiceTreeView extends ServiceView {
           }
         }));
     myNavBarPanel = new ServiceViewNavBarPanel(getProject(), true, getModel(), selector);
-    myNavBarPanel.getModel().updateModel(null);
+    myNavBarPanel.getModel().updateModel(DataContext.EMPTY_CONTEXT);
     myUi.setNavBar(myNavBarPanel);
 
     if (model instanceof ServiceViewModel.AllServicesModel) {
@@ -500,7 +500,7 @@ class ServiceTreeView extends ServiceView {
         AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, ServiceTreeView.this);
         myTree.setModel(asyncTreeModel);
         myNavBarPanel.hidePopup();
-        myNavBarPanel.getModel().updateModel(null);
+        myNavBarPanel.getModel().updateModel(DataContext.EMPTY_CONTEXT);
         myNavBarPanel.getUpdateQueue().rebuildUi();
         updateLastSelection();
       }
