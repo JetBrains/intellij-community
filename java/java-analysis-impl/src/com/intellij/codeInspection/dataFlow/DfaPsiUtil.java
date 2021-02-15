@@ -287,30 +287,38 @@ public final class DfaPsiUtil {
     PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return false;
 
+    if (field.hasModifierProperty(PsiModifier.STATIC)) {
+      for (PsiClassInitializer initializer : containingClass.getInitializers()) {
+        if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
+            initializer.hasModifierProperty(PsiModifier.STATIC) &&
+            getBlockNotNullFields(containingClass, initializer.getBody()).contains(field)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     PsiMethod[] constructors = containingClass.getConstructors();
     if (constructors.length == 0) return false;
 
     for (PsiMethod method : constructors) {
-      if (!getNotNullInitializedFields(method, containingClass).contains(field)) {
+      if (!method.getLanguage().isKindOf(JavaLanguage.INSTANCE) ||
+          !getBlockNotNullFields(containingClass, method.getBody()).contains(field)) {
         return false;
       }
     }
     return true;
   }
 
-  private static Set<PsiField> getNotNullInitializedFields(final PsiMethod constructor, final PsiClass containingClass) {
-    if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return Collections.emptySet();
-
-    final PsiCodeBlock body = constructor.getBody();
+  private static Set<PsiField> getBlockNotNullFields(PsiClass containingClass, PsiCodeBlock body) {
     if (body == null) return Collections.emptySet();
 
-    return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<>() {
+    return CachedValuesManager.getCachedValue(body, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
-        final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = new HashMap<>();
-        final DataFlowRunner dfaRunner = new DataFlowRunner(constructor.getProject()) {
+        final DataFlowRunner dfaRunner = new DataFlowRunner(body.getProject()) {
           PsiElement currentBlock;
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
@@ -386,7 +394,7 @@ public final class DfaPsiUtil {
             }
           }
         }
-        return Result.create(notNullFields, constructor, PsiModificationTracker.MODIFICATION_COUNT);
+        return Result.create(notNullFields, body, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }
@@ -439,6 +447,12 @@ public final class DfaPsiUtil {
             constructor.accept(visitor);
           }
         }
+ 
+        for (PsiClassInitializer initializer : psiClass.getInitializers()) {
+          if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+            initializer.accept(visitor);
+          }
+        } 
 
         return Result.create(result, psiClass);
       }
