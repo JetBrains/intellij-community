@@ -37,11 +37,6 @@ public abstract class FrameStateManager {
   public abstract void addListener(@NotNull FrameStateListener listener, @Nullable Disposable disposable);
 
   /**
-   * Removes a listener which is called when the IDE window is activated or deactivated.
-   *
-   * @param listener the listener instance.
-   */
-  /**
    * @deprecated Use message bus {@link FrameStateListener#TOPIC}
    */
   @Deprecated
