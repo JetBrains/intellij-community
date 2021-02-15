@@ -27,10 +27,20 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
     val buildScript = myProjectConfig.toNioPath().toString()
 
     val oomMessage = if (lastImportErrorMessage!!.contains("Java heap space")) "Java heap space" else "GC overhead limit exceeded"
-    assertSyncViewTreeEquals("-\n" +
-                             " -failed\n" +
-                             "  -build.gradle\n" +
-                             "   $oomMessage")
+    assertSyncViewTreeEquals{
+      assertThat(
+        listOf(
+          "-\n" +
+          " -failed\n" +
+          "  -build.gradle\n" +
+          "   $oomMessage",
+          "-\n" +
+          " -failed\n" +
+          "  $$oomMessage \n"
+        ).contains(it)
+      )
+    }
+
     assertSyncViewSelectedNode(oomMessage, true) { text ->
       assertThat(text).startsWith("""
       * Where:
