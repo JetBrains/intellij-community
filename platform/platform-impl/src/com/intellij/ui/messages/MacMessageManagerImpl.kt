@@ -3,6 +3,7 @@
 
 package com.intellij.ui.messages
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -195,6 +196,7 @@ private class NativeMacMessageManager : MacMessages() {
                                 defaultOptionIndex: Int,
                                 doNotAskDialogOption: DoNotAskOption?,
                                 fallback: () -> Int): Int {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     val info = MessageInfo(title, message, buttons, errorStyle, window, defaultOptionIndex, doNotAskDialogOption)
 
     if (myInfo != null) {
