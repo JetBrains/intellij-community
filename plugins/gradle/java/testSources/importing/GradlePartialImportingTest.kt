@@ -225,15 +225,26 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
 
     if (currentGradleBaseVersion >= GradleVersion.version("4.8")) {
       if (currentGradleBaseVersion != GradleVersion.version("4.10.3")) {
-        assertSyncViewTreeEquals {
-          assertThat(
-            listOf(
-              "-\n" +
-              " -failed\n" +
-              "  Build cancelled",
-              "-\n" +
-              " cancelled \n"
-            ).contains(it)
+        assertSyncViewTreeEquals { treeTestPresentation ->
+          assertThat(treeTestPresentation).satisfiesAnyOf(
+            {
+              assertThat(it).isEqualTo("-\n" +
+                                       " -failed\n" +
+                                       "  Build cancelled")
+
+            },
+            {
+              assertThat(it).isEqualTo("-\n" +
+                                       " cancelled \n")
+
+            },
+            {
+              assertThat(it).startsWith("-\n" +
+                                        " -failed\n" +
+                                        "  Build cancelled\n" +
+                                        "  Could not build ")
+
+            }
           )
         }
       }

@@ -27,32 +27,50 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
     val buildScript = myProjectConfig.toNioPath().toString()
 
     val oomMessage = if (lastImportErrorMessage!!.contains("Java heap space")) "Java heap space" else "GC overhead limit exceeded"
-    assertSyncViewTreeEquals{
-      assertThat(
-        listOf(
-          "-\n" +
-          " -failed\n" +
-          "  -build.gradle\n" +
-          "   $oomMessage",
-          "-\n" +
-          " -failed\n" +
-          "  $$oomMessage \n"
-        ).contains(it)
+    assertSyncViewTreeEquals { treeTestPresentation ->
+      assertThat(treeTestPresentation).satisfiesAnyOf(
+        {
+          assertThat(it).isEqualTo("-\n" +
+                                   " -failed\n" +
+                                   "  -build.gradle\n" +
+                                   "   $oomMessage")
+
+        },
+        {
+          assertThat(it).isEqualTo("-\n" +
+                                   " -failed\n" +
+                                   "  $$oomMessage \n")
+
+        }
       )
     }
 
     assertSyncViewSelectedNode(oomMessage, true) { text ->
-      assertThat(text).startsWith("""
-      * Where:
-      Build file '$buildScript' line: 9
-
-      * What went wrong:
-      Out of memory. $oomMessage
-
-      Possible solution:
-       - Check the JVM memory arguments defined for the gradle process in:
-         gradle.properties in project root directory
-    """.trimIndent())
+      assertThat(text).satisfiesAnyOf(
+        {
+          assertThat(it).startsWith("""
+            * Where:
+            Build file '$buildScript' line: 9
+      
+            * What went wrong:
+            Out of memory. $oomMessage
+      
+            Possible solution:
+             - Check the JVM memory arguments defined for the gradle process in:
+               gradle.properties in project root directory
+          """.trimIndent())
+        },
+        {
+          assertThat(it).startsWith("""
+            * What went wrong:
+            Out of memory. $oomMessage
+      
+            Possible solution:
+             - Check the JVM memory arguments defined for the gradle process in:
+               gradle.properties in project root directory
+          """.trimIndent())
+        }
+      )
     }
   }
 }
