@@ -1157,7 +1157,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public @NotNull DfType getUnboxedDfType(@NotNull DfaValue value) {
-    if (value instanceof DfaBoxedValue) {
+    if (value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getSpecialField() == SpecialField.UNBOX) {
       return getDfType(((DfaBoxedValue)value).getWrappedValue());
     }
     if (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType())) {

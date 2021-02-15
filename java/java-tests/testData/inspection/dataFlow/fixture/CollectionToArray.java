@@ -1,10 +1,14 @@
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.jetbrains.annotations.Contract;
 
 public class CollectionToArray {
+
+  String[] testEmpty() {
+    List<String> list = new ArrayList<>();
+    return list.toArray(new String[0]);
+  }
+
   void test(List<Object> obj) {
     if (obj.isEmpty()) return;
     Object[] objects = obj.toArray(new Object[0]);
