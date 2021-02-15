@@ -10,6 +10,8 @@ import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.throwIfNotEmpty
 import org.jdom.Element
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
@@ -18,7 +20,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
-private class PluginInfo {
+private data class ModuleInfo(val descriptorFile: Path, val isPlugin: Boolean) {
   val dependencies = mutableListOf<Reference>()
   val content = mutableListOf<Reference>()
 }
@@ -45,97 +47,14 @@ private class ModuleDescriptorPath {
 class PluginModelTest {
   @Test
   fun check() {
-    val modules = IntelliJProjectConfiguration.loadIntelliJProject(homePath.toString()).modules
+    val modules = IntelliJProjectConfiguration.loadIntelliJProject(homePath).modules
     val checker = PluginModelChecker(modules)
 
     // we cannot check everything in one pass - before checking we have to compute map of plugin to plugin modules
     // to be able to correctly check `<depends>Docker</depends>` that in a new plugin model specified as
     // <module name="intellij.clouds.docker.compose" package="com.intellij.docker.composeFile"/>
 
-    val moduleNameToFileInfo = LinkedHashMap<String, ModuleDescriptorPath>()
-    for (module in modules) {
-      // platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have id - ignore for now
-      if (module.name.startsWith("fleet.") ||
-          module.name == "fleet" ||
-          module.name == "intellij.idea.ultimate.resources" ||
-          module.name == "intellij.lightEdit" ||
-          module.name == "intellij.webstorm" ||
-          module.name == "intellij.cwm.plugin") {
-        continue
-      }
-
-      for (sourceRoot in module.sourceRoots) {
-        if (sourceRoot.rootType.isForTests) {
-          continue
-        }
-
-        val root = Path.of(JpsPathUtil.urlToPath(sourceRoot.url))
-        val metaInf = root.resolve("META-INF")
-        val pluginDescriptorFile = metaInf.resolve("plugin.xml")
-        val pluginDescriptor = try {
-          JDOMUtil.load(pluginDescriptorFile)
-        }
-        catch (ignore: NoSuchFileException) {
-          null
-        }
-
-        val moduleDescriptorFile = root.resolve("${module.name}.xml")
-        val moduleDescriptor = try {
-          JDOMUtil.load(moduleDescriptorFile)
-        }
-        catch (ignore: NoSuchFileException) {
-          null
-        }
-
-        if (Files.exists(metaInf.resolve("${module.name}.xml"))) {
-          checker.errors.add(PluginValidationError("Module descriptor must be in the root of module root", mapOf(
-            "module" to module.name,
-            "moduleDescriptor" to metaInf.resolve("${module.name}.xml"),
-          )))
-          continue
-        }
-
-        if (pluginDescriptor == null && moduleDescriptor == null) {
-          continue
-        }
-
-        val item = moduleNameToFileInfo.computeIfAbsent(module.name) { ModuleDescriptorPath() }
-        if (item.pluginDescriptorFile != null && pluginDescriptor != null) {
-          checker.errors.add(PluginValidationError("Duplicated plugin.xml", mapOf(
-            "module" to module.name,
-            "firstPluginDescriptor" to item.pluginDescriptorFile,
-            "secondPluginDescriptor" to pluginDescriptorFile,
-          )))
-          continue
-        }
-        if (item.pluginDescriptorFile != null && moduleDescriptor != null) {
-          checker.errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
-            "module" to module.name,
-            "pluginDescriptor" to item.pluginDescriptorFile,
-            "moduleDescriptor" to moduleDescriptorFile,
-          )))
-          continue
-        }
-        if (item.moduleDescriptorFile != null && pluginDescriptor != null) {
-          checker.errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
-            "module" to module.name,
-            "pluginDescriptor" to pluginDescriptorFile,
-            "moduleDescriptor" to item.moduleDescriptorFile,
-          )))
-          continue
-        }
-
-        if (pluginDescriptor == null) {
-          item.moduleDescriptorFile = moduleDescriptorFile
-          item.moduleDescriptor = moduleDescriptor
-        }
-        else {
-          item.pluginDescriptorFile = pluginDescriptorFile
-          item.pluginDescriptor = pluginDescriptor
-        }
-      }
-    }
-
+    val moduleNameToFileInfo = computeModuleSet(modules, checker)
     l@ for ((moduleName, moduleMetaInfo) in moduleNameToFileInfo) {
       val descriptor = moduleMetaInfo.pluginDescriptor ?: continue
       val pluginXml = moduleMetaInfo.pluginDescriptorFile ?: continue
@@ -179,7 +98,7 @@ class PluginModelTest {
     val descriptor = info.descriptor
     val dependencies = descriptor.getChild("dependencies")
     if (dependencies != null) {
-      val pluginInfo = checker.graph.computeIfAbsent(info.moduleName) { PluginInfo() }
+      val pluginInfo = checker.graph.computeIfAbsent(info.moduleName) { ModuleInfo(info.pluginXml, isPlugin = true) }
       try {
         checker.checkDependencies(dependencies, descriptor, info.pluginXml, pluginInfo)
       }
@@ -190,7 +109,7 @@ class PluginModelTest {
 
     val content = descriptor.getChild("content")
     if (content != null) {
-      val pluginInfo = checker.graph.computeIfAbsent(info.moduleName) { PluginInfo() }
+      val pluginInfo = checker.graph.computeIfAbsent(info.moduleName) { ModuleInfo(info.pluginXml, isPlugin = true) }
       try {
         checker.checkContent(content, descriptor, info.pluginXml, pluginInfo)
       }
@@ -208,6 +127,93 @@ class PluginModelTest {
   }
 }
 
+private fun computeModuleSet(modules: List<JpsModule>, checker: PluginModelChecker): LinkedHashMap<String, ModuleDescriptorPath> {
+  val moduleNameToFileInfo = LinkedHashMap<String, ModuleDescriptorPath>()
+  for (module in modules) {
+    // platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have id - ignore for now
+    if (module.name.startsWith("fleet.") ||
+        module.name == "fleet" ||
+        module.name == "intellij.idea.ultimate.resources" ||
+        module.name == "intellij.lightEdit" ||
+        module.name == "intellij.webstorm" ||
+        module.name == "intellij.cwm.plugin") {
+      continue
+    }
+
+    for (sourceRoot in module.sourceRoots) {
+      if (sourceRoot.rootType.isForTests) {
+        continue
+      }
+
+      val root = Path.of(JpsPathUtil.urlToPath(sourceRoot.url))
+      val metaInf = root.resolve("META-INF")
+      val pluginDescriptorFile = metaInf.resolve("plugin.xml")
+      val pluginDescriptor = try {
+        JDOMUtil.load(pluginDescriptorFile)
+      }
+      catch (ignore: NoSuchFileException) {
+        null
+      }
+
+      val moduleDescriptorFile = root.resolve("${module.name}.xml")
+      val moduleDescriptor = try {
+        JDOMUtil.load(moduleDescriptorFile)
+      }
+      catch (ignore: NoSuchFileException) {
+        null
+      }
+
+      if (Files.exists(metaInf.resolve("${module.name}.xml"))) {
+        checker.errors.add(PluginValidationError("Module descriptor must be in the root of module root", mapOf(
+          "module" to module.name,
+          "moduleDescriptor" to metaInf.resolve("${module.name}.xml"),
+        )))
+        continue
+      }
+
+      if (pluginDescriptor == null && moduleDescriptor == null) {
+        continue
+      }
+
+      val item = moduleNameToFileInfo.computeIfAbsent(module.name) { ModuleDescriptorPath() }
+      if (item.pluginDescriptorFile != null && pluginDescriptor != null) {
+        checker.errors.add(PluginValidationError("Duplicated plugin.xml", mapOf(
+          "module" to module.name,
+          "firstPluginDescriptor" to item.pluginDescriptorFile,
+          "secondPluginDescriptor" to pluginDescriptorFile,
+        )))
+        continue
+      }
+      if (item.pluginDescriptorFile != null && moduleDescriptor != null) {
+        checker.errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
+          "module" to module.name,
+          "pluginDescriptor" to item.pluginDescriptorFile,
+          "moduleDescriptor" to moduleDescriptorFile,
+        )))
+        continue
+      }
+      if (item.moduleDescriptorFile != null && pluginDescriptor != null) {
+        checker.errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
+          "module" to module.name,
+          "pluginDescriptor" to pluginDescriptorFile,
+          "moduleDescriptor" to item.moduleDescriptorFile,
+        )))
+        continue
+      }
+
+      if (pluginDescriptor == null) {
+        item.moduleDescriptorFile = moduleDescriptorFile
+        item.moduleDescriptor = moduleDescriptor
+      }
+      else {
+        item.pluginDescriptorFile = pluginDescriptorFile
+        item.pluginDescriptor = pluginDescriptor
+      }
+    }
+  }
+  return moduleNameToFileInfo
+}
+
 private fun printGraph(checker: PluginModelChecker) {
   val stringWriter = StringWriter()
   val writer = JsonFactory().createGenerator(stringWriter)
@@ -220,6 +226,7 @@ private fun printGraph(checker: PluginModelChecker) {
       for (name in names) {
         writer.obj(name) {
           val item = graph.get(name)!!
+          writer.writeStringField("descriptor", homePath.relativize(item.descriptorFile).toString())
           writeEntries(item.dependencies, "dependencies", writer)
           writeEntries(item.content, "content", writer)
         }
@@ -248,16 +255,35 @@ private class PluginModelChecker(modules: List<JpsModule>) {
   val pluginIdToModules = LinkedHashMap<String, PluginTask>()
   val packageToPlugin = HashMap<String, PluginTask>()
 
-  val graph = HashMap<String, PluginInfo>()
+  val graph = HashMap<String, ModuleInfo>()
 
   val errors = mutableListOf<Throwable>()
 
   private val nameToModule = modules.associateBy { it.name }
 
-  fun checkDependencies(element: Element, referencingDescriptor: Element, referencingDescriptorFile: Path, pluginInfo: PluginInfo) {
+  fun checkDependencies(element: Element, referencingDescriptor: Element, referencingDescriptorFile: Path, pluginInfo: ModuleInfo) {
     for (child in element.children) {
       if (child.name != "module") {
-        throw PluginValidationError("Unexpected element: ${JDOMUtil.write(child)}")
+        if (child.name == "plugin") {
+          if (pluginInfo.isPlugin) {
+            throw PluginValidationError("Plugin cannot depend on plugin: ${JDOMUtil.write(child)}",
+                                        mapOf(
+                                          "entry" to child,
+                                          "descriptorFile" to referencingDescriptorFile,
+                                        ))
+          }
+
+          // todo check that the referenced plugin exists
+          continue
+        }
+
+        if (pluginInfo.isPlugin) {
+          throw PluginValidationError("Unsupported dependency type: ${child.name}",
+                                      mapOf(
+                                        "entry" to child,
+                                        "descriptorFile" to referencingDescriptorFile,
+                                      ))
+        }
       }
 
       val moduleName = child.getAttributeValue("name") ?: throw PluginValidationError("Module name is not specified")
@@ -267,7 +293,9 @@ private class PluginModelChecker(modules: List<JpsModule>) {
         continue
       }
 
-      val (descriptor, referencedDescriptorFile) = loadFileInModule(module)
+      val (descriptor, referencedDescriptorFile) = loadFileInModule(module,
+                                                                    referencingDescriptorFile = referencingDescriptorFile,
+                                                                    child.getAttributeValue("package")!!)
       val aPackage = checkPackage(descriptor, referencedDescriptorFile, child)
 
       pluginInfo.dependencies.add(Reference(moduleName, aPackage))
@@ -315,8 +343,6 @@ private class PluginModelChecker(modules: List<JpsModule>) {
         }
       }
 
-      // if
-
       if (!isPluginDependencySpecified) {
         throw PluginValidationError("Module, that used as dependency, must specify dependency on some plugin (`dependencies.plugin`)" +
                                     "\n\nProposed fix (add to ${homePath.relativize(referencedDescriptorFile)}):\n\n" + """
@@ -329,6 +355,16 @@ private class PluginModelChecker(modules: List<JpsModule>) {
           "referencedDescriptorFile" to referencedDescriptorFile
         ))
       }
+
+      descriptor.getChild("dependencies")?.let {
+        try {
+          checkDependencies(it, descriptor, referencedDescriptorFile,
+                            graph.computeIfAbsent(moduleName) { ModuleInfo(referencedDescriptorFile, isPlugin = false) })
+        }
+        catch (e: PluginValidationError) {
+          errors.add(e)
+        }
+      }
     }
   }
 
@@ -336,7 +372,10 @@ private class PluginModelChecker(modules: List<JpsModule>) {
   // 1) depends + dependency on plugin in a referenced descriptor = optional descriptor. In old format: depends tag
   // 2) no depends + no dependency on plugin in a referenced descriptor = directly injected into plugin (separate classloader is not created
   // during transition period). In old format: xi:include (e.g. <xi:include href="dockerfile-language.xml"/>.
-  fun checkContent(content: Element, referencingDescriptor: Element, referencingDescriptorFile: Path, pluginInfo: PluginInfo) {
+  fun checkContent(content: Element,
+                   referencingDescriptor: Element,
+                   referencingDescriptorFile: Path,
+                   pluginInfo: ModuleInfo) {
     for (child in content.children) {
       if (child.name != "module") {
         throw PluginValidationError("Unexpected element: ${JDOMUtil.write(child)}")
@@ -354,7 +393,9 @@ private class PluginModelChecker(modules: List<JpsModule>) {
         return
       }
 
-      val (descriptor, referencedDescriptorFile) = loadFileInModule(module)
+      val (descriptor, referencedDescriptorFile) = loadFileInModule(module,
+                                                                    referencingDescriptorFile,
+                                                                    child.getAttributeValue("package")!!)
       val aPackage = checkPackage(descriptor, referencedDescriptorFile, child)
 
       pluginInfo.content.add(Reference(moduleName, aPackage))
@@ -400,6 +441,16 @@ private class PluginModelChecker(modules: List<JpsModule>) {
           "referencedDescriptorFile" to referencedDescriptorFile
         ))
       }
+
+      descriptor.getChild("content")?.let {
+        try {
+          checkContent(it, descriptor, referencedDescriptorFile,
+                       graph.computeIfAbsent(moduleName) { ModuleInfo(referencedDescriptorFile, isPlugin = false) })
+        }
+        catch (e: PluginValidationError) {
+          errors.add(e)
+        }
+      }
     }
   }
 }
@@ -420,6 +471,12 @@ private fun checkPackage(descriptor: Element, descriptorFile: Path, child: Eleme
 
 private class PluginValidationError(message: String) : RuntimeException(message) {
   constructor(message: String, params: Map<String, Any?>) : this(message + " (\n  ${params.entries.joinToString(separator = ",\n  ") { "${it.key}=${paramValueToString(it.value)}" }}\n)")
+
+  constructor(message: String, params: Map<String, Any?>, fix: String) : this(
+    message +
+    " (\n  ${params.entries.joinToString(separator = ",\n  ") { "${it.key}=${paramValueToString(it.value)}" }}\n)" +
+    "\n\nProposed fix:\n\n" + fix.trimIndent() + "\n\n"
+  )
 }
 
 private fun paramValueToString(value: Any?): String {
@@ -431,9 +488,12 @@ private fun paramValueToString(value: Any?): String {
   }
 }
 
-private fun loadFileInModule(module: JpsModule): Pair<Element, Path> {
+private fun loadFileInModule(module: JpsModule,
+                             referencingDescriptorFile: Path,
+                             aPackage: String): Pair<Element, Path> {
   val fileName = "${module.name}.xml"
-  for (sourceRoot in module.sourceRoots) {
+  val roots = module.getSourceRoots(JavaResourceRootType.RESOURCE) + module.getSourceRoots(JavaSourceRootType.SOURCE)
+  for (sourceRoot in roots) {
     try {
       val file = Path.of(JpsPathUtil.urlToPath(sourceRoot.url), fileName)
       return Pair(JDOMUtil.load(file), file)
@@ -442,6 +502,17 @@ private fun loadFileInModule(module: JpsModule): Pair<Element, Path> {
     }
   }
 
-  throw RuntimeException("Cannot find $fileName in module ${module.name}")
+  throw PluginValidationError("Module ${module.name} doesn't have descriptor file",
+                              mapOf(
+                                "expectedFile" to fileName,
+                                "referencingDescriptorFile" to referencingDescriptorFile,
+                              ),
+                              """
+                                Create file $fileName in ${homePath.relativize(Path.of(JpsPathUtil.urlToPath(roots.first().url)))}
+                                with content:
+                                
+                                <idea-plugin package="$aPackage">
+                                </idea-plugin>
+                              """)
 }
 
