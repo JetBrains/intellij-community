@@ -35,7 +35,9 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.containers.MultiMap
 import java.util.*
 
 class MethodExtractor {
@@ -64,8 +66,13 @@ class MethodExtractor {
         val extractor = if (useLegacyProcessor) LegacyMethodExtractor() else DefaultMethodExtractor()
         if (Registry.`is`("java.refactoring.extractMethod.inplace") && EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
           val popupSettings = createInplaceSettingsPopup(options)
-          val suggestedNames = guessMethodName(options).ifEmpty { listOf("extracted") }
-          doInplaceExtract(editor, extractor, parameters.copy(methodName = suggestedNames.first()), popupSettings, suggestedNames)
+          val guessedNames = guessMethodName(options).filterNot { name -> hasConflicts(options.copy(methodName = name)) }
+          val methodName = if (guessedNames.isNotEmpty()) {
+            guessedNames.first()
+          } else {
+            defaultNameCandidates().filterNot { name -> hasConflicts(options.copy(methodName = name)) }.first()
+          }
+          doInplaceExtract(editor, extractor, parameters.copy(methodName = methodName), popupSettings, guessedNames)
         }
         else {
           extractor.extractInDialog(parameters)
@@ -77,6 +84,17 @@ class MethodExtractor {
       CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId)
       showError(editor, e.problems)
     }
+  }
+
+  fun defaultNameCandidates(): Sequence<String> {
+    return sequenceOf("extracted", "newMethod") + generateSequence(1) { seed -> seed + 1 }.map { number -> "newMethod$number" }
+  }
+
+  private fun hasConflicts(options: ExtractOptions): Boolean {
+    val (_, method) = prepareRefactoringElements(options)
+    val conflicts = MultiMap<PsiElement, String>()
+    ConflictsUtil.checkMethodConflicts(options.anchor.containingClass, null, method, conflicts)
+    return ! conflicts.isEmpty
   }
 
   fun createInplaceSettingsPopup(options: ExtractOptions): ExtractMethodPopupProvider {
