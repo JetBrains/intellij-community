@@ -91,9 +91,6 @@ public final class PluginManagerCore {
 
   private static Map<String, String[]> ourAdditionalLayoutMap = Collections.emptyMap();
 
-  private static final Path distDir = Paths.get(PathManager.getHomePath());
-  private static final Path dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir)
-    .resolve("brokenPlugins.db");
   private static final Path updatedBrokenPluginFile = Paths.get(PathManager.getConfigPath()).resolve("updatedBrokenPlugins.db");
 
   @SuppressWarnings("StaticNonFinalField")
@@ -236,7 +233,7 @@ public final class PluginManagerCore {
     catch (NoSuchFileException ignore) {
     }
     catch (IOException e) {
-      getLogger().error("Failed to read " + dbFile, e);
+      getLogger().error("Failed to read " + updatedBrokenPluginFile, e);
     }
   }
 
@@ -254,7 +251,10 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull Map<PluginId, Set<String>> readBrokenPluginFile() {
-    Path brokenPluginsStorage = updatedBrokenPluginFile.toFile().exists() ? updatedBrokenPluginFile : dbFile;
+    Path distDir = Paths.get(PathManager.getHomePath());
+    Path dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir)
+      .resolve("brokenPlugins.db");
+    Path brokenPluginsStorage = Files.exists(updatedBrokenPluginFile) ? updatedBrokenPluginFile : dbFile;
     try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(brokenPluginsStorage), 32_000))) {
       int version = stream.readUnsignedByte();
       if (version != 1) {
