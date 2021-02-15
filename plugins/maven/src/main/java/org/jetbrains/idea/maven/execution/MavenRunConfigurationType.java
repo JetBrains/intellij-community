@@ -169,6 +169,12 @@ public final class MavenRunConfigurationType implements ConfigurationType {
                                                                                          project,
                                                                                          generateName(project, params),
                                                                                          isDelegateBuild);
+    if (!MavenUtil.isProjectTrustedEnoughToImport(project, true, true)) {
+      MavenUtil.showError(project,
+                          RunnerBundle.message("notification.title.failed.to.execute.maven.goal"),
+                          RunnerBundle.message("notification.project.is.untrusted"));
+      return;
+    }
 
     ProgramRunner runner = isDelegateBuild ? DelegateBuildRunner.getDelegateRunner() : DefaultJavaProgramRunner.getInstance();
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
