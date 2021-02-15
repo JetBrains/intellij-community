@@ -6,8 +6,12 @@ import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -15,13 +19,13 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements RunManagerListener, Disposable {
   private static final String DASHBOARD_NOTIFICATION_GROUP_ID = "Run Dashboard";
+  private static final String DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID = "run.dashboard.multiple.run.configurations";
   private static final String SHOW_RUN_DASHBOARD_NOTIFICATION = "show.run.dashboard.notification";
 
   private final Project myProject;
@@ -81,7 +85,25 @@ public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements Run
       toolWindowName,
       ExecutionBundle.message("run.dashboard.multiple.run.config.notification", type.getDisplayName(), toolWindowName),
       NotificationType.INFORMATION,
-      new AdvertiserNotificationListener(myProject, type.getId()));
+      null,
+      DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID);
+    String typeId = type.getId();
+    myNotification.addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.use.services.action", toolWindowName)) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e,
+                                  @NotNull Notification notification) {
+        notification.hideBalloon();
+        showInRunDashboard(typeId);
+      }
+    });
+    myNotification.addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.hide.multiple.run.config.notification.action")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e,
+                                  @NotNull Notification notification) {
+        PropertiesComponent.getInstance(myProject).setValue(SHOW_RUN_DASHBOARD_NOTIFICATION, false, true);
+        notification.expire();
+      }
+    });
     myNotification.notify(myProject);
   }
 
@@ -89,35 +111,10 @@ public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements Run
     return PropertiesComponent.getInstance(project).getBoolean(SHOW_RUN_DASHBOARD_NOTIFICATION, true);
   }
 
-  private static class AdvertiserNotificationListener implements NotificationListener {
-    private final Project myProject;
-    private final String myTypeId;
-
-    private AdvertiserNotificationListener(Project project, String typeId) {
-      myProject = project;
-      myTypeId = typeId;
-    }
-
-    @Override
-    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-
-      String description = event.getDescription();
-      if ("ignore".equals(description)) {
-        PropertiesComponent.getInstance(myProject).setValue(SHOW_RUN_DASHBOARD_NOTIFICATION, false, true);
-        notification.expire();
-      }
-      else if ("show".equals(description)) {
-        notification.hideBalloon();
-        showInRunDashboard();
-      }
-    }
-
-    private void showInRunDashboard() {
-      RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
-      Set<String> types = new HashSet<>(dashboardManager.getTypes());
-      types.add(myTypeId);
-      dashboardManager.setTypes(types);
-    }
+  private void showInRunDashboard(String typeId) {
+    RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
+    Set<String> types = new HashSet<>(dashboardManager.getTypes());
+    types.add(typeId);
+    dashboardManager.setTypes(types);
   }
 }
