@@ -60,7 +60,7 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
-    workflow.addCommitListener(CommitStateCleaner(), this)
+    workflow.addCommitListener(GitCommitStateCleaner(), this)
 
     addCommitAuthorListener(this, this)
 
@@ -260,5 +260,16 @@ internal class ChangesViewCommitWorkflowHandler(
 
   interface ActivityListener : EventListener {
     fun activityStateChanged()
+  }
+
+  private inner class GitCommitStateCleaner : CommitStateCleaner() {
+
+    private fun initCommitMessage() = setCommitMessage(getCommitMessageFromPolicy())
+
+    override fun onSuccess(commitMessage: String) {
+      initCommitMessage()
+
+      super.onSuccess(commitMessage)
+    }
   }
 }
