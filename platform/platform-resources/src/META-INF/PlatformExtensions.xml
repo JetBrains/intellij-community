@@ -1042,8 +1042,6 @@
 
     <preloadingActivity implementation="com.intellij.ide.SystemHealthMonitor"/>
 
-    <experimentalFeature id="copy.reference.popup" percentOfUsers="100"/>
-
     <registryKey key="run.anything.context.recent.directory.number" defaultValue="5"
                  description="Defines storing Run Anything context combobox directories number."/>
 
