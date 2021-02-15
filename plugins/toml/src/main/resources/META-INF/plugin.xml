@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
     <id>org.toml.lang</id>
     <name>Toml</name>
 
@@ -16,45 +16,5 @@
     ]]>
     </change-notes>
 
-    <depends>com.intellij.modules.lang</depends>
-
-    <extensions defaultExtensionNs="com.intellij">
-        <fileType name="TOML"
-                  language="TOML"
-                  implementationClass="org.toml.lang.psi.TomlFileType"
-                  fieldName="INSTANCE"
-                  extensions="toml"
-                  fileNames="Cargo.lock;Cargo.toml.orig;Gopkg.lock;Pipfile;poetry.lock"/>
-        <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
-        <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
-        <lang.syntaxHighlighter language="TOML" implementationClass="org.toml.ide.TomlHighlighter"/>
-        <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
-        <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
-        <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
-        <lang.elementManipulator forClass="org.toml.lang.psi.TomlLiteral"
-                                 implementationClass="org.toml.lang.psi.TomlStringLiteralManipulator"/>
-
-        <lang.findUsagesProvider language="TOML" implementationClass="org.toml.ide.search.TomlFindUsagesProvider"/>
-
-        <!-- Formatting -->
-        <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
-        <langCodeStyleSettingsProvider
-            implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
-
-        <!-- Folding -->
-        <lang.foldingBuilder language="TOML" implementationClass="org.toml.ide.folding.TomlFoldingBuilder"/>
-
-        <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
-        <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
-        <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
-        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
-        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
-        <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
-
-        <localInspection language="TOML"
-                         groupName="TOML"
-                         displayName="Unresolved reference"
-                         enabledByDefault="true" level="WARNING"
-                         implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
-    </extensions>
+    <xi:include href="/META-INF/toml-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
