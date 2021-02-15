@@ -34,9 +34,7 @@ import javax.swing.JList
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
 
-internal object GHPRCommitsBrowserComponent {
-
-  val COMMITS_LIST_KEY = Key.create<JList<GHCommit>>("COMMITS_LIST")
+internal class GHPRCommitsBrowserComponentFactory {
 
   fun create(commitsModel: SingleValueModel<List<GHCommit>>, onCommitSelected: (GHCommit?) -> Unit): JComponent {
     val commitsListModel = CollectionListModel(commitsModel.value)
@@ -172,5 +170,9 @@ internal object GHPRCommitsBrowserComponent {
       VcsUserImpl(name, email)
     }
     else unknownUser
+  }
+
+  companion object {
+    val COMMITS_LIST_KEY = Key.create<JList<GHCommit>>("COMMITS_LIST")
   }
 }
