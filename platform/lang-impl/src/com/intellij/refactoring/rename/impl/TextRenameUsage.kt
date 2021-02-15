@@ -14,7 +14,7 @@ internal class TextRenameUsage(
   override val fileUpdater: FileUpdater
 ) : PsiRenameUsage, ModifiableRenameUsage {
 
-  override val declaration: Boolean get() = false
+  override val declaration: Boolean get() = psiUsage.declaration
 
   override val file: PsiFile get() = psiUsage.file
 

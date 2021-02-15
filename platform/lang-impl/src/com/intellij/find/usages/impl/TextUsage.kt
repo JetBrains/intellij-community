@@ -15,6 +15,8 @@ internal class TextUsage(
 
   override fun createPointer(): Pointer<out TextUsage> = TextUsagePointer(file, range)
 
+  override val declaration: Boolean get() = false
+
   private class TextUsagePointer(file: PsiFile, range: TextRange) : Pointer<TextUsage> {
 
     private val rangePointer: SmartPsiFileRange = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, range)

@@ -58,7 +58,7 @@ fun <O> buildUsageViewQuery(project: Project,
                             handler: UsageHandler<O>,
                             allOptions: AllSearchOptions<O>): Query<out UVUsage> {
   return buildQuery(project, target, handler, allOptions).transforming {
-    if (it is PsiUsage) {
+    if (it is PsiUsage && !it.declaration) {
       listOf(Psi2UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
     }
     else {
