@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -187,10 +186,8 @@ public abstract class DumbService {
    */
   public abstract void smartInvokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
 
-  private static final NotNullLazyKey<DumbService, Project> INSTANCE_KEY = ServiceManager.createLazyKey(DumbService.class);
-
   public static DumbService getInstance(@NotNull Project project) {
-    return INSTANCE_KEY.getValue(project);
+    return project.getService(DumbService.class);
   }
 
   /**

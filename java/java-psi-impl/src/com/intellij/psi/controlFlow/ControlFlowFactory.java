@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.util.containers.ConcurrentList;
@@ -15,14 +14,13 @@ import java.util.Map;
 
 import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
 
+@Service(Service.Level.PROJECT)
 public final class ControlFlowFactory implements Disposable {
   // psiElements hold weakly, controlFlows softly
   private final Map<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = ContainerUtil.createConcurrentWeakKeySoftValueMap();
 
-  private static final NotNullLazyKey<ControlFlowFactory, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ControlFlowFactory.class);
-
   public static ControlFlowFactory getInstance(Project project) {
-    return INSTANCE_KEY.getValue(project);
+    return project.getService(ControlFlowFactory.class);
   }
 
   public ControlFlowFactory(@NotNull Project project) {
@@ -40,7 +38,7 @@ public final class ControlFlowFactory implements Disposable {
 
   void registerSubRange(final PsiElement codeFragment,
                         final ControlFlowSubRange flow,
-                        final ControlFlowOptions options, 
+                        final ControlFlowOptions options,
                         final ControlFlowPolicy policy) {
     registerControlFlow(codeFragment, flow, options, policy);
   }
