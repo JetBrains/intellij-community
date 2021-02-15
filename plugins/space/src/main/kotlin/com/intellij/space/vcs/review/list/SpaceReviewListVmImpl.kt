@@ -97,6 +97,10 @@ private fun defaultQuickFiltersMap(spaceProjectKey: ProjectKey,
   ReviewListQuickFilter.CLOSED to ReviewListFilters(
     projectKey = spaceProjectKey,
     state = CodeReviewStateFilter.Closed
+  ),
+  ReviewListQuickFilter.ASSIGNED_TO_ME to ReviewListFilters(
+    projectKey = spaceProjectKey,
+    reviewer = me.live
   )
 )
 
