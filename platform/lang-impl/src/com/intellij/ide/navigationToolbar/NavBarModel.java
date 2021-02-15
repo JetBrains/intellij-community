@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -101,7 +102,7 @@ public class NavBarModel {
   public void updateModelAsync(DataContext dataContext, @Nullable Runnable callback) {
     if (LaterInvocator.isInModalContext()) return;
 
-    ReadAction.nonBlocking(() -> updateModel(dataContext))
+    ReadAction.nonBlocking(() -> updateModel(Utils.wrapDataContext(dataContext)))
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.current(), __ -> {
         if (callback != null) callback.run();
