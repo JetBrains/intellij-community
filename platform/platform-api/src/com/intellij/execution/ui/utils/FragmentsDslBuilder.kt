@@ -11,34 +11,46 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.Font
 import javax.swing.JComponent
+import javax.swing.JLabel
 import kotlin.concurrent.thread
 
 @DslMarker
 private annotation class FragmentsDsl
 
-@ApiStatus.Experimental
-@FragmentsDsl
-class Group<Settings : FragmentedSettings>(val id: String) {
+abstract class AbstractFragmentBuilder<Settings : FragmentedSettings> {
   @Nls
-  var name: String? = null
+  var actionHint: String? = null
 
   @Nls
   var group: String? = null
 
   @Nls
-  var childrenGroupName: String? = null
+  var actionDescription: String? = null
 
-  var children: FragmentsBuilder<Settings>.() -> Unit = {}
+  abstract fun build(): SettingsEditorFragment<Settings, *>
+}
+
+@ApiStatus.Experimental
+@FragmentsDsl
+class Group<Settings : FragmentedSettings>(
+  val id: String,
+  val name: @Nls String
+) : AbstractFragmentBuilder<Settings>() {
+
   var visible: (Settings) -> Boolean = { true }
 
   @Nls
-  var actionHint: String? = null
+  var childrenGroupName: String? = null
 
-  fun build(): NestedGroupFragment<Settings> {
+  var children: FragmentsBuilder<Settings>.() -> Unit = {}
+
+  override fun build(): NestedGroupFragment<Settings> {
     return object : NestedGroupFragment<Settings>(id, name, group, visible) {
       override fun createChildren(): MutableList<SettingsEditorFragment<Settings, *>> {
         return FragmentsBuilder<Settings>().also(this@Group.children).build()
@@ -47,6 +59,44 @@ class Group<Settings : FragmentedSettings>(val id: String) {
       override fun getChildrenGroupName(): String? = this@Group.childrenGroupName ?: super.getChildrenGroupName()
     }.also {
       it.actionHint = actionHint
+      it.actionDescription = actionDescription
+    }
+  }
+}
+
+@ApiStatus.Experimental
+@FragmentsDsl
+class Tag<Settings : FragmentedSettings>(
+  val id: String,
+  val name: @Nls String
+) : AbstractFragmentBuilder<Settings>() {
+
+  var getter: (Settings) -> Boolean = { true }
+  var setter: (Settings, Boolean) -> Unit = { _, _ -> }
+
+  @Nls
+  var toolTip: String? = actionHint
+
+  var validation: ((Settings, TagButton) -> ValidationInfo?)? = null
+
+  override fun build(): SettingsEditorFragment<Settings, TagButton> {
+    val ref = Ref<SettingsEditorFragment<Settings, *>>()
+    val tagButton = TagButton(name) {
+      ref.get().isSelected = false
+    }
+
+    return Fragment<Settings, TagButton>(id, tagButton).also {
+      it.name = name
+      it.actionHint = actionHint
+      it.group = group
+      it.visible = getter
+      it.apply = { s, c -> setter(s, c.isVisible) }
+      it.reset = { s, c -> c.isVisible = getter(s) }
+      it.validation = validation
+      it.actionDescription = actionDescription
+    }.build().also {
+      it.component().setToolTip(toolTip)
+      ref.set(it)
     }
   }
 }
@@ -56,28 +106,26 @@ class Group<Settings : FragmentedSettings>(val id: String) {
 class Fragment<Settings : FragmentedSettings, Component : JComponent>(
   val id: String,
   private val component: Component
-) {
-  var reset: (Settings, Component) -> Unit = { _, _ -> }
-  var apply: (Settings, Component) -> Unit = { _, _ -> }
-  var visible: (Settings) -> Boolean = { true }
-  var isRemovable: Boolean = true
-  var validation: ((Settings, Component) -> ValidationInfo?)? = null
+) : AbstractFragmentBuilder<Settings>() {
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Nls
   var name: String? = null
 
-  @Nls(capitalization = Nls.Capitalization.Title)
-  var group: String? = null
+  var visible: (Settings) -> Boolean = { true }
+
+  var reset: (Settings, Component) -> Unit = { _, _ -> }
+  var apply: (Settings, Component) -> Unit = { _, _ -> }
+
+  var isRemovable: Boolean = true
+
+  var validation: ((Settings, Component) -> ValidationInfo?)? = null
 
   @Nls
   var hint: String? = null
 
-  @Nls
-  var actionHint: String? = null
-
   var commandLinePosition: Int = 0
 
-  fun build(): SettingsEditorFragment<Settings, Component> {
+  override fun build(): SettingsEditorFragment<Settings, Component> {
     return object : SettingsEditorFragment<Settings, Component>(id, name, group, component, commandLinePosition, reset, apply, visible) {
 
       private val validator = if (validation != null) ComponentValidator(this) else null
@@ -111,7 +159,10 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
     }.also {
       it.isRemovable = isRemovable
       it.setHint(hint)
+
+      it.actionDescription = actionDescription
       it.actionHint = actionHint
+
       if (component is Disposable) {
         Disposer.register(it, component)
       }
@@ -137,36 +188,14 @@ class FragmentsBuilder<Settings : FragmentedSettings> {
     return Fragment<Settings, Component>(id, component).also(setup).let { it.build().apply { fragments += this } }
   }
 
-  fun tag(
-    id: String,
-    @Nls name: String,
-    getter: (Settings) -> Boolean,
-    setter: (Settings, Boolean) -> Unit,
-    @Nls group: String? = null,
-    @Nls actionHint: String? = null,
-    @Nls toolTip: String? = null,
-    validation: ((Settings, TagButton) -> ValidationInfo?)? = null
-  ): SettingsEditorFragment<Settings, TagButton> {
-    val ref = Ref<SettingsEditorFragment<Settings, *>>()
-    val tagButton = TagButton(name) {
-      ref.get().isSelected = false
-    }
-    return fragment(id, tagButton) {
-      this.name = name
-      this.actionHint = actionHint
-      this.group = group
-      this.visible = getter
-      this.apply = { s, c -> setter(s, c.isVisible) }
-      this.reset = { s, c -> c.isVisible = getter(s) }
-      this.validation = validation
-    }.also {
-      it.component().setToolTip(toolTip)
-      ref.set(it)
-    }
+  fun customFragment(fragment: SettingsEditorFragment<Settings, *>) = fragment.apply { fragments += this }
+
+  fun tag(id: String, @Nls name: String, setup: Tag<Settings>.() -> Unit): SettingsEditorFragment<Settings, TagButton> {
+    return Tag<Settings>(id, name).also(setup).let { it.build().apply { fragments += this } }
   }
 
-  fun group(id: String, setup: Group<Settings>.() -> Unit): NestedGroupFragment<Settings> {
-    return Group<Settings>(id).also(setup).let { it.build().apply { fragments += this } }
+  fun group(id: String, @Nls name: String, setup: Group<Settings>.() -> Unit): NestedGroupFragment<Settings> {
+    return Group<Settings>(id, name).also(setup).let { it.build().apply { fragments += this } }
   }
 
   fun build() = fragments.toMutableList()
@@ -174,5 +203,13 @@ class FragmentsBuilder<Settings : FragmentedSettings> {
 
 @ApiStatus.Experimental
 inline fun <Settings : FragmentedSettings> fragments(
+  @Nls title: String? = null,
   setup: FragmentsBuilder<Settings>.() -> Unit
-): MutableList<SettingsEditorFragment<Settings, *>> = FragmentsBuilder<Settings>().also(setup).build()
+): MutableList<SettingsEditorFragment<Settings, *>> = FragmentsBuilder<Settings>().apply {
+  if (title != null) {
+    fragment("title", JLabel(title).also { it.font = JBUI.Fonts.label().deriveFont(Font.BOLD) }) {
+      isRemovable = false
+      commandLinePosition = -1
+    }
+  }
+}.also(setup).build()
