@@ -280,7 +280,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   @Override
   public @Nullable InputStream getResourceAsStream(@NotNull String name) {
-    // compatibility with existing code, non-standard classloader behavior
     Resource resource = doFindResource(name);
     if (resource != null) {
       try {
@@ -311,7 +310,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return null;
   }
 
-  private @Nullable Resource doFindResource(String name) {
+  private @Nullable Resource doFindResource(@NotNull String name) {
     String canonicalPath = toCanonicalPath(name);
     Resource resource = classPath.findResource(canonicalPath);
     if (resource == null && canonicalPath.startsWith("/")) {
