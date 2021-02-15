@@ -41,7 +41,8 @@ import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class FSRecords {
-  private static final Logger LOG = Logger.getInstance(FSRecords.class);
+
+  static final Logger LOG = Logger.getInstance(FSRecords.class);
 
   public static final boolean useContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
@@ -317,6 +318,9 @@ public final class FSRecords {
       // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
       // then do not save them back again unnecessarily
       if (!toSave.equals(children)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
+        }
         updateSymlinksForNewChildren(parent, children, toSave);
         ourTreeAccessor.doSaveChildren(parentId, toSave, ourConnection);
       }

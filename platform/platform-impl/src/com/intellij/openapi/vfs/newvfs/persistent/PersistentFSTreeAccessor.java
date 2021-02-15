@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
@@ -23,8 +22,6 @@ import java.util.List;
 import java.util.function.IntSupplier;
 
 final class PersistentFSTreeAccessor {
-  private static final Logger LOG = Logger.getInstance(PersistentFSTreeAccessor.class);
-
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
 
   @NotNull
@@ -49,7 +46,7 @@ final class PersistentFSTreeAccessor {
           throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; childInfo: "+childInfo+"; list: "+toSave);
         }
         if (childId == parentId) {
-          LOG.error("Cyclic parent-child relations. parentId="+parentId+"; list: "+toSave);
+          FSRecords.LOG.error("Cyclic parent-child relations. parentId="+parentId+"; list: "+toSave);
         }
         else {
           int delta = childId - prevId;
