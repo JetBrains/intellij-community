@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
@@ -44,6 +45,8 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  */
 public final class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
+
+  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,
                                           @Nullable RefCountHolder refCountHolder) {
@@ -697,7 +700,16 @@ public final class AnnotationsHighlightUtil {
     PsiMethod method = (PsiMethod)owner;
     if (isStatic(method) || method.isConstructor() && isStatic(method.getContainingClass())) {
       String text = JavaErrorBundle.message("receiver.static.context");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
+      HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
+      QuickFixAction.registerQuickFixAction(
+        info,
+        QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, false, false)
+      );
+      QuickFixAction.registerQuickFixAction(
+        info,
+        QUICK_FIX_FACTORY.createDeleteFix(parameter, QuickFixBundle.message("remove.receiver.parameter")));
+      return info;
     }
 
     PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parameter);
