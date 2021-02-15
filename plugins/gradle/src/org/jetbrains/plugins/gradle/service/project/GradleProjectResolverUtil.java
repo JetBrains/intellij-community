@@ -173,14 +173,8 @@ public final class GradleProjectResolverUtil {
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (externalProject != null) {
       File projectDir = externalProject.getProjectDir();
-      try {
-        return ExternalSystemApiUtil.toCanonicalPath(projectDir.getCanonicalPath());
-      }
-      catch (IOException e) {
-        LOG.warn("construction of the canonical path for the module fails", e);
-      }
+      return ExternalSystemApiUtil.toCanonicalPath(projectDir.getPath());
     }
-
     return GradleUtil.getConfigPath(gradleModule.getGradleProject(), rootProjectPath);
   }
 
@@ -327,7 +321,7 @@ public final class GradleProjectResolverUtil {
         File[] gradleSrcRoots = gradleSrc.listFiles();
         if (gradleSrcRoots == null) return;
         for (File srcRoot: gradleSrcRoots) {
-          library.addPath(LibraryPathType.SOURCE, srcRoot.getAbsolutePath());
+          library.addPath(LibraryPathType.SOURCE, srcRoot.getPath());
         }
       }
       return;
@@ -350,7 +344,7 @@ public final class GradleProjectResolverUtil {
       }
 
       if (srcDir.isDirectory()) {
-        library.addPath(LibraryPathType.SOURCE, srcDir.getAbsolutePath());
+        library.addPath(LibraryPathType.SOURCE, srcDir.getPath());
       }
     }
   }
@@ -455,12 +449,12 @@ public final class GradleProjectResolverUtil {
           String candidateFileName = sourceCandidate.getFileName().toString();
           if (!sourceFound[0] && StringUtil.endsWith(candidateFileName, SOURCE_JAR_SUFFIX)) {
             collect.computeIfAbsent(LibraryPathType.SOURCE, type -> new SmartList<>())
-              .add(sourceCandidate.toFile().getAbsolutePath());
+              .add(sourceCandidate.toFile().getPath());
             sourceFound[0] = true;
           }
           else if (!docFound[0] && StringUtil.endsWith(candidateFileName, JAVADOC_JAR_SUFFIX)) {
             collect.computeIfAbsent(LibraryPathType.DOC, type -> new SmartList<>())
-              .add(sourceCandidate.toFile().getAbsolutePath());
+              .add(sourceCandidate.toFile().getPath());
             docFound[0] = true;
           }
         }
@@ -486,10 +480,10 @@ public final class GradleProjectResolverUtil {
 
         String name = p.getFileName().toString();
         if (!sourceResolved && name.endsWith(SOURCE_JAR_SUFFIX)) {
-          collect.computeIfAbsent(LibraryPathType.SOURCE, type -> new SmartList<>()).add(p.toFile().getAbsolutePath());
+          collect.computeIfAbsent(LibraryPathType.SOURCE, type -> new SmartList<>()).add(p.toFile().getPath());
           sourceResolved = true;
         } else if (!docResolved && name.endsWith(JAVADOC_JAR_SUFFIX)) {
-          collect.computeIfAbsent(LibraryPathType.DOC, type -> new SmartList<>()).add(p.toFile().getAbsolutePath());
+          collect.computeIfAbsent(LibraryPathType.DOC, type -> new SmartList<>()).add(p.toFile().getPath());
           docResolved = true;
         }
         if (sourceResolved && docResolved) {
@@ -615,7 +609,7 @@ public final class GradleProjectResolverUtil {
           MultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File> projectPairs = new MultiMap<>(new Reference2ObjectLinkedOpenHashMap<>());
 
           for (File file : projectDependency.getProjectDependencyArtifacts()) {
-            moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath()));
+            moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getPath()));
             if (moduleId == null) continue;
             projectPair = sourceSetMap.get(moduleId);
 
@@ -689,14 +683,14 @@ public final class GradleProjectResolverUtil {
         library.setGroup(mergedDependency.getId().getGroup());
         library.setVersion(mergedDependency.getId().getVersion());
 
-        library.addPath(LibraryPathType.BINARY, ((ExternalLibraryDependency)mergedDependency).getFile().getAbsolutePath());
+        library.addPath(LibraryPathType.BINARY, ((ExternalLibraryDependency)mergedDependency).getFile().getPath());
         File sourcePath = ((ExternalLibraryDependency)mergedDependency).getSource();
         if (sourcePath != null) {
-          library.addPath(LibraryPathType.SOURCE, sourcePath.getAbsolutePath());
+          library.addPath(LibraryPathType.SOURCE, sourcePath.getPath());
         }
         File javaDocPath = ((ExternalLibraryDependency)mergedDependency).getJavadoc();
         if (javaDocPath != null) {
-          library.addPath(LibraryPathType.DOC, javaDocPath.getAbsolutePath());
+          library.addPath(LibraryPathType.DOC, javaDocPath.getPath());
         }
 
         LibraryLevel level = StringUtil.isNotEmpty(libraryName) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
@@ -723,13 +717,13 @@ public final class GradleProjectResolverUtil {
         libraryDependencyData.setExported(mergedDependency.getExported());
 
         for (File file: ((ExternalMultiLibraryDependency)mergedDependency).getFiles()) {
-          library.addPath(LibraryPathType.BINARY, file.getAbsolutePath());
+          library.addPath(LibraryPathType.BINARY, file.getPath());
         }
         for (File file: ((ExternalMultiLibraryDependency)mergedDependency).getSources()) {
-          library.addPath(LibraryPathType.SOURCE, file.getAbsolutePath());
+          library.addPath(LibraryPathType.SOURCE, file.getPath());
         }
         for (File file: ((ExternalMultiLibraryDependency)mergedDependency).getJavadoc()) {
-          library.addPath(LibraryPathType.DOC, file.getAbsolutePath());
+          library.addPath(LibraryPathType.DOC, file.getPath());
         }
 
         depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
@@ -744,10 +738,10 @@ public final class GradleProjectResolverUtil {
         libraryDependencyData.setExported(mergedDependency.getExported());
 
         for (File file: ((FileCollectionDependency)mergedDependency).getFiles()) {
-          library.addPath(LibraryPathType.BINARY, file.getAbsolutePath());
+          library.addPath(LibraryPathType.BINARY, file.getPath());
           if (mergedDependency instanceof DefaultFileCollectionDependency &&
               ((DefaultFileCollectionDependency)mergedDependency).isExcludedFromIndexing()) {
-            library.addPath(LibraryPathType.EXCLUDED, file.getAbsolutePath());
+            library.addPath(LibraryPathType.EXCLUDED, file.getPath());
           }
         }
 

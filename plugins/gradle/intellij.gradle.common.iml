@@ -33,5 +33,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingProxy" />
+    <orderEntry type="library" name="Log4J" level="project" />
   </component>
 </module>
