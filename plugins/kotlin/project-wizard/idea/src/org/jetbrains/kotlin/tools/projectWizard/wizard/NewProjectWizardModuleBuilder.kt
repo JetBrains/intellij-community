@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.NewProjectAction
 import com.intellij.ide.impl.NewProjectUtil
-import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.ide.util.projectWizard.*
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
@@ -16,9 +15,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.SystemProperties
 import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
-import org.jetbrains.kotlin.idea.projectWizard.WizardLoggingSession
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
@@ -81,7 +80,8 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         modulesProvider: ModulesProvider
     ): Array<ModuleWizardStep> {
         this.wizardContext = wizardContext
-        return arrayOf(ModuleNewWizardSecondStep(wizard, uiEditorUsagesStats, wizardContext))
+        val disposable = wizardContext.disposable
+        return arrayOf(ModuleNewWizardSecondStep(wizard, uiEditorUsagesStats, wizardContext, disposable))
     }
 
     override fun commit(
@@ -117,7 +117,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     }
 
     private fun logToFUS(project: Project?) {
-        val modules =  wizard.context.read {
+        val modules = wizard.context.read {
             KotlinPlugin.modules.reference.settingValue
         }
         val projectCreationStats = ProjectCreationStats(
@@ -176,10 +176,8 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         wizard.projectTemplate = template
     }
 
-    private val firstStep = ModuleNewWizardFirstStep(wizard)
-
-    override fun getCustomOptionsStep(context: WizardContext?, parentDisposable: Disposable?) =
-        firstStep
+    override fun getCustomOptionsStep(context: WizardContext?, parentDisposable: Disposable) =
+        ModuleNewWizardFirstStep(wizard, parentDisposable)
 }
 
 abstract class WizardStep(protected val wizard: IdeWizard, private val phase: GenerationPhase) : ModuleWizardStep() {
@@ -204,7 +202,7 @@ abstract class WizardStep(protected val wizard: IdeWizard, private val phase: Ge
     }
 }
 
-class ModuleNewWizardFirstStep(wizard: IdeWizard) : WizardStep(wizard, GenerationPhase.FIRST_STEP) {
+class ModuleNewWizardFirstStep(wizard: IdeWizard, disposable: Disposable) : WizardStep(wizard, GenerationPhase.FIRST_STEP) {
     private val component = FirstWizardStepComponent(wizard)
     override fun getComponent(): JComponent = component.component
 
@@ -212,6 +210,7 @@ class ModuleNewWizardFirstStep(wizard: IdeWizard) : WizardStep(wizard, Generatio
         runPreparePhase()
         initDefaultValues()
         component.onInit()
+        Disposer.register(disposable, component)
     }
 
     private fun runPreparePhase() = runWithProgressBar(title = "") {
@@ -264,10 +263,15 @@ class ModuleNewWizardFirstStep(wizard: IdeWizard) : WizardStep(wizard, Generatio
 class ModuleNewWizardSecondStep(
     wizard: IdeWizard,
     uiEditorUsagesStats: UiEditorUsageStats,
-    private val wizardContext: WizardContext
+    private val wizardContext: WizardContext,
+    disposable: Disposable
 ) : WizardStep(wizard, GenerationPhase.SECOND_STEP) {
     private val component = SecondStepWizardComponent(wizard, uiEditorUsagesStats)
     override fun getComponent(): JComponent = component.component
+
+    init {
+        Disposer.register(disposable, component)
+    }
 
     override fun _init() {
         component.onInit()

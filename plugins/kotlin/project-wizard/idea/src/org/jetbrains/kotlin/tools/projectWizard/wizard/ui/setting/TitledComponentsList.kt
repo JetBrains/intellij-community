@@ -20,6 +20,7 @@ open class TitledComponentsList(
     private val yGap = if (useBigYGap) yGapBig else yGapSmall
 
     init {
+        components.forEach(::registerSubComponent)
         ui.addToCenter(createComponentsPanel(components))
     }
 
@@ -36,6 +37,7 @@ open class TitledComponentsList(
 
     fun setComponents(newComponents: List<TitledComponent>) {
         this.components = newComponents
+        newComponents.forEach(::registerSubComponent)
         ui.removeAll()
         newComponents.forEach(TitledComponent::onInit)
         ui.addToCenter(createComponentsPanel(newComponents))

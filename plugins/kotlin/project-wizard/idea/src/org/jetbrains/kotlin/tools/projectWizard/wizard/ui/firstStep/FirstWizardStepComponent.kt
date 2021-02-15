@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.JavaModuleBuilder
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.TitledSeparator
@@ -208,6 +209,10 @@ private class JdkComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.con
 private class KotlinRuntimeComponentComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.context) {
     override val title: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime")
     override val component: JComponent = ideWizard.jpsData.libraryOptionsPanel.simplePanel
+
+    init {
+        Disposer.register(this, ideWizard.jpsData.libraryOptionsPanel)
+    }
 }
 
 @Suppress("SpellCheckingInspection")

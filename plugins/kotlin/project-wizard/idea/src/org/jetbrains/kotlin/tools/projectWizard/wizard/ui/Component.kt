@@ -1,7 +1,9 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.SettingsWriter
@@ -11,15 +13,23 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingRefe
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingType
 import javax.swing.JComponent
 
-abstract class Component : Displayable, ErrorNavigatable {
+abstract class Component : Displayable, ErrorNavigatable, Disposable {
     private val subComponents = mutableListOf<Component>()
+
+    override fun dispose() {}
 
     open fun onInit() {
         subComponents.forEach(Component::onInit)
     }
 
-    protected fun <C : Component> C.asSubComponent(): C = also {
-        this@Component.subComponents += it
+    protected fun <C : Component> C.asSubComponent(): C {
+        this@Component.registerSubComponent(this@asSubComponent)
+        return this
+    }
+
+    protected fun registerSubComponent(subComponent: Component) {
+        subComponents += subComponent
+        Disposer.register(this, subComponent)
     }
 
     protected fun clearSubComponents() {

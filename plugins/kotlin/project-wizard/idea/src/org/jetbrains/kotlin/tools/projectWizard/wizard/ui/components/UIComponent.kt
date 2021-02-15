@@ -26,15 +26,13 @@ abstract class UIComponent<V : Any>(
     labelText: String? = null,
     private val validator: SettingValidator<V>? = null,
     private val onValueUpdate: (V, isByUser: Boolean) -> Unit = { _, _ -> }
-) : DynamicComponent(context), FocusableComponent, Disposable {
+) : DynamicComponent(context), FocusableComponent {
     open val alignTarget: JComponent? = null
     private val validationIndicator by lazy(LazyThreadSafetyMode.NONE) {
         if (validator != null)
             IdeaBasedComponentValidator(this, getValidatorTarget())
         else null
     }
-
-    override fun dispose() {}
 
     protected abstract val uiComponent: JComponent
 

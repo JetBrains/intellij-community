@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.Disposer
 import icons.GradleIcons
 import icons.OpenapiIcons
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -48,7 +47,8 @@ class BuildSystemTypeSettingComponent(
         toolbar
     }
 
-    override val validationIndicator: ValidationIndicator = IdeaBasedComponentValidator(Disposer.newDisposable(), component)
+    override val validationIndicator: ValidationIndicator =
+        IdeaBasedComponentValidator(this, component)
 
     override fun navigateTo(error: ValidationResult.ValidationError) {
         if (validationIndicator.validationState.isSpecificError(error)) {
