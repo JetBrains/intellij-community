@@ -331,36 +331,57 @@ final class ClassLoaderConfigurator {
   // package of module is not taken in account to support resolving of module libraries -
   // instead, only classes from plugin's modules (content or dependencies) are excluded.
   private static @NotNull Predicate<String> createDependencyAndContentBasedPredicate(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    List<String> forbiddenPackagePrefixes = new ArrayList<>();
-    for (ModuleDependenciesDescriptor.ModuleItem item : descriptor.dependencyDescriptor.modules) {
-      String packagePrefix = item.packageName;
-      // intellij.platform.commercial.verifier is injected
-      if (packagePrefix != null && !item.name.equals("intellij.platform.commercial.verifier")) {
-        forbiddenPackagePrefixes.add(packagePrefix + '.');
+    List<String> contentPackagePrefixes = getContentPackagePrefixes(descriptor);
+    List<String> dependencyPackagePrefixes = getDependencyPackagePrefixes(descriptor);
+    String pluginId = descriptor.getPluginId().getIdString();
+    return name -> {
+      for (String prefix : contentPackagePrefixes) {
+        if (name.startsWith(prefix)) {
+          getLogger().error("Class " + name + " must be not requested from main classloader of " + pluginId + " plugin");
+          return true;
+        }
       }
-    }
+      for (String prefix : dependencyPackagePrefixes) {
+        if (name.startsWith(prefix)) {
+          return true;
+        }
+      }
+      return false;
+    };
+  }
+
+  private static @NotNull List<String> getContentPackagePrefixes(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    List<String> result = null;
     for (PluginContentDescriptor.ModuleItem item : descriptor.contentDescriptor.modules) {
       if (item.isInjected) {
         continue;
       }
 
       String packagePrefix = item.packageName;
-      // intellij.platform.commercial.verifier is injected
-      if (packagePrefix != null && !item.name.equals("intellij.platform.commercial.verifier")) {
-        forbiddenPackagePrefixes.add(packagePrefix + '.');
+      if (packagePrefix != null) {
+        if (result == null) {
+          result = new ArrayList<>(descriptor.contentDescriptor.modules.size());
+        }
+        result.add(packagePrefix + '.');
       }
     }
+    return result == null ? Collections.emptyList() : result;
+  }
 
-    String pluginId = descriptor.getPluginId().getIdString();
-    return name -> {
-      for (String prefix : forbiddenPackagePrefixes) {
-        if (name.startsWith(prefix)) {
-          getLogger().error("Class " + name + " must be not requested from main classloader of " + pluginId + " plugin");
-          return true;
-        }
+  private static @NotNull List<String> getDependencyPackagePrefixes(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    if (descriptor.dependencyDescriptor.modules.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<String> result = new ArrayList<>(descriptor.dependencyDescriptor.modules.size());
+    for (ModuleDependenciesDescriptor.ModuleItem item : descriptor.dependencyDescriptor.modules) {
+      String packagePrefix = item.packageName;
+      // intellij.platform.commercial.verifier is injected
+      if (packagePrefix != null && !item.name.equals("intellij.platform.commercial.verifier")) {
+        result.add(packagePrefix + '.');
       }
-      return false;
-    };
+    }
+    return result;
   }
 
   private static @NotNull Predicate<String> createContentBasedPredicate(@NotNull IdeaPluginDescriptorImpl descriptor) {

@@ -52,7 +52,6 @@ class PluginModelTest {
     // to be able to correctly check `<depends>Docker</depends>` that in a new plugin model specified as
     // <module name="intellij.clouds.docker.compose" package="com.intellij.docker.composeFile"/>
 
-    val errors = mutableListOf<Throwable>()
     val moduleNameToFileInfo = LinkedHashMap<String, ModuleDescriptorPath>()
     for (module in modules) {
       // platform/rdserver-plugin/resources/META-INF/plugin.xml doesn't have id - ignore for now
@@ -89,7 +88,7 @@ class PluginModelTest {
         }
 
         if (Files.exists(metaInf.resolve("${module.name}.xml"))) {
-          errors.add(PluginValidationError("Module descriptor must be in the root of module root", mapOf(
+          checker.errors.add(PluginValidationError("Module descriptor must be in the root of module root", mapOf(
             "module" to module.name,
             "moduleDescriptor" to metaInf.resolve("${module.name}.xml"),
           )))
@@ -102,7 +101,7 @@ class PluginModelTest {
 
         val item = moduleNameToFileInfo.computeIfAbsent(module.name) { ModuleDescriptorPath() }
         if (item.pluginDescriptorFile != null && pluginDescriptor != null) {
-          errors.add(PluginValidationError("Duplicated plugin.xml", mapOf(
+          checker.errors.add(PluginValidationError("Duplicated plugin.xml", mapOf(
             "module" to module.name,
             "firstPluginDescriptor" to item.pluginDescriptorFile,
             "secondPluginDescriptor" to pluginDescriptorFile,
@@ -110,7 +109,7 @@ class PluginModelTest {
           continue
         }
         if (item.pluginDescriptorFile != null && moduleDescriptor != null) {
-          errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
+          checker.errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
             "module" to module.name,
             "pluginDescriptor" to item.pluginDescriptorFile,
             "moduleDescriptor" to moduleDescriptorFile,
@@ -118,7 +117,7 @@ class PluginModelTest {
           continue
         }
         if (item.moduleDescriptorFile != null && pluginDescriptor != null) {
-          errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
+          checker.errors.add(PluginValidationError("Module cannot have both plugin.xml and module descriptor", mapOf(
             "module" to module.name,
             "pluginDescriptor" to pluginDescriptorFile,
             "moduleDescriptor" to item.moduleDescriptorFile,
@@ -144,7 +143,7 @@ class PluginModelTest {
       val id = descriptor.getChild("id")?.text
                ?: descriptor.getChild("name")?.text
       if (id == null) {
-        errors.add(PluginValidationError("Plugin id is not specified in ${homePath.relativize(pluginXml)}"))
+        checker.errors.add(PluginValidationError("Plugin id is not specified in ${homePath.relativize(pluginXml)}"))
         continue
       }
 
@@ -161,7 +160,7 @@ class PluginModelTest {
 
           val old = checker.packageToPlugin.put(packageName, task)
           if (old != null) {
-            errors.add(PluginValidationError("Duplicated package $packageName (old=$old, new=$task)"))
+            checker.errors.add(PluginValidationError("Duplicated package $packageName (old=$old, new=$task)"))
             continue@l
           }
         }
@@ -169,14 +168,14 @@ class PluginModelTest {
     }
 
     for (task in checker.pluginIdToModules.values) {
-      checkModule(task, checker, errors)
+      checkModule(task, checker)
     }
 
-    throwIfNotEmpty(errors)
+    throwIfNotEmpty(checker.errors)
     printGraph(checker)
   }
 
-  private fun checkModule(info: PluginTask, checker: PluginModelChecker, errors: MutableList<Throwable>) {
+  private fun checkModule(info: PluginTask, checker: PluginModelChecker) {
     val descriptor = info.descriptor
     val dependencies = descriptor.getChild("dependencies")
     if (dependencies != null) {
@@ -185,7 +184,7 @@ class PluginModelTest {
         checker.checkDependencies(dependencies, descriptor, info.pluginXml, pluginInfo)
       }
       catch (e: PluginValidationError) {
-        errors.add(e)
+        checker.errors.add(e)
       }
     }
 
@@ -196,7 +195,7 @@ class PluginModelTest {
         checker.checkContent(content, descriptor, info.pluginXml, pluginInfo)
       }
       catch (e: PluginValidationError) {
-        errors.add(e)
+        checker.errors.add(e)
       }
     }
 
@@ -250,6 +249,8 @@ private class PluginModelChecker(modules: List<JpsModule>) {
   val packageToPlugin = HashMap<String, PluginTask>()
 
   val graph = HashMap<String, PluginInfo>()
+
+  val errors = mutableListOf<Throwable>()
 
   private val nameToModule = modules.associateBy { it.name }
 
@@ -343,6 +344,15 @@ private class PluginModelChecker(modules: List<JpsModule>) {
 
       val moduleName = child.getAttributeValue("name") ?: throw PluginValidationError("Module name is not specified")
       val module = nameToModule.get(moduleName) ?: throw PluginValidationError("Cannot find module $moduleName")
+
+      if (moduleName == "intellij.platform.commercial.verifier") {
+        errors.add(PluginValidationError("intellij.platform.commercial.verifier is not supposed to be used as content of plugin",
+                                         mapOf(
+                                           "entry" to child,
+                                           "referencingDescriptorFile" to referencingDescriptorFile,
+                                         )))
+        return
+      }
 
       val (descriptor, referencedDescriptorFile) = loadFileInModule(module)
       val aPackage = checkPackage(descriptor, referencedDescriptorFile, child)
