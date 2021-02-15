@@ -87,7 +87,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   init {
     tree = MyChangesTree(project)
 
-    commitPanel = GitStageCommitPanel(tree.inclusionModel, project)
+    commitPanel = GitStageCommitPanel(tree, project)
     commitPanel.commitActionsPanel.isCommitButtonDefault = {
       !commitPanel.commitProgressUi.isDumbMode &&
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
