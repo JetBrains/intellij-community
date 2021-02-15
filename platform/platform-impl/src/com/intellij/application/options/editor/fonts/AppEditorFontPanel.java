@@ -35,7 +35,7 @@ public class AppEditorFontPanel implements Disposable {
     myTopPanel.add(restorePanel, BorderLayout.NORTH);
 
     JPanel innerPanel = new JPanel(new BorderLayout());
-    innerPanel.setBorder(JBUI.Borders.customLine(JBColor.lightGray, 1, 0,0,0));
+    innerPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0,0,0));
     JBSplitter splitter = new JBSplitter(false, 0.3f);
     myPreviewScheme = createPreviewScheme();
     myOptionsPanel = new AppEditorFontOptionsPanel(this, myPreviewScheme);
