@@ -971,32 +971,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  @Override
-  public TableCellRenderer getCellRenderer(int row, int column) {
-    return new MyAlignRenderer(super.getCellRenderer(row, column));
-  }
-
-  private static class MyAlignRenderer implements TableCellRenderer {
-    private final TableCellRenderer myRenderer;
-
-    private MyAlignRenderer(@NotNull TableCellRenderer renderer) {
-      myRenderer = renderer;
-    }
-
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      Component component = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (component instanceof JComponent && !(component instanceof JCheckBox)) {
-        JComponent cmp = (JComponent)component;
-        cmp.setBorder(JBUI.Borders.merge(null/*cmp.getBorder()*/, JBUI.Borders.emptyLeft(8), true));
-      }
-      return component;
-    }
-  }
-
   protected class JBTableHeader extends JTableHeader {
+
     private final Color disabledForeground = JBColor.namedColor("TableHeader.disabledForeground", JBColor.gray);
-    private TableCellRenderer myRenderer;
 
     public JBTableHeader() {
       super(JBTable.this.columnModel);
@@ -1009,8 +986,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       });
 
-      myRenderer = getDefaultRenderer();
-      super.setDefaultRenderer(new TableCellRenderer() {
+      DefaultTableCellRenderer renderer = (DefaultTableCellRenderer)getDefaultRenderer();
+      TableCellRenderer newRenderer = new TableCellRenderer() {
         @Override
         public Component getTableCellRendererComponent(JTable table,
                                                        Object value,
@@ -1018,7 +995,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
                                                        boolean hasFocus,
                                                        int row,
                                                        int column) {
-          Component delegate = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          Component delegate = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           if (!(delegate instanceof JLabel)) return delegate;
 
           JLabel cmp = (JLabel)delegate;
@@ -1032,17 +1009,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           cmp.setFont(RelativeFont.NORMAL.fromResource("Table.Header.fontSizeOffset", 0).derive(font));
           return cmp;
         }
-      });
-    }
-
-    @Override
-    public void setDefaultRenderer(TableCellRenderer defaultRenderer) {
-      if (disabledForeground == null) { // first call from super constructor
-        super.setDefaultRenderer(defaultRenderer);
-      }
-      else {
-        myRenderer = defaultRenderer;
-      }
+      };
+      setDefaultRenderer(newRenderer);
     }
 
     @Override
