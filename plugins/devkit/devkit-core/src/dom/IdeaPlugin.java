@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorPackageConverter;
 
 import java.util.List;
 
@@ -79,7 +80,7 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @Stubbed
-  @Convert(PsiPackageConverter.class)
+  @Convert(ModuleDescriptorPackageConverter.ForIdeaPlugin.class)
   GenericAttributeValue<PsiPackage> getPackage();
 
   @NotNull

@@ -7,6 +7,7 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorNameConverter;
+import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorPackageConverter;
 
 import java.util.List;
 
@@ -33,8 +34,7 @@ public interface ContentDescriptor extends DomElement {
     @NotNull
     @Required
     @Stubbed
-    @NameValue
-    @Convert(PsiPackageConverter.class)
+    @Convert(ModuleDescriptorPackageConverter.class)
     GenericAttributeValue<PsiPackage> getPackage();
   }
 }

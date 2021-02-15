@@ -2,12 +2,10 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.psi.PsiPackage;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
-import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorNameConverter;
 
 import java.util.List;
 
@@ -17,10 +15,10 @@ public interface DependencyDescriptor extends DomElement {
   @NotNull
   @Stubbed
   @SubTagList("module")
-  List<ModuleDescriptor> getModuleEntry();
+  List<ContentDescriptor.ModuleDescriptor> getModuleEntry();
 
   @SubTagList("module")
-  ModuleDescriptor addModuleEntry();
+  ContentDescriptor.ModuleDescriptor addModuleEntry();
 
   @NotNull
   @Stubbed
@@ -29,22 +27,6 @@ public interface DependencyDescriptor extends DomElement {
 
   @SubTagList("plugin")
   PluginDescriptor addPlugin();
-
-  @Presentation(icon = "AllIcons.Nodes.Module")
-  interface ModuleDescriptor extends DomElement {
-    @NotNull
-    @Required
-    @Stubbed
-    @Convert(ModuleDescriptorNameConverter.class)
-    GenericAttributeValue<IdeaPlugin> getName();
-
-    @NotNull
-    @Required
-    @Stubbed
-    @NameValue
-    @Convert(PsiPackageConverter.class)
-    GenericAttributeValue<PsiPackage> getPackage();
-  }
 
   @Presentation(icon = "AllIcons.Nodes.Plugin")
   interface PluginDescriptor extends DomElement {
