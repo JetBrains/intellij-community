@@ -235,7 +235,7 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
             },
             {
               assertThat(it).isEqualTo("-\n" +
-                                       " cancelled \n")
+                                       " cancelled")
 
             },
             {
