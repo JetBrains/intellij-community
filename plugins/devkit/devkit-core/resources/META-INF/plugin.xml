@@ -401,7 +401,7 @@
 
     <!-- Threading Model Helper -->
     <buildProcess.parametersProvider implementation="org.jetbrains.idea.devkit.threadingModelHelper.TMHBuildProcessParametersProvider"/>
-    <registryKey key="tmh.generate.assertions.for.annotations" defaultValue="false"
+    <registryKey key="tmh.generate.assertions.for.annotations" defaultValue="true"
                  description="Generate assertions for @RequiresEdt and similar annotations.
                  The assertions are added by instrumenting class files during compilation."/>
   </extensions>
