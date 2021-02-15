@@ -1418,31 +1418,37 @@
       <option name="CONSOLE_BLACK_OUTPUT">
         <value>
           <option name="FOREGROUND" value="000000" />
+          <option name="BACKGROUND" value="000000" />
         </value>
       </option>
       <option name="CONSOLE_BLUE_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="3A91CF" />
+          <option name="FOREGROUND" value="3993D4" />
+          <option name="BACKGROUND" value="245980" />
         </value>
       </option>
       <option name="CONSOLE_BLUE_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="1EA0FC" />
+          <option name="FOREGROUND" value="1FB0FF" />
+          <option name="BACKGROUND" value="1778BD" />
         </value>
       </option>
       <option name="CONSOLE_CYAN_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="009191" />
+          <option name="FOREGROUND" value="00A3A3" />
+          <option name="BACKGROUND" value="154F4F" />
         </value>
       </option>
       <option name="CONSOLE_CYAN_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="00FFFF" />
+          <option name="FOREGROUND" value="00E5E5" />
+          <option name="BACKGROUND" value="006E6E" />
         </value>
       </option>
       <option name="CONSOLE_DARKGRAY_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="4F4F4F" />
+          <option name="FOREGROUND" value="595959" />
+          <option name="BACKGROUND" value="424242" />
         </value>
       </option>
       <option name="CONSOLE_ERROR_OUTPUT">
@@ -1453,27 +1459,32 @@
       </option>
       <option name="CONSOLE_GRAY_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="7A7A7A" />
+          <option name="FOREGROUND" value="808080" />
+          <option name="BACKGROUND" value="616161" />
         </value>
       </option>
       <option name="CONSOLE_GREEN_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="548C26" />
+          <option name="FOREGROUND" value="5C962C" />
+          <option name="BACKGROUND" value="39511F" />
         </value>
       </option>
       <option name="CONSOLE_GREEN_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="61AB11" />
+          <option name="FOREGROUND" value="4FC414" />
+          <option name="BACKGROUND" value="458500" />
         </value>
       </option>
       <option name="CONSOLE_MAGENTA_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="A575BA" />
+          <option name="FOREGROUND" value="A771BF" />
+          <option name="BACKGROUND" value="5C4069" />
         </value>
       </option>
       <option name="CONSOLE_MAGENTA_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="E55CE5" />
+          <option name="FOREGROUND" value="ED7EED" />
+          <option name="BACKGROUND" value="B247B2" />
         </value>
       </option>
       <option name="CONSOLE_NORMAL_OUTPUT">
@@ -1494,12 +1505,14 @@
       </option>
       <option name="CONSOLE_RED_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="DB5451" />
+          <option name="FOREGROUND" value="F0524F" />
+          <option name="BACKGROUND" value="772E2C" />
         </value>
       </option>
       <option name="CONSOLE_RED_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="FF5452" />
+          <option name="FOREGROUND" value="FF4050" />
+          <option name="BACKGROUND" value="B82421" />
         </value>
       </option>
       <option name="CONSOLE_SYSTEM_OUTPUT">
@@ -1510,16 +1523,19 @@
       <option name="CONSOLE_WHITE_OUTPUT">
         <value>
           <option name="FOREGROUND" value="FFFFFF" />
+          <option name="BACKGROUND" value="FFFFFF" />
         </value>
       </option>
       <option name="CONSOLE_YELLOW_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="A89022" />
+          <option name="FOREGROUND" value="A68A0D" />
+          <option name="BACKGROUND" value="5C4F17" />
         </value>
       </option>
       <option name="CONSOLE_YELLOW_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="FFFF00" />
+          <option name="FOREGROUND" value="E5BF00" />
+          <option name="BACKGROUND" value="A87B00" />
         </value>
       </option>
       <option name="CSS.COLOR">
