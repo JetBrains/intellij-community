@@ -6,13 +6,14 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.impl.FindManagerImpl
+import com.intellij.find.usages.api.*
+import com.intellij.find.usages.impl.AllSearchOptions
+import com.intellij.find.usages.impl.buildQuery
+import com.intellij.find.usages.impl.symbolSearchTarget
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
-import com.intellij.model.psi.PsiSymbolDeclaration
-import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.targetSymbols
-import com.intellij.model.search.SearchService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -104,24 +105,29 @@ private fun getPsiUsageRanges(file: PsiFile, psiTarget: PsiElement): UsageRanges
 
 private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
   val project: Project = file.project
-  val searchScope: SearchScope = LocalSearchScope(file)
+  val searchTarget = symbolSearchTarget(project, symbol) ?: return null
+  return getSearchTargetUsageRanges(project, file, searchTarget, searchTarget.usageHandler)
+}
 
+private fun <O> getSearchTargetUsageRanges(
+  project: Project,
+  file: PsiFile,
+  searchTarget: SearchTarget,
+  usageHandler: UsageHandler<O>
+): UsageRanges {
+  val searchScope = LocalSearchScope(file)
+  val usages: Collection<Usage> = buildQuery(project, searchTarget, usageHandler, AllSearchOptions(
+    options = UsageOptions.createOptions(searchScope),
+    textSearch = true,
+    customOptions = usageHandler.getCustomOptions(UsageHandler.UsageAction.HIGHLIGHT_USAGES)
+  )).findAll()
   val readRanges = ArrayList<TextRange>()
   val readDeclarationRanges = ArrayList<TextRange>()
-
-  val refs: Collection<PsiSymbolReference> = SearchService.getInstance()
-    .searchPsiSymbolReferences(project, symbol, searchScope)
-    .findAll()
-  for (ref: PsiSymbolReference in refs) {
-    HighlightUsagesHandler.collectHighlightRanges(ref.element, ref.rangeInElement, readRanges)
+  for (usage in usages) {
+    if (usage !is PsiUsage) {
+      continue
+    }
+    HighlightUsagesHandler.collectHighlightRanges(usage.file, usage.range, if (usage.declaration) readDeclarationRanges else readRanges)
   }
-
-  val declarations: Collection<PsiSymbolDeclaration> = SearchService.getInstance()
-    .searchPsiSymbolDeclarations(project, symbol, searchScope)
-    .findAll()
-  for (declaration: PsiSymbolDeclaration in declarations) {
-    HighlightUsagesHandler.collectHighlightRanges(declaration.declaringElement, declaration.rangeInDeclaringElement, readDeclarationRanges)
-  }
-
   return UsageRanges(readRanges, emptyList(), readDeclarationRanges, emptyList())
 }

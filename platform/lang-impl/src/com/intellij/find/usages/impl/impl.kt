@@ -67,10 +67,12 @@ fun <O> buildUsageViewQuery(project: Project,
   }
 }
 
-private fun <O> buildQuery(project: Project,
-                           target: SearchTarget,
-                           handler: UsageHandler<O>,
-                           allOptions: AllSearchOptions<O>): Query<out Usage> {
+internal fun <O> buildQuery(
+  project: Project,
+  target: SearchTarget,
+  handler: UsageHandler<O>,
+  allOptions: AllSearchOptions<O>
+): Query<out Usage> {
   val queries = ArrayList<Query<out Usage>>()
   val (options, textSearch, customOptions) = allOptions
   if (options.isUsages) {
