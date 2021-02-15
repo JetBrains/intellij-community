@@ -9,9 +9,8 @@ import com.intellij.refactoring.rename.api.FileOperation
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.FileUpdater
 import com.intellij.refactoring.rename.api.PsiRenameUsage
+import com.intellij.refactoring.rename.api.TextReplacement
 import com.intellij.util.text.StringOperation
-
-internal typealias TextReplacement = (newName: String) -> String?
 
 internal class TextRenameUsage(
   private val psiUsage: PsiUsage,
