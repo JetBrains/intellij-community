@@ -307,6 +307,10 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
       myFragment = fragment;
       myLastSelected = lastSelected;
       getTemplatePresentation().setDescription(fragment.getActionHint());
+
+      if (fragment.getActionDescription() != null) {
+        getTemplatePresentation().putClientProperty(Presentation.PROP_VALUE, fragment.getActionDescription());
+      }
     }
 
     @Override

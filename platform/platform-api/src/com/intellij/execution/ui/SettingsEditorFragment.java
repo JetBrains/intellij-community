@@ -39,6 +39,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private @Nullable @Nls String myHint;
   private @Nullable JComponent myHintComponent;
   private @Nullable @Nls String myActionHint;
+  private @Nullable @Nls String myActionDescription;
   private @Nullable String myConfigId; // for FUS
   private @Nullable Function<? super C, ? extends JComponent> myEditorGetter;
   private boolean myRemovable = true;
@@ -249,6 +250,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public @Nullable @NlsActions.ActionDescription String getActionHint() {
     return myActionHint;
+  }
+
+  public void setActionDescription(@Nullable @Nls String actionDescription) {
+    myActionDescription = actionDescription;
+  }
+
+  public @Nullable @Nls String getActionDescription() {
+    return myActionDescription;
   }
 
   public void setActionHint(@Nullable @Nls String hint) {
