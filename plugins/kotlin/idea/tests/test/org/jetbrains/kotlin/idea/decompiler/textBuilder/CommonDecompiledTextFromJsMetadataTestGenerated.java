@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.test.TargetBackend;
 @TestMetadata("testData/decompiler/decompiledText")
 public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCommonDecompiledTextFromJsMetadataTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JS, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, TargetBackend.JS, testDataFilePath);
     }
 
     @TestMetadata("AnnotatedEnumEntry")

@@ -49,7 +49,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetData, Void>() {
     override fun getTargetDataKey() = GradleSourceSetData.KEY
 
-    private fun getProjectPlatforms(toImport: MutableCollection<DataNode<GradleSourceSetData>>): List<KotlinPlatform> {
+    private fun getProjectPlatforms(toImport: MutableCollection<out DataNode<GradleSourceSetData>>): List<KotlinPlatform> {
         val platforms = HashSet<KotlinPlatform>()
 
         for (nodeToImport in toImport) {

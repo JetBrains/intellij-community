@@ -34,6 +34,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     override fun setUp() {
         Assume.assumeFalse(AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio())
+        GradleProcessOutputInterceptor.install(testRootDisposable)
         super.setUp()
     }
 
@@ -117,11 +118,6 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
                 sourceFolder.url.replace(projectPath, "") to sourceFolder.rootType
             }
         }
-    }
-
-    override fun setUp() {
-        super.setUp()
-        GradleProcessOutputInterceptor.install(testRootDisposable)
     }
 
     override fun handleImportFailure(errorMessage: String, errorDetails: String?) {

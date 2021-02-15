@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.idea.perf
 
-import org.jetbrains.kotlin.idea.perf.WholeProjectPerformanceTest.Companion.nsToMs
 import org.jetbrains.kotlin.idea.perf.profilers.*
 import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.perf.whole.WholeProjectPerformanceTest.Companion.nsToMs
 import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
 import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.kotlin.test.KotlinTestUtils
@@ -325,7 +325,7 @@ class Stats(
         profilerConfig: ProfilerConfig
     ): PhaseProfiler {
         profilerConfig.name = "$testName${if (phaseName.isEmpty()) "" else "-$phaseName"}"
-        profilerConfig.path = pathToResource("profile/${plainname(name)}")
+        profilerConfig.path = pathToResource("profile/${plainname(name)}").path
         val profilerHandler = if (profilerConfig.enabled && !profilerConfig.warmup)
             ProfilerHandler.getInstance(profilerConfig)
         else

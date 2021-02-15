@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.google.common.graph.GraphBuilder
+import com.google.common.graph.Graphs
 import com.intellij.build.events.MessageEvent
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
@@ -28,6 +30,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.gradle.tooling.model.UnsupportedMethodException
 import org.gradle.tooling.model.idea.IdeaContentRoot
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
@@ -39,12 +42,13 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.kotlin.idea.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING
-import org.jetbrains.kotlin.idea.configuration.mpp.createPopulateModuleDependenciesContext
-import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesByCompilations
-import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
+import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibrariesDependencySubstitutor
+import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibrariesFixer
+import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE
+import org.jetbrains.kotlin.idea.configuration.mpp.*
+import org.jetbrains.kotlin.idea.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.configuration.utils.*
-import org.jetbrains.kotlin.idea.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.configuration.utils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
@@ -709,12 +713,43 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                         resolverCtx,
                         sourceSetMap,
                         artifactsMap,
-                        fromDataNode,
+                        fromDataNode as DataNode<GradleSourceSetData>,
                         preprocessDependencies(mergedSubstitutedDependencies),
                         ideProject
                     )
                     @Suppress("UNCHECKED_CAST")
                     KotlinNativeLibrariesFixer.applyTo(fromDataNode as DataNode<GradleSourceSetData>, ideProject)
+                }
+            }
+        }
+
+        private fun preprocessDependencies(dependencies: Collection<KotlinDependency>): List<ExternalDependency> {
+            return dependencies
+                .groupBy { it.id }
+                .mapValues { it.value.firstOrNull { it.scope == "COMPILE" } ?: it.value.lastOrNull() }
+                .values
+                .filterNotNull()
+        }
+
+        private fun processCompilations(
+            gradleModule: IdeaModule,
+            mppModel: KotlinMPPGradleModel,
+            ideModule: DataNode<ModuleData>,
+            resolverCtx: ProjectResolverContext,
+            processor: (DataNode<GradleSourceSetData>, KotlinCompilation) -> Unit
+        ) {
+            val sourceSetsMap = HashMap<String, DataNode<GradleSourceSetData>>()
+            for (dataNode in ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)) {
+                if (dataNode.kotlinSourceSet != null) {
+                    sourceSetsMap[dataNode.data.id] = dataNode
+                }
+            }
+            for (target in mppModel.targets) {
+                if (delegateToAndroidPlugin(target)) continue
+                for (compilation in target.compilations) {
+                    val moduleId = getKotlinModuleId(gradleModule, compilation, resolverCtx)
+                    val moduleDataNode = sourceSetsMap[moduleId] ?: continue
+                    processor(moduleDataNode, compilation)
                 }
             }
         }
