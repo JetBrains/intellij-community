@@ -29,10 +29,23 @@ public final class PatchCreator {
     create(p, changes, Paths.get(filePath), isReverse, commitContext);
   }
 
-  public static void create(@NotNull Project project, @NotNull List<? extends Change> changes, @NotNull Path file, boolean isReverse, @Nullable CommitContext commitContext)
+  public static void create(@NotNull Project project,
+                            @NotNull List<? extends Change> changes,
+                            @NotNull Path file,
+                            boolean isReverse,
+                            @Nullable CommitContext commitContext) throws IOException, VcsException {
+    create(project, changes, file, isReverse, commitContext, 3);
+  }
+
+  public static void create(@NotNull Project project,
+                            @NotNull List<? extends Change> changes,
+                            @NotNull Path file,
+                            boolean isReverse,
+                            @Nullable CommitContext commitContext,
+                            int contextLineCount)
     throws IOException, VcsException {
     Path basePath = ProjectKt.getStateStore(project).getProjectBasePath();
-    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, basePath, isReverse, false);
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, basePath, isReverse, false, contextLineCount);
     PatchWriter.writePatches(project, file, basePath, patches, commitContext);
   }
 }

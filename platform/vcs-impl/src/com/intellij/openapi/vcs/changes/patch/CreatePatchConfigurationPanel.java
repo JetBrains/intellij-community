@@ -7,10 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.TextBrowseFolderListener;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -18,8 +15,10 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.project.ProjectKt;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -42,6 +42,7 @@ public final class CreatePatchConfigurationPanel {
   private TextFieldWithBrowseButton myBasePathField;
   private JCheckBox myReversePatchCheckbox;
   private ComboBox<Charset> myEncoding;
+  private JBTextField myContextLineCount;
   private JLabel myWarningLabel;
   private final Project myProject;
   @Nullable private File myCommonParentDir;
@@ -68,9 +69,34 @@ public final class CreatePatchConfigurationPanel {
       }
     });
 
+    new ComponentValidator(myProject).withValidator(() -> {
+      String lines = myContextLineCount.getText();
+      if (StringUtil.isEmpty(lines)) {
+        return null;
+      }
+      try {
+        int contextLineCount = Integer.parseInt(lines);
+        if (contextLineCount >= 0) {
+          return null;
+        }
+        return new ValidationInfo(VcsBundle.message("patch.creation.context.line.count.not.a.number.error"), myContextLineCount);
+      }
+      catch (NumberFormatException nfe) {
+        return new ValidationInfo(VcsBundle.message("patch.creation.context.line.count.not.a.number.error"), myContextLineCount);
+      }
+    }).installOn(myContextLineCount);
+
+    myContextLineCount.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        ComponentValidator.getInstance(myContextLineCount).ifPresent(v -> v.revalidate());
+      }
+    });
+
     myToFileButton.addChangeListener(e -> myFileNameField.setEnabled(myToFileButton.isSelected()));
     myFileNameField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
     myBasePathField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
+    myContextLineCount.setMinimumSize(myContextLineCount.getPreferredSize());
     myBasePathField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
     myWarningLabel.setForeground(JBColor.RED);
     selectBasePath(ProjectKt.getStateStore(project).getProjectBasePath().toString());
@@ -98,6 +124,7 @@ public final class CreatePatchConfigurationPanel {
     myBasePathField = new TextFieldWithBrowseButton();
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
     myEncoding = new ComboBox<>();
+    myContextLineCount = new JBTextField();
     myWarningLabel = new JLabel();
     myToFileButton = new JBRadioButton(VcsBundle.message("create.patch.file.path"), true);
 
@@ -118,6 +145,7 @@ public final class CreatePatchConfigurationPanel {
       .addLabeledComponent(VcsBundle.message("patch.creation.base.path.field"), myBasePathField)
       .addComponent(myReversePatchCheckbox)
       .addLabeledComponent(VcsBundle.message("create.patch.encoding"), myEncoding)
+      .addLabeledComponent(VcsBundle.message("patch.creation.context.field"), myContextLineCount)
       .addComponent(myWarningLabel)
       .getPanel();
   }
@@ -146,6 +174,14 @@ public final class CreatePatchConfigurationPanel {
 
   public void setFileName(@NotNull Path file) {
     myFileNameField.setText(file.toString());
+  }
+
+  public int getContextLineCount() {
+    return Integer.parseInt(myContextLineCount.getText());
+  }
+
+  public void setContextLineCount(int lineCount) {
+    myContextLineCount.setText(Integer.toString(lineCount));
   }
 
   public boolean isReversePatch() {
@@ -194,6 +230,10 @@ public final class CreatePatchConfigurationPanel {
     checkExist();
     String validateNameError = PatchNameChecker.validateName(getFileName());
     if (validateNameError != null) return new ValidationInfo(validateNameError, myFileNameField);
+    ComponentValidator validator = ComponentValidator.getInstance(myContextLineCount).orElse(null);
+    if (validator != null && validator.getValidationInfo() != null) {
+      return validator.getValidationInfo();
+    }
     return verifyBaseDirPath();
   }
 }

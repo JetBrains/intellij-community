@@ -29,7 +29,6 @@ import java.util.List;
 import static java.util.Collections.singletonList;
 
 public final class TextPatchBuilder {
-  private static final int CONTEXT_LINES = 3;
   /**
    * @see com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider
    */
@@ -38,21 +37,25 @@ public final class TextPatchBuilder {
 
   @NotNull private final Path myBasePath;
   private final boolean myIsReversePath;
+  private final int myContextLineCount;
   @Nullable private final Runnable myCancelChecker;
 
   private TextPatchBuilder(@NotNull Path basePath,
                            boolean isReversePath,
+                           int contextLineCount,
                            @Nullable Runnable cancelChecker) {
     myBasePath = basePath;
     myIsReversePath = isReversePath;
+    myContextLineCount = contextLineCount;
     myCancelChecker = cancelChecker;
   }
 
   public static @NotNull List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
                                                     @NotNull Path basePath,
                                                     boolean reversePatch,
+                                                    int contextLineCount,
                                                     @Nullable Runnable cancelChecker) throws VcsException {
-    return new TextPatchBuilder(basePath, reversePatch, cancelChecker).build(changes);
+    return new TextPatchBuilder(basePath, reversePatch, contextLineCount, cancelChecker).build(changes);
   }
 
   @NotNull
@@ -102,7 +105,7 @@ public final class TextPatchBuilder {
 
     TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
 
-    List<PatchHunk> hunks = buildPatchHunks(beforeContent, afterContent);
+    List<PatchHunk> hunks = buildPatchHunks(beforeContent, afterContent, myContextLineCount);
     for (PatchHunk hunk : hunks) {
       patch.addHunk(hunk);
     }
@@ -114,7 +117,7 @@ public final class TextPatchBuilder {
   }
 
   @NotNull
-  public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent) {
+  public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent, int contextLineCount) {
     if (beforeContent.equals(afterContent)) return Collections.emptyList();
     if (beforeContent.isEmpty()) {
       return singletonList(createWholeFileHunk(afterContent, true, true));
@@ -134,9 +137,9 @@ public final class TextPatchBuilder {
 
     int hunkStart = 0;
     while (hunkStart < fragments.size()) {
-      List<Range> hunkFragments = getAdjacentFragments(fragments, hunkStart);
+      List<Range> hunkFragments = getAdjacentFragments(fragments, hunkStart, contextLineCount);
 
-      hunks.add(createHunk(hunkFragments, beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF));
+      hunks.add(createHunk(hunkFragments, beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF, contextLineCount));
 
       hunkStart += hunkFragments.size();
     }
@@ -145,14 +148,14 @@ public final class TextPatchBuilder {
   }
 
   @NotNull
-  private static List<Range> getAdjacentFragments(@NotNull List<Range> fragments, int hunkStart) {
+  private static List<Range> getAdjacentFragments(@NotNull List<Range> fragments, int hunkStart, int contextLineCount) {
     int hunkEnd = hunkStart + 1;
     while (hunkEnd < fragments.size()) {
       Range lastFragment = fragments.get(hunkEnd - 1);
       Range nextFragment = fragments.get(hunkEnd);
 
-      if (lastFragment.end1 + CONTEXT_LINES < nextFragment.start1 - CONTEXT_LINES &&
-          lastFragment.end2 + CONTEXT_LINES < nextFragment.start2 - CONTEXT_LINES) {
+      if (lastFragment.end1 + contextLineCount < nextFragment.start1 - contextLineCount &&
+          lastFragment.end2 + contextLineCount < nextFragment.start2 - contextLineCount) {
         break;
       }
       hunkEnd++;
@@ -165,14 +168,15 @@ public final class TextPatchBuilder {
                                       @NotNull List<String> beforeLines,
                                       @NotNull List<String> afterLines,
                                       boolean beforeNoNewlineAtEOF,
-                                      boolean afterNoNewlineAtEOF) {
+                                      boolean afterNoNewlineAtEOF,
+                                      int contextLineCount) {
     Range first = hunkFragments.get(0);
     Range last = hunkFragments.get(hunkFragments.size() - 1);
 
-    int contextStart1 = Math.max(first.start1 - CONTEXT_LINES, 0);
-    int contextStart2 = Math.max(first.start2 - CONTEXT_LINES, 0);
-    int contextEnd1 = Math.min(last.end1 + CONTEXT_LINES, beforeLines.size());
-    int contextEnd2 = Math.min(last.end2 + CONTEXT_LINES, afterLines.size());
+    int contextStart1 = Math.max(first.start1 - contextLineCount, 0);
+    int contextStart2 = Math.max(first.start2 - contextLineCount, 0);
+    int contextEnd1 = Math.min(last.end1 + contextLineCount, beforeLines.size());
+    int contextEnd2 = Math.min(last.end2 + contextLineCount, afterLines.size());
 
     PatchHunk hunk = new PatchHunk(contextStart1, contextEnd1, contextStart2, contextEnd2);
 

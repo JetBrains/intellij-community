@@ -161,7 +161,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
         Path baseDir = PatchWriter.calculateBaseDirForWritingPatch(project, changes);
-        CreatePatchCommitExecutor.writePatchToClipboard(project, baseDir, changes, false, false, patchBuilder, commitContext);
+        CreatePatchCommitExecutor.writePatchToClipboard(project, baseDir, changes, false, false,3, patchBuilder, commitContext);
       }
       catch (IOException | VcsException exception) {
         LOG.warn("Can't create patch", exception);

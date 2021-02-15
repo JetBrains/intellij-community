@@ -126,6 +126,10 @@ public class PatchBuilderTest extends LightPlatformTestCase {
     doTest(getProject(), true);
   }
 
+  public void testContextLineCount() throws Exception {
+    doTest(getProject(), true, null, 5);
+  }
+
   private void doTest() throws IOException, VcsException {
     doTest(getProject(), true);
   }
@@ -135,6 +139,11 @@ public class PatchBuilderTest extends LightPlatformTestCase {
   }
 
   private void doTest(@Nullable Project project, boolean relativePaths, @Nullable String forceLSeparator) throws IOException, VcsException {
+    doTest(project, relativePaths, forceLSeparator, 3);
+  }
+
+  private void doTest(@Nullable Project project, boolean relativePaths, @Nullable String forceLSeparator, int contextLineCount)
+    throws IOException, VcsException {
     Path testDataPath = Paths.get(getTestDir(getTestName(true)));
     assertTrue(Files.isDirectory(testDataPath));
     Path beforePath = testDataPath.resolve("before");
@@ -168,7 +177,7 @@ public class PatchBuilderTest extends LightPlatformTestCase {
     String expected = FileUtil.loadFile(testDataPath.resolve("expected.patch").toFile());
 
     StringWriter writer = new StringWriter();
-    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, testDataPath, false);
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, testDataPath, false, false, contextLineCount);
     UnifiedDiffWriter.write(project, patches, writer, forceLSeparator != null ? forceLSeparator : "\n", null);
     String result = writer.toString();
     if (forceLSeparator == null) {

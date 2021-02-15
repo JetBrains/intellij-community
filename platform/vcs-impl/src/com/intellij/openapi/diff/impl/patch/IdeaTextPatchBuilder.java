@@ -72,11 +72,28 @@ public final class IdeaTextPatchBuilder {
     return buildPatch(project, changes, basePath, reversePatch, false);
   }
 
-  public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
+  public static @NotNull List<FilePatch> buildPatch(Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull String basePath,
+                                                    boolean reversePatch,
+                                                    boolean honorExcludedFromCommit) throws VcsException {
+    return buildPatch(project, changes, Paths.get(basePath), reversePatch, honorExcludedFromCommit, 3);
+  }
+
+  public static @NotNull List<FilePatch> buildPatch(Project project,
                                                     @NotNull Collection<? extends Change> changes,
                                                     @NotNull Path basePath,
                                                     boolean reversePatch,
                                                     boolean honorExcludedFromCommit) throws VcsException {
+    return buildPatch(project, changes, basePath, reversePatch, honorExcludedFromCommit, 3);
+  }
+
+  public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull Path basePath,
+                                                    boolean reversePatch,
+                                                    boolean honorExcludedFromCommit,
+                                                    int contextLineCount) throws VcsException {
     Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<>(changes), honorExcludedFromCommit);
@@ -88,7 +105,7 @@ public final class IdeaTextPatchBuilder {
                                         convertRevision(change.getAfterRevision())));
       }
     }
-    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, () -> ProgressManager.checkCanceled());
+    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, contextLineCount, () -> ProgressManager.checkCanceled());
   }
 
   @Nullable
