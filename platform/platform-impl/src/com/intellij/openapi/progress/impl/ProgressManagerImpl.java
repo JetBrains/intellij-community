@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.WindowManager;
@@ -124,13 +125,13 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
     CompletableFuture<ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(
       () -> {
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          return new BackgroundableProcessIndicator(task);
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          return shouldKeepTasksAsynchronousInHeadlessMode()
+                 ? new ProgressIndicatorBase()
+                 : new EmptyProgressIndicator();
         }
-
-        return shouldKeepTasksAsynchronousInHeadlessMode()
-               ? new ProgressIndicatorBase()
-               : new EmptyProgressIndicator();
+        Project project = task.getProject();
+        return project != null && project.isDisposed() ? null : new BackgroundableProcessIndicator(task);
       }, PlainEdtExecutor.INSTANCE);
     return runProcessWithProgressAsync(task, progressIndicator, null, null, null);
   }
