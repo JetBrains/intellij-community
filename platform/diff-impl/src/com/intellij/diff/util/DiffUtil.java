@@ -1513,6 +1513,18 @@ public final class DiffUtil {
                                             @NotNull UndoConfirmationPolicy confirmationPolicy,
                                             boolean underBulkUpdate,
                                             @NotNull Runnable task) {
+    return executeWriteCommand(project, document, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, true, task);
+  }
+
+  @RequiresEdt
+  public static boolean executeWriteCommand(@Nullable Project project,
+                                            @NotNull Document document,
+                                            @Nullable @NlsContexts.Command String commandName,
+                                            @Nullable String commandGroupId,
+                                            @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                            boolean underBulkUpdate,
+                                            boolean shouldRecordCommandForActiveDocument,
+                                            @NotNull Runnable task) {
     if (!makeWritable(project, document)) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
@@ -1526,7 +1538,7 @@ public final class DiffUtil {
       else {
         task.run();
       }
-    }, commandName, commandGroupId, confirmationPolicy, document));
+    }, commandName, commandGroupId, confirmationPolicy, shouldRecordCommandForActiveDocument, document));
     return true;
   }
 

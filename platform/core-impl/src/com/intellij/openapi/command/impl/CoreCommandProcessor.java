@@ -182,7 +182,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     executeCommand(project, command, name, groupId, undoConfirmationPolicy, shouldRecordCommandForActiveDocument, null);
   }
 
-  private void executeCommand(@Nullable Project project,
+  @Override
+  public void executeCommand(@Nullable Project project,
                               @NotNull Runnable command,
                               @Nullable @NlsContexts.Command String name,
                               @Nullable Object groupId,
