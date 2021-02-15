@@ -30,6 +30,16 @@ interface StagingAreaOperation {
 
   @Throws(VcsException::class)
   fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>)
+
+  companion object {
+    fun refreshVirtualFiles(nodes: List<GitFileStatusNode>, isRollback: Boolean) {
+      RefreshVFsSynchronously.refresh(nodes.map { createChange(it) }, isRollback)
+    }
+
+    private fun createChange(node: GitFileStatusNode): FilePathChange {
+      return FilePathChange.Simple(node.status.path(ContentVersion.STAGED), node.status.path(ContentVersion.LOCAL))
+    }
+  }
 }
 
 object GitAddOperation : StagingAreaOperation {
@@ -83,9 +93,6 @@ object GitRevertOperation : StagingAreaOperation {
 
   override fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>) {
     GitFileUtils.revertUnstagedPaths(project, root, nodes.map { it.filePath })
-    RefreshVFsSynchronously.refresh(nodes.map { createChange(it) }, isRollback = true)
+    StagingAreaOperation.refreshVirtualFiles(nodes, true)
   }
-
-  private fun createChange(node: GitFileStatusNode): FilePathChange =
-    FilePathChange.Simple(node.status.path(ContentVersion.STAGED), node.status.path(ContentVersion.LOCAL))
 }

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
@@ -25,12 +26,14 @@ import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
 import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel.ChangelistData
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitCommit
@@ -42,6 +45,8 @@ import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.*
 import git4idea.config.GitConfigUtil
+import git4idea.config.GitExecutableManager
+import git4idea.config.GitVersionSpecialty
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.FIRST_PARENT
@@ -396,4 +401,27 @@ private fun createUnstashHandler(project: Project, stash: StashInfo, branch: Str
   }
   h.addParameters(stash.stash)
   return h
+}
+
+fun createStashPushHandler(project: Project, root: VirtualFile, files: Collection<FilePath>, vararg parameters: String): GitLineHandler {
+  val handler = GitLineHandler(project, root, GitCommand.STASH)
+  handler.addParameters("push")
+  handler.addParameters(*parameters)
+  if (GitVersionSpecialty.STASH_PUSH_PATHSPEC_FROM_FILE_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))) {
+    handler.addParameters("--pathspec-from-file=-")
+    handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(VcsFileUtil.toRelativePaths(root, files),
+                                                                      "\n", handler.charset, false))
+  }
+  else {
+    handler.endOptions()
+    handler.addRelativePaths(files)
+  }
+  return handler
+}
+
+fun refreshStash(project: Project, root: VirtualFile) {
+  val reflogFile = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(root)?.repositoryFiles?.stashReflogFile
+  if (reflogFile != null) {
+    VfsUtil.markDirtyAndRefresh(true, false, false, reflogFile)
+  }
 }
