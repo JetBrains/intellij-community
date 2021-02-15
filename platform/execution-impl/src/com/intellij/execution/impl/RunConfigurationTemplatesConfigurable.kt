@@ -13,6 +13,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.BorderLayout
+import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -72,6 +73,12 @@ class RunConfigurationTemplatesConfigurable(project: Project, val configurationT
     component!!.add(panel, BorderLayout.NORTH)
     selectTypeNode(configurationType)
     return component
+  }
+
+  override fun createLeftPanel(): JComponent {
+    val leftPanel = super.createLeftPanel()
+    leftPanel.minimumSize = Dimension(250, 100)
+    return leftPanel
   }
 
   override fun getDisplayName(): String {
