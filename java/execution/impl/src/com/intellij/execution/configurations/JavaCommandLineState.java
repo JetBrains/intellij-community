@@ -96,6 +96,10 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return null;
   }
 
+  protected boolean shouldPrepareDebuggerConnection() {
+    return true;
+  }
+
   @Override
   public void prepareTargetEnvironmentRequest(
     @NotNull TargetEnvironmentRequest request,
@@ -106,7 +110,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     myTargetEnvironmentRequest = request;
 
     TargetDebuggerConnection targetDebuggerConnection =
-      TargetDebuggerConnectionUtil.prepareDebuggerConnection(this, request, configuration);
+      shouldPrepareDebuggerConnection() ? TargetDebuggerConnectionUtil.prepareDebuggerConnection(this, request, configuration) : null;
     myTargetDebuggerConnection = targetDebuggerConnection;
 
     Ref<TargetedCommandLineBuilder> commandLineRef = new Ref<>();

@@ -2118,7 +2118,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myConnection = environment.getRemoteConnection();
 
     // in client mode start target process before the debugger to reduce polling
-    if (!(myConnection instanceof RemoteConnectionStub) && myConnection.isServerMode()) {
+    if (!(myConnection instanceof RemoteConnectionStub) &&
+        !(myConnection instanceof DelayedRemoteConnection) &&
+        myConnection.isServerMode()) {
       createVirtualMachine(environment);
     }
 
@@ -2146,7 +2148,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw e;
     }
 
-    if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
+    if (myConnection instanceof DelayedRemoteConnection) {
+      ((DelayedRemoteConnection)myConnection).setAttachRunnable(() -> createVirtualMachine(environment));
+    } else if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
       createVirtualMachine(environment);
     }
 
