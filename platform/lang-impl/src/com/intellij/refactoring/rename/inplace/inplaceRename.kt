@@ -33,7 +33,11 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.refactoring.InplaceRefactoringContinuation
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.api.*
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage
+import com.intellij.refactoring.rename.api.PsiRenameUsage
+import com.intellij.refactoring.rename.api.RenameTarget
+import com.intellij.refactoring.rename.api.RenameUsage
+import com.intellij.refactoring.rename.impl.DefaultPsiRenameUsageUpdater
 import com.intellij.refactoring.rename.impl.RenameOptions
 import com.intellij.refactoring.rename.impl.buildUsageQuery
 import com.intellij.refactoring.rename.impl.rename
