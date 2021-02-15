@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.groovy">
   <id>org.intellij.groovy</id>
   <name>Groovy</name>
   <category>Languages</category>
@@ -17,7 +17,6 @@
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
-  <depends optional="true" config-file="ant.xml">AntSupport</depends>
   <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
