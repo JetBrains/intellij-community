@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -254,19 +254,15 @@ public class IdentifierHighlighterPass {
   }
 
   private void highlightTargetUsages(@NotNull Symbol target) {
-    AstLoadingFilter.disallowTreeLoading(
-      () -> {
-        UsageRanges ranges = getUsageRanges(myFile, target);
-        myReadAccessRanges.addAll(ranges.getReadRanges());
-        myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
-        myWriteAccessRanges.addAll(ranges.getWriteRanges());
-        myWriteAccessRanges.addAll(ranges.getWriteDeclarationRanges());
-        return null;
-      },
-      () -> "Currently highlighted file: \n" +
-            "psi file: " + myFile + ";\n" +
-            "virtual file: " + myFile.getVirtualFile()
-    );
+    AstLoadingFilter.disallowTreeLoading(() -> {
+      UsageRanges ranges = getUsageRanges(myFile, target);
+      myReadAccessRanges.addAll(ranges.getReadRanges());
+      myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
+      myWriteAccessRanges.addAll(ranges.getWriteRanges());
+      myWriteAccessRanges.addAll(ranges.getWriteDeclarationRanges());
+    }, () -> "Currently highlighted file: \n" +
+             "psi file: " + myFile + ";\n" +
+             "virtual file: " + myFile.getVirtualFile());
   }
 
   private static volatile int id;
