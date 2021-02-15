@@ -2257,37 +2257,37 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
 
             @TestMetadata("topLevelPropertyGetterBodyCompletion.kt")
             public void testTopLevelPropertyGetterBodyCompletion() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/topLevelPropertyGetterBodyCompletion.kt");
+                runTest("testData/basic/common/primitiveCompletion/topLevelPropertyGetterBodyCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertyGetterExpressionCompletion.kt")
             public void testTopLevelPropertyGetterExpressionCompletion() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/topLevelPropertyGetterExpressionCompletion.kt");
+                runTest("testData/basic/common/primitiveCompletion/topLevelPropertyGetterExpressionCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertyGetterTypeCompletion.kt")
             public void testTopLevelPropertyGetterTypeCompletion() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/topLevelPropertyGetterTypeCompletion.kt");
+                runTest("testData/basic/common/primitiveCompletion/topLevelPropertyGetterTypeCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertyInitializerCompletion.kt")
             public void testTopLevelPropertyInitializerCompletion() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/topLevelPropertyInitializerCompletion.kt");
+                runTest("testData/basic/common/primitiveCompletion/topLevelPropertyInitializerCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertySetterBodyCompletion.kt")
             public void testTopLevelPropertySetterBodyCompletion() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/topLevelPropertySetterBodyCompletion.kt");
+                runTest("testData/basic/common/primitiveCompletion/topLevelPropertySetterBodyCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertySetterExpressionCompletion.kt")
             public void testTopLevelPropertySetterExpressionCompletion() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/topLevelPropertySetterExpressionCompletion.kt");
+                runTest("testData/basic/common/primitiveCompletion/topLevelPropertySetterExpressionCompletion.kt");
             }
 
             @TestMetadata("topLevelPropertyTypeCompletion.kt")
             public void testTopLevelPropertyTypeCompletion() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/topLevelPropertyTypeCompletion.kt");
+                runTest("testData/basic/common/primitiveCompletion/topLevelPropertyTypeCompletion.kt");
             }
 
             @TestMetadata("topLevelVariablesAndFunctions.kt")

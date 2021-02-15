@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.test.TargetBackend;
 @TestMetadata("testData/diagnosticMessage/js")
 public class DiagnosticMessageJsTestGenerated extends AbstractDiagnosticMessageJsTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.JS, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JS, testDataFilePath);
     }
 
     @TestMetadata("jsCodeErrorHtml.kt")

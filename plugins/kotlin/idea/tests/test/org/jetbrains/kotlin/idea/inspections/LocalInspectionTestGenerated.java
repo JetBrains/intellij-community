@@ -3346,7 +3346,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @TestMetadata("platformTypeEquals.kt")
             public void testPlatformTypeEquals() throws Exception {
-                runTest("idea/testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator/platformTypeEquals.kt");
+                runTest("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator/platformTypeEquals.kt");
             }
 
             @TestMetadata("plusFromJava.kt")
