@@ -10,6 +10,7 @@ import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 import java.util.List;
 
 @ApiStatus.Experimental
+@Presentation(icon = "AllIcons.Nodes.Related")
 public interface DependencyDescriptor extends DomElement {
 
   @NotNull
