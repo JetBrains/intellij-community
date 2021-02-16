@@ -16,10 +16,7 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
-import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.PyImportStatementBase
-import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.PyModuleType
@@ -87,20 +84,14 @@ class PyModuleNameCompletionContributor : CompletionContributor() {
   private fun shouldDoCompletion(parameters: CompletionParameters): Boolean {
     val element = parameters.position
     val parent = element.parent
-    if (parent is PyReferenceExpression && parent.isQualified) {
-      return false
-    }
-    if (parent is PyStringLiteralExpression) {
-      val prefix = parent.text.substring(0, parameters.offset - parent.textRange.startOffset)
-      if (prefix.contains(".")) {
-        return false
-      }
-    }
+
     val provider = element.containingFile.viewProvider
     if (provider is MultiplePsiFilesPerDocumentFileViewProvider) {
       return false
     }
 
-    return PsiTreeUtil.getParentOfType(element, PyImportStatementBase::class.java) == null
+    return parent is PyReferenceExpression
+           && !parent.isQualified
+           && PsiTreeUtil.getParentOfType(element, PyImportStatementBase::class.java) == null
   }
 }
