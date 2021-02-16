@@ -38,6 +38,10 @@ public interface CodeStyleSettingsService {
   @NotNull
   List<? extends LanguageCodeStyleProvider> getLanguageCodeStyleProviders();
 
+  /**
+   * @deprecated Use {@link #getCustomCodeStyleSettingsFactories()} which returns all factories, including settings pages.
+   */
+  @Deprecated
   @NotNull
   Set<? extends CustomCodeStyleSettingsFactory> getSettingsPagesProviders();
 }
