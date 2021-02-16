@@ -30,7 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
@@ -353,7 +353,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
         @Override
         public void mousePressed(MouseEvent e) {
-          ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecorator.class, myComponent),
+          ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent),
                                        decorator -> decorator.activate(ToolWindowEventSource.ToolWindowHeader));
           myPressPoint = e.getPoint();
         }
@@ -361,7 +361,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         @Override
         public void mouseClicked(MouseEvent e) {
           if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-            ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecorator.class, myComponent),
+            ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent),
                                          decorator -> {
                                            if (decorator.isHeaderVisible()) return;
                                            String id = decorator.getToolWindowId();
@@ -374,7 +374,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
         @Override
         public void mouseDragged(MouseEvent e) {
-          InternalDecorator decorator = ComponentUtil.getParentOfType(InternalDecorator.class, myComponent);
+          InternalDecoratorImpl decorator = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent);
           if (decorator == null || decorator.isHeaderVisible()) return;
           ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(decorator.getToolWindowId());
           ToolWindowAnchor anchor = window != null ? window.getAnchor() : null;
@@ -397,7 +397,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
         @Override
         public void mouseEntered(MouseEvent e) {
-          InternalDecorator decorator = ComponentUtil.getParentOfType(InternalDecorator.class, myComponent);
+          InternalDecoratorImpl decorator = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent);
           if (decorator == null || decorator.isHeaderVisible()) {
             e.getComponent().setCursor(Cursor.getDefaultCursor());
             return;
@@ -1573,7 +1573,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
       if (!Registry.is("debugger.new.tool.window.layout")) return;
-      InternalDecorator decorator = ComponentUtil.getParentOfType(InternalDecorator.class, myComponent);
+      InternalDecoratorImpl decorator = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent);
       if (decorator != null && myTabs.getTabCount() > 0 && !decorator.isHeaderVisible()) {
         UIUtil.drawHeader(g, 0, getWidth(), decorator.getHeaderHeight(), decorator.isActive(), true, false, false);
       }

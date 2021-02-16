@@ -33,7 +33,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.ToolwindowHeaderDecorator;
+import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -580,7 +580,7 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   }
 
   private void setToolWindowHeaderVisible(boolean isVisible) {
-    ToolwindowHeaderDecorator decorator = ((ToolWindowEx)myWindow).getDecorator();
+    InternalDecorator decorator = ((ToolWindowEx)myWindow).getDecorator();
     decorator.setHeaderVisible(isVisible);
   }
 

@@ -15,7 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
@@ -79,7 +79,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   @Override
   public void setTargetComponent(@NotNull JComponent component) {
     myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
-    myIsToolWindowContextMenu = ComponentUtil.getParentOfType(InternalDecorator.class, component) != null;
+    myIsToolWindowContextMenu = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, component) != null;
   }
 
   boolean isToolWindowContextMenu() {

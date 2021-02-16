@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.impl.ToolwindowHeaderDecorator;
+import com.intellij.openapi.wm.impl.InternalDecorator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +29,7 @@ public interface ToolWindowEx extends ToolWindow {
 
   void stretchHeight(int value);
 
-  @NotNull ToolwindowHeaderDecorator getDecorator();
+  @NotNull InternalDecorator getDecorator();
 
   void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
 
