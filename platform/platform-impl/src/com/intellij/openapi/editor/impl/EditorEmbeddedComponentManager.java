@@ -308,6 +308,7 @@ public final class EditorEmbeddedComponentManager {
       }
 
       if (inlay == null) return null;
+      Disposer.register(this, inlay);
 
       renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
 
@@ -397,18 +398,8 @@ public final class EditorEmbeddedComponentManager {
 
     @Override
     public void dispose() {
-      Application application = ApplicationManager.getApplication();
-      if (application.isDispatchThread()) disposeOnEdt();
-      else application.invokeLater(this::disposeOnEdt);
-    }
-
-    private void disposeOnEdt() {
-      myEditor.setCustomCursor(this, null);
-      List<Inlay<? extends MyRenderer>> oldInlays = new ArrayList<>(myInlays.descendingSet());
+      // All inlays are already registered in the disposable.
       myInlays.clear();
-      for (Inlay<? extends MyRenderer> inlay : oldInlays) {
-        Disposer.dispose(inlay);
-      }
     }
 
     private static class ResizeInfo {
