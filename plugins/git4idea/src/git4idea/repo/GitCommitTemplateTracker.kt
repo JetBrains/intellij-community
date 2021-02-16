@@ -76,7 +76,7 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   }
 
   private fun processEvents(events: List<VFileEvent>) {
-    val allTemplates = TEMPLATES_LOCK.read { commitTemplates.entries }
+    val allTemplates = TEMPLATES_LOCK.read { commitTemplates.toMap() }
     if (allTemplates.isEmpty()) return
 
     for (event in events) {
