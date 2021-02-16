@@ -20,7 +20,7 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.ide.scratch.ScratchFileType
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
@@ -150,7 +150,7 @@ private class ToolWindowScratchOutputHandler(private val parentDisposable: Dispo
                 toolWindow.show(null)
             }
 
-            toolWindow.setIcon(ExecutionUtil.getLiveIndicator(ScratchFileType.INSTANCE.icon))
+            toolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.FileTypes.Text))
         }
     }
 
@@ -169,7 +169,7 @@ private class ToolWindowScratchOutputHandler(private val parentDisposable: Dispo
                 toolWindow.hide(null)
             }
 
-            toolWindow.setIcon(ScratchFileType.INSTANCE.icon ?: error("Text icon is expected to be present"))
+            toolWindow.setIcon(AllIcons.FileTypes.Text)
         }
     }
 
@@ -211,7 +211,7 @@ private class ScratchToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val consoleView = ConsoleViewImpl(project, true)
         toolWindow.setToHideOnEmptyContent(true)
-        toolWindow.setIcon(ScratchFileType.INSTANCE.icon ?: error("Text icon should be present"))
+        toolWindow.setIcon(AllIcons.FileTypes.Text)
         toolWindow.hide(null)
 
         val contentManager = toolWindow.contentManager

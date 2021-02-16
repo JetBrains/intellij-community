@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesPr
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineDumpPanel
 
 @Suppress("ComponentNotRegistered")
-class CoroutineDumpAction : AnAction(), AnAction.TransparentUpdate {
+class CoroutineDumpAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
