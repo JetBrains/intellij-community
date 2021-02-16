@@ -44,6 +44,7 @@ import java.util.Collection;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.SystemInfo.isMac;
+import static com.intellij.openapi.util.registry.Registry.intValue;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
 import static com.intellij.util.EditSourceOnDoubleClickHandler.isExpandPreferable;
@@ -360,8 +361,14 @@ public final class DefaultTreeUI extends BasicTreeUI {
           path = cache.getPathForRow(++row);
         }
         width += insets.left + insets.right;
-        if (paintBounds.width < width && width < maxPaintX) {
-          width = Math.min(width + paintBounds.width / 3, maxPaintX);
+        if (width < maxPaintX) {
+          if (!is("ide.tree.prefer.to.shrink.width.on.scroll")) {
+            width = maxPaintX;
+          }
+          else if (paintBounds.width < width || !is("ide.tree.prefer.aggressive.scrolling.to.the.left")) {
+            int margin = intValue("ide.tree.preferable.right.margin", 25);
+            if (margin > 0) width = Math.min(width + paintBounds.width * margin / 100, maxPaintX);
+          }
         }
         preferredSize.width = width;
         preferredSize.height = insets.top + insets.bottom + cache.getPreferredHeight();
