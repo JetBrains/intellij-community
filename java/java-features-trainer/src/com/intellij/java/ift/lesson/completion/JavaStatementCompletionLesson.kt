@@ -9,11 +9,13 @@ import training.dsl.LessonContext
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
 import training.dsl.parseLessonSample
 import training.learn.course.KLesson
 
-class JavaStatementCompletionLesson
-  : KLesson("Statement completion", JavaLessonsBundle.message("java.statement.completion.lesson.name")) {
+class JavaStatementCompletionLesson : KLesson("Statement completion", JavaLessonsBundle.message("java.statement.completion.lesson.name")) {
+
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   val sample = parseLessonSample("""
     class PrimeNumbers {

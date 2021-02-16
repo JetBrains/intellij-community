@@ -24,7 +24,8 @@ import javax.swing.JList
 class TaskTestContext(rt: TaskRuntimeContext): TaskRuntimeContext(rt) {
 
   data class TestScriptProperties (
-    val duration: Int = 6 //seconds
+    val duration: Int = 6, //seconds
+    val skipTesting: Boolean = false
   )
 
   fun type(text: String) {
