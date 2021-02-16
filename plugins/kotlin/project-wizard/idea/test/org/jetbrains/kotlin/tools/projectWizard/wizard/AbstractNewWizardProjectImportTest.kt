@@ -121,7 +121,6 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
 
         val settings = GradleProjectSettings().apply {
             externalProjectPath = directory.toString()
-            isUseAutoImport = false
             isUseQualifiedModuleNames = true
             gradleJvm = SDK_NAME
             distributionType = distributionTypeSettings
