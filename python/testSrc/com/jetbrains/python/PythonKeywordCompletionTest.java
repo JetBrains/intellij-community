@@ -2,12 +2,18 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.List;
 
 public class PythonKeywordCompletionTest extends PyTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    PyModuleNameCompletionContributor.ENABLED = false;
+  }
 
   private void doTest3K() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
