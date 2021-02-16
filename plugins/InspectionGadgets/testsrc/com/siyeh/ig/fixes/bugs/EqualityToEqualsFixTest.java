@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.bugs;
 
 import com.siyeh.ig.IGQuickFixesTestCase;
@@ -13,9 +11,15 @@ import com.siyeh.ig.fixes.EqualityToEqualsFix;
  */
 public class EqualityToEqualsFixTest extends IGQuickFixesTestCase {
 
-  public void testSimple() { doTest(EqualityToEqualsFix.getFixName(false)); }
-  public void testPrecedence() { doTest(EqualityToEqualsFix.getFixName(false)); }
-  public void testNegated() { doTest(EqualityToEqualsFix.getFixName(true)); }
+  public void testSimple() {
+    assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(false));
+  }
+  public void testPrecedence() {
+    assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(false));
+  }
+  public void testNegated() {
+    assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(true));
+  }
 
   @Override
   protected void setUp() throws Exception {
