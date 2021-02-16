@@ -39,10 +39,8 @@ import java.util.List;
  * @author peter
  */
 public abstract class DumbService {
-  /**
-   * @see Project#getMessageBus()
-   */
-  public static final Topic<DumbModeListener> DUMB_MODE = new Topic<>("dumb mode", DumbModeListener.class);
+  @Topic.ProjectLevel
+  public static final Topic<DumbModeListener> DUMB_MODE = new Topic<>("dumb mode", DumbModeListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * The tracker is advanced each time we enter/exit from dumb mode.
