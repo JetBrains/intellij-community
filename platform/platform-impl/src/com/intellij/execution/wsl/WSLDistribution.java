@@ -569,9 +569,11 @@ public class WSLDistribution {
     final String releaseInfo = "/etc/resolv.conf"; // available for all distributions
     final ProcessOutput output;
     try {
-      output = executeOnWsl(10000, "cat", releaseInfo);
+      output = executeOnWsl(List.of("cat", releaseInfo),
+                            new WSLCommandLineOptions().setExecuteCommandInShell(false), 10_000, null);
     }
     catch (ExecutionException e) {
+      LOG.info("Cannot read host ip", e);
       return null;
     }
     if (LOG.isDebugEnabled()) LOG.debug("Reading release info: " + getId());
@@ -587,9 +589,11 @@ public class WSLDistribution {
   private @Nullable String readWslIp() {
     final ProcessOutput output;
     try {
-      output = executeOnWsl(10000, "ip", "addr", "show", "eth0");
+      output = executeOnWsl(List.of("ip", "addr", "show", "eth0"),
+                            new WSLCommandLineOptions().setExecuteCommandInShell(false), 10_000, null);
     }
     catch (ExecutionException e) {
+      LOG.info("Cannot read wsl ip", e);
       return null;
     }
     if (LOG.isDebugEnabled()) LOG.debug("Reading eth0 info: " + getId());
