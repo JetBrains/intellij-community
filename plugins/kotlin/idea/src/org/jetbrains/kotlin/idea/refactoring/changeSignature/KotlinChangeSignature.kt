@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeProp
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 interface KotlinChangeSignatureConfiguration {
     fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor = originalDescriptor
@@ -113,8 +113,9 @@ class KotlinChangeSignature(
                 ChangeSignatureProcessor(project, getPreviewInfoForJavaMethod(descriptor).second)
             }
 
-            else -> throw AssertionError("Unexpected declaration: ${baseDeclaration.getElementTextWithContext()}")
+            else -> throwUnexpectedDeclarationException(baseDeclaration)
         }
+
         processor.run()
     }
 
@@ -144,6 +145,7 @@ class KotlinChangeSignature(
                     @Suppress("UNCHECKED_CAST")
                     override fun getParameters() = javaChangeInfo.newParameters.toMutableList() as MutableList<ParameterInfoImpl>
                 }
+
                 object : JavaChangeSignatureDialog(project, javaDescriptor, false, null) {
                     override fun createRefactoringProcessor(): BaseRefactoringProcessor {
                         val parameters = parameters
@@ -161,11 +163,13 @@ class KotlinChangeSignature(
                         ).also {
                             it.setCheckUnusedParameter()
                         }
+
                         return ChangeSignatureProcessor(myProject, newJavaChangeInfo)
                     }
                 }
             }
-            else -> throw AssertionError("Unexpected declaration: ${baseDeclaration.getElementTextWithContext()}")
+
+            else -> throwUnexpectedDeclarationException(baseDeclaration)
         }
 
         if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -265,6 +269,12 @@ class KotlinChangeSignature(
     companion object {
         private val LOG = logger<KotlinChangeSignature>()
     }
+}
+
+private fun throwUnexpectedDeclarationException(baseDeclaration: PsiElement): Nothing {
+    throw KotlinExceptionWithAttachments("Unexpected declaration: $baseDeclaration")
+        .withAttachment("element", baseDeclaration.text)
+        .withAttachment("file", baseDeclaration.containingFile.text)
 }
 
 @TestOnly
