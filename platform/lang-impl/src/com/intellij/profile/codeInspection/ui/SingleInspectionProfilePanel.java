@@ -108,7 +108,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private TreeExpander myTreeExpander;
   private boolean myIsInRestore;
 
-  private String[] myInitialScopesOrder;
+  private List<String> myInitialScopesOrder;
   private Disposable myDisposable = Disposer.newDisposable();
 
   public SingleInspectionProfilePanel(@NotNull ProjectInspectionProfileManager projectProfileManager,
@@ -1118,7 +1118,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myProfile.isChanged()) return true;
     if (myProfile.getSource().isProjectLevel() != myProfile.isProjectLevel()) return true;
     if (!Comparing.strEqual(myProfile.getSource().getName(), myProfile.getName())) return true;
-    if (!Arrays.equals(myInitialScopesOrder, myProfile.getScopesOrder())) return true;
+    if (!myInitialScopesOrder.equals(myProfile.getScopesOrder())) return true;
     return descriptorsAreChanged();
   }
 

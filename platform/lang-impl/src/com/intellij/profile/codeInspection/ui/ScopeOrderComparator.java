@@ -16,27 +16,27 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
 public class ScopeOrderComparator implements Comparator<String> {
-  private final String[] myScopesOrder;
+  private final List<String> myScopesOrder;
 
   public ScopeOrderComparator(@NotNull InspectionProfileImpl inspectionProfile) {
     this(inspectionProfile.getScopesOrder());
   }
 
-  private ScopeOrderComparator(String[] scopesOrder) {
+  private ScopeOrderComparator(List<String> scopesOrder) {
     myScopesOrder = scopesOrder;
   }
 
   private int getKey(String scope) {
-    return myScopesOrder == null ? -1 : ArrayUtil.indexOf(myScopesOrder, scope);
+    return myScopesOrder == null ? -1 : myScopesOrder.indexOf(scope);
   }
 
   @Override

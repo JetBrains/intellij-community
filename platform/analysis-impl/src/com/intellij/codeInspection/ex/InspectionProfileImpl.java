@@ -20,13 +20,9 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -55,7 +51,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   protected boolean myLockedProfile;
   protected final InspectionProfileImpl myBaseProfile;
   private volatile String myToolShortName;
-  private String[] myScopesOrder;
+  private List<String> myScopesOrder = new ArrayList<>();
   private @NlsContexts.DetailedDescription String myDescription;
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
@@ -517,21 +513,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }, project);
 
-     DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<>() {
-      @Override
-      public @NotNull Collection<String> getNodes() {
-        return dependencies.keySet();
-      }
-
-      @Override
-      public @NotNull Iterator<String> getIn(String n) {
-        return dependencies.get(n).iterator();
-      }
-    }));
-    if (builder.isAcyclic()) {
-      myScopesOrder = ArrayUtilRt.toStringArray(builder.getSortedNodes());
-    }
-
     copyToolsConfigurations(project);
 
     initialized = true;
@@ -630,14 +611,17 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     };
   }
 
-  @Transient
-  public String @Nullable [] getScopesOrder() {
+  public List<String> getScopesOrder() {
     return myScopesOrder;
   }
 
-  public void setScopesOrder(String @NotNull [] scopesOrder) {
+  public void setScopesOrder(List<String> scopesOrder) {
     myScopesOrder = scopesOrder;
     schemeState = SchemeState.POSSIBLY_CHANGED;
+
+    for (ToolsImpl tools : myTools.values()) {
+      tools.changeToolsOrder(myScopesOrder);
+    }
   }
 
   private @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, @Nullable Project project) {

@@ -116,6 +116,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
       myTools = model.myTools
     }
     profileManager = model.profileManager
+    scopesOrder = model.scopesOrder
   }
 
   fun disableTool(toolShortName: String, element: PsiElement) {
