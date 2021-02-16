@@ -199,7 +199,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
           return;
         }
 
-        boolean visible = ToolWindowManagerEx.getInstanceEx(myProject).shouldUpdateToolWindowContent(myToolWindow);
+        boolean visible = ((ToolWindowManagerEx)toolWindowManager).shouldUpdateToolWindowContent(myToolWindow);
         if (!visible || wasVisible) {
           wasVisible = visible;
           if (!visible) {
