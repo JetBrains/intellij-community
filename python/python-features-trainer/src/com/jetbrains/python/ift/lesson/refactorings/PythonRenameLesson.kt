@@ -23,8 +23,7 @@ import javax.swing.JButton
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-class PythonRenameLesson
-  : KLesson("Rename", LessonsBundle.message("rename.lesson.name")) {
+class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesson.name")) {
   private val template = """
       class Championship:
           def __init__(self):
@@ -65,11 +64,12 @@ class PythonRenameLesson
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
+    val dynamicWord = UsageViewBundle.message("usage.view.results.node.dynamic")
     var replace: String? = null
     task("RenameElement") {
       text(PythonLessonsBundle.message("python.rename.press.rename", action(it), code("teams"), code("teams_number")))
       triggerByFoundPathAndHighlight { tree: JTree, path: TreePath ->
-        if (path.pathCount == 2 && path.getPathComponent(1).toString().contains("Dynamic")) {
+        if (path.pathCount == 2 && path.getPathComponent(1).toString().contains(dynamicWord)) {
           replace = replacePreviewPattern.matcher(tree.model.root.toString()).takeIf { m -> m.find() }?.group(1)
           true
         }
@@ -93,7 +93,7 @@ class PythonRenameLesson
           TreeUtil.collapseAll(tree, 1)
         }
       }
-      val dynamicReferencesString = "[${UsageViewBundle.message("usage.view.results.node.dynamic")}]"
+      val dynamicReferencesString = "[$dynamicWord]"
       text(PythonLessonsBundle.message("python.rename.expand.dynamic.references",
                                  code("teams"), strong(dynamicReferencesString)))
 
