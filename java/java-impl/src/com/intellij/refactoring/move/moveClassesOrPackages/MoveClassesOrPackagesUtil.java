@@ -106,7 +106,7 @@ public final class MoveClassesOrPackagesUtil {
       return ((PsiClassOwner)element).getName();
     }
     else {
-      LOG.error("Unknown element type");
+      LOG.error("Unknown element: " + (element == null ? null : element.getClass().getName()));
       return null;
     }
   }
