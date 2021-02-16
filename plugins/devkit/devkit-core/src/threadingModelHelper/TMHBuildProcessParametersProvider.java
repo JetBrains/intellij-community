@@ -13,7 +13,6 @@ public class TMHBuildProcessParametersProvider extends BuildProcessParametersPro
 
   @Override
   public @NotNull List<String> getVMArguments() {
-    // TODO for some reason, changing this takes effect only after second invocation of "Re-compile".
     if (Registry.is("tmh.generate.assertions.for.annotations")) {
       return Collections.singletonList("-D" + INSTRUMENT_ANNOTATIONS_PROPERTY + "=true");
     }
