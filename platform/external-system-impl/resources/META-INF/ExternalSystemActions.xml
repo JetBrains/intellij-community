@@ -25,15 +25,6 @@
         <reference id="ExternalSystem.ShowCommonSettings"/>
         <reference id="ExternalSystem.ShowSettings"/>
       </group>
-      <group id="ExternalSystem.ToggleAutoReload"
-             class="com.intellij.openapi.externalSystem.autoimport.ToggleAutoReloadActionGroup">
-        <action id="ExternalSystem.ToggleAutoReload.All"
-                class="com.intellij.openapi.externalSystem.autoimport.UseAllAutoReloadTypeAction"/>
-        <action id="ExternalSystem.ToggleAutoReload.Selective"
-                class="com.intellij.openapi.externalSystem.autoimport.UseSelectiveAutoReloadTypeAction"/>
-        <action id="ExternalSystem.ToggleAutoReload.None"
-                class="com.intellij.openapi.externalSystem.autoimport.UseNoneAutoReloadTypeAction"/>
-      </group>
       <action id="ExternalSystem.OpenTasksActivationManager"
               class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
       </action>
