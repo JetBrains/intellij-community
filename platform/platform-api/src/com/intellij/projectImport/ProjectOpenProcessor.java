@@ -47,6 +47,14 @@ public abstract class ProjectOpenProcessor {
                                           Messages.getQuestionIcon());
   }
 
+  /**
+   * Create an instance of the project, configure the project according to the needs of this ProjectOpenProcessor, and open it.
+   * <p/>
+   * The call to this method is guarded by the "Do you trust this project" check (see TrustedProjects#confirmOpeningUntrustedProject()),
+   * so it is safe for implementations of this method to assume that the project is trusted.
+   *
+   * @return The created project, or null if it was not possible to create a project for some reason.
+   */
   public abstract @Nullable Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
 
   /**
