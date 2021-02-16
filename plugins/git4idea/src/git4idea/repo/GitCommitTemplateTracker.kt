@@ -83,21 +83,39 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
 
     for (event in events) {
       ProgressManager.checkCanceled()
-      val eventPath = event.path
 
       for ((repository, template) in allTemplates) {
         ProgressManager.checkCanceled()
-        if (eventPath != template.watchedRoot.rootPath) continue
+        val watchedTemplatePath = template.watchedRoot.rootPath
 
-        if (event is VFileDeleteEvent) {
+        var templateChanged = false
+        if (isEventToStopTracking(event, watchedTemplatePath)) {
           stopTrackCommitTemplate(repository)
+          templateChanged = true
         }
-        else if (event is VFileContentChangeEvent || event is VFileMoveEvent || event is VFileCopyEvent) {
+        else if (isEventToReloadTemplateContent(event, watchedTemplatePath)) {
           reloadCommitTemplateContent(repository)
+          templateChanged = true
         }
-        BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).notifyCommitTemplateChanged(repository)
+
+        if (templateChanged) {
+          BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).notifyCommitTemplateChanged(repository)
+        }
       }
     }
+  }
+
+  private fun isEventToStopTracking(event: VFileEvent, watchedTemplatePath: String): Boolean {
+    return when {
+      event is VFileDeleteEvent -> event.path == watchedTemplatePath
+      event is VFileMoveEvent -> event.oldPath == watchedTemplatePath
+      event is VFilePropertyChangeEvent && event.isRename -> event.oldPath == watchedTemplatePath
+      else -> false
+    }
+  }
+
+  private fun isEventToReloadTemplateContent(event: VFileEvent, watchedTemplatePath: String): Boolean {
+    return event is VFileContentChangeEvent && event.path == watchedTemplatePath
   }
 
   private fun stopTrackCommitTemplate(repository: GitRepository) {
