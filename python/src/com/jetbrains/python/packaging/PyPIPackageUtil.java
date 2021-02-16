@@ -388,7 +388,7 @@ public class PyPIPackageUtil {
       @SerializedName("description_content_type")
       private String descriptionContentType = "";
       @SerializedName("project_urls")
-      private Map<String, String>  projectUrls = Collections.emptyMap();;
+      private Map<String, String>  projectUrls = Collections.emptyMap();
 
       @NotNull
       public String getVersion() {
