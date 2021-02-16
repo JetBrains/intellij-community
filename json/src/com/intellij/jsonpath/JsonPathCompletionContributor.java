@@ -8,16 +8,18 @@ import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
-import com.intellij.jsonpath.psi.JsonPathBinaryConditionalOperator;
-import com.intellij.jsonpath.psi.JsonPathObjectValue;
-import com.intellij.jsonpath.psi.JsonPathStringLiteral;
-import com.intellij.jsonpath.psi.JsonPathTypes;
+import com.intellij.jsonpath.psi.*;
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -116,25 +118,108 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       PsiFile file = parameters.getOriginalFile();
+
+      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
+      PsiLanguageInjectionHost injectionHost = injectedLanguageManager.getInjectionHost(file);
+      if (injectionHost != null) {
+        PsiFile hostFile = injectionHost.getContainingFile();
+        if (hostFile != null) {
+          visitJsonPathLiteralsInFile(injectedLanguageManager, hostFile, propertyName -> {
+            addCompletionElement(result, propertyName);
+          });
+        }
+      }
+
       Supplier<JsonFile> targetFileGetter = file.getUserData(JsonPathEvaluateManager.JSON_PATH_EVALUATE_SOURCE_KEY);
-      if (targetFileGetter == null) return;
+      if (targetFileGetter != null) {
+        JsonFile targetFile = targetFileGetter.get();
+        targetFile.accept(new JsonRecursiveElementVisitor() {
+          @Override
+          public void visitProperty(@NotNull JsonProperty o) {
+            super.visitProperty(o);
 
-      JsonFile targetFile = targetFileGetter.get();
-      targetFile.accept(new JsonRecursiveElementVisitor() {
-        @Override
-        public void visitProperty(@NotNull JsonProperty o) {
-          super.visitProperty(o);
-
-          String propertyName = o.getName();
-          if (!propertyName.isBlank()) {
-            if (!validIdentifiersOnly || VALID_IDENTIFIER_PATTERN.matcher(propertyName).matches()) {
-              result.addElement(PrioritizedLookupElement.withPriority(
-                LookupElementBuilder.create(propertyName)
-                  .withIcon(AllIcons.Nodes.Field)
-                  .withTypeText(JsonBundle.message("jsonpath.completion.key")),
-                100));
+            String propertyName = o.getName();
+            if (!propertyName.isBlank()) {
+              addCompletionElement(result, propertyName);
             }
           }
+        });
+      }
+    }
+
+    private void addCompletionElement(@NotNull CompletionResultSet result, String propertyName) {
+      if (!validIdentifiersOnly || VALID_IDENTIFIER_PATTERN.matcher(propertyName).matches()) {
+        result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create(propertyName)
+            .withIcon(AllIcons.Nodes.Field)
+            .withTypeText(JsonBundle.message("jsonpath.completion.key")),
+          100));
+      }
+    }
+
+    private void visitJsonPathLiteralsInFile(InjectedLanguageManager injectedLanguageManager,
+                                             PsiFile hostFile,
+                                             Consumer<String> pathNameConsumer) {
+      hostFile.accept(new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitElement(@NotNull PsiElement element) {
+          super.visitElement(element);
+
+          if (element instanceof PsiLanguageInjectionHost) {
+            List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
+            if (files == null) return;
+
+            for (Pair<PsiElement, TextRange> rangePair : files) {
+              if (rangePair.getFirst() instanceof JsonPathFile) {
+                JsonPathFile jsonPathFile = (JsonPathFile)rangePair.getFirst();
+
+                LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper =
+                  ((PsiLanguageInjectionHost)element).createLiteralTextEscaper();
+
+                visitJsonPathLiterals(jsonPathFile, rangePair.getSecond(), escaper);
+              }
+            }
+          }
+        }
+
+        private void visitJsonPathLiterals(JsonPathFile jsonPathFile,
+                                           TextRange fileRange,
+                                           LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper) {
+          jsonPathFile.accept(new JsonPathRecursiveElementVisitor() {
+            @Override
+            public void visitIdSegment(@NotNull JsonPathIdSegment o) {
+              super.visitIdSegment(o);
+
+              JsonPathId id = o.getId();
+              if (!id.getTextRange().isEmpty()) {
+                StringBuilder decodeBuilder = new StringBuilder();
+                TextRange idTextRange = id.getTextRange().shiftRight(fileRange.getStartOffset());
+                if (escaper.decode(idTextRange, decodeBuilder)) {
+                  pathNameConsumer.accept(decodeBuilder.toString());
+                }
+              }
+            }
+
+            @Override
+            public void visitQuotedSegment(@NotNull JsonPathQuotedSegment o) {
+              super.visitQuotedSegment(o);
+
+              for (JsonPathStringLiteral stringLiteral : o.getQuotedPathsList().getStringLiteralList()) {
+                TextRange literalTextRange = stringLiteral.getTextRange().shiftRight(fileRange.getStartOffset());
+
+                StringBuilder decodeBuilder = new StringBuilder();
+                for (Pair<TextRange, String> fragment : stringLiteral.getTextFragments()) {
+                  if (!fragment.getFirst().isEmpty()) {
+                    escaper.decode(fragment.getFirst().shiftRight(literalTextRange.getStartOffset()), decodeBuilder);
+                  }
+                }
+
+                if (decodeBuilder.length() > 0) {
+                  pathNameConsumer.accept(decodeBuilder.toString());
+                }
+              }
+            }
+          });
         }
       });
     }
