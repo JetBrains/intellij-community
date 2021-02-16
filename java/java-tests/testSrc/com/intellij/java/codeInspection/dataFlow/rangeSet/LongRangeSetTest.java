@@ -284,6 +284,17 @@ public class LongRangeSetTest {
     assertEquals("{Long.MIN_VALUE..-1, 1..9, 11..Long.MAX_VALUE}", all().subtract(modRange(0, 10, 2, 1)).toString());
     assertEquals("{Long.MIN_VALUE+1..Long.MAX_VALUE}: odd", all().subtract(modRange(Long.MIN_VALUE, Long.MAX_VALUE, 2, 1)).toString());
     assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE-1}: even", all().subtract(modRange(Long.MIN_VALUE, Long.MAX_VALUE, 2, 2)).toString());
+    LongRangeSet set = modRange(0, 100, 3, 0b101);
+    assertEquals("{0..99}: <0, 2> mod 3", set.toString());
+    assertEquals("{2..99}: <0, 2> mod 3", set.subtract(point(0)).toString());
+    assertEquals("{0..98}: <0, 2> mod 3", set.subtract(point(99)).toString());
+    assertEquals("{0..99}: <0, 2> mod 3", set.subtract(range(-100, -1)).toString());
+    assertEquals("{5..99}: <0, 2> mod 3", set.subtract(range(-100, 3)).toString());
+    assertEquals("{0..48}: <0, 2> mod 3", set.subtract(range(50, 100)).toString());
+    assertEquals("{0..48}: <0, 2> mod 3", set.subtract(range(50, 200)).toString());
+    assertEquals("{0..98}: <0, 2> mod 3", set.subtract(range(99, 200)).toString());
+    assertEquals("{0..99}: <0, 2> mod 3", set.subtract(range(110, 200)).toString());
+    assertEquals("{11..89}: <0, 2> mod 3", set.subtract(range(-200, -100).unite(range(-50, 10)).unite(range(90, 150))).toString());
   }
 
   @Test

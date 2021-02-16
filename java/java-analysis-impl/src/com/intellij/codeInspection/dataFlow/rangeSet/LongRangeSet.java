@@ -1709,6 +1709,24 @@ public abstract class LongRangeSet {
 
     @Override
     public @NotNull LongRangeSet subtract(@NotNull LongRangeSet other) {
+      if (other instanceof Point) {
+        Point p = (Point)other;
+        if (p.myValue == myFrom) {
+          return modRange(myFrom + 1, myTo, myMod, myBits);
+        }
+        if (p.myValue == myTo) {
+          return modRange(myFrom, myTo - 1, myMod, myBits);
+        }
+      }
+      if (other instanceof Range && !(other instanceof ModRange)) {
+        Range r = (Range)other;
+        if (r.myFrom <= myFrom && r.myTo >= myFrom && r.myTo < myTo) {
+          return modRange(r.myTo + 1, myTo, myMod, myBits);
+        }
+        if (r.myFrom > myFrom && r.myFrom <= myTo && r.myTo >= myTo) {
+          return modRange(myFrom, r.myFrom - 1, myMod, myBits);
+        }
+      }
       return super.subtract(other);
     }
 
