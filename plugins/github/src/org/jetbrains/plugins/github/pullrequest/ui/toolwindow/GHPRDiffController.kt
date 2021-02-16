@@ -4,12 +4,14 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffController
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModel
+import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import javax.swing.event.TreeSelectionListener
 import kotlin.properties.Delegates.observable
 
 
-class GHPRDiffBridge(private val diffController: GHPRDiffController) {
+class GHPRDiffController(private val diffRequestModel: GHPRDiffRequestModel,
+                         private val diffRequestProducer: DiffRequestChainProducer) {
   var activeTree by observable<ActiveTree?>(null) { _, _, current ->
     val tree = when (current) {
       ActiveTree.FILES -> filesTree
@@ -44,7 +46,7 @@ class GHPRDiffBridge(private val diffController: GHPRDiffController) {
   private fun propagateSelection(tree: ChangesTree) {
     val selection = tree.let { VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change } }
     // do not reset selection to zero
-    if (!selection.isEmpty) diffController.selection = selection
+    if (!selection.isEmpty) diffRequestModel.requestChain = selection.let(diffRequestProducer::getRequestChain)
   }
 
   enum class ActiveTree {

@@ -9,11 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
@@ -24,13 +26,12 @@ import javax.swing.JPanel
 
 internal class GHPRTimelineFileEditor(private val project: Project,
                                       private val dataContext: GHPRDataContext,
-                                      private val pullRequest: GHPRIdentifier)
+                                      private val dataProvider: GHPRDataProvider)
   : FileEditorBase() {
 
   val securityService = dataContext.securityService
   val avatarIconsProvider = dataContext.avatarIconsProvider
 
-  private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, this)
   val detailsData = dataProvider.detailsData
   val reviewData = dataProvider.reviewData
   val commentsData = dataProvider.commentsData
@@ -90,7 +91,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
 
   private fun getCurrentDetails(): GHPullRequestShort? {
-    return detailsData.loadedDetails ?: dataContext.listLoader.loadedData.find { it.id == pullRequest.id }
+    return detailsData.loadedDetails ?: dataContext.listLoader.loadedData.find { it.id == dataProvider.id.id }
   }
 
   override fun getPreferredFocusedComponent(): JComponent? = null

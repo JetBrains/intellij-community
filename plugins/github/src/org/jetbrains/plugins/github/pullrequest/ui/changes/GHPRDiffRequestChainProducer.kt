@@ -34,14 +34,15 @@ import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThr
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.util.concurrent.CompletableFuture
 
-class GHPRChangesDiffHelperImpl(private val project: Project,
-                                private val dataProvider: GHPRDataProvider,
-                                private val avatarIconsProvider: GHAvatarIconsProvider,
-                                private val currentUser: GHUser)
-  : GHPRChangesDiffHelper {
+class GHPRDiffRequestChainProducer(private val project: Project,
+                                   private val dataProvider: GHPRDataProvider,
+                                   private val avatarIconsProvider: GHAvatarIconsProvider,
+                                   private val currentUser: GHUser)
+  : DiffRequestChainProducer {
 
   override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
     val changesData = dataProvider.changesData
