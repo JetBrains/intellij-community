@@ -199,31 +199,30 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   @NotNull
   private JPanel createComponent() {
-    // Preferred size should not be zero, otherwise the content loading is not triggered
-    Function<Dimension, Dimension> adjustPrefSize = size -> size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
-
     Component uiComp = getCefBrowser().getUIComponent();
-    JPanel resultPanel = SystemInfoRt.isWindows ?
-      new JPanel(new BorderLayout()) {
-        @Override
-        public void removeNotify() {
-         if (myCefBrowser.getUIComponent().hasFocus()) {
-           // pass focus before removal
-           myCefBrowser.setFocus(false);
-         }
-         super.removeNotify();
+    JPanel resultPanel = new JPanel(new BorderLayout()) {
+      @Override
+      public void setBackground(Color bg) {
+        uiComp.setBackground(bg);
+        super.setBackground(bg);
+      }
+      @Override
+      public void removeNotify() {
+        if (SystemInfoRt.isWindows) {
+          if (myCefBrowser.getUIComponent().hasFocus()) {
+            // pass focus before removal
+            myCefBrowser.setFocus(false);
+          }
         }
-        @Override
-        public Dimension getPreferredSize() {
-         return adjustPrefSize.apply(super.getPreferredSize());
-        }
-      } :
-      new JPanel(new BorderLayout()) {
-        @Override
-        public Dimension getPreferredSize() {
-          return adjustPrefSize.apply(super.getPreferredSize());
-        }
-      };
+        super.removeNotify();
+      }
+      @Override
+      public Dimension getPreferredSize() {
+        // Preferred size should not be zero, otherwise the content loading is not triggered
+        Dimension size = super.getPreferredSize();
+        return size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
+      }
+    };
 
     resultPanel.setBackground(JBColor.background());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
