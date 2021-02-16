@@ -91,7 +91,7 @@ final class ActionUpdater {
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
-    boolean forceAsync = Utils.isAsyncDataContext(dataContext) && Registry.is("actionSystem.update.actions.async.always");
+    boolean forceAsync = Utils.isAsyncDataContext(dataContext) && Registry.is("actionSystem.update.actions.async.unsafe");
     myRealUpdateStrategy = new UpdateStrategy(
       action -> {
         // clone the presentation to avoid partially changing the cached one if update is interrupted
