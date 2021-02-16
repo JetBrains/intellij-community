@@ -504,4 +504,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   public boolean processProblemFiles(@NotNull Processor<? super VirtualFile> processor) {
     return ContainerUtil.process(myProblems.keySet(), processor);
   }
+
+  public static WolfTheProblemSolver createInstance(Project project){
+    return new WolfTheProblemSolverImpl(project);
+  }
 }
