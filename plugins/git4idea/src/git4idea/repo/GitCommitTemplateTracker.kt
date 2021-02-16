@@ -146,6 +146,13 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
         TEMPLATES_LOCK.write { commitTemplates[repository] = GitCommitTemplate(it, templateContent) }
         BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).notifyCommitTemplateChanged(repository)
       }
+      else {
+        lfs.removeWatchedRoot(it)
+        if (watchedTemplatePath != null) {
+          stopTrackCommitTemplate(repository)
+          BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).notifyCommitTemplateChanged(repository)
+        }
+      }
     }
   }
 
