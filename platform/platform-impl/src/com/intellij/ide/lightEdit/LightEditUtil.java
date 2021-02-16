@@ -221,6 +221,13 @@ public final class LightEditUtil {
     return project;
   }
 
+  public static void forbidServiceInLightEditMode(@Nullable Project project, @NotNull Class<?> serviceClass) {
+    if (LightEdit.owns(project)) {
+      throw new AssertionError("LightEdit mode lacks tool windows, so " + serviceClass.getName() + " shouldn't be instantiated there. " +
+                               "Please change the caller to avoid loading the service in LightEdit mode!");
+    }
+  }
+
   @NotNull
   static Project requireProject() {
     return requireLightEditProject(LightEditService.getInstance().getProject());
