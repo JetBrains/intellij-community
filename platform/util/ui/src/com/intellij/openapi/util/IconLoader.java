@@ -676,6 +676,7 @@ public final class IconLoader {
   public static class CachedImageIcon extends ScaleContextSupport implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     @Nullable private final String originalPath;
     @Nullable private volatile ImageDataLoader resolver;
+    @Nullable private final ImageDataLoader originalResolver;
     @Nullable("when not overridden") private final Boolean isDarkOverridden;
     @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
     private int pathTransformModCount = -1;
@@ -702,6 +703,7 @@ public final class IconLoader {
                               @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier) {
       this.originalPath = originalPath;
       this.resolver = resolver;
+      originalResolver = resolver;
       isDarkOverridden = darkOverridden;
       this.localFilterSupplier = localFilterSupplier;
 
@@ -786,6 +788,7 @@ public final class IconLoader {
       }
       else {
         synchronized (lock) {
+          this.resolver = originalResolver;
           resolver = this.resolver;
           if (resolver == null) {
             return EMPTY_ICON;

@@ -31,10 +31,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -250,7 +247,7 @@ public final class ImageLoader {
                                                               @NotNull Dimension2DDouble originalUserSize) throws IOException {
     Image image;
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path))) {
+    if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path)) && !descriptor.path.startsWith("file://")) {
       URLConnection connection = new URL(descriptor.path).openConnection();
       if (connection instanceof HttpURLConnection) {
         if (!descriptor.original) {
@@ -300,6 +297,17 @@ public final class ImageLoader {
       return resourceClass.getResourceAsStream(path);
     }
 
+    if (path.startsWith("file://")) {
+      File file = new File(path.substring("file://".length()));
+      if (file.exists()) {
+        try {
+          return new FileInputStream(file);
+        }
+        catch (FileNotFoundException e) {
+          getLogger().warn(e);
+        }
+      }
+    }
     return null;
   }
 
