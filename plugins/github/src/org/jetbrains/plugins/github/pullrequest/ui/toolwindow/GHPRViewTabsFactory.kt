@@ -22,7 +22,7 @@ internal class GHPRViewTabsFactory(private val project: Project,
   }
 
   fun create(infoComponent: JComponent,
-             diffBridge: GHPRDiffBridge,
+             diffController: GHPRDiffController,
              filesComponent: JComponent,
              filesCountModel: SingleValueModel<Int?>,
              commitsComponent: JComponent,
@@ -54,9 +54,9 @@ internal class GHPRViewTabsFactory(private val project: Project,
     }.also {
       val listener = object : TabsListener {
         override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-          diffBridge.activeTree = when (newSelection) {
-            filesTabInfo -> GHPRDiffBridge.ActiveTree.FILES
-            commitsTabInfo -> GHPRDiffBridge.ActiveTree.COMMITS
+          diffController.activeTree = when (newSelection) {
+            filesTabInfo -> GHPRDiffController.ActiveTree.FILES
+            commitsTabInfo -> GHPRDiffController.ActiveTree.COMMITS
             else -> null
           }
         }

@@ -43,8 +43,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsBrowserComponentFactory
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
+import org.jetbrains.plugins.github.util.DiffRequestChainProducer
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainProducer
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
@@ -66,9 +66,9 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                         private val disposable: Disposable) {
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
 
-  private val diffHelper = GHPRChangesDiffHelperImpl(project, dataProvider,
-                                                     dataContext.avatarIconsProvider,
-                                                     dataContext.securityService.currentUser)
+  private val diffRequestProducer = GHPRDiffRequestChainProducer(project, dataProvider,
+                                                                 dataContext.avatarIconsProvider,
+                                                                 dataContext.securityService.currentUser)
 
   private val detailsLoadingModel = GHCompletableFutureLoadingModel<GHPullRequest>(disposable)
   private val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(disposable)
@@ -99,7 +99,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     dataProvider.changesData.reloadChanges()
   }
 
-  private val diffBridge = GHPRDiffBridge(dataProvider.diffController)
+  private val diffBridge = GHPRDiffController(dataProvider.diffRequestModel, diffRequestProducer)
 
   private val uiDisposable = Disposer.newDisposable().also {
     Disposer.register(disposable, it)
@@ -124,7 +124,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
           when {
             GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> dataContext.repositoryDataService.remoteCoordinates.repository
             GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> this@GHPRViewComponentFactory.dataProvider
-            GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
+            DiffRequestChainProducer.DATA_KEY.`is`(dataId) -> diffRequestProducer
             else -> null
           }
         }
