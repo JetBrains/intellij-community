@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -496,4 +496,6 @@ public abstract class QuickFixFactory {
                                                                             @NotNull PsiClass parentClass, @NotNull PsiClass subClass);
 
   public abstract @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList);
+
+  public abstract @NotNull IntentionAction createUnimplementInterfaceAction(PsiJavaCodeReferenceElement ref, boolean isDuplicates);
 }

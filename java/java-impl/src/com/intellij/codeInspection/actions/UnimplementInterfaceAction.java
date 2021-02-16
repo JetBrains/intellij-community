@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -32,10 +19,24 @@ import java.util.*;
 
 public class UnimplementInterfaceAction implements IntentionAction {
   private String myName = "Interface";
+  private final PsiJavaCodeReferenceElement myRef;
+  private final boolean myIsDuplicates;
+
+  public UnimplementInterfaceAction() {
+    this(null, false);
+  }
+
+  public UnimplementInterfaceAction(PsiJavaCodeReferenceElement ref, boolean isDuplicates) {
+    myRef = ref;
+    myIsDuplicates = isDuplicates;
+  }
 
   @Override
   @NotNull
   public String getText() {
+    if (myIsDuplicates) {
+      return JavaBundle.message("intention.text.remove.duplicates");
+    }
     return JavaBundle.message("intention.text.unimplement.0", myName);
   }
 
@@ -47,6 +48,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (myIsDuplicates) return true;
     if (!(file instanceof PsiJavaFile)) return false;
     final PsiReference psiReference = TargetElementUtil.findReference(editor);
     if (psiReference == null) return false;
@@ -64,6 +66,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     final PsiElement target = referenceElement.resolve();
     if (!(target instanceof PsiClass)) return false;
+    if (HighlightClassUtil.checkExtendsDuplicate(referenceElement, target, file) != null) return false;
 
     PsiClass targetClass = (PsiClass)target;
     if (targetClass.isInterface()) {
@@ -90,7 +93,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiReference psiReference = TargetElementUtil.findReference(editor);
+    final PsiReference psiReference = myIsDuplicates ? myRef : TargetElementUtil.findReference(editor);
     if (psiReference == null) return;
 
     final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
@@ -108,6 +111,17 @@ public class UnimplementInterfaceAction implements IntentionAction {
     if (!(target instanceof PsiClass)) return;
 
     PsiClass targetClass = (PsiClass)target;
+
+    if (myIsDuplicates) {
+      final PsiManager manager = file.getManager();
+      for (PsiJavaCodeReferenceElement refElement : referenceList.getReferenceElements()) {
+        final PsiElement resolvedElement = refElement.resolve();
+        if (!manager.areElementsEquivalent(refElement, element) && manager.areElementsEquivalent(resolvedElement, targetClass)) {
+          refElement.delete();
+        }
+      }
+      return;
+    }
 
     final Map<PsiMethod, PsiMethod> implementations = new HashMap<>();
     for (PsiMethod psiMethod : targetClass.getAllMethods()) {
