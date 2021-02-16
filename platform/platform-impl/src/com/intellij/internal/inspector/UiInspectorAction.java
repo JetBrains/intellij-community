@@ -57,7 +57,6 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -216,35 +215,32 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           updateHighlighting();
         }
       };
-      DataProvider provider = new DataProvider() {
-        @Override
-        public @Nullable Object getData(@NotNull @NonNls String dataId) {
-          if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-            return new Navigatable() {
-              @Override
-              public void navigate(boolean requestFocus) {
-                if (myHierarchyTree.hasFocus()) {
-                  openClass(myComponents.get(0).getClass().getName(), requestFocus);
-                } else if (myInspectorTable.myTable.hasFocus()) {
-                  int row = myInspectorTable.myTable.getSelectedRow();
-                  Object at = myInspectorTable.myModel.getValueAt(row, 1);
-                  openClass(at.toString(), requestFocus);
-                }
+      DataProvider provider = dataId -> {
+        if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+          return new Navigatable() {
+            @Override
+            public void navigate(boolean requestFocus) {
+              if (myHierarchyTree.hasFocus()) {
+                openClass(myComponents.get(0).getClass().getName(), requestFocus);
+              } else if (myInspectorTable.myTable.hasFocus()) {
+                int row = myInspectorTable.myTable.getSelectedRow();
+                Object at = myInspectorTable.myModel.getValueAt(row, 1);
+                openClass(at.toString(), requestFocus);
               }
+            }
 
-              @Override
-              public boolean canNavigate() {
-                return true;
-              }
+            @Override
+            public boolean canNavigate() {
+              return true;
+            }
 
-              @Override
-              public boolean canNavigateToSource() {
-                return true;
-              }
-            };
-          }
-          return null;
+            @Override
+            public boolean canNavigateToSource() {
+              return true;
+            }
+          };
         }
+        return null;
       };
       myWrapperPanel.setContent(myInspectorTable);
 
@@ -485,7 +481,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
         else {
           append(getComponentName(component));
-          Pair<Class, String> class2field = getClassAndFieldName(component);
+          Pair<Class<?>, String> class2field = getClassAndFieldName(component);
           if (class2field != null) {
             append("(" + class2field.second + "@" + class2field.first.getSimpleName() + ")");
           }
@@ -528,19 +524,19 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   }
 
   @Nullable
-  private static Pair<Class, String> getClassAndFieldName(Component component) {
+  private static Pair<Class<?>, String> getClassAndFieldName(Component component) {
     Container parent = component.getParent();
     int deepness = 1;
     while(parent != null && deepness <= MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME) {
       Class<?> aClass = parent.getClass();
-      Map<Field, Class> fields = new HashMap<>();
+      Map<Field, Class<?>> fields = new HashMap<>();
       while (aClass != null) {
         for (Field field : aClass.getDeclaredFields()) {
           fields.put(field, aClass);
         }
         aClass = aClass.getSuperclass();
       }
-      for (Map.Entry<Field, Class> entry : fields.entrySet()) {
+      for (Map.Entry<Field, Class<?>> entry : fields.entrySet()) {
         try {
           Field field = entry.getKey();
           field.setAccessible(true);
@@ -607,10 +603,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     @Override
     public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof ComponentNode) {
-        Pair<Class, String> pair = null;
-if (((HierarchyTree.ComponentNode)value).myComponent != null) {
-  pair = getClassAndFieldName(((HierarchyTree.ComponentNode)value).myComponent);
-}
+        Pair<Class<?>, String> pair = null;
+        if (((HierarchyTree.ComponentNode)value).myComponent != null) {
+          pair = getClassAndFieldName(((HierarchyTree.ComponentNode)value).myComponent);
+        }
         if (pair != null) {
           return pair.first.getSimpleName() + '.' + pair.second;
         } else {
@@ -696,8 +692,8 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
       }
 
       @SuppressWarnings("UseOfObsoleteCollectionType")
-      private static Vector prepareChildren(@NotNull Accessible a) {
-        Vector<DefaultMutableTreeNode> result = new Vector<>();
+      private static Vector<TreeNode> prepareChildren(@NotNull Accessible a) {
+        Vector<TreeNode> result = new Vector<>();
         AccessibleContext ac = a.getAccessibleContext();
         if (ac != null) {
           int count = ac.getAccessibleChildrenCount();
@@ -1088,7 +1084,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
   }
 
   private static class ValueCellRenderer implements TableCellRenderer {
-    private static final Map<Class, Renderer> RENDERERS = new HashMap<>();
+    private static final Map<Class<?>, Renderer<?>> RENDERERS = new HashMap<>();
 
     static {
       RENDERERS.put(Point.class, new PointRenderer());
@@ -1125,14 +1121,15 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
     }
 
     @Nullable
-    private static Renderer<Object> getRenderer(Class clazz) {
+    private static Renderer<Object> getRenderer(Class<?> clazz) {
       if (clazz == null) return null;
 
+      @SuppressWarnings("unchecked") 
       Renderer<Object> renderer = (Renderer<Object>)RENDERERS.get(clazz);
       if (renderer != null) return renderer;
 
-      Class[] interfaces = clazz.getInterfaces();
-      for (Class aClass : interfaces) {
+      Class<?>[] interfaces = clazz.getInterfaces();
+      for (Class<?> aClass : interfaces) {
         renderer = getRenderer(aClass);
         if (renderer != null) {
           return renderer;
@@ -1194,7 +1191,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
 
       sb.append(" argb:0x");
       String hex = Integer.toHexString(value.getRGB());
-      for (int i = hex.length(); i < 8; i++) sb.append('0');
+      sb.append("0".repeat(8 - hex.length()));
       sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
@@ -1314,7 +1311,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
       sb.append(getClassName(value));
 
       Color color = getBorderColor(value);
-      if (color != null) sb.append(" color=").append(color.toString());
+      if (color != null) sb.append(" color=").append(color);
 
       if (value instanceof LineBorder) {
         if (((LineBorder)value).getRoundedCorners()) sb.append(" roundedCorners=true");
@@ -1356,7 +1353,6 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
     }
   }
 
-  @SuppressWarnings("rawtypes")
   @NotNull
   private static String getToStringValue(@NotNull Object value) {
     StringBuilder sb = new StringBuilder();
@@ -1373,9 +1369,8 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
             }
           }
           else if (table instanceof Map) {
-            Map map = (Map)table;
-            Set<Map.Entry> set = map.entrySet();
-            for (Map.Entry entry : set) {
+            Map<?, ?> map = (Map<?, ?>)table;
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
               if (entry.getKey().equals("uiInspector.addedAt")) continue;
               if (sb.length() > 0) sb.append(",");
               sb.append('[').append(entry.getKey()).append("->").append(entry.getValue()).append(']');
@@ -1676,7 +1671,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
         CardLayout cardLayout = (CardLayout)layout;
         Integer currentCard = ReflectionUtil.getField(CardLayout.class, cardLayout, null, "currentCard");
         //noinspection UseOfObsoleteCollectionType
-        Vector vector = ReflectionUtil.getField(CardLayout.class, cardLayout, Vector.class, "vector");
+        Vector<?> vector = ReflectionUtil.getField(CardLayout.class, cardLayout, Vector.class, "vector");
         String cardDescription = "???";
         if (vector != null && currentCard != null) {
           Object card = vector.get(currentCard);
@@ -2027,7 +2022,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
 
   private static class UiInspector implements AWTEventListener, Disposable {
 
-    private Project myProject;
+    private final Project myProject;
 
     UiInspector(@Nullable Project project) {
       myProject = project;
@@ -2092,7 +2087,8 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
       List<PropertyBean> clickInfo = new ArrayList<>();
       //clickInfo.add(new PropertyBean("Click point", me.getPoint()));
       if (component instanceof JList) {
-        JList list = (JList)component;
+        @SuppressWarnings("unchecked") 
+        JList<Object> list = (JList<Object>)component;
         int row = list.getUI().locationToIndex(list, me.getPoint());
         if (row != -1) {
           Component rendererComponent = list.getCellRenderer()
