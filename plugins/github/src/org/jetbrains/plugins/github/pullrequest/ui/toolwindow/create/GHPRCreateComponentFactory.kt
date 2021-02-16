@@ -40,6 +40,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsBrowserCom
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
+import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
@@ -135,26 +136,26 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
   }
 
   fun create(): JComponent {
-    val infoComponent = createInfoComponent()
-    return GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
-      .create(infoComponent, diffController,
-              createFilesComponent(), createCountModel(changesLoadingModel),
-              createCommitsComponent(), createCountModel(commitsLoadingModel)).apply {
-        setDataProvider { dataId ->
-          if (DiffRequestChainProducer.DATA_KEY.`is`(dataId)) diffRequestProducer
-          else null
-        }
-      }.component
-  }
+    val filesCountModel = createCountModel(changesLoadingModel)
+    val commitsCountModel = createCountModel(commitsLoadingModel)
 
-  private fun createInfoComponent(): JComponent {
     val titleDocument = PlainDocument()
     val descriptionDocument = DisableableDocument()
     val metadataModel = GHPRCreateMetadataModel(repositoryDataService, dataContext.securityService.currentUser)
     val createLoadingModel = GHCompletableFutureLoadingModel<GHPullRequestShort>(uiDisposable)
 
-    return GHPRCreateInfoComponentFactory(project, repositoriesManager, dataContext, viewController)
-      .create(directionModel, titleDocument, descriptionDocument, metadataModel, createLoadingModel)
+    val infoComponent = GHPRCreateInfoComponentFactory(project, repositoriesManager, dataContext, viewController)
+      .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, createLoadingModel)
+
+    return GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
+      .create(infoComponent, diffController,
+              createFilesComponent(), filesCountModel,
+              createCommitsComponent(), commitsCountModel).apply {
+        setDataProvider { dataId ->
+          if (DiffRequestChainProducer.DATA_KEY.`is`(dataId)) diffRequestProducer
+          else null
+        }
+      }.component
   }
 
   private fun createFilesComponent(): JComponent {
