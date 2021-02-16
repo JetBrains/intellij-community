@@ -40,8 +40,6 @@ abstract class SpaceOpenInBrowserActionGroup<T>(@NlsActions.ActionText groupName
 
   override fun isPopup(): Boolean = true
 
-  override fun disableIfNoVisibleChildren(): Boolean = false
-
   override fun canBePerformed(context: DataContext) = getData(context)?.size == 1
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
