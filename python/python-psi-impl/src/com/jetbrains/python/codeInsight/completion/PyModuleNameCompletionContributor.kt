@@ -21,12 +21,21 @@ import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyType
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Adds completion variants for modules and packages, inserts a dot after and calls completion on the result,
  * see [PyUnresolvedModuleAttributeCompletionContributor]
  */
 class PyModuleNameCompletionContributor : CompletionContributor() {
+
+  companion object {
+    // temporary solution for tests that are not prepared for module name completion firing everywhere
+    @TestOnly
+    @JvmField
+    var ENABLED = true
+  }
+
   /**
    * Checks whether completion should be performed for a given [parameters] and delegates actual work to [doFillCompletionVariants].
    */
@@ -82,6 +91,8 @@ class PyModuleNameCompletionContributor : CompletionContributor() {
   }
 
   private fun shouldDoCompletion(parameters: CompletionParameters): Boolean {
+    if (!ENABLED) return false
+
     val element = parameters.position
     val parent = element.parent
 

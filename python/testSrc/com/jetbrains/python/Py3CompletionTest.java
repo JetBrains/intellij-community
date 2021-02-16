@@ -8,6 +8,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -180,6 +181,7 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   public void testAsync() {
+    PyModuleNameCompletionContributor.ENABLED = false;
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
