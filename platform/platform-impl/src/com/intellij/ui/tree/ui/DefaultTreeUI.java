@@ -345,6 +345,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
     AbstractLayoutCache cache = treeState; // TODO: treeState ???
     if (tree != null && isValid(tree) && cache != null && is("ide.tree.experimental.preferred.width")) {
       Rectangle paintBounds = tree.getVisibleRect();
+      JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
+      if (pane != null) {
+        JScrollBar bar = pane.getHorizontalScrollBar();
+        if (bar != null && bar.isOpaque() && bar.isVisible()) {
+          paintBounds.height += bar.getPreferredSize().height;
+        }
+      }
       Insets insets = tree.getInsets();
       TreePath path = cache.getPathClosestTo(0, paintBounds.y - insets.top);
       int row = cache.getRowForPath(path);
