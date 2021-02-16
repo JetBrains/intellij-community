@@ -6,8 +6,12 @@ import com.intellij.compiler.BaseCompilerTestCase
 import com.intellij.compiler.CompilerWorkspaceConfiguration
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.compiler.*
-import com.intellij.openapi.compiler.CompilerMessageCategory.*
+import com.intellij.openapi.compiler.CompilationStatusListener
+import com.intellij.openapi.compiler.CompileContext
+import com.intellij.openapi.compiler.CompileStatusNotification
+import com.intellij.openapi.compiler.CompilerMessageCategory.INFORMATION
+import com.intellij.openapi.compiler.CompilerMessageCategory.WARNING
+import com.intellij.openapi.compiler.CompilerTopics
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -83,6 +87,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Updating dependency information... [a]\n" +
                                     "Adding @NotNull assertions... [a]\n" +
                                     "Adding pattern assertions... [a]\n" +
+                                    "Adding the Threading Model assertions... [a]\n" +
                                     "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
@@ -106,6 +111,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Updating dependency information... [a]\n" +
                                     "Adding @NotNull assertions... [a]\n" +
                                     "Adding pattern assertions... [a]\n" +
+                                    "Adding the Threading Model assertions... [a]\n" +
                                     "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
