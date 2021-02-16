@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class PluginsAdvertiser {
   static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
@@ -56,38 +57,32 @@ public final class PluginsAdvertiser {
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
   private static boolean extensionsHaveBeenUpdated = false;
 
-  @NotNull
-  public static List<Plugin> retrieve(@NotNull UnknownFeature unknownFeature) {
-    Map<String, String> params = new HashMap<>();
-    params.put("featureType", unknownFeature.getFeatureType());
-    params.put("implementationName", unknownFeature.getImplementationName());
-    params.put("build", MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests());
-    List<FeatureImpl> features =  MarketplaceRequests.getInstance().getFeatures(params);
-    return ContainerUtil.map(features, feature ->
-      new Plugin(
-        feature.getPluginId() != null ? StringUtil.unquoteString(feature.getPluginId()) : null,
-        feature.getPluginName() != null ? StringUtil.unquoteString(feature.getPluginName()) : null,
-        feature.getBundled())
-    );
+  public static @NotNull List<Plugin> retrieve(@NotNull UnknownFeature unknownFeature) {
+    MarketplaceRequests requests = MarketplaceRequests.getInstance();
+    Map<String, String> params = Map.of("featureType", unknownFeature.getFeatureType(),
+                                        "implementationName", unknownFeature.getImplementationName(),
+                                        "build", requests.getBuildForPluginRepositoryRequests());
+
+    return requests
+      .getFeatures(params)
+      .stream()
+      .flatMap(Plugin::fromFeature)
+      .collect(Collectors.toUnmodifiableList());
   }
 
   public static @NotNull NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup("Plugins Suggestion");
   }
 
-  static void loadAllExtensions(Set<String> customPluginIds) throws IOException {
+  static void loadAllExtensions(@NotNull Set<String> customPluginIds) throws IOException {
     @SuppressWarnings("deprecation")
     Map<String, String> params = Collections.singletonMap("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName());
-    List<FeatureImpl> features =  MarketplaceRequests.getInstance().getFeatures(params);
-    Map<String, Set<Plugin>> setExtensions = features.stream().collect(
-      Collectors.groupingBy(FeatureImpl::getImplementationName, Collectors.mapping(
-        feature -> new Plugin(
-          feature.getPluginId() != null ? StringUtil.unquoteString(feature.getPluginId()) : null,
-          feature.getPluginName() != null ? StringUtil.unquoteString(feature.getPluginName()) : null,
-          feature.getBundled(),
-          customPluginIds.contains(feature.getPluginId())
-        ), Collectors.toSet()
-      )));
+    List<FeatureImpl> features = MarketplaceRequests.getInstance().getFeatures(params);
+    Map<String, Set<Plugin>> setExtensions = features.stream()
+      .collect(Collectors.groupingBy(FeatureImpl::getImplementationName,
+                                     Collectors
+                                       .flatMapping(feature -> Plugin.fromFeature(feature, customPluginIds.contains(feature.getPluginId())),
+                                                    Collectors.toSet())));
     saveExtensions(setExtensions);
   }
 
@@ -134,18 +129,17 @@ public final class PluginsAdvertiser {
     PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(project, disabledPlugins.toArray(PluginId.EMPTY_ARRAY));
   }
 
-  static @Nullable List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
+  static @NotNull List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) {
-      return null;
+      return Collections.emptyList();
     }
 
-    List<String> bundled = new ArrayList<>();
-    for (Plugin plugin : plugins) {
-      if (plugin.myBundled && PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
-        bundled.add(plugin.myPluginName != null ? plugin.myPluginName : plugin.myPluginId);
-      }
-    }
-    return bundled.isEmpty() ? null : bundled;
+    Map<PluginId, IdeaPluginDescriptorImpl> descriptorsById = PluginManagerCore.buildPluginIdMap();
+    return plugins.stream()
+      .filter(Plugin::isBundled)
+      .filter(plugin -> !descriptorsById.containsKey(plugin.getPluginId()))
+      .map(Plugin::getPluginName)
+      .collect(Collectors.toUnmodifiableList());
   }
 
   /**
@@ -170,7 +164,7 @@ public final class PluginsAdvertiser {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           List<@NotNull String> ids = ContainerUtil.map(pluginIds, id -> id.getIdString());
-          List<PluginNode> marketplacePlugins =  MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(ids);
+          List<PluginNode> marketplacePlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(ids);
           myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
 
           myRepositoryPlugins = UpdateChecker.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true);
@@ -251,25 +245,54 @@ public final class PluginsAdvertiser {
 
   @Tag("plugin")
   public static final class Plugin implements Comparable<Plugin> {
-    public String myPluginId;
-    public String myPluginName;
+
+    /**
+     * Please use {@link #getPluginIdString)}/{@link #getPluginId)} properties.
+     */
+    public @NotNull String myPluginId;
+    /**
+     * Please use {@link #getPluginName} property.
+     */
+    public @Nullable String myPluginName;
     public boolean myBundled;
     public boolean myFromCustomRepository;
 
-    public Plugin(String pluginId, String pluginName, boolean bundled) {
-      myPluginId = pluginId;
-      myBundled = bundled;
-      myPluginName = pluginName;
+    @SuppressWarnings("unused")
+    public Plugin() {
+      this("", null, false);
     }
 
-    public Plugin(String pluginId, String pluginName, boolean bundled, boolean isFromCustomRepository) {
+    public Plugin(@NotNull String pluginId,
+                  @Nullable String pluginName,
+                  boolean bundled) {
+      this(pluginId, pluginName, bundled, false);
+    }
+
+    public Plugin(@NotNull String pluginId,
+                  @Nullable String pluginName,
+                  boolean bundled,
+                  boolean isFromCustomRepository) {
       myPluginId = pluginId;
       myPluginName = pluginName;
       myBundled = bundled;
       myFromCustomRepository = isFromCustomRepository;
     }
 
-    public Plugin() { }
+    public @NotNull String getPluginIdString() {
+      return myPluginId;
+    }
+
+    public @NotNull PluginId getPluginId() {
+      return PluginId.getId(myPluginId);
+    }
+
+    public @NotNull String getPluginName() {
+      return myPluginName != null ? myPluginName : myPluginId;
+    }
+
+    public boolean isBundled() {
+      return myBundled;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -278,11 +301,9 @@ public final class PluginsAdvertiser {
 
       Plugin plugin = (Plugin)o;
 
-      if (myBundled != plugin.myBundled) return false;
-      if (!myPluginId.equals(plugin.myPluginId)) return false;
-      if (myPluginName != null && !myPluginName.equals(plugin.myPluginName)) return false;
-
-      return true;
+      return myBundled == plugin.myBundled &&
+             myPluginId.equals(plugin.myPluginId) &&
+             (myPluginName == null || myPluginName.equals(plugin.myPluginName));
     }
 
     @Override
@@ -298,6 +319,25 @@ public final class PluginsAdvertiser {
       if (myBundled && !other.myBundled) return -1;
       if (!myBundled && other.myBundled) return 1;
       return Comparing.compare(myPluginId, other.myPluginId);
+    }
+
+    private static @NotNull Stream<@NotNull Plugin> fromFeature(@NotNull FeatureImpl feature,
+                                                                boolean isFromCustomRepository) {
+
+
+      return Stream.ofNullable(unquoteString(feature.getPluginId()))
+        .map(pluginId -> new Plugin(pluginId,
+                                    unquoteString(feature.getPluginName()),
+                                    feature.getBundled(),
+                                    isFromCustomRepository));
+    }
+
+    private static @NotNull Stream<@NotNull Plugin> fromFeature(@NotNull FeatureImpl feature) {
+      return fromFeature(feature, false);
+    }
+
+    private static @Nullable String unquoteString(@Nullable String pluginId) {
+      return pluginId != null ? StringUtil.unquoteString(pluginId) : null;
     }
   }
 }

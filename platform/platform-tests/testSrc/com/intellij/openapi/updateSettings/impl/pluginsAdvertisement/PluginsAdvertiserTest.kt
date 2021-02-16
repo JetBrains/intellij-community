@@ -8,12 +8,11 @@ import com.intellij.testFramework.UsefulTestCase
  */
 class PluginsAdvertiserTest : UsefulTestCase() {
   fun testSerializeKnownExtensions() {
-    val pluginMap = mutableMapOf<String, Set<PluginsAdvertiser.Plugin>>()
     val plugin = PluginsAdvertiser.Plugin("foo", "Foo", false)
-    pluginMap["foo"] = setOf(plugin)
-    PluginsAdvertiser.saveExtensions(pluginMap)
+    PluginsAdvertiser.saveExtensions(mapOf("foo" to setOf(plugin)))
+
     val knownExtensions = PluginsAdvertiser.loadExtensions()
     assertNotNull("Extensions information for PluginsAdvertiser has not been loaded", knownExtensions)
-    assertEquals("foo", knownExtensions!!.find("foo")!!.single().myPluginId)
+    assertEquals("foo", knownExtensions!!.find("foo")!!.single().pluginIdString)
   }
 }

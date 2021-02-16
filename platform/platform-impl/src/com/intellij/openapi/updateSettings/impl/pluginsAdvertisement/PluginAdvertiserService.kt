@@ -44,7 +44,7 @@ open class PluginAdvertiserService {
     }
 
     if (extensions == null) {
-      PluginsAdvertiser.loadAllExtensions(ContainerUtil.map2Set(customPlugins) { pluginDescriptor -> pluginDescriptor.pluginId.idString })
+      PluginsAdvertiser.loadAllExtensions(customPlugins.map { it.pluginId.idString }.toSet())
       if (project.isDisposed) {
         return
       }
@@ -65,13 +65,10 @@ open class PluginAdvertiserService {
         features.putValue(id, feature)
       }
       else {
-        val pluginId = PluginsAdvertiser.retrieve(feature)
-        if (!pluginId.isEmpty()) {
-          for (plugin in pluginId) {
-            val id = PluginId.getId(plugin.myPluginId)
-            ids[id] = plugin
-            features.putValue(id, feature)
-          }
+        for (plugin in PluginsAdvertiser.retrieve(feature)) {
+          val id = plugin.pluginId
+          ids[id] = plugin
+          features.putValue(id, feature)
         }
       }
     }
@@ -175,11 +172,13 @@ open class PluginAdvertiserService {
                                                           }
                                                         )
                                                       }
-                                                      else if (bundledPlugin != null && !PropertiesComponent.getInstance().isTrueValue(
+                                                      else if (bundledPlugin.isNotEmpty()
+                                                               && !PropertiesComponent.getInstance().isTrueValue(
                                                           PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
-                                                        message =
-                                                          IdeBundle.message("plugins.advertiser.ultimate.features.detected",
-                                                                            StringUtil.join(bundledPlugin, ", "))
+                                                        message = IdeBundle.message(
+                                                          "plugins.advertiser.ultimate.features.detected",
+                                                          bundledPlugin.joinToString()
+                                                        )
 
                                                         notificationActions.add(
                                                           NotificationAction.createSimpleExpiring(
@@ -222,7 +221,9 @@ open class PluginAdvertiserService {
 
     val ids: MutableSet<PluginId> = LinkedHashSet()
     plugins.forEach { plugin -> ids.add(plugin.id) }
-    disabledPlugins.keys.forEach { plugin -> ids.add(PluginId.getId(plugin.myPluginId)) }
+    disabledPlugins.keys
+      .map { it.pluginId }
+      .forEach { ids += it }
 
     val addressedFeatures = MultiMap.createSet<String, String>()
     ids.forEach { id ->

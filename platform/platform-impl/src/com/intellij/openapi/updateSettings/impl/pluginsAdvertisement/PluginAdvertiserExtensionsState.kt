@@ -140,9 +140,11 @@ internal class PluginAdvertiserExtensionsState(private val project: Project, pri
       if (alreadySupported) {
         val availablePlugins = knownExtensions.find(fileName)
         if (availablePlugins != null) {
-          val plugins = availablePlugins.map { it.myPluginId }.toSet()
+          val plugins = availablePlugins.map { it.pluginIdString }.toSet()
+
           for (loadedPlugin in PluginManagerCore.getLoadedPlugins()) {
-            if (loadedPlugin.isEnabled && plugins.contains(loadedPlugin.pluginId.idString)) {
+            if (loadedPlugin.isEnabled &&
+                plugins.contains(loadedPlugin.pluginId.idString)) {
               LOG.debug(String.format(
                 "File '%s' (type: '%s') is already supported by fileName via '%s'(id: '%s') plugin",
                 fileName,
@@ -176,21 +178,25 @@ internal class PluginAdvertiserExtensionsState(private val project: Project, pri
     }
 
     val pluginIdsFromMarketplace = MarketplaceRequests.getInstance()
-      .getLastCompatiblePluginUpdate(allPlugins.map { it.myPluginId }, null).map { it.pluginId }.toSet()
+      .getLastCompatiblePluginUpdate(allPlugins.map { it.pluginIdString })
+      .map { it.pluginId }
+      .toSet()
+
     val compatiblePlugins = allPlugins
       .asSequence()
       .filter {
-      it.myFromCustomRepository
-      || it.myBundled
-      || pluginIdsFromMarketplace.contains(it.myPluginId)
-    }.toHashSet()
+        it.myFromCustomRepository
+        || it.myBundled
+        || pluginIdsFromMarketplace.contains(it.pluginIdString)
+      }.toHashSet()
+
     if (compatiblePlugins.isEmpty()) {
       LOG.debug("No plugins for extension $extensionOrFileName")
       return null
     }
 
     LOG.debug {
-      "Found following plugins for '${extensionOrFileName}': ${compatiblePlugins.map { it.myPluginId }.joinToString { it }}"
+      "Found following plugins for '${extensionOrFileName}': ${compatiblePlugins.joinToString { it.pluginIdString }}"
     }
     return PluginAdvertiserExtensionsData(extensionOrFileName, compatiblePlugins)
   }
