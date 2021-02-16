@@ -62,7 +62,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
   final void onChildBusDisposed(@NotNull MessageBusImpl childBus) {
     boolean removed = childBuses.remove(childBus);
-    rootBus.myWaitingBuses.get().remove(childBus);
+    rootBus.waitingBuses.get().remove(childBus);
 
     MessageBusImpl parentBus = this;
     do {
@@ -80,7 +80,8 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     if (direction == BroadcastDirection.TO_DIRECT_CHILDREN) {
       if (parentBus != null) {
         throw new IllegalArgumentException("Broadcast direction TO_DIRECT_CHILDREN is allowed only for app level message bus. " +
-                                           "Please publish to app level message bus or change topic broadcast direction to NONE or TO_PARENT");
+                                           "Please publish to app level message bus or change topic " + topic.getListenerClass() +
+                                           " broadcast direction to NONE or TO_PARENT");
       }
       return new ToDirectChildrenMessagePublisher<>(topic, this);
     }
@@ -208,7 +209,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
     // disposed handlers are not removed for TO_CHILDREN topics in the same way as for others directions
     // because it is not wise to check each child bus - waitingBuses list can be used instead of checking each child bus message queue
-    Set<MessageBusImpl> waitingBuses = rootBus.myWaitingBuses.get();
+    Set<MessageBusImpl> waitingBuses = rootBus.waitingBuses.get();
     if (!waitingBuses.isEmpty()) {
       waitingBuses.removeIf(bus -> {
         JobQueue jobQueue = bus.messageQueue.get();

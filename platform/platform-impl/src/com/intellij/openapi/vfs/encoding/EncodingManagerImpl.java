@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +138,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private static void setCachedCharsetFromContent(Charset charset, Charset oldCached, @NotNull Document document) {
     document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
-    firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset, null);
+    firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
@@ -345,13 +344,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     myState.myDefaultConsoleEncoding = encodingReference;
   }
 
-  static void firePropertyChange(@Nullable Document document,
-                                 @NotNull String propertyName,
-                                 final Object oldValue,
-                                 final Object newValue,
-                                 @Nullable Project project) {
-    MessageBus messageBus = (project != null ? project : ApplicationManager.getApplication()).getMessageBus();
-    EncodingManagerListener publisher = messageBus.syncPublisher(EncodingManagerListener.ENCODING_MANAGER_CHANGES);
+  static void firePropertyChange(@Nullable Document document, @NotNull String propertyName, Object oldValue, Object newValue) {
+    EncodingManagerListener publisher = ApplicationManager.getApplication().getMessageBus()
+      .syncPublisher(EncodingManagerListener.ENCODING_MANAGER_CHANGES);
     publisher.propertyChanged(document, propertyName, oldValue, newValue);
   }
 }

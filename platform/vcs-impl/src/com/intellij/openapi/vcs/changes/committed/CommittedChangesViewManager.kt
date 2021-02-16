@@ -29,25 +29,25 @@ private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *
       }
     }
 
-class CommittedChangesViewManager(private val project: Project) : ChangesViewContentProvider {
+internal class CommittedChangesViewManager(private val project: Project) : ChangesViewContentProvider {
   private var panel: ProjectCommittedChangesPanel? = null
 
-  override fun initTabContent(content: Content) =
+  override fun initTabContent(content: Content) {
     createCommittedChangesPanel().let {
       panel = it
       content.component = it
       content.setDisposer(Disposable { panel = null })
 
-      with(project.messageBus.connect(it)) {
-        subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdtIfNotDisposed { updateCommittedChangesProvider() } })
-        subscribe(COMMITTED_TOPIC, MyCommittedChangesListener())
-        subscribe(BRANCHES_CHANGED, VcsConfigurationChangeListener.Notification { _, vcsRoot ->
-          runInEdtIfNotDisposed { panel?.notifyBranchesChanged(vcsRoot) }
-        })
-      }
+      val busConnection = project.messageBus.connect(it)
+      busConnection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdtIfNotDisposed { updateCommittedChangesProvider() } })
+      busConnection.subscribe(COMMITTED_TOPIC, MyCommittedChangesListener())
+      busConnection.subscribe(BRANCHES_CHANGED, VcsConfigurationChangeListener.Notification { _, vcsRoot ->
+        runInEdtIfNotDisposed { panel?.notifyBranchesChanged(vcsRoot) }
+      })
 
       it.refreshChanges()
     }
+  }
 
   private fun createCommittedChangesPanel(): ProjectCommittedChangesPanel =
     ProjectCommittedChangesPanel(project, project.getCommittedChangesProvider()!!)

@@ -155,20 +155,17 @@ public class MessageBusImpl implements MessageBus {
 
       bus.checkNotDisposed();
 
-      boolean isImmediateDelivery = topic.isImmediateDelivery();
-      Set<MessageBusImpl> busQueue;
-      JobQueue jobQueue;
-      if (isImmediateDelivery) {
-        busQueue = null;
-        jobQueue = null;
+      if (topic.isImmediateDelivery()) {
+        publish(method, args, null);
+        return NA;
       }
-      else {
-        busQueue = bus.rootBus.myWaitingBuses.get();
-        jobQueue = bus.messageQueue.get();
+
+      Set<MessageBusImpl> busQueue = bus.rootBus.waitingBuses.get();
+      if (!busQueue.isEmpty()) {
         pumpMessages(busQueue);
       }
 
-      if (publish(method, args, jobQueue) && !isImmediateDelivery) {
+      if (publish(method, args, bus.messageQueue.get())) {
         busQueue.add(bus);
         // we must deliver messages now even if currently processing message queue, because if published as part of handler invocation,
         // handler code expects that message will be delivered immediately after publishing
@@ -284,7 +281,7 @@ public class MessageBusImpl implements MessageBus {
     }
 
     if (parentBus == null) {
-      rootBus.myWaitingBuses.remove();
+      rootBus.waitingBuses.remove();
     }
     else {
       parentBus.onChildBusDisposed(this);
@@ -305,7 +302,7 @@ public class MessageBusImpl implements MessageBus {
       return false;
     }
 
-    Set<MessageBusImpl> waitingBuses = rootBus.myWaitingBuses.get();
+    Set<MessageBusImpl> waitingBuses = rootBus.waitingBuses.get();
     if (waitingBuses == null || waitingBuses.isEmpty()) {
       return false;
     }
@@ -349,15 +346,16 @@ public class MessageBusImpl implements MessageBus {
 
   private void jobRemoved(@NotNull JobQueue jobQueue) {
     if (jobQueue.current == null && jobQueue.queue.isEmpty()) {
-      rootBus.myWaitingBuses.get().remove(this);
+      rootBus.waitingBuses.get().remove(this);
     }
   }
 
   private static void pumpMessages(@NotNull Set<? extends MessageBusImpl> waitingBuses) {
     List<MessageBusImpl> liveBuses = new ArrayList<>(waitingBuses.size());
-    for (MessageBusImpl bus : waitingBuses) {
+    for (Iterator<? extends MessageBusImpl> iterator = waitingBuses.iterator(); iterator.hasNext(); ) {
+      MessageBusImpl bus = iterator.next();
       if (bus.isDisposed()) {
-        waitingBuses.remove(bus);
+        iterator.remove();
         LOG.error("Accessing disposed message bus " + bus);
         continue;
       }
@@ -643,7 +641,7 @@ public class MessageBusImpl implements MessageBus {
      * Pending message buses in the hierarchy.
      */
     @SuppressWarnings("SSBasedInspection")
-    final ThreadLocal<Set<MessageBusImpl>> myWaitingBuses = ThreadLocal.withInitial(() -> new LinkedHashSet<>());
+    final ThreadLocal<Set<MessageBusImpl>> waitingBuses = ThreadLocal.withInitial(() -> new LinkedHashSet<>());
 
     RootBus(@NotNull MessageBusOwner owner) {
       super(owner);

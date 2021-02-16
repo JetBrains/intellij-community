@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -462,7 +462,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public void setNative2AsciiForPropertiesFiles(final VirtualFile virtualFile, final boolean native2Ascii) {
     if (myNative2AsciiForPropertiesFiles != native2Ascii) {
       myNative2AsciiForPropertiesFiles = native2Ascii;
-      EncodingManagerImpl.firePropertyChange(null, PROP_NATIVE2ASCII_SWITCH, !native2Ascii, native2Ascii, myProject);
+      EncodingManagerImpl.firePropertyChange(null, PROP_NATIVE2ASCII_SWITCH, !native2Ascii, native2Ascii);
     }
   }
 
@@ -489,7 +489,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     Charset old = myDefaultCharsetForPropertiesFiles;
     if (!Comparing.equal(old, charset)) {
       myDefaultCharsetForPropertiesFiles = charset;
-      EncodingManagerImpl.firePropertyChange(null, PROP_PROPERTIES_FILES_ENCODING, old, charset, myProject);
+      EncodingManagerImpl.firePropertyChange(null, PROP_PROPERTIES_FILES_ENCODING, old, charset);
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
@@ -56,7 +56,6 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
   @Override
   protected void registerCustomListeners() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-
     // should update to reflect encoding-from-content
     connection.subscribe(EncodingManagerListener.ENCODING_MANAGER_CHANGES, (document, propertyName, oldValue, newValue) -> {
       if (propertyName.equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {
