@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsUtil
 
 abstract class FilesProcessorImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
   private val files = mutableSetOf<VirtualFile>()
@@ -53,11 +54,7 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
 
   @Synchronized
   protected fun removeFiles(filesToRemove: Collection<VirtualFile>): Boolean {
-    var modified = false
-    for (it in filesToRemove) {
-      modified = modified || files.remove(it)
-    }
-    return modified
+    return VcsUtil.removeAllFromSet(files, filesToRemove)
   }
 
   @Synchronized
