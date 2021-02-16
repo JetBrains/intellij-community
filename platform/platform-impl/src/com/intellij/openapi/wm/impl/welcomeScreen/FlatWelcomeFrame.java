@@ -59,9 +59,7 @@ import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -149,6 +147,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     });
 
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent componentEvent) {
+        saveSizeAndLocation(getBounds());
+      }
+    });
+
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
     Disposer.register(ApplicationManager.getApplication(), this);
@@ -227,7 +232,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private static void saveSizeAndLocation(@NotNull Rectangle location) {
     Point middle = new Point(location.x + location.width / 2, location.y + location.height / 2);
     WindowStateService.getInstance().putLocation(WelcomeFrame.DIMENSION_KEY, middle);
-    WindowStateService.getInstance().putSize(WelcomeFrame.DIMENSION_KEY, JBUI.size(location.width, location.height));
+    WindowStateService.getInstance().putSize(WelcomeFrame.DIMENSION_KEY, location.getSize());
   }
 
   @Nullable
