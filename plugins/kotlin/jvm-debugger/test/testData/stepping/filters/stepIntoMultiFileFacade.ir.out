@@ -3,7 +3,7 @@ Run Java
 Connected to the target VM
 stepIntoMultiFileFacade.kt:6
 a1.kt:7
-a1.kt:-1
+stepIntoMultiFileFacade.kt:6
 Disconnected from the target VM
 
 Process finished with exit code 0

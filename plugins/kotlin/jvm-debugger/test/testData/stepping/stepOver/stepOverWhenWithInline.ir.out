@@ -17,12 +17,10 @@ stepOverWhenWithInline.kt:27
 stepOverWhenWithInline.kt:25
 stepOverWhenWithInline.kt:32
 stepOverWhenWithInline.kt:33
-stepOverWhenWithInline.kt:32
 stepOverWhenWithInline.kt:34
 stepOverWhenWithInline.kt:32
 stepOverWhenWithInline.kt:38
 stepOverWhenWithInline.kt:39
-stepOverWhenWithInline.kt:38
 stepOverWhenWithInline.kt:42
 stepOverWhenWithInline.kt:43
 stepOverWhenWithInline.kt:38
@@ -38,6 +36,8 @@ stepOverWhenWithInline.kt:65
 stepOverWhenWithInline.kt:63
 stepOverWhenWithInline.kt:75
 stepOverWhenWithInline.kt:76
+stepOverWhenWithInline.kt:75
+stepOverWhenWithInline.kt:80
 Disconnected from the target VM
 
 Process finished with exit code 0
