@@ -46,38 +46,43 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
   }
 
   public void testImportForModuleFunction() {
-    myFixture.copyDirectoryToProject(getTestName(false), "");
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(testName, "");
     myFixture.configureByFile("main.py");
     myFixture.completeBasic();
-    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+    myFixture.checkResultByFile(testName + "/main.after.py");
   }
 
   public void testImportForModuleClass() {
-    myFixture.copyDirectoryToProject(getTestName(false), "");
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(testName, "");
     myFixture.configureByFile("main.py");
     myFixture.completeBasic();
-    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+    myFixture.checkResultByFile(testName + "/main.after.py");
   }
 
   public void testImportForAlias() {
-    myFixture.copyDirectoryToProject(getTestName(false), "");
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(testName, "");
     myFixture.configureByFile("main.py");
     myFixture.completeBasic();
-    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+    myFixture.checkResultByFile(testName + "/main.after.py");
   }
 
   public void testImportForAliasWithNonEmptyAttribute() {
-    myFixture.copyDirectoryToProject(getTestName(false), "");
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(testName, "");
     myFixture.configureByFile("main.py");
     myFixture.completeBasic();
-    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+    myFixture.checkResultByFile(testName + "/main.after.py");
   }
 
   public void testUseImportPriorityWhenAddingImport() {
-    myFixture.copyDirectoryToProject(getTestName(false), "");
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(testName, "");
     myFixture.configureByFile("main.py");
     myFixture.completeBasic();
-    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+    myFixture.checkResultByFile(testName + "/main.after.py");
   }
 
   @Override
