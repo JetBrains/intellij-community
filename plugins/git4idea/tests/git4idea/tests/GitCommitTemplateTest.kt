@@ -106,6 +106,47 @@ class GitCommitTemplateTest : GitPlatformTest() {
     assertCommitTemplate(repo2, templateContent2)
   }
 
+  fun `test commit template specified relative to git dir`() {
+    val repository = createRepository(projectPath)
+    val templateContent = """
+      Some Template
+      
+      # comment1
+      # comment2
+    """.trimIndent()
+    repository
+      .file("template.txt")
+      .assertNotExists()
+      .create(templateContent)
+    git.config(repository, "--local", COMMIT_TEMPLATE, "template.txt")
+    repository.repositoryFiles.configFile.refresh()
+
+    assertCommitTemplate(repository, templateContent)
+  }
+
+  fun `test not valid commit template specified relative to git dir`() {
+    val repository = createRepository(projectPath)
+    val templateContent = """
+      Some Template
+      
+      # comment1
+      # comment2
+    """.trimIndent()
+    repository
+      .file("template.txt")
+      .assertNotExists()
+      .create(templateContent)
+    val commitTemplateTracker = project.service<GitCommitTemplateTracker>()
+
+    git.config(repository, "--local", COMMIT_TEMPLATE, "/template.txt")
+    repository.repositoryFiles.configFile.refresh()
+    assertTrue("Commit template exist for $repository", !commitTemplateTracker.exists(repository))
+
+    git.config(repository, "--local", COMMIT_TEMPLATE, "template.txt/")
+    repository.repositoryFiles.configFile.refresh()
+    assertTrue("Commit template exist for $repository", !commitTemplateTracker.exists(repository))
+  }
+
   private fun setupCommitTemplate(repository: GitRepository,
                                   templateFileName: String,
                                   templateContent: String,

@@ -13,6 +13,8 @@ import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.util.ObjectUtils
+import com.intellij.util.SystemProperties
 import com.intellij.util.messages.Topic
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
@@ -123,7 +125,37 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
 
   private fun resolveCommitTemplatePath(repository: GitRepository): String? {
     val gitCommitTemplatePath = Git.getInstance().config(repository, COMMIT_TEMPLATE).outputAsJoinedString
-    return if (gitCommitTemplatePath.isNotBlank() && FileUtil.exists(gitCommitTemplatePath)) gitCommitTemplatePath else null
+    if (gitCommitTemplatePath.isBlank()) return null
+
+    return if (FileUtil.exists(gitCommitTemplatePath)) {
+      gitCommitTemplatePath
+    }
+    else
+      ObjectUtils.chooseNotNull(getPathRelativeToUserHome(gitCommitTemplatePath),
+                                repository.findPathRelativeToRootDirs(gitCommitTemplatePath))
+  }
+
+  private fun getPathRelativeToUserHome(fileNameOrPath: String): String? {
+    if (fileNameOrPath.startsWith('~')) {
+      val fileAtUserHome = File(SystemProperties.getUserHome(), fileNameOrPath.substring(1))
+      if (fileAtUserHome.exists()) {
+        return fileAtUserHome.path
+      }
+    }
+
+    return null
+  }
+
+  private fun GitRepository.findPathRelativeToRootDirs(relativeFilePath: String): String? {
+    if (relativeFilePath.startsWith('/') || relativeFilePath.endsWith('/')) return null
+
+    for (rootDir in repositoryFiles.rootDirs) {
+      val rootDirParent = rootDir.parent?.path ?: continue
+      val templateFile = File(rootDirParent, relativeFilePath)
+      if (templateFile.exists()) return templateFile.path
+    }
+
+    return null
   }
 
   private fun trackCommitTemplate(repository: GitRepository) {
