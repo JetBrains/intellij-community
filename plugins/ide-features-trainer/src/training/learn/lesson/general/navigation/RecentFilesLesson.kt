@@ -10,8 +10,8 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
@@ -23,7 +23,6 @@ import training.learn.course.KLesson
 import training.learn.lesson.LessonManager
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
-import javax.swing.JLabel
 import kotlin.random.Random
 
 abstract class RecentFilesLesson : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name")) {
@@ -71,9 +70,8 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("rfd") {
       text(LessonsBundle.message("recent.files.search.typing", code(it)))
-      val searchLabelText = UIBundle.message("search.popup.search.for.label")
-      triggerByUiComponentAndHighlight(false, false) { ui: JLabel ->
-        ui.text?.contains(searchLabelText) == true  // needed in next task to restore if search field closed
+      triggerByUiComponentAndHighlight(false, false) { ui: ExtendableTextField ->
+        ui.javaClass.name.contains("SpeedSearchBase\$SearchField")
       }
       stateCheck { checkRecentFilesSearch(it) }
       restoreIfRecentFilesPopupClosed()
@@ -190,7 +188,9 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   private fun checkWordInSearch(expected: String, component: JComponent): Boolean {
     val supply = SpeedSearchSupply.getSupply(component)
     val enteredPrefix = supply?.enteredPrefix ?: return false
-    return enteredPrefix.equals(expected, ignoreCase = true)
+    val equals = enteredPrefix.equals(expected, ignoreCase = true)
+    System.err.println("expected = '$expected', enteredPrefix = '$enteredPrefix', equals = $equals")
+    return equals
   }
 
   private fun TaskContext.restoreIfRecentFilesPopupClosed() {
