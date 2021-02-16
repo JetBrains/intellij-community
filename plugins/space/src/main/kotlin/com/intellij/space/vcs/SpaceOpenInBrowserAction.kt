@@ -40,7 +40,7 @@ abstract class SpaceOpenInBrowserActionGroup<T>(@NlsActions.ActionText groupName
 
   override fun isPopup(): Boolean = true
 
-  override fun canBePerformed(context: DataContext) = getData(context)?.size == 1
+  override fun canBePerformed(context: DataContext): Boolean = getData(context)?.size == 1
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     e ?: return emptyArray()
@@ -146,7 +146,8 @@ class SpaceVcsOpenInBrowserActionGroup :
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
     val line = if (editor != null && editor.document.lineCount >= 1) {
       editor.caretModel.currentCaret.logicalPosition.line
-    } else null
+    }
+    else null
 
     return repoDescription.projectInfos.map { OpenData.File(project, it, repoDescription.name, virtualFile, line, gitRepository) }
   }
