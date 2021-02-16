@@ -4,11 +4,13 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.codereview.ReturnToListComponent
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import javax.swing.JComponent
@@ -53,16 +55,14 @@ internal class GHPRViewTabsFactory(private val project: Project,
       sideComponent = createReturnToListSideComponent()
     }
     val filesTabInfo = TabInfo(filesComponent).apply {
-      text = GithubBundle.message("pull.request.files")
       sideComponent = createReturnToListSideComponent()
     }.also {
-      installFilesTabTitleUpdater(it, filesCountModel)
+      installTabTitleUpdater(it, GithubBundle.message("pull.request.files"), filesCountModel)
     }
     val commitsTabInfo = TabInfo(commitsComponent).apply {
-      text = GithubBundle.message("pull.request.commits")
       sideComponent = createReturnToListSideComponent()
     }.also {
-      installCommitsTabTitleUpdater(it, commitsCountModel)
+      installTabTitleUpdater(it, GithubBundle.message("pull.request.commits"), commitsCountModel)
     }
 
     return object : SingleHeightTabs(project, uiDisposable) {
@@ -80,19 +80,11 @@ internal class GHPRViewTabsFactory(private val project: Project,
     }
   }
 
-  private fun installCommitsTabTitleUpdater(tabInfo: TabInfo, countModel: SingleValueModel<Int?>) {
+  private fun installTabTitleUpdater(tabInfo: TabInfo, @Nls title: String, countModel: SingleValueModel<Int?>) {
     countModel.addAndInvokeValueChangedListener {
       val count = countModel.value
-      tabInfo.text = if (count == null) GithubBundle.message("pull.request.commits")
-      else GithubBundle.message("pull.request.commits.count", count)
-    }
-  }
-
-  private fun installFilesTabTitleUpdater(tabInfo: TabInfo, countModel: SingleValueModel<Int?>) {
-    countModel.addAndInvokeValueChangedListener {
-      val count = countModel.value
-      tabInfo.text = if (count == null) GithubBundle.message("pull.request.files")
-      else GithubBundle.message("pull.request.files.count", count)
+      tabInfo.clearText(false).append(title, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      if (count != null) tabInfo.append("  $count", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
   }
 }
