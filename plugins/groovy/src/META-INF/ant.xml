@@ -1,5 +1,5 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.plugins.groovy.gant.ant">
   <extensions defaultExtensionNs="org.intellij.groovy">
-    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.ant.GantMemberContributor"/>
   </extensions>
 </idea-plugin>
