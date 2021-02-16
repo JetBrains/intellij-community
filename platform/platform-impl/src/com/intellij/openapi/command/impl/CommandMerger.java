@@ -13,6 +13,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,8 +96,9 @@ public final class CommandMerger {
     DocumentReference refByFile = DocumentReferenceManager.getInstance().create(document);
     DocumentReference refByDoc = new DocumentReferenceByDocument(document);
     myCurrentActions.removeIf(action -> {
+      // remove UndoAction only if it doesn't contain anything but `document`, to avoid messing up with (very rare) complex undo actions containing several documents
       DocumentReference[] refs = ObjectUtils.notNull(action.getAffectedDocuments(), DocumentReference.EMPTY_ARRAY);
-      return ArrayUtil.contains(refByFile, refs) || ArrayUtil.contains(refByDoc, refs);
+      return ContainerUtil.and(refs, ref -> ref.equals(refByDoc) || ref.equals(refByFile));
     });
     myAllAffectedDocuments.remove(refByFile);
     myAllAffectedDocuments.remove(refByDoc);

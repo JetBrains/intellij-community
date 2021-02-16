@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -183,7 +184,8 @@ final class UndoRedoStacksHolder {
     DocumentReference referenceDoc = new DocumentReferenceByDocument(document);
     myDocumentStacks.remove(referenceFile);
     myDocumentStacks.remove(referenceDoc);
-    myGlobalStack.removeIf(group -> group.getAffectedDocuments().contains(referenceFile) || group.getAffectedDocuments().contains(referenceDoc));
+    // remove UndoAction only if it doesn't contain anything but `document`, to avoid messing up with (very rare) complex undo actions containing several documents
+    myGlobalStack.removeIf(group -> ContainerUtil.and(group.getAffectedDocuments(), ref->ref.equals(referenceFile) || ref.equals(referenceDoc)));
   }
 
   private static void convertTemporaryActionsToPermanent(LinkedList<UndoableGroup> each) {
