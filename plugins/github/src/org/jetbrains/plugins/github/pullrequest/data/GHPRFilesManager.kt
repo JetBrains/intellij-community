@@ -3,13 +3,18 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.pullrequest.GHNewPRDiffVirtualFile
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffVirtualFile
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineVirtualFile
 
 internal interface GHPRFilesManager : Disposable {
+  val newPRDiffFile: GHNewPRDiffVirtualFile
+
   fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean)
 
   fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean)
+
+  fun openNewPRDiffFile(requestFocus: Boolean)
 
   fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile?
 

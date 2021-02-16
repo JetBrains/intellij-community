@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModel
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCreationService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
@@ -19,7 +20,8 @@ internal class GHPRDataContext(val searchHolder: GHPRSearchQueryHolder,
                                val repositoryDataService: GHPRRepositoryDataService,
                                val creationService: GHPRCreationService,
                                val avatarIconsProvider: GHAvatarIconsProvider,
-                               val filesManager: GHPRFilesManager) : Disposable {
+                               val filesManager: GHPRFilesManager,
+                               val newPRDiffModel: GHPRDiffRequestModel) : Disposable {
 
   private val listenersDisposable = Disposer.newDisposable("GH PR context listeners disposable")
 

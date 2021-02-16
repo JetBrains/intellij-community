@@ -15,26 +15,36 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file is GHPRVirtualFile && GHPRDataContextRepository.getInstance(project).findContext(file.repository) != null
+    return file is GHRepoVirtualFile && GHPRDataContextRepository.getInstance(project).findContext(file.repository) != null
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    file as GHPRVirtualFile
+    file as GHRepoVirtualFile
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(file.repository)!!
-    val dataDisposable = Disposer.newDisposable()
-    val dataProvider = dataContext.dataProviderRepository.getDataProvider(file.pullRequest, dataDisposable)
+
 
     return when (file) {
-      is GHPRDiffVirtualFile -> {
-        GHPRDiffFileEditor(project, dataProvider.diffRequestModel).also { editor ->
-          editor.putUserData(EditorWindow.HIDE_TABS, true)
-          DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
+      is GHPRVirtualFile -> {
+        val dataDisposable = Disposer.newDisposable()
+        val dataProvider = dataContext.dataProviderRepository.getDataProvider(file.pullRequest, dataDisposable)
+        when (file) {
+          is GHPRDiffVirtualFile -> {
+            GHPRDiffFileEditor(project, dataProvider.diffRequestModel).also { editor ->
+              editor.putUserData(EditorWindow.HIDE_TABS, true)
+              DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
+            }
+          }
+          is GHPRTimelineVirtualFile -> GHPRTimelineFileEditor(project, dataContext, dataProvider)
+          else -> error("Unsupported file type")
+        }.also {
+          Disposer.register(it, dataDisposable)
         }
       }
-      is GHPRTimelineVirtualFile -> GHPRTimelineFileEditor(project, dataContext, dataProvider)
+      is GHNewPRDiffVirtualFile -> GHPRDiffFileEditor(project, dataContext.newPRDiffModel).also { editor ->
+        editor.putUserData(EditorWindow.HIDE_TABS, true)
+        DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
+      }
       else -> error("Unsupported file type")
-    }.also {
-      Disposer.register(it, dataDisposable)
     }
   }
 

@@ -18,6 +18,8 @@ interface GHPRToolWindowTabComponentController {
 
   fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean)
 
+  fun openNewPullRequestDiff(requestFocus: Boolean)
+
   companion object {
     val KEY = Key.create<GHPRToolWindowTabComponentController>("Github.PullRequests.Toolwindow.Controller")
   }

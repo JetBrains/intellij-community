@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolderImpl
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -149,7 +150,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
     indicator.checkCanceled()
     val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
     return GHPRDataContext(searchHolder, listLoader, listUpdatesChecker, dataProviderRepository,
-                           securityService, repoDataService, creationService, avatarIconsProvider, filesManager)
+                           securityService, repoDataService, creationService, avatarIconsProvider, filesManager,
+                           GHPRDiffRequestModelImpl())
   }
 
   @RequiresEdt
