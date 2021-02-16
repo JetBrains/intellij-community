@@ -20,10 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class ToolsImpl implements Tools {
   @NonNls static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
@@ -238,6 +235,11 @@ public final class ToolsImpl implements Tools {
     List<ScopeToolState> result = new ArrayList<>(myTools);
     result.add(myDefaultState);
     return result;
+  }
+
+  public void changeToolsOrder(List<String> scopesOrder) {
+    if (myTools != null)
+      myTools.sort(Comparator.comparingInt(t -> scopesOrder.indexOf(t.getScopeName())));
   }
 
   @Override
