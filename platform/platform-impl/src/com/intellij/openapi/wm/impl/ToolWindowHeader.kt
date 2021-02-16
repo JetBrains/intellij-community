@@ -282,7 +282,7 @@ abstract class ToolWindowHeader internal constructor(
     }
 
     init {
-      ActionUtil.copyFrom(this, InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID)
+      ActionUtil.copyFrom(this, InternalDecoratorImpl.HIDE_ACTIVE_WINDOW_ACTION_ID)
       templatePresentation.icon = AllIcons.General.HideToolWindow
       templatePresentation.setText { UIBundle.message("tool.window.hide.action.name") }
     }

@@ -10,15 +10,15 @@ import java.util.EventListener;
  * @author Vladimir Kondratyev
  */
 interface InternalDecoratorListener extends EventListener{
-  void hidden(@NotNull InternalDecorator source);
+  void hidden(@NotNull InternalDecoratorImpl source);
 
-  void hiddenSide(@NotNull InternalDecorator source);
+  void hiddenSide(@NotNull InternalDecoratorImpl source);
 
-  void resized(@NotNull InternalDecorator source);
+  void resized(@NotNull InternalDecoratorImpl source);
 
-  void activated(@NotNull InternalDecorator source);
+  void activated(@NotNull InternalDecoratorImpl source);
 
-  void contentUiTypeChanges(@NotNull InternalDecorator sources, @NotNull ToolWindowContentUiType type);
+  void contentUiTypeChanges(@NotNull InternalDecoratorImpl sources, @NotNull ToolWindowContentUiType type);
 
-  void visibleStripeButtonChanged(@NotNull InternalDecorator source, boolean visible);
+  void visibleStripeButtonChanged(@NotNull InternalDecoratorImpl source, boolean visible);
 }

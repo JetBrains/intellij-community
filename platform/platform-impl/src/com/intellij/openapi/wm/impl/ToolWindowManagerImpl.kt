@@ -135,7 +135,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     @JvmStatic
     @ApiStatus.Internal
-    fun getRegisteredMutableInfoOrLogError(decorator: InternalDecorator): WindowInfoImpl {
+    fun getRegisteredMutableInfoOrLogError(decorator: InternalDecoratorImpl): WindowInfoImpl {
       val toolWindow = decorator.toolWindow
       return toolWindow.toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindow.id)
     }
@@ -726,7 +726,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         val focusOwner = focusManager.getLastFocusedFor(frame) ?: return null
         var parent: Component? = focusOwner
         while (parent != null) {
-          if (parent is InternalDecorator) {
+          if (parent is InternalDecoratorImpl) {
             return parent.toolWindow.id
           }
 
@@ -1829,7 +1829,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun addFloatingDecorator(entry: ToolWindowEntry, info: WindowInfo) {
     val frame = frame!!.frame
-    val floatingDecorator = FloatingDecorator(frame!!, entry.toolWindow.getOrCreateDecoratorComponent() as InternalDecorator)
+    val floatingDecorator = FloatingDecorator(frame!!, entry.toolWindow.getOrCreateDecoratorComponent() as InternalDecoratorImpl)
     floatingDecorator.apply(info)
 
     entry.floatingDecorator = floatingDecorator
@@ -1967,7 +1967,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    * tool window depending on decoration type.
    */
   @ApiStatus.Internal
-  fun resized(source: InternalDecorator) {
+  fun resized(source: InternalDecoratorImpl) {
     if (!source.isShowing) {
       // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
       return
@@ -1993,16 +1993,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     else {
       // docked and sliding windows
       val anchor = info.anchor
-      var another: InternalDecorator? = null
+      var another: InternalDecoratorImpl? = null
       if (source.parent is Splitter) {
         var sizeInSplit = if (anchor.isSplitVertically) source.height.toFloat() else source.width.toFloat()
         val splitter = source.parent as Splitter
         if (splitter.secondComponent === source) {
           sizeInSplit += splitter.dividerWidth.toFloat()
-          another = splitter.firstComponent as InternalDecorator
+          another = splitter.firstComponent as InternalDecoratorImpl
         }
         else {
-          another = splitter.secondComponent as InternalDecorator
+          another = splitter.secondComponent as InternalDecoratorImpl
         }
         if (anchor.isSplitVertically) {
           info.sideWeight = sizeInSplit / splitter.height

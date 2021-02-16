@@ -249,7 +249,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         JComponent c = getComponentAt(anchor);
         if (c instanceof Splitter) {
           Splitter splitter = (Splitter)c;
-          InternalDecorator component1 = (InternalDecorator)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
+          InternalDecoratorImpl component1 = (InternalDecoratorImpl)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
           state.addSplitProportion(info, component1, splitter);
           setComponent(component1, anchor,
                        component1 == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component1).getWeight());
@@ -530,8 +530,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       JComponent component = getComponentAt(ToolWindowAnchor.LEFT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
-        WindowInfoImpl firstInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecorator)splitter.getFirstComponent());
-        WindowInfoImpl secondInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecorator)splitter.getSecondComponent());
+        WindowInfoImpl firstInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecoratorImpl)splitter.getFirstComponent());
+        WindowInfoImpl secondInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecoratorImpl)splitter.getSecondComponent());
         setComponent(splitter, ToolWindowAnchor.LEFT, ToolWindowAnchor.LEFT.isSplitVertically()
                                                       ? firstInfo.getWeight()
                                                       : firstInfo.getWeight() + secondInfo.getWeight());
@@ -543,8 +543,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       JComponent component = getComponentAt(ToolWindowAnchor.RIGHT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
-        WindowInfoImpl firstInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecorator)splitter.getFirstComponent());
-        WindowInfoImpl secondInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecorator)splitter.getSecondComponent());
+        WindowInfoImpl firstInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecoratorImpl)splitter.getFirstComponent());
+        WindowInfoImpl secondInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecoratorImpl)splitter.getSecondComponent());
         setComponent(splitter, ToolWindowAnchor.RIGHT, ToolWindowAnchor.RIGHT.isSplitVertically()
                                                        ? firstInfo.getWeight()
                                                        : firstInfo.getWeight() + secondInfo.getWeight());
@@ -814,8 +814,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
 
     float newWeight;
-    if (c instanceof InternalDecorator) {
-      InternalDecorator oldComponent = (InternalDecorator)c;
+    if (c instanceof InternalDecoratorImpl) {
+      InternalDecoratorImpl oldComponent = (InternalDecoratorImpl)c;
       WindowInfoImpl oldInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(oldComponent);
 
       IJSwingUtilities.updateComponentTreeUI(oldComponent);
@@ -1033,11 +1033,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       // Resize components at the PALETTE layer
       components = getComponentsInLayer(JLayeredPane.PALETTE_LAYER);
       for (Component component : components) {
-        if (!(component instanceof InternalDecorator)) {
+        if (!(component instanceof InternalDecoratorImpl)) {
           continue;
         }
 
-        WindowInfo info = (((InternalDecorator)component)).getToolWindow().getWindowInfo();
+        WindowInfo info = (((InternalDecoratorImpl)component)).getToolWindow().getWindowInfo();
         float weight = info.getAnchor().isHorizontal()
                        ? (float)component.getHeight() / getHeight()
                        : (float)component.getWidth() / getWidth();
