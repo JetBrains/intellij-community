@@ -1074,7 +1074,7 @@ public final class IconLoader {
       // This use case for temp themes only. Here we want immediately replace existing icon to a local one
       if (path != null && path.startsWith("file:/")) {
         try {
-          ImageDataResolverImpl resolver = new ImageDataResolverImpl(new URL(path), path.substring(1), classLoader, true);
+          ImageDataResolverImpl resolver = new ImageDataResolverImpl(new URL(path), path, classLoader, true);
           resolver.resolve();
           return resolver;
         }
