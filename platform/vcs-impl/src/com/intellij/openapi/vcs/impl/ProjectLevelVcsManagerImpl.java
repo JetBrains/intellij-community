@@ -83,7 +83,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   private final @NotNull AtomicInteger myBackgroundOperationCounter = new AtomicInteger();
 
-  private final Set<ActionKey> myBackgroundRunningTasks = new HashSet<>();
+  private final Set<ActionKey> myBackgroundRunningTasks = ContainerUtil.newConcurrentSet();
 
   private final List<VcsConsoleLine> myPendingOutput = new ArrayList<>();
 
@@ -687,9 +687,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return new BackgroundableActionEnabledHandler(myProject, action);
   }
 
-  @RequiresEdt
+  @CalledInAny
   boolean isBackgroundTaskRunning(Object @NotNull ... keys) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myBackgroundRunningTasks.contains(new ActionKey(keys));
   }
 
