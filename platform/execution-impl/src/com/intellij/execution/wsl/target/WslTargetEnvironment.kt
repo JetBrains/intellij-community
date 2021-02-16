@@ -66,15 +66,15 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     localPortBindingsSession.start()
 
     for (localPortBinding in wslRequest.localPortBindings) {
-      val targetPortFuture = localPortBindingsSession.getTargetPortFuture(localPortBinding)
-      var targetPort = localPortBinding.local
+      val targetHostPortFuture = localPortBindingsSession.getTargetHostPortFuture(localPortBinding)
+      var targetHostPort = HostPort("localhost", localPortBinding.local)
       try {
-        targetPort = targetPortFuture.get(10, TimeUnit.SECONDS)
+        targetHostPort = targetHostPortFuture.get(10, TimeUnit.SECONDS)
       }
       catch (e: Exception) {
-        LOG.info("Cannot get target port for $localPortBinding")
+        LOG.info("Cannot get target host and port for $localPortBinding")
       }
-      myLocalPortBindings[localPortBinding] = HostPort(distribution.hostIp, targetPort)
+      myLocalPortBindings[localPortBinding] = targetHostPort
     }
   }
 
