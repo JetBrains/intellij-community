@@ -12,7 +12,6 @@
   <extensions defaultExtensionNs="org.intellij.groovy">
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.ant.GantMemberContributor"/>
   </extensions>
   <actions>
     <action id="Gant.NewScript" class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction"
