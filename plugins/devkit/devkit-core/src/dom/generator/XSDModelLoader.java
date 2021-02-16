@@ -229,13 +229,25 @@ public class XSDModelLoader implements ModelLoader {
 
   private XSComplexTypeDefinition makeTypeFromAnonymous(XSObject o) {
     final XSComplexTypeDecl ctd = new XSComplexTypeDecl();
-    if (o instanceof XSElementDeclaration && ((XSElementDeclaration) o).getTypeDefinition() instanceof XSComplexTypeDecl) {
-      final XSComplexTypeDecl ctd1 = (XSComplexTypeDecl) ((XSElementDeclaration) o).getTypeDefinition();
-      final XSObjectListImpl annotations = ctd1.getAnnotations() instanceof XSObjectListImpl ? (XSObjectListImpl) ctd1.getAnnotations() : new XSObjectListImpl();
-      ctd.setValues(o.getName(), ctd1.getNamespace(), ctd1.getBaseType(), ctd1.getDerivationMethod(),
-              ctd1.getFinal(), ctd1.getProhibitedSubstitutions(), ctd1.getContentType(),
-              ctd1.getAbstract(), ctd1.getAttrGrp(), (XSSimpleType) ctd1.getSimpleType(),
-              (XSParticleDecl) ctd1.getParticle(), annotations);
+    if (o instanceof XSElementDeclaration) {
+      XSTypeDefinition xsTypeDefinition = ((XSElementDeclaration)o).getTypeDefinition();
+      if (xsTypeDefinition instanceof XSComplexTypeDecl) {
+        final XSComplexTypeDecl ctd1 = (XSComplexTypeDecl)xsTypeDefinition;
+        final XSObjectListImpl annotations =
+          ctd1.getAnnotations() instanceof XSObjectListImpl ? (XSObjectListImpl)ctd1.getAnnotations() : new XSObjectListImpl();
+        ctd.setValues(o.getName(), ctd1.getNamespace(), ctd1.getBaseType(), ctd1.getDerivationMethod(),
+                      ctd1.getFinal(), ctd1.getProhibitedSubstitutions(), ctd1.getContentType(),
+                      ctd1.getAbstract(), ctd1.getAttrGrp(), (XSSimpleType)ctd1.getSimpleType(),
+                      (XSParticleDecl)ctd1.getParticle(), annotations);
+      }
+      else if (xsTypeDefinition instanceof XSSimpleTypeDecl) {
+        final XSSimpleTypeDecl std = (XSSimpleTypeDecl)xsTypeDefinition;
+        final XSObjectListImpl annotations =
+          std.getAnnotations() instanceof XSObjectListImpl ? (XSObjectListImpl)std.getAnnotations() : new XSObjectListImpl();
+        ctd.setValues(o.getName(), std.getNamespace(), std.getBaseType(), XSConstants.DERIVATION_RESTRICTION,
+                      std.getFinal(), (short)0, XSComplexTypeDefinition.CONTENTTYPE_SIMPLE,
+                      false, new XSAttributeGroupDecl(), std, null, annotations);
+      }
       ctd.setName(o.getName() + Util.ANONYMOUS_ELEM_TYPE_SUFFIX);
     } else if (o instanceof XSAttributeDeclaration) {
       final XSSimpleTypeDecl ctd1 = (XSSimpleTypeDecl) ((XSAttributeDeclaration) o).getTypeDefinition();
