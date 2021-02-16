@@ -50,6 +50,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
 import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
@@ -65,6 +66,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
              titleDocument: Document,
              descriptionDocument: DisableableDocument,
              metadataModel: GHPRCreateMetadataModel,
+             commitsCountModel: SingleValueModel<Int?>,
              createLoadingModel: GHCompletableFutureLoadingModel<GHPullRequestShort>): JComponent {
 
     val progressIndicator = ListenableProgressIndicator()
@@ -135,6 +137,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     val statusPanel = JPanel(VerticalLayout(8, SwingConstants.LEFT)).apply {
       border = JBUI.Borders.empty(8)
 
+      add(createNoChangesWarningLabel(directionModel, commitsCountModel))
       add(createErrorLabel(createLoadingModel))
       add(createLoadingLabel(createLoadingModel, progressIndicator))
       add(actionsPanel)
@@ -321,6 +324,22 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
   companion object {
     private val Document.text: String get() = getText(0, length)
+
+    private fun createNoChangesWarningLabel(directionModel: GHPRCreateDirectionModel,
+                                            commitsCountModel: SingleValueModel<Int?>): JComponent {
+      val label = JLabel(AllIcons.General.Warning)
+      fun update() {
+        val commits = commitsCountModel.value
+        label.isVisible = commits == 0
+        val base = directionModel.baseBranch?.name.orEmpty()
+        val head = directionModel.headBranch?.name.orEmpty()
+        label.text = GithubBundle.message("pull.request.create.no.changes", base, head)
+      }
+
+      commitsCountModel.addValueChangedListener(::update)
+      commitsCountModel.addAndInvokeValueChangedListener(::update)
+      return label
+    }
 
     private fun createErrorLabel(loadingModel: GHLoadingModel): JLabel {
       val label = JLabel(AllIcons.Ide.FatalError).apply {
