@@ -453,6 +453,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   protected void showNextStepPopup(PopupStep nextStep, Object parentValue) {
+    if (nextStep == null) {
+      LOG.warn("Trying to open popup for null step");
+      return;
+    }
+
     final Point point = myList.indexToLocation(myList.getSelectedIndex());
     SwingUtilities.convertPointToScreen(point, myList);
     myChild = createPopup(this, nextStep, parentValue);
