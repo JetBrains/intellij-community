@@ -330,3 +330,30 @@ class X10 extends X9{
     System.out.println();
   }
 }
+class RedundantSuperBug {
+  static class A {
+    public void foo() {
+      System.out.println(1);
+    }
+  }
+
+  static class B extends A {
+    @Override
+    public void foo() {
+      super.foo();
+      System.out.println(1);
+    }
+  }
+
+  static class C extends B {
+    @Override
+    public void foo() {
+      super.foo();
+      System.out.println(1);
+    }
+  }
+
+  public static void main(String[] args) {
+    new C().foo();
+  }
+}

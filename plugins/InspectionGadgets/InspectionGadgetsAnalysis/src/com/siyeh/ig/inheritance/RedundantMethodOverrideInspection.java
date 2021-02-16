@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
@@ -108,10 +107,10 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       final TrackingEquivalenceChecker checker = new TrackingEquivalenceChecker() {
         @Override
         protected boolean equivalentDeclarations(PsiElement element1, PsiElement element2) {
-          final boolean result = super.equivalentDeclarations(element1, element2);
-          return result || element1 instanceof PsiMethod &&
-                           element2 instanceof PsiMethod &&
-                           MethodSignatureUtil.isSuperMethod((PsiMethod)element1, (PsiMethod)element2);
+          if (super.equivalentDeclarations(element1, element2)) {
+            return true;
+          }
+          return checkLibraryMethods && element1.getNavigationElement().equals(element2.getNavigationElement());
         }
 
         @Override
