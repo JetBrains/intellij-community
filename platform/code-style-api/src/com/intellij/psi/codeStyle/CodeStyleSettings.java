@@ -98,12 +98,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     initImportsByDefault();
 
     if (loadExtensions) {
-      for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
-        myCustomCodeStyleSettingsManager.addCustomSettings(this, factory);
-      }
-      for (CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getSettingsPagesProviders()) {
-        myCustomCodeStyleSettingsManager.addCustomSettings(this, factory);
-      }
+      myCustomCodeStyleSettingsManager.initCustomSettings();
     }
 
     if (needsRegistration) {
