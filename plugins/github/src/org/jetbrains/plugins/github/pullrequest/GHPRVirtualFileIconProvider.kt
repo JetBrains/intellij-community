@@ -11,6 +11,7 @@ class GHPRVirtualFileIconProvider : FileIconProvider {
 
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
     return when (file) {
+      is GHNewPRDiffVirtualFile -> AllIcons.Actions.Diff
       is GHPRTimelineVirtualFile -> file.getIcon()
       is GHPRDiffVirtualFile -> AllIcons.Actions.Diff
       else -> null

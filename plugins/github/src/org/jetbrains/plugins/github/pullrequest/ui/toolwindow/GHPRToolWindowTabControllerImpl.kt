@@ -286,5 +286,9 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
     override fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) =
       dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
+
+    override fun openNewPullRequestDiff(requestFocus: Boolean) {
+      dataContext.filesManager.openNewPRDiffFile(requestFocus)
+    }
   }
 }

@@ -42,11 +42,11 @@ internal class GHPRViewTabsFactory(private val project: Project,
     }
   }
 
-  fun create(infoComponent: JComponent,
-             filesComponent: JComponent,
-             filesCountModel: SingleValueModel<Int?>,
-             commitsComponent: JComponent,
-             commitsCountModel: SingleValueModel<Int?>): JBTabs {
+  private fun create(infoComponent: JComponent,
+                     filesComponent: JComponent,
+                     filesCountModel: SingleValueModel<Int?>,
+                     commitsComponent: JComponent,
+                     commitsCountModel: SingleValueModel<Int?>): JBTabs {
 
     val infoTabInfo = TabInfo(infoComponent).apply {
       text = GithubBundle.message("pull.request.info")

@@ -10,6 +10,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.pullrequest.GHNewPRDiffVirtualFile
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffVirtualFile
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineVirtualFile
@@ -25,6 +26,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
 
   private val files = ContainerUtil.createWeakValueMap<GHPRIdentifier, GHPRTimelineVirtualFile>()
   private val diffFiles = ContainerUtil.createWeakValueMap<GHPRIdentifier, GHPRDiffVirtualFile>()
+  override val newPRDiffFile by lazy { GHNewPRDiffVirtualFile(id, project, repository) }
 
   override fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
     files.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
@@ -43,6 +45,10 @@ internal class GHPRFilesManagerImpl(private val project: Project,
       VcsEditorTabFilesManager.getInstance().openFile(project, it, requestFocus)
       GHPRStatisticsCollector.logDiffOpened(project)
     }
+  }
+
+  override fun openNewPRDiffFile(requestFocus: Boolean) {
+    VcsEditorTabFilesManager.getInstance().openFile(project, newPRDiffFile, requestFocus)
   }
 
   override fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile? = files[SimpleGHPRIdentifier(pullRequest)]

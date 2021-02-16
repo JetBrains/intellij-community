@@ -38,6 +38,15 @@ public final class VcsDiffUtil {
            (localMark ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
   }
 
+  @Nls
+  @NotNull
+  public static String getRevisionTitle(@NotNull @NlsSafe String revision, @Nullable FilePath file, @Nullable FilePath baseFile) {
+    return revision +
+           (file == null || VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
+            ? ""
+            : " (" + getRelativeFileName(baseFile, file) + ")");
+  }
+
   public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
@@ -52,10 +61,7 @@ public final class VcsDiffUtil {
   public static String getRevisionTitle(@Nullable ContentRevision revision,
                                         @Nullable FilePath file,
                                         @Nullable FilePath baseFile) {
-    return getShortHash(revision) +
-           (file == null || VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
-            ? ""
-            : " (" + getRelativeFileName(baseFile, file) + ")");
+    return getRevisionTitle(getShortHash(revision), file, baseFile);
   }
 
   @NlsSafe
@@ -77,7 +83,9 @@ public final class VcsDiffUtil {
   }
 
   @RequiresEdt
-  public static void showChangesDialog(@NotNull Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull List<? extends Change> changes) {
+  public static void showChangesDialog(@NotNull Project project,
+                                       @NotNull @NlsContexts.DialogTitle String title,
+                                       @NotNull List<? extends Change> changes) {
     DialogBuilder dialogBuilder = new DialogBuilder(project);
 
     dialogBuilder.setTitle(title);
