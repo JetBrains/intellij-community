@@ -35,8 +35,6 @@ typealias TestName = String
 typealias TestTasks = List<String>
 
 open class TestTasksChooser {
-  private val LOG = Logger.getInstance(TestTasksChooser::class.java)
-
   @Suppress("CAST_NEVER_SUCCEEDS")
   private fun error(message: String): Nothing = LOG.error(message) as Nothing
 
@@ -158,6 +156,8 @@ open class TestTasksChooser {
   }
 
   companion object {
+    private val LOG = Logger.getInstance(TestTasksChooser::class.java)
+
     private const val TEST_TASK_NAME = "test"
 
     @JvmField

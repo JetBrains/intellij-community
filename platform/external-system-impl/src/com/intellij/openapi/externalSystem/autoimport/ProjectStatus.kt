@@ -10,8 +10,6 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
 class ProjectStatus(private val debugName: String? = null) {
-  private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
-
   private var state = AtomicReference(Synchronized(-1) as ProjectState)
 
   fun isDirty() = state.get() is Dirty
@@ -110,6 +108,10 @@ class ProjectStatus(private val debugName: String? = null) {
 
   private fun ProjectEvent.ifFuture(state: ProjectState, action: (Long) -> ProjectState): ProjectState {
     return if (stamp > state.stamp) action(stamp) else state
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
   }
 
   enum class ModificationType {
