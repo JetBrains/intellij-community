@@ -40,6 +40,7 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
 
     for (lesson in lessons) {
       if (lesson !is KLesson) continue
+      if (lesson.testScriptProperties.skipTesting) continue
       progress.checkCanceled()
       runSingleLesson(lesson)
     }
