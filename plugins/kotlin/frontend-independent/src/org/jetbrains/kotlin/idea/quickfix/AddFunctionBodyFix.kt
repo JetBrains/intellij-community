@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
-class AddFunctionBodyFix(element: KtFunction) : KotlinQuickFixAction<KtFunction>(element) {
+class AddFunctionBodyFix(element: KtFunction) : KotlinPsiOnlyQuickFixAction<KtFunction>(element) {
     override fun getFamilyName() = KotlinBundle.message("fix.add.function.body")
     override fun getText() = familyName
 
