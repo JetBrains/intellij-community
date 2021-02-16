@@ -70,7 +70,7 @@ class SuperCall {
 }
 class S2 extends SuperCall {
   @Override
-  void <warning descr="Method 'some()' is identical to its super method">some</warning>() {
+  void <warning descr="Method 'some()' only delegates to its super method">some</warning>() {
     super.some();
   }
 }
@@ -81,14 +81,14 @@ class B {
 }
 class C extends B {
   @Override
-  int <warning descr="Method 'some()' is identical to its super method">some</warning>() {
+  int <warning descr="Method 'some()' only delegates to its super method">some</warning>() {
     return super.some();
   }
 }
 @interface NotNull {}
 class MyList<E> extends ArrayList<E> {
   @Override
-  protected void <warning descr="Method 'removeRange()' is identical to its super method">removeRange</warning>(int fromIndex, int toIndex) {
+  protected void <warning descr="Method 'removeRange()' only delegates to its super method">removeRange</warning>(int fromIndex, int toIndex) {
     super.removeRange(fromIndex, toIndex);
   }
 

@@ -29,7 +29,10 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("redundant.method.override.problem.descriptor");
+    boolean delegatesToSuperMethod = (boolean)infos[0];
+    return delegatesToSuperMethod
+           ? InspectionGadgetsBundle.message("redundant.method.override.delegates.to.super.problem.descriptor")
+           : InspectionGadgetsBundle.message("redundant.method.override.problem.descriptor");
   }
 
   @Override
@@ -92,7 +95,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         return;
       }
       if (isSuperCallWithSameArguments(body, method, superMethod)) {
-        registerMethodError(method);
+        registerMethodError(method, Boolean.TRUE);
         return;
       }
       if (checkLibraryMethods && superMethod instanceof PsiCompiledElement) {
@@ -136,7 +139,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       }
       checker.markDeclarationsAsEquivalent(method, superMethod);
       if (checker.codeBlocksAreEquivalent(body, superBody)) {
-        registerMethodError(method);
+        registerMethodError(method, Boolean.FALSE);
       }
     }
 
