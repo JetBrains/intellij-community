@@ -66,7 +66,7 @@ public class JBColor extends Color {
       Color color = notNull(UIManager.getColor(propertyName), () ->
                             notNull(findPatternMatch(propertyName), defaultColor));
       if (UIManager.get(propertyName) == null) {
-        UIManager.put(propertyName + " as #" + ColorUtil.toHex(color), color);
+        UIManager.put(propertyName + " as #" + ColorUtil.toHex(color).toUpperCase(), color);
       }
       return color;
     });
