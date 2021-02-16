@@ -206,8 +206,8 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
     childBuses.forEach(childBus -> childBus.clearSubscriberCache(topicAndHandlerPairs));
 
-    // disposed handlers are not removed for TO_CHILDREN topics in the same way as for others directions because it is not wise to check each child bus -
-    // waitingBuses list can be used instead of checking each child bus message queue
+    // disposed handlers are not removed for TO_CHILDREN topics in the same way as for others directions
+    // because it is not wise to check each child bus - waitingBuses list can be used instead of checking each child bus message queue
     Set<MessageBusImpl> waitingBuses = rootBus.myWaitingBuses.get();
     if (!waitingBuses.isEmpty()) {
       waitingBuses.removeIf(bus -> {

@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal
@@ -448,45 +447,6 @@ public class MessageBusImpl implements MessageBus {
   void notifyOnSubscriptionToTopicToChildren(@NotNull Topic<?> topic) {
   }
 
-  // return false if no subscription
-  protected static boolean clearSubscriberCache(@NotNull MessageBusImpl bus,
-                                                @Nullable Map<Topic<?>, Object> handlers,
-                                                @Nullable Topic<?> singleTopic) {
-    if (handlers == null) {
-      if (singleTopic == null) {
-        bus.subscriberCache.clear();
-        return true;
-      }
-      else {
-        return bus.subscriberCache.remove(singleTopic) != null;
-      }
-    }
-    // forEach must be used here as map here it is SmartFMap - avoid temporary map entries creation
-    ToChildrenTopicSubscriberCleaner cleaner = new ToChildrenTopicSubscriberCleaner(bus);
-    handlers.forEach(cleaner);
-    return cleaner.removed;
-  }
-
-  private static final class ToChildrenTopicSubscriberCleaner implements BiConsumer<Topic<?>, Object> {
-    private final MessageBusImpl bus;
-    boolean removed;
-
-    ToChildrenTopicSubscriberCleaner(@NotNull MessageBusImpl bus) {
-      this.bus = bus;
-    }
-
-    @Override
-    public void accept(Topic<?> topic, Object __) {
-      // other directions are already removed
-      BroadcastDirection direction = topic.getBroadcastDirection();
-      if (direction == BroadcastDirection.TO_CHILDREN) {
-        if (bus.subscriberCache.remove(topic) != null) {
-          removed = true;
-        }
-      }
-    }
-  }
-
   void removeEmptyConnectionsRecursively() {
     subscribers.removeIf(MessageHandlerHolder::isDisposed);
   }
@@ -497,10 +457,13 @@ public class MessageBusImpl implements MessageBus {
     }
 
     rootBus.scheduleEmptyConnectionRemoving();
-
     return clearSubscriberCacheOnConnectionTerminated(topicAndHandlerPairs, this);
   }
 
+  /**
+   * For TO_DIRECT_CHILDREN broadcast direction we don't need special clean logic because cache is computed per bus, exactly as for
+   * NONE broadcast direction. And on publish, direct children of bus are queried to get message handlers.
+   */
   private static boolean clearSubscriberCacheOnConnectionTerminated(Object @NotNull [] topicAndHandlerPairs, @NotNull MessageBusImpl bus) {
     boolean isChildClearingNeeded = false;
 
@@ -557,7 +520,6 @@ public class MessageBusImpl implements MessageBus {
     }
 
     List<Message<Object>> newJobs = deliverImmediately(connection, jobs);
-
     if (newJobs == null) {
       return;
     }
