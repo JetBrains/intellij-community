@@ -16,12 +16,12 @@ public abstract class FileStatusManager {
   /**
    * Returns color that is associated with passed file in vcs subsystem.
    * <p>
-   * Users are discouraged from comparing returned value with a constant, because it might be vcs-specific (HgChangeProvider#RENAMED)
-   * or affected by other means (ChangelistConflictFileStatusProvider#MODIFIED_OUTSIDE).
+   * Users are discouraged from comparing returned value with a constant, because it might be vcs-specific {@link org.zmlx.hg4idea.provider.HgChangeProvider#RENAMED}
+   * or affected by other means {@link com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider#MODIFIED_OUTSIDE}.
    *
-   * @See com.intellij.openapi.vcs.changes.ChangeListManager#getStatus
-   * @See com.intellij.openapi.vcs.FileStatusFactory
-   * @See com.intellij.openapi.vcs.impl.FileStatusProvider
+   * @see com.intellij.openapi.vcs.changes.ChangeListManager#getStatus
+   * @see FileStatusFactory
+   * @see com.intellij.openapi.vcs.impl.FileStatusProvider
    */
   public abstract FileStatus getStatus(@NotNull VirtualFile file);
 
@@ -42,9 +42,9 @@ public abstract class FileStatusManager {
   public abstract Color getNotChangedDirectoryColor(@NotNull VirtualFile file);
 
   /**
-   * @See VcsConfiguration#SHOW_DIRTY_RECURSIVELY
-   * @See com.intellij.openapi.vcs.FileStatus#NOT_CHANGED_IMMEDIATE
-   * @See com.intellij.openapi.vcs.FileStatus#NOT_CHANGED_RECURSIVE
+   * @see VcsConfiguration#SHOW_DIRTY_RECURSIVELY
+   * @see FileStatus#NOT_CHANGED_IMMEDIATE
+   * @see FileStatus#NOT_CHANGED_RECURSIVE
    */
   @NotNull
   public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
