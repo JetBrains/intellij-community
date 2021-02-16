@@ -135,7 +135,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
             it.name.endsWith("gradle.kts")
         }
 
-        scripts.forEach { file ->
+        scripts.map { it.canonicalFile }.forEach { file ->
             val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
             val psiFile = project.getKtFile(virtualFile) ?: error("Cannot find KtFile for $file")
             assertTrue(
