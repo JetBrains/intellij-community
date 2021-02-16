@@ -26,5 +26,5 @@ class PythonSelectLesson(module: Module) : NewSelectLesson(module, "Python") {
   override val selectIf = sample.getPosition(1).selection!!.let { sample.text.substring(it.first, it.second) }
 
   @Nls
-  override val numberOfSelectsForWholeCall = 2
+  override val numberOfSelectsForWholeCall = 4
 }
