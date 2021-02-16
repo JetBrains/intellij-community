@@ -11,6 +11,7 @@ import javax.swing.JComponent
 
 /**
  * @author yole
+ * @see DialogPanelConfigurableBase
  */
 abstract class BoundConfigurable(
   @NlsContexts.ConfigurableName private val displayName: String,
@@ -20,6 +21,9 @@ abstract class BoundConfigurable(
   override fun getHelpTopic(): String? = helpTopic
 }
 
+/**
+ * @see DialogPanelUnnamedConfigurableBase
+ */
 abstract class DslConfigurableBase : UnnamedConfigurable {
   protected var disposable: Disposable? = null
     private set
