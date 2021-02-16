@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.targets.QodanaConfig;
 import com.intellij.codeInspection.targets.QodanaProfile;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.diagnostic.ThreadDumper;
@@ -757,6 +758,9 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   private static void closeProject(@NotNull Project project) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (!project.isDisposed()) {
+        if (Boolean.getBoolean("inspect.save.project.settings")) {
+          StoreUtil.saveSettings(project, true);
+        }
         ProjectManagerEx.getInstanceEx().forceCloseProject(project);
       }
     });
