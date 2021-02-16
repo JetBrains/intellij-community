@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TextCopyProvider;
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.speedSearch.FilteringTableModel;
@@ -209,6 +211,12 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 label.setText(String.format("[%d, %d, %d, %d] %s", i.top, i.left, i.bottom, i.right, label.getText()));
                 return panel;
               } catch (Exception ignore) {}
+            }
+            if (column == 0 && value instanceof String && ((String)value).contains(" as #")) {
+              label.setForeground(UIUtil.getListForeground(isSelected, hasFocus));
+              return simplePanel(new JBLabel(AllIcons.General.Warning, LEFT).withBorder(JBUI.Borders.emptyLeft(4)))
+                .addToLeft(label)
+                .withBackground(UIUtil.getListBackground(isSelected, hasFocus));
             }
             return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           }
