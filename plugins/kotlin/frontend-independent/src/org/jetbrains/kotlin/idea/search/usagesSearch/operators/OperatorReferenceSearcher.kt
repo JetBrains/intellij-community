@@ -9,8 +9,8 @@ import com.intellij.psi.search.*
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisIndependentBundle
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forceResolveReferences
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.getReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
@@ -278,7 +278,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                 val psiManager = PsiManager.getInstance(project)
                 // we must unwrap progress indicator because ProgressWrapper does not do anything on changing text and fraction
                 progress?.pushState()
-                progress?.text = KotlinIdeaAnalysisIndependentBundle.message("searching.for.implicit.usages")
+                progress?.text = KotlinBundle.message("searching.for.implicit.usages")
                 progress?.isIndeterminate = false
 
                 try {
