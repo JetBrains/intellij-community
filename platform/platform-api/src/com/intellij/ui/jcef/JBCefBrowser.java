@@ -201,6 +201,9 @@ public class JBCefBrowser extends JBCefBrowserBase {
   private JPanel createComponent() {
     Component uiComp = getCefBrowser().getUIComponent();
     JPanel resultPanel = new JPanel(new BorderLayout()) {
+      {
+        enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+      }
       @Override
       public void setBackground(Color bg) {
         uiComp.setBackground(bg);
