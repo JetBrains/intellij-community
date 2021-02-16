@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtilRt;
@@ -31,7 +32,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 // not final for android
-public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
+public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
 
@@ -132,6 +133,47 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
   @Override
   public ToolWindow getLastActiveToolWindow(@Nullable Predicate<? super JComponent> condition) {
     return null;
+  }
+
+  @Override
+  public void initToolWindow(@NotNull ToolWindowEP bean) {
+    doRegisterToolWindow(bean.id);
+  }
+
+  @Override
+  public ToolWindowsPane init(ProjectFrameHelper frameHelper) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull DesktopLayout getLayout() {
+    return new DesktopLayout();
+  }
+
+  @Override
+  public void setLayoutToRestoreLater(@Nullable DesktopLayout layout) {
+  }
+
+  @Override
+  public @Nullable DesktopLayout getLayoutToRestoreLater() {
+    return null;
+  }
+
+  @Override
+  public void setLayout(@NotNull DesktopLayout layout) {
+  }
+
+  @Override
+  public void clearSideStack() {
+  }
+
+  @Override
+  public void hideToolWindow(@NotNull String id, boolean hideSide) {
+  }
+
+  @Override
+  public @NotNull List<String> getIdsOn(@NotNull ToolWindowAnchor anchor) {
+    return Collections.emptyList();
   }
 
   public static class MockToolWindow implements ToolWindowEx {
