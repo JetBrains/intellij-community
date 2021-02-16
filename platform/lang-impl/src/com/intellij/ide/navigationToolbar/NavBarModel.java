@@ -20,10 +20,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,6 +99,12 @@ public class NavBarModel {
   public void updateModelAsync(DataContext dataContext, @Nullable Runnable callback) {
     if (LaterInvocator.isInModalContext()) return;
 
+    //rider calls edt-only method getFocusOwner() in the updating
+    if (PlatformUtils.isRider()) {
+      updateModel(dataContext);
+      return;
+    }
+    
     ReadAction.nonBlocking(() -> updateModel(Utils.wrapDataContext(dataContext)))
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.current(), __ -> {
