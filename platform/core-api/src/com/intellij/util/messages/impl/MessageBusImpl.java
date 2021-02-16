@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -44,13 +43,6 @@ public class MessageBusImpl implements MessageBus {
 
   final ThreadLocal<JobQueue> messageQueue = ThreadLocal.withInitial(JobQueue::new);
 
-  /**
-   * Root's order is empty
-   * Child bus's order is its parent order plus one more element, an int that's bigger than that of all sibling buses that come before
-   * Sorting by these vectors lexicographically gives DFS order
-   */
-  final int[] order;
-
   final ConcurrentMap<Topic<?>, Object> publisherCache = new ConcurrentHashMap<>();
 
   final Collection<MessageHandlerHolder> subscribers = new ConcurrentLinkedQueue<>();
@@ -79,13 +71,12 @@ public class MessageBusImpl implements MessageBus {
       p.subscriberCache.clear();
     }
 
-    order = parentBus.addChild(this);
+    parentBus.addChild(this);
   }
 
   // root message bus constructor
   MessageBusImpl(@NotNull MessageBusOwner owner) {
     this.owner = owner;
-    order = ArrayUtil.EMPTY_INT_ARRAY;
     rootBus = (RootBus)this;
     parentBus = null;
   }
@@ -290,7 +281,7 @@ public class MessageBusImpl implements MessageBus {
     JobQueue jobs = messageQueue.get();
     messageQueue.remove();
     if (!jobs.queue.isEmpty()) {
-      LOG.error("Not delivered events in the queue: " + jobs);
+      LOG.error("Not delivered events in the queue: " + jobs.queue);
     }
 
     if (parentBus == null) {
@@ -688,12 +679,9 @@ public class MessageBusImpl implements MessageBus {
 
     /**
      * Pending message buses in the hierarchy.
-     * The map's keys are sorted by {@link #order}
-     * <p>
-     * Used to avoid traversing the whole hierarchy when there are no messages to be sent in most of it.
      */
     @SuppressWarnings("SSBasedInspection")
-    final ThreadLocal<Set<MessageBusImpl>> myWaitingBuses = ThreadLocal.withInitial(() -> new TreeSet<>((bus1, bus2) -> ArrayUtil.lexicographicCompare(bus1.order, bus2.order)));
+    final ThreadLocal<Set<MessageBusImpl>> myWaitingBuses = ThreadLocal.withInitial(() -> new LinkedHashSet<>());
 
     RootBus(@NotNull MessageBusOwner owner) {
       super(owner);

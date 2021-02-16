@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
@@ -57,17 +56,8 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     return !childBuses.isEmpty();
   }
 
-  /**
-   * calculates {@link #order} for the given child bus
-   */
-  final synchronized int @NotNull [] addChild(@NotNull MessageBusImpl bus) {
-    List<MessageBusImpl> children = childBuses;
-    int lastChildIndex = children.isEmpty() ? 0 : ArrayUtil.getLastElement(children.get(children.size() - 1).order, 0);
-    if (lastChildIndex == Integer.MAX_VALUE) {
-      LOG.error("Too many child buses");
-    }
-    children.add(bus);
-    return ArrayUtil.append(order, lastChildIndex + 1);
+  final void addChild(@NotNull MessageBusImpl bus) {
+    childBuses.add(bus);
   }
 
   final void onChildBusDisposed(@NotNull MessageBusImpl childBus) {
