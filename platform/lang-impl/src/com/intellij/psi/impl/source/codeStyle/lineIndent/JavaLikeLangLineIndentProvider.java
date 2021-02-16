@@ -165,7 +165,10 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       }
       else if (getPosition(editor, offset).before().matchesRule(
         position -> isColonAfterLabelOrCase(position) || position.isAtAnyOf(ElseKeyword, DoKeyword))) {
-        return myFactory.createIndentCalculator(NORMAL, IndentCalculator.LINE_BEFORE);
+        Type indentType = getPosition(editor, offset).afterOptional(Whitespace).isAt(BlockOpeningBrace) ?
+                          NONE : // e.g. else <caret> {
+                          NORMAL;
+        return myFactory.createIndentCalculator(indentType, IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).matchesRule(
         position -> {
