@@ -5,14 +5,11 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
@@ -272,7 +269,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       }.apply {
         border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }
-    val toolbar = createChangesBrowserToolbar(changesLoadingPanel)
+    val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
     val changesBrowser = BorderLayoutPanel().andTransparent()
       .addToTop(toolbar)
       .addToCenter(changesLoadingPanel)
@@ -309,7 +306,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       }.apply {
         border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }
-    val toolbar = createChangesBrowserToolbar(changesLoadingPanel)
+    val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
     return panel.addToTop(toolbar).addToCenter(changesLoadingPanel)
   }
 
@@ -382,18 +379,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
   }
 
-  private fun createChangesBrowserToolbar(target: JComponent)
-    : TreeActionsToolbarPanel {
-
-    val changesToolbarActionGroup = actionManager.getAction("Github.PullRequest.Changes.Toolbar") as ActionGroup
-    val changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true)
-    val treeActionsGroup = DefaultActionGroup(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL),
-                                              actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL))
-    return TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, target)
-  }
-
   companion object {
-
     private fun ChangesTree.selectChange(toSelect: Change) {
       val rowInTree = findRowContainingChange(root, toSelect)
       if (rowInTree == -1) return

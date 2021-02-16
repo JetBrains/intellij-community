@@ -4,12 +4,9 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.PushSpec
-import com.intellij.dvcs.ui.CompareBranchesDialog
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.dvcs.util.CommitCompareInfo
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -30,17 +27,17 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import git4idea.*
+import git4idea.GitLocalBranch
+import git4idea.GitRemoteBranch
+import git4idea.GitStandardRemoteBranch
+import git4idea.GitVcs
 import git4idea.branch.GitBranchUtil
-import git4idea.changes.GitChangeUtils
-import git4idea.history.GitHistoryUtils
 import git4idea.push.GitPushOperation
 import git4idea.push.GitPushSource
 import git4idea.push.GitPushSupport
 import git4idea.push.GitPushTarget
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitCompareBranchesHelper
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -54,9 +51,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFact
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.*
-import org.jetbrains.plugins.github.util.GithubUtil.runInterruptable
 import java.awt.event.ActionEvent
-import java.io.IOException
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.text.Document
@@ -136,14 +131,6 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     val actionsPanel = JPanel(HorizontalLayout(JBUIScale.scale(8))).apply {
       add(createButton)
       add(cancelButton)
-      add(JButton(object : AbstractAction(ActionsBundle.message("action.Diff.ShowDiff.text")) {
-        override fun actionPerformed(e: ActionEvent?) {
-          val baseBranch = directionModel.baseBranch ?: return
-          val headRepo = directionModel.headRepo ?: return
-          val headBranch = directionModel.headBranch ?: return
-          showDiff(headRepo.gitRemote.repository, baseBranch, headBranch)
-        }
-      }))
     }
     val statusPanel = JPanel(VerticalLayout(8, SwingConstants.LEFT)).apply {
       border = JBUI.Borders.empty(8)
@@ -310,38 +297,6 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       //always set tracking
       return GitPushTarget(GitStandardRemoteBranch(remote, branchName), true)
     }
-  }
-
-  //TODO: replace with in-editor diff
-  private fun showDiff(repository: GitRepository, baseBranch: GitRemoteBranch, headBranch: GitBranch) {
-    val info = CommitCompareInfo(CommitCompareInfo.InfoType.BRANCH_TO_HEAD)
-    try {
-      val progressManager = ProgressManager.getInstance()
-      progressManager.runProcessWithProgressSynchronously({
-                                                            runInterruptable(progressManager.progressIndicator) {
-                                                              val commits1 = GitHistoryUtils.history(project, repository.root,
-                                                                                                     "${headBranch.name}..${baseBranch.name}")
-                                                              val commits2 = GitHistoryUtils.history(project, repository.root,
-                                                                                                     "${baseBranch.name}..${headBranch.name}")
-                                                              val diff = GitChangeUtils.getDiff(project, repository.root, baseBranch.name,
-                                                                                                headBranch.name, null)
-                                                              info.putTotalDiff(repository, diff)
-                                                              info.put(repository, commits1, commits2)
-                                                            }
-                                                          },
-                                                          GithubBundle.message("pull.request.create.collect.diff.data.process.title"), true,
-                                                          project)
-    }
-    catch (e: IOException) {
-      GithubNotifications.showError(project,
-                                    GithubNotificationIdsHolder.PULL_REQUEST_CANNOT_COLLECT_DIFF_DATA,
-                                    GithubBundle.message("cannot.collect.diff.data"),
-                                    e)
-      return
-    }
-
-    val dialog = CompareBranchesDialog(GitCompareBranchesHelper(project), baseBranch.name, headBranch.name, info, repository, true)
-    dialog.show()
   }
 
   private fun resetForm(directionModel: GHPRCreateDirectionModel,
