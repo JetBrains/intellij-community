@@ -18,7 +18,7 @@ import javax.swing.JLabel
 import kotlin.concurrent.thread
 
 @DslMarker
-private annotation class FragmentsDsl
+annotation class FragmentsDsl
 
 abstract class AbstractFragmentBuilder<Settings : FragmentedSettings> {
   @Nls
@@ -68,7 +68,11 @@ class Tag<Settings : FragmentedSettings>(
   val name: @Nls String
 ) : AbstractFragmentBuilder<Settings>() {
 
-  var getter: (Settings) -> Boolean = { true }
+  var holder: SettingsEditorFragment<Settings, *>? = null
+
+  var buttonAction: (SettingsEditorFragment<Settings, *>) -> Unit = { it.isSelected = false }
+
+  var getter: (Settings) -> Boolean = { false }
   var setter: (Settings, Boolean) -> Unit = { _, _ -> }
 
   @Nls
@@ -79,7 +83,7 @@ class Tag<Settings : FragmentedSettings>(
   override fun build(): SettingsEditorFragment<Settings, TagButton> {
     val ref = Ref<SettingsEditorFragment<Settings, *>>()
     val tagButton = TagButton(name) {
-      ref.get().isSelected = false
+      buttonAction(ref.get())
     }
 
     return Fragment<Settings, TagButton>(id, tagButton).also {
@@ -93,7 +97,12 @@ class Tag<Settings : FragmentedSettings>(
       it.actionDescription = actionDescription
     }.build().also {
       it.component().setToolTip(toolTip)
-      ref.set(it)
+      if (holder == null) {
+        ref.set(it)
+      }
+      else {
+        ref.set(holder)
+      }
     }
   }
 }
