@@ -7893,6 +7893,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/initializeWithConstructorParameter/memberPropertyWithDelegateRuntime.kt");
         }
 
+        @TestMetadata("multipleConstructors.kt")
+        public void testMultipleConstructors() throws Exception {
+            runTest("testData/quickfix/initializeWithConstructorParameter/multipleConstructors.kt");
+        }
+
         @TestMetadata("topLevelProperty.kt")
         public void testTopLevelProperty() throws Exception {
             runTest("testData/quickfix/initializeWithConstructorParameter/topLevelProperty.kt");

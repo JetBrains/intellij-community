@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.descriptorUtil.secondaryConstructors
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
     class AddInitializerFix(property: KtProperty) : KotlinQuickFixAction<KtProperty>(property) {
@@ -92,7 +93,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
             val klass = element.containingClassOrObject ?: return
             val propertyDescriptor = element.resolveToDescriptorIfAny() as? PropertyDescriptor ?: return
 
-            StartMarkAction.canStart(project)?.let { return }
+            StartMarkAction.canStart(editor)?.let { return }
             val startMarkAction = StartMarkAction.start(editor, project, text)
 
             try {
@@ -112,7 +113,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                     override fun onRefactoringDone() {
                         val constructorOrClass = constructorPointer.element
                         val constructor = constructorOrClass as? KtConstructor<*> ?: (constructorOrClass as? KtClass)?.primaryConstructor
-                        constructor?.getValueParameters()?.lastOrNull()?.replace(parameterToInsert)
+                        constructor?.valueParameters?.lastOrNull()?.replace(parameterToInsert)
                     }
                 }.run()
             } finally {
@@ -130,7 +131,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
         private fun configureChangeSignature(propertyDescriptor: PropertyDescriptor): KotlinChangeSignatureConfiguration {
             return object : KotlinChangeSignatureConfiguration {
                 override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
-                    return originalDescriptor.modify {
+                    return originalDescriptor.modify { methodDescriptor ->
                         val classDescriptor = propertyDescriptor.containingDeclaration as ClassDescriptorWithResolutionScopes
                         val constructorScope = classDescriptor.scopeForClassHeaderResolution
                         val validator = CollectingNameValidator(originalDescriptor.parameters.map { it.name }) { name ->
@@ -145,7 +146,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                             originalTypeInfo = KotlinTypeInfo(false, propertyDescriptor.type),
                             defaultValueForCall = KtPsiFactory(element!!.project).createExpression(initializerText)
                         )
-                        it.addParameter(newParam)
+                        methodDescriptor.addParameter(newParam)
                     }
                 }
 
@@ -157,33 +158,33 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
         private fun processConstructors(
             project: Project,
             editor: Editor?,
-            propertyDescriptor: PropertyDescriptor,
-            descriptorsToProcess: Iterator<ConstructorDescriptor>,
-            visitedElements: MutableSet<PsiElement> = HashSet()
+            configuration: KotlinChangeSignatureConfiguration,
+            constructorDescriptor: ConstructorDescriptor,
+            visitedElements: MutableSet<PsiElement>
         ) {
             val element = element!!
 
-            if (!descriptorsToProcess.hasNext()) return
-            val descriptor = descriptorsToProcess.next()
-            val constructorPointer = descriptor.source.getPsi()?.createSmartPointer()
-            val config = configureChangeSignature(propertyDescriptor)
-
+            val constructorPointer = constructorDescriptor.source.getPsi()?.createSmartPointer()
             object : CompositeRefactoringRunner(project, "refactoring.changeSignature") {
                 override fun runRefactoring() {
-                    runChangeSignature(project, editor, descriptor, config, element.containingClassOrObject!!, text)
+                    val containingClassOrObject = element.containingClassOrObject ?: return
+                    runChangeSignature(project, editor, constructorDescriptor, configuration, containingClassOrObject, text)
                 }
 
                 override fun onRefactoringDone() {
                     val constructorOrClass = constructorPointer?.element
-                    val constructor = constructorOrClass as? KtConstructor<*> ?: (constructorOrClass as? KtClass)?.primaryConstructor
-                    if (constructor == null || !visitedElements.add(constructor)) return
+                    val constructor = constructorOrClass as? KtConstructor<*>
+                        ?: (constructorOrClass as? KtClass)?.primaryConstructor
+                        ?: return
+
+                    if (!visitedElements.add(constructor)) return
                     constructor.valueParameters.lastOrNull()?.let { newParam ->
                         val psiFactory = KtPsiFactory(project)
-                        (constructor as? KtSecondaryConstructor)?.getOrCreateBody()?.appendElement(
-                            psiFactory.createExpression("this.${element.name} = ${newParam.name!!}")
-                        ) ?: element.setInitializer(psiFactory.createExpression(newParam.name!!))
+                        val name = newParam.name ?: return
+                        constructor.safeAs<KtSecondaryConstructor>()?.getOrCreateBody()
+                            ?.appendElement(psiFactory.createExpression("this.${element.name} = $name"))
+                            ?: element.setInitializer(psiFactory.createExpression(name))
                     }
-                    processConstructors(project, editor, propertyDescriptor, descriptorsToProcess)
                 }
             }.run()
         }
@@ -202,14 +203,18 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                 }
             }
 
+            val config = configureChangeSignature(propertyDescriptor)
+            val visitedElements = mutableSetOf<PsiElement>()
             project.runRefactoringAndKeepDelayedRequests {
-                processConstructors(project, editor, propertyDescriptor, constructorDescriptors.iterator())
+                for (constructorDescriptor in constructorDescriptors) {
+                    processConstructors(project, editor, config, constructorDescriptor, visitedElements)
+                }
             }
         }
     }
 
-    private fun noUsagesExist(affectedFunctions: Collection<PsiElement>): Boolean {
-        return affectedFunctions.flatMap { it.toLightMethods() }.all { MethodReferencesSearch.search(it).findFirst() == null }
+    private fun noUsagesExist(affectedFunctions: Collection<PsiElement>): Boolean = affectedFunctions.flatMap { it.toLightMethods() }.all {
+        MethodReferencesSearch.search(it).findFirst() == null
     }
 
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
