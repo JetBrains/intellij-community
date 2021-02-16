@@ -91,8 +91,6 @@ public final class PluginManagerCore {
 
   private static Map<String, String[]> ourAdditionalLayoutMap = Collections.emptyMap();
 
-  private static final Path updatedBrokenPluginFile = Paths.get(PathManager.getConfigPath()).resolve("updatedBrokenPlugins.db");
-
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
   @ApiStatus.Internal
@@ -219,6 +217,7 @@ public final class PluginManagerCore {
 
   public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins) {
     ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(brokenPlugins);
+    Path updatedBrokenPluginFile = getUpdatedBrokenPluginFile();
     try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(updatedBrokenPluginFile), 32_000))) {
       out.write(1);
       out.writeInt(brokenPlugins.size());
@@ -251,14 +250,19 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull Map<PluginId, Set<String>> readBrokenPluginFile() {
-    Path distDir = Paths.get(PathManager.getHomePath());
-    Path dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir)
-      .resolve("brokenPlugins.db");
-    Path brokenPluginsStorage = Files.exists(updatedBrokenPluginFile) ? updatedBrokenPluginFile : dbFile;
+    Path updatedBrokenPluginFile = getUpdatedBrokenPluginFile();
+    Path brokenPluginsStorage;
+    if (Files.exists(updatedBrokenPluginFile)) {
+      brokenPluginsStorage = updatedBrokenPluginFile;
+    }
+    else {
+      Path distDir = Paths.get(PathManager.getHomePath());
+      brokenPluginsStorage = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve("brokenPlugins.db");
+    }
     try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(brokenPluginsStorage), 32_000))) {
       int version = stream.readUnsignedByte();
       if (version != 1) {
-        getLogger().error("Unsupported version of " + dbFile + "(fileVersion=" + version + ", supportedVersion=1)");
+        getLogger().error("Unsupported version of " + brokenPluginsStorage + "(fileVersion=" + version + ", supportedVersion=1)");
         return Collections.emptyMap();
       }
 
@@ -278,7 +282,7 @@ public final class PluginManagerCore {
     catch (NoSuchFileException ignore) {
     }
     catch (IOException e) {
-      getLogger().error("Failed to read " + dbFile, e);
+      getLogger().error("Failed to read " + brokenPluginsStorage, e);
     }
     return Collections.emptyMap();
   }
@@ -387,6 +391,10 @@ public final class PluginManagerCore {
       }
     }
     return null;
+  }
+
+  private static Path getUpdatedBrokenPluginFile(){
+    return Paths.get(PathManager.getConfigPath()).resolve("updatedBrokenPlugins.db");
   }
 
   private static boolean hasLoadedClass(@NotNull String className, @NotNull ClassLoader loader) {
