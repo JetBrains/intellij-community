@@ -22,8 +22,8 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
+import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentFactory
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -222,8 +222,8 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
     private val listComponent by lazy { GHPRListComponent.create(project, dataContext, parentDisposable) }
     private val createComponent by lazy {
-      GHPRCreateComponentFactory(project,  dataContext, this, parentDisposable).create()
-    }
+      GHPRCreateComponentFactory(ActionManager.getInstance(), project, repositoryManager, dataContext, this,
+                                                             parentDisposable).create()}
     private var currentDisposable: Disposable? = null
 
     private var currentPullRequest: GHPRIdentifier? = null

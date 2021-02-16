@@ -10,30 +10,22 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 
-class GHApiLoadingErrorHandler(private val project: Project,
-                               private val account: GithubAccount,
-                               private val resetRunnable: () -> Unit)
-  : GHLoadingErrorHandler {
+open class GHApiLoadingErrorHandler(private val project: Project,
+                                    private val account: GithubAccount,
+                                    resetRunnable: () -> Unit)
+  : GHRetryLoadingErrorHandler(resetRunnable) {
 
   override fun getActionForError(error: Throwable): Action? {
     if (error is GithubAuthenticationException) {
       return ReLoginAction()
     }
-    else {
-      return RetryAction()
-    }
+    return super.getActionForError(error)
   }
 
   private inner class ReLoginAction : AbstractAction(GithubBundle.message("accounts.relogin")) {
     override fun actionPerformed(e: ActionEvent?) {
       if (GithubAuthenticationManager.getInstance().requestReLogin(account, project))
         resetRunnable()
-    }
-  }
-
-  private inner class RetryAction : AbstractAction(GithubBundle.message("retry.action")) {
-    override fun actionPerformed(e: ActionEvent?) {
-      resetRunnable()
     }
   }
 }

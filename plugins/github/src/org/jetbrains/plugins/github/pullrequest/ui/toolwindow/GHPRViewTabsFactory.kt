@@ -27,6 +27,26 @@ internal class GHPRViewTabsFactory(private val project: Project,
              filesCountModel: SingleValueModel<Int?>,
              commitsComponent: JComponent,
              commitsCountModel: SingleValueModel<Int?>): JBTabs {
+    return create(infoComponent, filesComponent, filesCountModel, commitsComponent, commitsCountModel).also {
+      val listener = object : TabsListener {
+        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
+          diffController.activeTree = when (newSelection?.component) {
+            filesComponent -> GHPRDiffController.ActiveTree.FILES
+            commitsComponent -> GHPRDiffController.ActiveTree.COMMITS
+            else -> null
+          }
+        }
+      }
+      it.addListener(listener)
+      listener.selectionChanged(null, it.selectedInfo)
+    }
+  }
+
+  fun create(infoComponent: JComponent,
+             filesComponent: JComponent,
+             filesCountModel: SingleValueModel<Int?>,
+             commitsComponent: JComponent,
+             commitsCountModel: SingleValueModel<Int?>): JBTabs {
 
     val infoTabInfo = TabInfo(infoComponent).apply {
       text = GithubBundle.message("pull.request.info")
@@ -51,18 +71,6 @@ internal class GHPRViewTabsFactory(private val project: Project,
       addTab(infoTabInfo)
       addTab(filesTabInfo)
       addTab(commitsTabInfo)
-    }.also {
-      val listener = object : TabsListener {
-        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
-          diffController.activeTree = when (newSelection) {
-            filesTabInfo -> GHPRDiffController.ActiveTree.FILES
-            commitsTabInfo -> GHPRDiffController.ActiveTree.COMMITS
-            else -> null
-          }
-        }
-      }
-      it.addListener(listener)
-      listener.selectionChanged(null, it.selectedInfo)
     }
   }
 
