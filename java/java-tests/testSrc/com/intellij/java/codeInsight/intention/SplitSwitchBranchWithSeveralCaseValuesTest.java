@@ -10,9 +10,4 @@ public class SplitSwitchBranchWithSeveralCaseValuesTest extends LightQuickFixPar
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/splitSwitchBranchWithSeveralCaseValues";
   }
-
-  @Override
-  protected boolean shouldBeAvailableAfterExecution() {
-    return false;
-  }
 }

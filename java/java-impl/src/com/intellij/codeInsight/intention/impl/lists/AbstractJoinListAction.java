@@ -41,11 +41,6 @@ public abstract class AbstractJoinListAction<L extends PsiElement, E extends Psi
     CodeStyleManager.getInstance(project).adjustLineIndent(context.myList.getContainingFile(), context.myList.getParent().getTextRange());
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   private static void deleteBreakIfPresent(Document document, PsiElement aBreak) {
     if (aBreak != null) {
       TextRange range = aBreak.getTextRange();

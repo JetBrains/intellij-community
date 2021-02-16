@@ -201,11 +201,6 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   @Override
-  public boolean textMatches(@NotNull PsiElement element) {
-    return getText().equals(element.getText());
-  }
-
-  @Override
   public ASTNode getNode() {
     return null;
   }

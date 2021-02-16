@@ -76,11 +76,6 @@ public class IReparseableElementType extends ILazyParseableElementType implement
     return isParsable(buffer, fileLanguage, project);
   }
 
-  @Override
-  public boolean isValidReparse(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
-    return true;
-  }
-
   // Please, add no more public methods here. Add them to `IReparseableElementTypeBase` instead.
   // If you are not sure about the API stability, use `ApiStatus.Experimental` annotation
 }

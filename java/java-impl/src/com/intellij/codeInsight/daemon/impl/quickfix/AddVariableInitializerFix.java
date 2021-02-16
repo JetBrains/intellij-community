@@ -133,9 +133,4 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
     }
     return result.toArray(LookupElement.EMPTY_ARRAY);
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

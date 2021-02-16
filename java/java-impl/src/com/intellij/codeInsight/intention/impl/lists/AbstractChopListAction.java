@@ -51,11 +51,6 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
     }
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   abstract int findOffsetForBreakAfter(E element);
 
   protected int findOffsetOfBreakBeforeFirst(@NotNull E element) {

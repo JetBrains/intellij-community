@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -23,11 +22,6 @@ import java.util.Set;
 public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSwitchExpression {
   public PsiSwitchExpressionImpl() {
     super(JavaElementType.SWITCH_EXPRESSION);
-  }
-
-  @Override
-  public PsiExpression getExpression() {
-    return (PsiExpression)findPsiChildByType(ElementType.EXPRESSION_BIT_SET);
   }
 
   @Override

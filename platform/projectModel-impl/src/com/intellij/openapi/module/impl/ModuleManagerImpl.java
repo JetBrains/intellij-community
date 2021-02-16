@@ -224,10 +224,6 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     myModulePathsToLoad.clear();
   }
 
-  @Override
-  public void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
-  }
-
   @NotNull
   // returns mutable linked hash set
   public static Set<ModulePath> getPathsToModuleFiles(@NotNull Element element) {

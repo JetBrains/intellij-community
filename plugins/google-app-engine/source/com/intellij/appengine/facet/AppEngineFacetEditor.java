@@ -142,10 +142,6 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   }
 
   @Override
-  public void disposeUIResources() {
-  }
-
-  @Override
   public String getHelpTopic() {
     return "Google_App_Engine_Facet";
   }

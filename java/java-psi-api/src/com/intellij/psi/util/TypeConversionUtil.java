@@ -1409,11 +1409,6 @@ public final class TypeConversionUtil {
       }
 
       @Override
-      public PsiType visitEllipsisType(@NotNull PsiEllipsisType ellipsisType) {
-        return visitArrayType(ellipsisType);
-      }
-
-      @Override
       public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
         final PsiType componentType = arrayType.getComponentType();
         final PsiType newComponentType = componentType.accept(this);

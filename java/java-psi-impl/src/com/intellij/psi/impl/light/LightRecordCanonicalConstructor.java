@@ -44,9 +44,4 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     }
     return baseIcon;
   }
-
-  @Override
-  public PsiElement getContext() {
-    return getContainingClass();
-  }
 }

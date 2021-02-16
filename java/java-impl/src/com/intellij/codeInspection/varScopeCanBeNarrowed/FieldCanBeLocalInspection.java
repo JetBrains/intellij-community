@@ -450,10 +450,6 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       return PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiField.class);
     }
 
-    @Override
-    protected void beforeDelete(@NotNull Project project, @NotNull PsiField variable, @NotNull PsiElement newDeclaration) {
-    }
-
     @NotNull
     @Override
     protected String suggestLocalName(@NotNull Project project, @NotNull PsiField field, @NotNull PsiCodeBlock scope) {

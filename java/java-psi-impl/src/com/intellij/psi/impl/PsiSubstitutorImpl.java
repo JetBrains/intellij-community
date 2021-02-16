@@ -261,11 +261,6 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
         }
         return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
       }
-
-      @Override
-      public PsiType visitType(@NotNull PsiType type) {
-        return null;
-      }
     });
   }
 

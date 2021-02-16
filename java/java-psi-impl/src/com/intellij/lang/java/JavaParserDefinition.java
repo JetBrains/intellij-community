@@ -51,12 +51,6 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
-    return TokenSet.WHITE_SPACE;
-  }
-
-  @NotNull
-  @Override
   public TokenSet getCommentTokens() {
     return ElementType.JAVA_COMMENT_BIT_SET;
   }

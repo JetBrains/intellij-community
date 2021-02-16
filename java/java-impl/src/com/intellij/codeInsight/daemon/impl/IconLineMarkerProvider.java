@@ -94,9 +94,4 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
   public String getName() {
     return JavaBundle.message("icon.preview");
   }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
 }

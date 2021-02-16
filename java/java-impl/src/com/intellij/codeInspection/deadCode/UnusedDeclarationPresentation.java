@@ -350,11 +350,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         }
       }
     }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
   }
   private static void commentOutDead(PsiElement psiElement) {
     PsiFile psiFile = psiElement.getContainingFile();

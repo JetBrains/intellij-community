@@ -44,12 +44,6 @@ public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
 
   @NotNull
   @Override
-  public Icon getItemIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-    return getProcessIcon(project, info, dataHolder);
-  }
-
-  @NotNull
-  @Override
   public String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return getProcessDisplayText(project, info, dataHolder);
   }

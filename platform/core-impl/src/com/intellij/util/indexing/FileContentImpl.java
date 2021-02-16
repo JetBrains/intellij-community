@@ -134,12 +134,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   }
 
   @NotNull
-  @Override
-  public VirtualFile getFile() {
-    return myFile;
-  }
-
-  @NotNull
   public Charset getCharset() {
     Charset charset = myCharset;
     if (charset == null) {

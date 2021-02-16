@@ -107,14 +107,6 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   @Override
-  public void selectNotify(){
-  }
-
-  @Override
-  public void deselectNotify(){
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener){
     //TODO[anton,vova]
   }

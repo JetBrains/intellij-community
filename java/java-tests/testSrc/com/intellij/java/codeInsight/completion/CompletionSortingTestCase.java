@@ -8,8 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NonNls;
 
@@ -23,12 +21,6 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   protected CompletionSortingTestCase(CompletionType type) {
     myType = type;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable());
   }
 
   @Override

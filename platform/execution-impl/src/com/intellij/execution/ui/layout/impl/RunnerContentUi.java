@@ -53,7 +53,9 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabPainterAdapter;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
@@ -873,10 +875,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
             }
           }
         });
-      }
-
-      @Override
-      public void contentRemoveQuery(final @NotNull ContentManagerEvent event) {
       }
 
       @Override
