@@ -94,11 +94,8 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   @TestOnly
   public abstract List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file);
 
-  public abstract void cleanFileLevelHighlights(@NotNull Project project, int group, @NotNull PsiFile psiFile);
+  public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
 
-  public abstract void addFileLevelHighlight(@NotNull Project project,
-                                             int group,
-                                             @NotNull HighlightInfo info,
-                                             @NotNull PsiFile psiFile);
+  public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile);
 
 }

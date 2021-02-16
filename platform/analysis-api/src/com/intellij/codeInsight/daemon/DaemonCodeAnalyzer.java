@@ -13,7 +13,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -30,13 +29,13 @@ public abstract class DaemonCodeAnalyzer {
   public abstract void setUpdateByTimerEnabled(boolean value);
   public abstract void disableUpdateByTimer(@NotNull Disposable parentDisposable);
 
-  public abstract boolean isHighlightingAvailable(@Nullable PsiFile file);
+  public abstract boolean isHighlightingAvailable(@NotNull PsiFile file);
 
   public abstract void setImportHintsEnabled(@NotNull PsiFile file, boolean value);
   public abstract void resetImportHintsEnabledForProject();
   public abstract void setHighlightingEnabled(@NotNull PsiFile file, boolean value);
   public abstract boolean isImportHintsEnabled(@NotNull PsiFile file);
-  public abstract boolean isAutohintsAvailable(@Nullable PsiFile file);
+  public abstract boolean isAutohintsAvailable(@NotNull PsiFile file);
 
   /**
    * Force re-highlighting for all files.

@@ -566,7 +566,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setEnabled(myDaemonCodeAnalyzer.isAutohintsAvailable(getPsiFile()));
+        PsiFile psiFile = getPsiFile();
+        e.getPresentation().setEnabled(psiFile != null && myDaemonCodeAnalyzer.isAutohintsAvailable(psiFile));
       }
 
       @Override
