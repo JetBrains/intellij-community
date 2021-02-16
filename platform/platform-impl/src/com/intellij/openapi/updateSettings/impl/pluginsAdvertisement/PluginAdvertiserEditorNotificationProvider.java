@@ -69,6 +69,11 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     IdeaPluginDescriptor disabledPlugin = null;
     Set<PluginsAdvertiser.Plugin> pluginsToInstall = new HashSet<>();
     Set<PluginsAdvertiser.Plugin> jbPluginsToInstall = new HashSet<>();
+    Runnable onPluginsInstalled = () -> {
+      pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
+      updateAllNotifications(project);
+    };
+
     for (PluginsAdvertiser.Plugin plugin : plugins) {
       IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId));
       if (installedPlugin != null) {
@@ -84,18 +89,15 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       IdeaPluginDescriptor finalDisabledPlugin = disabledPlugin;
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.enable.plugin", disabledPlugin.getName()), () -> {
         pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
-        EditorNotifications.getInstance(project).updateAllNotifications();
-        FeatureUsageData data = new FeatureUsageData()
-          .addData("source", "editor")
+        updateAllNotifications(project);
+        FeatureUsageData data = getSourceUsageData()
           .addData("plugins", Collections.singletonList(finalDisabledPlugin.getPluginId().getIdString()));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
         PluginsAdvertiser.enablePlugins(project, Collections.singletonList(finalDisabledPlugin.getPluginId()));
       });
     }
     else if (!jbPluginsToInstall.isEmpty()) {
-      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins"), () -> {
-        installPlugins(project, pluginAdvertiserExtensionsState, extensionOrFileName, jbPluginsToInstall);
-      });
+      createInstallActionLabel(panel, jbPluginsToInstall, onPluginsInstalled);
     }
     else if (PluginsAdvertiser.hasBundledPluginToInstall(plugins) != null) {
       if (PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
@@ -106,50 +108,55 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       //noinspection DialogTitleCapitalization
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate"), () -> {
         pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
-        FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
+        FeatureUsageData data = getSourceUsageData();
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "open.download.page", data);
         PluginsAdvertiser.openDownloadPage();
       });
 
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate"), () -> {
-        FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
+        FeatureUsageData data = getSourceUsageData();
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.ultimate", data);
         PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");
-        EditorNotifications.getInstance(project).updateAllNotifications();
+        updateAllNotifications(project);
       });
     }
     else if (!pluginsToInstall.isEmpty()) {
-      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins"), () -> {
-        installPlugins(project, pluginAdvertiserExtensionsState, extensionOrFileName, pluginsToInstall);
-      });
+      createInstallActionLabel(panel, pluginsToInstall, onPluginsInstalled);
     }
     else {
       return null;
     }
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.extension"), () -> {
-      FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
+      FeatureUsageData data = getSourceUsageData();
       FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.extensions", data);
       pluginAdvertiserExtensionsState.ignoreExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
-      EditorNotifications.getInstance(project).updateAllNotifications();
+      updateAllNotifications(project);
     });
     return panel;
   }
 
-  private static void installPlugins(@NotNull Project project,
-                                     PluginAdvertiserExtensionsState pluginAdvertiserExtensionsState,
-                                     String extensionOrFileName,
-                                     Set<? extends PluginsAdvertiser.Plugin> pluginsToInstall) {
-    Set<PluginId> pluginIds = new HashSet<>();
-    for (PluginsAdvertiser.Plugin plugin : pluginsToInstall) {
-      pluginIds.add(PluginId.getId(plugin.myPluginId));
-    }
-    FeatureUsageData data = new FeatureUsageData()
-      .addData("source", "editor")
-      .addData("plugins", ContainerUtil.map(pluginIds, (pluginId) -> pluginId.getIdString()));
-    FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "install.plugins", data);
-    PluginsAdvertiser.installAndEnable(pluginIds, () -> {
-      pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
-      EditorNotifications.getInstance(project).updateAllNotifications();
-    });
+  private static void createInstallActionLabel(@NotNull EditorNotificationPanel panel,
+                                               @NotNull Set<PluginsAdvertiser.Plugin> pluginsToInstall,
+                                               @NotNull Runnable onSuccess) {
+    panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins"),
+                            () -> {
+                              Set<PluginId> pluginIds = new HashSet<>();
+                              for (PluginsAdvertiser.Plugin plugin : pluginsToInstall) {
+                                pluginIds.add(PluginId.getId(plugin.myPluginId));
+                              }
+                              FeatureUsageData data = getSourceUsageData()
+                                .addData("plugins", ContainerUtil.map(pluginIds, PluginId::getIdString));
+
+                              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "install.plugins", data);
+                              PluginsAdvertiser.installAndEnable(pluginIds, onSuccess);
+                            });
+  }
+
+  private static void updateAllNotifications(@NotNull Project project) {
+    EditorNotifications.getInstance(project).updateAllNotifications();
+  }
+
+  private static @NotNull FeatureUsageData getSourceUsageData() {
+    return new FeatureUsageData().addData("source", "editor");
   }
 }
