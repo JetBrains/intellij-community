@@ -160,6 +160,18 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<ConvertToInstanceMethodAction>())
   }
 
+  fun testPushDownOnMethod() {
+    assertTrue(doActionExists<PushDownAction>())
+  }
+
+  fun testPushDownOnClass() {
+    assertTrue(doActionExists<PushDownAction>())
+  }
+
+  fun testPushDownFiltered() {
+    assertFalse(doActionExists<PushDownAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     val actions = findAvailableActions()
