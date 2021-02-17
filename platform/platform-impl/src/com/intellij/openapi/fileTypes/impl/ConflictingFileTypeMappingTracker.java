@@ -55,7 +55,7 @@ class ConflictingFileTypeMappingTracker {
     final @NotNull @Nls String explainText;
     final boolean approved;
 
-    private ResolveConflictResult(@NotNull FileType resolved, @Nullable @Nls String notification, @NotNull @Nls String explainText, boolean approved) {
+    private ResolveConflictResult(@NotNull FileType resolved, @NotNull @Nls String notification, @NotNull @Nls String explainText, boolean approved) {
       this.resolved = resolved;
       this.notification = notification;
       this.explainText = explainText;
@@ -68,21 +68,21 @@ class ConflictingFileTypeMappingTracker {
                                                        @NotNull FileType newFileType) {
     PluginDescriptor oldPlugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(oldFileType.getClass().getName());
     PluginDescriptor newPlugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(newFileType.getClass().getName());
-    if (newPlugin == null) {
+    if (newPlugin == null || newPlugin.isBundled() && oldPlugin != null && !oldPlugin.isBundled()) {
+      PluginDescriptor plugin = newPlugin;
+      FileType type = newFileType;
       newPlugin = oldPlugin;
-      FileType t = newFileType;
       newFileType = oldFileType;
-      oldFileType = t;
-      oldPlugin = null;
+      oldFileType = type;
+      oldPlugin = plugin;
     }
     // do not show notification if the new plugin reassigned core or bundled plugin
     boolean approved = oldPlugin == null || !oldPlugin.equals(newPlugin) && oldPlugin.isBundled();
     String explain = FileTypesBundle.message("notification.content.file.type.reassigned.message", matcher.getPresentableString(), oldFileType.getDisplayName(),
-               approved ? "bundled" : oldPlugin.getName());
+                                             oldPlugin == null || oldPlugin.isBundled() ? "bundled" : oldPlugin.getName());
     if (newPlugin != null) {
       // new plugin overrides pattern
-      String message = approved ? null
-                       : FileTypesBundle.message("notification.content.file.type.reassigned.plugin", matcher.getPresentableString(), oldPlugin.getName(), newFileType.getDisplayName(), newPlugin.getName());
+      String message = FileTypesBundle.message("notification.content.file.type.reassigned.plugin", matcher.getPresentableString(), oldPlugin ==null?"":oldPlugin.getName(), newFileType.getDisplayName(), newPlugin.getName());
       return new ResolveConflictResult(newFileType, message, explain, approved);
     }
     /* ? wild guess*/
@@ -119,8 +119,8 @@ class ConflictingFileTypeMappingTracker {
     if (oldFileType.equals(newFileType)) {
       throw new IllegalArgumentException("expected different file types but got "+newFileType);
     }
-    String oldName = oldFileType.getDisplayName();
-    String newName = newFileType.getDisplayName();
+    String oldDisplayName = oldFileType.getDisplayName();
+    String newDisplayName = newFileType.getDisplayName();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       AssertionError error = new AssertionError(notificationText + "; matcher: " + matcher);
       switch(throwOnConflict) {
@@ -142,34 +142,34 @@ class ConflictingFileTypeMappingTracker {
         NotificationType.INFORMATION, null);
       if (!result.approved) {
         // if approved==true, there's no need to explicitly confirm
-        notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.conflict.confirm", newName), () -> {
+        notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.conflict.confirm", newDisplayName), () -> {
           // mark as removed from fileTypeOld and associated with fileTypeNew
           ApplicationManager.getApplication().runWriteAction(() -> {
-            myRemovedMappingTracker.add(matcher, oldName, true);
+            myRemovedMappingTracker.add(matcher, oldFileType.getName(), true);
             FileTypeManager.getInstance().associate(newFileType, matcher);
           });
           notification.expire();
-          String m = FileTypesBundle.message("dialog.message.file.pattern.was.assigned.to", matcher.getPresentableString(), newName);
+          String m = FileTypesBundle.message("dialog.message.file.pattern.was.assigned.to", matcher.getPresentableString(), newDisplayName);
           showReassignedInfoNotification(project, m);
         }));
       }
-      notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.revert.to", oldName), () -> {
+      notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.revert.to", oldDisplayName), () -> {
         // mark as removed from fileTypeNew and associated with fileTypeOld
         ApplicationManager.getApplication().runWriteAction(() -> {
-          myRemovedMappingTracker.add(matcher, newName, true);
+          myRemovedMappingTracker.add(matcher, newFileType.getName(), true);
           FileTypeManager.getInstance().associate(oldFileType, matcher);
         });
         notification.expire();
-        String m = FileTypesBundle.message("dialog.message.file.pattern.was.reassigned.back.to", matcher.getPresentableString(), oldName);
+        String m = FileTypesBundle.message("dialog.message.file.pattern.was.reassigned.back.to", matcher.getPresentableString(), oldDisplayName);
         showReassignedInfoNotification(project, m);
       }));
       if (!oldFileType.isReadOnly()) {
-        notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.edit",
-                                                                                       oldName), () -> editFileType(project, oldFileType)));
+        notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.edit", oldDisplayName),
+                                                               () -> editFileType(project, oldFileType)));
       }
       if (!newFileType.isReadOnly()) {
-        notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.edit",
-                                                                                       newName), () -> editFileType(project, newFileType)));
+        notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.edit", newDisplayName),
+                                                               () -> editFileType(project, newFileType)));
       }
       Notifications.Bus.notify(notification, project);
     }, project == null ? ApplicationManager.getApplication().getDisposed() : project.getDisposed());
