@@ -22,8 +22,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ApiStatus.Internal
-public final class DirectBufferPool {
-  private static final Logger LOG = Logger.getInstance(DirectBufferPool.class);
+public final class FilePageCache {
+  private static final Logger LOG = Logger.getInstance(FilePageCache.class);
 
   static final int MAX_PAGES_COUNT = 0xFFFF;
   private static final int MAX_LIVE_STORAGES_COUNT = 0xFFFF;
@@ -82,7 +82,7 @@ public final class DirectBufferPool {
   private volatile long mySizeLimit;
   private volatile int myMappingChangeCount;
 
-  public DirectBufferPool() {
+  public FilePageCache() {
     mySizeLimit = UPPER_LIMIT;
     mySegments = new LinkedHashMap<Integer, DirectBufferWrapper>(10, 0.75f, true) {
       @Override

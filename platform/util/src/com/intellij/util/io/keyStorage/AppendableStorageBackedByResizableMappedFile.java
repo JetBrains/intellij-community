@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -93,28 +92,29 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   @Override
   public boolean processAll(@NotNull Processor<? super Data> processor) throws IOException {
     assert !isDirty();
-
     if (myFileLength == 0) return true;
 
-    try (DataInputStream keysStream = new DataInputStream(
-      new BufferedInputStream(new LimitedInputStream(Files.newInputStream(getPagedFileStorage().getFile()),
-                                                     myFileLength) {
-        @Override
-        public int available() {
-          return remainingLimit();
-        }
-      }, 32768))) {
+    return getPagedFileStorage().readInputStream(is -> {
+      DataInputStream keyStream = new DataInputStream(
+        new BufferedInputStream(new LimitedInputStream(is, myFileLength) {
+          @Override
+          public int available() {
+            return remainingLimit();
+          }
+        }, 32768));
+
       try {
         while (true) {
-          Data key = myDataDescriptor.read(keysStream);
+          Data key = myDataDescriptor.read(keyStream);
           if (!processor.process(key)) return false;
         }
       }
       catch (EOFException e) {
         // Done
       }
+
       return true;
-    }
+    });
   }
 
   @Override

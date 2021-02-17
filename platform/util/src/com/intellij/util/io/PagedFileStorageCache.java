@@ -30,7 +30,7 @@ class PagedFileStorageCache {
   }
 
   @Nullable
-  synchronized DirectBufferWrapper getPageFromCache(long page, int mappingChangeCount, boolean readOnly) {
+  synchronized DirectBufferWrapper getPageFromCache(long page, int mappingChangeCount) {
     if (myLastPage == page) {
       ByteBuffer buf = myLastBuffer.getCachedBuffer();
       if (buf != null && myLastChangeCount == mappingChangeCount) {

@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -23,7 +25,7 @@ public class PagedFileStorage implements Forceable {
   private static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
   public static final int MB = 1024 * 1024;
-  public static final int BUFFER_SIZE = DirectBufferPool.BUFFER_SIZE;
+  public static final int BUFFER_SIZE = FilePageCache.BUFFER_SIZE;
 
   @NotNull
   private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
@@ -44,6 +46,7 @@ public class PagedFileStorage implements Forceable {
   @NotNull
   private final Path myFile;
   private final boolean myReadOnly;
+  private final Object myInputStreamLock = new Object();
   protected final int myPageSize;
   protected final boolean myValuesAreBufferAligned;
 
@@ -98,8 +101,16 @@ public class PagedFileStorage implements Forceable {
     return myStorageLockContext;
   }
 
-  public @NotNull Path getFile() {
+  @NotNull Path getFile() {
     return myFile;
+  }
+
+  public <R> @NotNull R readInputStream(@NotNull ThrowableNotNullFunction<? super InputStream, R, ? extends IOException> consumer) throws IOException {
+    synchronized (myInputStreamLock) {
+      try (InputStream is = Files.newInputStream(myFile)) {
+        return consumer.fun(is);
+      }
+    }
   }
 
   public void putInt(long addr, int value) {
@@ -130,7 +141,7 @@ public class PagedFileStorage implements Forceable {
 
   public DirectBufferWrapper getByteBuffer(long address, boolean modify) {
     long page = address / myPageSize;
-    assert page >= 0 && page <= DirectBufferPool.MAX_PAGES_COUNT: address + " in " + myFile;
+    assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT: address + " in " + myFile;
     return getBufferWrapper(page, modify, myReadOnly);
   }
 
@@ -321,7 +332,7 @@ public class PagedFileStorage implements Forceable {
 
   private DirectBufferWrapper getBufferWrapper(long page, boolean modify, boolean readOnly) {
     DirectBufferWrapper pageFromCache =
-      myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getBufferPool().getMappingChangeCount(), readOnly);
+      myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getBufferPool().getMappingChangeCount());
 
     try {
       if (pageFromCache != null) {
@@ -329,7 +340,7 @@ public class PagedFileStorage implements Forceable {
         return pageFromCache;
       }
 
-      assert page >= 0 && page <= DirectBufferPool.MAX_PAGES_COUNT:page;
+      assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT : page;
 
       if (myStorageIndex == -1) {
         throw new IOException("storage is already closed; path " + myFile);
