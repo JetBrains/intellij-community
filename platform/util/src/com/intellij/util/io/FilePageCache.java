@@ -184,8 +184,13 @@ public final class FilePageCache {
 
     assert mySegmentsAllocationLock.isHeldByCurrentThread();
     Iterator<DirectBufferWrapper> iterator = mySegmentsToRemove.iterator();
-    while(iterator.hasNext()) {
-      iterator.next().release();
+    while (iterator.hasNext()) {
+      try {
+        iterator.next().release();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
       iterator.remove();
     }
   }
@@ -220,8 +225,8 @@ public final class FilePageCache {
 
     int min = (int)Math.min(ownerLength - off, owner.myPageSize);
     DirectBufferWrapper wrapper = readOnly
-                                ? DirectBufferWrapper.readOnlyDirect(owner.getFile(), off, min)
-                                : DirectBufferWrapper.readWriteDirect(owner.getFile(), off, min);
+                                ? DirectBufferWrapper.readOnlyDirect(owner, off, min)
+                                : DirectBufferWrapper.readWriteDirect(owner, off, min);
     Throwable oome = null;
     while (true) {
       try {
@@ -324,24 +329,15 @@ public final class FilePageCache {
 
       mySegmentsAllocationLock.lock();
       try {
-        DirectBufferWrapper.FileContext fileContext = null;
         try {
           for (DirectBufferWrapper buffer : buffers.values()) {
             if (buffer.isDirty()) {
-              if (fileContext == null) {
-                fileContext = buffer.openContext();
-              }
-              buffer.flushWithContext(fileContext);
+              buffer.force();
             }
           }
         }
         catch (IOException e) {
           exceptions.add(e);
-        }
-        finally {
-          if (fileContext != null) {
-            fileContext.close();
-          }
         }
       }
       finally {

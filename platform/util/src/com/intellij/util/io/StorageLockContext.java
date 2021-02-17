@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ApiStatus.Internal
 public final class StorageLockContext {
-  private static final FilePageCache ourDefaultPool = new FilePageCache();
+  private static final FilePageCache ourDefaultCache = new FilePageCache();
 
   private final boolean myCheckThreadAccess;
   @NotNull
@@ -16,23 +16,36 @@ public final class StorageLockContext {
   @NotNull
   private final FilePageCache myFilePageCache;
   private final boolean myUseReadWriteLock;
+  private final boolean myCacheChannels;
 
-  public StorageLockContext(@NotNull FilePageCache lock,
+  public StorageLockContext(@NotNull FilePageCache filePageCache,
                             boolean checkAccess,
-                            boolean useReadWriteLock) {
+                            boolean useReadWriteLock,
+                            boolean cacheChannels) {
     myLock = new ReentrantReadWriteLock();
-    myFilePageCache = lock;
+    myFilePageCache = filePageCache;
     myCheckThreadAccess = checkAccess;
     myUseReadWriteLock = useReadWriteLock;
+    myCacheChannels = cacheChannels;
+  }
+
+  public StorageLockContext(boolean checkAccess,
+                            boolean useReadWriteLock,
+                            boolean cacheChannels) {
+    this(ourDefaultCache, checkAccess, useReadWriteLock, cacheChannels);
   }
 
   public StorageLockContext(boolean checkAccess,
                             boolean useReadWriteLock) {
-    this(ourDefaultPool, checkAccess, useReadWriteLock);
+    this(ourDefaultCache, checkAccess, useReadWriteLock, false);
   }
 
   public StorageLockContext(boolean checkAccess) {
-    this(ourDefaultPool, checkAccess, false);
+    this(ourDefaultCache, checkAccess, false, false);
+  }
+
+  boolean useChannelCache() {
+    return myCacheChannels;
   }
 
   public void lockRead() {
@@ -62,7 +75,7 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   @NotNull
-  FilePageCache getBufferPool() {
+  FilePageCache getBufferCache() {
     return myFilePageCache;
   }
 

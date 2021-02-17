@@ -80,7 +80,7 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
   }
 
   private <T> T useFileChannel(@NotNull OpenChannelsCache.ChannelProcessor<T> channelConsumer) throws IOException {
-    return ourCache.useChannel(myFile, channelConsumer);
+    return ourCache.useChannel(myFile, channelConsumer, false);
   }
 
   public void putInt(long addr, int value) {
