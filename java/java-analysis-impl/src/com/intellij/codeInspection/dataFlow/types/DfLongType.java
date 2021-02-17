@@ -39,6 +39,7 @@ public interface DfLongType extends DfIntegralType {
   @NotNull
   @Override
   default DfType join(@NotNull DfType other) {
+    if (other == DfTypes.BOTTOM) return this;
     if (!(other instanceof DfLongType)) return DfTypes.TOP;
     LongRangeSet range = ((DfLongType)other).getRange().unite(getRange());
     LongRangeSet wideRange = ((DfLongType)other).getWideRange().unite(getWideRange());
