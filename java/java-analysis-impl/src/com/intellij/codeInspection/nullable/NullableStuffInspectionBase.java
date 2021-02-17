@@ -659,7 +659,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                   @NotNull ProblemsHolder holder,
                                                   @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey) {
     PsiElement anchor = annotation.isPhysical() ? annotation : owner.getNameIdentifier();
-    if (anchor != null) {
+    if (anchor != null && !anchor.textMatches("")) {
       reportProblem(holder, anchor, new RemoveAnnotationQuickFix(annotation, owner), messageKey);
     }
   }
