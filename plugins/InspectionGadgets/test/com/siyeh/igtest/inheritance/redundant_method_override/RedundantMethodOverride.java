@@ -357,3 +357,40 @@ class RedundantSuperBug {
     new C().foo();
   }
 }
+class RedundantSuperBug2 {
+  static class Super {
+    public void foo() {
+      System.out.println("From super");
+    }
+  }
+
+  interface Iface {
+    default void foo() {
+      System.out.println("From iface");
+    }
+  }
+  static class Sub extends Super implements Iface {
+    @Override
+    public void foo() {
+      Iface.super.foo();
+    }
+  }
+
+  static class Sub2 extends Super implements Iface {
+    @Override
+    public void <warning descr="Method 'foo()' only delegates to its super method">foo</warning>() {
+      Sub2.super.foo();
+    }
+  }
+
+  static class Sub3 implements Iface {
+    @java.lang.Override
+    public void <warning descr="Method 'foo()' only delegates to its super method">foo</warning>() {
+      Iface.super.foo();
+    }
+  }
+
+  public static void main(String[] args) {
+    new Sub().foo();
+  }
+}

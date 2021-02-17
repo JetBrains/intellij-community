@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
@@ -172,7 +173,13 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         return false;
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-      if (!MethodCallUtils.isSuperMethodCall(methodCallExpression, method)) return false;
+      if (!MethodCallUtils.isSuperMethodCall(methodCallExpression, method)) {
+        return false;
+      }
+      final PsiMethod targetMethod = methodCallExpression.resolveMethod();
+      if (targetMethod != superMethod) {
+        return false;
+      }
 
       if (superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
         final PsiJavaFile file = (PsiJavaFile)method.getContainingFile();
