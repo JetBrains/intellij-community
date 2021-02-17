@@ -53,7 +53,12 @@ import java.util.Set;
     return (Objects.hashCode(myQualifier) * 31 + Arrays.hashCode(myArguments))*31+myMutation.hashCode();
   }
 
-  public void flush(DfaMemoryState state) {
+  public void flush(@NotNull DfaMemoryState state, @NotNull DfaValueFactory factory, @Nullable PsiMethod method) {
+    SideEffectHandlers.SideEffectHandler handler = SideEffectHandlers.getHandler(method);
+    if (handler != null) {
+      handler.handleSideEffect(factory, state, this, method);
+      return;
+    }
     if (myMutation.isPure()) {
       return;
     }
@@ -100,7 +105,6 @@ import java.util.Set;
       }
       argValues[i] = argValue;
     }
-    DfaCallArguments arguments = new DfaCallArguments(qualifierValue, argValues, MutationSignature.fromCall(call));
-    return arguments;
+    return new DfaCallArguments(qualifierValue, argValues, MutationSignature.fromCall(call));
   }
 }

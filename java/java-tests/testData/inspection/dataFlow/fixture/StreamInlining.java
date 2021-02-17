@@ -194,6 +194,18 @@ public class StreamInlining {
       throw new IllegalStateException("Multiple entries found: " + a + " and " + b);
     });
     Double res = result.orElse(null);
+    if (<warning descr="Condition 'res != null' is always 'true'">res != null</warning>) {
+      System.out.println(res);
+    } else {
+      System.out.println("Huh?");
+    }
+  }
+
+  void testReduce2(List<Double> input) {
+    Optional<Double> result = input.stream().reduce((a, b) -> {
+      throw new IllegalStateException("Multiple entries found: " + a + " and " + b);
+    });
+    Double res = result.orElse(null);
     if (res != null) {
       System.out.println(res);
     } else {

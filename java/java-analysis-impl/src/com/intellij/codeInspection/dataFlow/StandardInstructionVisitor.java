@@ -436,7 +436,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (expression != null) {
         onMethodCall(state.peek(), expression, callArguments, state);
       }
-      callArguments.flush(state);
+      callArguments.flush(state, factory, instruction.getTargetMethod());
       pushExpressionResult(state.pop(), instruction, state);
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
     }

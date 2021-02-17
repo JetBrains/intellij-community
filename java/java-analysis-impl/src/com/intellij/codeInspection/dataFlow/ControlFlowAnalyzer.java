@@ -2186,7 +2186,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   static final CallInliner[] INLINERS = {
     new OptionalChainInliner(), new LambdaInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
-    new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(), new CollectionMethodInliner(),
+    new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
     new TransformInliner()
   };
 }

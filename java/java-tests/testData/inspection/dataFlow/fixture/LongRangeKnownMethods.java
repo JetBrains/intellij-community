@@ -300,6 +300,15 @@ public class LongRangeKnownMethods {
   void testSizeCheck() {
     List<String> list = new ArrayList<>();
     list.add(null);
+    if(<warning descr="Condition 'list.size() == 0' is always 'false'">list.size() == 0</warning>) return;
+    if(<warning descr="Condition 'list.size() == 0' is always 'false'">list.size() == 0</warning>) return;
+  }
+  
+  native void unknown(List<String> list);
+
+  void testSizeCheck2() {
+    List<String> list = new ArrayList<>();
+    unknown(list);
     if(list.size() == 0) return;
     if(<warning descr="Condition 'list.size() == 0' is always 'false'">list.size() == 0</warning>) return;
   }
