@@ -12,15 +12,14 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.CharFilter
-import com.intellij.openapi.util.text.StringUtil
 import java.util.concurrent.CompletableFuture
 
 class WslTargetIntrospectable(val distribution: WSLDistribution, val console: ConsoleView) : LanguageRuntimeType.Introspectable() {
 
   override fun promiseEnvironmentVariable(varName: String): CompletableFuture<String?> {
     try {
-      val value = StringUtil.trim(executeCommand(listOf("printenv", varName)), CharFilter.NOT_WHITESPACE_FILTER)
+      val value = distribution.getEnvironmentVariable(varName)
+      console.print("$varName=$value\n\n", ConsoleViewContentType.NORMAL_OUTPUT)
       return CompletableFuture.completedFuture(value)
     }
     catch (t: Throwable) {
