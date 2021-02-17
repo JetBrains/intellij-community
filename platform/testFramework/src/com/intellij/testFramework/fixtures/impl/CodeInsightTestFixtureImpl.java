@@ -979,7 +979,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final UsageHandler<Object> handler = (UsageHandler<Object>)target.getUsageHandler();
     final SearchScope searchScope = coalesce(target.getMaximalSearchScope(), GlobalSearchScope.allScope(project));
     final AllSearchOptions<Object> allOptions =
-      new AllSearchOptions<>(UsageOptions.createOptions(searchScope), false, handler.getCustomOptions(FIND_USAGES));
+      new AllSearchOptions<>(UsageOptions.createOptions(searchScope), true, handler.getCustomOptions(FIND_USAGES));
 
     final List<UsageTarget> usageTargets = List.of(new SearchTarget2UsageTarget<>(project, target, allOptions));
     final Collection<? extends Usage> usages = buildUsageViewQuery(getProject(), target, handler, allOptions).findAll();
