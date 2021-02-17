@@ -152,6 +152,14 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<MakeStaticAction>())
   }
 
+  fun testConvertToInstanceMethod() {
+    assertTrue(doActionExists<ConvertToInstanceMethodAction>())
+  }
+
+  fun testConvertToInstanceMethodFiltered() {
+    assertFalse(doActionExists<ConvertToInstanceMethodAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     val actions = findAvailableActions()

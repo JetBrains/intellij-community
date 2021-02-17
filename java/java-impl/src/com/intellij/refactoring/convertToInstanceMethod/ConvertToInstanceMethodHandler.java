@@ -16,6 +16,7 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +28,8 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -39,7 +42,7 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class ConvertToInstanceMethodHandler implements RefactoringActionHandler {
+public class ConvertToInstanceMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodHandler.class);
 
   @Override
@@ -120,6 +123,12 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     }
 
     new ConvertToInstanceMethodDialog(method, ArrayUtil.toObjectArray(targetQualifiers)).show();
+  }
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    PsiElement caretElement = BaseRefactoringAction.getElementAtCaret(editor, file);
+    return RefactoringActionContextUtil.getJavaMethodHeader(caretElement) != null;
   }
 
   static @NlsContexts.DialogTitle String getRefactoringName() {
