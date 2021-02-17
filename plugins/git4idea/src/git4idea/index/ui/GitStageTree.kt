@@ -5,7 +5,6 @@ import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.ide.dnd.DnDActionInfo
 import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -253,24 +252,6 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   private fun isUnderKind(node: ChangesBrowserNode<*>, nodeKind: NodeKind): Boolean {
     val nodePath = node.path?.takeIf { it.isNotEmpty() } ?: return false
     return (nodePath.find { it is MyKindNode } as? MyKindNode)?.kind == nodeKind
-  }
-
-  override fun installGroupingSupport(): ChangesGroupingSupport {
-    val result = ChangesGroupingSupport(project, this, false)
-
-    if (PropertiesComponent.getInstance(project).getValues(GROUPING_PROPERTY_NAME) == null) {
-      val oldGroupingKeys = (PropertiesComponent.getInstance(project).getValues(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
-      oldGroupingKeys.add(REPOSITORY_GROUPING)
-      PropertiesComponent.getInstance(project).setValues(GROUPING_PROPERTY_NAME, *oldGroupingKeys.toTypedArray())
-    }
-
-    installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
-    return result
-  }
-
-  companion object {
-    @NonNls
-    private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
   }
 
   private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)
