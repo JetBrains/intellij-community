@@ -50,9 +50,9 @@ class ClsJavaStubByVirtualFileCache {
         try {
             return ClsFileImpl.buildFileStub(file, file.contentsToByteArray(false))
         } catch (e: ClsFormatException) {
-            LOG.error("Failed to build java cls class for " + file.canonicalPath!!, e)
+            LOG.warn("Failed to build java cls class for " + file.canonicalPath!!, e)
         } catch (e: IOException) {
-            LOG.error("Failed to build java cls class for " + file.canonicalPath!!, e)
+            LOG.warn("Failed to build java cls class for " + file.canonicalPath!!, e)
         }
 
         return null
