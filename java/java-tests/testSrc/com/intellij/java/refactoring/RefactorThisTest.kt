@@ -127,9 +127,18 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertTrue(doActionExists<MoveAction>())
   }
 
+  fun testIntroduceParameterObject() {
+    assertTrue(doActionExists<IntroduceParameterObjectAction>())
+  }
+
+  fun testIntroduceParameterObjectFiltered() {
+    assertFalse(doActionExists<IntroduceParameterObjectAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
-    return findAvailableActions().any { action -> action is A }
+    val actions = findAvailableActions()
+    return actions.any { action -> action is A }
   }
 
   private fun findAvailableActions(): List<AnAction> {

@@ -30,13 +30,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class IntroduceParameterObjectHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    final PsiMethod selectedMethod = getSelectedMethod(editor, file, dataContext);
+    final PsiMethod selectedMethod = getSelectedMethod(editor, file);
     if (selectedMethod != null) {
       final PsiMethod[] deepestSuperMethods = selectedMethod.findDeepestSuperMethods();
       return deepestSuperMethods.length > 0 || getErrorMessage(selectedMethod) == null;
@@ -48,7 +49,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     final ScrollingModel scrollingModel = editor.getScrollingModel();
     scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiMethod selectedMethod = getSelectedMethod(editor, file, dataContext);
+    PsiMethod selectedMethod = getSelectedMethod(editor, file);
     if (selectedMethod == null) {
       final String message = RefactorJBundle.message("cannot.perform.the.refactoring") +
                              RefactorJBundle.message("the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored");
@@ -58,31 +59,10 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     invoke(project, selectedMethod, editor);
   }
 
-  private static PsiMethod getSelectedMethod(Editor editor, PsiFile file, DataContext dataContext) {
-    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    PsiMethod selectedMethod = null;
-    if (element instanceof PsiMethod) {
-      selectedMethod = (PsiMethod)element;
-    }
-    else if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod){
-      selectedMethod = (PsiMethod)((PsiParameter)element).getDeclarationScope();
-    }
-    else {
-      final CaretModel caretModel = editor.getCaretModel();
-      final int position = caretModel.getOffset();
-      final PsiElement elementAt = file.findElementAt(position);
-      final PsiMethodCallExpression methodCallExpression =
-       PsiTreeUtil.getParentOfType(elementAt, PsiMethodCallExpression.class);
-      if (methodCallExpression != null) {
-        selectedMethod = methodCallExpression.resolveMethod();
-      } else {
-        final PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
-        if (parameterList != null && parameterList.getParent() instanceof PsiMethod) {
-          selectedMethod = (PsiMethod)parameterList.getParent();
-        }
-      }
-    }
-    return selectedMethod;
+  private static PsiMethod getSelectedMethod(Editor editor, PsiFile file) {
+    final int caret = editor.getCaretModel().getOffset();
+    final PsiElement elementAt = file.findElementAt(caret);
+    return RefactoringActionContextUtil.getJavaMethodHeader(elementAt);
   }
 
   @Override
