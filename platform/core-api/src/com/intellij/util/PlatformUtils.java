@@ -40,7 +40,7 @@ public final class PlatformUtils {
   public static final @NonNls String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "GoLand";
   public static final String FLEET_PREFIX = "FleetBackend";
-  public static final String INTELLIJ_CLIENT_PREFIX = "IntelliJClient";
+  public static final String CWM_GUEST_PREFIX = "CodeWithMeGuest";
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
     IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, MOBILE_IDE_PREFIX, PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX, DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX));
@@ -141,7 +141,7 @@ public final class PlatformUtils {
   }
 
   public static boolean isIntelliJClient() {
-    return is(INTELLIJ_CLIENT_PREFIX);
+    return is(CWM_GUEST_PREFIX);
   }
 
   public static boolean isCommunityEdition() {
