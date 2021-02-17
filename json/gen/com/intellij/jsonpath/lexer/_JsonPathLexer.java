@@ -28,6 +28,7 @@ public class _JsonPathLexer implements FlexLexer {
   public static final int REGEX_EXPECTED = 4;
   public static final int SEGMENT_EXPRESSION = 6;
   public static final int SCRIPT_EXPRESSION = 8;
+  public static final int NESTED_PATH = 10;
 
   /**
    * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
@@ -36,7 +37,7 @@ public class _JsonPathLexer implements FlexLexer {
    * l is of the form l = 2*k, k a non negative integer
    */
   private static final int ZZ_LEXSTATE[] = { 
-     0,  0,  1,  1,  2,  2,  3,  3,  4, 4
+     0,  0,  1,  1,  2,  2,  3,  3,  4,  4,  0, 0
   };
 
   /** 
@@ -166,14 +167,14 @@ public class _JsonPathLexer implements FlexLexer {
 
   private static final String ZZ_ACTION_PACKED_0 =
     "\5\0\1\1\1\2\1\3\1\4\1\5\1\6\2\7"+
-    "\1\10\1\11\1\12\1\13\1\14\1\15\1\16\1\17"+
-    "\1\20\1\21\1\22\1\23\1\1\1\24\1\25\2\1"+
-    "\1\26\1\27\1\30\1\31\1\32\1\33\1\6\1\34"+
-    "\1\35\1\36\1\37\3\1\1\40\1\41\1\42\1\43"+
-    "\3\42\1\0\2\44\2\10\2\11\1\45\1\46\1\47"+
-    "\1\50\1\51\1\52\1\53\1\54\2\33\1\7\1\55"+
-    "\3\0\3\42\1\44\1\56\1\57\3\0\3\42\1\60"+
-    "\1\61\1\0\1\60\1\61\1\42\2\62";
+    "\1\10\1\11\1\12\1\13\1\14\1\15\1\4\1\16"+
+    "\1\17\1\20\1\21\1\22\1\1\1\23\1\24\2\1"+
+    "\1\25\1\26\1\27\1\30\1\31\1\32\1\6\1\33"+
+    "\1\34\1\35\1\36\3\1\1\37\1\40\1\41\1\42"+
+    "\3\41\1\0\2\43\2\10\2\11\1\44\1\45\1\46"+
+    "\1\47\1\50\1\51\1\52\1\53\2\32\1\7\1\54"+
+    "\3\0\3\41\1\43\1\55\1\56\3\0\3\41\1\57"+
+    "\1\60\1\0\1\57\1\60\1\41\2\61";
 
   private static int [] zzUnpackAction() {
     int [] result = new int[93];
@@ -676,72 +677,18 @@ public class _JsonPathLexer implements FlexLexer {
     popState();
             } 
             // fall through
-          case 51: break;
+          case 50: break;
           case 2: 
             { return JsonPathTypes.ROOT_CONTEXT;
             } 
             // fall through
-          case 52: break;
+          case 51: break;
           case 3: 
             { return JsonPathTypes.EVAL_CONTEXT;
             } 
             // fall through
-          case 53: break;
+          case 52: break;
           case 4: 
-            { if (myStateStack.isEmpty()) {
-      return TokenType.BAD_CHARACTER;
-    }
-    popState();
-    return TokenType.WHITE_SPACE;
-            } 
-            // fall through
-          case 54: break;
-          case 5: 
-            { return JsonPathTypes.IDENTIFIER;
-            } 
-            // fall through
-          case 55: break;
-          case 6: 
-            { return JsonPathTypes.MINUS_OP;
-            } 
-            // fall through
-          case 56: break;
-          case 7: 
-            { return JsonPathTypes.INTEGER_NUMBER;
-            } 
-            // fall through
-          case 57: break;
-          case 8: 
-            { return JsonPathTypes.SINGLE_QUOTED_STRING;
-            } 
-            // fall through
-          case 58: break;
-          case 9: 
-            { return JsonPathTypes.DOUBLE_QUOTED_STRING;
-            } 
-            // fall through
-          case 59: break;
-          case 10: 
-            { return JsonPathTypes.DIVIDE_OP;
-            } 
-            // fall through
-          case 60: break;
-          case 11: 
-            { pushState(WILDCARD_EXPECTED); return JsonPathTypes.DOT;
-            } 
-            // fall through
-          case 61: break;
-          case 12: 
-            { return JsonPathTypes.PLUS_OP;
-            } 
-            // fall through
-          case 62: break;
-          case 13: 
-            { pushState(SEGMENT_EXPRESSION); return JsonPathTypes.LBRACKET;
-            } 
-            // fall through
-          case 63: break;
-          case 14: 
             { if (myStateStack.isEmpty()) {
       return TokenType.BAD_CHARACTER;
     }
@@ -749,187 +696,232 @@ public class _JsonPathLexer implements FlexLexer {
     popState();
             } 
             // fall through
-          case 64: break;
-          case 15: 
+          case 53: break;
+          case 5: 
+            { return JsonPathTypes.IDENTIFIER;
+            } 
+            // fall through
+          case 54: break;
+          case 6: 
+            { return JsonPathTypes.MINUS_OP;
+            } 
+            // fall through
+          case 55: break;
+          case 7: 
+            { return JsonPathTypes.INTEGER_NUMBER;
+            } 
+            // fall through
+          case 56: break;
+          case 8: 
+            { return JsonPathTypes.SINGLE_QUOTED_STRING;
+            } 
+            // fall through
+          case 57: break;
+          case 9: 
+            { return JsonPathTypes.DOUBLE_QUOTED_STRING;
+            } 
+            // fall through
+          case 58: break;
+          case 10: 
+            { return JsonPathTypes.DIVIDE_OP;
+            } 
+            // fall through
+          case 59: break;
+          case 11: 
+            { pushState(WILDCARD_EXPECTED); return JsonPathTypes.DOT;
+            } 
+            // fall through
+          case 60: break;
+          case 12: 
+            { return JsonPathTypes.PLUS_OP;
+            } 
+            // fall through
+          case 61: break;
+          case 13: 
+            { pushState(SEGMENT_EXPRESSION); return JsonPathTypes.LBRACKET;
+            } 
+            // fall through
+          case 62: break;
+          case 14: 
             { return JsonPathTypes.MULTIPLY_OP;
             } 
             // fall through
-          case 65: break;
-          case 16: 
+          case 63: break;
+          case 15: 
             { return JsonPathTypes.LBRACE;
             } 
             // fall through
-          case 66: break;
-          case 17: 
+          case 64: break;
+          case 16: 
             { return JsonPathTypes.RBRACE;
             } 
             // fall through
-          case 67: break;
-          case 18: 
+          case 65: break;
+          case 17: 
             { pushState(SCRIPT_EXPRESSION); return JsonPathTypes.LPARENTH;
             } 
             // fall through
-          case 68: break;
-          case 19: 
+          case 66: break;
+          case 18: 
             { return JsonPathTypes.NOT_OP;
             } 
             // fall through
-          case 69: break;
-          case 20: 
+          case 67: break;
+          case 19: 
             { return JsonPathTypes.GT_OP;
             } 
             // fall through
-          case 70: break;
-          case 21: 
+          case 68: break;
+          case 20: 
             { return JsonPathTypes.LT_OP;
             } 
             // fall through
-          case 71: break;
-          case 22: 
+          case 69: break;
+          case 21: 
             { return JsonPathTypes.COLON;
             } 
             // fall through
-          case 72: break;
-          case 23: 
+          case 70: break;
+          case 22: 
             { return JsonPathTypes.COMMA;
             } 
             // fall through
-          case 73: break;
-          case 24: 
+          case 71: break;
+          case 23: 
             { return JsonPathTypes.FILTER_OPERATOR;
             } 
             // fall through
-          case 74: break;
-          case 25: 
+          case 72: break;
+          case 24: 
             { return JsonPathTypes.WILDCARD;
             } 
             // fall through
-          case 75: break;
-          case 26: 
+          case 73: break;
+          case 25: 
             { return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 76: break;
-          case 27: 
+          case 74: break;
+          case 26: 
             { return JsonPathTypes.REGEX_STRING;
             } 
             // fall through
-          case 77: break;
-          case 28: 
+          case 75: break;
+          case 27: 
             { return JsonPathTypes.DOT;
             } 
             // fall through
-          case 78: break;
-          case 29: 
+          case 76: break;
+          case 28: 
             { return JsonPathTypes.LBRACKET;
             } 
             // fall through
-          case 79: break;
-          case 30: 
+          case 77: break;
+          case 29: 
             { popState(); return JsonPathTypes.RPARENTH;
             } 
             // fall through
-          case 80: break;
-          case 31: 
+          case 78: break;
+          case 30: 
             { popState(); return JsonPathTypes.RBRACKET;
             } 
             // fall through
-          case 81: break;
+          case 79: break;
+          case 31: 
+            { pushState(NESTED_PATH); return JsonPathTypes.ROOT_CONTEXT;
+            } 
+            // fall through
+          case 80: break;
           case 32: 
-            { pushState(YYINITIAL); return JsonPathTypes.ROOT_CONTEXT;
+            { pushState(NESTED_PATH); return JsonPathTypes.EVAL_CONTEXT;
             } 
             // fall through
-          case 82: break;
+          case 81: break;
           case 33: 
-            { pushState(YYINITIAL); return JsonPathTypes.EVAL_CONTEXT;
-            } 
-            // fall through
-          case 83: break;
-          case 34: 
             { return JsonPathTypes.NAMED_OP;
             } 
             // fall through
-          case 84: break;
-          case 35: 
+          case 82: break;
+          case 34: 
             { return JsonPathTypes.RBRACKET;
             } 
             // fall through
-          case 85: break;
-          case 36: 
+          case 83: break;
+          case 35: 
             { return JsonPathTypes.DOUBLE_NUMBER;
             } 
             // fall through
-          case 86: break;
-          case 37: 
+          case 84: break;
+          case 36: 
             { pushState(WILDCARD_EXPECTED); return JsonPathTypes.RECURSIVE_DESCENT;
             } 
             // fall through
-          case 87: break;
-          case 38: 
+          case 85: break;
+          case 37: 
             { return JsonPathTypes.NE_OP;
             } 
             // fall through
-          case 88: break;
-          case 39: 
+          case 86: break;
+          case 38: 
             { return JsonPathTypes.EQ_OP;
             } 
             // fall through
-          case 89: break;
-          case 40: 
+          case 87: break;
+          case 39: 
             { pushState(REGEX_EXPECTED); return JsonPathTypes.RE_OP;
             } 
             // fall through
-          case 90: break;
-          case 41: 
+          case 88: break;
+          case 40: 
             { return JsonPathTypes.GE_OP;
             } 
             // fall through
-          case 91: break;
-          case 42: 
+          case 89: break;
+          case 41: 
             { return JsonPathTypes.LE_OP;
             } 
             // fall through
-          case 92: break;
-          case 43: 
+          case 90: break;
+          case 42: 
             { return JsonPathTypes.OR_OP;
             } 
             // fall through
-          case 93: break;
-          case 44: 
+          case 91: break;
+          case 43: 
             { return JsonPathTypes.AND_OP;
             } 
             // fall through
-          case 94: break;
-          case 45: 
+          case 92: break;
+          case 44: 
             { return JsonPathTypes.RECURSIVE_DESCENT;
             } 
             // fall through
-          case 95: break;
-          case 46: 
+          case 93: break;
+          case 45: 
             { return JsonPathTypes.ENE_OP;
             } 
             // fall through
-          case 96: break;
-          case 47: 
+          case 94: break;
+          case 46: 
             { return JsonPathTypes.EEQ_OP;
             } 
             // fall through
-          case 97: break;
-          case 48: 
+          case 95: break;
+          case 47: 
             { return JsonPathTypes.NULL;
             } 
             // fall through
-          case 98: break;
-          case 49: 
+          case 96: break;
+          case 48: 
             { return JsonPathTypes.TRUE;
             } 
             // fall through
-          case 99: break;
-          case 50: 
+          case 97: break;
+          case 49: 
             { return JsonPathTypes.FALSE;
             } 
             // fall through
-          case 100: break;
+          case 98: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }
