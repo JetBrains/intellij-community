@@ -30,7 +30,7 @@ final class InterfaceExtensionImplementationClassResolver implements Implementat
         !result.isAnnotationPresent(InternalIgnoreDependencyViolation.class)) {
       String idString = pluginDescriptor.getPluginId().getIdString();
       if (!idString.equals("com.intellij.java") && !idString.equals("com.intellij.java.ide") && !idString.equals("org.jetbrains.android")
-          && !idString.equals("com.intellij.kotlinNative.platformDeps")) {
+          && !idString.equals("com.intellij.kotlinNative.platformDeps") && !idString.equals("com.jetbrains.rider.android")) {
         ExtensionPointImpl.LOG.error(componentManager.createError("Created extension classloader is not equal to plugin's one.\n" +
                                                                   "See https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md\n" +
                                                                   "(\n" +
