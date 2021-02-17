@@ -53,7 +53,7 @@ public class GradleTestEventsProcessor {
       }
     }
     if (event instanceof ExternalSystemFinishEvent) {
-      if (descriptor.getMethodName() == null) {
+      if (StringUtil.isEmpty(descriptor.getMethodName())) {
         return TestEventType.AFTER_SUITE;
       } else {
         return TestEventType.AFTER_TEST;
