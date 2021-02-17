@@ -144,6 +144,14 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<WrapReturnValueAction>())
   }
 
+  fun testMakeStatic() {
+    assertTrue(doActionExists<MakeStaticAction>())
+  }
+
+  fun testMakeStaticFiltered() {
+    assertFalse(doActionExists<MakeStaticAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     val actions = findAvailableActions()

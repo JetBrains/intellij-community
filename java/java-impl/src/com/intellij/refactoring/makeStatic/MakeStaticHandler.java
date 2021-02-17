@@ -17,6 +17,7 @@
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,11 +34,13 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MakeStaticHandler implements RefactoringActionHandler {
+public class MakeStaticHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(MakeStaticHandler.class);
 
   @Override
@@ -77,6 +80,12 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     }
 
     invoke(member);
+  }
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    PsiElement element = BaseRefactoringAction.getElementAtCaret(editor, file);
+    return RefactoringActionContextUtil.getJavaMethodHeader(element) != null;
   }
 
   public static void invoke(final PsiTypeParameterListOwner member) {
