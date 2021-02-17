@@ -5,7 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerConfigurableProxy;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -107,13 +107,8 @@ public class IntentionDescriptionPanel {
     boolean isCustomPlugin = pluginDescriptor != null && pluginDescriptor.isBundled() && !appInfo.isEssentialPlugin(pluginId);
     if (isCustomPlugin) {
       HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
-      label.addHyperlinkListener(__ -> {
-        PluginManagerConfigurableProxy.showPluginConfigurable(
-          null,
-          ProjectManager.getInstance().getDefaultProject(),
-          pluginDescriptor
-        );
-      });
+      label.addHyperlinkListener(__ -> PluginManagerConfigurable.showPluginConfigurable(ProjectManager.getInstance().getDefaultProject(),
+                                                                                        List.of(pluginId)));
       myPoweredByPanel.add(label, BorderLayout.CENTER);
     }
     myPoweredByPanel.setVisible(isCustomPlugin);

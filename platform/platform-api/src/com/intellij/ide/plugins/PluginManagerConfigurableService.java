@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,5 +11,6 @@ public interface PluginManagerConfigurableService {
     return ApplicationManager.getApplication().getService(PluginManagerConfigurableService.class);
   }
 
-  void showPluginConfigurableAndEnable(@Nullable Project project, PluginId @NotNull ... plugins);
+  void showPluginConfigurableAndEnable(@Nullable Project project,
+                                       String @NotNull ... plugins);
 }

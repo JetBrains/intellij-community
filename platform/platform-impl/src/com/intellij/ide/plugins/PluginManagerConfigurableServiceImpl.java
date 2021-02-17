@@ -2,30 +2,28 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+import java.util.LinkedHashSet;
+import java.util.Map;
 
-public class PluginManagerConfigurableServiceImpl implements PluginManagerConfigurableService {
+final class PluginManagerConfigurableServiceImpl implements PluginManagerConfigurableService {
+
   @Override
   public void showPluginConfigurableAndEnable(@Nullable Project project,
-                                              PluginId @NotNull ... plugins) {
-    IdeaPluginDescriptor[] descriptors = new IdeaPluginDescriptor[plugins.length];
-    for (int i = 0; i < plugins.length; i++) {
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(plugins[i]);
+                                              String @NotNull ... plugins) {
+    Map<PluginId, IdeaPluginDescriptorImpl> descriptorsById = PluginManagerCore.buildPluginIdMap();
+    LinkedHashSet<IdeaPluginDescriptor> descriptors = new LinkedHashSet<>();
+    for (String plugin : plugins) {
+      IdeaPluginDescriptor descriptor = descriptorsById.get(PluginId.getId(plugin));
       if (descriptor == null) {
-        throw new IllegalArgumentException("Plugin " + plugins[i] + " not found");
+        throw new IllegalArgumentException("Plugin " + plugin + " not found");
       }
-      descriptors[i] = descriptor;
+      descriptors.add(descriptor);
     }
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-      configurable.getPluginModel()
-        .enablePlugins(Set.of(descriptors));
-      configurable.select(descriptors);
-    });
+
+    PluginManagerConfigurable.showPluginConfigurableAndEnable(project, descriptors);
   }
 }

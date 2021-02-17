@@ -265,21 +265,22 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   public void addComponent(@NotNull ListPluginComponent component) {
     IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
+    PluginId pluginId = descriptor.getPluginId();
     if (!component.isMarketplace()) {
       if (myInstallingPlugins.contains(descriptor) &&
-          (myInstalling == null || myInstalling.ui == null || myInstalling.ui.findComponent(descriptor) == null)) {
+          (myInstalling == null || myInstalling.ui == null || myInstalling.ui.findComponent(pluginId) == null)) {
         return;
       }
 
       myInstalledPluginComponents.add(component);
 
       List<ListPluginComponent> components =
-        myInstalledPluginComponentMap.computeIfAbsent(descriptor.getPluginId(), __ -> new ArrayList<>());
+        myInstalledPluginComponentMap.computeIfAbsent(pluginId, __ -> new ArrayList<>());
       components.add(component);
     }
     else {
       List<ListPluginComponent> components =
-        myMarketplacePluginComponentMap.computeIfAbsent(descriptor.getPluginId(), __ -> new ArrayList<>());
+        myMarketplacePluginComponentMap.computeIfAbsent(pluginId, __ -> new ArrayList<>());
       components.add(component);
     }
   }
@@ -527,7 +528,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       myTopController.showProgress(false);
     }
 
-    List<ListPluginComponent> marketplaceComponents = myMarketplacePluginComponentMap.get(descriptor.getPluginId());
+    PluginId pluginId = descriptor.getPluginId();
+    List<ListPluginComponent> marketplaceComponents = myMarketplacePluginComponentMap.get(pluginId);
     if (marketplaceComponents != null) {
       for (ListPluginComponent gridComponent : marketplaceComponents) {
         if (installedDescriptor != null) {
@@ -536,7 +538,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         gridComponent.hideProgress(success, restartRequired);
       }
     }
-    List<ListPluginComponent> installedComponents = myInstalledPluginComponentMap.get(descriptor.getPluginId());
+    List<ListPluginComponent> installedComponents = myInstalledPluginComponentMap.get(pluginId);
     if (installedComponents != null) {
       for (ListPluginComponent listComponent : installedComponents) {
         if (installedDescriptor != null) {
@@ -575,7 +577,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
     else if (success) {
       if (myDownloaded != null && myDownloaded.ui != null && restartRequired) {
-        ListPluginComponent component = myDownloaded.ui.findComponent(descriptor);
+        ListPluginComponent component = myDownloaded.ui.findComponent(pluginId);
         if (component != null) {
           component.enableRestart();
         }
@@ -650,13 +652,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
 
     for (IdeaPluginDescriptor descriptor : InstalledPluginsState.getInstance().getInstalledPlugins()) {
-      if (myDownloaded.ui.findComponent(descriptor) != null) {
+      PluginId pluginId = descriptor.getPluginId();
+      if (myDownloaded.ui.findComponent(pluginId) != null) {
         continue;
       }
 
       appendOrUpdateDescriptor(descriptor, true);
 
-      String id = descriptor.getPluginId().getIdString();
+      String id = pluginId.getIdString();
 
       for (Map.Entry<PluginId, List<ListPluginComponent>> entry : myMarketplacePluginComponentMap.entrySet()) {
         if (id.equals(entry.getKey().getIdString())) {
@@ -712,7 +715,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       addEnabledGroup(myDownloaded);
     }
     else {
-      ListPluginComponent component = myDownloaded.ui.findComponent(descriptor);
+      ListPluginComponent component = myDownloaded.ui.findComponent(id);
       if (component != null) {
         myInstalledPanel.setSelection(component);
         component.enableRestart();

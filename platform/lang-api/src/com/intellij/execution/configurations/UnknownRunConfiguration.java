@@ -9,7 +9,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.plugins.PluginFeatureService;
 import com.intellij.ide.plugins.PluginManagerConfigurableService;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -121,7 +120,8 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
         RuntimeConfigurationError err = new RuntimeConfigurationError(
           LangBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.getDisplayName()));
         err.setQuickFix(() -> {
-          PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null, PluginId.getId(plugin.getPluginId()));
+          PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null,
+                                                                                         plugin.getPluginId());
         });
         throw err;
       }

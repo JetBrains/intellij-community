@@ -2,10 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginFeatureService
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.RepositoryHelper
+import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -117,34 +114,30 @@ open class PluginAdvertiserService {
                                                       if (plugins.isNotEmpty() || disabledPlugins.isNotEmpty()) {
                                                         message = getAddressedMessagePresentation(plugins, disabledPlugins, features)
                                                         if (disabledPlugins.isNotEmpty()) {
-                                                          val title: String
-                                                          title = if (disabledPlugins.size == 1) {
-                                                            val descriptor = disabledPlugins.values.iterator().next()
-                                                            IdeBundle.message("plugins.advertiser.action.enable.plugin", descriptor.name)
-                                                          }
-                                                          else {
+                                                          val disabledDescriptors = disabledPlugins.values
+                                                          val title = if (disabledPlugins.size == 1)
+                                                            IdeBundle.message(
+                                                              "plugins.advertiser.action.enable.plugin",
+                                                              disabledDescriptors.single().name
+                                                            )
+                                                          else
                                                             IdeBundle.message("plugins.advertiser.action.enable.plugins")
+
+                                                          val action = NotificationAction.createSimpleExpiring(title) {
+                                                            val data = FeatureUsageData()
+                                                              .addData("source", "notification")
+                                                              .addData("plugins", disabledDescriptors.map { it.pluginId.idString })
+                                                            FUCounterUsageLogger.getInstance().logEvent(
+                                                              PluginsAdvertiser.FUS_GROUP_ID,
+                                                              "enable.plugins",
+                                                              data,
+                                                            )
+                                                            PluginManagerConfigurable.showPluginConfigurableAndEnable(
+                                                              project,
+                                                              disabledDescriptors.toSet(),
+                                                            )
                                                           }
-                                                          notificationActions.add(
-                                                            NotificationAction.createSimpleExpiring(
-                                                              title
-                                                            ) {
-                                                              val disabledPluginIds =
-                                                                ContainerUtil.map(
-                                                                  disabledPlugins.values
-                                                                ) { plugin: IdeaPluginDescriptor -> plugin.pluginId }
-                                                              val data = FeatureUsageData()
-                                                                .addData("source", "notification")
-                                                                .addData(
-                                                                  "plugins", ContainerUtil.map(
-                                                                  disabledPluginIds
-                                                                ) { id: PluginId -> id.idString }
-                                                                )
-                                                              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID,
-                                                                                                          "enable.plugins", data)
-                                                              PluginsAdvertiser.enablePlugins(project, disabledPluginIds)
-                                                            }
-                                                          )
+                                                          notificationActions.add(action)
                                                         }
                                                         else {
                                                           notificationActions.add(

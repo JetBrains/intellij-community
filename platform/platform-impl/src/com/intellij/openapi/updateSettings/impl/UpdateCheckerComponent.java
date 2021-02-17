@@ -34,14 +34,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.event.InputEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -277,26 +276,29 @@ final class UpdateCheckerComponent {
 
     String title = IdeBundle.message("update.installed.notification.title");
     String message = new HtmlBuilder()
-      .appendWithSeparators(HtmlChunk.text(", "), ContainerUtil.map(descriptors, d -> HtmlChunk.link(d.getPluginId().getIdString(), d.getName())))
+      .appendWithSeparators(HtmlChunk.text(", "),
+                            ContainerUtil.map(descriptors, d -> HtmlChunk.link(d.getPluginId().getIdString(), d.getName())))
       .wrapWith("html").toString();
 
-    UpdateChecker.getNotificationGroupForUpdateResults().createNotification(title, message, NotificationType.INFORMATION,
-                                                                            (notification, event) -> {
-      String id = event.getDescription();
-      if (id == null) return;
+    UpdateChecker.getNotificationGroupForUpdateResults()
+      .createNotification(title,
+                          message,
+                          NotificationType.INFORMATION,
+                          (__, event) -> {
+                            String id = event.getDescription();
+                            PluginId pluginId = id != null ? PluginId.findId(id) : null;
 
-      PluginId pluginId = PluginId.findId(id);
-      if (pluginId == null) return;
+                            if (pluginId != null) {
+                              PluginManagerConfigurable.showPluginConfigurable(findProject(event), List.of(pluginId));
+                            }
+                          }, "plugins.updated.after.restart").notify(project);
+  }
 
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
-      if (descriptor == null) return;
-
-      InputEvent inputEvent = event.getInputEvent();
-      Component component = inputEvent == null ? null : inputEvent.getComponent();
-      DataProvider provider = component == null ? null : DataManager.getDataProvider((JComponent)component);
-
-      PluginManagerConfigurable.showPluginConfigurable(provider == null ? null : CommonDataKeys.PROJECT.getData(provider), descriptor);
-    }, "plugins.updated.after.restart").notify(project);
+  private static @Nullable Project findProject(@NotNull HyperlinkEvent event) {
+    InputEvent inputEvent = event.getInputEvent();
+    JComponent component = inputEvent != null ? (JComponent)inputEvent.getComponent() : null;
+    DataProvider provider = component != null ? DataManager.getDataProvider(component) : null;
+    return provider != null ? CommonDataKeys.PROJECT.getData(provider) : null;
   }
 
   private static Set<String> getUpdatedPlugins() {

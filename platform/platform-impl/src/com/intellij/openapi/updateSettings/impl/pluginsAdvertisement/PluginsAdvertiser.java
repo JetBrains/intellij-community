@@ -125,10 +125,6 @@ public final class PluginsAdvertiser {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/idea/download/"));
   }
 
-  static void enablePlugins(Project project, final Collection<PluginId> disabledPlugins) {
-    PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(project, disabledPlugins.toArray(PluginId.EMPTY_ARRAY));
-  }
-
   static @NotNull List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) {
       return Collections.emptyList();

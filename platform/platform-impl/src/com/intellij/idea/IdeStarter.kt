@@ -10,7 +10,7 @@ import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.DisabledPluginsState
-import com.intellij.ide.plugins.PluginManagerConfigurableProxy
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -271,8 +271,11 @@ private fun reportPluginErrors() {
 
       val description = event.description
       if (PluginManagerCore.EDIT == description) {
-        val ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null)
-        PluginManagerConfigurableProxy.showPluginConfigurable(ideFrame?.component, null)
+        PluginManagerConfigurable.showPluginConfigurable(
+          WindowManagerEx.getInstanceEx().findFrameFor(null)?.component,
+          null,
+          emptyList(),
+        )
         return@Notification
       }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -40,14 +41,16 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LicensingFacade;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -55,8 +58,6 @@ import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -815,7 +816,7 @@ public final class PluginManagerConfigurable
               public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
                 myUpdateAll.setEnabled(false);
 
-                for (UIPluginGroup group : myInstalledPanel.getGroups()) {
+                for (UIPluginGroup group : getInstalledGroups()) {
                   for (ListPluginComponent plugin : group.plugins) {
                     plugin.updatePlugin();
                   }
@@ -1375,9 +1376,46 @@ public final class PluginManagerConfigurable
     }
   }
 
+  /**
+   * @deprecated Please use {@link #showPluginConfigurable(Project, Collection)}.
+   */
+  @Deprecated(since = "2020.2", forRemoval = true)
   public static void showPluginConfigurable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
+    showPluginConfigurable(project,
+                           ContainerUtil.map(descriptors, IdeaPluginDescriptor::getPluginId));
+  }
+
+  public static void showPluginConfigurable(@Nullable Project project,
+                                            @NotNull Collection<PluginId> pluginIds) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
+    ShowSettingsUtil.getInstance().editConfigurable(project,
+                                                    configurable,
+                                                    () -> configurable.select(pluginIds));
+  }
+
+  public static void showPluginConfigurable(@Nullable Component parent,
+                                            @Nullable Project project,
+                                            @NotNull Collection<PluginId> pluginIds) {
+    if (parent != null) {
+      PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
+      ShowSettingsUtil.getInstance().editConfigurable(parent,
+                                                      configurable,
+                                                      () -> configurable.select(pluginIds));
+    }
+    else {
+      showPluginConfigurable(project, pluginIds);
+    }
+  }
+
+  public static void showPluginConfigurableAndEnable(@Nullable Project project,
+                                                     @NotNull Set<? extends IdeaPluginDescriptor> descriptors) {
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
+    ShowSettingsUtil.getInstance().editConfigurable(project,
+                                                    configurable,
+                                                    () -> {
+                                                      configurable.myPluginModel.enablePlugins(descriptors);
+                                                      configurable.select(descriptors);
+                                                    });
   }
 
   private enum SortBySearchOption {
@@ -1654,29 +1692,27 @@ public final class PluginManagerConfigurable
     myPluginModel.clear(myCardPanel);
   }
 
-  @NotNull
-  public MyPluginModel getPluginModel() {
-    return myPluginModel;
+  /**
+   * @deprecated Please use {@link #select(Collection)}.
+   */
+  @Deprecated(since = "2020.2", forRemoval = true)
+  public void select(@NotNull IdeaPluginDescriptor @NotNull ... descriptors) {
+    select(ContainerUtil.newHashSet(descriptors));
   }
 
-  public void select(IdeaPluginDescriptor @NotNull ... descriptors) {
-    if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
-      myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
-    }
+  private void select(@NotNull Set<? extends IdeaPluginDescriptor> descriptors) {
+    select(ContainerUtil.map(descriptors, IdeaPluginDescriptor::getPluginId));
+  }
 
-    if (descriptors.length == 0) {
-      return;
-    }
+  private void select(@NotNull Collection<PluginId> pluginIds) {
+    updateSelectionTab(INSTALLED_TAB);
 
     List<ListPluginComponent> components = new ArrayList<>();
 
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-        ListPluginComponent component = group.findComponent(descriptor);
-        if (component != null) {
-          components.add(component);
-          break;
-        }
+    for (PluginId pluginId : pluginIds) {
+      ListPluginComponent component = findInstalledPluginById(pluginId);
+      if (component != null) {
+        components.add(component);
       }
     }
 
@@ -1698,11 +1734,7 @@ public final class PluginManagerConfigurable
 
     return () -> {
       boolean marketplace = option != null && option.startsWith(SearchWords.TAG.getValue());
-      int tabIndex = marketplace ? MARKETPLACE_TAB : INSTALLED_TAB;
-
-      if (myTabHeaderComponent.getSelectionTab() != tabIndex) {
-        myTabHeaderComponent.setSelectionWithEvents(tabIndex);
-      }
+      updateSelectionTab(marketplace ? MARKETPLACE_TAB : INSTALLED_TAB);
 
       PluginsTab tab = marketplace ? myMarketplaceTab : myInstalledTab;
       tab.clearSearchPanel(option);
@@ -1723,22 +1755,37 @@ public final class PluginManagerConfigurable
 
         boolean select = myInstalledPanel == null;
 
-        if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
-          myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
-        }
+        updateSelectionTab(INSTALLED_TAB);
 
         myInstalledTab.clearSearchPanel("");
 
         if (select) {
-          for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-            ListPluginComponent component = group.findComponent(callbackData.getPluginDescriptor());
-            if (component != null) {
-              myInstalledPanel.setSelection(component);
-              break;
-            }
+          ListPluginComponent component = findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId());
+          if (component != null) {
+            myInstalledPanel.setSelection(component);
           }
         }
       });
     }
+  }
+
+  private void updateSelectionTab(int tab) {
+    if (myTabHeaderComponent.getSelectionTab() != tab) {
+      myTabHeaderComponent.setSelectionWithEvents(tab);
+    }
+  }
+
+  private @NotNull List<UIPluginGroup> getInstalledGroups() {
+    return myInstalledPanel.getGroups();
+  }
+
+  private @Nullable ListPluginComponent findInstalledPluginById(@NotNull PluginId pluginId) {
+    for (UIPluginGroup group : getInstalledGroups()) {
+      ListPluginComponent component = group.findComponent(pluginId);
+      if (component != null) {
+        return component;
+      }
+    }
+    return null;
   }
 }

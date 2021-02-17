@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.util.PropertiesComponent;
@@ -86,7 +87,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
         FeatureUsageData data = getSourceUsageData()
           .addData("plugins", Collections.singletonList(disabledPlugin.getPluginId().getIdString()));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
-        PluginsAdvertiser.enablePlugins(project, Collections.singletonList(disabledPlugin.getPluginId()));
+        PluginManagerConfigurable.showPluginConfigurableAndEnable(project, Set.of(disabledPlugin));
       });
     }
     else if (!pluginsToInstall.myJbProduced.isEmpty()) {
