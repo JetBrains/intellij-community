@@ -675,5 +675,7 @@ class QuickFixRegistrar : QuickFixContributor {
         INCOMPATIBLE_THROWS_OVERRIDE.registerFactory(RemoveAnnotationFix)
 
         COMPATIBILITY_WARNING.registerFactory(UseFullyQualifiedCallFix)
+
+        SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC.registerFactory(AddJvmStaticAnnotationFix)
     }
 }

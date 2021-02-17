@@ -898,6 +898,24 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/addJvmStaticAnnotation")
+    public static class AddJvmStaticAnnotation extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("testData/quickfix/addJvmStaticAnnotation/function.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("testData/quickfix/addJvmStaticAnnotation/property.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addNewLineAfterAnnotations")
     public static class AddNewLineAfterAnnotations extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
