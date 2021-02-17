@@ -69,7 +69,6 @@ public final class StorageLock {
     return Runtime.getRuntime().maxMemory();
   }
 
-  public final StorageLockContext myDefaultContext;
   private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
 
   private final LinkedHashMap<Integer, DirectBufferWrapper> mySegments;
@@ -84,8 +83,6 @@ public final class StorageLock {
   private volatile int myMappingChangeCount;
 
   public StorageLock() {
-    myDefaultContext = new StorageLockContext(this, true, false);
-
     mySizeLimit = UPPER_LIMIT;
     mySegments = new LinkedHashMap<Integer, DirectBufferWrapper>(10, 0.75f, true) {
       @Override

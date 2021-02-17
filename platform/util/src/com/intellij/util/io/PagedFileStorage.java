@@ -32,6 +32,7 @@ public class PagedFileStorage implements Forceable {
 
   // It is important to have ourLock after previous static constants as it depends on them
   static final StorageLock ourLock = new StorageLock();
+  private static final StorageLockContext ourDefaultContext = new StorageLockContext(true, false);
 
   @NotNull
   public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
@@ -69,7 +70,7 @@ public class PagedFileStorage implements Forceable {
       storageLockContext = context;
     }
 
-    myStorageLockContext = storageLockContext != null ? storageLockContext : ourLock.myDefaultContext;
+    myStorageLockContext = storageLockContext != null ? storageLockContext : ourDefaultContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.getStorageLock().registerPagedFileStorage(this);

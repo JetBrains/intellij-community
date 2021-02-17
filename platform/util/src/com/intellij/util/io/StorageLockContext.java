@@ -15,14 +15,17 @@ public final class StorageLockContext {
   private final StorageLock myStorageLock;
   private final boolean myUseReadWriteLock;
 
-  public StorageLockContext(@NotNull StorageLock lock, boolean checkAccess, boolean useReadWriteLock) {
+  public StorageLockContext(@NotNull StorageLock lock,
+                            boolean checkAccess,
+                            boolean useReadWriteLock) {
     myLock = new ReentrantReadWriteLock();
     myStorageLock = lock;
     myCheckThreadAccess = checkAccess;
     myUseReadWriteLock = useReadWriteLock;
   }
 
-  public StorageLockContext(boolean checkAccess, boolean useReadWriteLock) {
+  public StorageLockContext(boolean checkAccess,
+                            boolean useReadWriteLock) {
     this(PagedFileStorage.ourLock, checkAccess, useReadWriteLock);
   }
 
