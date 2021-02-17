@@ -23,15 +23,12 @@ public class PagedFileStorage implements Forceable {
   private static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
   public static final int MB = 1024 * 1024;
-  public static final int BUFFER_SIZE = StorageLock.BUFFER_SIZE;
+  public static final int BUFFER_SIZE = DirectBufferPool.BUFFER_SIZE;
 
   @NotNull
   private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
   @NotNull
   private final static ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
-
-  // It is important to have ourLock after previous static constants as it depends on them
-  static final StorageLock ourLock = new StorageLock();
   private static final StorageLockContext ourDefaultContext = new StorageLockContext(true, false);
 
   @NotNull
@@ -73,7 +70,7 @@ public class PagedFileStorage implements Forceable {
     myStorageLockContext = storageLockContext != null ? storageLockContext : ourDefaultContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
-    myStorageIndex = myStorageLockContext.getStorageLock().registerPagedFileStorage(this);
+    myStorageIndex = myStorageLockContext.getBufferPool().registerPagedFileStorage(this);
     myNativeBytesOrder = nativeBytesOrder;
   }
 
@@ -133,7 +130,7 @@ public class PagedFileStorage implements Forceable {
 
   public DirectBufferWrapper getByteBuffer(long address, boolean modify) {
     long page = address / myPageSize;
-    assert page >= 0 && page <= StorageLock.MAX_PAGES_COUNT:address + " in " + myFile;
+    assert page >= 0 && page <= DirectBufferPool.MAX_PAGES_COUNT: address + " in " + myFile;
     return getBufferWrapper(page, modify, myReadOnly);
   }
 
@@ -239,7 +236,7 @@ public class PagedFileStorage implements Forceable {
     ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> force()));
     ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
       unmapAll();
-      myStorageLockContext.getStorageLock().removeStorage(myStorageIndex);
+      myStorageLockContext.getBufferPool().removeStorage(myStorageIndex);
       myStorageIndex = -1;
     }));
     if (!exceptions.isEmpty()) {
@@ -248,7 +245,7 @@ public class PagedFileStorage implements Forceable {
   }
 
   private void unmapAll() {
-    myStorageLockContext.getStorageLock().unmapBuffersForOwner(myStorageIndex, myStorageLockContext);
+    myStorageLockContext.getBufferPool().unmapBuffersForOwner(myStorageIndex, myStorageLockContext);
     myLastAccessedBufferCache.clear();
   }
 
@@ -257,7 +254,7 @@ public class PagedFileStorage implements Forceable {
     if (oldSize == newSize && oldSize == length()) return;
 
     final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    myStorageLockContext.getStorageLock().invalidateBuffer(myStorageIndex | (int)(oldSize / myPageSize)); // TODO long page
+    myStorageLockContext.getBufferPool().invalidateBuffer(myStorageIndex | (int)(oldSize / myPageSize)); // TODO long page
     final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
 
     resizeFile(newSize);
@@ -324,7 +321,7 @@ public class PagedFileStorage implements Forceable {
 
   private DirectBufferWrapper getBufferWrapper(long page, boolean modify, boolean readOnly) {
     DirectBufferWrapper pageFromCache =
-      myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getStorageLock().getMappingChangeCount(), readOnly);
+      myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getBufferPool().getMappingChangeCount(), readOnly);
 
     try {
       if (pageFromCache != null) {
@@ -332,19 +329,19 @@ public class PagedFileStorage implements Forceable {
         return pageFromCache;
       }
 
-      assert page >= 0 && page <= StorageLock.MAX_PAGES_COUNT:page;
+      assert page >= 0 && page <= DirectBufferPool.MAX_PAGES_COUNT:page;
 
       if (myStorageIndex == -1) {
         throw new IOException("storage is already closed; path " + myFile);
       }
-      DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getStorageLock().get(myStorageIndex | (int)page, !modify, readOnly); // TODO: long page
+      DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferPool().get(myStorageIndex | (int)page, !modify, readOnly); // TODO: long page
       if (modify) markDirty(byteBufferWrapper);
       ByteBuffer buf = byteBufferWrapper.getBuffer();
       if (myNativeBytesOrder && buf.order() != ourNativeByteOrder) {
         buf.order(ourNativeByteOrder);
       }
 
-      myLastAccessedBufferCache.updateCache(page, byteBufferWrapper, myStorageLockContext.getStorageLock().getMappingChangeCount());
+      myLastAccessedBufferCache.updateCache(page, byteBufferWrapper, myStorageLockContext.getBufferPool().getMappingChangeCount());
 
       return byteBufferWrapper;
     }
@@ -367,7 +364,7 @@ public class PagedFileStorage implements Forceable {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
     if (isDirty) {
-      myStorageLockContext.getStorageLock().flushBuffersForOwner(myStorageIndex, myStorageLockContext);
+      myStorageLockContext.getBufferPool().flushBuffersForOwner(myStorageIndex, myStorageLockContext);
       isDirty = false;
     }
 

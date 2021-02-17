@@ -8,29 +8,31 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ApiStatus.Internal
 public final class StorageLockContext {
+  private static final DirectBufferPool ourDefaultPool = new DirectBufferPool();
+
   private final boolean myCheckThreadAccess;
   @NotNull
   private final ReentrantReadWriteLock myLock;
   @NotNull
-  private final StorageLock myStorageLock;
+  private final DirectBufferPool myDirectBufferPool;
   private final boolean myUseReadWriteLock;
 
-  public StorageLockContext(@NotNull StorageLock lock,
+  public StorageLockContext(@NotNull DirectBufferPool lock,
                             boolean checkAccess,
                             boolean useReadWriteLock) {
     myLock = new ReentrantReadWriteLock();
-    myStorageLock = lock;
+    myDirectBufferPool = lock;
     myCheckThreadAccess = checkAccess;
     myUseReadWriteLock = useReadWriteLock;
   }
 
   public StorageLockContext(boolean checkAccess,
                             boolean useReadWriteLock) {
-    this(PagedFileStorage.ourLock, checkAccess, useReadWriteLock);
+    this(ourDefaultPool, checkAccess, useReadWriteLock);
   }
 
   public StorageLockContext(boolean checkAccess) {
-    this(PagedFileStorage.ourLock, checkAccess, false);
+    this(ourDefaultPool, checkAccess, false);
   }
 
   public void lockRead() {
@@ -60,8 +62,8 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   @NotNull
-  StorageLock getStorageLock() {
-    return myStorageLock;
+  DirectBufferPool getBufferPool() {
+    return myDirectBufferPool;
   }
 
   @ApiStatus.Internal
