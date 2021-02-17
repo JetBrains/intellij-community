@@ -32,6 +32,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -109,7 +110,8 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     }
 
     @Override
-    public SettingsEditor<DummyDeploymentConfiguration> createEditor(@NotNull DeploymentSource source, @NotNull RemoteServer<AppEngineServerConfiguration> server) {
+    public SettingsEditor<DummyDeploymentConfiguration> createEditor(@NotNull DeploymentSource source,
+                                                                     @Nullable RemoteServer<AppEngineServerConfiguration> server) {
       return null;
     }
   }
