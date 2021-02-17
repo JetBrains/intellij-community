@@ -22,7 +22,14 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
-public class SideEffectHandlers {
+/**
+ * Possible side effects for the methods usually are handled via purity or mutability annotations
+ * (see {@link DfaCallArguments#flush(DfaMemoryState, DfaValueFactory, PsiMethod)}): for pure method,
+ * nothing is done. For impure methods, some or all qualified mutable variables are flushed.
+ * This class allows custom handling (for example, updating the size of the collection on the 
+ * {@link java.util.List#add(Object)} call).
+ */
+class SideEffectHandlers {
   private static final CallMapper<SideEffectHandler> HANDLERS = new CallMapper<SideEffectHandler>()
     // While list.set() produces a side effect (changes element), we don't track anything except size, 
     // so we don't need to flush anything
@@ -133,11 +140,24 @@ public class SideEffectHandlers {
     }
   }
 
-  public static SideEffectHandler getHandler(PsiMethod method) {
+  /**
+   * @param method
+   * @return a custom side-effect handler for given method; null if not found
+   */
+  static SideEffectHandler getHandler(PsiMethod method) {
     return HANDLERS.mapFirst(method);
   }
 
   interface SideEffectHandler {
+    /**
+     * Apply side effects of the call to the supplied memory state. If handler is executed, default
+     * processing (based on purity or mutation signature) is not executed.
+     * 
+     * @param factory value factory to use if necessary
+     * @param state memory state to update
+     * @param arguments call arguments
+     * @param method called method
+     */
     void handleSideEffect(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments, PsiMethod method);
   }
   
