@@ -139,7 +139,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.INVISIBLE_MEMBER
         ),
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveModifierFactory(),
+            RemoveModifierFix.removeNonRedundantModifier,
             Errors.WRONG_MODIFIER_TARGET
         ),
         diagnosticBasedProcessing(
