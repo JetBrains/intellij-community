@@ -10,13 +10,13 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module-library">
       <library name="debugger-memory-agent" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:debugger-memory-agent:1.0.30" />
+        <properties maven-id="org.jetbrains.intellij.deps:debugger-memory-agent:1.0.32" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.30/debugger-memory-agent-1.0.30.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.32/debugger-memory-agent-1.0.32.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.30/debugger-memory-agent-1.0.30-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.32/debugger-memory-agent-1.0.32-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

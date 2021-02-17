@@ -132,7 +132,7 @@ public final class MemoryAgentUtil {
   public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull EvaluationContextImpl context,
                                                           @NotNull List<JavaReferenceInfo> objects) {
     MemoryAgent agent = MemoryAgent.get(context.getDebugProcess());
-    if (!agent.capabilities().canEstimateObjectsSizes()) return objects;
+    if (!agent.getCapabilities().canEstimateObjectsSizes()) return objects;
     if (objects.size() > ESTIMATE_OBJECTS_SIZE_LIMIT) {
       LOG.info("Too many objects to estimate their sizes");
       return objects;
@@ -171,7 +171,7 @@ public final class MemoryAgentUtil {
         if (context.isEvaluationPossible()) {
           if (isInitialized.compareAndSet(false, true)) {
             debugProcess.removeDebugProcessListener(this);
-            MemoryAgentOperations.initializeAgent(context);
+            MemoryAgentInitializer.initializeAgent(context);
           }
         }
       }

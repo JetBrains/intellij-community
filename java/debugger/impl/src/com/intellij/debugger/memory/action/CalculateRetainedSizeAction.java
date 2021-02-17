@@ -54,6 +54,7 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
           EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
           MemoryAgent memoryAgent = MemoryAgent.get(debugProcess);
           Disposer.register(dialog.getDisposable(), () -> memoryAgent.cancelAction());
+          memoryAgent.setProgressIndicator(dialog.createProgressIndicator());
           MemoryAgentActionResult<Pair<long[], ObjectReference[]>> result = memoryAgent.estimateObjectSize(
             evaluationContext, reference, Registry.get("debugger.memory.agent.action.timeout").asInteger()
           );
@@ -89,12 +90,12 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     if (!super.isEnabled(node, e)) return false;
     DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(node.getTree().getProject());
-    if (debugProcess == null || !debugProcess.isEvaluationPossible() || !MemoryAgent.get(debugProcess).capabilities().isLoaded()) {
+    if (debugProcess == null || !debugProcess.isEvaluationPossible() || !MemoryAgent.get(debugProcess).getCapabilities().isLoaded()) {
       e.getPresentation().setVisible(false);
       return false;
     }
 
     ObjectReference reference = getObjectReference(node);
-    return reference != null && MemoryAgent.get(debugProcess).capabilities().canEstimateObjectSize();
+    return reference != null && MemoryAgent.get(debugProcess).getCapabilities().canEstimateObjectSize();
   }
 }
