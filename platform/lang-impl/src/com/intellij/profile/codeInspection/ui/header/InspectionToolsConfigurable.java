@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,6 +21,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -233,7 +234,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     final SingleInspectionProfilePanel panel = getSelectedPanel();
     return panel == null ? null : panel.getPreferredFocusedComponent();
   }

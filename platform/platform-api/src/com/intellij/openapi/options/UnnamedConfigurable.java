@@ -28,7 +28,7 @@ public interface UnnamedConfigurable {
   /**
    * @return component which should be focused when the dialog appears on the screen.
    */
-  default JComponent getPreferredFocusedComponent() {
+  default @Nullable JComponent getPreferredFocusedComponent() {
     return null;
   }
 
