@@ -23,7 +23,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,7 @@ public class ShowRecentFilesAction extends DumbAwareAction implements LightEditC
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files");
-    Switcher.createAndShowSwitcher(e, IdeBundle.message("title.popup.recent.files"), IdeActions.ACTION_RECENT_FILES,false, true);
+    Switcher.createAndShowSwitcher(e, IdeBundle.message("title.popup.recent.files"), false, true);
   }
 
   @Override

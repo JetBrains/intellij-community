@@ -169,7 +169,7 @@ public final class Switcher extends AnAction implements DumbAware {
       isNewSwitcher = true;
       // Assigns SWITCHER field
       boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
-      switcher = createAndShowSwitcher(project, IdeBundle.message("window.title.switcher"), IdeActions.ACTION_SWITCHER, false, false, !moveBack);
+      switcher = createAndShowSwitcher(project, IdeBundle.message("window.title.switcher"), false, false, !moveBack);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
     }
 
@@ -186,33 +186,32 @@ public final class Switcher extends AnAction implements DumbAware {
   }
 
   /**
-   * @deprecated Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, String, boolean, boolean)}
+   * @deprecated Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
-    return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
+    return createAndShowSwitcher(e, title, pinned, vFiles != null);
   }
 
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, @NonNls @NotNull String actionId, boolean onlyEdited, boolean pinned) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean onlyEdited, boolean pinned) {
     Project project = e.getProject();
     if (project == null) return null;
     SwitcherPanel switcher = SWITCHER_KEY.get(project);
     if (switcher != null && Objects.equals(switcher.myTitle, title)) return null;
     boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
-    return createAndShowSwitcher(project, title, actionId, onlyEdited, pinned, !moveBack);
+    return createAndShowSwitcher(project, title, onlyEdited, pinned, !moveBack);
   }
 
   private static @NotNull SwitcherPanel createAndShowSwitcher(@NotNull Project project,
                                                               @NotNull @Nls String title,
-                                                              @NotNull String actionId,
                                                               boolean onlyEdited,
                                                               boolean pinned,
                                                               boolean moveForward) {
     SwitcherPanel old = SWITCHER_KEY.get(project);
     if (old != null) old.cancel();
-    SwitcherPanel switcher = new SwitcherPanel(project, title, actionId, onlyEdited, pinned, moveForward);
+    SwitcherPanel switcher = new SwitcherPanel(project, title, onlyEdited, pinned, moveForward);
     setSwitcher(project, switcher);
     return switcher;
   }
@@ -369,9 +368,7 @@ public final class Switcher extends AnAction implements DumbAware {
     };
 
     @SuppressWarnings({"ConstantConditions"})
-    SwitcherPanel(@NotNull final Project project, @NotNull @Nls String title, @NotNull String actionId, boolean onlyEdited, boolean pinned,
-                  boolean moveForward)
-    {
+    SwitcherPanel(@NotNull final Project project, @NotNull @Nls String title, boolean onlyEdited, boolean pinned, boolean moveForward) {
       setLayout(new BorderLayout());
       this.project = project;
       myTitle = title;
