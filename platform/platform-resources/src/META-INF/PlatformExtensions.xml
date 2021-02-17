@@ -95,6 +95,7 @@
                         serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.diagnostic.IdeHeartbeatEventReporter" preload="true"/>
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
@@ -707,7 +708,7 @@
     <statistics.counterUsagesCollector groupId="ui.mnemonic" version="1"/>
 
     <statistics.counterUsagesCollector groupId="event.log" version="57"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.LowMemoryNotifier$UILatencyLogger"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.IdeHeartbeatEventReporter$UILatencyLogger"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.notification.impl.NotificationsEventLogGroup"/>
     <statistics.counterUsagesCollector groupId="productivity" version="57"/>
     <statistics.counterUsagesCollector groupId="ui.dialogs" version="57"/>
