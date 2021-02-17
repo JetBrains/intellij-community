@@ -2,7 +2,9 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
@@ -17,6 +19,11 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
 
   public JavaApplicationSettingsEditor(ApplicationConfiguration configuration) {
     super(configuration);
+  }
+
+  @Override
+  public boolean isInplaceValidationSupported() {
+    return true;
   }
 
   @Override
@@ -62,6 +69,8 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       Editor editor = field.getEditor();
       return editor == null ? field : editor.getContentComponent();
     });
+    mainClassFragment.setValidation((fragment, configuration) ->
+      RuntimeConfigurationException.validate(mainClass, () -> ReadAction.run(() -> configuration.checkClass())));
     return mainClassFragment;
   }
 }

@@ -5,9 +5,12 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -37,14 +40,14 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   private final SettingsEditorFragment<Settings, LabeledComponent<TextFieldWithBrowseButton>> myWorkingDirectory;
   private final Computable<Boolean> myHasModule;
 
-  public CommonParameterFragments(@NotNull Project project, Computable<Boolean> hasModule) {
-    myHasModule = hasModule;
+  public CommonParameterFragments(@NotNull Project project, Computable<Module> moduleProvider) {
+    myHasModule = () -> moduleProvider.compute() != null;
     TextFieldWithBrowseButton workingDirectoryField = new TextFieldWithBrowseButton();
     workingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
                                                     project,
                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor(),
                                                     TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    MacrosDialog.addMacroSupport((ExtendableTextField)workingDirectoryField.getTextField(), MacrosDialog.Filters.DIRECTORY_PATH, hasModule);
+    MacrosDialog.addMacroSupport((ExtendableTextField)workingDirectoryField.getTextField(), MacrosDialog.Filters.DIRECTORY_PATH, myHasModule);
     LabeledComponent<TextFieldWithBrowseButton> field = LabeledComponent.create(workingDirectoryField, ExecutionBundle.message(
                                                                                        "run.configuration.working.directory.label"));
     field.setLabelLocation(BorderLayout.WEST);
@@ -55,6 +58,8 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                         .setWorkingDirectory(component.getComponent().getText()),
                                                       settings -> true);
     myWorkingDirectory.setRemovable(false);
+    myWorkingDirectory.setValidation((fragment, settings) -> RuntimeConfigurationException.validate(workingDirectoryField.getTextField(),
+        () -> ProgramParametersUtil.checkWorkingDirectoryExist(settings, settings.getProject(), moduleProvider.compute())));
     myFragments.add(myWorkingDirectory);
     myFragments.add(createEnvParameters());
   }
@@ -68,7 +73,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
     FragmentedSettingsUtil.setupPlaceholderVisibility(programArguments.getEditorField());
     setMonospaced(programArguments.getTextField());
-    MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, myHasModule);
+    MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, () -> myHasModule.compute() != null);
     SettingsEditorFragment<Settings, RawCommandLineEditor> parameters =
       new SettingsEditorFragment<>("commandLineParameters", ExecutionBundle.message("run.configuration.program.parameters.name"), null, programArguments,
                                    100,
@@ -102,7 +107,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
       }
     });
 
-    MacrosDialog.addMacroSupport((ExtendableTextField)inputFile.getTextField(), MacrosDialog.Filters.ALL, myHasModule);
+    MacrosDialog.addMacroSupport((ExtendableTextField)inputFile.getTextField(), MacrosDialog.Filters.ALL, () -> myHasModule.compute() != null);
     LabeledComponent<TextFieldWithBrowseButton> labeledComponent =
       LabeledComponent.create(inputFile, ExecutionBundle.message("redirect.input.from"));
     labeledComponent.setLabelLocation(BorderLayout.WEST);

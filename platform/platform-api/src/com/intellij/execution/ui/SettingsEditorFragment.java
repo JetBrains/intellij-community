@@ -5,15 +5,19 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +26,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -34,6 +40,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected C myComponent;
   private final BiConsumer<? super Settings, ? super C> myReset;
   private final BiConsumer<? super Settings, ? super C> myApply;
+  private @Nullable BiFunction<SettingsEditorFragment<Settings, C>, Settings, ValidationInfo> myValidation;
   private final int myCommandLinePosition;
   private final Predicate<? super Settings> myInitialSelection;
   private @Nullable @Nls String myHint;
@@ -162,6 +169,32 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myRemovable = removable;
   }
 
+  public void setValidation(@Nullable BiFunction<SettingsEditorFragment<Settings, C>, Settings, ValidationInfo> validation) {
+    myValidation = validation;
+  }
+
+  protected void validate(Settings s) {
+    if (myValidation == null) return;
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ValidationInfo info = myValidation.apply(this, s);
+      if (info == null || info.component == null) return;
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (Disposer.isDisposed(this)) return;
+        JComponent component = info.component;
+        Optional<ComponentValidator> optional = ComponentValidator.getInstance(component);
+        ComponentValidator validator;
+        if (optional.isEmpty()) {
+          validator = new ComponentValidator(this);
+          validator.installOn(component);
+        }
+        else {
+          validator = optional.get();
+        }
+        validator.updateInfo(info.message.isEmpty() ? null : info);
+      });
+    });
+  }
+
   /**
    * Can be hidden by user even if {@link #isInitiallyVisible(Object)} returns true
    */
@@ -232,6 +265,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   @Override
   protected void applyEditorTo(@NotNull Settings s) {
     myApply.accept(s, myComponent);
+    validate(s);
   }
 
   @Override

@@ -39,6 +39,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     myExtensionsManager = extensionsManager;
   }
 
+  public boolean isInplaceValidationSupported() {
+    return false;
+  }
+
   @Override
   protected boolean isDefaultSettings() {
     return myDefaultSettings;

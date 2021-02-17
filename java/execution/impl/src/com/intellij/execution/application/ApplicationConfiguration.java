@@ -159,14 +159,20 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     if (getDefaultTargetName() == null) {
       JavaParametersUtil.checkAlternativeJRE(this);
     }
+    final JavaRunConfigurationModule configurationModule = checkClass();
+    ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), configurationModule.getModule());
+    JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
+  }
+
+  @NotNull
+  public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
     final PsiClass psiClass =
       configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
     if (!PsiMethodUtil.hasMainMethod(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
     }
-    ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), configurationModule.getModule());
-    JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
+    return configurationModule;
   }
 
   @Override

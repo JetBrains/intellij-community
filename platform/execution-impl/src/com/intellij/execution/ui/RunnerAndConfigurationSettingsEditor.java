@@ -36,6 +36,10 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
                     : null;
   }
 
+  public boolean isInplaceValidationSupported() {
+    return myConfigurationEditor.isInplaceValidationSupported();
+  }
+
   @Override
   public void targetChanged(String targetName) {
     myConfigurationEditor.targetChanged(targetName);

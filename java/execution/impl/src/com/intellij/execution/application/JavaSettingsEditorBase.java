@@ -39,7 +39,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
 
     fragments.add(CommonTags.parallelRun());
 
-    CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(getProject(), hasModule);
+    CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(getProject(), () -> classpathCombo.getSelectedModule());
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent, this));
 

@@ -8,6 +8,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
+import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -109,8 +110,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         requestToUpdateWarning();
       }
     });
+    
+    boolean inplaceValidationSupported = getEditor() instanceof RunnerAndConfigurationSettingsEditor &&
+                                         ((RunnerAndConfigurationSettingsEditor)getEditor()).isInplaceValidationSupported();
     myValidationAlarm = new SingleAlarm(() -> {
-      if (myComponent != null) {
+      if (myComponent != null && !inplaceValidationSupported) {
         validateResultOnBackgroundThread(configurationException -> myComponent.updateValidationResultVisibility(configurationException));
       }
     }, 100, getEditor(), Alarm.ThreadToUse.SWING_THREAD, ModalityState.current());
