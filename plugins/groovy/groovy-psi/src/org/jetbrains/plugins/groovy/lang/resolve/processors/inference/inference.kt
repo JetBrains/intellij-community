@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
@@ -36,13 +38,22 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
     else -> return expression.type
   }
 
+  val inferReturnType = shouldInferReturnType(expression)
+
   return result?.candidate?.let {
     val session = GroovyInferenceSessionBuilder(expression, it, result.contextSubstitutor)
       .resolveMode(false)
       .build()
-    session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method).devoid(expression))
+    val returnType = if (inferReturnType) PsiUtil.getSmartReturnType(it.method) else it.method.returnType
+    session.inferSubst().substitute(returnType.devoid(expression))
   }
 }
+
+val forbidInteriorReturnTypeInference : Key<Unit> = Key.create("shouldInferReturnType")
+
+fun shouldInferReturnType(expression: GrExpression): Boolean =
+  expression.parentOfType<GrMethodCall>()?.getUserData(forbidInteriorReturnTypeInference) == null
+
 
 fun buildQualifier(ref: GrReferenceExpression?, state: ResolveState): Argument {
   val qualifierExpression = ref?.qualifierExpression

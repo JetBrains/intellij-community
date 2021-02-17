@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.forbidInteriorReturnTypeInference
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -271,7 +272,12 @@ fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterLis
   val factory = GroovyPsiElementFactory.getInstance(method.project)
   val newFile = factory.createGroovyFile(fileText, false, method)
   val virtualMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
+  disableInteriorReturnTypeInference(virtualMethod)
   return SmartPointerManager.createPointer(virtualMethod)
+}
+
+private fun disableInteriorReturnTypeInference(virtualMethod: GrMethod) {
+  virtualMethod.putUserData(forbidInteriorReturnTypeInference, Unit)
 }
 
 fun convertToGroovyMethod(method: PsiMethod): GrMethod? {
@@ -310,7 +316,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
     }
 
     override fun visitIntersectionType(intersectionType: PsiIntersectionType): PsiType? {
-      return compress(intersectionType.conjuncts?.filterNotNull()?.mapNotNull { it.accept(this) })
+      return compress(intersectionType.conjuncts.filterNotNull().mapNotNull { it.accept(this) })
     }
 
     override fun visitWildcardType(wildcardType: PsiWildcardType): PsiType {
