@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class RandomAccessDataFile implements Forceable, Closeable {
   private static final Logger LOG = Logger.getInstance(RandomAccessDataFile.class);
 
-  private static final OpenChannelsCache ourCache = new OpenChannelsCache(150,
+  private static final OpenChannelsCache ourCache = new OpenChannelsCache(10,
                                                                           EnumSet.of(StandardOpenOption.READ,
                                                                                      StandardOpenOption.WRITE,
                                                                                      StandardOpenOption.CREATE));
