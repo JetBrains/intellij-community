@@ -60,8 +60,7 @@ public final class WinDockDelegate implements SystemDock.Delegate {
     final Task[] result = new Task[actions.size()];
 
     int i = 0;
-    for (; i < actions.size(); i++) {
-      final var action = actions.get(i);
+    for (final var action : actions) {
       if (!(action instanceof ReopenProjectAction)) {
         continue;
       }
@@ -69,8 +68,9 @@ public final class WinDockDelegate implements SystemDock.Delegate {
       final ReopenProjectAction reopenProjectAction = (ReopenProjectAction)action;
 
       final String reopenProjectActionPath = reopenProjectAction.getProjectPath();
+      final String reopenProjectActionPathEscaped = "\"" + reopenProjectActionPath + "\"";
 
-      result[i] = new Task(launcherPath, reopenProjectActionPath, reopenProjectAction.getTemplatePresentation().getText());
+      result[i++] = new Task(launcherPath, reopenProjectActionPathEscaped, reopenProjectAction.getTemplatePresentation().getText());
     }
 
     if (i < result.length) {
