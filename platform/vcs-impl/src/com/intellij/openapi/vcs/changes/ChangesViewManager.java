@@ -878,9 +878,7 @@ public class ChangesViewManager implements ChangesViewEx,
       super.drop(event);
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ShelvedChangeListDragBean) {
-        ChangesViewToolWindowPanel panel = ((ChangesViewManager)getInstance(myProject)).initToolWindowPanel();
-        ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject,
-                                                     ChangesTreeDnDSupport.getDropRootNode(panel.myView, event),
+        ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject, null,
                                                      !ChangesTreeDnDSupport.isCopyAction(event));
       }
     }

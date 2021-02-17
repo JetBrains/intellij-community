@@ -522,10 +522,10 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       return null
     }
 
-    override fun canHandleDropEvent(aEvent: DnDEvent, dropNode: ChangesBrowserNode<*>): Boolean {
+    override fun canHandleDropEvent(aEvent: DnDEvent, dropNode: ChangesBrowserNode<*>?): Boolean {
       val dragBean = aEvent.attachedObject
       if (dragBean is MyDragBean) {
-        if (dragBean.sourceComponent === this@GitStageTree && canAcceptDrop(dropNode, dragBean)) {
+        if (dropNode != null && dragBean.sourceComponent === this@GitStageTree && canAcceptDrop(dropNode, dragBean)) {
           dragBean.targetNode = dropNode
           return true
         }

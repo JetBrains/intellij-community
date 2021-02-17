@@ -1008,14 +1008,12 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   @RequiresEdt
   public static void unshelveSilentlyWithDnd(@NotNull Project project,
                                              @NotNull ShelvedChangeListDragBean shelvedChangeListDragBean,
-                                             @Nullable ChangesBrowserNode dropRootNode,
+                                             @Nullable LocalChangeList targetChangeList,
                                              boolean removeFilesFromShelf) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    LocalChangeList predefinedChangeList =
-      dropRootNode != null ? ObjectUtils.tryCast(dropRootNode.getUserObject(), LocalChangeList.class) : null;
     getInstance(project).unshelveSilentlyAsynchronously(project, shelvedChangeListDragBean.getShelvedChangelists(),
                                                         shelvedChangeListDragBean.getChanges(),
-                                                        shelvedChangeListDragBean.getBinaryFiles(), predefinedChangeList,
+                                                        shelvedChangeListDragBean.getBinaryFiles(), targetChangeList,
                                                         removeFilesFromShelf);
   }
 
