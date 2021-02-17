@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
@@ -70,6 +71,7 @@ object LocalModelsTraining {
                            indicator: ProgressIndicator) {
     val dumbService = DumbService.getInstance(project)
     val psiManager = PsiManager.getInstance(project)
+    val resolveCache = ResolveCache.getInstance(project)
     val executorService = Executors.newFixedThreadPool((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1))
     indicator.isIndeterminate = false
     indicator.text = MlLocalModelsBundle.message("ml.local.models.training.files.processing")
@@ -89,6 +91,7 @@ object LocalModelsTraining {
                   LOG.error("Local model training error. Model: ${id2builder.key}. File: ${file.path}.", e)
                 }
               }
+              resolveCache.clearCache(true)
             }
             indicator.fraction = processed.incrementAndGet().toDouble() / files.size
           }
