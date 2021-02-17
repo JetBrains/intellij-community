@@ -110,8 +110,8 @@ class OpenIssues : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser
   }
 }
 
-class SpaceVcsOpenInBrowserActionGroup :
-  SpaceOpenInBrowserActionGroup<SpaceVcsOpenInBrowserActionGroup.Companion.OpenData>(
+internal class SpaceVcsOpenInBrowserActionGroup :
+  SpaceOpenInBrowserActionGroup<UrlData>(
     SpaceBundle.message("open.in.browser.group.open.on.space")
   ) {
 
@@ -119,9 +119,9 @@ class SpaceVcsOpenInBrowserActionGroup :
     e.presentation.isEnabledAndVisible = (getData(e.dataContext) != null)
   }
 
-  override fun buildAction(it: OpenData): AnAction = OpenAction(it)
+  override fun buildAction(it: UrlData): AnAction = OpenAction(it)
 
-  override fun getData(dataContext: DataContext): List<OpenData>? {
+  override fun getData(dataContext: DataContext): List<UrlData>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
 
     return getDataFromHistory(dataContext, project)
@@ -129,7 +129,7 @@ class SpaceVcsOpenInBrowserActionGroup :
            ?: getDataFromVirtualFile(dataContext, project)
   }
 
-  private fun getDataFromVirtualFile(dataContext: DataContext, project: Project): List<OpenData>? {
+  private fun getDataFromVirtualFile(dataContext: DataContext, project: Project): List<UrlData>? {
     val virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
     val gitRepository = VcsRepositoryManager.getInstance(project).getRepositoryForFileQuick(virtualFile) ?: return null
     if (gitRepository !is GitRepository) return null
@@ -149,26 +149,26 @@ class SpaceVcsOpenInBrowserActionGroup :
     }
     else null
 
-    return repoDescription.projectInfos.map { OpenData.File(project, it, repoDescription.name, virtualFile, line, gitRepository) }
+    return repoDescription.projectInfos.map { UrlData.File(project, it, repoDescription.name, virtualFile, line, gitRepository) }
   }
 
-  private fun getDataFromHistory(dataContext: DataContext, project: Project): List<OpenData>? {
+  private fun getDataFromHistory(dataContext: DataContext, project: Project): List<UrlData>? {
     val filePath = dataContext.getData(VcsDataKeys.FILE_PATH) ?: return null
     val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
     if (fileRevision !is VcsFileRevisionEx) return null
     val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return null
     val repoDescription = findProjectInfo(gitRepository, project) ?: return null
 
-    return repoDescription.projectInfos.map { OpenData.FileRevision(project, it, repoDescription.name, fileRevision) }
+    return repoDescription.projectInfos.map { UrlData.FileRevision(project, it, repoDescription.name, fileRevision) }
   }
 
-  private fun getDataFromLog(dataContext: DataContext, project: Project): List<OpenData>? {
+  private fun getDataFromLog(dataContext: DataContext, project: Project): List<UrlData>? {
     val vcsLog = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
     val selectedCommit = vcsLog.selectedCommits.firstOrNull() ?: return null
     val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(selectedCommit.root) ?: return null
     val repoDescription = findProjectInfo(gitRepository, project) ?: return null
 
-    return repoDescription.projectInfos.map { OpenData.Commit(project, it, repoDescription.name, selectedCommit) }
+    return repoDescription.projectInfos.map { UrlData.Commit(project, it, repoDescription.name, selectedCommit) }
   }
 
   private fun findProjectInfo(gitRepository: GitRepository, project: Project): SpaceRepoInfo? {
@@ -182,72 +182,68 @@ class SpaceVcsOpenInBrowserActionGroup :
   private fun getRemoteUrls(gitRepository: GitRepository): List<String> {
     return gitRepository.remotes.flatMap { it.urls }.toList()
   }
+}
 
-  companion object {
-    class OpenAction(private val data: OpenData) : DumbAwareAction(
-      SpaceBundle.message("open.in.browser.open.for.project.action", data.info.project.name)
-    ) {
+internal class OpenAction(private val data: UrlData) : DumbAwareAction(
+  SpaceBundle.message("open.in.browser.open.for.project.action", data.info.project.name)
+) {
 
-      override fun actionPerformed(e: AnActionEvent) {
-        data.url?.let { BrowserUtil.browse(it) }
+  override fun actionPerformed(e: AnActionEvent) {
+    data.url?.let { BrowserUtil.browse(it) }
+  }
+}
+
+internal sealed class UrlData(val project: Project,
+                              val info: SpaceProjectInfo,
+                              val repo: String
+) {
+  abstract val url: String?
+
+  internal class Commit(project: Project,
+                        projectKey: SpaceProjectInfo,
+                        repo: String,
+                        private val commit: CommitId) : UrlData(project, projectKey, repo) {
+    override val url: String
+      get() {
+        return SpaceUrls.commits(info.key, repo, commit.hash.asString())
       }
-    }
+  }
 
-    sealed class OpenData(val project: Project,
-                          val info: SpaceProjectInfo,
-                          val repo: String
-    ) {
-      abstract val url: String?
+  internal class FileRevision(project: Project,
+                              projectKey: SpaceProjectInfo,
+                              repo: String,
+                              private val vcsFileRevisionEx: VcsFileRevisionEx) : UrlData(project, projectKey, repo) {
+    override val url: String
+      get() {
+        return SpaceUrls.revision(info.key, repo, vcsFileRevisionEx.revisionNumber.asString())
+      }
+  }
 
-      class Commit(project: Project,
-                   projectKey: SpaceProjectInfo,
-                   repo: String,
-                   private val commit: CommitId) : OpenData(project, projectKey, repo) {
+  internal class File(project: Project,
+                      projectKey: SpaceProjectInfo,
+                      repo: String,
+                      private val virtualFile: VirtualFile,
+                      private val selectedLine: Int? = null,
+                      private val gitRepository: GitRepository) : UrlData(project, projectKey, repo) {
+    override val url: String?
+      get() {
+        val relativePath = VfsUtilCore.getRelativePath(virtualFile, gitRepository.root) ?: return null
+        val hash = getCurrentFileRevisionHash(project, virtualFile) ?: return null
 
-        override val url: String
-          get() {
-            return SpaceUrls.commits(info.key, repo, commit.hash.asString())
-          }
+        return SpaceUrls.fileAnnotate(info.key, repo, hash, relativePath, selectedLine)
       }
 
-      class FileRevision(project: Project,
-                         projectKey: SpaceProjectInfo,
-                         repo: String,
-                         private val vcsFileRevisionEx: VcsFileRevisionEx) : OpenData(project, projectKey, repo) {
-
-        override val url: String
-          get() {
-            return SpaceUrls.revision(info.key, repo, vcsFileRevisionEx.revisionNumber.asString())
-          }
-      }
-
-      class File(project: Project,
-                 projectKey: SpaceProjectInfo,
-                 repo: String,
-                 private val virtualFile: VirtualFile,
-                 private val selectedLine: Int? = null,
-                 private val gitRepository: GitRepository) : OpenData(project, projectKey, repo) {
-        override val url: String?
-          get() {
-            val relativePath = VfsUtilCore.getRelativePath(virtualFile, gitRepository.root) ?: return null
-            val hash = getCurrentFileRevisionHash(project, virtualFile) ?: return null
-
-            return SpaceUrls.fileAnnotate(info.key, repo, hash, relativePath, selectedLine)
-          }
-
-        private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {
-          val ref = Ref1<GitRevisionNumber>()
-          object : Task.Modal(project, SpaceBundle.message("open.file.on.space.getting.last.revision.indicator.text"), true) {
-            override fun run(indicator: ProgressIndicator) {
-              ref.set(GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), GitUtil.HEAD) as GitRevisionNumber?)
-            }
-
-            override fun onThrowable(error: Throwable) {
-            }
-          }.queue()
-          return if (ref.isNull) null else ref.get().rev
+    private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {
+      val ref = Ref1<GitRevisionNumber>()
+      object : Task.Modal(project, SpaceBundle.message("open.file.on.space.getting.last.revision.indicator.text"), true) {
+        override fun run(indicator: ProgressIndicator) {
+          ref.set(GitHistoryUtils.getCurrentRevision(project, VcsUtil.getFilePath(file), GitUtil.HEAD) as GitRevisionNumber?)
         }
-      }
+
+        override fun onThrowable(error: Throwable) {
+        }
+      }.queue()
+      return if (ref.isNull) null else ref.get().rev
     }
   }
 }
