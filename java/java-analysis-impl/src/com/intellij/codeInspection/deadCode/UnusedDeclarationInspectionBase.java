@@ -32,6 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UnusedDeclarationInspectionBase.class);
@@ -699,18 +700,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   public List<EntryPoint> getExtensions() {
-    List<EntryPoint> extensions = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
-    List<EntryPoint> deadCodeAddIns = new ArrayList<>(extensions.size());
-    for (EntryPoint entryPoint : extensions) {
-      try {
-        deadCodeAddIns.add(entryPoint.clone());
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-    deadCodeAddIns.sort((o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName()));
-    return deadCodeAddIns;
+    return EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList()
+      .stream()
+      .sorted((o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName()))
+      .collect(Collectors.toList());
   }
 
   public static String getDisplayNameText() {

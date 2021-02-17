@@ -5,14 +5,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -196,12 +195,14 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    XmlSerializer.deserializeInto(this, element);
+    DefaultJDOMExternalizer.readExternal(this, element);
   }
 
   @Override
   @SuppressWarnings("deprecation")
   public void writeExternal(Element element) throws WriteExternalException {
-    XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
+    if (!ADD_EXPORTED_PACKAGES_AND_SERVICES_TO_ENTRIES) {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
   }
 }
