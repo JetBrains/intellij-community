@@ -51,7 +51,6 @@ internal fun createKotlinSourceSet(
     dependencies = emptyArray(),
     dependsOnSourceSets = dependsOnSourceSets,
     defaultPlatform = KotlinPlatformContainerImpl().apply { addSimplePlatforms(platforms) },
-    defaultIsTestModule = isTestModule
 )
 
 internal fun createKotlinCompilation(

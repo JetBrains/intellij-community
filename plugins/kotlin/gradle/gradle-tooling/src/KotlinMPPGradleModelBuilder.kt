@@ -363,7 +363,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val nativeMainRunTasks =
             if (platform == KotlinPlatform.NATIVE) buildNativeMainRunTasks(gradleTarget)
             else emptyList()
-        val artifacts = konanArtifacts(gradleTarget, dependencyResolver, project, dependencyMapper)
+        val artifacts = konanArtifacts(gradleTarget, dependencyResolver, importingContext.project, dependencyMapper)
         val target = KotlinTargetImpl(
             gradleTarget.name,
             targetPresetName,
