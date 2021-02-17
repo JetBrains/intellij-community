@@ -6,6 +6,7 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -206,8 +207,10 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     final String moduleName = getModuleName();
     final Module module;
     final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(project);
-    if (fromConfigurable != null) {
-      module = fromConfigurable.getModulesConfig().getModule(moduleName);
+    ModifiableModuleModel modifiableModel = fromConfigurable != null ? fromConfigurable.getContext().getModulesConfigurator().getModuleModel()
+                                                                     : null;
+    if (modifiableModel != null) {
+      module = modifiableModel.findModuleByName(moduleName);
     }
     else {
       module = ModuleManager.getInstance(project).findModuleByName(moduleName);
