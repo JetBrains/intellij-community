@@ -4,7 +4,6 @@ package training.learn.lesson.general.assistance
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.testGuiFramework.impl.button
 import training.dsl.LessonContext
 import training.dsl.LessonSample
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
@@ -59,7 +58,7 @@ class CodeFormatLesson(private val sample: LessonSample, private val optimizeImp
         restoreAfterStateBecomeFalse {
           focusOwner is EditorComponentImpl
         }
-        test {
+        test(waitEditorToBeReady = false) {
           properties.setValue("LayoutCode.optimizeImports", true)
           ideFrame {
             button("Run").click()

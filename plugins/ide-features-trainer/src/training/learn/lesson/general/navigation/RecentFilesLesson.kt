@@ -7,8 +7,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -89,7 +87,9 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       restoreState {
         !checkRecentFilesSearch("rfd") || previous.ui?.isShowing != true
       }
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test(waitEditorToBeReady = false) {
+        invokeActionViaShortcut("ENTER")
+      }
     }
 
     actionTask("RecentFiles") {
@@ -112,7 +112,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       restoreIfRecentFilesPopupClosed()
       test {
         repeat(countOfFilesToDelete) {
-          GuiTestUtil.shortcut(Key.DELETE)
+          invokeActionViaShortcut("DELETE")
         }
       }
     }
@@ -120,7 +120,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     task {
       text(LessonsBundle.message("recent.files.close.popup", LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
       stateCheck { focusOwner is IdeFrame }
-      test { GuiTestUtil.shortcut(Key.ESCAPE) }
+      test { invokeActionViaShortcut("ESCAPE") }
     }
 
     actionTask("RecentLocations") {
@@ -146,7 +146,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       restoreState {
         !checkRecentLocationsSearch(stringForRecentFilesSearch) || previous.ui?.isShowing != true
       }
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test { invokeActionViaShortcut("ENTER") }
     }
   }
 
@@ -188,9 +188,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   private fun checkWordInSearch(expected: String, component: JComponent): Boolean {
     val supply = SpeedSearchSupply.getSupply(component)
     val enteredPrefix = supply?.enteredPrefix ?: return false
-    val equals = enteredPrefix.equals(expected, ignoreCase = true)
-    System.err.println("expected = '$expected', enteredPrefix = '$enteredPrefix', equals = $equals")
-    return equals
+    return enteredPrefix.equals(expected, ignoreCase = true)
   }
 
   private fun TaskContext.restoreIfRecentFilesPopupClosed() {

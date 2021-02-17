@@ -14,7 +14,6 @@ import com.intellij.util.Alarm
 import training.dsl.LearningBalloonConfig
 import training.dsl.TaskContext
 import training.dsl.TaskRuntimeContext
-import training.dsl.TaskTestContext
 import training.learn.ActionsRecorder
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
@@ -188,8 +187,6 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> () -> Component)  {
     hasDetection = true
   }
-
-  override fun test(action: TaskTestContext.() -> Unit) = Unit // do nothing
 
   override fun action(actionId: String): String = "" //Doesn't matter what to return
 

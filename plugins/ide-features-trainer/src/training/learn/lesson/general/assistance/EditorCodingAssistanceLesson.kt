@@ -2,11 +2,6 @@
 package training.learn.lesson.general.assistance
 
 import com.intellij.ide.IdeBundle
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.jList
-import com.intellij.testGuiFramework.util.Key
-import com.intellij.testGuiFramework.util.Modifier
-import com.intellij.testGuiFramework.util.Shortcut
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
@@ -59,9 +54,8 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
       restoreIfModifiedOrMoved()
       test {
         Thread.sleep(500)
-        val errorDescriptionShortcut = Shortcut(hashSetOf(Modifier.CONTROL), Key.F1)
-        GuiTestUtil.shortcut(errorDescriptionShortcut)
-        GuiTestUtil.shortcut(errorDescriptionShortcut)
+        invokeActionViaShortcut("CONTROL F1")
+        invokeActionViaShortcut("CONTROL F1")
       }
     }
 

@@ -5,8 +5,6 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.testGuiFramework.impl.button
-import com.intellij.testGuiFramework.impl.jList
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import training.dsl.*
@@ -108,7 +106,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         stateCheck {
           focusOwner is EditorComponentImpl
         }
-        test {
+        test(waitEditorToBeReady = false) {
           ideFrame {
             button("Cancel").click()
           }

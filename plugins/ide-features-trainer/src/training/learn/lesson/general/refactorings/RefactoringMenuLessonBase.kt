@@ -3,8 +3,6 @@ package training.learn.lesson.general.refactorings
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.components.JBList
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
@@ -38,7 +36,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
       stateCheck { hasInplaceRename() }
       restoreState(delayMillis = defaultRestoreDelay, restoreId = showPopupTaskId) { focusOwner !is JBList<*> }
       test {
-        GuiTestUtil.shortcut(Key.ENTER)
+        invokeActionViaShortcut("ENTER")
       }
     }
 
@@ -47,8 +45,8 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
       stateCheck {
         !hasInplaceRename()
       }
-      test {
-        GuiTestUtil.shortcut(Key.ENTER)
+      test(waitEditorToBeReady = false) {
+        invokeActionViaShortcut("ENTER")
       }
     }
   }

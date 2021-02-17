@@ -4,8 +4,6 @@ package training.learn.lesson.general.assistance
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.QuickDocUtil
 import com.intellij.codeInsight.hint.ImplementationViewComponent
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import training.dsl.LessonContext
 import training.dsl.LessonSample
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
@@ -31,7 +29,7 @@ class QuickPopupsLesson(private val sample: LessonSample) :
       stateCheck { checkDocComponentClosed() }
       restoreIfModifiedOrMoved()
       test {
-        GuiTestUtil.shortcut(Key.ESCAPE)
+        invokeActionViaShortcut("ESCAPE")
       }
     }
 

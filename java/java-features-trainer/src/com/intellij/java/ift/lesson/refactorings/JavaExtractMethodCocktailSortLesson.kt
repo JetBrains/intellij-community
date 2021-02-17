@@ -4,11 +4,9 @@ package com.intellij.java.ift.lesson.refactorings
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.testGuiFramework.impl.button
 import com.intellij.ui.UIBundle
 import training.dsl.LessonContext
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.TaskTestContext
 import training.dsl.dropMnemonic
 import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
@@ -46,10 +44,8 @@ class JavaExtractMethodCocktailSortLesson
         }
 
         test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(RefactoringBundle.message("extract.method.title"), needToKeepDialog=true) {
-              button(refactorButtonText).click()
-            }
+          dialog(RefactoringBundle.message("extract.method.title")) {
+            button(refactorButtonText).click()
           }
         }
       }
@@ -63,10 +59,8 @@ class JavaExtractMethodCocktailSortLesson
         }
 
         test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(processDuplicatesTitle) {
-              button(replaceButtonText).click()
-            }
+          dialog(processDuplicatesTitle) {
+            button(replaceButtonText).click()
           }
         }
       }

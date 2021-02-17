@@ -9,14 +9,13 @@ import com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.jList
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.util.ui.UIUtil
+import org.fest.swing.driver.ComponentDriver
 import training.dsl.*
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import java.awt.Component
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
 
@@ -64,8 +63,8 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
             // Note 1: it is editor from test IDE fixture
             // Note 2: In order to pass this task without interference with later task I need to firstly focus lesson
             // and only then press Escape
-            editor.requestFocus()
-            GuiTestUtil.shortcut(Key.ESCAPE)
+            ComponentDriver<Component>(robot).focusAndWaitForFocusGain(editor.contentComponent)
+            invokeActionViaShortcut("ESCAPE")
           }
         }
       }
