@@ -115,7 +115,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     try {
-      if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(getFile())) return;
+      if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(getFile())) {
+        return;
+      }
       inspect(getInspectionTools(myProfileWrapper), InspectionManager.getInstance(myProject), true, progress);
     }
     finally {
@@ -577,9 +579,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!inspectionProfile.isToolEnabled(key, getFile())) return;
 
     HighlightInfoType type = new InspectionHighlightInfoType(level, element);
-    final String plainMessage = message.startsWith("<html>") 
+    final String plainMessage = message.startsWith("<html>")
                                 ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", ""))
-                                  .replaceAll("&nbsp;", " ") 
+                                  .replaceAll("&nbsp;", " ")
                                 : message;
 
     @NlsSafe String tooltip = null;

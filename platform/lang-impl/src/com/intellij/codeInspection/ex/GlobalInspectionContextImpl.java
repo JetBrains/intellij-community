@@ -86,7 +86,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
 
   private final NotNullLazyValue<? extends ContentManager> myContentManager;
-  private final InspectListener myInspectTopicPublisher;
   private volatile InspectionResultsView myView;
   private Content myContent;
   private volatile boolean myViewClosed = true;
@@ -95,9 +94,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
-    myContentManager = contentManager;
-    myInspectTopicPublisher = project.getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
 
+    myContentManager = contentManager;
+  }
+
+  private @NotNull InspectListener getEventPublisher() {
+    return getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
   }
 
   private @NotNull ContentManager getContentManager() {
@@ -144,7 +146,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   @Override
-  public void doInspections(final @NotNull AnalysisScope scope) {
+  public void doInspections(@NotNull AnalysisScope scope) {
     if (myContent != null) {
       getContentManager().removeContent(myContent, true);
     }
@@ -437,7 +439,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
           ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
           reportWhenInspectionFinished(
-            myInspectTopicPublisher,
+            getEventPublisher(),
             toolWrapper,
             GLOBAL_SIMPLE,
             () -> {
@@ -553,6 +555,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     SearchScope initialSearchScope = ReadAction.compute(scope::toSearchScope);
     final boolean canBeExternalUsages = !(scope.getScopeType() == AnalysisScope.PROJECT && scope.isIncludeTestSource());
+    InspectListener eventPublisher = getEventPublisher();
     for (Tools tools : globalTools) {
       for (ScopeToolState state : tools.getTools()) {
         if (!state.isEnabled()) continue;
@@ -568,7 +571,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           if (tool.isGraphNeeded()) {
             try {
               reportWhenActivityFinished(
-                myInspectTopicPublisher,
+                eventPublisher,
                 InspectListener.ActivityKind.REFERENCE_SEARCH,
                 () -> {
                   ((RefManagerImpl)getRefManager()).findAllDeclarations();
@@ -581,7 +584,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           }
           ThrowableRunnable<RuntimeException> runnable = () -> {
             reportWhenInspectionFinished(
-              myInspectTopicPublisher,
+              eventPublisher,
               toolWrapper,
               GLOBAL,
               () -> {
@@ -610,7 +613,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       }
     }
     reportWhenActivityFinished(
-      myInspectTopicPublisher,
+      eventPublisher,
       InspectListener.ActivityKind.GLOBAL_POST_RUN_ACTIVITIES,
       () -> {
         processPostRunActivities(needRepeatSearchRequest);
