@@ -3,58 +3,20 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.hprof.action.HeapDumpSnapshotRunnable;
 import com.intellij.diagnostic.report.MemoryReportReason;
-import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
-import com.intellij.internal.DebugAttachDetector;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId1;
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 
 final class LowMemoryNotifier implements Disposable {
-  private static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
-  private static final int TOLERABLE_UI_LATENCY = 100;
-
   private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(this::onLowMemorySignalReceived, ONLY_AFTER_GC);
   private final AtomicBoolean myNotificationShown = new AtomicBoolean();
-  private volatile long myPreviousLoggedUIResponse = 0;
-
-  LowMemoryNotifier() {
-    boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
-    ApplicationManager.getApplication().getMessageBus().connect(this)
-      .subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
-        @Override
-        public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
-          if (!isDebugEnabled) {
-            LifecycleUsageTriggerCollector.onFreeze(durationMs);
-          }
-        }
-
-        @Override
-        public void uiResponded(long latencyMs) {
-          final long currentTime = System.currentTimeMillis();
-          if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
-            myPreviousLoggedUIResponse = currentTime;
-            UILatencyLogger.LATENCY.log(latencyMs);
-          }
-          if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
-            UILatencyLogger.LAGGING.log(latencyMs);
-          }
-        }
-      });
-  }
 
   private void onLowMemorySignalReceived() {
     if (myNotificationShown.compareAndSet(false, true)) {
@@ -85,17 +47,5 @@ final class LowMemoryNotifier implements Disposable {
   @Override
   public void dispose() {
     myWatcher.stop();
-  }
-
-  public static final class UILatencyLogger extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("performance", 57);
-
-    private static final EventId1<Long> LATENCY = GROUP.registerEvent("ui.latency", EventFields.Long("duration_ms"));
-    private static final EventId1<Long> LAGGING = GROUP.registerEvent("ui.lagging", EventFields.Long("duration_ms"));
-
-    @Override
-    public EventLogGroup getGroup() {
-      return GROUP;
-    }
   }
 }
