@@ -34,6 +34,10 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowEP;
+import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.impl.StripeButton;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -1525,6 +1529,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
       addActionInfo(component);
       addToolbarInfo(component);
+      addToolWindowInfo(component);
       addGutterInfo(component);
 
       UiInspectorContextProvider contextProvider = UiInspectorUtil.getProvider(component);
@@ -1634,6 +1639,25 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         JComponent targetComponent = ReflectionUtil.getField(ActionToolbarImpl.class, toolbar, JComponent.class, "myTargetComponent");
         if (targetComponent != null) {
           myProperties.add(new PropertyBean("Target component", targetComponent.toString(), true));
+        }
+      }
+    }
+
+    private void addToolWindowInfo(Object component) {
+      if (component instanceof StripeButton) {
+        ToolWindowImpl window = ((StripeButton)component).getToolWindow();
+        myProperties.add(new PropertyBean("Tool Window ID", window.getId(), true));
+        myProperties.add(new PropertyBean("Tool Window Icon", window.getIcon()));
+
+        ToolWindowFactory contentFactory = ReflectionUtil.getField(ToolWindowImpl.class, window, ToolWindowFactory.class, "contentFactory");
+        if (contentFactory != null) {
+          myProperties.add(new PropertyBean("Tool Window Factory", contentFactory));
+        }
+        else {
+          ToolWindowEP ep = ToolWindowEP.EP_NAME.findFirstSafe(it -> it.id == window.getId());
+          if (ep != null && ep.factoryClass != null) {
+            myProperties.add(new PropertyBean("Tool Window Factory", ep.factoryClass));
+          }
         }
       }
     }
