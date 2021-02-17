@@ -88,7 +88,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     return new MessagePublisher<>(topic, this);
   }
 
-  private static final class ToDirectChildrenMessagePublisher<L>  extends MessagePublisher<L>  implements InvocationHandler {
+  private static final class ToDirectChildrenMessagePublisher<L> extends MessagePublisher<L>  implements InvocationHandler {
     ToDirectChildrenMessagePublisher(@NotNull Topic<L> topic, @NotNull CompositeMessageBus bus) {
       super(topic, bus);
     }

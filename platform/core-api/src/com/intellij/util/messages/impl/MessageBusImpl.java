@@ -133,7 +133,9 @@ public class MessageBusImpl implements MessageBus {
     }
     else {
       // warn as there is quite a lot such violations
-      LOG.warn("Broadcast direction TO_CHILDREN  is not allowed for module level message bus. Please change to NONE or TO_PARENT");
+      LOG.error("Topic " + topic.getListenerClass().getName() +
+                " broadcast direction TO_CHILDREN is not allowed for module level message bus. " +
+                "Please change to NONE or TO_PARENT");
       return new MessagePublisher<>(topic, this);
     }
   }
@@ -189,13 +191,13 @@ public class MessageBusImpl implements MessageBus {
     }
 
     // args not null
-    List<Throwable> executeOrAddToQueue(@NotNull Topic<L> topic,
-                                        @NotNull Method method,
-                                        Object[] args,
-                                        @NotNull List<L> handlers,
-                                        @Nullable JobQueue jobQueue,
-                                        @Nullable MessageDeliveryListener messageDeliveryListener,
-                                        @Nullable List<Throwable> exceptions) {
+    final List<Throwable> executeOrAddToQueue(@NotNull Topic<L> topic,
+                                              @NotNull Method method,
+                                              Object[] args,
+                                              @NotNull List<L> handlers,
+                                              @Nullable JobQueue jobQueue,
+                                              @Nullable MessageDeliveryListener messageDeliveryListener,
+                                              @Nullable List<Throwable> exceptions) {
       MethodHandle methodHandle = MethodHandleCache.compute(method, args);
       if (jobQueue == null) {
         for (L handler : handlers) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -14,6 +14,8 @@ final class Message<L> {
   final Topic<L> topic;
   final String methodName;
   final MethodHandle method;
+  // we don't bind args as part of MethodHandle creation, because object is not known yet - so, MethodHandle here is not ready to use
+  // it allows us to cache MethodHandle per method and partially reuse it
   final Object[] args;
   final List<L> handlers;
   final @Nullable ClientId clientId;
