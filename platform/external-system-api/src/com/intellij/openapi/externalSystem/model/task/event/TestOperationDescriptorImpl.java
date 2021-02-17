@@ -16,7 +16,6 @@
 package com.intellij.openapi.externalSystem.model.task.event;
 
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,37 +24,21 @@ import org.jetbrains.annotations.Nullable;
 public class TestOperationDescriptorImpl extends OperationDescriptorImpl implements TestOperationDescriptor {
   private static final long serialVersionUID = 1L;
 
-  private final String myId;
-  private final String myParentId;
   private final String mySuiteName;
   private final String myClassName;
   private final String myMethodName;
 
-  public TestOperationDescriptorImpl(@NotNull String id,
-                                     @Nullable String parentId,
-                                     @Nls String displayName,
+  public TestOperationDescriptorImpl(@Nls String displayName,
                                      long eventTime,
                                      String suiteName,
                                      String className,
                                      String methodName) {
     super(displayName, eventTime);
-    myId = id;
-    myParentId = parentId;
     mySuiteName = suiteName;
     myClassName = className;
     myMethodName = methodName;
   }
 
-
-  @Override
-  public @NotNull String getId() {
-    return myId;
-  }
-
-  @Override
-  public @Nullable String getParentId() {
-    return myParentId;
-  }
 
   @Nullable
   @Override

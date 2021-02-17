@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.externalSystem.model.task.event.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -41,7 +40,7 @@ public class AfterTestEvent extends AbstractTestEvent {
     if (!(testEvent instanceof ExternalSystemFinishEvent)) {
       return;
     }
-    final String testId = testEvent.getDescriptor().getId();
+    final String testId = testEvent.getEventId();
 
     final SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;

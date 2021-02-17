@@ -5,6 +5,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,10 +36,9 @@ public class BeforeTestEvent extends AbstractTestEvent {
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
     TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
-    final String testId = testDescriptor.getId();
-    final String parentTestId = testDescriptor.getParentId();
-    String methodName = testDescriptor.getMethodName();
-    final String name = methodName != null ? methodName : testId;
+    final String testId = testEvent.getEventId();
+    final String parentTestId = testEvent.getParentEventId();
+    final String name = ObjectUtils.coalesce(testDescriptor.getDisplayName(), testDescriptor.getMethodName(), testId);
     final String fqClassName = testDescriptor.getClassName();
 
     doProcess(testId, parentTestId, name, fqClassName);

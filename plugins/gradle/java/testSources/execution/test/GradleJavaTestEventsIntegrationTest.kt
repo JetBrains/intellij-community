@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.model.task.*
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
@@ -21,8 +22,23 @@ import org.junit.Test
 
 open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
 
+  override fun setUp() {
+    super.setUp()
+    if (testLauncherAPISupported()) {
+      Registry.get("gradle.testLauncherAPI.enabled").setValue(true)
+    }
+  }
+
+  override fun tearDown() {
+    RunAll(
+      ThrowableRunnable { Registry.get("gradle.testLauncherAPI.enabled").setValue(false) },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
+  }
+
   @Test
   fun test() {
+
     val gradleSupportsJunitPlatform = isGradleNewerOrSameAs("4.6")
     createProjectSubFile("src/main/java/my/pack/AClass.java",
                          "package my.pack;\n" +
