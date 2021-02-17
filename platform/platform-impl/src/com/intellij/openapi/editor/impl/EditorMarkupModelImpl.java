@@ -318,7 +318,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         if (action instanceof HintManagerImpl.ActionToIgnore) {
           return;
         }
-        myPopupManager.hidePopup();
+        if (myPopupManager != null) {
+          myPopupManager.hidePopup();
+        }
       }
     });
 
