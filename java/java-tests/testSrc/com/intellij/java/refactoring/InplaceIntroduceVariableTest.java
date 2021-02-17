@@ -245,6 +245,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTest(null);
   }
 
+  public void testHeavilyBrokenFile10() {
+    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("xyz"));
+  }
+
   public void testAnnotationArgument() {
     assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class, 
                  "Introduce Variable refactoring is not supported in the current context", () -> doTest(null));
