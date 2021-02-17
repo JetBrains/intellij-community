@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -122,6 +123,7 @@ final class DfaBasedFilter {
   }
 
   private @Nullable static PsiType getElementType(@NotNull PsiElement element) {
+    if (DumbService.isDumb(element.getProject())) return null;
     if (element instanceof PsiExpression) {
       return ((PsiExpression)element).getType();
     }
