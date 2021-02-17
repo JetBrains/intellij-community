@@ -3,11 +3,11 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemMessageEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.Key;
-import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
@@ -35,25 +35,21 @@ public class OnOutputEvent extends AbstractTestEvent {
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
-    if (!(testEvent instanceof ExternalSystemStatusEvent)) {
+    if (!(testEvent instanceof ExternalSystemMessageEvent)) {
       return;
     }
     TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
 
-    final String testId = testDescriptor.getId();
-    String description = ((ExternalSystemStatusEvent)testEvent).getDescription();
-    Key destination = ProcessOutputTypes.STDERR;
-    if (description.startsWith(OUT)) {
-      destination = ProcessOutputTypes.STDOUT;
-      description = description.substring(OUT.length());
+    final String testId = testEvent.getEventId();
+    final String description = ((ExternalSystemMessageEvent)testEvent).getDescription();
+
+    if (description == null) {
+      doProcess(testId, "", ProcessOutputTypes.STDERR);
+    } else if (description.startsWith(OUT)) {
+      doProcess(testId, description.substring(OUT.length()), ProcessOutputTypes.STDOUT);
     } else if (description.startsWith(ERR)) {
-      destination = ProcessOutputTypes.STDERR;
-      description = description.substring(ERR.length());
+      doProcess(testId, description.substring(ERR.length()), ProcessOutputTypes.STDERR);
     }
-
-    final String output = description;
-
-    doProcess(testId, output, destination);
   }
 
   private void doProcess(String testId, String output, @NotNull Key type) {

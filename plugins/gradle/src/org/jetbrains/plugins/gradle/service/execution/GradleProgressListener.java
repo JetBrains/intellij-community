@@ -10,17 +10,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
+import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
-import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
-import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.gradle.tooling.events.FinishEvent;
@@ -109,10 +108,10 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     String message = prefix + outputEvent.getDescriptor().getMessage();
     if (descriptor instanceof JvmTestOperationDescriptor) {
       final TestOperationDescriptor operationDescriptor = convertDescriptor(outputEvent, (JvmTestOperationDescriptor)descriptor);
-      ExternalSystemStatusEventImpl<TestOperationDescriptor> event = new ExternalSystemStatusEventImpl<>(eventId.id.toString(),
-                                                                                                         eventId.parentId.toString(),
-                                                                              operationDescriptor,0,0, "",
-                                                                              message);
+      ExternalSystemMessageEvent<TestOperationDescriptor> event = new ExternalSystemMessageEventImpl<>(eventId.id.toString(),
+                                                                                                       eventId.parentId.toString(),
+                                                                                                       operationDescriptor,
+                                                                                                       message);
       return new ExternalSystemTaskExecutionEvent(myTaskId, event);
     }
 
@@ -173,7 +172,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     boolean parentIsTest = descriptor.getParent() instanceof org.gradle.tooling.events.test.TestOperationDescriptor;
     String parentId = parentIsTest ? descriptor.getParent().getDisplayName() : null;
 
-    return new TestOperationDescriptorImpl(id, parentId, descriptor.getDisplayName(),
+    return new TestOperationDescriptorImpl(descriptor.getDisplayName(),
                                            testProgressEvent.getEventTime(),
                                            descriptor.getSuiteName(),
                                            descriptor.getClassName(),

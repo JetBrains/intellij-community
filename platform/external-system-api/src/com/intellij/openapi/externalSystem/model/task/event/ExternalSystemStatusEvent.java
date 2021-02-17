@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
  * An event that informs about an interim results of the operation.
  *
  * @author Vladislav.Soroka
  */
-public interface ExternalSystemStatusEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
+public interface ExternalSystemStatusEvent<T extends OperationDescriptor> extends ExternalSystemMessageEvent<T> {
   /**
    * The amount of work already performed by the build operation.
    *
@@ -43,12 +41,4 @@ public interface ExternalSystemStatusEvent<T extends OperationDescriptor> extend
    * @return The measure used to express the amount of work.
    */
   String getUnit();
-
-  /**
-   * Textual description of event.
-   *
-   * @return arbitrary additional information about status update
-   */
-  @Nullable
-  default String getDescription() { return null; }
 }
