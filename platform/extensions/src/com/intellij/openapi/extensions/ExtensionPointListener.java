@@ -12,4 +12,10 @@ public interface ExtensionPointListener<T> {
 
   default void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
   }
+
+  static <T> ExtensionPointListener<T> @NotNull [] emptyArray() {
+    //noinspection unchecked
+    return (ExtensionPointListener<T>[])EMPTY_ARRAY;
+  }
+  ExtensionPointListener<?>[] EMPTY_ARRAY = new ExtensionPointListener<?>[0];
 }

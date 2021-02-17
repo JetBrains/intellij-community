@@ -94,8 +94,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
 
-    if (myProject != null) {
-      Disposer.register(myProject, this);
+    if (project != null) {
+      Disposer.register(project, this);
     }
 
     myDialogInitialization = () -> {

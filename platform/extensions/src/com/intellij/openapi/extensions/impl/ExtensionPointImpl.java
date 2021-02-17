@@ -33,29 +33,25 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-@SuppressWarnings("SynchronizeOnThis")
 @ApiStatus.Internal
 public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T>, Iterable<T> {
-  private static final ExtensionPointListener<?>[] EMPTY_ARRAY = new ExtensionPointListener<?>[0];
-
   static final Logger LOG = Logger.getInstance(ExtensionPointImpl.class);
 
   // test-only
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE; // guarded by this
 
   private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY =
-    n -> n == 0 ? EMPTY_ARRAY : new ExtensionPointListener[n];
+    n -> n == 0 ? ExtensionPointListener.emptyArray() : new ExtensionPointListener[n];
 
   private final String myName;
   private final String myClassName;
 
-  private volatile List<T> myExtensionsCache; // immutable list, never modified inplace, only swapped atomically
+  private volatile List<? extends T> myExtensionsCache; // immutable list, never modified inplace, only swapped atomically
   // Since JDK 9 Arrays.ArrayList.toArray() doesn't return T[] array (https://bugs.openjdk.java.net/browse/JDK-6260652),
   // but instead returns Object[], so, we cannot use toArray() anymore.
   // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
   private volatile T @Nullable [] myExtensionsCacheAsArray;
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private ComponentManager componentManager;
 
   protected final @NotNull PluginDescriptor pluginDescriptor;
@@ -65,10 +61,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   private volatile boolean adaptersIsSorted = true;
 
   // guarded by this
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized", "unchecked"})
-  private ExtensionPointListener<T> @NotNull [] myListeners = (ExtensionPointListener<T>[])EMPTY_ARRAY;
+  private ExtensionPointListener<T> @NotNull [] myListeners = ExtensionPointListener.emptyArray();
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private @Nullable Class<T> myExtensionClass;
 
   private final boolean isDynamic;
@@ -243,19 +237,21 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final @NotNull List<T> getExtensionList() {
-    List<T> result = myExtensionsCache;
-    return result != null ? result : calcExtensionList();
+    List<? extends T> result = myExtensionsCache;
+    //noinspection unchecked
+    return result != null ? (List<T>)result : calcExtensionList();
   }
 
   private synchronized List<T> calcExtensionList() {
-    List<T> result = myExtensionsCache;
+    List<? extends T> result = myExtensionsCache;
     if (result == null) {
       T[] array = processAdapters();
       myExtensionsCacheAsArray = array;
       result = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
       myExtensionsCache = result;
     }
-    return result;
+    //noinspection unchecked
+    return (List<T>)result;
   }
 
   @Override
@@ -285,8 +281,9 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   @Override
   @ApiStatus.Experimental
   public final @NotNull Iterator<T> iterator() {
-    List<T> result = myExtensionsCache;
-    return result == null ? createIterator() : result.iterator();
+    List<? extends T> result = myExtensionsCache;
+    //noinspection unchecked
+    return result == null ? createIterator() : (Iterator<T>)result.iterator();
   }
 
   public final void processWithPluginDescriptor(boolean shouldBeSorted, @NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
@@ -383,8 +380,9 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final @NotNull Stream<T> extensions() {
-    List<T> result = myExtensionsCache;
-    return result == null ? StreamSupport.stream(spliterator(), false) : result.stream();
+    List<? extends T> result = myExtensionsCache;
+    //noinspection unchecked
+    return result == null ? StreamSupport.stream(spliterator(), false) : (Stream<T>)result.stream();
   }
 
   @Override
@@ -585,7 +583,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       assertNotReadOnlyMode();
     }
 
-    List<T> oldList = myExtensionsCache;
+    List<? extends T> oldList = myExtensionsCache;
     T[] oldArray = myExtensionsCacheAsArray;
 
     myExtensionsCache = ContainerUtil.immutableList(newList);
@@ -745,25 +743,19 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       return true;
     }
 
-    List<ExtensionPointListener<T>> priorityListeners = ContainerUtil.filter(listeners, listener -> {
-      return listener instanceof ExtensionPointPriorityListener;
-    });
-    List<ExtensionPointListener<T>> regularListeners = ContainerUtil.filter(listeners, listener -> {
-      return !(listener instanceof ExtensionPointPriorityListener);
-    });
+    List<ExtensionPointListener<T>> priorityListeners = ContainerUtil.filter(listeners, listener -> listener instanceof ExtensionPointPriorityListener);
+    List<ExtensionPointListener<T>> regularListeners = ContainerUtil.filter(listeners, listener -> !(listener instanceof ExtensionPointPriorityListener));
 
     List<ExtensionComponentAdapter> finalRemovedAdapters = removedAdapters;
     if (!priorityListeners.isEmpty()) {
-      priorityListenerCallbacks.add(() -> {
-        //noinspection unchecked
-        notifyListeners(true, finalRemovedAdapters, priorityListeners.toArray(new ExtensionPointListener[0]));
-      });
+      priorityListenerCallbacks.add(() ->
+        notifyListeners(true, finalRemovedAdapters, priorityListeners.toArray(ExtensionPointListener.emptyArray()))
+      );
     }
     if (!regularListeners.isEmpty()) {
-      listenerCallbacks.add(() -> {
-        //noinspection unchecked
-        notifyListeners(true, finalRemovedAdapters, regularListeners.toArray(new ExtensionPointListener[0]));
-      });
+      listenerCallbacks.add(() ->
+        notifyListeners(true, finalRemovedAdapters, regularListeners.toArray(ExtensionPointListener.emptyArray()))
+      );
     }
     return true;
   }
@@ -893,8 +885,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
 
     // help GC
-    //noinspection unchecked
-    myListeners = (ExtensionPointListener<T>[])EMPTY_ARRAY;
+    myListeners = ExtensionPointListener.emptyArray();
     myExtensionClass = null;
   }
 
