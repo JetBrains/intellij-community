@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -67,6 +68,7 @@ final class ActionUpdater {
   private final Utils.ActionGroupVisitor myVisitor;
 
   private boolean myAllowPartialExpand = true;
+  private boolean myPreCacheAsyncDataKeys;
 
   ActionUpdater(boolean isInModalContext,
                 PresentationFactory presentationFactory,
@@ -91,9 +93,11 @@ final class ActionUpdater {
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
+    myPreCacheAsyncDataKeys = Utils.isAsyncDataContext(dataContext);
     boolean forceAsync = Utils.isAsyncDataContext(dataContext) && Registry.is("actionSystem.update.actions.async.unsafe");
     myRealUpdateStrategy = new UpdateStrategy(
       action -> {
+        ensureAsyncDataKeysPreCached();
         // clone the presentation to avoid partially changing the cached one if update is interrupted
         Presentation presentation = ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action).clone());
         presentation.setEnabledAndVisible(true);
@@ -232,6 +236,7 @@ final class ActionUpdater {
     cancelAndRestartOnUserActivity(promise, indicator);
 
     ourExecutor.execute(() -> {
+      ensureAsyncDataKeysPreCached();
       while (promise.getState() == Promise.State.PENDING) {
         try {
           indicator.checkCanceled();
@@ -253,6 +258,21 @@ final class ActionUpdater {
       }
     });
     return promise;
+  }
+
+  private void ensureAsyncDataKeysPreCached() {
+    if (!myPreCacheAsyncDataKeys) return;
+    myPreCacheAsyncDataKeys = false;
+    long start = System.currentTimeMillis();
+    ReadAction.nonBlocking(() -> {
+      for (DataKey<?> key : DataKey.allKeys()) {
+        myDataContext.getData(key);
+      }
+    }).executeSynchronously();
+    long time = System.currentTimeMillis() - start;
+    if (time > 500) {
+      LOG.debug("ensureAsyncDataKeysPreCached() took: " + time + " ms");
+    }
   }
 
   private static void cancelAndRestartOnUserActivity(Promise<?> promise, ProgressIndicator indicator) {
