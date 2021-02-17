@@ -75,6 +75,6 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
   IntelliJPlatformProduct.MOBILE_IDE,
   IntelliJPlatformProduct.DBE,
   IntelliJPlatformProduct.ANDROID_STUDIO,
-  IntelliJPlatformProduct.INTELLIJ_CLIENT,
+  IntelliJPlatformProduct.CWM_GUEST,
   IntelliJPlatformProduct.IDEA_IE -> null
 }
