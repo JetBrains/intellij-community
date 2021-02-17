@@ -125,6 +125,17 @@
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
       <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
     </action>
+
+    <action id="com.intellij.space.vcs.SpaceCopyLinkActionGroup"
+            class="com.intellij.space.vcs.SpaceCopyLinkActionGroup">
+      <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
+      <add-to-group group-id="CopyExternalReferenceGroup" anchor="last"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
+      <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
+      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
+      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
+    </action>
+
     <action id="com.intellij.space.vcs.share.SpaceShareProjectAction"
             class="com.intellij.space.vcs.share.SpaceShareProjectAction">
       <add-to-group group-id="SpaceGroup" anchor="first"/>

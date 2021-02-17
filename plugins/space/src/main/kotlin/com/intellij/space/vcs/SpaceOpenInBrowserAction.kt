@@ -5,6 +5,7 @@ import circlet.client.api.ProjectKey
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
@@ -28,10 +29,12 @@ import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 import icons.SpaceIcons
+import java.awt.datatransfer.StringSelection
 import com.intellij.openapi.util.Ref as Ref1
 
-abstract class SpaceOpenInBrowserActionGroup<T>(@NlsActions.ActionText groupName: String) :
-  ActionGroup(groupName, SpaceBundle.message("open.in.browser.group.description"), SpaceIcons.Main),
+abstract class SpaceOpenInBrowserActionGroup<T>(@NlsActions.ActionText groupName: String,
+                                                @NlsActions.ActionDescription val description: String) :
+  ActionGroup(groupName, description, SpaceIcons.Main),
   DumbAware {
 
   abstract fun getData(dataContext: DataContext): List<T>?
@@ -56,7 +59,7 @@ abstract class SpaceOpenInBrowserActionGroup<T>(@NlsActions.ActionText groupName
 }
 
 abstract class SpaceOpenInBrowserAction(@NlsActions.ActionText groupName: String) :
-  SpaceOpenInBrowserActionGroup<Pair<SpaceProjectInfo, String>>(groupName) {
+  SpaceOpenInBrowserActionGroup<Pair<SpaceProjectInfo, String>>(groupName, SpaceBundle.message("open.in.browser.group.description")) {
 
   override fun update(e: AnActionEvent) {
     SpaceActionUtils.showIconInActionSearch(e)
@@ -110,16 +113,15 @@ class OpenIssues : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser
   }
 }
 
-internal class SpaceVcsOpenInBrowserActionGroup :
-  SpaceOpenInBrowserActionGroup<UrlData>(
-    SpaceBundle.message("open.in.browser.group.open.on.space")
-  ) {
+internal abstract class SpaceUrlBasedActionGroup(@NlsActions.ActionText groupName: String,
+                                                 @NlsActions.ActionDescription description: String) :
+  SpaceOpenInBrowserActionGroup<UrlData>(groupName, description) {
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = (getData(e.dataContext) != null)
+    val data = getData(e.dataContext)
+    e.presentation.isEnabledAndVisible = (data != null)
+    e.presentation.description = data?.singleOrNull()?.url ?: description
   }
-
-  override fun buildAction(it: UrlData): AnAction = OpenAction(it)
 
   override fun getData(dataContext: DataContext): List<UrlData>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
@@ -184,14 +186,42 @@ internal class SpaceVcsOpenInBrowserActionGroup :
   }
 }
 
+internal class SpaceVcsOpenInBrowserActionGroup : SpaceUrlBasedActionGroup(SpaceBundle.message("open.in.browser.group.open.on.space"),
+                                                                           SpaceBundle.message("open.in.browser.group.description")) {
+  override fun buildAction(it: UrlData): AnAction = OpenAction(it)
+}
+
+internal class SpaceCopyLinkActionGroup : SpaceUrlBasedActionGroup(SpaceBundle.message("copy.link.to.space.action"),
+                                                                   SpaceBundle.message("copy.link.to.space.action.description")) {
+  override fun buildAction(it: UrlData): AnAction = CopyLinkAction(it)
+}
+
 internal class OpenAction(private val data: UrlData) : DumbAwareAction(
   SpaceBundle.message("open.in.browser.open.for.project.action", data.info.project.name)
 ) {
+  override fun update(e: AnActionEvent) {
+    e.presentation.text = data.url
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
     data.url?.let { BrowserUtil.browse(it) }
   }
 }
+
+internal class CopyLinkAction(private val data: UrlData) : DumbAwareAction(
+  SpaceBundle.messagePointer("copy.link.in.project.action", data.info.project.name)
+) {
+  override fun update(e: AnActionEvent) {
+    e.presentation.description = data.url
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    data.url?.let {
+      CopyPasteManager.getInstance().setContents(StringSelection(it))
+    }
+  }
+}
+
 
 internal sealed class UrlData(val project: Project,
                               val info: SpaceProjectInfo,
