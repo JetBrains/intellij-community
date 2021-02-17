@@ -8,6 +8,7 @@ import com.intellij.ui.AnActionButton
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
+import org.jetbrains.idea.maven.server.DummyMavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerConnectorImpl
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -27,7 +28,8 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
 
     override fun updateButton(e: AnActionEvent) {
       val connector = tableView.selectedObject
-      isEnabled = connector is MavenServerConnectorImpl && connector.state == MavenServerConnectorImpl.State.RUNNING
+      isEnabled = (connector is MavenServerConnectorImpl && connector.state == MavenServerConnectorImpl.State.RUNNING)
+                  || connector is DummyMavenServerConnector
     }
   }
   val refresh = object : AnActionButton(MavenConfigurableBundle.message("connector.ui.refresh"), AllIcons.Actions.Refresh) {
