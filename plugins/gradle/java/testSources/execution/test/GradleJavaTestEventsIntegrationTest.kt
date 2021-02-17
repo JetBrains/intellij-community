@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.execution.test
 
 import com.intellij.openapi.externalSystem.model.task.*
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import com.intellij.openapi.util.Pair
@@ -115,9 +114,9 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
   private fun extractTestClassesAndMethods(testListener: LoggingESStatusChangeListener) =
     testListener.eventLog
       .filterIsInstance<ExternalSystemTaskExecutionEvent>()
-      .map { it.progressEvent }
-      .filterIsInstance<ExternalSystemProgressEvent<TestOperationDescriptor>>()
-      .map { it.descriptor.run { className to methodName } }
+      .map { it.progressEvent.descriptor }
+      .filterIsInstance<TestOperationDescriptor>()
+      .map { it.run { className to methodName } }
 
   private fun `call test task produces test events`() {
     val testEventListener = LoggingESStatusChangeListener()
@@ -211,9 +210,9 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
     if (testLauncherAPISupported()) {
       val testOperationDescriptors = testEventListener.eventLog
         .filterIsInstance<ExternalSystemTaskExecutionEvent>()
-        .map { it.progressEvent }
-        .filterIsInstance<ExternalSystemProgressEvent<TestOperationDescriptor>>()
-        .map { it.descriptor.run { "$className$$methodName" to displayName } }
+        .map { it.progressEvent.descriptor }
+        .filterIsInstance<TestOperationDescriptor>()
+        .map { it.run { "$className$$methodName" to displayName } }
 
       assertThat(testOperationDescriptors)
         .contains("my.otherpack.ADisplayNamedTest\$successful_test()" to "successful test")

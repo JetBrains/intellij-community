@@ -685,7 +685,7 @@ public class GradleExecutionHelper {
    * Args list will contain all other known arguments.
    *
    * @param args full command line
-   * @return test tasks geouped with its patterns
+   * @return test tasks grouped with its patterns
    */
   static  MultiMap<String, String> extractTestCommandOptions(@NotNull List<String> args) {
     MultiMap<String, String> taskToTestsPatterns = new MultiMap<>();
