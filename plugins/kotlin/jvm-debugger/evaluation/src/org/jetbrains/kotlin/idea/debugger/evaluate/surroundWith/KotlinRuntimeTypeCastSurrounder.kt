@@ -74,7 +74,7 @@ class KotlinRuntimeTypeCastSurrounder : KotlinExpressionSurrounder() {
             val project = myEditor.project
             DebuggerInvocationUtil.invokeLater(project, Runnable {
                 object : WriteCommandAction<Any>(project, JavaDebuggerBundle.message("command.name.surround.with.runtime.cast")) {
-                    override fun run(result: Result<Any>) {
+                    override fun run(result: Result<in Any>) {
                         try {
                             val factory = KtPsiFactory(myElement.project)
 
