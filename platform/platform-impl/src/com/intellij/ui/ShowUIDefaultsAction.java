@@ -184,9 +184,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 return box;
               }
             }
-            final JPanel panel = new JPanel(new BorderLayout());
             final JLabel label = new JLabel(value == null ? "" : value.toString());
-            panel.add(label, BorderLayout.CENTER);
+            final JPanel panel = simplePanel(label);
             if (value instanceof Color) {
               final Color c = (Color)value;
               label.setText(String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
@@ -213,9 +212,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
               } catch (Exception ignore) {}
             }
             if (column == 0 && value instanceof String && ((String)value).contains(" as #")) {
-              label.setForeground(UIUtil.getListForeground(isSelected, hasFocus));
-              return simplePanel(new JBLabel(AllIcons.General.Warning, LEFT).withBorder(JBUI.Borders.emptyLeft(4)))
-                .addToLeft(label)
+              return simplePanel(new JBLabel(AllIcons.General.Warning, LEFT))
+                .addToLeft(super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column))
                 .withBackground(UIUtil.getListBackground(isSelected, hasFocus));
             }
             return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
