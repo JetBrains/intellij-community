@@ -21,10 +21,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
-import com.intellij.util.Consumer;
-import com.intellij.util.Functions;
-import com.intellij.util.LineSeparator;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -52,14 +49,16 @@ public class WSLDistribution {
   private static final String RUN_PARAMETER = "run";
   public static final String UNC_PREFIX = "\\\\wsl$\\";
   private static final String WSLENV = "WSLENV";
+  private static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
-  private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
-  private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(() -> readWslIp());
-  private final NullableLazyValue<String> myShellPath = NullableLazyValue.createValue(() -> readShellPath());
+  private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(this::readHostIp);
+  private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(this::readWslIp);
+  private final NullableLazyValue<String> myShellPath = NullableLazyValue.createValue(this::readShellPath);
+  private final NullableLazyValue<String> myUserHomeProvider = NullableLazyValue.createValue(this::readUserHome);
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -476,7 +475,11 @@ public class WSLDistribution {
   }
 
   public final @Nullable @NlsSafe String getUserHome() {
-    return myDescriptor.getUserHome();
+    return myUserHomeProvider.getValue();
+  }
+
+  private @NlsSafe @Nullable String readUserHome() {
+    return getEnvironmentVariable("HOME");
   }
 
   /**
@@ -611,7 +614,11 @@ public class WSLDistribution {
   }
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
-    return myDescriptor.getEnvironmentVariable(name);
+    WSLCommandLineOptions options = new WSLCommandLineOptions()
+      .setExecuteCommandInInteractiveShell(true)
+      .setExecuteCommandInLoginShell(true)
+      .setShellPath(getShellPath());
+    return executeInShellAndGetCommandOnlyStdout(List.of("printenv", name), options, DEFAULT_TIMEOUT, true);
   }
 
   public @NlsSafe @NotNull String getShellPath() {
@@ -620,28 +627,47 @@ public class WSLDistribution {
 
   private @NlsSafe @Nullable String readShellPath() {
     WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true);
-    String prefixText = "intellij: fetching SHELL";
+    return executeInShellAndGetCommandOnlyStdout(List.of("printenv", "SHELL"), options, DEFAULT_TIMEOUT, true);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  @Nullable String executeInShellAndGetCommandOnlyStdout(@NotNull List<String> command,
+                                                         @NotNull WSLCommandLineOptions options,
+                                                         int timeout,
+                                                         boolean oneLineStdoutExpected) {
+    options.setExecuteCommandInShell(true);
+    // When command is executed in interactive/login shell, the result stdout may contain additional output
+    // produced by shell configuration files, for example, "Message Of The Day".
+    // Let's print some unique message before executing the command to know where command output begins in the result output.
+    String prefixText = "intellij: executing command...";
     options.addInitCommand("echo " + CommandLineUtil.posixQuote(prefixText));
     try {
-      ProcessOutput output = executeOnWsl(List.of("printenv", "SHELL"), options, 10_000, null);
+      ProcessOutput output = executeOnWsl(command, options, timeout, null);
+      String stdout = output.getStdout();
       if (!output.isTimeout() && output.getExitCode() == 0) {
         String markerText = prefixText + LineSeparator.LF.getSeparatorString();
-        int index = output.getStdout().indexOf(markerText);
+        int index = stdout.indexOf(markerText);
         if (index >= 0) {
-          String stdout = output.getStdout().substring(index + markerText.length()).trim();
-          if (!stdout.isEmpty()) {
-            return stdout;
-          }
+          String commandOwnStdout = stdout.substring(index + markerText.length());
+          return oneLineStdoutExpected ? expectOneLineOutput(command, commandOwnStdout) : commandOwnStdout;
         }
       }
-      LOG.info("Failed to read SHELL environment variable for " + getMsId() + ": " +
-               "stdout=" + output.getStdout() + ", stderr=" + output.getStderr() +
-               ", exitCode=" + output.getExitCode() + ", timeout=" + output.isTimeout());
-      return null;
+      LOG.info("Failed to execute " + command + " for " + getMsId() + ": " +
+               "exitCode=" + output.getExitCode() + ", timeout=" + output.isTimeout() +
+               ", stdout=" + stdout + ", stderr=" + output.getStderr());
     }
     catch (ExecutionException e) {
-      LOG.info("Failed to read SHELL environment variable for " + getMsId(), e);
-      return null;
+      LOG.info("Failed to execute " + command + " for " + getMsId(), e);
     }
+    return null;
+  }
+
+  private @NotNull String expectOneLineOutput(@NotNull List<String> command, @NotNull String stdout) {
+    String converted = StringUtil.convertLineSeparators(stdout, LineSeparator.LF.getSeparatorString());
+    List<String> lines = StringUtil.split(converted, LineSeparator.LF.getSeparatorString(), true, true);
+    if (lines.size() != 1) {
+      LOG.info("One line stdout expected: " + getMsId() + ", command=" + command + ", stdout=" + stdout + ", lines=" + lines.size());
+    }
+    return StringUtil.notNullize(ContainerUtil.getFirstItem(lines), stdout);
   }
 }
