@@ -52,6 +52,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
+import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.*
 import org.jetbrains.plugins.github.util.GithubUtil.runInterruptable
 import java.awt.event.ActionEvent
@@ -67,7 +68,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
   fun create(directionModel: GHPRCreateDirectionModel,
              titleDocument: Document,
-             descriptionDocument: Document,
+             descriptionDocument: DisableableDocument,
              metadataModel: GHPRCreateMetadataModel,
              createLoadingModel: GHCompletableFutureLoadingModel<GHPullRequestShort>): JComponent {
 
@@ -87,15 +88,12 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
         progressIndicator.cancel()
         viewController.viewList()
-        directionModel.reset()
-        titleDocument.remove(0, titleDocument.length)
-        descriptionDocument.remove(0, descriptionDocument.length)
-        metadataModel.reset()
+        resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
         createLoadingModel.future = null
       }
     }
     InfoController(directionModel, createAction, createDraftAction)
-    directionModel.reset()
+    resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
 
     val directionSelector = GHPRCreateDirectionComponentFactory(repositoriesManager, directionModel).create().apply {
       border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
@@ -118,6 +116,10 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       emptyText.text = GithubBundle.message("pull.request.create.description")
       lineWrap = true
     }
+    descriptionDocument.addAndInvokeEnabledStateListener {
+      descriptionField.isEnabled = descriptionDocument.enabled
+    }
+
     val descriptionPane = JBScrollPane(descriptionField,
                                        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
@@ -203,7 +205,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
   }
 
   private inner class CreateAction(private val directionModel: GHPRCreateDirectionModel,
-                                   private val titleDocument: Document, private val descriptionDocument: Document,
+                                   private val titleDocument: Document, private val descriptionDocument: DisableableDocument,
                                    private val metadataModel: GHPRCreateMetadataModel,
                                    private val draft: Boolean,
                                    private val loadingModel: GHCompletableFutureLoadingModel<GHPullRequestShort>,
@@ -240,17 +242,15 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                                                       CollectionDelta(emptyList(), assignees))
               if (labels.isNotEmpty()) detailsData.adjustLabels(ProgressWrapper.wrap(progressIndicator),
                                                                 CollectionDelta(emptyList(), labels))
-            } finally {
+            }
+            finally {
               Disposer.dispose(disposable)
             }
             pullRequest
           }
       }.successOnEdt {
         viewController.viewPullRequest(it)
-        directionModel.reset()
-        titleDocument.remove(0, titleDocument.length)
-        descriptionDocument.remove(0, descriptionDocument.length)
-        metadataModel.reset()
+        resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
         it
       }
     }
@@ -304,7 +304,8 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                                                      GithubBundle.message("pull.request.create.input.remote.branch.name"),
                                                                      GithubBundle.message("pull.request.create.input.remote.branch.title"),
                                                                      null, localBranch.name, null, null,
-                                                                     GithubBundle.message("pull.request.create.input.remote.branch.comment", localBranch.name, remote.name))
+                                                                     GithubBundle.message("pull.request.create.input.remote.branch.comment",
+                                                                                          localBranch.name, remote.name))
                        ?: return null
       //always set tracking
       return GitPushTarget(GitStandardRemoteBranch(remote, branchName), true)
@@ -341,6 +342,26 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
     val dialog = CompareBranchesDialog(GitCompareBranchesHelper(project), baseBranch.name, headBranch.name, info, repository, true)
     dialog.show()
+  }
+
+  private fun resetForm(directionModel: GHPRCreateDirectionModel,
+                        titleDocument: Document,
+                        descriptionDocument: DisableableDocument,
+                        metadataModel: GHPRCreateMetadataModel) {
+    directionModel.reset()
+    titleDocument.remove(0, titleDocument.length)
+    descriptionDocument.remove(0, descriptionDocument.length)
+    descriptionDocument.enabled = false
+    descriptionDocument.insertString(0, GithubBundle.message("pull.request.create.loading.template"), null)
+    GHPRTemplateLoader.readTemplate(project).successOnEdt {
+      if (!descriptionDocument.enabled) {
+        descriptionDocument.remove(0, descriptionDocument.length)
+        descriptionDocument.insertString(0, it, null)
+      }
+    }.completionOnEdt {
+      if (!descriptionDocument.enabled) descriptionDocument.enabled = true
+    }
+    metadataModel.reset()
   }
 
   companion object {

@@ -13,6 +13,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
+import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import javax.swing.*
 import javax.swing.text.PlainDocument
 
@@ -43,7 +44,7 @@ internal class GHPRCreateComponentFactory(private val project: Project,
 
     val directionModel = GHPRCreateDirectionModelImpl(repositoryDataService.repositoryMapping)
     val titleDocument = PlainDocument()
-    val descriptionDocument = PlainDocument()
+    val descriptionDocument = DisableableDocument()
     val metadataModel = GHPRCreateMetadataModel(repositoryDataService, dataContext.securityService.currentUser)
     val createLoadingModel = GHCompletableFutureLoadingModel<GHPullRequestShort>(uiDisposable)
 
