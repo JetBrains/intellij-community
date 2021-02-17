@@ -147,6 +147,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   @Override
   @Nullable
   public Module getModule(@NotNull String name) {
+    if (myModuleModel == null) return null;
+
     final Module moduleByName = myModuleModel.findModuleByName(name);
     if (moduleByName != null) {
       return moduleByName;
