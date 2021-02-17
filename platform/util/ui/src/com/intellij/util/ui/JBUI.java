@@ -404,7 +404,7 @@ public class JBUI {
 
       @NotNull
       public static Insets numberMnemonicInsets() {
-        return insets("ActionsList.mnemonicsBorderInsets", insets(0, 8, 0, 6));
+        return insets("ActionsList.mnemonicsBorderInsets", insets(0, 8, 1, 6));
       }
 
       @NotNull

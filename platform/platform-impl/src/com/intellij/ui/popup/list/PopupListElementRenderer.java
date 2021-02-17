@@ -31,12 +31,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected final ListPopupImpl myPopup;
   private JLabel myShortcutLabel;
   private @Nullable JLabel myValueLabel;
+  protected JLabel myMnemonicLabel;
 
   protected JComponent myRightPart;
   protected JComponent myLeftPart;
   protected JComponent myNextStepButtonSeparator;
-
-  protected final JLabel myMnemonicLabel = new JLabel();
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<>() {
@@ -74,14 +73,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
     });
     myPopup = aPopup;
-
-    Dimension preferredSize = new JLabel("A").getPreferredSize();
-    Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
-    preferredSize.width += insets.left + insets.right;
-    myMnemonicLabel.setPreferredSize(preferredSize);
-    myMnemonicLabel.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
-    myMnemonicLabel.setForeground(JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
-    myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
   }
 
   @Override
@@ -104,15 +95,27 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
     };
     panel.add(myTextLabel, BorderLayout.WEST);
+
     myValueLabel = new JLabel();
     myValueLabel.setEnabled(false);
     myValueLabel.setBorder(JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0));
     myValueLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     panel.add(myValueLabel, BorderLayout.CENTER);
+
     myShortcutLabel = new JLabel();
-    myShortcutLabel.setBorder(JBUI.Borders.emptyRight(3));
+    myShortcutLabel.setBorder(JBUI.Borders.empty(0,0,1,3));
     myShortcutLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     panel.add(myShortcutLabel, BorderLayout.EAST);
+
+    myMnemonicLabel = new JLabel();
+    Dimension preferredSize = new JLabel("A").getPreferredSize();
+    Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
+    preferredSize.width += insets.left + insets.right;
+    myMnemonicLabel.setPreferredSize(preferredSize);
+    myMnemonicLabel.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
+    myMnemonicLabel.setForeground(JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
+    myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
+
     return layoutComponent(panel);
   }
 
