@@ -15,6 +15,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.*
+import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -37,7 +38,7 @@ private val LOG = logger<EntityStorageSerializerImpl>()
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
                                   private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v9"
+    const val SERIALIZER_VERSION = "v10"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024

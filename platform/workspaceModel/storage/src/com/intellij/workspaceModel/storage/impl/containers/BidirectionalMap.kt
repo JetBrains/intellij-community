@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.containers
 
+import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-internal class BidirectionalSetMap<K, V> private constructor(private val keyToValueMap: Object2ObjectOpenHashMap<K, V>,
-                                                             private val valueToKeysMap: MutableMap<V, MutableSet<K>>) : MutableMap<K, V> {
-
-  constructor() : this(Object2ObjectOpenHashMap<K, V>(), HashMap<V, MutableSet<K>>())
+internal class BidirectionalMap<K, V> private constructor(private val keyToValueMap: Object2ObjectOpenHashMap<K, V>,
+                                                          private val valueToKeysMap: MutableMap<V, MutableList<K>>) : MutableMap<K, V> {
+  constructor() : this(Object2ObjectOpenHashMap<K, V>(), HashMap<V, MutableList<K>>())
 
   override fun put(key: K, value: V): V? {
     val oldValue = keyToValueMap.put(key, value)
@@ -22,9 +22,7 @@ internal class BidirectionalSetMap<K, V> private constructor(private val keyToVa
         valueToKeysMap.remove(oldValue)
       }
     }
-
-    val array = valueToKeysMap.computeIfAbsent(value) { HashSet() }
-    array.add(key)
+    valueToKeysMap.computeIfAbsent(value) { SmartList() }.add(key)
     return oldValue
   }
 
@@ -33,7 +31,7 @@ internal class BidirectionalSetMap<K, V> private constructor(private val keyToVa
     valueToKeysMap.clear()
   }
 
-  fun getKeysByValue(value: V): Set<K>? {
+  fun getKeysByValue(value: V): List<K>? {
     return valueToKeysMap[value]
   }
 
@@ -55,10 +53,12 @@ internal class BidirectionalSetMap<K, V> private constructor(private val keyToVa
     return valueToKeysMap.containsKey(value)
   }
 
-  override operator fun get(key: K): V? = keyToValueMap[key]
+  override operator fun get(key: K): V? {
+    return keyToValueMap[key]
+  }
 
   fun removeValue(v: V) {
-    val ks: MutableSet<K>? = valueToKeysMap.remove(v)
+    val ks: List<K>? = valueToKeysMap.remove(v)
     if (ks != null) {
       for (k in ks) {
         keyToValueMap.remove(k)
@@ -68,7 +68,7 @@ internal class BidirectionalSetMap<K, V> private constructor(private val keyToVa
 
   override fun remove(key: K): V? {
     val value = keyToValueMap.remove(key)
-    val ks: MutableSet<K>? = valueToKeysMap[value]
+    val ks: MutableList<K>? = valueToKeysMap[value]
     if (ks != null) {
       if (ks.size > 1) {
         ks.remove(key)
@@ -92,10 +92,10 @@ internal class BidirectionalSetMap<K, V> private constructor(private val keyToVa
   override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
     get() = keyToValueMap.entries
 
-  fun copy(): BidirectionalSetMap<K, V> {
-    val valueToKeys = HashMap<V, MutableSet<K>>(valueToKeysMap.size)
-    valueToKeysMap.forEach { (key, value) -> valueToKeys[key] = HashSet(value) }
-    return BidirectionalSetMap(keyToValueMap.clone(), valueToKeys)
+  fun copy(): BidirectionalMap<K, V> {
+    val valueToKeys = HashMap<V, MutableList<K>>(valueToKeysMap.size)
+    valueToKeysMap.forEach { (key, value) -> valueToKeys[key] = SmartList(value) }
+    return BidirectionalMap(keyToValueMap.clone(), valueToKeys)
   }
 
   override fun toString(): String {
