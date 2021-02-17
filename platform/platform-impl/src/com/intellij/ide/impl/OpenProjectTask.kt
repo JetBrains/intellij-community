@@ -78,6 +78,13 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
     }
 
     @JvmStatic
+    fun fromWizardAndRunConfigurators(): OpenProjectTask {
+      return OpenProjectTask(runConfigurators = true,
+                             isProjectCreatedWithWizard = true,
+                             isRefreshVfsNeeded = false)
+    }
+
+    @JvmStatic
     @JvmOverloads
     fun withProjectToClose(projectToClose: Project?, forceOpenInNewFrame: Boolean = false): OpenProjectTask {
       return OpenProjectTask(projectToClose = projectToClose, forceOpenInNewFrame = forceOpenInNewFrame)

@@ -812,7 +812,7 @@ public final class ProjectUtil {
     if (projectFile == null) {
       return null;
     }
-    return ProjectManagerEx.getInstanceEx().openProject(projectFile, OpenProjectTask.newProjectFromWizardAndRunConfigurators(null, false));
+    return ProjectManagerEx.getInstanceEx().openProject(projectFile, OpenProjectTask.fromWizardAndRunConfigurators());
   }
 
   private static void saveAndDisposeProject(@NotNull Project project) {
