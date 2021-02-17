@@ -36,6 +36,6 @@ public interface DependencyDescriptor extends DomElement {
     @Required
     @Stubbed
     @Convert(IdeaPluginConverter.class)
-    GenericAttributeValue<String> getId();
+    GenericAttributeValue<IdeaPlugin> getId();
   }
 }
