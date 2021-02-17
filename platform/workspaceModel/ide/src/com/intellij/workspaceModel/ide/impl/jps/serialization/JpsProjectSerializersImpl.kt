@@ -292,7 +292,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   internal fun getActualFileUrl(source: EntitySource) = getActualFileSource(source)?.let { getActualFileUrl(it) }
 
   override fun getAllModulePaths(): List<ModulePath> {
-    return fileSerializersByUrl.values.filterIsInstance<ModuleImlFileEntitiesSerializer>().map { it.modulePath }
+    return fileSerializersByUrl.values.filterIsInstance<ModuleImlFileEntitiesSerializer>().mapTo(LinkedHashSet()) { it.modulePath }.toList()
   }
 
   override fun saveEntities(storage: WorkspaceEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter) {
@@ -417,8 +417,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
     }
 
-    moduleListSerializersByUrl.values.forEach {
-      if (it in affectedFileFactories) {
+    if (affectedFileFactories.isNotEmpty()) {
+      moduleListSerializersByUrl.values.forEach {
         saveModulesList(it, storage, writer)
       }
     }

@@ -423,6 +423,18 @@ class ExternalSystemStorageTest {
   }
 
   @Test
+  fun `remove regular module with enabled external storage`() {
+    loadModifySaveAndCheck("twoRegularModules", "twoRegularModulesAfterRemoval") { project ->
+      val moduleManager = ModuleManager.getInstance(project)
+      val module = moduleManager.findModuleByName("test2")
+      assertThat(module).isNotNull
+      runWriteActionAndWait {
+        moduleManager.disposeModule(module!!)
+      }
+    }
+  }
+
+  @Test
   fun `change storeExternally property and save libraries to internal storage`() {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("libraryInExternalStorage", "libraryAfterStoreExternallyPropertyChanged") { project ->
