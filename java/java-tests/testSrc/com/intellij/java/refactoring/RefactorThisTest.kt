@@ -172,6 +172,18 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<PushDownAction>())
   }
 
+  fun testIntroduceFunctionalParameterFromExpression() {
+    assertTrue(doActionExists<IntroduceFunctionalVariableAction>())
+  }
+
+  fun testIntroduceFunctionalParameterFromStatement() {
+    assertTrue(doActionExists<IntroduceFunctionalVariableAction>())
+  }
+
+  fun testIntroduceFunctionalParameterFiltered() {
+    assertFalse(doActionExists<IntroduceFunctionalVariableAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     val actions = findAvailableActions()

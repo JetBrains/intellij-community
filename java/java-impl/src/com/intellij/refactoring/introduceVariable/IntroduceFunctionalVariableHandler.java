@@ -111,6 +111,15 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     });
   }
 
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    if (editor.getSelectionModel().hasSelection()) {
+      return super.isAvailableForQuickList(editor, file, dataContext);
+    } else {
+      return false;
+    }
+  }
+
   private  void functionalInterfaceSelected(PsiType type,
                                             Project project,
                                             Editor editor,
