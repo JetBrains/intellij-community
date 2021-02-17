@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
@@ -94,13 +95,12 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     }
 
     @Override
-    final boolean publish(@NotNull Method method, Object[] args, @Nullable JobQueue jobQueue) {
+    final boolean publish(@NotNull Method method, Object[] args, @Nullable MessageQueue jobQueue) {
       List<Throwable> exceptions = null;
       boolean hasHandlers = false;
 
-      //noinspection unchecked
-      List<L> handlers = (List<L>)bus.subscriberCache.computeIfAbsent(topic, topic1 -> bus.computeSubscribers((Topic<L>)topic1));
-      if (!handlers.isEmpty()) {
+      @Nullable Object @NotNull [] handlers = bus.subscriberCache.computeIfAbsent(topic, topic1 -> bus.computeSubscribers(topic1));
+      if (handlers.length != 0) {
         exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, null);
         hasHandlers = true;
       }
@@ -111,14 +111,12 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
           continue;
         }
 
-        //noinspection unchecked
-        handlers = (List<L>)childBus.subscriberCache.computeIfAbsent(topic, topic1 -> {
-          List<L> result = new ArrayList<>();
-          //noinspection unchecked
-          childBus.doComputeSubscribers((Topic<L>)topic1, result, /* subscribeLazyListeners = */ !childBus.owner.isParentLazyListenersIgnored());
-          return result.isEmpty() ? Collections.emptyList() : result;
+        handlers = childBus.subscriberCache.computeIfAbsent(topic, topic1 -> {
+          List<Object> result = new ArrayList<>();
+          childBus.doComputeSubscribers(topic1, result, /* subscribeLazyListeners = */ !childBus.owner.isParentLazyListenersIgnored());
+          return result.isEmpty() ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : result.toArray();
         });
-        if (handlers.isEmpty()) {
+        if (handlers.length == 0) {
           continue;
         }
 
@@ -134,16 +132,16 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  final @NotNull <L> List<L> computeSubscribers(@NotNull Topic<L> topic) {
+  final @Nullable Object @NotNull [] computeSubscribers(@NotNull Topic<?> topic) {
     // light project
     if (owner.isDisposed()) {
-      return Collections.emptyList();
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
     return super.computeSubscribers(topic);
   }
 
   @Override
-  final <L> void doComputeSubscribers(@NotNull Topic<L> topic, @NotNull List<? super L> result, boolean subscribeLazyListeners) {
+  final void doComputeSubscribers(@NotNull Topic<?> topic, @NotNull List<Object> result, boolean subscribeLazyListeners) {
     if (subscribeLazyListeners) {
       subscribeLazyListeners(topic);
     }
@@ -212,11 +210,12 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     Set<MessageBusImpl> waitingBuses = rootBus.waitingBuses.get();
     if (!waitingBuses.isEmpty()) {
       waitingBuses.removeIf(bus -> {
-        JobQueue jobQueue = bus.messageQueue.get();
-        return !jobQueue.queue.isEmpty() &&
-               jobQueue.queue.removeIf(job -> MessageBusConnectionImpl.removeHandlersFromJob(job, topicAndHandlerPairs) && job.handlers.isEmpty()) &&
-               jobQueue.current == null &&
-               jobQueue.queue.isEmpty();
+        MessageQueue messageQueue = bus.messageQueue.get();
+        Deque<Message> queue = messageQueue.queue;
+        return !queue.isEmpty() &&
+               queue.removeIf(message -> MessageBusConnectionImpl.nullizeHandlersFromMessage(message, topicAndHandlerPairs)) &&
+               messageQueue.current == null &&
+               queue.isEmpty();
       });
     }
     return false;

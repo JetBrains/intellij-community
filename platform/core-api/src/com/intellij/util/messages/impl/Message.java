@@ -8,23 +8,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
-import java.util.List;
 
-final class Message<L> {
-  final Topic<L> topic;
+final class Message {
+  final Topic<?> topic;
   final String methodName;
   final MethodHandle method;
   // we don't bind args as part of MethodHandle creation, because object is not known yet - so, MethodHandle here is not ready to use
   // it allows us to cache MethodHandle per method and partially reuse it
   final Object[] args;
-  final List<L> handlers;
+  final @Nullable Object @NotNull [] handlers;
   final @Nullable ClientId clientId;
 
   // to avoid creating Message for each handler
   // see note about pumpMessages in createPublisher (invoking job handlers can be stopped and continued as part of another pumpMessages call)
   int currentHandlerIndex;
 
-  Message(@NotNull Topic<L> topic, @NotNull MethodHandle method, @NotNull String methodName, Object[] args, @NotNull List<L> handlers) {
+  Message(@NotNull Topic<?> topic, @NotNull MethodHandle method, @NotNull String methodName, Object[] args, @Nullable Object @NotNull [] handlers) {
     this.topic = topic;
     this.method = method;
     this.methodName = methodName;
@@ -39,7 +38,7 @@ final class Message<L> {
            "topic=" + topic +
            ", method=" + methodName +
            ", args=" + Arrays.toString(args) +
-           ", handlers=" + handlers +
+           ", handlers=" + Arrays.toString(handlers) +
            ')';
   }
 }
