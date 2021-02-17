@@ -28,12 +28,14 @@ public interface ContentDescriptor extends DomElement {
     @NotNull
     @Required
     @Stubbed
+    @NameValue(referencable = false)
     @Convert(ModuleDescriptorNameConverter.class)
     GenericAttributeValue<IdeaPlugin> getName();
 
     @NotNull
     @Required
     @Stubbed
+    @NameValue(referencable = false)
     @Convert(ModuleDescriptorPackageConverter.class)
     GenericAttributeValue<PsiPackage> getPackage();
   }

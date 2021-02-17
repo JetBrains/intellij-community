@@ -10,5 +10,11 @@
 
     <plugin id="<error descr="Cannot resolve plugin 'plugin.id' in dependencies (Reference: Plugin Dependencies)">plugin.id</error>"/>
     <plugin id=<error descr="Value must not be empty">""</error>/>
+
+
+    <module name="<error descr="Cannot resolve module descriptor 'module.duplicate.xml' in source roots of module 'module.duplicate'"><error descr="Module with such name already exists">module.duplicate</error></error>" package="<error descr="Invalid value: 'modulepackage'">modulepackage</error>"/>
+    <module name="<error descr="Cannot resolve module descriptor 'module.duplicate.xml' in source roots of module 'module.duplicate'"><error descr="Module with such name already exists">module.duplicate</error></error>" package="<error descr="Invalid value: 'modulepackage'">modulepackage</error>"/>
+    <plugin id="<error descr="Cannot resolve plugin 'plugin.duplicate' in dependencies (Reference: Plugin Dependencies)"><error descr="Plugin with such name already exists">plugin.duplicate</error></error>"/>
+    <plugin id="<error descr="Cannot resolve plugin 'plugin.duplicate' in dependencies (Reference: Plugin Dependencies)"><error descr="Plugin with such name already exists">plugin.duplicate</error></error>"/>
   </dependencies>
 </idea-plugin>
