@@ -63,8 +63,6 @@ open class GHOpenInBrowserActionGroup
     return getData(context)?.size == 1
   }
 
-  override fun disableIfNoVisibleChildren(): Boolean = false
-
   protected open fun getData(dataContext: DataContext): List<Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
 
