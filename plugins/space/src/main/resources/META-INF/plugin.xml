@@ -113,15 +113,18 @@
       <reference id="com.intellij.space.actions.SpaceLogoutAction"/>
     </group>
 
-    <group id="com.intellij.space.vcs.SpaceVcsOpenInBrowserActionGroup"
-           class="com.intellij.space.vcs.SpaceVcsOpenInBrowserActionGroup">
-      <add-to-group group-id="EditorPopupMenu"/>
-      <add-to-group group-id="ProjectViewPopupMenu"/>
-      <add-to-group group-id="EditorTabPopupMenu"/>
+    <action id="com.intellij.space.vcs.SpaceVcsOpenInBrowserActionGroup"
+            class="com.intellij.space.vcs.SpaceVcsOpenInBrowserActionGroup">
+      <override-text place="EditorTabPopup"/>
+      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+      <add-to-group group-id="RevealGroup"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
-    </group>
+      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
+    </action>
     <action id="com.intellij.space.vcs.share.SpaceShareProjectAction"
             class="com.intellij.space.vcs.share.SpaceShareProjectAction">
       <add-to-group group-id="SpaceGroup" anchor="first"/>
