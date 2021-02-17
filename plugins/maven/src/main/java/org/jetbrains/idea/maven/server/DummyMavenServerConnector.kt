@@ -74,7 +74,7 @@ class TrustProjectQuickFix : BuildIssueQuickFix {
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     val future = CompletableFuture<Void>()
-    ApplicationManager.getApplication().invokeLaterOnWriteThread {
+    ApplicationManager.getApplication().invokeLater {
       try {
         val result = MavenUtil.isProjectTrustedEnoughToImport(project, true, true)
         if (result) {

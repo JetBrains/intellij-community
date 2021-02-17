@@ -65,6 +65,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -72,10 +73,7 @@ import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenServerEmbedder;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
-import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.server.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -1064,12 +1062,16 @@ public class MavenUtil {
                                                            "unlinked.project.notification.load.action",
                                                            MAVEN_NAME));
       if (trust) {
-        MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
-          if (it.getProject().equals(project)) {
-            it.shutdown(true);
-          }
-        });
-        MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
+            if (it.getProject().equals(project)) {
+              it.shutdown(true);
+            }
+          });
+          MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
+        }, SyncBundle.message("maven.sync.restarting"), false, project);
+
+        return true;
       }
     }
     return state == ThreeState.YES;
@@ -1392,5 +1394,9 @@ public class MavenUtil {
   public static File getMavenPluginParentFile() {
     File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
     return luceneLib.getParentFile().getParentFile().getParentFile();
+  }
+
+  public static MavenDistribution getEffectiveMavenHome(Project project, String workingDirectory) {
+    return MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDirectory);
   }
 }
