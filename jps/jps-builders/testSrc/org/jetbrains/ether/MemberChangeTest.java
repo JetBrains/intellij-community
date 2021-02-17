@@ -27,6 +27,18 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddSAMInterfaceMethod() {
+    doTest();
+  }
+
+  public void testAddSAMInterfaceAbstractMethod() {
+    doTest();
+  }
+
+  public void testChangeSAMInterfaceMethodToAbstract() {
+    doTest();
+  }
+
   public void testAddPrivateMethodToAbstractClass() {
     doTest();
   }

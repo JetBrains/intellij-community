@@ -7,6 +7,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.*;
@@ -189,17 +190,9 @@ public class ClassRepr extends ClassFileRepr {
     };
   }
 
-  public int @NotNull [] getSupers() {
-    final int[] result = new int[myInterfaces.size() + 1];
-
-    result[0] = mySuperClass.className;
-
-    int i = 1;
-    for (TypeRepr.AbstractType t : myInterfaces) {
-      result[i++] = ((TypeRepr.ClassType)t).className;
-    }
-
-    return result;
+  public Iterable<TypeRepr.ClassType> getSuperTypes() {
+    final Iterable<TypeRepr.ClassType> supers = Iterators.map(myInterfaces, t -> (TypeRepr.ClassType)t);
+    return mySuperClass != null? Iterators.flat(Iterators.asIterable(mySuperClass), supers) : supers;
   }
 
   @Override

@@ -648,6 +648,8 @@ class ClassfileAnalyzer {
                 final Type samMethodType = (Type)bsmArgs[0];
                 if (samMethodType.getSort() == Type.METHOD) {
                   registerMethodUsage(returnType.getInternalName(), methodName, samMethodType.getDescriptor());
+                  // reflect dynamic proxy instantiation with NewClassUsage
+                  myUsages.add(UsageRepr.createClassNewUsage(myContext, myContext.get(returnType.getInternalName())));
                 }
               }
             }
