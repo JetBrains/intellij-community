@@ -181,15 +181,17 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   }
 
   private fun trackCommitTemplate(repository: GitRepository) {
-    val currentTemplatePath = resolveCommitTemplatePath(repository)
-    if (currentTemplatePath == null) {
-      stopTrackCommitTemplate(repository)
-      return
-    }
     val lfs = LocalFileSystem.getInstance()
+    val currentTemplatePath = resolveCommitTemplatePath(repository)
+
     val templateChanged = synchronized(this) {
       val watchedTemplatePath = TEMPLATES_LOCK.read { commitTemplates[repository]?.watchedRoot }
       when {
+        currentTemplatePath == null && watchedTemplatePath != null -> {
+          stopTrackCommitTemplate(repository)
+          return@synchronized true
+        }
+        currentTemplatePath == null -> return@synchronized false
         watchedTemplatePath == null -> lfs.addRootToWatch(currentTemplatePath, false)
         watchedTemplatePath.rootPath != currentTemplatePath -> lfs.replaceWatchedRoot(watchedTemplatePath, currentTemplatePath, false)
         else -> null
