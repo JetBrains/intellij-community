@@ -15,6 +15,7 @@ import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -54,6 +55,8 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 public final class DefaultTreeUI extends BasicTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
+  @ApiStatus.Internal @ApiStatus.Experimental
+  public static final Key<Boolean> EXPERIMENTAL_PREFERRED_WIDTH = Key.create("allows to calculate a preferred width for visible nodes");
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
@@ -138,6 +141,12 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   private static boolean isLargeModelAllowed(@Nullable JTree tree) {
     return is("ide.tree.large.model.allowed") || UIUtil.isClientPropertyTrue(tree, LARGE_MODEL_ALLOWED);
+  }
+
+  private static boolean isExperimentalPreferredWidth(@Nullable JTree tree) {
+    if (tree instanceof TreeTableTree) return false;
+    Boolean property = UIUtil.getClientProperty(tree, EXPERIMENTAL_PREFERRED_WIDTH);
+    return property != null ? property : is("ide.tree.experimental.preferred.width");
   }
 
   private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
@@ -329,7 +338,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
     super.configureLayoutCache();
     JTree tree = getTree();
     AbstractLayoutCache cache = treeState; // TODO: treeState ???
-    if (tree != null && cache != null && is("ide.tree.experimental.preferred.width")) {
+    if (tree != null && cache != null && isExperimentalPreferredWidth(tree)) {
       if (null == ReflectionUtil.getField(BasicTreeUI.class, this, null, "componentListener")) {
         ComponentListener listener = createComponentListener();
         ReflectionUtil.setField(BasicTreeUI.class, this, null, "componentListener", listener);
@@ -342,7 +351,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   protected void updateCachedPreferredSize() {
     JTree tree = getTree();
     AbstractLayoutCache cache = treeState; // TODO: treeState ???
-    if (tree != null && isValid(tree) && cache != null && is("ide.tree.experimental.preferred.width")) {
+    if (tree != null && isValid(tree) && cache != null && isExperimentalPreferredWidth(tree)) {
       Rectangle paintBounds = tree.getVisibleRect();
       Insets insets = tree.getInsets();
       TreePath path = cache.getPathClosestTo(0, paintBounds.y - insets.top);
