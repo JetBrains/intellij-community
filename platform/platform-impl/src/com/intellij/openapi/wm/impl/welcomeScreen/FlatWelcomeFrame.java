@@ -150,7 +150,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent componentEvent) {
-        saveSizeAndLocation(getBounds());
+        if (WindowStateService.getInstance().getSize(WelcomeFrame.DIMENSION_KEY) != null) {
+          saveSizeAndLocation(getBounds());
+        }
       }
     });
 
