@@ -241,6 +241,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
           includedRootsListeners.multicaster.includedRootsChanged()
         }
       })
+      tracker.addListener(object : GitStageTrackerListener {
+        override fun update() {
+          includedRootsListeners.multicaster.includedRootsChanged()
+        }
+      }, this@GitStagePanel)
 
       doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
@@ -295,9 +300,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
 
     fun getIncludedRoots(): Collection<VirtualFile> {
-      if (state.rootStates.size == 1 ||
-          !groupingSupport.isAvailable(REPOSITORY_GROUPING) ||
-          !groupingSupport[REPOSITORY_GROUPING]) return state.rootStates.keys
+      if (!isInclusionEnabled()) return state.rootStates.keys
 
       return inclusionModel.getInclusion().mapNotNull { (it as? GitRepository)?.root }
     }
@@ -306,12 +309,18 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       includedRootsListeners.addListener(listener, disposable)
     }
 
+    private fun isInclusionEnabled(): Boolean {
+      return state.rootStates.size > 1 && state.stagedRoots.size > 1 &&
+             groupingSupport.isAvailable(REPOSITORY_GROUPING) &&
+             groupingSupport[REPOSITORY_GROUPING]
+    }
+
     override fun isInclusionEnabled(node: ChangesBrowserNode<*>): Boolean {
-      return state.rootStates.size > 1 && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
+      return isInclusionEnabled() && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
     }
 
     override fun isInclusionVisible(node: ChangesBrowserNode<*>): Boolean {
-      return state.rootStates.size > 1 && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
+      return isInclusionEnabled() && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
     }
 
     override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): MutableList<Any> {
