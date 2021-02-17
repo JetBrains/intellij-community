@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.intellij.debugger.engine.JavaValue
 import com.sun.jdi.ObjectReference
+import com.sun.jdi.VMDisconnectedException
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isAbstractCoroutine
@@ -31,8 +32,9 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
             }
             val lastRestoredFrame = continuationStack.coroutineStack.lastOrNull()
             return findCoroutineInformation(lastRestoredFrame?.baseContinuationImpl?.coroutineOwner, consumer)
+        } catch (e: VMDisconnectedException) {
         } catch (e: Exception) {
-            log.error("Error while looking for stack frame.", e)
+            log.warn("Error while looking for stack frame", e)
         }
         return null
     }
