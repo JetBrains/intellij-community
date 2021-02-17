@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.completion
 
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import training.dsl.LessonContext
 import training.dsl.LessonSample
 import training.dsl.LessonUtil
@@ -46,7 +44,7 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
           }
         }
         test {
-          GuiTestUtil.typeText(item1StartToType)
+          type(item1StartToType)
         }
       }
       task("EditorChooseLookupItem") {
@@ -59,8 +57,8 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
             !isTheFirstVariant(ui)
           } ?: true
         }
-        test {
-          GuiTestUtil.shortcut(Key.ENTER)
+        test(waitEditorToBeReady = false) {
+          invokeActionViaShortcut("ENTER")
         }
       }
       waitBeforeContinue(500)

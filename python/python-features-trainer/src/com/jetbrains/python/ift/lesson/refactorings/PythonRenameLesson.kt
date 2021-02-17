@@ -3,17 +3,12 @@ package com.jetbrains.python.ift.lesson.refactorings
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.exclusion.ExclusionHandler
-import com.intellij.openapi.application.runReadAction
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.impl.button
-import com.intellij.testGuiFramework.impl.jTree
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.ift.PythonLessonsBundle
+import org.fest.swing.fixture.JTreeFixture
 import org.jetbrains.annotations.Nullable
 import training.dsl.*
 import training.learn.LessonsBundle
@@ -24,6 +19,7 @@ import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesson.name")) {
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(10)
   private val template = """
       class Championship:
           def __init__(self):
@@ -55,9 +51,6 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       print(c.<name>)
   """.trimIndent() + '\n'
 
-  /** For test only */
-  private val substringPredicate: (String, String) -> Boolean = { found: String, wanted: String -> found.contains(wanted) }
-
   private val sample = parseLessonSample(template.replace("<name>", "teams"))
 
   private val replacePreviewPattern = Pattern.compile(".*Variable to be renamed to (\\w+).*")
@@ -66,10 +59,13 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
     prepareSample(sample)
     val dynamicWord = UsageViewBundle.message("usage.view.results.node.dynamic")
     var replace: String? = null
+    var dynamicItem: String? = null
     task("RenameElement") {
       text(PythonLessonsBundle.message("python.rename.press.rename", action(it), code("teams"), code("teams_number")))
       triggerByFoundPathAndHighlight { tree: JTree, path: TreePath ->
-        if (path.pathCount == 2 && path.getPathComponent(1).toString().contains(dynamicWord)) {
+        val pathStr = path.getPathComponent(1).toString()
+        if (path.pathCount == 2 && pathStr.contains(dynamicWord)) {
+          dynamicItem = pathStr
           replace = replacePreviewPattern.matcher(tree.model.root.toString()).takeIf { m -> m.find() }?.group(1)
           true
         }
@@ -77,11 +73,9 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       }
       test {
         actions(it)
-        with(TaskTestContext.guiTestCase) {
-          dialog {
-            typeText("teams_number")
-            button("Refactor").click()
-          }
+        dialog {
+          type("teams_number")
+          button("Refactor").click()
         }
       }
     }
@@ -102,12 +96,14 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       }
       showWarningIfFindToolbarClosed()
       test {
+        //TODO: Fix tree access
+        val jTree = previous.ui as? JTree ?: return@test
+        val di = dynamicItem ?: return@test
         ideFrame {
-          val jTree = runReadAction {
-            jTree(dynamicReferencesString, timeout = Timeouts.seconds03, predicate = substringPredicate)
-          }
+          val jTreeFixture = JTreeFixture(robot, jTree)
+          jTreeFixture.replaceSeparator("@@@")
+          jTreeFixture.expandPath(di)
           // WARNING: several exception will be here because of UsageNode#toString inside info output during this operation
-          jTree.doubleClickPath()
         }
       }
     }
@@ -131,8 +127,8 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       showWarningIfFindToolbarClosed()
       test {
         ideFrame {
-          type("co_me")
-          GuiTestUtil.shortcut(Key.DELETE)
+          type("come")
+          invokeActionViaShortcut("DELETE")
         }
       }
     }
@@ -149,7 +145,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       text(PythonLessonsBundle.message("python.rename.finish.refactoring", strong(confirmRefactoringButton)))
       stateCheck { editor.document.text == result }
       showWarningIfFindToolbarClosed()
-      test {
+      test(waitEditorToBeReady = false) {
         ideFrame {
           button(confirmRefactoringButton).click()
         }

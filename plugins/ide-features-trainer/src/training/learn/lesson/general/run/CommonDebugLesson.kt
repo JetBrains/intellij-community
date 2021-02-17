@@ -19,8 +19,6 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.tasks.TaskBundle
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -196,7 +194,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       proposeModificationRestore(sample.text)
       test {
         Thread.sleep(500)
-        GuiTestUtil.shortcut(Key.ESCAPE)
+        invokeActionViaShortcut("ESCAPE")
       }
     }
   }
@@ -249,8 +247,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       proposeModificationRestore(sample.text)
       test {
         Thread.sleep(500)
-        GuiTestUtil.shortcut(if (stepIntoDirection == "→") Key.RIGHT else Key.LEFT)
-        GuiTestUtil.shortcut(Key.ENTER)
+        invokeActionViaShortcut(if (stepIntoDirection == "→") "RIGHT" else "LEFT")
+        invokeActionViaShortcut("ENTER")
       }
     }
   }
@@ -286,7 +284,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
         else checkForBreakpoints()
       }
       test {
-        GuiTestUtil.shortcut(Key.ESCAPE)
+        invokeActionViaShortcut("ESCAPE")
         invokeLater {
           WriteCommandAction.runWriteCommandAction(project) {
             val offset = sample.text.indexOf("[0]")
@@ -356,6 +354,9 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     }
 
     task(expressionToBeEvaluated) {
+      before {
+        LearningUiHighlightingManager.clearHighlights()
+      }
       text(LessonsBundle.message("debug.workflow.type.result", code(it),
                                  strong(XDebuggerBundle.message("xdebugger.evaluate.label.expression"))))
       stateCheck { checkWordInTextField(it) }
@@ -377,7 +378,10 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
         dialog?.title == XDebuggerBundle.message("xdebugger.evaluate.dialog.title") && root?.children?.size == 1
       }
       proposeModificationRestore(afterFixText)
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test(waitEditorToBeReady = false) {
+        invokeActionViaShortcut("ENTER")
+        invokeActionViaShortcut("ESCAPE")
+      }
     }
   }
 

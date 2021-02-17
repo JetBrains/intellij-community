@@ -4,8 +4,6 @@ package training.learn.lesson.general.navigation
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
@@ -48,7 +46,7 @@ abstract class FileStructureLesson
         text(LessonsBundle.message("file.structure.navigate", LessonUtil.rawEnter()))
         stateCheck { editor.caretModel.logicalPosition == methodToFindPosition }
         restoreState { !checkWordInSearch(searchSubstring) }
-        test { GuiTestUtil.shortcut(Key.ENTER) }
+        test { invokeActionViaShortcut("ENTER") }
       }
       task("ActivateStructureToolWindow") {
         text(LessonsBundle.message("file.structure.toolwindow", action(it)))

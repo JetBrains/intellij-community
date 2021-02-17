@@ -39,8 +39,7 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
     val lessons = CourseManager.instance.lessonsForModules
 
     for (lesson in lessons) {
-      if (lesson !is KLesson) continue
-      if (lesson.testScriptProperties.skipTesting) continue
+      if (lesson !is KLesson || lesson.testScriptProperties.skipTesting) continue
       progress.checkCanceled()
       runSingleLesson(lesson)
     }
