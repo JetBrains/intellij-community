@@ -70,13 +70,17 @@ EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
 %state REGEX_EXPECTED
 %state SEGMENT_EXPRESSION
 %state SCRIPT_EXPRESSION
+%state NESTED_PATH
 
 %%
 
-<YYINITIAL> {
+<YYINITIAL, NESTED_PATH> {
   "."                                  { pushState(WILDCARD_EXPECTED); return JsonPathTypes.DOT; }
   ".."                                 { pushState(WILDCARD_EXPECTED); return JsonPathTypes.RECURSIVE_DESCENT; }
   "["                                  { pushState(SEGMENT_EXPRESSION); return JsonPathTypes.LBRACKET; }
+  {ROOT_CONTEXT}                       { return JsonPathTypes.ROOT_CONTEXT; }
+  {EVAL_CONTEXT}                       { return JsonPathTypes.EVAL_CONTEXT; }
+  {IDENTIFIER}                         { return JsonPathTypes.IDENTIFIER; }
   ")"                                  {
     if (myStateStack.isEmpty()) {
       return TokenType.BAD_CHARACTER;
@@ -84,15 +88,12 @@ EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
     yypushback(1);
     popState();
   }
-  {ROOT_CONTEXT}                       { return JsonPathTypes.ROOT_CONTEXT; }
-  {EVAL_CONTEXT}                       { return JsonPathTypes.EVAL_CONTEXT; }
-  {IDENTIFIER}                         { return JsonPathTypes.IDENTIFIER; }
   {WHITE_SPACE}                        {
     if (myStateStack.isEmpty()) {
       return TokenType.BAD_CHARACTER;
     }
+    yypushback(1);
     popState();
-    return TokenType.WHITE_SPACE;
   }
 }
 
@@ -108,8 +109,8 @@ EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
 }
 
 <SCRIPT_EXPRESSION> {
-  {ROOT_CONTEXT}                       { pushState(YYINITIAL); return JsonPathTypes.ROOT_CONTEXT; }
-  {EVAL_CONTEXT}                       { pushState(YYINITIAL); return JsonPathTypes.EVAL_CONTEXT; }
+  {ROOT_CONTEXT}                       { pushState(NESTED_PATH); return JsonPathTypes.ROOT_CONTEXT; }
+  {EVAL_CONTEXT}                       { pushState(NESTED_PATH); return JsonPathTypes.EVAL_CONTEXT; }
   "["                                  { return JsonPathTypes.LBRACKET; }
   "]"                                  { return JsonPathTypes.RBRACKET; }
   "null"                               { return JsonPathTypes.NULL; }
@@ -118,7 +119,7 @@ EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
   {IDENTIFIER}                         { return JsonPathTypes.NAMED_OP; }
 }
 
-<YYINITIAL, SEGMENT_EXPRESSION, SCRIPT_EXPRESSION> {
+<YYINITIAL, NESTED_PATH, SEGMENT_EXPRESSION, SCRIPT_EXPRESSION> {
   "."                                  { return JsonPathTypes.DOT; }
   ".."                                 { return JsonPathTypes.RECURSIVE_DESCENT; }
   "{"                                  { return JsonPathTypes.LBRACE; }
