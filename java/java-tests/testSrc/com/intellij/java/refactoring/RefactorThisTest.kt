@@ -65,7 +65,7 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testReplaceConstructorWithFactoryOnCall() {
-    assertTrue(doActionExists<ReplaceConstructorWithFactoryAction>())
+    assertFalse(doActionExists<ReplaceConstructorWithFactoryAction>())
   }
 
   fun testReplaceConstructorWithFactoryOnDeclaration() {
