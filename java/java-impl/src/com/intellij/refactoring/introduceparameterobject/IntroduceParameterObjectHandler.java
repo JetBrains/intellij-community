@@ -19,7 +19,6 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -52,7 +51,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     PsiMethod selectedMethod = getSelectedMethod(editor, file);
     if (selectedMethod == null) {
       final String message = RefactorJBundle.message("cannot.perform.the.refactoring") +
-                             RefactorJBundle.message("the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored");
+                             RefactorJBundle.message("the.caret.should.be.positioned.within.a.method.declaration.to.be.refactored");
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.IntroduceParameterObject);
       return;
     }

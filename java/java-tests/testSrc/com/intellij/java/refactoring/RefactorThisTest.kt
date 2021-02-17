@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.refactoring.actions.*
+import com.intellij.refactoring.wrapreturnvalue.WrapReturnValueAction
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import org.jetbrains.annotations.NonNls
 
@@ -133,6 +134,14 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
 
   fun testIntroduceParameterObjectFiltered() {
     assertFalse(doActionExists<IntroduceParameterObjectAction>())
+  }
+
+  fun testWrapReturnValue() {
+    assertTrue(doActionExists<WrapReturnValueAction>())
+  }
+
+  fun testWrapReturnValueFiltered() {
+    assertFalse(doActionExists<WrapReturnValueAction>())
   }
 
   private inline fun <reified A> doActionExists(): Boolean {
