@@ -76,10 +76,10 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         }
         final Window window = SwingUtilities.getWindowAncestor(myPanel);
         if (window != null && !window.isFocused()) {
-          model.updateModelAsync(DataManager.getInstance().getDataContext(myPanel));
+          model.updateModelAsync(DataManager.getInstance().getDataContext(myPanel), null);
         }
         else {
-          model.updateModelAsync(dataContext);
+          model.updateModelAsync(dataContext, null);
         }
       }
       else {

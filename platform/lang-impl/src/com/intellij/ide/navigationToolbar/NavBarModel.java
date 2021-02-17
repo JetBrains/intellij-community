@@ -91,31 +91,40 @@ public class NavBarModel {
     if (index >= myModel.size() && myModel.size() > 0) return index % myModel.size();
     return index;
   }
-
-  public void updateModelAsync(DataContext dataContext) {
-    updateModelAsync(dataContext, null);
-  }
   
   public void updateModelAsync(DataContext dataContext, @Nullable Runnable callback) {
-    if (LaterInvocator.isInModalContext()) return;
-
+    if (LaterInvocator.isInModalContext() || 
+        PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
+    
     //rider calls edt-only method getFocusOwner() in the updating
     if (PlatformUtils.isRider()) {
       updateModel(dataContext);
       return;
     }
     
-    ReadAction.nonBlocking(() -> updateModel(Utils.wrapDataContext(dataContext)))
+    ReadAction.nonBlocking(() -> createModel(Utils.wrapDataContext(dataContext)))
       .expireWith(myProject)
-      .finishOnUiThread(ModalityState.current(), __ -> {
+      .finishOnUiThread(ModalityState.current(), model -> {
+        setModelWithUpdate(model);
         if (callback != null) callback.run();
       })
       .submit(ourExecutor);
   }
-  
-  //public for tests
+
+  private void setModelWithUpdate(@Nullable List<Object> model) {
+    if (model != null) setModel(model);
+    
+    setChanged(false);
+    updated = true;
+  }
+
   public void updateModel(DataContext dataContext) {
-    if (updated && !isFixedComponent || PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
+    setModelWithUpdate(createModel(dataContext));
+  }
+  
+  @Nullable
+  private List<Object> createModel(@NotNull DataContext dataContext) {
+    if (updated && !isFixedComponent) return null;
     
     NavBarModelExtension ownerExtension = null;
     PsiElement psiElement = null;
@@ -142,23 +151,22 @@ public class NavBarModel {
     if (ownerExtension == null) {
       psiElement = normalize(psiElement);
     }
-    if (!myModel.isEmpty() && Objects.equals(get(myModel.size() - 1), psiElement) && !myChanged) return;
+    if (!myModel.isEmpty() && Objects.equals(get(myModel.size() - 1), psiElement) && !myChanged) return null;
 
     if (psiElement != null && psiElement.isValid()) {
-      updateModel(psiElement, ownerExtension);
+      return createModel(psiElement, ownerExtension);
     }
     else {
-      if (UISettings.getInstance().getShowNavigationBar() && !myModel.isEmpty()) return;
+      if (UISettings.getInstance().getShowNavigationBar() && !myModel.isEmpty()) return null;
 
       Object root = calculateRoot(dataContext);
 
       if (root != null) {
-        setModel(Collections.singletonList(root));
+        return Collections.singletonList(root);
       }
     }
-    setChanged(false);
-
-    updated = true;
+    
+    return null;
   }
 
   private Object calculateRoot(DataContext dataContext) {
@@ -183,7 +191,11 @@ public class NavBarModel {
   }
 
   protected void updateModel(final PsiElement psiElement, @Nullable NavBarModelExtension ownerExtension) {
+    setModel(createModel(psiElement, ownerExtension));
+  }
 
+  @NotNull
+  private List<Object> createModel(final PsiElement psiElement, @Nullable NavBarModelExtension ownerExtension) {
     final Set<VirtualFile> roots = new HashSet<>();
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
@@ -204,9 +216,10 @@ public class NavBarModel {
       }
     }
 
-    List<Object> updatedModel = ReadAction.compute(() -> isValid(psiElement) ? myBuilder.createModel(psiElement, roots, ownerExtension) : Collections.emptyList());
+    List<Object> updatedModel =
+      ReadAction.compute(() -> isValid(psiElement) ? myBuilder.createModel(psiElement, roots, ownerExtension) : Collections.emptyList());
 
-    setModel(ContainerUtil.reverse(updatedModel));
+    return ContainerUtil.reverse(updatedModel);
   }
 
   void revalidate() {
