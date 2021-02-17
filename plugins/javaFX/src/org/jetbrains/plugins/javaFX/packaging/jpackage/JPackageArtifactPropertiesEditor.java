@@ -1,12 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging.jpackage;
 
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,6 +27,7 @@ import java.awt.*;
 public class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   private final JPackageArtifactProperties myProperties;
+  private final Project myProject;
 
   private TextFieldWithBrowseButton myMainClass;
   private JTextField myVersion;
@@ -27,8 +36,9 @@ public class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JBTextArea myDescription;
   private JCheckBox myVerbose;
 
-  public JPackageArtifactPropertiesEditor(JPackageArtifactProperties properties) {
+  public JPackageArtifactPropertiesEditor(JPackageArtifactProperties properties, @NotNull Project project) {
     myProperties = properties;
+    myProject = project;
   }
 
   @Nls
@@ -39,7 +49,21 @@ public class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   @Override
   public @Nullable JComponent createComponent() {
-    myMainClass = new TextFieldWithBrowseButton();
+    final TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(myProject);
+    myMainClass = new TextFieldWithBrowseButton(
+      e -> {
+        final TreeClassChooser classChooser =
+          chooserFactory.createWithInnerClassesScopeChooser(ExecutionBundle.message("choose.main.class.dialog.title"),
+                                                          GlobalSearchScope.projectScope(myProject),
+                                                          PsiMethodUtil::hasMainMethod, null);
+        classChooser.showDialog();
+        final PsiClass selectedClass = classChooser.getSelected();
+        if (selectedClass == null) {
+          return;
+        }
+        myMainClass.setText(selectedClass.getQualifiedName());
+      }
+    );
     myMainClass.setText(myProperties.mainClass);
     myVersion = new JTextField(myProperties.version);
     myCopyright = new JTextField(myProperties.copyright);
