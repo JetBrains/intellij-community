@@ -143,16 +143,14 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
           if (validator != null) {
             val validationInfo = (validation!!)(s, this.component())
 
-            if (validationInfo != null) {
-              validationInfo.component?.let {
-                if (ComponentValidator.getInstance(it).isEmpty) {
-                  when (it) {
-                    is ComponentWithBrowseButton<*> -> validator.withOutlineProvider(ComponentValidator.CWBB_PROVIDER)
-                    is TagButton -> validator.withOutlineProvider(TagButton.COMPONENT_VALIDATOR_TAG_PROVIDER)
-                  }
-
-                  validator.installOn(it)
+            validationInfo?.component?.let {
+              if (ComponentValidator.getInstance(it).isEmpty) {
+                when (it) {
+                  is ComponentWithBrowseButton<*> -> validator.withOutlineProvider(ComponentValidator.CWBB_PROVIDER)
+                  is TagButton -> validator.withOutlineProvider(TagButton.COMPONENT_VALIDATOR_TAG_PROVIDER)
                 }
+
+                validator.installOn(it)
               }
             }
 
