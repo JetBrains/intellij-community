@@ -154,6 +154,9 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         try {
             val executionContext = ExecutionContext(context, frameProxy)
             return evaluateSafe(executionContext, status)
+        } catch (e: CodeFragmentCodegenException) {
+            status.error(EvaluationError.BackendException)
+            evaluationException(e.reason)
         } catch (e: EvaluateException) {
             val error = if (e.exceptionFromTargetVM != null) {
                 EvaluationError.ExceptionFromEvaluatedCode
@@ -231,13 +234,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         val moduleDescriptor = analysisResult.moduleDescriptor
 
-        try {
-            val result = CodeFragmentCompiler(context, status).compile(codeFragment, filesToCompile, bindingContext, moduleDescriptor)
-            return createCompiledDataDescriptor(result, sourcePosition)
-        } catch (e: Throwable) {
-            status.error(EvaluationError.BackendException)
-            throw e
-        }
+        val result = CodeFragmentCompiler(context, status).compile(codeFragment, filesToCompile, bindingContext, moduleDescriptor)
+        return createCompiledDataDescriptor(result, sourcePosition)
     }
 
     private fun KtCodeFragment.wrapToStringIfNeeded(bindingContext: BindingContext): Boolean {

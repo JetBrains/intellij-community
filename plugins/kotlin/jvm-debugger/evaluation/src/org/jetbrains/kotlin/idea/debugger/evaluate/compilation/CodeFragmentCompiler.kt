@@ -45,6 +45,8 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.SimpleType
 import org.jetbrains.kotlin.utils.Printer
 
+class CodeFragmentCodegenException(val reason: Exception) : Exception()
+
 class CodeFragmentCompiler(private val executionContext: ExecutionContext, private val status: EvaluationStatus) {
     data class CompilationResult(
         val classes: List<ClassToLoad>,
@@ -107,6 +109,8 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
             generationState.destroy()
 
             return CompilationResult(classes, parameterInfo, functionSuffixes, methodSignature)
+        } catch (e: Exception) {
+            throw CodeFragmentCodegenException(e)
         } finally {
             CodeFragmentCodegen.clearCodeFragmentInfo(codeFragment)
         }
