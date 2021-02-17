@@ -17,11 +17,13 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -277,6 +279,16 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       }
     }
     return PsiUtil.captureToplevelWildcards(substitutedReturnType, call);
+  }
+
+  @Override
+  public void replaceChildInternal(@NotNull ASTNode child,
+                                   @NotNull TreeElement newElement) {
+    if (getChildRole(child) == ChildRole.METHOD_EXPRESSION &&
+        newElement.getElementType() != JavaElementType.REFERENCE_EXPRESSION) {
+      throw new IncorrectOperationException("ReferenceExpression expected; got: " + newElement.getElementType());
+    }
+    super.replaceChildInternal(child, newElement);
   }
 }
 
