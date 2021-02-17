@@ -13,18 +13,13 @@ public abstract class EqualityOperatorComparesObjectsInspectionTestBase extends 
   public void testEnumComparison() { assertQuickfixNotAvailable(); }
   public void testNullComparison() { assertQuickfixNotAvailable(); }
   public void testPrimitiveComparison() { assertQuickfixNotAvailable(); }
-  public void testSimpleObjectComparison() {
-    assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(false));
-  }
-  public void testNegatedObjectComparison() {
-    assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(true));
-  }
+  public void testSimpleObjectComparison() { doTest(EqualityToEqualsFix.getFixName(false)); }
+  public void testNegatedObjectComparison() { doTest(EqualityToEqualsFix.getFixName(true)); }
   public void testCompareThisInEqualsMethod() { assertQuickfixNotAvailable(); }
   public void testCompareSameQualifiedThisInEqualsMethod() { assertQuickfixNotAvailable(); }
   public void testCompareOtherQualifiedThisInEqualsMethod() { doTest(EqualityToEqualsFix.getFixName(false)); }
-  public void testCompareFieldInEqualsMethod() {
-    assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(false));
-  }
+  public void testCompareFieldInEqualsMethod() { doTest(EqualityToEqualsFix.getFixName(false)); }
+  public void testNullableLeftOperandComparison() { assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(false)); }
 
   @Override
   protected void setUp() throws Exception {

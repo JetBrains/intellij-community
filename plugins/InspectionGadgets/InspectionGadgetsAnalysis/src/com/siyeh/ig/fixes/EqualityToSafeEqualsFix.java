@@ -16,6 +16,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
@@ -35,18 +36,27 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
+public final class EqualityToSafeEqualsFix extends InspectionGadgetsFix implements PriorityAction {
 
   private final boolean myNegated;
+  private final Priority myPriority;
 
-  private EqualityToSafeEqualsFix(boolean negated) {
+  private EqualityToSafeEqualsFix(boolean negated, @NotNull Priority priority) {
     myNegated = negated;
+    myPriority = priority;
+  }
+
+  @Override
+  public @NotNull Priority getPriority() {
+    return myPriority;
   }
 
   @Nullable
   public static EqualityToSafeEqualsFix buildFix(PsiBinaryExpression expression) {
-    if (NullabilityUtil.getExpressionNullability(expression.getLOperand()) == Nullability.NOT_NULL) return null;
-    return new EqualityToSafeEqualsFix(JavaTokenType.NE.equals(expression.getOperationTokenType()));
+    final Nullability nullability = NullabilityUtil.getExpressionNullability(expression.getLOperand(), true);
+    if (nullability == Nullability.NOT_NULL) return null;
+    final Priority priority = nullability == Nullability.UNKNOWN ? Priority.TOP : Priority.NORMAL;
+    return new EqualityToSafeEqualsFix(JavaTokenType.NE.equals(expression.getOperationTokenType()), priority);
   }
 
   @Nls

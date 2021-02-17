@@ -11,15 +11,9 @@ import com.siyeh.ig.fixes.EqualityToEqualsFix;
  */
 public class EqualityToEqualsFixTest extends IGQuickFixesTestCase {
 
-  public void testSimple() {
-    assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(false));
-  }
-  public void testPrecedence() {
-    assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(false));
-  }
-  public void testNegated() {
-    assertQuickfixNotAvailable(EqualityToEqualsFix.getFixName(true));
-  }
+  public void testSimple() { doTest(EqualityToEqualsFix.getFixName(false)); }
+  public void testPrecedence() { doTest(EqualityToEqualsFix.getFixName(false)); }
+  public void testNegated() { doTest(EqualityToEqualsFix.getFixName(true)); }
 
   @Override
   protected void setUp() throws Exception {

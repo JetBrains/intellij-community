@@ -56,6 +56,8 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   @Nullable
   public static EqualityToEqualsFix buildFix(PsiBinaryExpression expression) {
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
+    final Nullability nullability = NullabilityUtil.getExpressionNullability(expression.getLOperand(), true);
+    if (nullability == Nullability.NULLABLE) return null;
     if (lhs instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
@@ -71,9 +73,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
 
   public static InspectionGadgetsFix @NotNull [] buildEqualityFixes(PsiBinaryExpression expression) {
     final List<InspectionGadgetsFix> result = new ArrayList<>(2);
-    if (NullabilityUtil.getExpressionNullability(expression.getLOperand(), true) == Nullability.NOT_NULL) {
-      ContainerUtil.addIfNotNull(result, buildFix(expression));
-    }
+    ContainerUtil.addIfNotNull(result, buildFix(expression));
     ContainerUtil.addIfNotNull(result, EqualityToSafeEqualsFix.buildFix(expression));
     return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
