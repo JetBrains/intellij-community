@@ -148,6 +148,10 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
     @Nullable
     private KtClassOrObject getOriginalClass() {
         PsiElement klass = LightClassUtilsKt.getUnwrapped(getPsiElement());
+        if (klass == null) {
+            return null;
+        }
+
         //noinspection ConstantConditions
         return klass instanceof KtClassOrObject
                ? (KtClassOrObject) klass
