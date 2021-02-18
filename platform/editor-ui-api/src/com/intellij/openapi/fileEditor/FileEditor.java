@@ -4,12 +4,11 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -135,6 +134,16 @@ public interface FileEditor extends UserDataHolder, Disposable {
     return null;
   }
 
+  @ApiStatus.Internal
+  Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
+
+  /**
+   * Returns the file for which {@link FileEditorProvider#createEditor)} was called.
+   * The default implementation is temporary, and shall be dropped in future.
+   */
   @Nullable 
-  default VirtualFile getFile() { return null; }
+  default VirtualFile getFile() {
+    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getFile", "A proper @NotNull implementation required");
+    return FILE_KEY.get(this);
+  }
 }
