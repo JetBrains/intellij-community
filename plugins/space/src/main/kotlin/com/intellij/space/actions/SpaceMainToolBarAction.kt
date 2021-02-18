@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.actions
 
 import circlet.client.api.englishFullName
@@ -40,15 +40,9 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
       e.presentation.isEnabledAndVisible = false
       return
     }
-
-    val space = SpaceWorkspaceComponent.getInstance()
-    val connected = space.loginState.value is SpaceLoginState.Connected
-    if (!connected) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
     e.presentation.isEnabledAndVisible = true
 
+    val space = SpaceWorkspaceComponent.getInstance()
     val avatars = SpaceUserAvatarProvider.getInstance().avatars.value
     val isOnline = space.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
     val isConnecting = space.loginState.value is SpaceLoginState.Connecting
