@@ -26,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Predicate;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
 @ApiStatus.Internal
@@ -229,40 +228,51 @@ final class ClassLoaderConfigurator {
                                                          "com.intellij.lang.ognl.");
         case "com.intellij.properties":
           // todo ability to customize (cannot move due to backward compatibility)
-          return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
-                                       descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory) {
-            @Override
-            protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-              return super.isDefinitelyAlienClass(name, packagePrefix) &&
-                     !name.equals("com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider");
-            }
-          };
+          return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                         new PluginClassLoader.ResolveScopeManager() {
+                                           @Override
+                                           public boolean isDefinitelyAlienClass(String name, String packagePrefix) {
+                                             return !name.startsWith(packagePrefix) &&
+                                                    !name.startsWith("com.intellij.ultimate.PluginVerifier") &&
+                                                    !name.equals("com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider");
+                                           }
+                                         });
+      }
+
+      if (descriptor.packagePrefix != null) {
+        return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                       createPluginDependencyAndContentBasedScope(descriptor));
       }
     }
-
-    if (!descriptor.contentDescriptor.modules.isEmpty()) {
-      if (descriptor.packagePrefix == null) {
-        // Assertion based on package prefix is not enough because, surprise,
-        // we cannot set package prefix for some plugins for now due to number of issues.
-        // For example, for docker package prefix is not and cannot be set for now.
-        return new FilteringPluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, createContentBasedPredicate(descriptor),
-                                              coreLoader, resourceFileFactory);
-      }
-      else if (descriptor.descriptorPath != null /* it is module and not a plugin */) {
-        // see "The `content.module` element" section about content handling for a module
-        Predicate<String> contentBasedPredicate = createContentBasedPredicate(descriptor);
-        return new ContentPredicateBasedPluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, contentBasedPredicate,
-                                                          coreLoader, resourceFileFactory);
-      }
+    else if (!descriptor.contentDescriptor.modules.isEmpty()) {
+      // see "The `content.module` element" section about content handling for a module
+      return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                     createModuleContentBasedScope(descriptor));
     }
 
-    if (isMain && descriptor.packagePrefix != null) {
-      return new FilteringPluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor,
-                                            createDependencyAndContentBasedPredicate(descriptor), coreLoader, resourceFileFactory);
+    if (descriptor.packagePrefix == null) {
+      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, null,
+                                   null, resourceFileFactory);
     }
+    else {
+      return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                     new PluginClassLoader.ResolveScopeManager() {
+                                       @Override
+                                       public boolean isDefinitelyAlienClass(String name, String packagePrefix) {
+                                         return !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier");
+                                       }
+                                     });
+    }
+  }
 
+  private static @NotNull PluginClassLoader createPluginClassloader(@NotNull ClassLoader @NotNull [] parentLoaders,
+                                                                    @NotNull IdeaPluginDescriptorImpl descriptor,
+                                                                    @NotNull UrlClassLoader.Builder urlClassLoaderBuilder,
+                                                                    @NotNull ClassLoader coreLoader,
+                                                                    @Nullable ClassPath.ResourceFileFactory resourceFileFactory,
+                                                                    @Nullable PluginClassLoader.ResolveScopeManager resolveScopeManager) {
     return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader,
-                                 descriptor.packagePrefix, resourceFileFactory);
+                                 resolveScopeManager, descriptor.packagePrefix, resourceFileFactory);
   }
 
   private static @NotNull PluginClassLoader createPluginClassLoaderWithExtraPackage(@NotNull ClassLoader @NotNull [] parentLoaders,
@@ -271,70 +281,23 @@ final class ClassLoaderConfigurator {
                                                                                     @NotNull ClassLoader coreLoader,
                                                                                     @Nullable ClassPath.ResourceFileFactory resourceFileFactory,
                                                                                     @NotNull String customPackage) {
-    return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
-                                 descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory) {
-      @Override
-      protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-        return super.isDefinitelyAlienClass(name, packagePrefix) &&
-               !name.startsWith(customPackage);
-      }
-    };
-  }
-
-  private static final class ContentPredicateBasedPluginClassLoader extends PluginClassLoader {
-    private final @NotNull Predicate<? super String> contentBasedPredicate;
-
-    private ContentPredicateBasedPluginClassLoader(@NotNull UrlClassLoader.Builder builder,
-                                                   @NotNull ClassLoader @NotNull [] parentLoaders,
-                                                   @NotNull IdeaPluginDescriptorImpl descriptor,
-                                                   @NotNull Predicate<? super String> contentBasedPredicate,
-                                                   @NotNull ClassLoader coreLoader,
-                                                   @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
-      super(builder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory);
-
-      this.contentBasedPredicate = contentBasedPredicate;
-    }
-
-    @Override
-    protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-      if (!super.isDefinitelyAlienClass(name, packagePrefix)) {
-        return false;
-      }
-
-      // for a module, the referenced module doesn't have own classloader and is added directly to classpath,
-      // so, if name doesn't pass standard package prefix filter,
-      // check that it is not in content - if in content, then it means that class is not alien
-      return !contentBasedPredicate.test(name);
-    }
-  }
-
-  private static final class FilteringPluginClassLoader extends PluginClassLoader {
-    private final @NotNull Predicate<? super String> dependencyBasedPredicate;
-
-    private FilteringPluginClassLoader(@NotNull UrlClassLoader.Builder builder,
-                                       @NotNull ClassLoader @NotNull [] parentLoaders,
-                                       @NotNull IdeaPluginDescriptorImpl descriptor,
-                                       @NotNull Predicate<? super String> dependencyBasedPredicate,
-                                       @NotNull ClassLoader coreLoader,
-                                       @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
-      super(builder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory);
-
-      this.dependencyBasedPredicate = dependencyBasedPredicate;
-    }
-
-    @Override
-    protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-      return dependencyBasedPredicate.test(name);
-    }
+    return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                   new PluginClassLoader.ResolveScopeManager() {
+                                     @Override
+                                     public boolean isDefinitelyAlienClass(String name, String packagePrefix) {
+                                       return !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier") &&
+                                              !name.startsWith(customPackage);
+                                     }
+                                   });
   }
 
   // package of module is not taken in account to support resolving of module libraries -
   // instead, only classes from plugin's modules (content or dependencies) are excluded.
-  private static @NotNull Predicate<String> createDependencyAndContentBasedPredicate(@NotNull IdeaPluginDescriptorImpl descriptor) {
+  private static @NotNull PluginClassLoader.ResolveScopeManager createPluginDependencyAndContentBasedScope(@NotNull IdeaPluginDescriptorImpl descriptor) {
     List<String> contentPackagePrefixes = getContentPackagePrefixes(descriptor);
     List<String> dependencyPackagePrefixes = getDependencyPackagePrefixes(descriptor);
     String pluginId = descriptor.getPluginId().getIdString();
-    return name -> {
+    return (name, __) -> {
       for (String prefix : contentPackagePrefixes) {
         if (name.startsWith(prefix)) {
           getLogger().error("Class " + name + " must be not requested from main classloader of " + pluginId + " plugin");
@@ -384,7 +347,7 @@ final class ClassLoaderConfigurator {
     return result;
   }
 
-  private static @NotNull Predicate<String> createContentBasedPredicate(@NotNull IdeaPluginDescriptorImpl descriptor) {
+  private static @NotNull PluginClassLoader.ResolveScopeManager createModuleContentBasedScope(@NotNull IdeaPluginDescriptorImpl descriptor) {
     List<String> packagePrefixes = new ArrayList<>(descriptor.contentDescriptor.modules.size());
     for (PluginContentDescriptor.ModuleItem item : descriptor.contentDescriptor.modules) {
       String packagePrefix = item.packageName;
@@ -392,13 +355,20 @@ final class ClassLoaderConfigurator {
         packagePrefixes.add(packagePrefix + '.');
       }
     }
-    return name -> {
+    return (name, packagePrefix) -> {
+      if (name.startsWith(packagePrefix) || name.startsWith("com.intellij.ultimate.PluginVerifier")) {
+        return false;
+      }
+
+      // for a module, the referenced module doesn't have own classloader and is added directly to classpath,
+      // so, if name doesn't pass standard package prefix filter,
+      // check that it is not in content - if in content, then it means that class is not alien
       for (String prefix : packagePrefixes) {
         if (name.startsWith(prefix)) {
-          return true;
+          return false;
         }
       }
-      return false;
+      return true;
     };
   }
 
