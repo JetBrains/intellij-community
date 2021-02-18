@@ -13,6 +13,7 @@ import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToC
 import com.intellij.space.chat.ui.discussion.SpaceChatDiscussionActionsFactory
 import com.intellij.space.chat.ui.getLink
 import com.intellij.space.chat.ui.thread.SpaceChatStandaloneThreadComponent
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.review.details.SpaceReviewChange
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.comment.wrapComponentUsingRoundedPanel
@@ -68,5 +69,7 @@ internal class SpaceReviewCommentPanelFactory(
           }
         )
       }
-    )
+    ).apply {
+      setLoadingText(SpaceBundle.message("review.diff.loading.discussion.text"))
+    }
 }

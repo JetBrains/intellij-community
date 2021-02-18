@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui
 
 import circlet.client.api.M2ChannelRecord
@@ -10,12 +10,15 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
+import org.jetbrains.annotations.Nls
 import runtime.Ui
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
 import javax.swing.JComponent
@@ -26,9 +29,16 @@ internal abstract class SpaceChatContentPanelBase(
   private val channelsVm: ChannelsVm,
   private val chatRecord: Ref<M2ChannelRecord>
 ) : BorderLayoutPanel() {
-  private val loadingPanel = JBLoadingPanel(BorderLayout(), parent).apply {
-    startLoading()
-    isOpaque = false
+  private val loadingPanel = object : JBLoadingPanel(BorderLayout(), parent) {
+    init {
+      startLoading()
+      isOpaque = false
+    }
+
+    override fun getPreferredSize(): Dimension {
+      val size = super.getPreferredSize()
+      return Dimension(size.width, size.height.takeIf { it != 0 } ?: JBUI.scale(80))
+    }
   }
 
   init {
@@ -74,5 +84,9 @@ internal abstract class SpaceChatContentPanelBase(
       loadingPanel.revalidate()
       loadingPanel.repaint()
     }
+  }
+
+  fun setLoadingText(@Nls text: String) {
+    loadingPanel.setLoadingText(text)
   }
 }
