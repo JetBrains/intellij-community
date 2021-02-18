@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -90,7 +91,9 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
       }
     }
 
-    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myRepositoriesList).disableUpDownActions();
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myRepositoriesList)
+      .disableUpDownActions()
+      .setAddIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown));
 
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override

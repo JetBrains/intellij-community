@@ -29,6 +29,7 @@ import com.intellij.ui.ColorChooser.chooseColor
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.CommonActionsPanel
 import com.intellij.ui.FileColorManager
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.ToolbarDecorator.createDecorator
 import com.intellij.ui.components.ActionLink
@@ -371,6 +372,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
         val popup = JBPopupFactory.getInstance().createListPopup(ScopeListPopupStep(this))
         it.preferredPopupPoint?.let { point -> popup.show(point) }
       }
+      .setAddIcon(LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
       .setMoveUpActionUpdater { table.selectedRows.all { canExchangeRows(it, it - 1) } }
       .setMoveDownActionUpdater { table.selectedRows.all { canExchangeRows(it, it + 1) } }
       .createPanel()
