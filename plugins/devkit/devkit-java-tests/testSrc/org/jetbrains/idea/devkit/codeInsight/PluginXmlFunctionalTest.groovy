@@ -222,18 +222,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        'com.intellij.custom')
   }
 
-  void testContentDescriptorHighlighting() {
-    doHighlightingTest("ContentDescriptorHighlighting.xml")
-  }
-
-  void testDependencyDescriptorHighlighting() {
-    doHighlightingTest("DependencyDescriptorHighlighting.xml")
-  }
-
-  void testDependenciesContentDescriptorNonJetbrains() {
-    doHighlightingTest("DependenciesContentDescriptorNonJetbrains.xml")
-  }
-
   private void configureByFile() {
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml"))
   }
