@@ -47,6 +47,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public final class UnindexedFilesUpdater extends DumbModeTask {
@@ -332,6 +333,11 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(indicator, providers.size());
 
+    // Workaround for concurrent modification of the [projectIndexingHistory].
+    // PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible may finish earlier than all its spawned tasks have completed.
+    // And some scanning statistics may be tried to be added to the [projectIndexingHistory],
+    // leading to ConcurrentModificationException in the statistics' processor.
+    AtomicBoolean allTasksFinished = new AtomicBoolean();
     List<Runnable> tasks = ContainerUtil.map(providers, provider -> {
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(1);
       List<VirtualFile> files = new ArrayList<>();
@@ -374,14 +380,20 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
         finally {
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
           synchronized (projectIndexingHistory) {
-            projectIndexingHistory.addScanningStatistics(scanningStatistics);
+            if (!allTasksFinished.get()) {
+              projectIndexingHistory.addScanningStatistics(scanningStatistics);
+            }
           }
           subTaskIndicator.finished();
         }
       };
     });
     LOG.info("Scanning: use " + getNumberOfScanningThreads() + " scanning threads");
-    PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(tasks);
+    try {
+      PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(tasks);
+    } finally {
+      allTasksFinished.set(true);
+    }
     return providerToFiles;
   }
 

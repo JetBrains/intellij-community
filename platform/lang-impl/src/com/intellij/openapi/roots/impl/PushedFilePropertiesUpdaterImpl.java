@@ -330,6 +330,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     invokeConcurrentlyIfPossible(tasks);
   }
 
+  // TODO: this method may return earlier than all spawned threads have completed.
   public static void invokeConcurrentlyIfPossible(@NotNull List<? extends Runnable> tasks) {
     if (tasks.isEmpty()) return;
     if (tasks.size() == 1 || ApplicationManager.getApplication().isWriteAccessAllowed()) {
