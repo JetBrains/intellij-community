@@ -497,11 +497,11 @@ public final class CompileDriver {
           String logPath = PathManager.getLogPath();
           Path perfMetrics = Paths.get(logPath).resolve("performance-metrics").resolve("buildMetrics.json");
           try {
-            FileUtil.writeToFile(perfMetrics.toFile(), "{\n\t\"errors\" : " +
+            FileUtil.writeToFile(perfMetrics.toFile(), "{\n\t\"build_errors\" : " +
                                                        compileContext.getMessageCount(CompilerMessageCategory.ERROR) + "," +
-                                                       "\n\t\"warnings\" : " +
+                                                       "\n\t\"build_warnings\" : " +
                                                        compileContext.getMessageCount(CompilerMessageCategory.WARNING) + "," +
-                                                       "\n\t\"duration\" : " +
+                                                       "\n\t\"build_duration\" : " +
                                                        duration +
                                                        "\n}");
           }
