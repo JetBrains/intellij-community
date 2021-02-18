@@ -10606,6 +10606,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasContinue.kt");
         }
 
+        @TestMetadata("defaultValueBlockHasLabeledBreak.kt")
+        public void testDefaultValueBlockHasLabeledBreak() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasLabeledBreak.kt");
+        }
+
+        @TestMetadata("defaultValueBlockHasLabeledContinue.kt")
+        public void testDefaultValueBlockHasLabeledContinue() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasLabeledContinue.kt");
+        }
+
         @TestMetadata("defaultValueBlockHasMultiStatement.kt")
         public void testDefaultValueBlockHasMultiStatement() throws Exception {
             runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasMultiStatement.kt");
