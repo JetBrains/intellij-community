@@ -282,11 +282,13 @@ open class MarketplaceRequests {
           return@connect Files.newBufferedReader(file).use(parser)
         }
         catch (e: HttpRequests.HttpStatusException) {
-          LOG.warn("Cannot load data from $url (statusCode=${e.statusCode})", e)
+          LOG.warn("Cannot load data from ${url} (statusCode=${e.statusCode})")
+          LOG.debug(e)
           throw e
         }
         catch (e: Exception) {
-          LOG.warn("Error reading Marketplace file: url=${url} file=${file?.fileName}", e)
+          LOG.warn("Error reading Marketplace file: file=${file} URL=${url}")
+          LOG.debug(e)
           if (file != null && LOG.isDebugEnabled) {
             LOG.debug("File content:\n${try { Files.readString(file) } catch (e: Exception) { IoErrorText.message(e) } }")
           }
