@@ -21,11 +21,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.PsiDocumentListener;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -208,14 +213,8 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     return answer;
   }
 
-  @NotNull
   public Collection<Bookmark> getAllBookmarks() {
     return myBookmarks.values();
-  }
-
-  @NotNull
-  public Collection<Bookmark> getFileBookmarks(@Nullable VirtualFile file) {
-    return myBookmarks.get(file);
   }
 
   @Nullable
@@ -255,26 +254,6 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
       bookmark.release();
       getPublisher().bookmarkRemoved(bookmark);
     }
-  }
-
-  @Nullable
-  public Bookmark findElementBookmark(@NotNull PsiElement element) {
-    if (!(element instanceof PsiNameIdentifierOwner) || !element.isValid()) return null;
-
-    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-    PsiElement nameIdentifier = virtualFile == null ? null : ((PsiNameIdentifierOwner)element).getNameIdentifier();
-    TextRange nameRange = nameIdentifier == null ? null : nameIdentifier.getTextRange();
-    Document document = nameRange == null ? null : FileDocumentManager.getInstance().getDocument(virtualFile);
-
-    Collection<Bookmark> bookmarks = document == null ? Collections.emptyList() : getFileBookmarks(virtualFile);
-    for (Bookmark bookmark : bookmarks) {
-      int line = bookmark.getLine();
-      if (line == -1) continue;
-      if (nameRange.intersects(document.getLineStartOffset(line), document.getLineEndOffset(line))) {
-        return bookmark;
-      }
-    }
-    return null;
   }
 
   @Override

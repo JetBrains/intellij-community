@@ -17,9 +17,7 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.tags.TagManager;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,13 +48,8 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
     Object userObject = TreeUtil.getUserObject(value);
     if (userObject instanceof HierarchyNodeDescriptor) {
       HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)userObject;
-      Icon tagIcon = TagManager.appendTags(descriptor.getPsiElement(), this);
       descriptor.getHighlightedText().customize(this);
-      Icon icon = fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus);
-      if (tagIcon != null) {
-        icon = new RowIcon(tagIcon, icon);
-      }
-      setIcon(icon);
+      setIcon(fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus));
     }
     else {
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
