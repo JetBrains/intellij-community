@@ -11,6 +11,7 @@ import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nls;
@@ -70,14 +71,14 @@ public class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myVendor = new JTextField(myProperties.vendor);
     myDescription = new JBTextArea(myProperties.description, 5, 50);
     myDescription.setMinimumSize(new Dimension(100, 50));
-    myVerbose = new JCheckBox("Verbose", myProperties.verbose);
+    myVerbose = new JCheckBox("Show verbose output when building the platform specific package", myProperties.verbose);
 
     final FormBuilder builder = new FormBuilder();
     builder.addLabeledComponent("Main class", myMainClass);
     builder.addLabeledComponent("Version", myVersion);
     builder.addLabeledComponent("Copyright", myCopyright);
     builder.addLabeledComponent("Vendor", myVendor);
-    builder.addLabeledComponent("Description", myDescription);
+    builder.addLabeledComponent("Description", new JBScrollPane(myDescription));
     builder.addComponent(myVerbose);
     return builder.getPanel();
   }
