@@ -15,7 +15,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
             buildDependencies(
                 resolverCtx, sourceSetMap, artifactsMap, dataNode, getDependencies(compilation), ideProject
             )
-            for (sourceSet in compilation.allSourceSets) {
+            for (sourceSet in compilation.defaultSourceSets) {
                 if (sourceSet.fullName() == compilation.fullName()) continue
                 val targetDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx) ?: continue
                 addDependency(dataNode, targetDataNode, sourceSet.isTestModule)

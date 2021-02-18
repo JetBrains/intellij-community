@@ -44,6 +44,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         return modelName == KotlinMPPGradleModel::class.java.name
     }
 
+    // TODO NOW: Exceptions shall be reported to test -.-
     override fun buildAll(modelName: String, project: Project): Any? {
         val projectTargets = project.getTargets() ?: return null
         val dependencyResolver = DependencyResolverImpl(
@@ -116,17 +117,16 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val allSourceSetsProtosByNames = sourceSets.mapNotNull {
             buildSourceSet(it, dependencyResolver, importingContext.project, dependencyMapper, androidDeps)
         }.associateBy { it.name }
-        val dependsOnCache = HashMap<String, Set<String>>()
 
         // Some performance optimisation: do not build metadata dependencies if source set is not common
         return if (importingContext.getProperty(BUILD_METADATA_DEPENDENCIES)) {
             allSourceSetsProtosByNames.mapValues { (_, proto) ->
-                proto.buildKotlinSourceSetImpl(true, allSourceSetsProtosByNames, dependsOnCache)
+                proto.buildKotlinSourceSetImpl(true, allSourceSetsProtosByNames)
             }
         } else {
             val unactualizedSourceSets = allSourceSetsProtosByNames.values.flatMap { it.dependsOnSourceSets }.distinct()
             allSourceSetsProtosByNames.mapValues { (name, proto) ->
-                proto.buildKotlinSourceSetImpl(unactualizedSourceSets.contains(name), allSourceSetsProtosByNames, dependsOnCache)
+                proto.buildKotlinSourceSetImpl(unactualizedSourceSets.contains(name), allSourceSetsProtosByNames)
             }
         }
     }
@@ -519,23 +519,20 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         }
         val nativeExtensions = konanTarget?.let(::KotlinNativeCompilationExtensionsImpl)
 
-        val allSourceSets = if (platform != KotlinPlatform.ANDROID) {
-            kotlinSourceSets
-        } else {
-            kotlinSourceSets.flatMap { it.dependsOnSourceSets }.mapNotNull { importingContext.sourceSetByName(it) }
-                .union(kotlinSourceSets)
-        }
+        val allSourceSets = kotlinSourceSets.flatMap { it.dependsOnSourceSets }
+            .mapNotNull { importingContext.sourceSetByName(it) }
+            .union(kotlinSourceSets)
 
         return KotlinCompilationImpl(
-            gradleCompilation.name,
-            allSourceSets,
-            kotlinSourceSets,
-            dependencies.map { dependencyMapper.getId(it) }.distinct().toTypedArray(),
-            output,
-            arguments,
-            dependencyClasspath.toTypedArray(),
-            kotlinTaskProperties,
-            nativeExtensions
+            name = gradleCompilation.name,
+            allSourceSets = allSourceSets,
+            defaultSourceSets = if(platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
+            dependencies = dependencies.map { dependencyMapper.getId(it) }.distinct().toTypedArray(),
+            output = output,
+            arguments = arguments,
+            dependencyClasspath = dependencyClasspath.toTypedArray(),
+            kotlinTaskProperties = kotlinTaskProperties,
+            nativeExtensions = nativeExtensions
         )
     }
 

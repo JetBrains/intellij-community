@@ -98,6 +98,10 @@ interface KotlinNativeCompilationExtensions : Serializable {
 }
 
 interface KotlinCompilation : KotlinModule {
+
+    @Deprecated("Use allSourceSets or defaultSourceSets instead")
+    val sourceSets: Collection<KotlinSourceSet> get() = allSourceSets
+
     /**
      * All source sets participated in this compilation, including those available
      * via dependsOn.

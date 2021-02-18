@@ -16,30 +16,24 @@ class KotlinSourceSetProto(
     private val dependencies: () -> Array<KotlinDependencyId>,
     val dependsOnSourceSets: Set<String>
 ) {
-
     fun buildKotlinSourceSetImpl(
         doBuildDependencies: Boolean,
         allSourceSetsProtosByNames: Map<String, KotlinSourceSetProto>,
-        dependsOnCache: HashMap<String, Set<String>>
     ) = KotlinSourceSetImpl(
-        name,
-        languageSettings,
-        sourceDirs,
-        resourceDirs,
-        if (doBuildDependencies) dependencies.invoke() else emptyArray(),
-        calculateDependsOnClosure(this, allSourceSetsProtosByNames, dependsOnCache)
+        name = name,
+        languageSettings = languageSettings,
+        sourceDirs = sourceDirs,
+        resourceDirs = resourceDirs,
+        dependencies = if (doBuildDependencies) dependencies.invoke() else emptyArray(),
+        dependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames)
     )
+}
 
-    private fun calculateDependsOnClosure(
-        currentSourceSetProto: KotlinSourceSetProto,
-        sourceSetsMap: Map<String, KotlinSourceSetProto>,
-        cache: MutableMap<String, Set<String>>
-    ): Set<String> {
-        return cache.computeIfAbsent(currentSourceSetProto.name) {
-            currentSourceSetProto.dependsOnSourceSets.flatMap { name ->
-                val nextSourceSet = sourceSetsMap[name] ?: error("Source set $name is not found in map $sourceSetsMap")
-                calculateDependsOnClosure(nextSourceSet, sourceSetsMap, cache).union(setOf(name))
-            }.toSet()
+fun KotlinSourceSetProto.allDependsOnSourceSets(sourceSetsByName: Map<String, KotlinSourceSetProto>): Set<String> {
+    return mutableSetOf<String>().apply {
+        addAll(dependsOnSourceSets)
+        dependsOnSourceSets.map(sourceSetsByName::getValue).forEach { dependsOnSourceSet ->
+            addAll(dependsOnSourceSet.allDependsOnSourceSets(sourceSetsByName))
         }
     }
 }
@@ -139,15 +133,15 @@ data class KotlinCompilationImpl(
 
     // create deep copy
     constructor(kotlinCompilation: KotlinCompilation, cloningCache: MutableMap<Any, Any>) : this(
-        kotlinCompilation.name,
-        cloneSourceSetsWithCaching(kotlinCompilation.allSourceSets, cloningCache),
-        cloneSourceSetsWithCaching(kotlinCompilation.defaultSourceSets, cloningCache),
-        kotlinCompilation.dependencies,
-        KotlinCompilationOutputImpl(kotlinCompilation.output),
-        KotlinCompilationArgumentsImpl(kotlinCompilation.arguments),
-        kotlinCompilation.dependencyClasspath,
-        KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
-        kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl)
+        name = kotlinCompilation.name,
+        defaultSourceSets = cloneSourceSetsWithCaching(kotlinCompilation.defaultSourceSets, cloningCache),
+        allSourceSets = cloneSourceSetsWithCaching(kotlinCompilation.allSourceSets, cloningCache),
+        dependencies = kotlinCompilation.dependencies,
+        output = KotlinCompilationOutputImpl(kotlinCompilation.output),
+        arguments = KotlinCompilationArgumentsImpl(kotlinCompilation.arguments),
+        dependencyClasspath = kotlinCompilation.dependencyClasspath,
+        kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
+        nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl)
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform

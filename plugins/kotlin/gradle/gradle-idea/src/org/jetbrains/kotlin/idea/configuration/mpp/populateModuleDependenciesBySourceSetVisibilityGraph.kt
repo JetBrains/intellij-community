@@ -207,7 +207,7 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateSourceSetInfos(
     val dependeeSourceSets = closedSourceSetGraph.successors(sourceSet)
     val sourceSetInfos = if (isAndroid) {
         ideModule.kotlinAndroidSourceSets?.filter {
-            (it.kotlinModule as? KotlinCompilation)?.allSourceSets?.contains(sourceSet) ?: false
+            (it.kotlinModule as? KotlinCompilation)?.defaultSourceSets?.contains(sourceSet) ?: false
         } ?: emptyList()
     } else {
         listOfNotNull(fromDataNode.kotlinSourceSet)
