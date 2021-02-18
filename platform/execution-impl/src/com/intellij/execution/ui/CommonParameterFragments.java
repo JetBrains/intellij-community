@@ -58,8 +58,8 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                         .setWorkingDirectory(component.getComponent().getText()),
                                                       settings -> true);
     myWorkingDirectory.setRemovable(false);
-    myWorkingDirectory.setValidation((fragment, settings) -> RuntimeConfigurationException.validate(workingDirectoryField.getTextField(),
-        () -> ProgramParametersUtil.checkWorkingDirectoryExist(settings, settings.getProject(), moduleProvider.compute())));
+    myWorkingDirectory.setValidation((settings) -> Collections.singletonList(RuntimeConfigurationException.validate(workingDirectoryField.getTextField(),
+        () -> ProgramParametersUtil.checkWorkingDirectoryExist(settings, project, moduleProvider.compute()))));
     myFragments.add(myWorkingDirectory);
     myFragments.add(createEnvParameters());
   }

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-class TestMethod extends TestObject {
+public class TestMethod extends TestObject {
   TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
@@ -105,11 +105,9 @@ class TestMethod extends TestObject {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
-    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    final String testClass = data.getMainClassName();
-    final PsiClass psiClass = configurationModule.checkModuleAndClassName(testClass, JUnitBundle.message("no.test.class.specified.error.text"));
+    final PsiClass psiClass = checkClass();
 
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String methodName = data.getMethodName();
     String methodNameWithSignature = data.getMethodNameWithSignature();
     if (methodName == null || methodName.trim().length() == 0) {
@@ -125,10 +123,19 @@ class TestMethod extends TestObject {
     if (!found) {
       throw new RuntimeConfigurationWarning(JUnitBundle.message("test.method.doesnt.exist.error.message", methodName));
     }
+  }
+
+    @NotNull
+  public PsiClass checkClass() throws RuntimeConfigurationException {
+    final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    final String testClass = data.getMainClassName();
+    final PsiClass psiClass = configurationModule.checkModuleAndClassName(testClass, JUnitBundle.message("no.test.class.specified.error.text"));
 
     TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
     if (testFramework == null || !testFramework.isTestClass(psiClass)) {
       throw new RuntimeConfigurationError(JUnitBundle.message("class.not.test.error.message", testClass));
     }
+    return psiClass;
   }
 }

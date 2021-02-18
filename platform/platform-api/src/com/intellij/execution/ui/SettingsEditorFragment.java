@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -40,7 +39,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected C myComponent;
   private final BiConsumer<? super Settings, ? super C> myReset;
   private final BiConsumer<? super Settings, ? super C> myApply;
-  private @Nullable BiFunction<SettingsEditorFragment<Settings, C>, Settings, ValidationInfo> myValidation;
+  private @Nullable Function<Settings, List<ValidationInfo>> myValidation;
   private final int myCommandLinePosition;
   private final Predicate<? super Settings> myInitialSelection;
   private @Nullable @Nls String myHint;
@@ -169,28 +168,31 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myRemovable = removable;
   }
 
-  public void setValidation(@Nullable BiFunction<SettingsEditorFragment<Settings, C>, Settings, ValidationInfo> validation) {
+  public void setValidation(@Nullable Function<Settings, List<ValidationInfo>> validation) {
     myValidation = validation;
   }
 
   protected void validate(Settings s) {
     if (myValidation == null) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ValidationInfo info = myValidation.apply(this, s);
-      if (info == null || info.component == null) return;
+      List<ValidationInfo> infos = myValidation.apply(s);
+      if (infos.isEmpty()) return;
       UIUtil.invokeLaterIfNeeded(() -> {
         if (Disposer.isDisposed(this)) return;
-        JComponent component = info.component;
-        Optional<ComponentValidator> optional = ComponentValidator.getInstance(component);
-        ComponentValidator validator;
-        if (optional.isEmpty()) {
-          validator = new ComponentValidator(this);
-          validator.installOn(component);
+        for (ValidationInfo info : infos) {
+          JComponent component = info.component;
+          if (component == null) continue;
+          Optional<ComponentValidator> optional = ComponentValidator.getInstance(component);
+          ComponentValidator validator;
+          if (optional.isEmpty()) {
+            validator = new ComponentValidator(this);
+            validator.installOn(component);
+          }
+          else {
+            validator = optional.get();
+          }
+          validator.updateInfo(info.message.isEmpty() ? null : info);
         }
-        else {
-          validator = optional.get();
-        }
-        validator.updateInfo(info.message.isEmpty() ? null : info);
       });
     });
   }

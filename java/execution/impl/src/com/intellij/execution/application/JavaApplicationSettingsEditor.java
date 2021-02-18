@@ -11,6 +11,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
@@ -69,8 +70,8 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       Editor editor = field.getEditor();
       return editor == null ? field : editor.getContentComponent();
     });
-    mainClassFragment.setValidation((fragment, configuration) ->
-      RuntimeConfigurationException.validate(mainClass, () -> ReadAction.run(() -> configuration.checkClass())));
+    mainClassFragment.setValidation((configuration) ->
+      Collections.singletonList(RuntimeConfigurationException.validate(mainClass, () -> ReadAction.run(() -> configuration.checkClass()))));
     return mainClassFragment;
   }
 }

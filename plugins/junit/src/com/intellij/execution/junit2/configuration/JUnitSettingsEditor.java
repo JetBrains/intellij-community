@@ -126,4 +126,9 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
       });
     fragments.add(new TargetPathFragment<>());
   }
+
+  @Override
+  public boolean isInplaceValidationSupported() {
+    return true;
+  }
 }
