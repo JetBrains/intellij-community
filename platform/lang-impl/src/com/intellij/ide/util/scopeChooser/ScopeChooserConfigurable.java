@@ -28,6 +28,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -347,7 +348,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       super(IdeBundle.message("add.scope.popup.title"), true);
       myFromPopup = fromPopup;
       final Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(IconUtil.getAddIcon());
+      presentation.setIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown));
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
     }
 

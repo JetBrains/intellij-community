@@ -14,7 +14,6 @@ import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.CommonActionsPanel
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.toArray
 import com.intellij.util.text.UniqueNameGenerator
@@ -152,7 +151,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   }
 
   private inner class CreateNewTargetGroup : ActionGroup(ExecutionBundle.message("targets.details.action.add.text"),
-                                                         "", IconUtil.getAddIcon()),
+                                                         "", LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown)),
                                              ActionGroupWithPreselection, DumbAware {
     init {
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree)

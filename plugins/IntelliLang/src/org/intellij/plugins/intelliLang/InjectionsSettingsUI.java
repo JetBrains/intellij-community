@@ -119,6 +119,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     decorator.disableUpDownActions();
     decorator.setAddActionUpdater(e -> !myAddActions.isEmpty());
     decorator.setAddAction(this::performAdd);
+    decorator.setAddIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown));
     decorator.setRemoveActionUpdater(e -> {
       boolean enabled = false;
       for (InjInfo info : getSelectedInjections()) {
