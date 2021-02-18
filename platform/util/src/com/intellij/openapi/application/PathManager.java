@@ -129,7 +129,16 @@ public final class PathManager {
   }
 
   public static boolean isUnderHomeDirectory(@NotNull String path) {
-    Path home = Paths.get(getHomePath()), target = Paths.get(path);
+    try {
+      return isUnderHomeDirectory(Paths.get(path));
+    }
+    catch (InvalidPathException e) {
+      return false;
+    }
+  }
+
+  public static boolean isUnderHomeDirectory(@NotNull Path target) {
+    Path home = Paths.get(getHomePath());
     try {
       home = home.toRealPath();
       target = target.toRealPath();
