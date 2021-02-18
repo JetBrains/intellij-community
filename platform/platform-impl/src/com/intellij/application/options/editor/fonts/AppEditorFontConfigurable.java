@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public final class AppEditorFontConfigurable implements SearchableConfigurable, NoScroll {
+public final class AppEditorFontConfigurable implements SearchableConfigurable, Configurable.NoMargin, NoScroll {
   @NonNls public static final String ID = "editor.preferences.fonts.default";
   private final NotNullLazyValue<AppEditorFontPanel> myFontPanelInstance = NotNullLazyValue.lazy(() -> new AppEditorFontPanel());
 
