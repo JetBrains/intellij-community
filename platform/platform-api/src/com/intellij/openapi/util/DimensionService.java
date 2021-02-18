@@ -72,7 +72,7 @@ public final class DimensionService extends SimpleModificationTracker implements
   }
 
   @Nullable
-  public synchronized Point getLocation(@NotNull String key, Project project) {
+  public synchronized Point getLocation(@NotNull String key, @Nullable Project project) {
     Point point = project == null ? null : WindowStateService.getInstance(project).getLocation(key);
     if (point != null) return point;
 
@@ -104,7 +104,7 @@ public final class DimensionService extends SimpleModificationTracker implements
     setLocation(key, point, guessProject());
   }
 
-  public synchronized void setLocation(@NotNull String key, Point point, Project project) {
+  public synchronized void setLocation(@NotNull String key, Point point, @Nullable Project project) {
     getWindowStateService(project).putLocation(key, point);
     Pair<String, Float> pair = keyPair(key, project);
     if (point != null) {
@@ -134,7 +134,7 @@ public final class DimensionService extends SimpleModificationTracker implements
   }
 
   @Nullable
-  public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
+  public synchronized Dimension getSize(@NotNull @NonNls String key, @Nullable Project project) {
     Dimension size = project == null ? null : WindowStateService.getInstance(project).getSize(key);
     if (size != null) return size;
 
@@ -163,7 +163,7 @@ public final class DimensionService extends SimpleModificationTracker implements
     setSize(key, size, guessProject());
   }
 
-  public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
+  public synchronized void setSize(@NotNull @NonNls String key, Dimension size, @Nullable Project project) {
     getWindowStateService(project).putSize(key, size);
     Pair<String, Float> pair = keyPair(key, project);
     if (size != null) {
