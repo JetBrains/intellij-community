@@ -991,7 +991,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       // editors in tabs
       for (FileEditor tabEditor : myFileEditorManager.getSelectedEditorWithRemotes()) {
         if (!tabEditor.isValid()) continue;
-        VirtualFile file = myFileEditorManager.getFile(tabEditor);
+        VirtualFile file = tabEditor.getFile();
         if (file != null) {
           files.add(file);
         }
@@ -1002,7 +1002,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     // do not duplicate documents
     if (!activeTextEditors.isEmpty()) {
       for (FileEditor fileEditor : activeTextEditors) {
-        VirtualFile file = myFileEditorManager.getFile(fileEditor);
+        VirtualFile file = fileEditor.getFile();
         if (file != null && files.contains(file)) {
           continue;
         }
