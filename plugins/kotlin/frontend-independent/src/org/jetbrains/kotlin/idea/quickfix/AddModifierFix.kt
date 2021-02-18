@@ -108,6 +108,8 @@ open class AddModifierFix(
             AddModifierFix.createFactory(KtTokens.ABSTRACT_KEYWORD, KtClassOrObject::class.java)
         val addOpenToContainingClass: QuickFixesPsiBasedFactory<PsiElement> =
             AddModifierFix.createFactory(KtTokens.OPEN_KEYWORD, KtClassOrObject::class.java)
+        val addFinalToProperty: QuickFixesPsiBasedFactory<PsiElement> =
+            AddModifierFix.createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
 
         val modifiersWithWarning = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
 

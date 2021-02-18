@@ -8907,6 +8907,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/modifiers/abstractModifierInEnum.kt");
         }
 
+        @TestMetadata("abstractVarWithPrivateSetter.kt")
+        public void testAbstractVarWithPrivateSetter() throws Exception {
+            runTest("idea/testData/quickfix/modifiers/abstractVarWithPrivateSetter.kt");
+        }
+
         @TestMetadata("addLateinit.kt")
         public void testAddLateinit() throws Exception {
             runTest("testData/quickfix/modifiers/addLateinit.kt");
@@ -9047,9 +9052,14 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/modifiers/openObject.kt");
         }
 
-        @TestMetadata("openVarWithPrivateSetter.kt")
-        public void testOpenVarWithPrivateSetter() throws Exception {
-            runTest("testData/quickfix/modifiers/openVarWithPrivateSetter.kt");
+        @TestMetadata("openVarWithPrivateSetter1.kt")
+        public void testOpenVarWithPrivateSetter1() throws Exception {
+            runTest("idea/testData/quickfix/modifiers/openVarWithPrivateSetter1.kt");
+        }
+
+        @TestMetadata("openVarWithPrivateSetter2.kt")
+        public void testOpenVarWithPrivateSetter2() throws Exception {
+            runTest("idea/testData/quickfix/modifiers/openVarWithPrivateSetter2.kt");
         }
 
         @TestMetadata("operatorModifier.kt")
@@ -9077,9 +9087,14 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/modifiers/operatorModifierInherited.kt");
         }
 
-        @TestMetadata("overrideWithPrivateSetter.kt")
-        public void testOverrideWithPrivateSetter() throws Exception {
-            runTest("testData/quickfix/modifiers/overrideWithPrivateSetter.kt");
+        @TestMetadata("overrideWithPrivateSetter1.kt")
+        public void testOverrideWithPrivateSetter1() throws Exception {
+            runTest("idea/testData/quickfix/modifiers/overrideWithPrivateSetter1.kt");
+        }
+
+        @TestMetadata("overrideWithPrivateSetter2.kt")
+        public void testOverrideWithPrivateSetter2() throws Exception {
+            runTest("idea/testData/quickfix/modifiers/overrideWithPrivateSetter2.kt");
         }
 
         @TestMetadata("packageMemberCannotBeProtected.kt")
