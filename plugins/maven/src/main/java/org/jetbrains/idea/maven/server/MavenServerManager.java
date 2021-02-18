@@ -207,13 +207,11 @@ public final class MavenServerManager implements Disposable {
 
   @Override
   public void dispose() {
-    shutdown(true);
   }
 
 
   public synchronized void shutdown(boolean wait) {
     Collection<MavenServerConnector> values;
-    MavenServerConnector connector;
     synchronized (myMultimoduleDirToConnectorMap) {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
@@ -443,21 +441,13 @@ public final class MavenServerManager implements Disposable {
 
   public void addDownloadListener(MavenServerDownloadListener listener) {
     synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.values().forEach(connector -> {
-        if (connector instanceof MavenServerConnectorImpl) {
-          ((MavenServerConnectorImpl)connector).addDownloadListener(listener);
-        }
-      });
+      myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.addDownloadListener(listener));
     }
   }
 
   public void removeDownloadListener(MavenServerDownloadListener listener) {
     synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.values().forEach(connector -> {
-        if (connector instanceof MavenServerConnectorImpl) {
-          ((MavenServerConnectorImpl)connector).removeDownloadListener(listener);
-        }
-      });
+      myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.removeDownloadListener(listener));
     }
   }
 

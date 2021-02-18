@@ -8,9 +8,7 @@ import com.intellij.ui.AnActionButton
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
-import org.jetbrains.idea.maven.server.DummyMavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerConnector
-import org.jetbrains.idea.maven.server.MavenServerConnectorImpl
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
 import javax.swing.ListSelectionModel
@@ -28,8 +26,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
 
     override fun updateButton(e: AnActionEvent) {
       val connector = tableView.selectedObject
-      isEnabled = (connector is MavenServerConnectorImpl && connector.state == MavenServerConnectorImpl.State.RUNNING)
-                  || connector is DummyMavenServerConnector
+      isEnabled = connector?.state == MavenServerConnector.State.RUNNING
     }
   }
   val refresh = object : AnActionButton(MavenConfigurableBundle.message("connector.ui.refresh"), AllIcons.Actions.Refresh) {
@@ -44,7 +41,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
     tableView.selectionModel.addListSelectionListener {
       if (it.valueIsAdjusting) return@addListSelectionListener
       val connector = tableView.selectedObject
-      stop.isEnabled = connector is MavenServerConnectorImpl && connector.state == MavenServerConnectorImpl.State.RUNNING
+      stop.isEnabled = connector?.state == MavenServerConnector.State.RUNNING
     }
   }
 
@@ -56,9 +53,9 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
     val maven = TableColumn(
       MavenConfigurableBundle.message("connector.ui.maven")) { "${it.mavenDistribution.version} ${it.mavenDistribution.mavenHome}" }
     val state = TableColumn(
-      MavenConfigurableBundle.message("connector.ui.state")) { if (it is MavenServerConnectorImpl) it.state.toString() else "Dummy" }
+      MavenConfigurableBundle.message("connector.ui.state")) { it.state.toString() }
     val type = TableColumn(
-      MavenConfigurableBundle.message("connector.ui.type")) { if (it is MavenServerConnectorImpl) it.supportType else "Dummy" }
+      MavenConfigurableBundle.message("connector.ui.type")) { it.supportType }
     val columnInfos = arrayOf<TableColumn>(project, dir, type, maven, state)
     return ListTableModel<MavenServerConnector>(columnInfos, MavenServerManager.getInstance().allConnectors.toList(), 3,
                                                 SortOrder.DESCENDING);
