@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
@@ -81,12 +80,24 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (body == null || method.getNameIdentifier() == null) {
         return;
       }
-      final PsiMethod[] methods = method.findSuperMethods();
-      if (methods.length == 0) {
+      final PsiMethod[] superMethods = method.findSuperMethods();
+      if (superMethods.length == 0) {
         return;
       }
-      PsiMethod superMethod = methods[0];
-      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && methods.length > 1) {
+      PsiMethod superMethod = null;
+      if (superMethods.length > 1) {
+        for (PsiMethod candidate : superMethods) {
+          final PsiClass aClass = candidate.getContainingClass();
+          if (aClass != null && !aClass.isInterface()) {
+            superMethod = candidate;
+            break;
+          }
+        }
+      }
+      else {
+        superMethod = superMethods[0];
+      }
+      if (superMethod == null || superMethod.hasModifierProperty(PsiModifier.DEFAULT) && superMethods.length > 1) {
         return;
       }
       if (!AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
