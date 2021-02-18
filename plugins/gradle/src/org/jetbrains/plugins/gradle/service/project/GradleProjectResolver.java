@@ -299,7 +299,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     resolverCtx.checkCancelled();
     if (useCustomSerialization) {
       assert gradleVersion != null;
-      allModels.initToolingSerializer(new IdeaProjectSerializationService(gradleVersion));
+      allModels.initToolingSerializer();
     }
 
     allModels.setBuildEnvironment(buildEnvironment);

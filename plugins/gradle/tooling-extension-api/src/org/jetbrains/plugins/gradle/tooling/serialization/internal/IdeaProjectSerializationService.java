@@ -17,7 +17,7 @@ import org.gradle.tooling.model.java.InstalledJdk;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
+import org.jetbrains.plugins.gradle.tooling.serialization.GradleBuiltinModelSerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.*;
 import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator;
@@ -37,14 +37,12 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
 /**
  * @author Vladislav.Soroka
  */
-public final class IdeaProjectSerializationService implements SerializationService<IdeaProject> {
-  private final GradleVersionComparator myGradleVersionComparator;
+public final class IdeaProjectSerializationService implements GradleBuiltinModelSerializationService<IdeaProject> {
   private final WriteContext myWriteContext;
   private final ReadContext myReadContext;
 
-  public IdeaProjectSerializationService(@NotNull GradleVersion gradleVersion) {
-    myGradleVersionComparator = new GradleVersionComparator(gradleVersion.getBaseVersion());
-    myWriteContext = new WriteContext(myGradleVersionComparator);
+  public IdeaProjectSerializationService() {
+    myWriteContext = new WriteContext(new GradleVersionComparator(GradleVersion.current()));
     myReadContext = new ReadContext();
   }
 
@@ -53,6 +51,9 @@ public final class IdeaProjectSerializationService implements SerializationServi
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     IonWriter writer = createIonWriter().build(out);
     try {
+      writer.stepIn(IonType.STRUCT);
+      writeString(writer, "gradleVersion", GradleVersion.current().getVersion());
+      writer.stepOut();
       writeProject(writer, myWriteContext, ideaProject);
     }
     finally {
@@ -65,6 +66,11 @@ public final class IdeaProjectSerializationService implements SerializationServi
   public IdeaProject read(byte[] object, Class<? extends IdeaProject> modelClazz) throws IOException {
     IonReader reader = IonReaderBuilder.standard().build(object);
     try {
+      if (reader.next() == null) return null;
+      reader.stepIn();
+      String gradleVersion = assertNotNull(readString(reader, "gradleVersion"));
+      reader.stepOut();
+      myReadContext.setGradleVersion(gradleVersion);
       return readProject(reader, myReadContext);
     }
     finally {
@@ -144,7 +150,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     writer.stepOut();
   }
 
-  private void writeDependency(IonWriter writer, WriteContext context, IdeaDependency dependency) throws IOException {
+  private static void writeDependency(IonWriter writer, WriteContext context, IdeaDependency dependency) throws IOException {
     if (dependency instanceof IdeaModuleDependency) {
       writeModuleDependency(writer, context, (IdeaModuleDependency)dependency);
     }
@@ -200,7 +206,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     });
   }
 
-  private void writeModuleDependency(final IonWriter writer, final WriteContext context, final IdeaModuleDependency moduleDependency)
+  private static void writeModuleDependency(final IonWriter writer, final WriteContext context, final IdeaModuleDependency moduleDependency)
     throws IOException {
     context.ideaDependenciesCollector.add(moduleDependency, new ObjectCollector.Processor<IOException>() {
       @Override
@@ -210,7 +216,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
         writer.writeInt(objectId);
         if (isAdded) {
           writeString(writer, "_type", IdeaModuleDependency.class.getSimpleName());
-          writeString(writer, "targetModuleName", new TargetModuleNameGetter(moduleDependency, myGradleVersionComparator).get());
+          writeString(writer, "targetModuleName", new TargetModuleNameGetter(moduleDependency, context.myGradleVersionComparator).get());
           writeString(writer, "scope", moduleDependency.getScope().getScope());
           writeBoolean(writer, "exported", moduleDependency.getExported());
         }
@@ -566,7 +572,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
   private InternalIdeaContentRoot readContentRoot(IonReader reader) {
     if (reader.next() == null) return null;
     reader.stepIn();
-    InternalIdeaContentRoot contentRoot = new InternalIdeaContentRoot(myGradleVersionComparator);
+    InternalIdeaContentRoot contentRoot = new InternalIdeaContentRoot(myReadContext.myGradleVersionComparator);
     contentRoot.setRootDirectory(readFile(reader, "rootDirectory"));
     contentRoot.setSourceDirectories(readSourceDirectories(reader, "sourceDirectories"));
     contentRoot.setTestDirectories(readSourceDirectories(reader, "testDirectories"));
@@ -813,6 +819,11 @@ public final class IdeaProjectSerializationService implements SerializationServi
     private final IntObjectMap<InternalGradleTask> tasksMap = new IntObjectMap<InternalGradleTask>();
     private final IntObjectMap<InternalIdeaCompilerOutput> compilerOutputsMap = new IntObjectMap<InternalIdeaCompilerOutput>();
     private final IntObjectMap<InternalIdeaDependency> dependenciesMap = new IntObjectMap<InternalIdeaDependency>();
+
+    private GradleVersionComparator myGradleVersionComparator;
+    private void setGradleVersion(String gradleVersion) {
+      myGradleVersionComparator = new GradleVersionComparator(GradleVersion.version(gradleVersion));
+    }
   }
 
   private static final class WriteContext {

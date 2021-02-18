@@ -103,7 +103,7 @@ class ToolingSerializerTest {
   @Test
   @Throws(Exception::class)
   fun `IDEA project serialization test`() {
-    val gradleVersion = GradleVersion.version("5.5")
+    val gradleVersion = GradleVersion.current()
     myRandomParameters
       .randomize(
         ofType(GradleVersionComparator::class.java).and(inClass(InternalIdeaContentRoot::class.java)),
@@ -120,7 +120,6 @@ class ToolingSerializerTest {
       .excludeField(named("gradleProject").and(inClass(InternalGradleTask::class.java)))
 
     val serializer = ToolingSerializer()
-    serializer.register(IdeaProjectSerializationService(gradleVersion))
     doTest(InternalIdeaProject::class.java, Consumer { ideaProject ->
       val buildIdentifier = InternalBuildIdentifier(myRandom.nextObject(File::class.java))
       ideaProject.children.forEach { ideaModule ->
@@ -167,7 +166,7 @@ class ToolingSerializerTest {
     val testComponentDependencies = ComponentDependenciesImpl("test", testCompileDependencies, testRuntimeDependencies)
     projectDependencies.add(testComponentDependencies)
 
-    val bytes = ToolingSerializer().write(projectDependencies, ProjectDependenciesImpl::class.java)
+    val bytes = ToolingSerializer().write(projectDependencies)
     val deserializedObject = ToolingSerializer().read(bytes, ProjectDependenciesImpl::class.java)
 
     val deserializedMainNestedDependency = deserializedObject!!.componentsDependencies[0].runtimeDependenciesGraph.dependencies[0].dependencies[0]
@@ -193,7 +192,7 @@ class ToolingSerializerTest {
                          serializer: ToolingSerializer) {
     val generatedObject = myRandom.nextObject(modelClazz)
     generatedObjectPatcher?.accept(generatedObject)
-    val bytes = serializer.write(generatedObject as Any, modelClazz)
+    val bytes = serializer.write(generatedObject as Any)
     val deserializedObject = serializer.read(bytes, modelClazz)
     assertThat(deserializedObject).usingRecursiveComparison().isEqualTo(generatedObject)
   }
