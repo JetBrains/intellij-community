@@ -27,7 +27,7 @@ public final class StoragePathMacros {
   public static final String CACHE_FILE = "$CACHE_FILE$";
 
   /**
-   * Applicable only for project-level.
+   * Same as {@link #WORKSPACE_FILE}, but stored per-product. Applicable only for project-level.
    */
   @NotNull
   public static final String PRODUCT_WORKSPACE_FILE = "$PRODUCT_WORKSPACE_FILE$";
