@@ -664,6 +664,7 @@ class QuickFixRegistrar : QuickFixContributor {
         COMPATIBILITY_WARNING.registerFactory(UseFullyQualifiedCallFix)
 
         INLINE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.registerFactory(InlineClassConstructorNotValParameterFactory)
+        INLINE_CLASS_DEPRECATED.registerFactory(InlineClassDeprecatedFix)
 
         SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC.registerFactory(AddJvmStaticAnnotationFix)
 
