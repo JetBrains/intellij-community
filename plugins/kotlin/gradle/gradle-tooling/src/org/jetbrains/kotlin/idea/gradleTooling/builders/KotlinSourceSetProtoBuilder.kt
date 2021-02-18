@@ -89,12 +89,16 @@ class KotlinSourceSetProtoBuilder(val androidDeps: Map<String, List<Any>>?) :
             androidDeps: Map<String, List<Any>>?
         ): List<KotlinDependency> {
             return ArrayList<KotlinDependency>().apply {
+                val androidDependencies = buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet)
+                if (androidDependencies.isNotEmpty()) {
+                    this += androidDependencies
+                    return@apply
+                }
+
                 this += apiMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext)
                 this += implementationMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext)
                 this += compileOnlyMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext)
                 this += runtimeOnlyMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext).onlyNewDependencies(this)
-
-                this += buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet)
             }
         }
 
