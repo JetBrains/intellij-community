@@ -353,13 +353,16 @@ public final class TypeConversionUtil {
    * <p>See JEP-397 for more details.</p>
    */
   public static boolean canConvertSealedTo(@NotNull PsiClass sealedClass, @NotNull PsiClass psiClass) {
-    return canConvertSealedTo(sealedClass, psiClass, new HashSet<>());
+    return canConvertSealedTo(sealedClass, psiClass, new HashSet<>(), true);
   }
   
-  private static boolean canConvertSealedTo(@NotNull PsiClass sealedClass, @NotNull PsiClass psiClass, @NotNull Set<PsiClass> visited) {
+  private static boolean canConvertSealedTo(@NotNull PsiClass sealedClass,
+                                            @NotNull PsiClass psiClass,
+                                            @NotNull Set<PsiClass> visited,
+                                            boolean isTopLevel) {
     if (visited.contains(sealedClass)) return true;
     visited.add(sealedClass);
-    if (!sealedClass.isInterface() && !psiClass.isInterface()) return true;
+    if (isTopLevel && !sealedClass.isInterface() && !psiClass.isInterface()) return true;
     PsiReferenceList permitsList = sealedClass.getPermitsList();
     List<PsiClass> sealedSubClasses = new SmartList<>();
     boolean hasClassInheritors;
@@ -372,7 +375,7 @@ public final class TypeConversionUtil {
         .map(t -> t.resolve())
         .anyMatch(subClass -> subClassExtendsClass(subClass, psiClass, sealedSubClasses));
     }
-    return hasClassInheritors || sealedSubClasses.stream().anyMatch(subClass -> canConvertSealedTo(subClass, psiClass, visited));
+    return hasClassInheritors || sealedSubClasses.stream().anyMatch(subClass -> canConvertSealedTo(subClass, psiClass, visited, false));
   }
 
   private static @NotNull Set<PsiClass> findDirectSubClassesInFile(@NotNull PsiClass sealedClass) {

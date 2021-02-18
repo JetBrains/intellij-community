@@ -37,6 +37,12 @@ interface Foo {
 
   interface I1 {}
   
+  sealed interface GrandParent permits Parent {}
+  static sealed class Parent implements GrandParent permits Child {}
+  static final class Child extends Parent {}
+  static class RandomClass {} 
+  
+  
   static void testA(A a) {
     if (<error descr="Inconvertible types; cannot cast 'Foo.A' to 'Foo'">a instanceof Foo</error>)
       System.out.println("It's a Foo");
@@ -84,5 +90,11 @@ interface Foo {
 
   static void testRecursive1(Recursive1 r1) {
     if (r1 instanceof I1) {}
+  }
+  
+  static void testDeepSealedHierarchy(GrandParent gp) {
+    if (<error descr="Inconvertible types; cannot cast 'Foo.GrandParent' to 'Foo.RandomClass'">gp instanceof RandomClass</error>) {
+      System.out.println("It's a RandomClass");
+    }
   }
 }
