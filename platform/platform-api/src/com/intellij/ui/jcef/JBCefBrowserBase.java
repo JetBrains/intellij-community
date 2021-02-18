@@ -46,8 +46,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   protected static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
   @Nullable private volatile LoadDeferrer myLoadDeferrer;
-  @NotNull private volatile String myLastRequestedUrl = "";
-  @Nullable private volatile ErrorPage myErrorPage;
+  @NotNull private String myLastRequestedUrl = "";
+  @NotNull private final Object myLastRequestedUrlLock = new Object();
+  @Nullable private volatile ErrorPage myErrorPage = ErrorPage.DEFAULT;
 
   private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
     new LazyInitializer.NotNullValue<>() {
@@ -108,12 +109,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myCefClient = cefClient;
     myCefBrowser = cefBrowser;
     myIsDefaultClient = isDefaultClient;
-    myErrorPage = new ErrorPage() {
-      @Override
-      public @NotNull String create(@NotNull CefLoadHandler.ErrorCode errorCode, @NotNull String errorText, @NotNull String failedUrl) {
-        return ErrorPage.super.create(errorCode, errorText, failedUrl);
-      }
-    };
 
     if (isNewBrowserCreated) {
       cefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
@@ -137,9 +132,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
           // do not show error page if another URL has already been requested to load
           ErrorPage errorPage = myErrorPage;
-          if (errorPage != null && myLastRequestedUrl.equals(failedUrl)) {
+          String lastRequestedUrl = getLastRequestedUrl();
+          if (errorPage != null && lastRequestedUrl.equals(failedUrl)) {
             String html = errorPage.create(errorCode, errorText, failedUrl);
-            UIUtil.invokeLaterIfNeeded(() -> loadHTML(html));
+            UIUtil.invokeLaterIfNeeded(() -> compareLastRequestedUrlAndPerform(failedUrl, () -> loadHTML(html)));
           }
         }
       }, getCefBrowser());
@@ -152,7 +148,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                       boolean user_gesture,
                                       boolean is_redirect)
         {
-          myLastRequestedUrl = ObjectUtils.notNull(request.getURL(), "");
+          setLastRequestedUrl(ObjectUtils.notNull(request.getURL(), ""));
           return super.onBeforeBrowse(browser, frame, request, user_gesture, is_redirect);
         }
       }, getCefBrowser());
@@ -317,7 +313,26 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   private void loadUrlImpl(@NotNull String url) {
+    setLastRequestedUrl(""); // will be set to a correct value in onBeforeBrowse()
     getCefBrowser().loadURL(url);
+  }
+
+  private String getLastRequestedUrl() {
+    synchronized (myLastRequestedUrlLock) {
+      return myLastRequestedUrl;
+    }
+  }
+
+  private void setLastRequestedUrl(@NotNull String url) {
+    synchronized (myLastRequestedUrlLock) {
+      myLastRequestedUrl = url;
+    }
+  }
+
+  private void compareLastRequestedUrlAndPerform(@NotNull String url, @NotNull Runnable action) {
+    synchronized (myLastRequestedUrlLock) {
+      if (myLastRequestedUrl.equals(url)) action.run();
+    }
   }
 
   /**
@@ -325,44 +340,52 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   public interface ErrorPage {
     /**
+     * Default error page.
+     */
+    ErrorPage DEFAULT = new ErrorPage() {
+      @Override
+      public @NotNull String create(CefLoadHandler.@NotNull ErrorCode errorCode,
+                                    @NotNull String errorText,
+                                    @NotNull String failedUrl)
+      {
+        int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.1);
+        int headerFontSize = fontSize + JBUIScale.scale(3);
+        int headerPaddingTop = headerFontSize / 5;
+        int lineHeight = headerFontSize * 2;
+        int iconPaddingRight = JBUIScale.scale(12);
+        Color bgColor = JBColor.background();
+        String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
+        Color fgColor = JBColor.foreground();
+        String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
+
+        String html = ERROR_PAGE_READER.get();
+        html = html.replace("${lineHeight}", String.valueOf(lineHeight));
+        html = html.replace("${iconPaddingRight}", String.valueOf(iconPaddingRight));
+        html = html.replace("${fontSize}", String.valueOf(fontSize));
+        html = html.replace("${headerFontSize}", String.valueOf(headerFontSize));
+        html = html.replace("${headerPaddingTop}", String.valueOf(headerPaddingTop));
+        html = html.replace("${bgWebColor}", bgWebColor);
+        html = html.replace("${fgWebColor}", fgWebColor);
+        html = html.replace("${errorText}", errorText);
+        html = html.replace("${failedUrl}", failedUrl);
+
+        ScaleContext ctx = ScaleContext.create();
+        ctx.update(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
+        // Reset sys scale to prevent raster downscaling on passing the image to jcef.
+        // Overriding is used to prevent scale change during further intermediate context transformations.
+        ctx.overrideScale(SYS_SCALE.of(1.0));
+
+        html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
+
+        return html;
+      }
+    };
+
+    /**
      * Returns an error page html.
      */
     @NotNull
-    default String create(@NotNull @SuppressWarnings("unused") CefLoadHandler.ErrorCode errorCode,
-                          @NotNull String errorText,
-                          @NotNull String failedUrl)
-    {
-      int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.1);
-      int headerFontSize = fontSize + JBUIScale.scale(3);
-      int headerPaddingTop = headerFontSize / 5;
-      int lineHeight = headerFontSize * 2;
-      int iconPaddingRight = JBUIScale.scale(12);
-      Color bgColor = JBColor.background();
-      String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
-      Color fgColor = JBColor.foreground();
-      String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
-
-      String html = ERROR_PAGE_READER.get();
-      html = html.replace("${lineHeight}", String.valueOf(lineHeight));
-      html = html.replace("${iconPaddingRight}", String.valueOf(iconPaddingRight));
-      html = html.replace("${fontSize}", String.valueOf(fontSize));
-      html = html.replace("${headerFontSize}", String.valueOf(headerFontSize));
-      html = html.replace("${headerPaddingTop}", String.valueOf(headerPaddingTop));
-      html = html.replace("${bgWebColor}", bgWebColor);
-      html = html.replace("${fgWebColor}", fgWebColor);
-      html = html.replace("${errorText}", errorText);
-      html = html.replace("${failedUrl}", failedUrl);
-
-      ScaleContext ctx = ScaleContext.create();
-      ctx.update(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
-      // Reset sys scale to prevent raster downscaling on passing the image to jcef.
-      // Overriding is used to prevent scale change during further intermediate context transformations.
-      ctx.overrideScale(SYS_SCALE.of(1.0));
-
-      html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
-
-      return html;
-    }
+    String create(@NotNull @SuppressWarnings("unused") CefLoadHandler.ErrorCode errorCode, @NotNull String errorText, @NotNull String failedUrl);
   }
 
   /**
