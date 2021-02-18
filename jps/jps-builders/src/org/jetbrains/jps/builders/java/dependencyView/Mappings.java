@@ -217,10 +217,10 @@ public class Mappings {
 
   @Nullable
   private ClassFileRepr getReprByName(@Nullable File source, int qName) {
-    final Iterable<File> sources = source != null? Collections.singleton(source) : classToSourceFileGet(qName);
+    final Iterable<String> sources = source != null? Collections.singleton(toRelative(source)) : myClassToRelativeSourceFilePath.get(qName);
     if (sources != null) {
-      for (File src : sources) {
-        final Collection<ClassFileRepr> reprs = sourceFileToClassesGet(src);
+      for (String src : sources) {
+        final Collection<ClassFileRepr> reprs = myRelativeSourceFilePathToClasses.get(src);
         if (reprs != null) {
           for (ClassFileRepr repr : reprs) {
             if (repr.name == qName) {
@@ -953,15 +953,14 @@ public class Mappings {
   }
 
   private TIntHashSet addAllSubclasses(final int root, final TIntHashSet acc) {
-    if (!acc.add(root)) {
-      return acc;
-    }
-    final TIntHashSet directSubclasses = myClassToSubclasses.get(root);
-    if (directSubclasses != null) {
-      directSubclasses.forEach(s -> {
-        addAllSubclasses(s, acc);
-        return true;
-      });
+    if (acc.add(root)) {
+      final TIntHashSet directSubclasses = myClassToSubclasses.get(root);
+      if (directSubclasses != null) {
+        directSubclasses.forEach(s -> {
+          addAllSubclasses(s, acc);
+          return true;
+        });
+      }
     }
     return acc;
   }
@@ -1002,27 +1001,31 @@ public class Mappings {
       });
     }
 
-    final String packageName = ClassRepr.getPackageName(myContext.getValue(isField ? owner : member.name));
+    final String cName = myContext.getValue(isField ? owner : member.name);
+    if (cName != null) {
+      final String packageName = ClassRepr.getPackageName(cName);
 
-    debug("Softening non-incremental decision: adding all package classes for a recompilation");
-    debug("Package name: ", packageName);
+      debug("Softening non-incremental decision: adding all package classes for a recompilation");
+      debug("Package name: ", packageName);
 
-    // Package-local branch
-    myClassToRelativeSourceFilePath.forEachEntry(new TIntObjectProcedure<Collection<String>>() {
-      @Override
-      public boolean execute(int className, Collection<String> relFilePaths) {
-        if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
-          for (String rel : relFilePaths) {
-            File file = toFull(rel);
-            if (filter == null || filter.accept(file)) {
-              debug("Adding: ", rel);
-              toRecompile.add(file);
+      // Package-local branch
+      myClassToRelativeSourceFilePath.forEachEntry(new TIntObjectProcedure<Collection<String>>() {
+        @Override
+        public boolean execute(int className, Collection<String> relFilePaths) {
+          final String clsName = myContext.getValue(className);
+          if (clsName != null && ClassRepr.getPackageName(clsName).equals(packageName)) {
+            for (String rel : relFilePaths) {
+              File file = toFull(rel);
+              if (filter == null || filter.accept(file)) {
+                debug("Adding: ", rel);
+                toRecompile.add(file);
+              }
             }
           }
+          return true;
         }
-        return true;
-      }
-    });
+      });
+    }
 
     // filtering already compiled and non-existing paths
     toRecompile.removeAll(currentlyCompiled);
@@ -1282,8 +1285,7 @@ public class Mappings {
             }
           }
 
-          final TIntHashSet subClasses = getAllSubclasses(it.name);
-          subClasses.forEach(subClass -> {
+          getAllSubclasses(it.name).forEach(subClass -> {
             final ClassRepr r = myFuture.classReprByName(subClass);
             if (r == null) {
               return true;
@@ -1622,8 +1624,7 @@ public class Mappings {
         debug("Field: ", f.name);
 
         if (!f.isPrivate()) {
-          final TIntHashSet subClasses = getAllSubclasses(classRepr.name);
-          subClasses.forEach(subClass -> {
+          getAllSubclasses(classRepr.name).forEach(subClass -> {
             final ClassRepr r = myFuture.classReprByName(subClass);
             if (r != null) {
               final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
