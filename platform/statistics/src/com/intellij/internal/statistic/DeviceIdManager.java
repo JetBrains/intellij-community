@@ -30,10 +30,10 @@ public final class DeviceIdManager {
    */
   @Deprecated
   public static String getOrGenerateId() {
-    return getOrGenerateId(null);
+    return getOrGenerateId("UNDEFINED");
   }
 
-  public static String getOrGenerateId(@Nullable String recorderId) {
+  public static String getOrGenerateId(@NotNull String recorderId) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     Preferences prefs = getPreferences(appInfo);
 
@@ -52,13 +52,13 @@ public final class DeviceIdManager {
   }
 
   @NotNull
-  private static String getPreferenceKey(@Nullable String recorderId) {
-    return recorderId == null ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
+  private static String getPreferenceKey(@NotNull String recorderId) {
+    return "FUS".equals(recorderId) ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
   }
 
   @NotNull
-  private static String getSharedFile(@Nullable String recorderId) {
-    return recorderId == null ? DEVICE_ID_SHARED_FILE : recorderId + "_" + DEVICE_ID_SHARED_FILE;
+  private static String getSharedFile(@NotNull String recorderId) {
+    return "FUS".equals(recorderId) ? DEVICE_ID_SHARED_FILE : recorderId + "_" + DEVICE_ID_SHARED_FILE;
   }
 
   @NotNull
