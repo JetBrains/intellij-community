@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.ui.avatars
 
 import com.intellij.util.ui.codereview.avatar.CachingAvatarIconsProvider
-import icons.GithubIcons
+import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader

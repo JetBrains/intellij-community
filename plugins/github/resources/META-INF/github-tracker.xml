@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.plugins.github.tasks">
   <extensions defaultExtensionNs="com.intellij">
     <tasks.repositoryType implementation="org.jetbrains.plugins.github.tasks.GithubRepositoryType"/>
   </extensions>

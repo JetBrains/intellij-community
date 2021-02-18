@@ -23,7 +23,6 @@ public final class ClassLoaderConfigurationData {
         PluginId.getId("JavaScript"),
         PluginId.getId("Docker"),
         PluginId.getId("com.intellij.diagram"),
-        PluginId.getId("org.jetbrains.plugins.github")
       });
     }
     else if (value.isEmpty()) {

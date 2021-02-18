@@ -15,7 +15,7 @@ import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuItemRenderer
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import com.intellij.util.ui.codereview.avatar.CachingAvatarIconsProvider
-import icons.GithubIcons
+import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
@@ -151,7 +151,8 @@ class GHAccountSelectorComponentFactory {
     }
   }
 
-  private class AccountAvatarIconsProvider : CachingAvatarIconsProvider<GithubAccount>(GithubIcons.DefaultAvatar) {
+  private class AccountAvatarIconsProvider : CachingAvatarIconsProvider<GithubAccount>(
+    GithubIcons.DefaultAvatar) {
 
     private val requestExecutorManager = GithubApiRequestExecutorManager.getInstance()
     private val accountInformationProvider = GithubAccountInformationProvider.getInstance()
