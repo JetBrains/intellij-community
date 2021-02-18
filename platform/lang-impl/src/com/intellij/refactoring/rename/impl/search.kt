@@ -3,22 +3,16 @@ package com.intellij.refactoring.rename.impl
 
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
-import com.intellij.model.psi.impl.allReferencesInElement
-import com.intellij.model.psi.impl.hasReferencesInElement
-import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchRequest
 import com.intellij.model.search.SearchService
 import com.intellij.model.search.TextOccurrence
+import com.intellij.model.search.impl.buildTextQuery
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.util.walkUp
 import com.intellij.refactoring.rename.api.*
-import com.intellij.refactoring.util.TextOccurrencesUtilBase
 import com.intellij.util.Query
-import com.intellij.util.codeInsight.CommentUtilCore
 
 internal fun buildQuery(project: Project, target: RenameTarget, options: RenameOptions): Query<UsagePointer> {
   return buildUsageQuery(project, target, options).mapping {
@@ -66,73 +60,9 @@ private fun buildTextResultsQueries(project: Project,
   for ((searchRequest: SearchRequest, usageTextByName: UsageTextByName) in replaceTextTargets) {
     val effectiveSearchScope: SearchScope = searchRequest.searchScope?.let(searchScope::intersectWith) ?: searchScope
     val searchString: String = searchRequest.searchString
-    val queryBuilder = SearchService.getInstance()
-      .searchWord(project, searchString)
-      .inScope(effectiveSearchScope)
-      .includeInjections()
-    if (context == ReplaceTextTargetContext.IN_PLAIN_TEXT) {
-      result += queryBuilder
-        .inContexts(SearchContext.IN_PLAIN_TEXT)
-        .buildLeafOccurrenceQuery()
-        .filtering { !hasReferences(it) }
-        .mapToUsages(searchString, usageTextByName)
-    }
-    else {
-      result += queryBuilder
-        .inContexts(SearchContext.IN_COMMENTS)
-        .buildLeafOccurrenceQuery()
-        .filtering { inComment(it) && !hasReferences(it) }
-        .mapToUsages(searchString, usageTextByName)
-      result += queryBuilder
-        .inContexts(SearchContext.IN_STRINGS)
-        .buildLeafOccurrenceQuery()
-        .filtering { inString(it) && !hasResolvableReferences(it) }
-        .mapToUsages(searchString, usageTextByName)
-    }
+    buildTextQuery(project, searchString, effectiveSearchScope, context.searchContexts).mapToUsages(searchString, usageTextByName)
   }
   return result
-}
-
-private fun inComment(occurrence: TextOccurrence): Boolean {
-  for ((element, _) in walkUp(occurrence)) {
-    if (CommentUtilCore.isCommentTextElement(element)) {
-      return true
-    }
-  }
-  return false
-}
-
-private fun inString(occurrence: TextOccurrence): Boolean {
-  for ((element, _) in walkUp(occurrence)) {
-    if (TextOccurrencesUtilBase.isStringLiteralElement(element)) {
-      return true
-    }
-  }
-  return false
-}
-
-private fun hasReferences(occurrence: TextOccurrence): Boolean {
-  for ((element, offsetInElement) in walkUp(occurrence)) {
-    if (hasReferencesInElement(element, offsetInElement)) {
-      return true
-    }
-  }
-  return false
-}
-
-private fun hasResolvableReferences(occurrence: TextOccurrence): Boolean {
-  for ((element, offsetInElement) in walkUp(occurrence)) {
-    for (reference in allReferencesInElement(element, offsetInElement)) {
-      if (reference.resolveReference().isNotEmpty()) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
-private fun walkUp(occurrence: TextOccurrence): Iterator<Pair<PsiElement, Int>> {
-  return walkUp(occurrence.element, occurrence.offsetInElement)
 }
 
 private fun Query<out TextOccurrence>.mapToUsages(
