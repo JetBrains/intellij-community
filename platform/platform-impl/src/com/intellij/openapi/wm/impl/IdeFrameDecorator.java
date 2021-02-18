@@ -110,6 +110,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         return Promises.rejectedPromise();
       }
 
+      Component toFocus = myFrame.getMostRecentFocusOwner();
       Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
       try {
         myFrame.getRootPane().putClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS, Boolean.TRUE);
@@ -134,6 +135,11 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
           myFrame.setExtendedState(extendedState);
         }
         notifyFrameComponents(state);
+
+        if (toFocus != null) {
+          // window 'forgets' last focused component on disposal, so we need to restore it explicitly
+          toFocus.requestFocusInWindow();
+        }
       }
       EventQueue.invokeLater(() -> {
         myFrame.getRootPane().putClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS, null);
