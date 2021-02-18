@@ -173,7 +173,8 @@ class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       object : BuildIssue {
         override val title = SyncBundle.message("maven.sync.not.trusted.title")
-        override val description = SyncBundle.message("maven.sync.not.trusted.description", TrustProjectQuickFix.ID)
+        override val description = SyncBundle.message("maven.sync.not.trusted.description") +
+         "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
         override val quickFixes: List<BuildIssueQuickFix> = listOf(TrustProjectQuickFix())
 
         override fun getNavigatable(project: Project) = null
