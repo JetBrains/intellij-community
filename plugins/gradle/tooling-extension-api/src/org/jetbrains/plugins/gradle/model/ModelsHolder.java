@@ -25,10 +25,8 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -49,11 +47,8 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
   }
 
   @ApiStatus.Internal
-  public void initToolingSerializer(SerializationService<?>... additionalSerializerServices) {
+  public void initToolingSerializer() {
     mySerializer = new ToolingSerializer();
-    for (SerializationService<?> service : additionalSerializerServices) {
-      mySerializer.register(service);
-    }
   }
 
   @ApiStatus.Internal
@@ -133,7 +128,7 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
             iterator.remove();
           }
         }
-        catch (IOException e) {
+        catch (Exception e) {
           //noinspection UseOfSystemOutOrSystemErr
           System.err.println(e.getMessage());
           iterator.remove();
