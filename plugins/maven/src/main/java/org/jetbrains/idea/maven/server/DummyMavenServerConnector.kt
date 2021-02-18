@@ -12,6 +12,7 @@ import org.apache.lucene.search.Query
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.security.MavenToken
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -21,7 +22,7 @@ import java.util.concurrent.CompletableFuture
 
 
 class DummyMavenServerConnector(project: @NotNull Project,
-                                manager: @NotNull MavenServerManager,
+                                val manager: @NotNull MavenServerManager,
                                 jdk: @NotNull Sdk,
                                 vmOptions: @NotNull String,
                                 mavenDistribution: @NotNull MavenDistribution,
@@ -37,6 +38,16 @@ class DummyMavenServerConnector(project: @NotNull Project,
   override fun getServer(): MavenServer {
     return DummyMavenServer(myProject);
   }
+
+  override fun addDownloadListener(listener: MavenServerDownloadListener?) {
+  }
+
+  override fun removeDownloadListener(listener: MavenServerDownloadListener?) {
+  }
+
+  override fun getSupportType() = MavenConfigurableBundle.message("connector.ui.dummy")
+
+  override fun getState() = State.RUNNING
 
 }
 

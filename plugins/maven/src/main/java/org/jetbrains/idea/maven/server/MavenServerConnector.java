@@ -81,6 +81,10 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   }
 
 
+  public abstract void addDownloadListener(MavenServerDownloadListener listener);
+
+  public abstract void removeDownloadListener(MavenServerDownloadListener listener);
+
   @ApiStatus.Internal
   public void shutdown(boolean wait) {
     myManager.unregisterConnector(this);
@@ -93,6 +97,17 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
     catch (RemoteException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public abstract String getSupportType();
+
+  public abstract State getState();
+
+  public enum State {
+    STARTING,
+    RUNNING,
+    FAILED,
+    STOPPED
   }
 
   @Override

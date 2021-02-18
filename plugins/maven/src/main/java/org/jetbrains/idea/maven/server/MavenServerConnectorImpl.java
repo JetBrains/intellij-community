@@ -138,10 +138,12 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     }
   }
 
+  @Override
   public void addDownloadListener(MavenServerDownloadListener listener) {
     myDownloadListener.myListeners.add(listener);
   }
 
+  @Override
   public void removeDownloadListener(MavenServerDownloadListener listener) {
     myDownloadListener.myListeners.remove(listener);
   }
@@ -175,12 +177,13 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     throw new RuntimeException("Cannot reconnect.", last);
   }
 
-
+  @Override
   public String getSupportType() {
     MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
     return support == null ? "???" : support.type();
   }
 
+  @Override
   public State getState() {
     switch (myServerPromise.getState()) {
       case SUCCEEDED: {
@@ -193,12 +196,6 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     }
   }
 
-  public enum State {
-    STARTING,
-    RUNNING,
-    FAILED,
-    STOPPED
-  }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
     @Override
