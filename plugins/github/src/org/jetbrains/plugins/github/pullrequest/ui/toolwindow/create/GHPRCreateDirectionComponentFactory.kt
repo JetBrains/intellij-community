@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
@@ -17,6 +18,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitBranch
+import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -26,6 +28,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GithubGitHelper
 import java.awt.event.ActionEvent
 import javax.swing.ComboBoxModel
 import javax.swing.JComponent
@@ -47,14 +50,41 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
     }.apply {
       isFocusable = true
     }
+    val changesWarningLabel = JLabel(AllIcons.General.Warning)
 
     model.addAndInvokeDirectionChangesListener {
-      val baseRepo = model.baseRepo.repository.repositoryPath
-      val headRepo = model.headRepo?.repository?.repositoryPath
-      val showRepoOwners = headRepo != null && baseRepo != headRepo
+      val baseRepoPath = model.baseRepo.repository.repositoryPath
+      val headRepo = model.headRepo
+      val headRepoPath = headRepo?.repository?.repositoryPath
+      val baseBranch = model.baseBranch
+      val headBranch = model.headBranch
+      val showRepoOwners = headRepoPath != null && baseRepoPath != headRepoPath
 
-      base.text = getRepoText(baseRepo, showRepoOwners, model.baseBranch)
-      head.text = getRepoText(headRepo, showRepoOwners, model.headBranch)
+      base.text = getRepoText(baseRepoPath, showRepoOwners, baseBranch)
+      head.text = getRepoText(headRepoPath, showRepoOwners, headBranch)
+
+      with(changesWarningLabel) {
+        if (headRepo != null && headBranch != null && headBranch is GitLocalBranch) {
+          val headRemote = headRepo.gitRemote
+          val pushTarget = GithubGitHelper.findPushTarget(headRemote.repository, headRemote.remote, headBranch)
+          if (pushTarget == null) {
+            toolTipText = GithubBundle.message("pull.request.create.warning.push", headBranch.name, headRemote.remote.name)
+            isVisible = true
+            return@with
+          }
+          else {
+            val repo = headRemote.repository
+            val localHash = repo.branches.getHash(headBranch)
+            val remoteHash = repo.branches.getHash(pushTarget.branch)
+            if (localHash != remoteHash) {
+              toolTipText = GithubBundle.message("pull.request.create.warning.not.synced", headBranch.name, pushTarget.branch.name)
+              isVisible = true
+              return@with
+            }
+          }
+        }
+        isVisible = false
+      }
     }
 
     return NonOpaquePanel().apply {
@@ -68,6 +98,7 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
         border = JBUI.Borders.empty(0, 5)
       })
       add(head, CC().minWidth("${UI.scale(30)}"))
+      add(changesWarningLabel, CC().gapLeft("${UI.scale(10)}"))
     }
   }
 

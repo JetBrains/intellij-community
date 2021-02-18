@@ -27,11 +27,9 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import git4idea.GitLocalBranch
-import git4idea.GitRemoteBranch
-import git4idea.GitStandardRemoteBranch
-import git4idea.GitVcs
-import git4idea.branch.GitBranchUtil
+import git4idea.*
+import git4idea.changes.GitChangeUtils
+import git4idea.history.GitHistoryUtils
 import git4idea.push.GitPushOperation
 import git4idea.push.GitPushSource
 import git4idea.push.GitPushSupport
@@ -253,10 +251,14 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       val gitPushSupport = DvcsUtil.getPushSupport(GitVcs.getInstance(project)) as? GitPushSupport
                            ?: return CompletableFuture.failedFuture(ProcessCanceledException())
 
-      val pushTarget = GitPushTarget.getFromPushSpec(repository, remote, localBranch)
-                       ?: GitBranchUtil.getTrackInfoForBranch(repository, localBranch)
-                         ?.takeIf { it.remote == remote }
-                         ?.let { GitPushTarget(it.remoteBranch, false) }
+      val existingPushTarget = GithubGitHelper.findPushTarget(repository, remote, localBranch)
+      if (existingPushTarget != null) {
+        val localHash = repository.branches.getHash(localBranch)
+        val remoteHash = repository.branches.getHash(existingPushTarget.branch)
+        if (localHash == remoteHash) return CompletableFuture.completedFuture(existingPushTarget.branch)
+      }
+
+      val pushTarget = existingPushTarget
                        ?: inputPushTarget(repository, remote, localBranch)
                        ?: return CompletableFuture.failedFuture(ProcessCanceledException())
 
