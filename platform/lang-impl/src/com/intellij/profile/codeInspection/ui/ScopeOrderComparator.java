@@ -41,23 +41,10 @@ public class ScopeOrderComparator implements Comparator<String> {
 
   @Override
   public int compare(String scope1, String scope2) {
-    final int key = getKey(scope1);
-    final int key1 = getKey(scope2);
-    if (key >= 0) {
-      if (key1 >= 0) {
-        return key - key1;
-      }
-      else {
-        return -1;
-      }
-    }
-    else {
-      if (key1 >= 0) {
-        return 1;
-      }
-      else {
-        return scope1.compareTo(scope2);
-      }
-    }
+    final int key1 = getKey(scope1);
+    final int key2 = getKey(scope2);
+
+    if (key1 != -1 || key2 != -1) return Integer.compare(key1, key2);
+    return scope1.compareTo(scope2);
   }
 }
