@@ -13,7 +13,7 @@ import java.io.IOException
 
 object DefaultIndexStorageLayout {
   private val forcedLayout: String? = System.getProperty("idea.index.storage.forced.layout")
-  private val contentLessIndexLock: StorageLockContext = StorageLockContext(true)
+  private val contentLessIndexLock: StorageLockContext = StorageLockContext(true, false, true)
 
   @JvmStatic
   @Throws(IOException::class)
