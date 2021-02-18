@@ -26,6 +26,11 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -91,12 +96,52 @@ import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_
 
 public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible {
   private static final String CLICK_INFO = "CLICK_INFO";
+  private static final String ACTION_ID = "UiInspector";
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
+  private List<MouseShortcut> myMouseShortcuts = new ArrayList<>();
 
   public UiInspectorAction() {
     setEnabledInModalContext(true);
+    updateMouseShortcuts();
+    KeymapManagerEx.getInstanceEx().addWeakListener(new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        updateMouseShortcuts();
+      }
+
+      @Override
+      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+        if (ACTION_ID.equals(actionId)) {
+          updateMouseShortcuts();
+        }
+      }
+    });
+    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event instanceof MouseEvent && ((MouseEvent)event).getClickCount() > 0 && !myMouseShortcuts.isEmpty()) {
+          MouseEvent me = (MouseEvent)event;
+          MouseShortcut mouseShortcut = new MouseShortcut(me.getButton(), me.getModifiersEx(), me.getClickCount());
+          if (myMouseShortcuts.contains(mouseShortcut) && !(me.getComponent() instanceof MouseShortcutPanel)) {
+            me.consume();
+          }
+        }
+      }
+    }, AWTEvent.MOUSE_EVENT_MASK);
+  }
+
+  private void updateMouseShortcuts() {
+    if (KeymapManagerImpl.isKeymapManagerInitialized()) {
+      myMouseShortcuts.clear();
+      Keymap keymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
+      for (Shortcut shortcut : keymap.getShortcuts(ACTION_ID)) {
+        if (shortcut instanceof MouseShortcut) {
+          myMouseShortcuts.add((MouseShortcut)shortcut);
+        }
+      }
+    }
   }
 
   @Override
