@@ -182,6 +182,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testRecordWithComponent() { doTest(); }
   public void testRecordWithComponentNoBody() { doTest(); }
   public void testVarargMethod() { doTest(); }
+  public void testSemicolonAfterSwitchExpression() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
