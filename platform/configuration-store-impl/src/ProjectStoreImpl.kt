@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -20,7 +20,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.configLocation
+import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectStoreWithJpsContentReader
 import kotlinx.coroutines.coroutineScope
@@ -185,7 +185,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
   }
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
-    return StorageJpsConfigurationReader(project, project.configLocation!!.baseDirectoryUrlString)
+    return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!.baseDirectoryUrlString)
   }
 
   private fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,

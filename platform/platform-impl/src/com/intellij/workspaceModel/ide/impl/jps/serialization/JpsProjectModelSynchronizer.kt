@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -28,8 +28,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.util.PlatformUtils
@@ -200,7 +198,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   fun loadRealProject(project: Project) {
-    val configLocation: JpsProjectConfigLocation = project.configLocation!!
+    val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     if (!(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
       recordModuleLoadingActivity()
@@ -274,7 +272,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val existingSerializers = this.serializers.get()
     if (existingSerializers != null) return existingSerializers
 
-    val configLocation: JpsProjectConfigLocation = project.configLocation!!
+    val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
     val externalStoragePath = project.getExternalConfigurationDir()
     //TODO:: Get rid of dependency on ExternalStorageConfigurationManager in order to use in build process

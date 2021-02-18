@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.configurationStore
 
 import com.intellij.facet.FacetManager
@@ -69,7 +69,7 @@ class SaveFacetsTest {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     class SampleCustomModuleSource(override val internalSource: JpsFileEntitySource) : EntitySource, CustomModuleEntitySource
     val moduleDir = projectModel.baseProjectDir.virtualFileRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
-    val source = SampleCustomModuleSource(JpsFileEntitySource.FileInDirectory(moduleDir, projectModel.project.configLocation!!))
+    val source = SampleCustomModuleSource(JpsFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         val moduleEntity = it.addModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source, null)
