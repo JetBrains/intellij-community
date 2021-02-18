@@ -11,14 +11,12 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.ui.jcef.JCEFHtmlPanel;
 import com.intellij.util.Alarm;
-import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,41 +30,37 @@ import java.beans.PropertyChangeListener;
 public class WebPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private final VirtualFile myFile;
   private final JCEFHtmlPanel myPanel;
+  private String myUrl;
 
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
-    myPanel = new JCEFHtmlPanel(myFile.getUrl());
+    myPanel = new JCEFHtmlPanel(file.getPreviewUrl().toExternalForm());
     myPanel.setRequestFocusOnStart(false);
     myPanel.getCefBrowser().createImmediately();
     Alarm alarm = new Alarm(this);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(myFile);
     if (psiFile != null) {
-      Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-      if (document != null) {
-        reloadHtml(document);
-        project.getMessageBus().connect(alarm)
-          .subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
-                     new AnyPsiChangeListener() {
-                       @Override
-                       public void afterPsiChanged(boolean isPhysical) {
-                         PsiFile psi = PsiManager.getInstance(project).findFile(myFile);
-                         if (psi != null) {
-                           Document doc = PsiDocumentManager.getInstance(project).getDocument(psi);
-                           if (doc != null) {
-                             alarm.cancelAllRequests();
-                             alarm.addRequest(() -> reloadHtml(doc), 100);
-                           }
-                         }
+      myUrl = file.getPreviewUrl().toExternalForm();
+      reloadPage();
+      project.getMessageBus().connect(alarm)
+        .subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
+                   new AnyPsiChangeListener() {
+                     @Override
+                     public void afterPsiChanged(boolean isPhysical) {
+                       PsiFile psi = PsiManager.getInstance(project).findFile(myFile);
+                       if (psi != null) {
+                         alarm.cancelAllRequests();
+                         alarm.addRequest(() -> reloadPage(), 100);
                        }
-                     });
-      }
+                     }
+                   });
     }
   }
 
-  private void reloadHtml(@NotNull Document document) {
+  private void reloadPage() {
     FileDocumentManager.getInstance().saveAllDocuments();
     ApplicationManager.getApplication().saveAll();
-    myPanel.setHtml(document.getText());
+    myPanel.loadURL(myUrl);
   }
 
   @Override
