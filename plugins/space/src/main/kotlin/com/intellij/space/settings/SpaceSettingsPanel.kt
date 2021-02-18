@@ -7,6 +7,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
@@ -16,15 +17,19 @@ import com.intellij.space.utils.LifetimedDisposable
 import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.klogging.logger
-import java.awt.GridBagLayout
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
+import runtime.reactive.SequentialLifetimes
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -36,39 +41,46 @@ class SpaceSettingsPanel :
   BoundConfigurable(SpaceBundle.message("configurable.name"), null),
   SearchableConfigurable,
   LifetimedDisposable by LifetimedDisposableImpl() {
-  private val settings = SpaceSettings.getInstance()
-
-  private val accountPanel = BorderLayoutPanel()
-
-  init {
-    SpaceWorkspaceComponent.getInstance().loginState.forEach(lifetime) { st ->
-      accountPanel.removeAll()
-      accountPanel.addToCenter(createView(st))
-      accountPanel.revalidate()
-      accountPanel.repaint()
-    }
-  }
+  private val sqLifetime = SequentialLifetimes(lifetime)
 
   override fun getId(): String = "settings.space"
 
   override fun createPanel(): DialogPanel = panel {
+    val panelLifetime = sqLifetime.next()
+    val accountPanel = BorderLayoutPanel()
     row {
       cell(isFullWidth = true) { accountPanel(pushX, growX) }
-      largeGapAfter()
     }
-    row {
+    val separatorRow = row {
+      SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)()
+    }
+    val cloneTypeRow = row {
       cell(isFullWidth = true) {
         label(SpaceBundle.message("settings.panel.clone.repositories.with.label"))
-        comboBox(EnumComboBoxModel(CloneType::class.java), settings::cloneType)
-        createConfigureHttpAndSshLink()()
+        comboBox(EnumComboBoxModel(CloneType::class.java), SpaceSettings.getInstance()::cloneType)
+        createConfigureHttpAndSshLink()().withLargeLeftGap()
       }
+    }
+
+    SpaceWorkspaceComponent.getInstance().loginState.forEach(panelLifetime) { loginState ->
+      accountPanel.removeAll()
+      accountPanel.addToCenter(createView(accountPanel, loginState))
+      accountPanel.revalidate()
+      accountPanel.repaint()
+
+      val rowsVisibility = when (loginState) {
+        is SpaceLoginState.Connected -> true
+        else -> false
+      }
+      separatorRow.visible = rowsVisibility
+      cloneTypeRow.visible = rowsVisibility
     }
   }
 
-  private fun createView(st: SpaceLoginState): JComponent {
+  private fun createView(wrapper: JComponent, st: SpaceLoginState): JComponent {
     when (st) {
       is SpaceLoginState.Disconnected -> return buildLoginPanel(st) { server ->
-        SpaceWorkspaceComponent.getInstance().signInManually(server, lifetime, accountPanel)
+        SpaceWorkspaceComponent.getInstance().signInManually(server, lifetime, wrapper)
       }
 
       is SpaceLoginState.Connecting -> return buildConnectingPanel(st) {
@@ -78,6 +90,7 @@ class SpaceSettingsPanel :
       is SpaceLoginState.Connected -> {
         val serverComponent = JLabel(cleanupUrl(st.server)).apply {
           foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
+          font = font.deriveFont((font.size * 0.9).toFloat())
         }
         val logoutButton = JButton(SpaceBundle.message("settings.panel.log.out.button.text")).apply {
           addActionListener {
@@ -90,17 +103,26 @@ class SpaceSettingsPanel :
           add(serverComponent)
         }
 
+        val infoPanel = JPanel(VerticalLayout(UIUtil.DEFAULT_VGAP)).apply {
+          add(namePanel)
+          val logoutButtonPanel = BorderLayoutPanel().addToLeft(logoutButton).apply {
+            border = JBUI.Borders.emptyTop(5)
+          }
+          add(logoutButtonPanel)
+        }
+
         val avatarLabel = JLabel()
         SpaceUserAvatarProvider.getInstance().avatars.forEach(lifetime) { avatars ->
-          avatarLabel.icon = resizeIcon(avatars.circle, 50)
+          avatarLabel.icon = resizeIcon(avatars.circle, 64)
         }
-        return JPanel(GridBagLayout()).apply {
-          var gbc = GridBag().nextLine().next().anchor(GridBag.LINE_START).insetRight(UIUtil.DEFAULT_HGAP)
-          add(avatarLabel, gbc)
-          gbc = gbc.next().weightx(1.0).anchor(GridBag.WEST)
-          add(namePanel, gbc)
-          gbc = gbc.nextLine().next().next().anchor(GridBag.WEST)
-          add(logoutButton, gbc)
+        return JPanel().apply {
+          layout = MigLayout(LC().gridGap("${JBUI.scale(10)}", "0")
+                               .insets("0", "0", "0", "0")
+                               .fill()).apply {
+            columnConstraints = "[][]"
+          }
+          add(avatarLabel, CC().pushY().alignY("center"))
+          add(infoPanel, CC().push())
         }
       }
     }
@@ -117,7 +139,6 @@ class SpaceSettingsPanel :
         val browserLink = BrowserLink(SpaceBundle.message("settings.panel.configure.git.ssh.keys.http.password.link"), url)
         contentPanel.addToCenter(browserLink)
       }
-      contentPanel.isVisible = it != null
       contentPanel.revalidate()
       contentPanel.repaint()
     }
