@@ -40,7 +40,7 @@ internal object UpdateInfoPanel {
 
   private val REPORTING_LISTENER = object : BrowserHyperlinkListener() {
     override fun hyperlinkActivated(e: HyperlinkEvent) {
-      UpdateInfoStatsCollector.click(e.url.toString())
+      UpdateInfoStatsCollector.click(e.description)
       super.hyperlinkActivated(e)
     }
   }
