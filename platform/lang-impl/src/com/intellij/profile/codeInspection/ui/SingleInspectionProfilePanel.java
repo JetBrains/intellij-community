@@ -890,7 +890,11 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           });
 
-        final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
+        final ToolbarDecorator wrappedTable = ToolbarDecorator
+            .createDecorator(scopesAndScopesAndSeveritiesTable)
+            .disableUpDownActions()
+            .setAddIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
+            .setRemoveActionUpdater(
           __ -> {
             final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
             final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
