@@ -66,7 +66,6 @@ class MPSProperties extends JetBrainsProductProperties {
                 pluginLayout.bundlingRestrictions.supportedOs = OsFamily.ALL
             }
             return pluginLayout
-        }).filter({ pluginLayout -> "intellij.android.smali" != pluginLayout.getMainModule()
         }).collect() + [
                 JavaPluginLayout.javaPlugin()
         ]
