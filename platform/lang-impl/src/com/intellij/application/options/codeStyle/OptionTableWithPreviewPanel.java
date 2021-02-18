@@ -565,7 +565,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public final ColumnInfo TITLE = new ColumnInfo("TITLE") {
     @Override
     public Object valueOf(Object o) {
@@ -582,7 +581,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   };
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public final ColumnInfo VALUE = new ColumnInfo("VALUE") {
     private final TableCellEditor myEditor = new MyValueEditor();
     private final TableCellRenderer myRenderer = new MyValueRenderer();
@@ -1001,7 +999,9 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   private static void updateColors(@NotNull JComponent component, @NotNull JTable table, boolean isSelected) {
     component.setOpaque(isSelected);
     component.setBackground(RenderingUtil.getBackground(table, isSelected));
-    component.setForeground(RenderingUtil.getForeground(table, isSelected));
+    if (!(component instanceof ColoredLabel) || isSelected) {
+      component.setForeground(RenderingUtil.getForeground(table, isSelected));
+    }
   }
 
   @NotNull
@@ -1012,5 +1012,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     b.append(array[0]);
     for (int i = 1; i < n; i++) b.append(',').append(' ').append(array[i]);
     return b.toString();
+  }
+
+  protected static class ColoredLabel extends JLabel {
+    public ColoredLabel(@Nls String text, Color foreground) {
+      super(text);
+      setForeground(foreground);
+    }
   }
 }

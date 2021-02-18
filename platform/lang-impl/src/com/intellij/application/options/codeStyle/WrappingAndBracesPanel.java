@@ -6,11 +6,13 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.presentation.*;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.util.containers.MultiMap;
@@ -222,6 +224,23 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
         JLabel wrapLabel = new JLabel(MarginOptionsUtil.getDefaultWrapOnTypingText(getSettings()));
         UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, wrapLabel);
         return wrapLabel;
+      }
+    }
+    else if ("BUILDER_METHODS".equals(optionName)) {
+      if (value instanceof String) {
+        String strValue = (String)value;
+        String tooltipText = ApplicationBundle.message("settings.code.style.builder.methods.tooltip");
+        if (StringUtil.isEmptyOrSpaces(strValue)) {
+          ColoredLabel hintLabel = new ColoredLabel(ApplicationBundle.message("settings.code.style.builder.method.names"), JBColor.gray);
+          UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, hintLabel);
+          hintLabel.setToolTipText(tooltipText);
+          return hintLabel;
+        }
+        else if (!strValue.contains(",")){
+          JLabel valueLabel = new JLabel(strValue);
+          valueLabel.setToolTipText(tooltipText);
+          return valueLabel;
+        }
       }
     }
     return super.getCustomValueRenderer(optionName, value);
