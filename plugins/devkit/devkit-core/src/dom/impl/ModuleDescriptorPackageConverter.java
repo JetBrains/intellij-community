@@ -1,13 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PackageReferenceSet;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiPackageReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -40,7 +44,39 @@ public class ModuleDescriptorPackageConverter extends PsiPackageConverter {
     final GlobalSearchScope searchScope = getResolveScope(genericDomValue);
     if (searchScope == null) return PsiReference.EMPTY_ARRAY;
 
-    return new PackageReferenceSet(s, element, ElementManipulators.getOffsetInElement(element), searchScope).getPsiReferences();
+    return new PackageReferenceSet(s, element, ElementManipulators.getOffsetInElement(element), searchScope) {
+      @Override
+      protected @NotNull PsiPackageReference createReference(TextRange range, int index) {
+        return new MyCreatePackageFixPsiPackageReference(this, range, index, getResolveScope());
+      }
+    }.getPsiReferences();
+  }
+
+  private static class MyCreatePackageFixPsiPackageReference extends PsiPackageReference implements LocalQuickFixProvider {
+
+    private final GlobalSearchScope myScope;
+
+    MyCreatePackageFixPsiPackageReference(PackageReferenceSet set, TextRange range, int index, GlobalSearchScope searchScope) {
+      super(set, range, index);
+      myScope = searchScope;
+    }
+
+    @Override
+    public LocalQuickFix @Nullable [] getQuickFixes() {
+      PsiPackage basePackage = null;
+      if (myIndex != 0) {
+        final ResolveResult resolveResult = ArrayUtil.getFirstElement(getReferenceSet().getReference(myIndex - 1).multiResolve(false));
+        if (resolveResult != null) {
+          basePackage = ObjectUtils.tryCast(resolveResult.getElement(), PsiPackage.class);
+        }
+      }
+
+      final String qualifiedName = ElementManipulators.getValueText(getElement());
+      final CreateClassOrPackageFix fix =
+        CreateClassOrPackageFix.createFix(qualifiedName, myScope, getElement(), basePackage, null, null, null);
+
+      return fix != null ? new CreateClassOrPackageFix[]{fix} : LocalQuickFix.EMPTY_ARRAY;
+    }
   }
 
   @Nullable
