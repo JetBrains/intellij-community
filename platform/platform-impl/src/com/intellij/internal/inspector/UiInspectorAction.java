@@ -100,7 +100,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
-  private List<MouseShortcut> myMouseShortcuts = new ArrayList<>();
+  private final List<MouseShortcut> myMouseShortcuts = new ArrayList<>();
 
   public UiInspectorAction() {
     setEnabledInModalContext(true);
@@ -199,8 +199,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
       setLayout(new BorderLayout());
       setTitle(component.getClass().getName());
-      Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey());
-      Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey());
+      Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey(), null);
+      Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey(), null);
       if (size != null) setSize(size);
       if (location != null) setLocation(location);
 
@@ -291,7 +291,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
               } else if (myInspectorTable.myTable.hasFocus()) {
                 int row = myInspectorTable.myTable.getSelectedRow();
                 Object at = myInspectorTable.myModel.getValueAt(row, 1);
-                openClass(at.toString(), requestFocus);
+                openClass(String.valueOf(at), requestFocus);
               }
             }
 
@@ -394,8 +394,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     @Override
     public void dispose() {
-      DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize());
-      DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation());
+      DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize(), null);
+      DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
       super.dispose();
       DialogWrapper.cleanupRootPane(rootPane);
       DialogWrapper.cleanupWindowListeners(this);
@@ -411,7 +411,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       myComponents.clear();
       updateHighlighting();
       setVisible(false);
-      dispose();
+      Disposer.dispose(this);
     }
 
     private void updateHighlighting() {
@@ -523,6 +523,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           }
 
           if (myInitialSelection == componentNode.getComponent()) {
+            //noinspection UseJBColor
             background = new Color(31, 128, 8, 58);
           }
         }
@@ -793,12 +794,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           return myText != null ? myText : myComponent.getClass().getName();
         }
         else {
-          if (myText != null) {
-            return myText;
-          }
-          else {
-            return myAccessible.getClass().getName();
-          }
+          return Objects.requireNonNullElseGet(myText, () -> myAccessible.getClass().getName());
         }
       }
 
@@ -1480,10 +1476,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     return JBUIScale.scaleIcon(new ColorsIcon(11, color1, color2));
   }
 
-  private static Icon createComponentIcon(Component component) {
-    return UiInspectorIcons.findIconFor(component);
-  }
-
   private static class InspectorTableModel extends AbstractTableModel {
 
     final List<String> PROPERTIES = Arrays.asList(
@@ -2124,7 +2116,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     public void showInspector(@Nullable Project project, @NotNull Component c) {
       InspectorWindow window = new InspectorWindow(project, c, this);
       Disposer.register(window, this);
-      if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey()) == null) {
+      if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey(), null) == null) {
         window.pack();
       }
       window.setVisible(true);
@@ -2273,6 +2265,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
     else if (type == Insets.class) {
       if (s.length >= 5) {
+        //noinspection UseDPIAwareInsets
         return new Insets(Integer.parseInt(s[1]), Integer.parseInt(s[2]),
                           Integer.parseInt(s[4]), Integer.parseInt(s[4]));
       }
