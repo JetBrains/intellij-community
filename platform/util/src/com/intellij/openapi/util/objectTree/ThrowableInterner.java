@@ -77,7 +77,7 @@ public final class ThrowableInterner {
   }
 
   private static Object[] getBacktrace(@NotNull Throwable throwable) {
-    // the JVM blocks access to Throwable.backtrace via reflection
+    // the JVM blocks access to Throwable.backtrace via reflection sometimes
     Object backtrace;
     try {
       backtrace = BACKTRACE_FIELD != null ? BACKTRACE_FIELD.get(throwable) : null;
