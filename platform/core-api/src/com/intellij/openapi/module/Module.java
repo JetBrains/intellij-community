@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.Disposable;
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
@@ -29,6 +30,13 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NonNls String ELEMENT_TYPE = "type";
 
   /**
+   * @deprecated Module level message bus is deprecated. Please use app- or project- level.
+   */
+  @Override
+  @Deprecated
+  @NotNull MessageBus getMessageBus();
+
+  /**
    * Returns the {@code VirtualFile} for the module .iml file. Note that location if .iml file may not be related to location of the module
    * files, it may be stored in a different directory, under .idea/modules or doesn't exist at all if the module configuration is imported
    * from external project system (e.g. Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
@@ -42,7 +50,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
    */
   @ApiStatus.Internal
-  @SystemIndependent @NonNls 
+  @SystemIndependent @NonNls
   default @NotNull String getModuleFilePath() {
     return getModuleNioFile().toString().replace(File.separatorChar, '/');
   }

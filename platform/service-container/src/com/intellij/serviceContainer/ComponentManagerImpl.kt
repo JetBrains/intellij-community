@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.LoadingState
@@ -52,6 +52,7 @@ import java.util.function.Consumer
 
 internal val LOG = logger<ComponentManagerImpl>()
 
+@Internal
 abstract class ComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManagerImpl?,
                                                               setExtensionsRootArea: Boolean = parent == null) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase() {
   protected enum class ContainerState {
@@ -210,7 +211,21 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       ProgressManager.checkCanceled()
       throw AlreadyDisposedException("Already disposed: $this")
     }
-    return messageBus!!
+
+    val messageBus = messageBus
+    if (messageBus == null) {
+      LOG.error("Do not use module level message bus")
+      return getOrCreateMessageBusUnderLock()
+    }
+    return messageBus
+  }
+
+  fun getDeprecatedModuleLevelMessageBus(): MessageBus {
+    if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
+      ProgressManager.checkCanceled()
+      throw AlreadyDisposedException("Already disposed: $this")
+    }
+    return messageBus ?: getOrCreateMessageBusUnderLock()
   }
 
   protected open fun setProgressDuringInit(indicator: ProgressIndicator) {
@@ -299,9 +314,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
 
     // ensure that messageBus is created, regardless of lazy listeners map state
-    val messageBus = getOrCreateMessageBusUnderLock()
-    map?.let {
-      (messageBus as MessageBusEx).setLazyListeners(it)
+    if (parent?.parent == null) {
+      val messageBus = getOrCreateMessageBusUnderLock()
+      map?.let {
+        (messageBus as MessageBusEx).setLazyListeners(it)
+      }
     }
   }
 
@@ -605,7 +622,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   @Synchronized
-  protected open fun getOrCreateMessageBusUnderLock(): MessageBus {
+  private fun getOrCreateMessageBusUnderLock(): MessageBus {
     var messageBus = this.messageBus
     if (messageBus != null) {
       return messageBus

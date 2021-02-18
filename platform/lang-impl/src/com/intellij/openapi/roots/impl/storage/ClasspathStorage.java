@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.ProjectTopics;
@@ -75,7 +75,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     myPathMacroSubstitutor = storageManager.getMacroSubstitutor();
 
     final List<String> paths = myConverter.getFilePaths();
-    MessageBusConnection busConnection = module.getMessageBus().connect();
+    MessageBusConnection busConnection = module.getProject().getMessageBus().connect(module);
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -101,7 +101,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
       }
     });
 
-    module.getProject().getMessageBus().connect(module).subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    busConnection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void modulesRenamed(@NotNull Project project,
                                  @NotNull List<? extends Module> modules,

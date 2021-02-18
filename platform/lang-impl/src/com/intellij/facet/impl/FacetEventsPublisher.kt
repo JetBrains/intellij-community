@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl
 
 import com.intellij.ProjectTopics
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
@@ -62,34 +63,34 @@ internal class FacetEventsPublisher(private val project: Project) {
   }
 
   fun fireBeforeFacetAdded(facet: Facet<*>) {
-    facet.module.publisher.beforeFacetAdded(facet)
+    getPublisher(facet.module).beforeFacetAdded(facet)
   }
 
   fun fireBeforeFacetRemoved(facet: Facet<*>) {
-    facet.module.publisher.beforeFacetRemoved(facet)
+    getPublisher(facet.module).beforeFacetRemoved(facet)
     onFacetRemoved(facet, true)
   }
 
   fun fireBeforeFacetRenamed(facet: Facet<*>) {
-    facet.module.publisher.beforeFacetRenamed(facet)
+    getPublisher(facet.module).beforeFacetRenamed(facet)
   }
 
   fun fireFacetAdded(facet: Facet<*>) {
-    facet.module.publisher.facetAdded(facet)
+    getPublisher(facet.module).facetAdded(facet)
     onFacetAdded(facet)
   }
 
   fun fireFacetRemoved(module: Module, facet: Facet<*>) {
-    module.publisher.facetRemoved(facet)
+    getPublisher(module).facetRemoved(facet)
     onFacetRemoved(facet, false)
   }
 
   fun fireFacetRenamed(facet: Facet<*>, newName: String) {
-    facet.module.publisher.facetRenamed(facet, newName)
+    getPublisher(facet.module).facetRenamed(facet, newName)
   }
 
   fun fireFacetConfigurationChanged(facet: Facet<*>) {
-    facet.module.publisher.facetConfigurationChanged(facet)
+    getPublisher(facet.module).facetConfigurationChanged(facet)
     onFacetChanged(facet)
   }
 
@@ -191,11 +192,15 @@ internal class FacetEventsPublisher(private val project: Project) {
     for (listenerEP in LISTENER_EP.getByGroupingKey<String>(ANY_TYPE, LISTENER_EP_CACHE_KEY::class.java, LISTENER_EP_CACHE_KEY)) {
       action(listenerEP.listenerInstance as ProjectFacetListener<Facet<*>>)
     }
-    manuallyRegisteredListeners.filter { it.first == null }.forEach {
-      action(it.second as ProjectFacetListener<Facet<*>>)
-    }
+    manuallyRegisteredListeners.asSequence()
+      .filter { it.first == null }
+      .forEach {
+        action(it.second as ProjectFacetListener<Facet<*>>)
+      }
   }
 
-  private val Module.publisher
-    get() = messageBus.syncPublisher(FacetManager.FACETS_TOPIC)
+  private fun getPublisher(module: Module): FacetManagerListener {
+    @Suppress("DEPRECATION")
+    return ((module as? ModuleEx)?.deprecatedModuleLevelMessageBus ?: module.messageBus).syncPublisher(FacetManager.FACETS_TOPIC)
+  }
 }
