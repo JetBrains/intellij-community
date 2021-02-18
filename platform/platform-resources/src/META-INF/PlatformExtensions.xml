@@ -720,6 +720,8 @@
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsLocalSummary" />
 
+    <registryKey key="usage.statistics.test.action.recorder.id" defaultValue="FUS" description="The data from the recorder with selected id will be sent"/>
+
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.wsl.WslFileWatcher" />
 
