@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
@@ -526,20 +525,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public VirtualFile getFile(@NotNull FileEditor editor) {
     EditorComposite editorComposite = getEditorComposite(editor);
-    VirtualFile virtualFile = editorComposite == null ? null : editorComposite.getFile();
-    VirtualFile file = editor.getFile();
-    if (!Comparing.equal(file, virtualFile)) {
-      if (file == null) {
+    VirtualFile tabFile = editorComposite == null ? null : editorComposite.getFile();
+    VirtualFile editorFile = editor.getFile();
+    if (!Objects.equals(editorFile, tabFile)) {
+      if (editorFile == null) {
         LOG.warn(editor.getClass().getName() + ".getFile() shall not return null");
       }
+      else if (tabFile == null) {
+        //todo DaemonCodeAnalyzerImpl#getSelectedEditors calls it for any Editor
+        //LOG.warn(editor.getClass().getName() + ".getFile() shall be used, fileEditor is not opened in a tab.");
+      }
       else {
-        if (!(file instanceof BackedVirtualFile)) {
-          LOG.warn("fileEditor.getFile=" + file + "!= fileEditorManager.getFile=" + virtualFile +
-                   ", fileEditor.class=" + editor.getClass().getName());
-        }
+        LOG.warn("fileEditor.getFile=" + editorFile + " != fileEditorManager.getFile=" + tabFile +
+                 ", fileEditor.class=" + editor.getClass().getName());
       }
     }
-    return virtualFile;
+    return tabFile;
   }
 
   @Override
