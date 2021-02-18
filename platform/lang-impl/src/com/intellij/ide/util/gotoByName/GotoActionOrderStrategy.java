@@ -2,6 +2,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
+import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger;
 import com.intellij.internal.statistic.local.ActionGlobalUsageInfo;
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -24,7 +25,7 @@ public class GotoActionOrderStrategy {
 
   public GotoActionOrderStrategy() {
     myExperimentGroup =
-      EventLogConfiguration.INSTANCE.getBucket() % NUMBER_OF_GROUPS == EXPERIMENT_GROUP &&
+      SearchEverywhereLogger.getBucket() % NUMBER_OF_GROUPS == EXPERIMENT_GROUP &&
       StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP();
   }
 

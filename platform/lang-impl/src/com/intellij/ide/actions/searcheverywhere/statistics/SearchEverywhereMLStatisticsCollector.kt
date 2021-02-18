@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger.log
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionService
 import com.intellij.internal.statistic.local.ActionSummary
@@ -64,7 +65,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              symbolsInQuery: Int,
                              elements: List<SearchEverywhereFoundElementInfo>,
                              tabId: String) {
-    val logData = FeatureUsageData()
+    val logData = SearchEverywhereLogger.newData()
     logData.addData(SESSION_ID_LOG_DATA_KEY, mySessionId)
     if (indexes.isNotEmpty()) {
       logData.addData(SELECTED_INDEXES_DATA_KEY, indexes.map { it.toString() })
