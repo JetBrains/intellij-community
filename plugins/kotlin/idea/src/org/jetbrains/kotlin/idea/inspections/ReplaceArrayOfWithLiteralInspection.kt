@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2000-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -20,28 +20,29 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class ReplaceArrayOfWithLiteralInspection : AbstractKotlinInspection() {
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = callExpressionVisitor(fun(expression) {
         if (!expression.languageVersionSettings.supportsFeature(ArrayLiteralsInAnnotations) &&
             !ApplicationManager.getApplication().isUnitTestMode
         ) return
 
         val calleeExpression = expression.calleeExpression as? KtNameReferenceExpression ?: return
-        if (!expression.isArrayOfMethod()) return
 
         when (val parent = expression.parent) {
             is KtValueArgument -> {
-                if (parent.parent.parent !is KtAnnotationEntry) return
+                if (parent.parent?.parent !is KtAnnotationEntry) return
                 if (parent.getSpreadElement() != null && !parent.isNamed()) return
             }
+
             is KtParameter -> {
-                val constructor = parent.parent.parent as? KtPrimaryConstructor ?: return
+                val constructor = parent.parent?.parent as? KtPrimaryConstructor ?: return
                 val containingClass = constructor.getContainingClassOrObject()
                 if (!containingClass.isAnnotation()) return
             }
+
             else -> return
         }
 
+        if (!expression.isArrayOfMethod()) return
         val calleeName = calleeExpression.getReferencedName()
         holder.registerProblem(
             calleeExpression,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license 
+ * Copyright 2010-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
  * that can be found in the license/LICENSE.txt file.
  */
 
@@ -63,13 +63,13 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
 
         override fun visitCallExpression(expression: KtCallExpression) {
             val callee = expression.calleeExpression ?: return
-            if (!expression.isCalling(controlFlowFunctions)) return
             val body = when (val argument = expression.valueArguments.singleOrNull()?.getArgumentExpression()) {
                 is KtLambdaExpression -> argument.bodyExpression
                 is KtNamedFunction -> argument.bodyBlockExpression
                 else -> return
             }
-            if (body.isEmptyBodyOrNull()) {
+
+            if (body.isEmptyBodyOrNull() && expression.isCalling(controlFlowFunctions)) {
                 holder.registerProblem(expression, callee)
             }
         }
