@@ -163,7 +163,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   }
 
   @NotNull
-  private static JComponent createNextStepButtonSeparator() {
+  protected static JComponent createNextStepButtonSeparator() {
     SeparatorComponent separator = new SeparatorComponent(JBColor.namedColor("Menu.separatorColor", JBColor.lightGray), SeparatorOrientation.VERTICAL);
     separator.setHGap(0);
     separator.setVGap(2);
