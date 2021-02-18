@@ -102,15 +102,28 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     InputEvent event = e.getInputEvent();
+    event.consume();
     Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+
+    Project project = e.getProject();
+    closeAllInspectorWindows();
+
     if (event instanceof MouseEvent && event.getComponent() != null) {
-      component = UIUtil.getDeepestComponentAt(event.getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY());
+      new UiInspector(project).processMouseEvent(project, (MouseEvent)event);
+      return;
     }
     if (component == null) {
-      component = IdeFocusManager.getInstance(e.getProject()).getFocusOwner();
+      component = IdeFocusManager.getInstance(project).getFocusOwner();
     }
+
     assert component != null;
-    new UiInspector(e.getProject()).showInspector(e.getProject(), component, event);
+    new UiInspector(project).showInspector(project, component);
+  }
+
+  private static void closeAllInspectorWindows() {
+    Arrays.stream(Window.getWindows())
+      .filter(w -> w instanceof InspectorWindow)
+      .forEach(w -> Disposer.dispose(((InspectorWindow)w).myInspector));
   }
 
   private static final class InspectorWindow extends JDialog implements Disposable {
@@ -123,10 +136,14 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     @NotNull private final HierarchyTree myHierarchyTree;
     @NotNull private final Wrapper myWrapperPanel;
     @Nullable private final Project myProject;
+    private final UiInspector myInspector;
 
-    private InspectorWindow(@Nullable Project project, @NotNull Component component) throws HeadlessException {
+    private InspectorWindow(@Nullable Project project,
+                            @NotNull Component component,
+                            UiInspector inspector) throws HeadlessException {
       super(findWindow(component));
       myProject = project;
+      myInspector = inspector;
       Window window = findWindow(component);
       setModal(window instanceof JDialog && ((JDialog)window).isModal());
       myComponents.add(component);
@@ -504,10 +521,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           componentNode.setText(toString());
           setIcon(UiInspectorIcons.findIconFor(component));
         }
-        if (value instanceof HierarchyTree.ClickInfoNode) {
-          append(value.toString());
-          setIcon(AllIcons.Ide.Rating);
-        }
+      }
+      if (value instanceof HierarchyTree.ClickInfoNode) {
+        append(value.toString());
+        setIcon(AllIcons.Ide.Rating);
       }
       setForeground(foreground);
       setBackground(background);
@@ -2042,10 +2059,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
   private static class UiInspector implements AWTEventListener, Disposable {
 
-    private final Project myProject;
-
     UiInspector(@Nullable Project project) {
-      myProject = project;
+      if (project != null) {
+        Disposer.register(project, this);
+      }
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.CONTAINER_EVENT_MASK);
     }
 
@@ -2059,12 +2076,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
     }
 
-    public void showInspector(@Nullable Project project, @NotNull Component c, @Nullable InputEvent event) {
-      if (event instanceof MouseEvent) {
-        putClickInfo((MouseEvent)event);
-      }
-
-      InspectorWindow window = new InspectorWindow(project, c);
+    public void showInspector(@Nullable Project project, @NotNull Component c) {
+      InspectorWindow window = new InspectorWindow(project, c, this);
       Disposer.register(window, this);
       if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey()) == null) {
         window.pack();
@@ -2080,14 +2093,23 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
     }
 
-    private static void putClickInfo(@NotNull MouseEvent me) {
+    private void processMouseEvent(Project project, MouseEvent me) {
+      me.consume();
       Component component = me.getComponent();
+
       if (component instanceof Container) {
-        component = ((Container)component).findComponentAt(me.getPoint());
+        component = UIUtil.getDeepestComponentAt(component, me.getX(), me.getY());
       }
-      if (component instanceof JComponent) {
-        ((JComponent)component).putClientProperty(CLICK_INFO, getClickInfo(me, component));
-        ((JComponent)component).putClientProperty(CLICK_INFO_POINT, me.getPoint());
+      else if (component == null) {
+        component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      }
+      if (component != null) {
+        if (component instanceof JComponent) {
+          ((JComponent)component).putClientProperty(CLICK_INFO, getClickInfo(me, component));
+          ((JComponent)component).putClientProperty(CLICK_INFO_POINT, me.getPoint());
+        }
+
+        showInspector(project, component);
       }
     }
 
@@ -2097,7 +2119,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       List<PropertyBean> clickInfo = new ArrayList<>();
       //clickInfo.add(new PropertyBean("Click point", me.getPoint()));
       if (component instanceof JList) {
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked") 
         JList<Object> list = (JList<Object>)component;
         int row = list.getUI().locationToIndex(list, me.getPoint());
         if (row != -1) {
