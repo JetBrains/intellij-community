@@ -4,6 +4,7 @@ package com.intellij.ide.browsers.actions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,9 +12,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class WebPreviewVirtualFile extends LightVirtualFile {
   private final VirtualFile myFile;
+  private final Url myPreviewUrl;
 
-  public WebPreviewVirtualFile(VirtualFile file) {
+  public WebPreviewVirtualFile(VirtualFile file, Url myPreviewUrl) {
     myFile = file;
+    this.myPreviewUrl = myPreviewUrl;
     setFileType(WebPreviewFileType.INSTANCE);
     setWritable(false);
   }
@@ -26,5 +29,9 @@ public class WebPreviewVirtualFile extends LightVirtualFile {
   @Override
   public @NlsSafe @NotNull String getName() {
     return "Preview of " + myFile.getName();
+  }
+
+  public Url getPreviewUrl() {
+    return myPreviewUrl;
   }
 }
