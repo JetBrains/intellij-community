@@ -13,9 +13,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +49,10 @@ public final class SimpleStringPersistentEnumerator {
     myState.put(value, (short)n);
     writeStorageToDisk(myState, myFile);
     return (short)n;
+  }
+
+  public synchronized @NotNull Collection<String> entries() {
+    return new ArrayList<>(myState.keySet());
   }
 
   @Nullable

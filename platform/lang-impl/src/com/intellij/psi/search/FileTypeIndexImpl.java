@@ -13,6 +13,7 @@ import java.util.Collections;
 public final class FileTypeIndexImpl
         extends ScalarIndexExtension<FileType>
         implements CustomImplementationFileBasedIndexExtension<FileType, Void> {
+  private static final boolean USE_LOG_INDEX = Boolean.getBoolean("use.log.file.type.index");
   @NotNull
   @Override
   public ID<FileType, Void> getName() {
@@ -44,13 +45,13 @@ public final class FileTypeIndexImpl
 
   @Override
   public int getVersion() {
-    return 3;
+    return 3 + (USE_LOG_INDEX ? 0xFF : 0);
   }
 
   @Override
   public @NotNull UpdatableIndex<FileType, Void, FileContent> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension,
                                                                                         @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout)
     throws StorageException, IOException {
-    return new FileTypeMapReduceIndex(extension, indexStorageLayout);
+    return USE_LOG_INDEX ? new LogFileTypeMapReduceIndex(extension) : new FileTypeMapReduceIndex(extension, indexStorageLayout);
   }
 }

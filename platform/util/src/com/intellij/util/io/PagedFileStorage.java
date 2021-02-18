@@ -365,7 +365,7 @@ public class PagedFileStorage implements Forceable {
       assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT : page;
 
       if (myStorageIndex == -1) {
-        throw new IOException("storage is already closed; path " + myFile);
+        throw new MappingFailedException("storage is already closed; path " + myFile);
       }
       DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | (int)page, !modify, readOnly); // TODO: long page
       if (modify) markDirty(byteBufferWrapper);
