@@ -25,7 +25,7 @@ fun idFileRangeUpdater(): FileUpdater = idFileRangeUpdater
  * This updater can be used if the usage text differs from target name,
  * e.g., for `getFoo` reference to `foo` property this updater might look like
  * ```
- * rangeUpdater { newName ->
+ * fileRangeUpdater { newName ->
  *   "get" + newName.capitalize()
  * }
  * ```
