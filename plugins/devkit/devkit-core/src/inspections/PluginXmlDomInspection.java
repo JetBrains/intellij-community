@@ -247,15 +247,28 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void annotateDependencyDescriptor(DependencyDescriptor descriptor, DomElementAnnotationHolder holder) {
-    if (isIdeaProjectOrJetBrains(descriptor)) return;
+    if (!isIdeaProjectOrJetBrains(descriptor)) {
+      highlightJetbrainsOnly(descriptor, holder);
+      return;
+    }
 
-    highlightJetbrainsOnly(descriptor, holder);
+    if (descriptor.getModuleEntry().isEmpty() &&
+        descriptor.getPlugin().isEmpty()) {
+      holder.createProblem(descriptor, HighlightSeverity.ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.dependency.descriptor.at.least.one.dependency"));
+    }
   }
 
   private static void annotateContentDescriptor(ContentDescriptor descriptor, DomElementAnnotationHolder holder) {
-    if (isIdeaProjectOrJetBrains(descriptor)) return;
+    if (!isIdeaProjectOrJetBrains(descriptor)) {
+      highlightJetbrainsOnly(descriptor, holder);
+      return;
+    }
 
-    highlightJetbrainsOnly(descriptor, holder);
+    if (descriptor.getModuleEntry().isEmpty()) {
+      holder.createProblem(descriptor, HighlightSeverity.ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.module.descriptor.at.least.one.dependency"));
+    }
   }
 
   private static void annotateModuleDescriptor(ContentDescriptor.ModuleDescriptor descriptor, DomElementAnnotationHolder holder) {
@@ -925,6 +938,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkTemplateText(vendor, "YourCompany", holder);
     checkMaxLength(vendor, 255, holder);
 
+    //noinspection HttpUrlsUsage
     checkTemplateText(vendor.getUrl(), "http://www.yourcompany.com", holder);
     checkMaxLength(vendor.getUrl(), 255, holder);
 

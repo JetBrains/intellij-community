@@ -26,12 +26,11 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
     return DevkitJavaTestsUtil.TESTDATA_PATH + "codeInsight/contentDependencyDescriptor";
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  public void testNonJetBrainsHighlighting() {
+    doHighlightingTest(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  public void testNonJetBrainsHighlighting() {
+  public void testEmptyContentDependenciesHighlighting() {
     doHighlightingTest(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
