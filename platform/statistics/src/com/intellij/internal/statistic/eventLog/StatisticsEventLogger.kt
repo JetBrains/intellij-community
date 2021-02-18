@@ -61,8 +61,8 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
-    val config = EventLogConfiguration
-    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, config.build)
+    val config = EventLogConfiguration.getOrCreate(recorderId)
+    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, EventLogConfiguration.build)
 
     val configService = EventLogConfigOptionsService.getInstance()
     val throttledWriter = StatisticsEventLogThrottleWriter(
@@ -70,7 +70,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     )
 
     val logger = StatisticsFileEventLogger(
-      recorderId, config.sessionId, isHeadless, config.build, config.bucket.toString(), version.toString(), throttledWriter,
+      recorderId, config.sessionId, isHeadless, EventLogConfiguration.build, config.bucket.toString(), version.toString(), throttledWriter,
       UsageStatisticsPersistenceComponent.getInstance()
     )
     Disposer.register(ApplicationManager.getApplication(), logger)

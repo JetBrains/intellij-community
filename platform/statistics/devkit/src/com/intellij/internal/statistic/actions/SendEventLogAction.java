@@ -67,8 +67,9 @@ public class SendEventLogAction extends AnAction {
       }
 
       private StatisticsResult send() {
+        EventLogRecorderConfiguration config = EventLogConfiguration.INSTANCE.getOrCreate(FUS_RECORDER);
         return EventLogStatisticsService.send(
-          new DeviceConfiguration(EventLogConfiguration.INSTANCE.getDeviceId(), EventLogConfiguration.INSTANCE.getBucket()),
+          new DeviceConfiguration(config.getDeviceId(), config.getBucket()),
           new EventLogInternalRecorderConfig(FUS_RECORDER),
           new EventLogTestSettingsService(),
           new EventLogTestResultDecorator()

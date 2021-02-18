@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -24,21 +25,40 @@ public final class DeviceIdManager {
   private static final String DEVICE_ID_SHARED_FILE = "PermanentDeviceId";
   private static final String DEVICE_ID_PREFERENCE_KEY = "device_id";
 
+  /**
+   * @deprecated Use getOrGenerateId(String) with purpose specific id
+   */
+  @Deprecated
   public static String getOrGenerateId() {
+    return getOrGenerateId(null);
+  }
+
+  public static String getOrGenerateId(@Nullable String recorderId) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     Preferences prefs = getPreferences(appInfo);
 
-    String deviceId = prefs.get(DEVICE_ID_PREFERENCE_KEY, null);
+    String preferenceKey = getPreferenceKey(recorderId);
+    String deviceId = prefs.get(preferenceKey, null);
     if (StringUtil.isEmptyOrSpaces(deviceId)) {
       deviceId = generateId(Calendar.getInstance(Locale.ENGLISH), getOSChar());
-      prefs.put(DEVICE_ID_PREFERENCE_KEY, deviceId);
+      prefs.put(preferenceKey, deviceId);
       LOG.info("Generating new Device ID");
     }
 
     if (appInfo.isVendorJetBrains() && SystemInfo.isWindows) {
-      deviceId = syncWithSharedFile(DEVICE_ID_SHARED_FILE, deviceId, prefs, DEVICE_ID_PREFERENCE_KEY);
+      deviceId = syncWithSharedFile(getSharedFile(recorderId), deviceId, prefs, preferenceKey);
     }
     return deviceId;
+  }
+
+  @NotNull
+  private static String getPreferenceKey(@Nullable String recorderId) {
+    return recorderId == null ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
+  }
+
+  @NotNull
+  private static String getSharedFile(@Nullable String recorderId) {
+    return recorderId == null ? DEVICE_ID_SHARED_FILE : recorderId + "_" + DEVICE_ID_SHARED_FILE;
   }
 
   @NotNull
