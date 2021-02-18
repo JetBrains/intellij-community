@@ -76,7 +76,7 @@ class Tag<Settings : FragmentedSettings>(
   var setter: (Settings, Boolean) -> Unit = { _, _ -> }
 
   @Nls
-  var toolTip: String? = actionHint
+  var toolTip: String? = null
 
   var validation: ((Settings, TagButton) -> ValidationInfo?)? = null
 
@@ -96,7 +96,7 @@ class Tag<Settings : FragmentedSettings>(
       it.validation = validation
       it.actionDescription = actionDescription
     }.build().also {
-      it.component().setToolTip(toolTip)
+      it.component().setToolTip(toolTip ?: actionHint)
       if (holder == null) {
         ref.set(it)
       }
