@@ -8,5 +8,5 @@ interface InstallationIdProvider {
 }
 
 private class PermanentInstallationIdProvider : InstallationIdProvider {
-  override fun installationId(): String = DeviceIdManager.getOrGenerateId()
+  override fun installationId(): String = DeviceIdManager.getOrGenerateId("FUS")
 }
