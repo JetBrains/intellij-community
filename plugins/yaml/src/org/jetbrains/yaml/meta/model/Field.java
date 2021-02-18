@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.*;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -48,6 +49,10 @@ public class Field {
    */
   public interface MetaTypeSupplier {
     @NotNull YamlMetaType getMainType();
+
+    default @Nullable YamlMetaType getSpecializedType(@SuppressWarnings("unused") @NotNull YAMLValue element) {
+      return null;
+    }
   }
 
   public Field(@NonNls @NotNull String name, @NotNull YamlMetaType mainType) {
@@ -253,7 +258,39 @@ public class Field {
   public Icon getLookupIcon() {
     return myIsMany ? AllIcons.Json.Array : getMainType().getIcon();
   }
-  
+
+  @NotNull
+  public Field resolveToSpecializedField(@NotNull YAMLValue element) {
+    if(myMetaTypeSupplier == null)
+      return this;
+
+    YamlMetaType specializedType = myMetaTypeSupplier.getSpecializedType(element);
+    if(specializedType == null)
+      return this;
+
+    return cloneWithNewType(specializedType);
+  }
+
+  private Field cloneWithNewType(@NotNull YamlMetaType newType) {
+    var result = newField(newType);
+
+    result.myIsRequired = myIsRequired;
+    result.myEditable = myEditable;
+    result.myDeprecated = myDeprecated;
+    result.myAnyNameAllowed = myAnyNameAllowed;
+    result.myEmptyValueAllowed = myEmptyValueAllowed;
+    result.myIsMany = myIsMany;
+    result.myOverriddenDefaultRelation = myOverriddenDefaultRelation;
+    result.myPerRelationTypes.putAll(myPerRelationTypes);
+
+    return result;
+  }
+
+  @NotNull
+  protected Field newField(@NotNull YamlMetaType type) {
+    return new Field(this.myName, type);
+  }
+
   @NotNull
   private YamlMetaType getMainType() {
     if(myMainType != null)
