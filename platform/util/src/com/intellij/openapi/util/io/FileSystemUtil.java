@@ -416,7 +416,11 @@ public final class FileSystemUtil {
         }
         else {
           isHidden = false;
-          isWritable = Files.isWritable(path);
+          try {
+            isWritable = Files.isWritable(path);
+          } catch (SecurityException e){
+            isWritable = false;
+          }
         }
         return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
       }
