@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -25,9 +25,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPO
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
@@ -134,7 +134,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   }
 
   private fun getComponentWidth(icon: Icon): Int {
-    val hasTransparentScrollbar = JBScrollPane.findScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } == true
+    val hasTransparentScrollbar = ComponentUtil.getScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } == true
     if (hasTransparentScrollbar) return icon.iconWidth + UIUtil.getScrollBarWidth()
     return icon.iconWidth
   }

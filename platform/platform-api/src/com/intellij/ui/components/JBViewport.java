@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -472,12 +473,10 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
     private void addViewInsets(JComponent view, Insets insets) {
       if (this == view.getBorder()) {
-        Container parent = view.getParent();
-        if (parent instanceof JViewport) {
-          JViewport viewport = (JViewport)parent;
-          Container grand = viewport.getParent();
-          if (grand instanceof JScrollPane) {
-            JScrollPane pane = (JScrollPane)grand;
+        JViewport viewport = ComponentUtil.getViewport(view);
+        if (viewport != null) {
+          JScrollPane pane = ComponentUtil.getScrollPane(viewport);
+          if (pane != null) {
             // calculate empty border under vertical scroll bar
             JScrollBar vsb = pane.getVerticalScrollBar();
             if (vsb != null && vsb.isVisible()) {

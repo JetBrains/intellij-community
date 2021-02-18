@@ -101,4 +101,39 @@ public final class ComponentUtil {
     }
     return null;
   }
+
+  /**
+   * @param component a view component of the requested scroll pane
+   * @return a scroll pane for the given component or {@code null} if none
+   */
+  public static @Nullable JScrollPane getScrollPane(@Nullable Component component) {
+    return getScrollPane(getViewport(component));
+  }
+
+  /**
+   * @param bar a scroll bar of the requested scroll pane
+   * @return a scroll pane for the given scroll bar or {@code null} if none
+   */
+  public static @Nullable JScrollPane getScrollPane(@Nullable JScrollBar bar) {
+    Container parent = bar == null ? null : bar.getParent();
+    return parent instanceof JScrollPane ? (JScrollPane)parent : null;
+  }
+
+  /**
+   * @param viewport a viewport of the requested scroll pane
+   * @return a scroll pane for the given viewport or {@code null} if none
+   */
+  public static @Nullable JScrollPane getScrollPane(@Nullable JViewport viewport) {
+    Container parent = viewport == null ? null : viewport.getParent();
+    return parent instanceof JScrollPane ? (JScrollPane)parent : null;
+  }
+
+  /**
+   * @param component a view component of the requested viewport
+   * @return a viewport for the given component or {@code null} if none
+   */
+  public static @Nullable JViewport getViewport(@Nullable Component component) {
+    Container parent = component == null ? null : SwingUtilities.getUnwrappedParent(component);
+    return parent instanceof JViewport ? (JViewport)parent : null;
+  }
 }
