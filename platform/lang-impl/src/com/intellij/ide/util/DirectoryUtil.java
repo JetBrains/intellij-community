@@ -32,10 +32,27 @@ public final class DirectoryUtil {
       }
     }
 
-    String existingPath = path;
+    PsiDirectory directory = findLongestExistingDirectory(manager, path);
+    if (directory == null) {
+      return null;
+    }
+    String existingPath = directory.getVirtualFile().getPath();
+    if (existingPath.equals(path)) {
+      return directory;
+    }
+
+    String postfix = path.substring(existingPath.length() + 1);
+    StringTokenizer tokenizer = new StringTokenizer(postfix, "/");
+    while (tokenizer.hasMoreTokens()) {
+      directory = directory.createSubdirectory(tokenizer.nextToken());
+    }
+
+    return directory;
+  }
+
+  public static PsiDirectory findLongestExistingDirectory(PsiManager manager,String existingPath) {
 
     PsiDirectory directory = null;
-
     // find longest existing path
     while (existingPath.length() > 0) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(existingPath);
@@ -62,24 +79,9 @@ public final class DirectoryUtil {
 
       existingPath = existingPath.substring(0, index);
     }
-
-    if (directory == null) {
-      return null;
-    }
-
-    if (existingPath.equals(path)) {
-      return directory;
-    }
-
-    String postfix = path.substring(existingPath.length() + 1);
-    StringTokenizer tokenizer = new StringTokenizer(postfix, "/");
-    while (tokenizer.hasMoreTokens()) {
-      directory = directory.createSubdirectory(tokenizer.nextToken());
-    }
-
     return directory;
   }
-
+  
   public static PsiDirectory createSubdirectories(final String subDirName, PsiDirectory baseDirectory, final String delim) throws IncorrectOperationException {
     StringTokenizer tokenizer = new StringTokenizer(subDirName, delim);
     PsiDirectory dir = baseDirectory;
