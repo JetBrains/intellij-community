@@ -63,7 +63,7 @@ private fun buildTextResultsQueries(project: Project,
                                     context: ReplaceTextTargetContext): List<Query<out RenameUsage>> {
   val replaceTextTargets: Collection<ReplaceTextTarget> = target.textTargets(context)
   val result = ArrayList<Query<out RenameUsage>>(replaceTextTargets.size)
-  for ((searchRequest: SearchRequest, textReplacement: TextReplacement) in replaceTextTargets) {
+  for ((searchRequest: SearchRequest, usageTextByName: UsageTextByName) in replaceTextTargets) {
     val effectiveSearchScope: SearchScope = searchRequest.searchScope?.let(searchScope::intersectWith) ?: searchScope
     val searchString: String = searchRequest.searchString
     val queryBuilder = SearchService.getInstance()
@@ -75,19 +75,19 @@ private fun buildTextResultsQueries(project: Project,
         .inContexts(SearchContext.IN_PLAIN_TEXT)
         .buildLeafOccurrenceQuery()
         .filtering { !hasReferences(it) }
-        .mapToUsages(searchString, textReplacement)
+        .mapToUsages(searchString, usageTextByName)
     }
     else {
       result += queryBuilder
         .inContexts(SearchContext.IN_COMMENTS)
         .buildLeafOccurrenceQuery()
         .filtering { inComment(it) && !hasReferences(it) }
-        .mapToUsages(searchString, textReplacement)
+        .mapToUsages(searchString, usageTextByName)
       result += queryBuilder
         .inContexts(SearchContext.IN_STRINGS)
         .buildLeafOccurrenceQuery()
         .filtering { inString(it) && !hasResolvableReferences(it) }
-        .mapToUsages(searchString, textReplacement)
+        .mapToUsages(searchString, usageTextByName)
     }
   }
   return result
@@ -137,9 +137,9 @@ private fun walkUp(occurrence: TextOccurrence): Iterator<Pair<PsiElement, Int>> 
 
 private fun Query<out TextOccurrence>.mapToUsages(
   searchString: String,
-  textReplacement: TextReplacement
+  usageTextByName: UsageTextByName
 ): Query<out RenameUsage> {
-  val fileUpdater = fileRangeUpdater(textReplacement)
+  val fileUpdater = fileRangeUpdater(usageTextByName)
   return mapping { occurrence: TextOccurrence ->
     val rangeInElement = TextRange.from(occurrence.offsetInElement, searchString.length)
     TextRenameUsage(PsiUsage.textUsage(occurrence.element, rangeInElement), fileUpdater)

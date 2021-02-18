@@ -143,7 +143,7 @@ private fun prepareTemplate(
   val originUsageRange: TextRange = usageRangeInHost(hostFile, originUsage)
                                     ?: return null // can't start inplace rename from a usage broken into pieces
 
-  val usageReplacements = HashMap<TextRange, TextReplacement>()
+  val usageReplacements = HashMap<TextRange, UsageTextByName>()
   for (psiUsage: PsiRenameUsage in psiUsages) {
     if (psiUsage === originUsage) {
       continue // already handled
@@ -160,7 +160,7 @@ private fun prepareTemplate(
     if (usageReplacements.containsKey(usageRangeInHost)) {
       continue
     }
-    usageReplacements[usageRangeInHost] = fileUpdater.textReplacement
+    usageReplacements[usageRangeInHost] = fileUpdater.usageTextByName
   }
 
   val allVariables: SortedMap<TextRange, String> = templateVariableNames(originUsageRange, usageReplacements.keys)
@@ -200,15 +200,15 @@ private fun buildTemplate(
 private fun assignTemplateExpressionsToVariables(
   template: Template,
   originUsageText: String,
-  usageReplacements: HashMap<TextRange, TextReplacement>,
+  usageReplacements: HashMap<TextRange, UsageTextByName>,
   allVariables: SortedMap<TextRange, String>
 ) {
   // add primary variable first, because variables added before it won't be recomputed
   val originUsageExpression = MyLookupExpression(originUsageText, null, null, null, false, null)
   template.addVariable(Variable(PRIMARY_VARIABLE_NAME, originUsageExpression, originUsageExpression, true, false))
-  for ((usageRange, textReplacement) in usageReplacements) {
+  for ((usageRange, usageTextByName) in usageReplacements) {
     val variableName = requireNotNull(allVariables[usageRange])
-    val usageExpression = InplaceRenameUsageExpression(textReplacement)
+    val usageExpression = InplaceRenameUsageExpression(usageTextByName)
     template.addVariable(Variable(variableName, usageExpression, null, false, false))
   }
 }

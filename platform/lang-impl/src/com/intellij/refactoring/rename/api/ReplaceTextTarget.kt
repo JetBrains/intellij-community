@@ -9,12 +9,12 @@ import com.intellij.model.search.SearchRequest
  * Example: when renaming the Java class `Bar` from package `com.foo` to `XBar`
  * we also want to find and update fully qualified names in plain text:
  * - the [textSearchRequest].[searchString][SearchRequest.getSearchString] is `com.foo.Bar`;
- * - the [textReplacement] function returns `com.foo.XBar`.
+ * - the [usageTextByName] function returns `com.foo.XBar`.
  *
  * @param textSearchRequest what and where to search
- * @param textReplacement given new name computes new text to replace the found search string
+ * @param usageTextByName given new name computes new text to replace the found search string
  */
 data class ReplaceTextTarget(
   val textSearchRequest: SearchRequest,
-  val textReplacement: TextReplacement
+  val usageTextByName: UsageTextByName
 )
