@@ -17,7 +17,7 @@ import org.gradle.tooling.model.java.InstalledJdk;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.serialization.GradleBuiltinModelSerializationService;
+import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.*;
 import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator;
@@ -37,7 +37,7 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
 /**
  * @author Vladislav.Soroka
  */
-public final class IdeaProjectSerializationService implements GradleBuiltinModelSerializationService<IdeaProject> {
+public final class IdeaProjectSerializationService implements SerializationService<IdeaProject> {
   private final WriteContext myWriteContext;
   private final ReadContext myReadContext;
 
