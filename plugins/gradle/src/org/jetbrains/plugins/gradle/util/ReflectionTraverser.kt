@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.util.ReflectionUtil
-import java.lang.IllegalAccessException
 import java.lang.reflect.Array
 import java.lang.reflect.Field
 import java.util.*
@@ -52,7 +51,8 @@ class ReflectionTraverser {
         if (value.javaClass.isPrimitive) continue
         stack.add(value)
       }
-      catch (ignored: IllegalAccessException) { }
+      catch (ignored: IllegalAccessException) {
+      }
     }
   }
 
@@ -69,7 +69,8 @@ class ReflectionTraverser {
             packageName.startsWith("java.lang.module") ||
             packageName.startsWith("com.sun.proxy")) {
           skip = true
-        } else {
+        }
+        else {
           val collectFields = ReflectionUtil.collectFields(c)
           for (it in collectFields) {
             if (!it.type.isPrimitive) {
@@ -99,9 +100,11 @@ class ReflectionTraverser {
     }
 
     private fun walkMap(stack: Deque<Any>, map: Map<*, *>) {
-      // todo handle map keys object
       for (entry in map) {
-        entry.key ?: continue
+        val key = entry.key ?: continue
+        if (!key.javaClass.isPrimitive) {
+          stack += key
+        }
         val value = entry.value ?: continue
         if (value.javaClass.isPrimitive) continue
         stack += value
