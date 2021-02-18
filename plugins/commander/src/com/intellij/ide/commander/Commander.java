@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +39,9 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.List;
 
 import static com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy.getPreferredFocusedComponent;
@@ -350,7 +353,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (toolWindow != null) {
       final AbstractTreeNode node = activePanel.getSelectedNode();
       if (node instanceof ProjectViewNode) {
-        toolWindow.setTitle(((ProjectViewNode)node).getTitle());
+        toolWindow.setTitle(ObjectUtils.notNull(((ProjectViewNode)node).getTitle(), ""));
       }
     }
   }
