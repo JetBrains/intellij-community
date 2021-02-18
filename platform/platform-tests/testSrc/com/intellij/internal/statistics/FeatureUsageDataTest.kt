@@ -111,7 +111,19 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("file_path"))
     Assert.assertTrue(build["file_path"] != path)
-    Assert.assertTrue(build["file_path"] == EventLogConfiguration.anonymize(path))
+    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getOrCreate("ABC").anonymize(path))
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getOrCreate("FUS").anonymize(path))
+  }
+
+  @Test
+  fun `test add anonymized path with another recorder`() {
+    val path = "/my/path/to/smth"
+    val build = FeatureUsageData("ABC").addAnonymizedPath(path).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("file_path"))
+    Assert.assertTrue(build["file_path"] != path)
+    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getOrCreate("FUS").anonymize(path))
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getOrCreate("ABC").anonymize(path))
   }
 
   @Test
@@ -129,7 +141,19 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("anonymous_id"))
     Assert.assertTrue(build["anonymous_id"] != id)
-    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getOrCreate("ABC").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getOrCreate("FUS").anonymize(id))
+  }
+
+  @Test
+  fun `test add anonymized id with another recorder`() {
+    val id = "item-id"
+    val build = FeatureUsageData("ABC").addAnonymizedId(id).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("anonymous_id"))
+    Assert.assertTrue(build["anonymous_id"] != id)
+    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getOrCreate("FUS").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getOrCreate("ABC").anonymize(id))
   }
 
   @Test
