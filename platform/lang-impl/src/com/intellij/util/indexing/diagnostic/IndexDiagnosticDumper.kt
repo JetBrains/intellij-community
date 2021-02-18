@@ -8,8 +8,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -84,7 +87,7 @@ class IndexDiagnosticDumper : Disposable {
   }
 
   fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistory) {
-    ProjectIndexingHistoryListener.EP_NAME.forEachExtensionSafe { it.onStartedIndexing(projectIndexingHistory) }
+    runAllListenersSafely { onStartedIndexing(projectIndexingHistory) }
   }
 
   fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistory) {
@@ -96,8 +99,26 @@ class IndexDiagnosticDumper : Disposable {
         return
       }
       NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
-    } finally {
-      ProjectIndexingHistoryListener.EP_NAME.forEachExtensionSafe { it.onFinishedIndexing(projectIndexingHistory) }
+    }
+    finally {
+      runAllListenersSafely { onFinishedIndexing(projectIndexingHistory) }
+    }
+  }
+
+  private fun runAllListenersSafely(block: ProjectIndexingHistoryListener.() -> Unit) {
+    val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<ProjectIndexingHistoryListener>, Exception> {
+      ProjectIndexingHistoryListener.EP_NAME.extensionList
+    }
+    for (listener in listeners) {
+      try {
+        listener.block()
+      } catch (e: Exception) {
+        if (e is ControlFlowException) {
+          // Make all listeners run first.
+          continue
+        }
+        LOG.error(e)
+      }
     }
   }
 
