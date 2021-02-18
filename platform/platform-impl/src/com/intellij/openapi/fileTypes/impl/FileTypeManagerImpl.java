@@ -1029,7 +1029,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, ignoreFiles));
     }
 
-    Element map = new Element(ELEMENT_EXTENSION_MAP);
+    Element extensionMap = new Element(ELEMENT_EXTENSION_MAP);
 
     List<FileType> notExternalizableFileTypes = new ArrayList<>();
     for (FileType type : mySchemeManager.getAllSchemes()) {
@@ -1040,12 +1040,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (!notExternalizableFileTypes.isEmpty()) {
       notExternalizableFileTypes.sort(Comparator.comparing(FileType::getName));
       for (FileType type : notExternalizableFileTypes) {
-        writeExtensionsMap(map, type, true);
+        writeExtensionsMap(extensionMap, type, true);
       }
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-138366
-    myRemovedMappingTracker.save(map);
+    myRemovedMappingTracker.save(extensionMap);
 
     if (!myUnresolvedMappings.isEmpty()) {
       List<Map.Entry<FileNameMatcher, String>> entries = new ArrayList<>(myUnresolvedMappings.entrySet());
@@ -1056,13 +1056,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         String typeName = entry.getValue();
         Element content = AbstractFileType.writeMapping(typeName, fileNameMatcher, true);
         if (content != null) {
-          map.addContent(content);
+          extensionMap.addContent(content);
         }
       }
     }
 
-    if (!map.getChildren().isEmpty()) {
-      state.addContent(map);
+    if (!extensionMap.getChildren().isEmpty()) {
+      state.addContent(extensionMap);
     }
 
     if (!state.getChildren().isEmpty()) {
@@ -1071,7 +1071,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return state;
   }
 
-  private void writeExtensionsMap(@NotNull Element map, @NotNull FileType type, boolean specifyTypeName) {
+  private void writeExtensionsMap(@NotNull Element extensionMap, @NotNull FileType type, boolean specifyTypeName) {
     List<FileNameMatcher> associations = myPatternsTable.getAssociations(type);
     Set<FileNameMatcher> defaultAssociations = new HashSet<>(myInitialAssociations.getAssociations(type));
 
@@ -1080,7 +1080,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (!isDefaultAssociationContains && shouldSave(type)) {
         Element content = AbstractFileType.writeMapping(type.getName(), matcher, specifyTypeName);
         if (content != null) {
-          map.addContent(content);
+          extensionMap.addContent(content);
         }
       }
     }
@@ -1092,13 +1092,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         Element hashBangTag = new Element("hashBang");
         hashBangTag.setAttribute("value", hashBangPattern);
         hashBangTag.setAttribute("type", type.getName());
-        map.addContent(hashBangTag);
+        extensionMap.addContent(hashBangTag);
       }
     }
     List<FileNameMatcher> removedMappings = myRemovedMappingTracker.getMappingsForFileType(type.getName());
     // do not store removed mappings which are going to be stored anyway via RemovedMappingTracker.save()
     defaultAssociations.removeIf(matcher -> removedMappings.contains(matcher));
-    myRemovedMappingTracker.saveRemovedMappingsForFileType(map, type.getName(), defaultAssociations, specifyTypeName);
+    myRemovedMappingTracker.saveRemovedMappingsForFileType(extensionMap, type.getName(), defaultAssociations, specifyTypeName);
   }
 
   // -------------------------------------------------------------------------
@@ -1139,40 +1139,40 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   /**
    * Registers a standard file type. Doesn't notifyListeners any change events.
    */
-  private void registerFileTypeWithoutNotification(@NotNull FileType fileType,
+  private void registerFileTypeWithoutNotification(@NotNull FileType newFileType,
                                                    @NotNull List<? extends FileNameMatcher> matchers,
-                                                   @NotNull List<String> hasBangPatterns,
+                                                   @NotNull List<String> hashBangPatterns,
                                                    boolean addScheme) {
     if (addScheme) {
-      mySchemeManager.addScheme(fileType);
+      mySchemeManager.addScheme(newFileType);
     }
-    List<FileNameMatcher> removedMappings = myRemovedMappingTracker.getMappingsForFileType(fileType.getName());
+    List<FileNameMatcher> removedMappings = myRemovedMappingTracker.getMappingsForFileType(newFileType.getName());
     for (FileNameMatcher matcher : matchers) {
       if (removedMappings.contains(matcher)) {
         continue;
       }
       FileType oldFileType = myPatternsTable.findAssociatedFileType(matcher);
-      ConflictingFileTypeMappingTracker.ResolveConflictResult result = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFileType, fileType);
-      FileType newFileType = result.resolved;
-      if (!newFileType.equals(oldFileType)) {
-        myPatternsTable.addAssociation(matcher, newFileType);
+      ConflictingFileTypeMappingTracker.ResolveConflictResult result = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFileType, newFileType);
+      FileType resolvedFileType = result.resolved;
+      if (!resolvedFileType.equals(oldFileType)) {
+        myPatternsTable.addAssociation(matcher, resolvedFileType);
         if (result.approved && oldFileType != null) {
           myRemovedMappingTracker.add(matcher, oldFileType.getName(), true);
         }
       }
       else if (oldFileType instanceof AbstractFileType && result.approved) {
-        myPatternsTable.addAssociation(matcher, fileType);
+        myPatternsTable.addAssociation(matcher, newFileType);
       }
 
-      myInitialAssociations.addAssociation(matcher, fileType);
+      myInitialAssociations.addAssociation(matcher, newFileType);
     }
-    for (String hashBang : hasBangPatterns) {
-      myPatternsTable.addHashBangPattern(hashBang, fileType);
-      myInitialAssociations.addHashBangPattern(hashBang, fileType);
+    for (String hashBang : hashBangPatterns) {
+      myPatternsTable.addHashBangPattern(hashBang, newFileType);
+      myInitialAssociations.addHashBangPattern(hashBang, newFileType);
     }
 
-    if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
-      mySpecialFileTypes = ArrayUtil.append(mySpecialFileTypes, (FileTypeIdentifiableByVirtualFile)fileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
+    if (newFileType instanceof FileTypeIdentifiableByVirtualFile) {
+      mySpecialFileTypes = ArrayUtil.append(mySpecialFileTypes, (FileTypeIdentifiableByVirtualFile)newFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
   }
 
@@ -1308,8 +1308,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myPatternsTable = assocTable.copy();
     fireFileTypesChanged();
 
-    myRemovedMappingTracker.removeIf((matcher, fileTypeName) -> {
+    myRemovedMappingTracker.removeIf(mapping -> {
+      String fileTypeName = mapping.getFileTypeName();
       FileType fileType = getFileTypeByName(fileTypeName);
+      FileNameMatcher matcher = mapping.getFileNameMatcher();
       return fileType != null && assocTable.isAssociatedWith(fileType, matcher);
     });
     for (Map.Entry<FileNameMatcher, FileType> entry : removedMappings.entrySet()) {
@@ -1319,7 +1321,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   public void associate(@NotNull FileType fileType, @NotNull FileNameMatcher matcher, boolean fireChange) {
     // delete "this matcher is removed from this file type" record
-    myRemovedMappingTracker.removeIf((removedMatcher, removeFileTypeName) -> matcher.equals(removedMatcher) && fileType.getName().equals(removeFileTypeName));
+    myRemovedMappingTracker.removeIf(mapping -> matcher.equals(mapping.getFileNameMatcher()) && fileType.getName().equals(mapping.getFileTypeName()));
     if (!myPatternsTable.isAssociatedWith(fileType, matcher)) {
       if (fireChange) {
         fireBeforeFileTypesChanged();
