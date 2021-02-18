@@ -75,13 +75,13 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
    * then this view should ignore such event
    */
   private fun updateCurrentFileIfLocalId() {
-    if (ClientId.isCurrentlyUnderLocalId) {
+    if (ClientId.current == myClientId) {
       updateCurrentFile()
     }
   }
   
   private fun updateCurrentFile() {
-    currentFile = findCurrentFile()
+    currentFile = ClientId.withClientId(myClientId) { findCurrentFile() }
   }
 
   val currentRoot
@@ -117,7 +117,7 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
   }
 
   private fun updateStatus() {
-    val status = getCurrentStatus()
+    val status = ClientId.withClientId(myClientId) { getCurrentStatus() }
     if (previousStatus != status) {
       previousStatus = status
       tree.emptyText.text = status.title

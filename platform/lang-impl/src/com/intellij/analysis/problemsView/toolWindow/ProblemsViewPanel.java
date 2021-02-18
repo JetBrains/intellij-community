@@ -2,12 +2,14 @@
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -52,6 +54,8 @@ import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
+  protected final ClientId myClientId = ClientId.getCurrent();
+
   private final Project myProject;
   private final ProblemsViewState myState;
   private final Supplier<@NlsContexts.TabTitle String> myName;
@@ -319,13 +323,23 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     return node == null ? null : node.getVirtualFile();
   }
 
+  private boolean isActiveTab() {
+    ToolWindow window = ProblemsView.getToolWindow(getProject());
+    if (window == null || !window.isActive()) return false;
+    Content content = window.getContentManager().getSelectedContent();
+    if (content == null) return false;
+    return SwingUtilities.isDescendingFrom(this, content.getComponent());
+  }
+
   private void updateAutoscroll() {
-    if (UIUtil.isFocusAncestor(this) && isNotNullAndSelected(getAutoscrollToSource())) {
+    if (isActiveTab() && isNotNullAndSelected(getAutoscrollToSource())) {
       invokeLater(() -> {
         Node node = getSelectedNode();
         Navigatable navigatable = node == null ? null : node.getNavigatable();
         if (navigatable != null && navigatable.canNavigateToSource()) {
-          navigate(false, navigatable);
+          ClientId.withClientId(myClientId, () -> {
+            navigate(false, navigatable);
+          });
         }
       });
     }
@@ -335,11 +349,13 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     Editor editor = myPreview.preview(isNotNullAndSelected(getShowPreview()));
     if (editor != null) {
       invokeLater(() -> {
-        if (editor.getComponent().isShowing()) {
+        if (EditorActivityManager.getInstance().isVisible(editor)) {
           Node node = getSelectedNode();
           OpenFileDescriptor descriptor = node == null ? null : node.getDescriptor();
           if (descriptor != null) {
-            descriptor.navigateIn(editor);
+            ClientId.withClientId(myClientId, () -> {
+              descriptor.navigateIn(editor);
+            });
           }
         }
       });
