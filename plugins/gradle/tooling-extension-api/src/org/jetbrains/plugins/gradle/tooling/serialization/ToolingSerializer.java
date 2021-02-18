@@ -19,7 +19,7 @@ import java.util.ServiceLoader;
  */
 public final class ToolingSerializer {
   private final DefaultSerializationService myDefaultSerializationService;
-  private final ClassMap<SerializationService<?>> myModelBuildersSerializationServices;
+  private final ClassMap<SerializationService<?>> mySerializationServices;
   @Nullable private final ClassLoader myModelBuildersClassLoader;
 
   public ToolingSerializer() {
@@ -29,7 +29,7 @@ public final class ToolingSerializer {
   public ToolingSerializer(@Nullable ClassLoader modelBuildersClassLoader) {
     myModelBuildersClassLoader = modelBuildersClassLoader;
     myDefaultSerializationService = new DefaultSerializationService();
-    myModelBuildersSerializationServices = new ClassMap<SerializationService<?>>();
+    mySerializationServices = new ClassMap<SerializationService<?>>();
     ClassLoader clientOwnedDaemonPayloadLoader = getClass().getClassLoader();
     if (modelBuildersClassLoader != null) {
       try {
@@ -85,7 +85,7 @@ public final class ToolingSerializer {
   @NotNull
   private <T> SerializationService<T> getService(@NotNull Class<T> modelClazz, boolean useDefaultSerializer)
     throws SerializationServiceNotFoundException {
-    SerializationService service = myModelBuildersSerializationServices.get(modelClazz);
+    SerializationService service = mySerializationServices.get(modelClazz);
     if (service != null) return service;
     if (useDefaultSerializer) {
       return myDefaultSerializationService;
@@ -104,7 +104,7 @@ public final class ToolingSerializer {
   }
 
   private void register(@NotNull SerializationService<?> serializerService) {
-    myModelBuildersSerializationServices.put(serializerService.getModelClass(), serializerService);
+    mySerializationServices.put(serializerService.getModelClass(), serializerService);
   }
 
   private static void addModelBuildersClassLoaderUrlsToTapiClientClassloader(@NotNull ClassLoader modelBuildersClassLoader,
