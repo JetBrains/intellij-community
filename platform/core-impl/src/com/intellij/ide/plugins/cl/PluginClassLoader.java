@@ -398,19 +398,16 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   private <T> @Nullable T findResource(String name, Function<Resource, T> f1, BiFunction<ClassLoader, String, T> f2) {
     String canonicalPath = toCanonicalPath(name);
-    T result = doFindResource(canonicalPath, f1, f2);
-    if (result == null && canonicalPath.startsWith("/")) {
+
+    if (canonicalPath.startsWith("/")) {
+      canonicalPath = canonicalPath.substring(1);
       //noinspection SpellCheckingInspection
       if (!canonicalPath.startsWith("/org/bridj/")) {
         String message = "Do not request resource from classloader using path with leading slash";
-        Logger.getInstance(PluginClassLoader.class).error(message, new IllegalArgumentException(name));
+        Logger.getInstance(PluginClassLoader.class).error(message, new PluginException(name, pluginId));
       }
-      result = doFindResource(canonicalPath.substring(1), f1, f2);
     }
-    return result;
-  }
 
-  private <T> @Nullable T doFindResource(String canonicalPath, Function<Resource, T> f1, BiFunction<ClassLoader, String, T> f2) {
     Resource resource = classPath.findResource(canonicalPath);
     if (resource != null) {
       return f1.apply(resource);
