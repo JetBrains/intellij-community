@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
+import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -95,15 +96,25 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     myProject = event.getRequiredData(CommonDataKeys.PROJECT);
     PsiElement context = GotoActionBase.getPsiContext(event);
     myPsiContext = context != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(context) : null;
-    myEverywhereScope = GlobalSearchScope.everythingScope(myProject);
+
+    GlobalSearchScope everywhereScope = SearchEverywhereClassifier.EP_Manager.getEverywhereScope(myProject);
+    if (everywhereScope == null) {
+      everywhereScope = GlobalSearchScope.everythingScope(myProject);
+    }
+    myEverywhereScope = everywhereScope;
+
     List<ScopeDescriptor> scopeDescriptors = createScopes();
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    if (myEverywhereScope.equals(projectScope)) {
-      // just get the second scope, i.e. Attached Directories in DataGrip
-      ScopeDescriptor secondScope = JBIterable.from(scopeDescriptors)
-        .filter(o -> !o.scopeEquals(myEverywhereScope) && !o.scopeEquals(null))
-        .first();
-      projectScope = secondScope != null ? (GlobalSearchScope)secondScope.getScope() : myEverywhereScope;
+
+    GlobalSearchScope projectScope = SearchEverywhereClassifier.EP_Manager.getProjectScope(myProject);
+    if (projectScope == null) {
+      projectScope = GlobalSearchScope.projectScope(myProject);
+      if (myEverywhereScope.equals(projectScope)) {
+        // just get the second scope, i.e. Attached Directories in DataGrip
+        ScopeDescriptor secondScope = JBIterable.from(scopeDescriptors)
+          .filter(o -> !o.scopeEquals(this.myEverywhereScope) && !o.scopeEquals(null))
+          .first();
+        projectScope = secondScope != null ? (GlobalSearchScope) secondScope.getScope() : this.myEverywhereScope;
+      }
     }
     myProjectScope = projectScope;
     myScopeDescriptor = getInitialSelectedScope(scopeDescriptors);
