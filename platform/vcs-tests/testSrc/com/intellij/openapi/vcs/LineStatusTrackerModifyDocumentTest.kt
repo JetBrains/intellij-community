@@ -700,6 +700,39 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  fun testNonEmptyLinesPriority1() {
+    test("A_B__C_D") {
+      "C_".delete()
+      "B_".insertAfter("C_")
+
+      assertRanges(Range(2, 2, 2, 3),
+                   Range(3, 4, 4, 4))
+    }
+  }
+
+  fun testNonEmptyLinesPriority2() {
+    test("A_B____C_D") {
+      "C_".delete()
+      "B_".insertAfter("C_")
+
+      assertRanges(Range(2, 3, 2, 2),
+                   Range(6, 6, 5, 6))
+    }
+  }
+
+  fun testFreezeNonEmptyLinesPriority() {
+    test("A_B_C__C_D") {
+      (2 th "C_").delete()
+
+      tracker.doFrozen {
+        simpleTracker.setBaseRevision(parseInput("A_B__C_D"))
+      }
+
+      assertRanges(Range(2, 2, 2, 3),
+                   Range(3, 4, 4, 4))
+    }
+  }
+
   fun testFreeze1() {
     test("X_X_X") {
       (2 th "X_").insertAfter("X_")
@@ -859,6 +892,35 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       assertRanges(Range(1, 2, 1, 2),
                    Range(3, 3, 3, 8),
                    Range(7, 12, 12, 12))
+    }
+  }
+
+  fun testSuboptimalBaseRevisionUpdateWithEmptyLines() {
+    val prefix = """
+      /**
+       * Javadoc
+       */_
+      public static void main(String[] args) {
+          System.out.println("Hello");
+          System.out.println("World");
+      }_
+    """.trimIndent()
+
+    val suffix = """
+      tracker.doFrozen(Runnable {
+        simpleTracker.setBaseRevision(parseInput(" 23"))
+      })_
+    """.trimIndent()
+
+    test(prefix + "_" + suffix) {
+      (1 th "}_").insertAfter("__")
+      ("Javadoc").insertAfter(" with modification")
+
+      tracker.doFrozen(Runnable {
+        simpleTracker.setBaseRevision(parseInput(prefix + "___" + suffix))
+      })
+
+      assertRanges(Range(1, 2, 1, 2))
     }
   }
 }
