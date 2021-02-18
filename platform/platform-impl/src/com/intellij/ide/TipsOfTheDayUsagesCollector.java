@@ -16,16 +16,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 5);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 6);
 
   public enum DialogType {automatically, manually}
 
   public static final EventId NEXT_TIP = GROUP.registerEvent("next.tip");
   public static final EventId PREVIOUS_TIP = GROUP.registerEvent("previous.tip");
-  public static final EventId1<DialogType> DIALOG_SHOWN =
+
+  private static final EventId1<DialogType> DIALOG_SHOWN =
     GROUP.registerEvent("dialog.shown", EventFields.Enum("type", DialogType.class));
 
-  public static final StringEventField ALGORITHM_FIELD =
+  private static final EventId2<Boolean, Boolean> DIALOG_CLOSED =
+    GROUP.registerEvent("dialog.closed", EventFields.Boolean("keep_showing_before"), EventFields.Boolean("keep_showing_after"));
+
+  private static final StringEventField ALGORITHM_FIELD =
     EventFields.String("algorithm",
                        Arrays.asList("TOP", "MATRIX_ALS", "MATRIX_BPR", "PROB", "WIDE", "CODIS", "RANDOM", "WEIGHTS_LIN_REG",
                                      "default_shuffle", "unknown", "ONE_TIP_SUMMER2020", "RANDOM_SUMMER2020"));
@@ -42,6 +46,14 @@ public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
 
   public static void triggerTipShown(@NotNull TipAndTrickBean tip, @NotNull String algorithm, @Nullable String version) {
     TIP_SHOWN.log(tip.fileName, algorithm, version);
+  }
+
+  public static void triggerDialogShown(@NotNull DialogType type) {
+    DIALOG_SHOWN.log(type);
+  }
+
+  public static void triggerDialogClosed(boolean showOnStartupBefore) {
+    DIALOG_CLOSED.log(showOnStartupBefore, GeneralSettings.getInstance().isShowTipsOnStartup());
   }
 
   public static class TipInfoValidationRule extends CustomValidationRule {
