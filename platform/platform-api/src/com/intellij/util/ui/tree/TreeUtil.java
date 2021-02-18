@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.ui.UISettings;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -1629,9 +1630,9 @@ public final class TreeUtil {
   }
 
   private static void internalScroll(@NotNull JTree tree, @NotNull Rectangle bounds, boolean centered) {
-    Container parent = tree.getParent();
-    if (parent instanceof JViewport) {
-      int width = parent.getWidth();
+    JViewport viewport = ComponentUtil.getViewport(tree);
+    if (viewport != null) {
+      int width = viewport.getWidth();
       if (!centered && tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {
         bounds.x = -tree.getX();
         bounds.width = width;
@@ -1641,7 +1642,7 @@ public final class TreeUtil {
         bounds.x = Math.max(0, bounds.x - control);
         bounds.width = bounds.x > 0 ? Math.min(bounds.width + control, centered ? width : width / 2) : width;
       }
-      int height = parent.getHeight();
+      int height = viewport.getHeight();
       if (height > bounds.height && height < tree.getHeight()) {
         if (centered || height < bounds.height * 5) {
           bounds.y -= (height - bounds.height) / 2;

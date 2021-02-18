@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -127,18 +127,13 @@ public class JBScrollPane extends JScrollPane {
     return view.getBackground();
   }
 
+  /**
+   * @deprecated use {@link ComponentUtil#getScrollPane} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static JScrollPane findScrollPane(Component c) {
-    if (c == null) return null;
-
-    if (!(c instanceof JViewport)) {
-      Container vp = c.getParent();
-      if (vp instanceof JViewport) c = vp;
-    }
-
-    c = c.getParent();
-    if (!(c instanceof JScrollPane)) return null;
-
-    return (JScrollPane)c;
+    return ComponentUtil.getScrollPane(c);
   }
 
   private void init() {
