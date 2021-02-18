@@ -39,10 +39,11 @@ public class AppEditorFontPanel implements Disposable {
     JBSplitter splitter = new JBSplitter(false, 0.3f);
     myPreviewScheme = createPreviewScheme();
     myOptionsPanel = new AppEditorFontOptionsPanel(this, myPreviewScheme);
+    myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(5));
     myPreview = new FontEditorPreview(()-> myPreviewScheme, true) {
       @Override
       protected Border getBorder() {
-        return JBUI.Borders.customLine(JBColor.border(), 0, 1, 1,1);
+        return JBUI.Borders.customLine(JBColor.border(), 0, 1, 0,1);
       }
     };
     splitter.setFirstComponent(myOptionsPanel);
