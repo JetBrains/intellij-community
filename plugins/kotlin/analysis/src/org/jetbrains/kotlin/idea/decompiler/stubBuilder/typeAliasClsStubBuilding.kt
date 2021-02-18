@@ -21,9 +21,10 @@ fun createTypeAliasStub(
     parent: StubElement<out PsiElement>,
     typeAliasProto: ProtoBuf.TypeAlias,
     protoContainer: ProtoContainer,
-    context: ClsStubBuilderContext
+    outerContext: ClsStubBuilderContext
 ) {
-    val shortName = context.nameResolver.getName(typeAliasProto.name)
+    val c = outerContext.child(typeAliasProto.typeParameterList)
+    val shortName = c.nameResolver.getName(typeAliasProto.name)
 
     val classId = when (protoContainer) {
         is ProtoContainer.Class -> protoContainer.classId.createNestedClassId(shortName)
@@ -37,16 +38,16 @@ fun createTypeAliasStub(
 
     val modifierList = createModifierListStubForDeclaration(typeAlias, typeAliasProto.flags, arrayListOf(VISIBILITY), listOf())
 
-    val typeStubBuilder = TypeClsStubBuilder(context)
+    val typeStubBuilder = TypeClsStubBuilder(c)
     val restConstraints = typeStubBuilder.createTypeParameterListStub(typeAlias, typeAliasProto.typeParameterList)
     assert(restConstraints.isEmpty()) {
         "'where' constraints are not allowed for type aliases"
     }
 
     if (Flags.HAS_ANNOTATIONS.get(typeAliasProto.flags)) {
-        createAnnotationStubs(typeAliasProto.annotationList.map { context.nameResolver.getClassId(it.id) }, modifierList)
+        createAnnotationStubs(typeAliasProto.annotationList.map { c.nameResolver.getClassId(it.id) }, modifierList)
     }
 
-    val typeAliasUnderlyingType = typeAliasProto.underlyingType(context.typeTable)
+    val typeAliasUnderlyingType = typeAliasProto.underlyingType(c.typeTable)
     typeStubBuilder.createTypeReferenceStub(typeAlias, typeAliasUnderlyingType)
 }
