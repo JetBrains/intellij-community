@@ -90,6 +90,7 @@
       <action id="Tree-selectPreviousExtendSelection" class="com.intellij.ui.TreeActions$ShiftUp" use-shortcut-of="EditorUpWithSelection"/>
       <action id="Tree-selectNext" class="com.intellij.ui.TreeActions$Down" use-shortcut-of="EditorDown"/>
       <action id="Tree-selectNextExtendSelection" class="com.intellij.ui.TreeActions$ShiftDown" use-shortcut-of="EditorDownWithSelection"/>
+      <action id="Tree-selectParentNoCollapse" class="com.intellij.ui.TreeActions$SelectParent"/>
       <action id="Tree-selectParent" class="com.intellij.ui.TreeActions$Left" use-shortcut-of="EditorLeft"/>
       <action id="Tree-selectParentExtendSelection" class="com.intellij.ui.TreeActions$ShiftLeft"
               use-shortcut-of="EditorLeftWithSelection"/>
