@@ -152,7 +152,7 @@ private fun createRequest(context: DataContext, isForceFileUrlIfNoUrlProvider: B
   return null
 }
 
-private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
+internal fun chooseUrl(urls: Collection<Url>): Promise<Url> {
   if (urls.size == 1) {
     return resolvedPromise(urls.first())
   }
