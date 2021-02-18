@@ -129,17 +129,25 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private final int instanceId;
   private volatile int state = ACTIVE;
 
+  private final @Nullable ResolveScopeManager resolveScopeManager;
+
+  public interface ResolveScopeManager {
+    boolean isDefinitelyAlienClass(String name, String packagePrefix);
+  }
+
   public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot,
                            @NotNull ClassLoader coreLoader,
+                           @Nullable ResolveScopeManager resolveScopeManager,
                            @Nullable String packagePrefix,
                            @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
     super(builder, resourceFileFactory, isParallelCapable);
 
     instanceId = instanceIdProducer.incrementAndGet();
 
+    this.resolveScopeManager = resolveScopeManager;
     this.parents = parents;
     this.pluginDescriptor = pluginDescriptor;
     pluginId = pluginDescriptor.getPluginId();
@@ -315,7 +323,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   @Override
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
-    if (packagePrefix != null && isDefinitelyAlienClass(name, packagePrefix)) {
+    if (!forceLoadFromSubPluginClassloader &&
+        (resolveScopeManager != null && resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix))) {
       return null;
     }
 
@@ -361,11 +370,6 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     }
     catch (IOException ignored) {
     }
-  }
-
-  protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-    // packed into plugin jar
-    return !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier");
   }
 
   @Override
