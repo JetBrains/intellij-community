@@ -137,7 +137,12 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             }
             catch (IncorrectOperationException e) {
               LOG.debug(e);
-              expression = elementFactory.createExpressionFromText(dialog.getI18NText(data.getKey(), data.getValue(), ""), psiElement);
+              try {
+                expression = elementFactory.createExpressionFromText(dialog.getI18NText(data.getKey(), data.getValue(), ""), psiElement);
+              }
+              catch (IncorrectOperationException exception) { 
+                continue;
+              }
             }
             
             @Nullable Couple<String> callDescriptor = getCallDescriptor(expression);
