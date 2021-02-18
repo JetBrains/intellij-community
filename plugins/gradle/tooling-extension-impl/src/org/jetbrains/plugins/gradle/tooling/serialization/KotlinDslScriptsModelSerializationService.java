@@ -6,7 +6,7 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.kotli
 
 import java.io.IOException;
 
-public class KotlinDslScriptsModelSerializationService implements GradleBuiltinModelSerializationService<KotlinDslScriptsModel> {
+public class KotlinDslScriptsModelSerializationService implements SerializationService<KotlinDslScriptsModel> {
   @Override
   public byte[] write(KotlinDslScriptsModel object, Class<? extends KotlinDslScriptsModel> modelClazz) throws IOException {
     InternalKotlinDslScriptsModel internalKotlinDslScriptsModel = new InternalKotlinDslScriptsModel(object.getScriptModels());
