@@ -243,8 +243,8 @@ public final class ToolsImpl implements Tools {
         final int key1 = scopesOrder.indexOf(scope1.getScopeName());
         final int key2 = scopesOrder.indexOf(scope2.getScopeName());
 
-        if (key1 != -1 || key2 != -1) return Integer.compare(key1, key2);
-        return scope1.getScopeName().compareTo(scope2.getScopeName());
+        if (key1 == -1 && key2 == -1) return scope1.getScopeName().compareTo(scope2.getScopeName());
+        return Integer.compare(key1, key2);
       });
     }
   }
