@@ -44,7 +44,11 @@ public final class ToolingSerializer {
                 return m.invoke(serializationService, args);
               }
             });
-          register(proxyService);
+          try {
+            register(proxyService);
+          } catch (Throwable ignore) {
+            // ignore ClassNotFoundException/NoClassDefFoundError as builtin Gradle models presence might depend on specific Gradle versions
+          }
         }
 
         addModelBuildersClassLoaderUrlsToTapiClientClassloader(modelBuildersClassLoader, clientOwnedDaemonPayloadLoader);
