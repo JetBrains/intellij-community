@@ -44,8 +44,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.ListIterator;
+
+import static com.intellij.openapi.actionSystem.ex.ActionUtil.getMnemonicAsShortcut;
 
 class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
@@ -53,6 +57,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
   private static final String COUNTER_PROPERTY = "debugger.speed.search.tree.option.hint.counter";
   private static final String CAN_EXPAND_PROPERTY = "debugger.speed.search.tree.option.can.expand";
   private MyActionButton mySearchOption = null;
+  private ShortcutSet myOptionShortcutSet;
 
   XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
     super(tree, toStringConvertor, PropertiesComponent.getInstance().getBoolean(CAN_EXPAND_PROPERTY, false));
@@ -186,8 +191,25 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
   protected void setSearchOption(AnAction searchOption) {
     mySearchOption = new MyActionButton(searchOption, false);
+    myOptionShortcutSet = getMnemonicAsShortcut(searchOption);
   }
 
+  @Override
+  protected void processKeyEvent(KeyEvent e) {
+    if (mySearchOption.isShowing()) {
+      KeyStroke eventKeyStroke = KeyStroke.getKeyStrokeForEvent(e);
+      boolean match = Arrays.stream(myOptionShortcutSet.getShortcuts())
+        .filter(s -> s.isKeyboard())
+        .map(s -> ((KeyboardShortcut)s))
+        .anyMatch(s -> eventKeyStroke.equals(s.getFirstKeyStroke()) || eventKeyStroke.equals(s.getSecondKeyStroke()));
+      if (match) {
+        mySearchOption.click();
+        e.consume();
+        return;
+      }
+    }
+    super.processKeyEvent(e);
+  }
 
   @Override
   protected @NotNull SearchPopup createPopup(String s) {
@@ -227,6 +249,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       getTemplatePresentation().setIcon(AllIcons.General.Tree);
       getTemplatePresentation().setHoveredIcon(AllIcons.General.TreeHovered);
       getTemplatePresentation().setSelectedIcon(AllIcons.General.TreeSelected);
+      setShortcutSet(getMnemonicAsShortcut(this));
     }
 
     @Override
