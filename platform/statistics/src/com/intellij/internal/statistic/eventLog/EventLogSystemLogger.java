@@ -51,12 +51,13 @@ public final class EventLogSystemLogger {
                                   int failed,
                                   boolean external,
                                   @NotNull List<String> successfullySentFiles) {
+    EventLogRecorderConfiguration config = EventLogConfiguration.INSTANCE.getOrCreate(recorderId);
     final FeatureUsageData data = new FeatureUsageData().
       addData("total", total).
       addData("send", succeed + failed).
       addData("failed", failed).
       addData("external", external).
-      addData("paths", ContainerUtil.map(successfullySentFiles, path -> EventLogConfiguration.INSTANCE.anonymize(path)));
+      addData("paths", ContainerUtil.map(successfullySentFiles, path -> config.anonymize(path)));
     logEvent(recorderId, "logs.send", data);
   }
 
