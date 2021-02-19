@@ -68,7 +68,7 @@ internal fun createKotlinCompilation(
 ): KotlinCompilationImpl {
     return KotlinCompilationImpl(
         name = name,
-        defaultSourceSets = defaultSourceSets,
+        declaredSourceSets = defaultSourceSets,
         allSourceSets = allSourceSets,
         dependencies = dependencies.toList().toTypedArray(),
         output = output,

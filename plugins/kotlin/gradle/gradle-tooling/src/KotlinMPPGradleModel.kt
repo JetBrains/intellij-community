@@ -131,9 +131,9 @@ interface KotlinNativeCompilationExtensions : Serializable {
 interface KotlinCompilation : KotlinModule {
 
     // TODO NOW: Check byte-code
-    @Deprecated("Use allSourceSets or defaultSourceSets instead")
+    @Deprecated("Use allSourceSets or declaredSourceSets instead")
     val sourceSets: Collection<KotlinSourceSet>
-        get() = defaultSourceSets
+        get() = declaredSourceSets
 
     /**
      * All source sets participated in this compilation, including those available
@@ -142,14 +142,14 @@ interface KotlinCompilation : KotlinModule {
     val allSourceSets: Collection<KotlinSourceSet>
 
     /**
-     * Only default source sets of this compilation, i.e. those which are included
+     * Only directly declared source sets of this compilation, i.e. those which are included
      * into compilations directly.
      *
      * Usually, those are automatically created source sets for automatically created
      * compilations (like jvmMain for JVM compilations) or manually included source sets
      * (like 'jvm().compilations["main"].source(mySourceSet)' )
      */
-    val defaultSourceSets: Collection<KotlinSourceSet>
+    val declaredSourceSets: Collection<KotlinSourceSet>
 
     val output: KotlinCompilationOutput
     val arguments: KotlinCompilationArguments

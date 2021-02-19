@@ -527,7 +527,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         return KotlinCompilationImpl(
             name = gradleCompilation.name,
             allSourceSets = allSourceSets,
-            defaultSourceSets = if(platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
+            declaredSourceSets = if(platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
             dependencies = dependencies.map { dependencyMapper.getId(it) }.distinct().toTypedArray(),
             output = output,
             arguments = arguments,
@@ -769,7 +769,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             return
         }
 
-        if (!getProperty(IS_HMPP_ENABLED) && !isDefaultSourceSet(sourceSet)) {
+        if (!getProperty(IS_HMPP_ENABLED) && !isDeclaredSourceSet(sourceSet)) {
             // intermediate source sets should be common if HMPP is disabled
             sourceSet.actualPlatforms.addSimplePlatforms(listOf(KotlinPlatform.COMMON))
             return

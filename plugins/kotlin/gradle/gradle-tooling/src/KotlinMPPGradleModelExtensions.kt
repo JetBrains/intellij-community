@@ -11,7 +11,7 @@ fun KotlinMPPGradleModel.getCompilations(sourceSet: KotlinSourceSet): Set<Kotlin
 fun KotlinMPPGradleModel.compilationDependsOnSourceSet(
     compilation: KotlinCompilation, sourceSet: KotlinSourceSet
 ): Boolean {
-    return compilation.defaultSourceSets.any { sourceSetInCompilation ->
+    return compilation.declaredSourceSets.any { sourceSetInCompilation ->
         sourceSetInCompilation == sourceSet || sourceSetInCompilation.isDependsOn(this, sourceSet)
     }
 }

@@ -39,12 +39,12 @@ internal interface MultiplatformModelImportingContext: KotlinSourceSetContainer 
     fun isOrphanSourceSet(sourceSet: KotlinSourceSet): Boolean = compilationsBySourceSet(sourceSet) == null
 
     /**
-     * "Default" source-set is a source-set which is included into compilation directly, rather
+     * "Declared" source-set is a source-set which is included into compilation directly, rather
      * through closure over dependsOn-relation.
      *
-     * See also KDoc for [KotlinCompilation.defaultSourceSets]
+     * See also KDoc for [KotlinCompilation.declaredSourceSets]
      */
-    fun isDefaultSourceSet(sourceSet: KotlinSourceSet): Boolean
+    fun isDeclaredSourceSet(sourceSet: KotlinSourceSet): Boolean
 }
 
 internal fun MultiplatformModelImportingContext.getProperty(property: GradleImportProperties): Boolean = project.getProperty(property)
@@ -81,7 +81,7 @@ internal class MultiplatformModelImportingContextImpl(override val project: Proj
     override lateinit var compilations: Collection<KotlinCompilation>
         private set
     private lateinit var sourceSetToParticipatedCompilations: Map<KotlinSourceSet, Set<KotlinCompilation>>
-    private lateinit var allDefaultSourceSets: Set<KotlinSourceSet>
+    private lateinit var allDeclaredSourceSets: Set<KotlinSourceSet>
 
 
     /** see [initializeTargets] */
@@ -118,7 +118,7 @@ internal class MultiplatformModelImportingContextImpl(override val project: Proj
 
         this.sourceSetToParticipatedCompilations = sourceSetToCompilations
 
-        this.allDefaultSourceSets = compilations.flatMapTo(mutableSetOf()) { it.defaultSourceSets }
+        this.allDeclaredSourceSets = compilations.flatMapTo(mutableSetOf()) { it.declaredSourceSets }
     }
 
     internal fun initializeTargets(targets: Collection<KotlinTarget>) {
@@ -130,7 +130,7 @@ internal class MultiplatformModelImportingContextImpl(override val project: Proj
     // overload for small optimization
     override fun isOrphanSourceSet(sourceSet: KotlinSourceSet): Boolean = sourceSet !in sourceSetToParticipatedCompilations.keys
 
-    override fun isDefaultSourceSet(sourceSet: KotlinSourceSet): Boolean = sourceSet in allDefaultSourceSets
+    override fun isDeclaredSourceSet(sourceSet: KotlinSourceSet): Boolean = sourceSet in allDeclaredSourceSets
 
     override fun compilationsBySourceSet(sourceSet: KotlinSourceSet): Collection<KotlinCompilation>? =
         sourceSetToParticipatedCompilations[sourceSet]
