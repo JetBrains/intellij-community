@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.PermanentInstallationID;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +96,4 @@ public final class LicensingFacade {
     return confirmationStamps == null? null : confirmationStamps.get(productCode);
   }
 
-  public boolean isEA2Product(@NotNull String productCodeOrPluginId) {
-    return ArrayUtil.contains(productCodeOrPluginId, "DPN", "DC", "DPA", "PDB", "PWS", "PGO", "PPS", "PPC", "PRB", "PSW", "Pythonid");
-  }
 }
