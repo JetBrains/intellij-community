@@ -44,7 +44,13 @@ internal fun isImage(file: Path) = ImageExtension.fromName(file.fileName.toStrin
 internal fun isImage(file: File) = ImageExtension.fromName(file.name) != null
 
 internal fun imageSize(file: Path, failOnMalformedImage: Boolean = false): Dimension? {
-  val image = loadImage(file, failOnMalformedImage)
+  val image = try {
+    loadImage(file, failOnMalformedImage)
+  }
+  catch (e: Exception) {
+    if (failOnMalformedImage) throw e
+    null
+  }
   if (image == null) {
     if (failOnMalformedImage) error("Can't load $file")
     println("WARNING: can't load $file")
