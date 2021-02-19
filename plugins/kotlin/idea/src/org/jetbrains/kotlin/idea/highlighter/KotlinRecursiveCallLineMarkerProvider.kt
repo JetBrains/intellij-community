@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.icons.AllIcons
@@ -124,13 +123,13 @@ class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         callElement,
         callElement.textRange,
         AllIcons.Gutter.RecursiveMethod,
-        Pass.LINE_MARKERS,
         { KotlinBundle.message("highlighter.tool.tip.text.recursive.call") },
         null,
-        GutterIconRenderer.Alignment.RIGHT
+        GutterIconRenderer.Alignment.RIGHT,
+        { KotlinBundle.message("highlighter.tool.tip.text.recursive.call") }
     ) {
 
-        override fun createGutterRenderer(): GutterIconRenderer? {
+        override fun createGutterRenderer(): GutterIconRenderer {
             return object : LineMarkerInfo.LineMarkerGutterIconRenderer<PsiElement>(this) {
                 override fun getClickAction() = null // to place breakpoint on mouse click
             }
