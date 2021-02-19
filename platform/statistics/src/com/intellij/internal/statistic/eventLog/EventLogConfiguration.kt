@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessDeviceIdProperty
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessSaltProperty
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getSaltPropertyKey
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -92,7 +93,7 @@ object EventLogConfiguration {
 }
 
 class EventLogRecorderConfiguration internal constructor(recorderId: String) {
-  val sessionId: String = UUID.randomUUID().toString().shortedUUID()
+  val sessionId: String = generateSessionId()
 
   val deviceId: String = getOrGenerateDeviceId(recorderId)
   val bucket: Int = deviceId.asBucket()
@@ -124,6 +125,11 @@ class EventLogRecorderConfiguration internal constructor(recorderId: String) {
 
   private fun String.asBucket(): Int {
     return MathUtil.nonNegativeAbs(this.hashCode()) % 256
+  }
+
+  private fun generateSessionId(): String {
+    val presentableHour = StatisticsUtil.getCurrentHourInUTC()
+    return "$presentableHour-${UUID.randomUUID().toString().shortedUUID()}"
   }
 
   private fun getOrGenerateDeviceId(recorderId: String): String {
