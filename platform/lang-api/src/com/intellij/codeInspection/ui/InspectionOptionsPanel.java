@@ -12,7 +12,7 @@ public class InspectionOptionsPanel extends JPanel {
     super(new MigLayout("fillx, ins 0"));
   }
 
-  public void row(Component label, Component component) {
+  public void addRow(Component label, Component component) {
     add(label, "");
     add(component, "pushx, wrap");
   }

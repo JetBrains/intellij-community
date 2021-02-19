@@ -489,7 +489,7 @@ public final class PythonUiServiceImpl extends PythonUiService {
   @Override
   public void addRowToOptionsPanel(JPanel optionsPanel, JComponent label, JComponent component) {
     if (optionsPanel instanceof InspectionOptionsPanel) {
-      ((InspectionOptionsPanel) optionsPanel).row(label, component);
+      ((InspectionOptionsPanel) optionsPanel).addRow(label, component);
     }
   }
 

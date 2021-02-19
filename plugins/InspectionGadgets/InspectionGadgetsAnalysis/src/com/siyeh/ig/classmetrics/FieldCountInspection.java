@@ -80,7 +80,7 @@ public class FieldCountInspection extends ClassMetricInspection {
                    this, "myCountEnumConstants");
 
     final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-    panel.row(label, valueField);
+    panel.addRow(label, valueField);
     panel.add(includeCheckBox);
     panel.add(considerCheckBox);
     panel.add(enumConstantCheckBox);

@@ -68,7 +68,7 @@ public class ClassCouplingInspection
     final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.row(label, valueField);
+    panel.addRow(label, valueField);
 
     panel.addCheckbox(InspectionGadgetsBundle.message(
         "include.java.system.classes.option"), "m_includeJavaClasses");
