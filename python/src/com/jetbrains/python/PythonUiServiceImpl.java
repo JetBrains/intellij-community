@@ -4,7 +4,9 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
@@ -477,5 +479,24 @@ public final class PythonUiServiceImpl extends PythonUiService {
                               @ListItem String initialValue,
                               @Nullable Icon icon) {
     return MessagesService.getInstance().showChooseDialog(project, parentComponent, message, title, values, initialValue, icon);
+  }
+
+  @Override
+  public JPanel createMultipleCheckboxOptionsPanel(final InspectionProfileEntry owner) {
+    return new MultipleCheckboxOptionsPanel(owner);
+  }
+
+  @Override
+  public void addRowToOptionsPanel(JPanel optionsPanel, JComponent label, JComponent component) {
+    if (optionsPanel instanceof InspectionOptionsPanel) {
+      ((InspectionOptionsPanel) optionsPanel).row(label, component);
+    }
+  }
+
+  @Override
+  public void addCheckboxToOptionsPanel(JPanel optionsPanel, String label, String property) {
+    if (optionsPanel instanceof MultipleCheckboxOptionsPanel) {
+      ((MultipleCheckboxOptionsPanel) optionsPanel).addCheckbox(label, property);
+    }
   }
 }
