@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -64,7 +63,8 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final ListTable table = new ListTable(
       new ListWrappingTableModel(Arrays.asList(methodMatcher.getClassNames(), methodMatcher.getMethodNamePatterns()),
-                                 JavaBundle.message("column.assertion.class.name"), InspectionGadgetsBundle.message("method.name.regex")));
+                                 InspectionGadgetsBundle.message("column.assertion.class.name"),
+                                 InspectionGadgetsBundle.message("method.name.regex")));
     final CheckBox checkBox1 =
       new CheckBox(InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion"), this, "assertKeywordIsAssertion");
     final CheckBox checkBox2 =
