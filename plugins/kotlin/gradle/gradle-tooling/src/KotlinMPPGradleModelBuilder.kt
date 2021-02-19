@@ -67,7 +67,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
 
         val coroutinesState = getCoroutinesState(project)
         val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: NO_KOTLIN_NATIVE_HOME
-        return KotlinMPPGradleModelImpl(
+        val model = KotlinMPPGradleModelImpl(
             filterOrphanSourceSets(importingContext),
             importingContext.targets,
             ExtraFeaturesImpl(
@@ -78,6 +78,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             kotlinNativeHome,
             dependencyMapper.toDependencyMap()
         )
+        return model
     }
 
     private fun filterOrphanSourceSets(

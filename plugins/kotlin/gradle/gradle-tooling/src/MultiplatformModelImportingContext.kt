@@ -129,7 +129,7 @@ internal class MultiplatformModelImportingContextImpl(override val project: Proj
     }
 
     // overload for small optimization
-    override fun isOrphanSourceSet(sourceSet: KotlinSourceSet): Boolean = sourceSet in sourceSetToParticipatedCompilations.keys
+    override fun isOrphanSourceSet(sourceSet: KotlinSourceSet): Boolean = sourceSet !in sourceSetToParticipatedCompilations.keys
 
     override fun isDefaultSourceSet(sourceSet: KotlinSourceSet): Boolean = sourceSet in allDefaultSourceSets
 
