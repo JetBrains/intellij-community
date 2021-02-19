@@ -6,6 +6,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.FeatureImpl;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EnumEventField;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.eventLog.events.StringListEventField;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -30,6 +36,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +49,9 @@ import java.util.stream.Stream;
 
 public final class PluginsAdvertiser {
   static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
-  private static final String CASHED_EXTENSIONS = "extensions.xml";
+  private static final @NonNls String CASHED_EXTENSIONS = "extensions.xml";
 
-  public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
+  private static final @NonNls String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
 
   /**
    * @deprecated Use {@link #getNotificationGroup()}
@@ -52,7 +59,41 @@ public final class PluginsAdvertiser {
   @Deprecated
   public static final NotificationGroup NOTIFICATION_GROUP = getNotificationGroup();
 
-  public static final String FUS_GROUP_ID = "plugins.advertiser";
+  private static final @NonNls String FUS_GROUP_ID = "plugins.advertiser";
+  private static final EventLogGroup GROUP = new EventLogGroup(FUS_GROUP_ID,
+                                                               1);
+
+  enum Source {EDITOR, NOTIFICATION}
+
+  private static final EnumEventField<Source> SOURCE_FIELD = new EnumEventField<>("source",
+                                                                                  Source.class,
+                                                                                  source -> source.name().toLowerCase(Locale.ROOT));
+  private static final StringListEventField PLUGINS_FIELD = new StringListEventField.ValidatedByCustomRule("plugins",
+                                                                                                           "plugin");
+
+  @SuppressWarnings("TypeParameterExtendsFinalClass")
+  private static final @NotNull EventId2<List<? extends String>, Source> ENABLE_PLUGINS_EVENT = GROUP.registerEvent("enable.plugins",
+                                                                                                                    PLUGINS_FIELD,
+                                                                                                                    SOURCE_FIELD);
+  @SuppressWarnings("TypeParameterExtendsFinalClass")
+  private static final @NotNull EventId2<List<? extends String>, Source> INSTALL_PLUGINS_EVENT = GROUP.registerEvent("install.plugins",
+                                                                                                                     PLUGINS_FIELD,
+                                                                                                                     SOURCE_FIELD);
+
+  private static final @NotNull EventId1<Source> CONFIGURE_PLUGINS_EVENT = GROUP.registerEvent("configure.plugins",
+                                                                                               SOURCE_FIELD);
+
+  private static final @NotNull EventId1<Source> IGNORE_ULTIMATE_EVENT = GROUP.registerEvent("ignore.ultimate",
+                                                                                             SOURCE_FIELD);
+
+  private static final @NotNull EventId1<Source> OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent("open.download.page",
+                                                                                                SOURCE_FIELD);
+
+  private static final @NotNull EventId1<Source> IGNORE_EXTENSIONS_EVENT = GROUP.registerEvent("ignore.extensions",
+                                                                                               SOURCE_FIELD);
+
+  private static final @NotNull EventId1<Source> IGNORE_UNKNOWN_FEATURES_EVENT = GROUP.registerEvent("ignore.unknown.features",
+                                                                                                     SOURCE_FIELD);
 
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
   private static boolean extensionsHaveBeenUpdated = false;
@@ -121,8 +162,47 @@ public final class PluginsAdvertiser {
     extensionsHaveBeenUpdated = true;
   }
 
-  public static void openDownloadPage() {
+  static void logEnablePlugins(@NotNull List<@NonNls String> plugins,
+                               @NotNull Source source,
+                               @Nullable Project project) {
+    ENABLE_PLUGINS_EVENT.log(project, plugins, source);
+  }
+
+  static void logInstallPlugins(@NotNull List<@NonNls String> plugins,
+                                @SuppressWarnings("SameParameterValue") @NotNull Source source,
+                                @SuppressWarnings("SameParameterValue") @Nullable Project project) {
+    INSTALL_PLUGINS_EVENT.log(project, plugins, source);
+  }
+
+  public static void logConfigurePlugins(@NotNull Source source,
+                                         @Nullable Project project) {
+    CONFIGURE_PLUGINS_EVENT.log(project, source);
+  }
+
+  static boolean isIgnoreUltimate() {
+    return PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION);
+  }
+
+  static void doIgnoreUltimateAndLog(@NotNull Source source,
+                                     @Nullable Project project) {
+    PropertiesComponent.getInstance().setValue(IGNORE_ULTIMATE_EDITION, true);
+    IGNORE_ULTIMATE_EVENT.log(project, source);
+  }
+
+  static void openDownloadPageAndLog(@NotNull Source source,
+                                     @Nullable Project project) {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/idea/download/"));
+    OPEN_DOWNLOAD_PAGE_EVENT.log(project, source);
+  }
+
+  static void logIgnoreExtension(@SuppressWarnings("SameParameterValue") @NotNull Source source,
+                                 @Nullable Project project) {
+    IGNORE_EXTENSIONS_EVENT.log(project, source);
+  }
+
+  static void logIgnoreUnknownFeatures(@SuppressWarnings("SameParameterValue") @NotNull Source source,
+                                       @NotNull Project project) {
+    IGNORE_UNKNOWN_FEATURES_EVENT.log(project, source);
   }
 
   static @NotNull List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
@@ -143,14 +223,17 @@ public final class PluginsAdvertiser {
    */
   @Deprecated
   public static void installAndEnablePlugins(@NotNull Set<String> pluginIds, @NotNull Runnable onSuccess) {
-    installAndEnable(new LinkedHashSet<>(ContainerUtil.map(pluginIds, it -> PluginId.getId(it))), onSuccess);
+    installAndEnable(new LinkedHashSet<>(ContainerUtil.map(pluginIds, PluginId::getId)), onSuccess);
   }
 
   public static void installAndEnable(@NotNull Set<PluginId> pluginIds, @NotNull Runnable onSuccess) {
     installAndEnable(null, pluginIds, true, onSuccess);
   }
 
-  public static void installAndEnable(@Nullable Project project, @NotNull Set<PluginId> pluginIds, boolean showDialog, @NotNull Runnable onSuccess) {
+  public static void installAndEnable(@Nullable Project project,
+                                      @NotNull Set<PluginId> pluginIds,
+                                      boolean showDialog,
+                                      @NotNull Runnable onSuccess) {
     ProgressManager.getInstance().run(new Task.Modal(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myRepositoryPlugins;
@@ -159,7 +242,7 @@ public final class PluginsAdvertiser {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          List<@NotNull String> ids = ContainerUtil.map(pluginIds, id -> id.getIdString());
+          List<@NotNull String> ids = ContainerUtil.map(pluginIds, PluginId::getIdString);
           List<PluginNode> marketplacePlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(ids);
           myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
 

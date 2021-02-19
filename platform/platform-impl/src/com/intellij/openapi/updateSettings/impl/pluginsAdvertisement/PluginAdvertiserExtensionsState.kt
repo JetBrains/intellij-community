@@ -51,20 +51,18 @@ internal class PluginAdvertiserExtensionsStateService : SimpleModificationTracke
   }
 
   fun registerLocalPlugin(extensionOrFileName: String, plugin: PluginDescriptor) {
-    state.localState.put(extensionOrFileName, PluginsAdvertiser.Plugin(plugin.pluginId.idString, plugin.name, plugin.isBundled, false))
+    state.localState[extensionOrFileName] = PluginsAdvertiser.Plugin(plugin.pluginId.idString, plugin.name, plugin.isBundled)
     // no need to waste time to check that map is really changed - registerLocalPlugin is not called often after start-up,
     // so, mod count will be not incremented too often
     incModificationCount()
   }
 
   fun getLocalPlugin(fileName: String, fullExtension: String?): PluginAdvertiserExtensionsData? {
-    state.localState.get(fileName)?.let { plugin ->
-      return PluginAdvertiserExtensionsData(fileName, setOf(plugin))
-    }
-    fullExtension?.let { state.localState.get(it) }?.let { plugin ->
-      return PluginAdvertiserExtensionsData(fullExtension, setOf(plugin))
-    }
-    return null
+    val (extensionOrFileName, plugin) = state.localState[fileName]?.let { fileName to it }
+                                        ?: state.localState[fullExtension]?.let { fullExtension!! to it }
+                                        ?: return null
+
+    return PluginAdvertiserExtensionsData(extensionOrFileName, setOf(plugin))
   }
 }
 
