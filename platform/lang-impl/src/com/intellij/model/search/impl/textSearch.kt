@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search.impl
 
+import com.intellij.model.psi.impl.hasDeclarationsInElement
 import com.intellij.model.psi.impl.hasReferencesInElement
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
@@ -43,7 +44,7 @@ private fun isApplicableOccurrence(occurrence: TextOccurrence, comments: Boolean
     if (!isApplicableSearchContext(element, comments, strings, plainText)) {
       return false
     }
-    if (hasReferencesInElement(element, offsetInElement)) {
+    if (hasReferencesInElement(element, offsetInElement) || hasDeclarationsInElement(element, offsetInElement)) {
       return false
     }
   }
