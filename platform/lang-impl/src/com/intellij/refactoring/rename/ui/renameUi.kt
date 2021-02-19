@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.ui
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.readAction
@@ -28,6 +29,9 @@ internal suspend fun <T> withBackgroundIndicator(
   @ProgressTitle progressTitle: String,
   action: suspend CoroutineScope.() -> T
 ): T = coroutineScope {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return@coroutineScope action()
+  }
   val deferred = async(block = action)
   launch(Dispatchers.IO) { // block some thread while [action] is not completed
     CoroutineBackgroundTask(project, progressTitle, deferred).queue()

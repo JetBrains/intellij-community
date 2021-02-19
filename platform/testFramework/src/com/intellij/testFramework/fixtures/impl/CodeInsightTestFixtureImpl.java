@@ -107,6 +107,8 @@ import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.*;
+import com.intellij.refactoring.rename.api.RenameTarget;
+import com.intellij.refactoring.rename.impl.RenameKt;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
@@ -844,6 +846,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
     if (substitution == null) return;
     new RenameProcessor(getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
+  }
+
+  @Override
+  public void renameTarget(@NotNull RenameTarget renameTarget, @NotNull String newName) {
+    RenameKt.renameAndWait(getProject(), renameTarget, newName);
   }
 
   @Override

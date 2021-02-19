@@ -28,12 +28,17 @@ import com.intellij.refactoring.rename.api.ReplaceTextTargetContext.IN_PLAIN_TEX
 import com.intellij.refactoring.rename.ui.*
 import com.intellij.util.Query
 import com.intellij.util.text.StringOperation
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.toList
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.CoroutineContext
 
 
@@ -73,8 +78,8 @@ internal fun rename(
   newName: String,
   options: RenameOptions,
   preview: Boolean = false
-) {
-  CoroutineScope(CoroutineName("root rename coroutine")).launch(Dispatchers.Default) {
+): Job {
+  return CoroutineScope(CoroutineName("root rename coroutine")).launch(Dispatchers.Default) {
     rename(this, project, targetPointer, newName, options, preview)
   }
 }
@@ -144,6 +149,9 @@ private data class ProcessUsagesResult(
 )
 
 private suspend fun processUsages(usageChannel: ReceiveChannel<UsagePointer>, newName: String): ProcessUsagesResult {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return ProcessUsagesResult(usageChannel.toList(), false)
+  }
   val usagePointers = ArrayList<UsagePointer>()
   for (pointer: UsagePointer in usageChannel) {
     usagePointers += pointer
@@ -314,4 +322,24 @@ private suspend fun previewInDialog(project: Project, fileUpdates: FileUpdates):
         .showAndGet()
     }
   } != false
+}
+
+@Internal
+@TestOnly
+fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
+  val application = ApplicationManager.getApplication()
+  application.assertIsDispatchThread()
+  require(application.isUnitTestMode)
+
+  val targetPointer = target.createPointer()
+  val options = RenameOptions(
+    renameTextOccurrences = true,
+    renameCommentsStringsOccurrences = true,
+    searchScope = target.maximalSearchScope ?: GlobalSearchScope.projectScope(project)
+  )
+  val renameJob = rename(project, targetPointer, newName, options)
+  while (renameJob.isActive) {
+    UIUtil.dispatchAllInvocationEvents()
+    LockSupport.parkNanos(10_000_000)
+  }
 }
