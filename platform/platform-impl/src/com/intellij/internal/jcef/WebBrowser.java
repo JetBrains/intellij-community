@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
+import com.intellij.ui.jcef.JBCefBrowserBase;
 import com.intellij.ui.jcef.JBCefCookie;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -55,6 +56,7 @@ public class WebBrowser extends AnAction implements DumbAware {
     frame.setLayout(new BorderLayout());
 
     final JBCefBrowser myJBCefBrowser = new JBCefBrowser(URL);
+    myJBCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
     final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame, myJBCefBrowser);
 
     frame.addWindowListener(new WindowAdapter() {
