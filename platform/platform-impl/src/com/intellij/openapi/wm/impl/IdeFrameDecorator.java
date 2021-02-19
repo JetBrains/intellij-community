@@ -136,8 +136,10 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         }
         notifyFrameComponents(state);
 
-        if (toFocus != null) {
-          // window 'forgets' last focused component on disposal, so we need to restore it explicitly
+        if (toFocus != null && !(toFocus instanceof JRootPane)) {
+          // Window 'forgets' last focused component on disposal, so we need to restore it explicitly.
+          // Special case is toggling fullscreen mode from menu. In this case menu UI moves focus to the root pane before performing
+          // the action. We shouldn't explicitly request focus in this case - menu UI will restore the focus without our help.
           toFocus.requestFocusInWindow();
         }
       }
