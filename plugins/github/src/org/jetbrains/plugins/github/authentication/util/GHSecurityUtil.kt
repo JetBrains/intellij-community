@@ -12,7 +12,8 @@ object GHSecurityUtil {
   private const val REPO_SCOPE = "repo"
   private const val GIST_SCOPE = "gist"
   private const val READ_ORG_SCOPE = "read:org"
-  val MASTER_SCOPES = listOf(REPO_SCOPE, GIST_SCOPE, READ_ORG_SCOPE)
+  private const val WORKFLOW_SCOPE = "workflow"
+  val MASTER_SCOPES = listOf(REPO_SCOPE, GIST_SCOPE, READ_ORG_SCOPE, WORKFLOW_SCOPE)
 
   const val DEFAULT_CLIENT_NAME = "Github Integration Plugin"
 
