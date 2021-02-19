@@ -9,14 +9,12 @@ import java.util.List;
 
 /**
  * Method comment
- *
- * @author Dmitry Skavish
  */
-public class JDMethodComment extends JDParamListOwnerComment {
-  private String myReturnTag;
+class JDMethodComment extends JDParamListOwnerComment {
+  private final List<String> myReturnTags = new ArrayList<>(); // In erroneous cases multiple return tags are possible (see IDEA-186041)
   private List<TagDescription> myThrowsList;
 
-  public JDMethodComment(@NotNull CommentFormatter formatter) {
+  JDMethodComment(@NotNull CommentFormatter formatter) {
     super(formatter);
   }
 
@@ -24,10 +22,10 @@ public class JDMethodComment extends JDParamListOwnerComment {
   protected void generateSpecial(@NotNull String prefix, @NotNull StringBuilder sb) {
     super.generateSpecial(prefix, sb);
 
-    if (myReturnTag != null) {
-      if (myFormatter.getSettings().JD_KEEP_EMPTY_RETURN || !myReturnTag.trim().isEmpty()) {
+    for (String returnTag : myReturnTags) {
+      if (myFormatter.getSettings().JD_KEEP_EMPTY_RETURN || !returnTag.trim().isEmpty()) {
         JDTag tag = JDTag.RETURN;
-        sb.append(myFormatter.getParser().formatJDTagDescription(myReturnTag,
+        sb.append(myFormatter.getParser().formatJDTagDescription(returnTag,
                                                                  prefix + tag.getWithEndWhitespace(),
                                                                  prefix + javadocContinuationIndent()));
 
@@ -48,8 +46,8 @@ public class JDMethodComment extends JDParamListOwnerComment {
     }
   }
 
-  public void setReturnTag(@NotNull String returnTag) {
-    this.myReturnTag = returnTag;
+  public void addReturnTag(@NotNull String returnTag) {
+    myReturnTags.add(returnTag);
   }
 
   public void addThrow(@NotNull String className, @Nullable String description) {
