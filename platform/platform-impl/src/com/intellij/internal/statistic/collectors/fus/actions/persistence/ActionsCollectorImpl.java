@@ -96,7 +96,12 @@ public class ActionsCollectorImpl extends ActionsCollector {
     if (action instanceof ActionWithDelegate) {
       Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
       PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
-      actionId = delegateInfo.isSafeToReport() ? delegate.getClass().getName() : DEFAULT_ID;
+      if (delegate instanceof AnAction) {
+        AnAction delegateAction = (AnAction)delegate;
+        actionId = getActionId(delegateInfo, delegateAction);
+      } else {
+        actionId = delegateInfo.isSafeToReport() ? delegate.getClass().getName() : DEFAULT_ID;
+      }
       data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionId));
       data.add(ActionsEventLogGroup.ACTION_PARENT.with(actionClassName));
     }
