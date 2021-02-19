@@ -172,6 +172,10 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, "int[]"));
   }
 
+  public void testVarTypeLambdaTypeCast() {
+    doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, "I"));
+  }
+
   public void testTypeContainingVarJava11() {
     doTest("temp", true, false, false, "var.X");
   }

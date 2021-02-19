@@ -1006,6 +1006,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       else if (copyVariableInitializer instanceof PsiArrayInitializerExpression) {
         new AddNewArrayExpressionFix((PsiArrayInitializerExpression)copyVariableInitializer).doFix();
       }
+      else if (copyVariableInitializer instanceof PsiFunctionalExpression) {
+        PsiTypeCastExpression castExpression =
+          (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(copyVariableInitializer.getProject())
+            .createExpressionFromText("(" + typeElement.getText() + ")a", copyVariableInitializer);
+        Objects.requireNonNull(castExpression.getOperand()).replace(copyVariableInitializer);
+        copyVariableInitializer.replace(castExpression);
+      }
     }
 
     return new CommentTracker().replaceAndRestoreComments(typeElement, JavaPsiFacade.getElementFactory(context.getProject()).createTypeElementFromText("var", context));
