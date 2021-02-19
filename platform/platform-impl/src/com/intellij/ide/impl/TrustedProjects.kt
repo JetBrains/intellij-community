@@ -32,7 +32,9 @@ fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String):
   val dontAskAgain = if (origin != null) {
     object : DialogWrapper.DoNotAskOption.Adapter() {
       override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-        service<TrustedHostsSettings>().setHostTrusted(origin, true)
+        if (isSelected && exitCode == Messages.YES) {
+          service<TrustedHostsSettings>().setHostTrusted(origin, true)
+        }
       }
 
       override fun getDoNotShowMessage(): String {
