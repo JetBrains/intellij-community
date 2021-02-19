@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.idea.frontend.api.fir.utils
 
-import org.jetbrains.kotlin.idea.frontend.api.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.idea.frontend.api.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.idea.frontend.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
+import org.jetbrains.kotlin.idea.frontend.api.tokens.hackyAllowRunningOnEdt
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 
 @HackToForceAllowRunningAnalyzeOnEDT
