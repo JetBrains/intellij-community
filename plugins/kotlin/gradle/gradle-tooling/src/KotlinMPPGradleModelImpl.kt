@@ -46,8 +46,9 @@ class KotlinSourceSetImpl(
     override val resourceDirs: Set<File>,
     override val dependencies: Array<KotlinDependencyId>,
     override val declaredDependsOnSourceSets: Set<String>,
+    @Suppress("OverridingDeprecatedMember")
     override val allDependsOnSourceSets: Set<String>,
-    defaultPlatform: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
+    defaultActualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
     defaultIsTestModule: Boolean = false
 ) : KotlinSourceSet {
 
@@ -60,12 +61,12 @@ class KotlinSourceSetImpl(
         dependencies = kotlinSourceSet.dependencies.clone(),
         declaredDependsOnSourceSets = HashSet(kotlinSourceSet.declaredDependsOnSourceSets),
         allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
-        defaultPlatform = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
+        defaultActualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
     ) {
         this.isTestModule = kotlinSourceSet.isTestModule
     }
 
-    override var actualPlatforms: KotlinPlatformContainer = defaultPlatform
+    override var actualPlatforms: KotlinPlatformContainer = defaultActualPlatforms
         internal set
 
     override var isTestModule: Boolean = defaultIsTestModule
@@ -291,20 +292,20 @@ class KotlinPlatformContainerImpl() : KotlinPlatformContainer {
         get() = myPlatforms != null
 
     constructor(platform: KotlinPlatformContainer) : this() {
-        myPlatforms = HashSet<KotlinPlatform>(platform.platforms)
+        myPlatforms = HashSet(platform.platforms)
     }
 
-    override val platforms: Collection<KotlinPlatform>
+    override val platforms: Set<KotlinPlatform>
         get() = myPlatforms ?: defaultCommonPlatform
 
     override fun supports(simplePlatform: KotlinPlatform): Boolean = platforms.contains(simplePlatform)
 
-    override fun addSimplePlatforms(platforms: Collection<KotlinPlatform>) {
-        (myPlatforms ?: HashSet<KotlinPlatform>().apply { myPlatforms = this }).let {
-            it.addAll(platforms)
-            if (it.contains(KotlinPlatform.COMMON)) {
-                it.clear()
-                it.addAll(defaultCommonPlatform)
+    override fun pushPlatforms(platforms: Iterable<KotlinPlatform>) {
+        myPlatforms = (myPlatforms ?: LinkedHashSet()).apply {
+            addAll(platforms)
+            if (contains(KotlinPlatform.COMMON)) {
+                clear()
+                addAll(defaultCommonPlatform)
             }
         }
     }

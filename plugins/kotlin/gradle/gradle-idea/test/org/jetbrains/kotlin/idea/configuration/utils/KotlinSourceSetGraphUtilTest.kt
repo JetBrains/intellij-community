@@ -183,7 +183,7 @@ private fun createKotlinSourceSetPair(
     dependencies = emptyArray(),
     declaredDependsOnSourceSets = declaredDependsOnSourceSets,
     allDependsOnSourceSets = allDependsOnSourceSets,
-    defaultPlatform = KotlinPlatformContainerImpl().apply { addSimplePlatforms(platforms) },
+    defaultActualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
     defaultIsTestModule = isTestModule
 )
 

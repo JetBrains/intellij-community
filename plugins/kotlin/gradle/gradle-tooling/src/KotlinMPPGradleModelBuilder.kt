@@ -520,14 +520,14 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         }
         val nativeExtensions = konanTarget?.let(::KotlinNativeCompilationExtensionsImpl)
 
-        val allSourceSets = kotlinSourceSets.flatMap { it.allDependsOnSourceSets }
-            .mapNotNull { importingContext.sourceSetByName(it) }
+        val allSourceSets = kotlinSourceSets
+            .flatMap { sourceSet -> importingContext.resolveAllDependsOnSourceSets(sourceSet) }
             .union(kotlinSourceSets)
 
         return KotlinCompilationImpl(
             name = gradleCompilation.name,
             allSourceSets = allSourceSets,
-            declaredSourceSets = if(platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
+            declaredSourceSets = if (platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
             dependencies = dependencies.map { dependencyMapper.getId(it) }.distinct().toTypedArray(),
             output = output,
             arguments = arguments,
@@ -760,24 +760,24 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             // Explicitly set platform of orphan source-sets to only used platforms, not all supported platforms
             // Otherwise, the tooling might be upset after trying to provide some support for a target which actually
             // doesn't exist in this project (e.g. after trying to draw gutters, while test tasks do not exist)
-            sourceSet.actualPlatforms.addSimplePlatforms(projectPlatforms)
+            sourceSet.actualPlatforms.pushPlatforms(projectPlatforms)
             return
         }
 
         if (shouldCoerceToCommon(sourceSet)) {
-            sourceSet.actualPlatforms.addSimplePlatforms(listOf(KotlinPlatform.COMMON))
+            sourceSet.actualPlatforms.pushPlatforms(KotlinPlatform.COMMON)
             return
         }
 
         if (!getProperty(IS_HMPP_ENABLED) && !isDeclaredSourceSet(sourceSet)) {
             // intermediate source sets should be common if HMPP is disabled
-            sourceSet.actualPlatforms.addSimplePlatforms(listOf(KotlinPlatform.COMMON))
+            sourceSet.actualPlatforms.pushPlatforms(KotlinPlatform.COMMON)
             return
         }
 
         compilationsBySourceSet(sourceSet)?.let { compilations ->
             val platforms = compilations.map { it.platform }
-            sourceSet.actualPlatforms.addSimplePlatforms(platforms)
+            sourceSet.actualPlatforms.pushPlatforms(platforms)
         }
     }
 

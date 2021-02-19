@@ -54,7 +54,7 @@ private fun getFixedDependsOnSourceSets(
     (Can probably be dropped in Kotlin 1.5)
      */
     val implicitDependsOnEdgeForAndroid = if (
-        sourceSet.actualPlatforms.supports(KotlinPlatform.ANDROID) && sourceSet.declaredDependsOnSourceSets.isEmpty()
+        sourceSet.actualPlatforms.contains(KotlinPlatform.ANDROID) && sourceSet.declaredDependsOnSourceSets.isEmpty()
     ) {
         val commonSourceSetName = if (sourceSet.isTestModule) KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME
         else KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME

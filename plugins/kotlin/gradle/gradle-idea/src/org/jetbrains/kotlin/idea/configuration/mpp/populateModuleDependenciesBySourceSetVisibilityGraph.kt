@@ -60,7 +60,7 @@ private data class DependencyPopulationSettings(
 private fun dependencyPopulationSettings(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet): DependencyPopulationSettings {
     val forceNativeDependencyPropagation: Boolean
     val excludeInheritedNativeDependencies: Boolean
-    if (mppModel.extraFeatures.isHMPPEnabled && sourceSet.actualPlatforms.getSinglePlatform() == KotlinPlatform.NATIVE) {
+    if (mppModel.extraFeatures.isHMPPEnabled && sourceSet.actualPlatforms.singleOrNull() == KotlinPlatform.NATIVE) {
         forceNativeDependencyPropagation = mppModel.extraFeatures.isNativeDependencyPropagationEnabled
         excludeInheritedNativeDependencies = !forceNativeDependencyPropagation
     } else {

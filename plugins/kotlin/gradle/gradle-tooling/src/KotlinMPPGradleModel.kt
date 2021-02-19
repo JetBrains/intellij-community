@@ -73,7 +73,8 @@ interface KotlinSourceSet : KotlinModule {
                 "Replace with 'KotlinSourceSetContainer.resolveAllDependsOnSourceSets' to make intention of receiving the full transitive closure explicit",
         level = DeprecationLevel.ERROR
     )
-    val dependsOnSourceSets: Set<String> get() = allDependsOnSourceSets
+    val dependsOnSourceSets: Set<String>
+        get() = allDependsOnSourceSets
 
     /**
      * The whole transitive closure of source sets this source set depends on.
@@ -87,9 +88,9 @@ interface KotlinSourceSet : KotlinModule {
     val allDependsOnSourceSets: Set<String>
 
 
-    @Deprecated("Returns single target platform", ReplaceWith("actualPlatforms.actualPlatforms"), DeprecationLevel.ERROR)
+    @Deprecated("Returns single target platform. Use actualPlatforms instead", level = DeprecationLevel.ERROR)
     val platform: KotlinPlatform
-        get() = actualPlatforms.getSinglePlatform()
+        get() = actualPlatforms.platforms.singleOrNull() ?: KotlinPlatform.COMMON
 
 
     companion object {
@@ -177,15 +178,50 @@ enum class KotlinPlatform(val id: String) {
     }
 }
 
-interface KotlinPlatformContainer : Serializable {
+interface KotlinPlatformContainer : Serializable, Iterable<KotlinPlatform> {
+    /**
+     * Distinct collection of Platforms.
+     * Keeping 'Collection' as type for binary compatibility
+     */
     val platforms: Collection<KotlinPlatform>
     val arePlatformsInitialized: Boolean
 
+    @Deprecated(
+        "Ambiguous semantics of 'supports' for COMMON or (ANDROID/JVM) platforms. Use 'platforms' directly to express clear intention",
+        level = DeprecationLevel.ERROR
+    )
     fun supports(simplePlatform: KotlinPlatform): Boolean
 
-    fun addSimplePlatforms(platforms: Collection<KotlinPlatform>)
-
+    @Deprecated(
+        "Unclear semantics: Use 'platforms' directly to express intention",
+        level = DeprecationLevel.ERROR
+    )
     fun getSinglePlatform() = platforms.singleOrNull() ?: KotlinPlatform.COMMON
+
+    @Deprecated(
+        "Unclear semantics: Use 'pushPlatform' instead",
+        ReplaceWith("pushPlatform"),
+        level = DeprecationLevel.ERROR
+    )
+    fun addSimplePlatforms(platforms: Collection<KotlinPlatform>) = pushPlatforms(platforms)
+
+    /**
+     * Adds the given [platforms] to this container.
+     * Note: If any of the pushed [platforms] is common, then this container will drop all non-common platforms and subsequent invocations
+     * to this function will have no further effect.
+     */
+    fun pushPlatforms(platforms: Iterable<KotlinPlatform>)
+
+    /**
+     * @see pushPlatforms
+     */
+    fun pushPlatforms(vararg platform: KotlinPlatform) {
+        pushPlatforms(platform.toList())
+    }
+
+    override fun iterator(): Iterator<KotlinPlatform> {
+        return platforms.toSet().iterator()
+    }
 }
 
 

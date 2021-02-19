@@ -40,11 +40,12 @@ import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.kotlin.idea.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING
 import org.jetbrains.kotlin.idea.configuration.mpp.createPopulateModuleDependenciesContext
+import org.jetbrains.kotlin.idea.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesByCompilations
 import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
-import org.jetbrains.kotlin.idea.configuration.utils.*
-import org.jetbrains.kotlin.idea.configuration.mpp.getCompilations
+import org.jetbrains.kotlin.idea.configuration.utils.UnsafeTestSourceSetHeuristicApi
+import org.jetbrains.kotlin.idea.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.configuration.utils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
@@ -407,7 +408,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             val ignoreCommonSourceSets by lazy { externalProject.notImportedCommonSourceSets() }
             for (sourceSet in mppModel.sourceSetsByName.values) {
                 if (delegateToAndroidPlugin(sourceSet)) continue
-                if (sourceSet.actualPlatforms.supports(KotlinPlatform.COMMON) && ignoreCommonSourceSets) continue
+                if (sourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.COMMON && ignoreCommonSourceSets) continue
                 val moduleId = getKotlinModuleId(gradleModule, sourceSet, resolverCtx)
                 val existingSourceSetDataNode = sourceSetMap[moduleId]?.first
                 if (existingSourceSetDataNode?.kotlinSourceSet != null) continue
@@ -442,7 +443,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                             .mapNotNull { compilationData -> compilationData.targetCompatibility }
                             .minWithOrNull(VersionComparatorUtil.COMPARATOR)
 
-                        if (sourceSet.actualPlatforms.getSinglePlatform() == KotlinPlatform.NATIVE) {
+                        if (sourceSet.actualPlatforms.singleOrNull() == KotlinPlatform.NATIVE) {
                             it.konanTargets = compilationDataRecords
                                 .flatMap { compilationData -> compilationData.konanTargets }
                                 .toSet()
@@ -772,13 +773,15 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 val languageSettings = sourceSet.languageSettings
                 info.moduleId = getKotlinModuleId(gradleModule, sourceSet, resolverCtx)
                 info.gradleModuleId = getModuleId(resolverCtx, gradleModule)
-                info.actualPlatforms.addSimplePlatforms(sourceSet.actualPlatforms.platforms)
+                info.actualPlatforms.pushPlatforms(sourceSet.actualPlatforms)
                 info.isTestModule = sourceSet.isTestModule
                 info.dependsOn = mppModel.resolveAllDependsOnSourceSets(sourceSet).map { dependsOnSourceSet ->
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name)
                 }
                 //TODO(auskov): target flours are lost here
-                info.compilerArguments = createCompilerArguments(emptyList(), sourceSet.actualPlatforms.getSinglePlatform()).also {
+                info.compilerArguments = createCompilerArguments(
+                    emptyList(), sourceSet.actualPlatforms.singleOrNull() ?: KotlinPlatform.COMMON
+                ).also {
                     it.multiPlatform = true
                     it.languageVersion = languageSettings.languageVersion
                     it.apiVersion = languageSettings.apiVersion
@@ -814,7 +817,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             return KotlinSourceSetInfo(compilation).also { sourceSetInfo ->
                 sourceSetInfo.moduleId = getKotlinModuleId(gradleModule, compilation, resolverCtx)
                 sourceSetInfo.gradleModuleId = getModuleId(resolverCtx, gradleModule)
-                sourceSetInfo.actualPlatforms.addSimplePlatforms(listOf(compilation.platform))
+                sourceSetInfo.actualPlatforms.pushPlatforms(compilation.platform)
                 sourceSetInfo.isTestModule = compilation.isTestModule
                 sourceSetInfo.dependsOn = compilation.declaredSourceSets.flatMap { it.allDependsOnSourceSets }.map {
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
