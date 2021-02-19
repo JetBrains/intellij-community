@@ -41,39 +41,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgBundle;
-import org.zmlx.hg4idea.HgChange;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgFileRevision;
-import org.zmlx.hg4idea.HgFileStatusEnum;
-import org.zmlx.hg4idea.HgNameWithHashInfo;
-import org.zmlx.hg4idea.HgProjectSettings;
-import org.zmlx.hg4idea.HgRevisionNumber;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -83,6 +55,12 @@ import org.zmlx.hg4idea.log.HgHistoryUtil;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
+
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * HgUtil is a collection of static utility methods for Mercurial.
@@ -503,7 +481,6 @@ public abstract class HgUtil {
   }
 
   @Nullable
-  @RequiresEdt
   public static HgRepository getCurrentRepository(@NotNull Project project) {
     if (project.isDisposed()) return null;
     return DvcsUtil.guessRepositoryForFile(project, getRepositoryManager(project),
