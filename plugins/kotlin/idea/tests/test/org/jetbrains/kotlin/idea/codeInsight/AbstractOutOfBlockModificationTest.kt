@@ -46,7 +46,7 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
         // have to analyze file before any change to support incremental analysis
         ktFile.analyzeWithAllCompilerChecks()
 
-        myFixture.type(stringToType)
+        myFixture.type(stringToType(myFixture))
         PsiDocumentManager.getInstance(myFixture.project).commitDocument(myFixture.getDocument(myFixture.file))
         val oobAfterCount = ktFile.outOfBlockModificationCount
         val modificationCountAfterType = tracker.modificationCount
@@ -109,9 +109,6 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
             )
         }
     }
-
-    private val stringToType: String
-        get() = stringToType(myFixture)
 
     private val expectedOutOfBlockResult: Boolean
         get() {
