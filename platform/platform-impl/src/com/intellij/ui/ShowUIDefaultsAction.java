@@ -211,11 +211,6 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 return panel;
               } catch (Exception ignore) {}
             }
-            if (column == 0 && value instanceof String && ((String)value).contains(" as #")) {
-              return simplePanel(new JBLabel(AllIcons.General.Warning, LEFT))
-                .addToLeft(super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column))
-                .withBackground(UIUtil.getListBackground(isSelected, hasFocus));
-            }
             return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           }
         });

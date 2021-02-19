@@ -63,12 +63,8 @@ public class JBColor extends Color {
   @NotNull
   public static JBColor namedColor(@NonNls @NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
-      Color color = notNull(UIManager.getColor(propertyName), () ->
-                            notNull(findPatternMatch(propertyName), defaultColor));
-      if (UIManager.get(propertyName) == null) {
-        UIManager.put(propertyName + " as #" + ColorUtil.toHex(color).toUpperCase(), color);
-      }
-      return color;
+      return notNull(UIManager.getColor(propertyName),
+                     () -> notNull(findPatternMatch(propertyName), defaultColor));
     });
   }
 
