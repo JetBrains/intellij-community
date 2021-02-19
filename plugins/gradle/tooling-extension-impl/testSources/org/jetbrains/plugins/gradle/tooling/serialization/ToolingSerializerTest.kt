@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.model.tests.DefaultExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.RepositoriesModelImpl
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.*
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
 import org.junit.Before
@@ -103,11 +102,10 @@ class ToolingSerializerTest {
   @Test
   @Throws(Exception::class)
   fun `IDEA project serialization test`() {
-    val gradleVersion = GradleVersion.current()
     myRandomParameters
       .randomize(
         ofType(GradleVersionComparator::class.java).and(inClass(InternalIdeaContentRoot::class.java)),
-        Randomizer { GradleVersionComparator(gradleVersion) }
+        Randomizer { GradleVersionComparator(GradleVersion.version("6.8")) }
       )
       .randomize(
         ofType(InternalProjectIdentifier::class.java),
@@ -115,8 +113,6 @@ class ToolingSerializerTest {
       )
       .excludeField(named("parent").and(ofType(InternalIdeaProject::class.java)).and(inClass(InternalIdeaModule::class.java)))
       .excludeField(named("parent").and(ofType(InternalGradleProject::class.java)).and(inClass(InternalGradleProject::class.java)))
-      // relax InternalBuildIdentifier.rootDir absolute path assertion
-      .randomize(File::class.java) { File(myRandom.nextObject(String::class.java)).absoluteFile }
       .excludeField(named("gradleProject").and(inClass(InternalGradleTask::class.java)))
 
     val serializer = ToolingSerializer()
