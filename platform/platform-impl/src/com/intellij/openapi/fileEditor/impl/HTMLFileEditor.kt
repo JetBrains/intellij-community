@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.jcef.JBCefBrowserBase.ErrorPage
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.Alarm
 import com.intellij.util.AlarmFactory
@@ -40,37 +41,33 @@ internal class HTMLFileEditor private constructor() : UserDataHolderBase(), File
   private lateinit var fallback: String
 
   constructor(html: String) : this() {
-    contentPanel.loadHTML(html)
     fallback = ""
+    contentPanel.setErrorPage(ErrorPage.DEFAULT)
+    contentPanel.loadHTML(html)
   }
 
   constructor(url: String, timeoutHtml: String? = null) : this() {
-    contentPanel.loadURL(url)
     fallback = if (!timeoutHtml.isNullOrEmpty()) timeoutHtml else EditorBundle.message("message.html.editor.timeout")
+    contentPanel.setErrorPage(if (!timeoutHtml.isNullOrEmpty()) ErrorPage { _, _, _ -> timeoutHtml } else ErrorPage.DEFAULT)
+    contentPanel.loadURL(url)
   }
 
   init {
     loadingPanel.setLoadingText(CommonBundle.getLoadingTreeNodeText())
 
     contentPanel.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
-      override fun onLoadStart(browser: CefBrowser, frame: CefFrame, transitionType: CefRequest.TransitionType?) {
-        if (fallback.isNotEmpty()) {
-          alarm.addRequest({ contentPanel.setHtml(fallback)}, Registry.intValue("html.editor.timeout", 10000))
-        }
-      }
-
-      override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-        alarm.cancelAllRequests()
-      }
-
       override fun onLoadingStateChange(browser: CefBrowser, isLoading: Boolean, canGoBack: Boolean, canGoForward: Boolean) {
         if (isLoading) {
+          if (fallback.isNotEmpty()) {
+            alarm.addRequest({ contentPanel.loadHTML(fallback) }, Registry.intValue("html.editor.timeout", 10000))
+          }
           invokeLater {
             loadingPanel.startLoading()
             multiPanel.select(LOADING_KEY, true)
           }
         }
         else {
+          alarm.cancelAllRequests()
           invokeLater {
             loadingPanel.stopLoading()
             multiPanel.select(CONTENT_KEY, true)
