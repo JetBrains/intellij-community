@@ -4,6 +4,9 @@ package com.intellij.internal.statistic.utils
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
+import java.text.SimpleDateFormat
+import java.time.ZoneOffset
+import java.util.*
 
 fun addPluginInfoTo(info: PluginInfo, data: MutableMap<String, Any>) {
   data["plugin_type"] = info.type.name
@@ -52,6 +55,16 @@ object StatisticsUtil {
     val step = steps[stepIndex]
     val addPlus = stepIndex == steps.size - 1 || steps[stepIndex + 1] != step + 1
     return humanize(step) + if (addPlus) "+" else ""
+  }
+
+  /**
+   * Returns current hour in UTC as "yyMMddHH"
+   */
+  fun getCurrentHourInUTC(calendar: Calendar = Calendar.getInstance(Locale.ENGLISH)): String {
+    calendar[Calendar.YEAR] = calendar[Calendar.YEAR].coerceIn(2000, 2099)
+    val format = SimpleDateFormat("yyMMddHH", Locale.ENGLISH)
+    format.timeZone = TimeZone.getTimeZone(ZoneOffset.UTC)
+    return format.format(calendar.time)
   }
 
   private fun humanize(number: Int): String {
