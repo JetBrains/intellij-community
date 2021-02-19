@@ -53,7 +53,7 @@ public class MethodCountInspection extends BaseInspection {
     final Component label = new JLabel(InspectionGadgetsBundle.message("method.count.limit.option"));
     final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
-    panel.row(label, valueField);
+    panel.addRow(label, valueField);
     panel.addCheckbox(InspectionGadgetsBundle.message("method.count.ignore.getters.setters.option"), "ignoreGettersAndSetters");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
 

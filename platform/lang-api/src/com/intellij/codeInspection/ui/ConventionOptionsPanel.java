@@ -89,9 +89,9 @@ public class ConventionOptionsPanel extends InspectionOptionsPanel {
     final Document maxLengthDocument = maxLengthField.getDocument();
     maxLengthDocument.addDocumentListener(listener);
 
-    row(patternLabel, regexField);
-    row(minLengthLabel, minLengthField);
-    row(maxLengthLabel,  maxLengthField);
+    addRow(patternLabel, regexField);
+    addRow(minLengthLabel, minLengthField);
+    addRow(maxLengthLabel, maxLengthField);
 
     for (JComponent extraOption : extraOptions) {
       add(extraOption);

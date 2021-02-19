@@ -66,7 +66,7 @@ public class MethodCouplingInspection extends MethodMetricInspection {
 
     final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
-    panel.row(label, valueField);
+    panel.addRow(label, valueField);
     panel.addCheckbox(InspectionGadgetsBundle.message("include.java.system.classes.option"), "m_includeJavaClasses");
     panel.addCheckbox(InspectionGadgetsBundle.message("include.library.classes.option"), "m_includeLibraryClasses");
 

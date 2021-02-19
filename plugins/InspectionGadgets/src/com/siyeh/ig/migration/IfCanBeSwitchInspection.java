@@ -93,7 +93,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       }
     });
 
-    panel.row(label, valueField);
+    panel.addRow(label, valueField);
     panel.addCheckbox(InspectionGadgetsBundle.message("if.can.be.switch.int.option"), "suggestIntSwitches");
     panel.addCheckbox(InspectionGadgetsBundle.message("if.can.be.switch.enum.option"), "suggestEnumSwitches");
     panel.addCheckbox(InspectionGadgetsBundle.message("if.can.be.switch.null.safe.option"), "onlySuggestNullSafe");
