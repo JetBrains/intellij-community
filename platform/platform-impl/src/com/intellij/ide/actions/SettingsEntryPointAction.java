@@ -379,7 +379,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     private boolean myShowPopup = true;
 
     private MyStatusBarWidget() {
-      initPluginsListeners();
+      ApplicationManager.getApplication().invokeLater(() -> initPluginsListeners(), ModalityState.any());
     }
 
     @Override
