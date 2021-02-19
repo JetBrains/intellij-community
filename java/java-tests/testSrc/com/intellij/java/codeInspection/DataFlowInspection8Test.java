@@ -329,4 +329,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testModifyListInLambda() {
     doTest();
   }
+  public void testConstantInClosure() { doTest(); }
 }

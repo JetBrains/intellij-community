@@ -776,10 +776,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         if (PsiUtil.isJvmLocalVariable(target)) {
           variables.add((PsiVariable)target);
         }
-        if (target instanceof PsiMember && !((PsiMember)target).hasModifierProperty(PsiModifier.STATIC)) {
-          DfaValue qualifier = getFactory().getExpressionFactory().getQualifierOrThisValue(expression);
-          if (qualifier instanceof DfaVariableValue) {
-            escapedVars.add((DfaVariableValue)qualifier);
+        if (target instanceof PsiMember) {
+          DfaValue escapedVar = getFactory().getExpressionFactory().getQualifierOrThisValue(expression);
+          if (escapedVar == null) {
+            escapedVar = getFactory().createValue(expression);
+          }
+          if (escapedVar instanceof DfaVariableValue) {
+            escapedVars.add((DfaVariableValue)escapedVar);
           }
         }
       }
