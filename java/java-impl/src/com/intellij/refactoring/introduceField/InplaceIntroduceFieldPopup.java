@@ -85,6 +85,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
         updateInitializer(elementFactory, field1);
       }
       PsiUtil.setModifierProperty(field1, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
+      PsiUtil.setModifierProperty(field1, PsiModifier.STATIC, myStatic);
       final String visibility = myIntroduceFieldPanel.getFieldVisibility();
       if (visibility != null) {
         PsiUtil.setModifierProperty(field1, visibility, true);
