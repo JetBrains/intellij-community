@@ -1237,7 +1237,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     @RequiresEdt
     public void destroy() {
-      Disposer.dispose(myViewer);
+      try {
+        Disposer.dispose(myViewer);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     @Nullable
@@ -1288,7 +1293,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     @RequiresEdt
     public void destroy() {
-      Disposer.dispose(myViewer);
+      try {
+        Disposer.dispose(myViewer);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     @Nullable
@@ -1366,8 +1376,13 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     @RequiresEdt
     public void destroy() {
-      Disposer.dispose(myViewer);
-      Disposer.dispose(myWrapperViewer);
+      try {
+        Disposer.dispose(myViewer);
+        Disposer.dispose(myWrapperViewer);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     @Nullable
