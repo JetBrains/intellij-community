@@ -484,11 +484,9 @@ public class DependencyResolverImpl implements DependencyResolver {
     Collection<ExternalDependency> result = new ArrayList<ExternalDependency>(2);
     List<File> files = new ArrayList<File>(sourceSetOutput.getClassesDirs().getFiles());
     files.add(sourceSetOutput.getResourcesDir());
-    if (!files.isEmpty()) {
-      DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(files);
-      fileCollectionDependency.setScope(scope);
-      result.add(fileCollectionDependency);
-    }
+    DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(files);
+    fileCollectionDependency.setScope(scope);
+    result.add(fileCollectionDependency);
 
     if (scope == RUNTIME_SCOPE) {
       ExternalDependency outputDirsRuntimeFileDependency = resolveSourceSetOutputDirsRuntimeFileDependency(sourceSetOutput);
