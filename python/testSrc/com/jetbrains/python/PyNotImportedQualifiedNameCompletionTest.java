@@ -28,6 +28,35 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     assertContainsElements(variants, "bar.func", "bar.func1");
   }
 
+  // PY-47281
+  public void testVariantsFromInternalThirdPartyModulesExcludedUnlessExported() {
+    runWithAdditionalClassEntryInSdkRoots(getTestName(false) + "/site-packages", () -> {
+      myFixture.copyDirectoryToProject(getTestName(false) + "/src", "");
+      myFixture.configureByFile("main.py");
+      myFixture.completeBasic();
+      List<String> variants = myFixture.getLookupElementStrings();
+      assertNotNull(variants);
+      assertDoesntContain(variants, "mypackage._impl.func", "mypackage._vendor.lib.func");
+      assertContainsElements(variants, "mypackage.func_exported", "mypackage_util._impl.func");
+    });
+  }
+
+  // PY-47281
+  public void testVariantsFromInternalSkeletonsExcludedUnlessExported() {
+    String testName = getTestName(false);
+    runWithAdditionalClassEntryInSdkRoots(testName + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testName + "/python_stubs", () -> {
+        myFixture.copyDirectoryToProject(testName + "/src", "");
+        myFixture.configureByFile("main.py");
+        myFixture.completeBasic();
+        List<String> variants = myFixture.getLookupElementStrings();
+        assertNotNull(variants);
+        assertDoesntContain(variants, "mypackage._impl.func");
+        assertContainsElements(variants, "mypackage.func_exported", "mypackage_util._impl.func");
+      });
+    });
+  }
+
   public void testQualifiedNameMatcherTest() {
     QualifiedNameMatcher matcher = new QualifiedNameMatcher(QualifiedName.fromDottedString("foo.bar.baz"));
     assertTrue(matcher.prefixMatches("foo.bar.baz"));

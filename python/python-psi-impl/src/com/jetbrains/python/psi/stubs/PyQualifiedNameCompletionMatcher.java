@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
@@ -41,6 +42,7 @@ public class PyQualifiedNameCompletionMatcher {
     QualifiedNameMatcher matcher = new QualifiedNameMatcher(qualifiedNamePattern);
     StubIndex stubIndex = StubIndex.getInstance();
     Project project = Objects.requireNonNull(scope.getProject());
+    PsiManager psiManager = PsiManager.getInstance(project);
 
     GlobalSearchScope moduleMatchingScope = scope.intersectWith(new ModuleQualifiedNameMatchingScope(matcher, project));
     Set<QualifiedName> alreadySuggestedAttributes = new HashSet<>();
@@ -65,6 +67,9 @@ public class PyQualifiedNameCompletionMatcher {
             }
             else {
               importPath = moduleQualifiedName;
+            }
+            if (ContainerUtil.exists(importPath.getComponents(), c -> c.startsWith("_")) && !psiManager.isInProject(element)) {
+              return true;
             }
             QualifiedName attributeQualifiedName = importPath.append(attributeName);
             if (alreadySuggestedAttributes.add(attributeQualifiedName)) {
