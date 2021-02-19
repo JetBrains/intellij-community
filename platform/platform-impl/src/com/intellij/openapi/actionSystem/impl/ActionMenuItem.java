@@ -166,6 +166,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         //If action has Enter shortcut, do not add it. Otherwise, user won't be able to chose any ActionMenuItem other than that
         if (!isEnterKeyStroke(firstKeyStroke)) {
           setAccelerator(firstKeyStroke);
+          if (KeymapUtil.isSimplifiedMacShortcuts()) {
+            putClientProperty("accelerator.text", KeymapUtil.getPreferredShortcutText(shortcuts));
+          }
         }
         break;
       }
