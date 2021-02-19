@@ -54,7 +54,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                 arrayOf("4.9", "1.3.30"),
                 arrayOf("4.9", "1.3.72"),
                 arrayOf("5.6.4", "1.3.72"),
-                arrayOf("6.7.1", "1.4.20")
+                arrayOf("6.7.1", "1.4.0"),
+                arrayOf("6.8.2", "1.4.30")
             )
         }
     }
