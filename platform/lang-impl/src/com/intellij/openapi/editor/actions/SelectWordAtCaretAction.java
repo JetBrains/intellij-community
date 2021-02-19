@@ -55,8 +55,6 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       int line = document.getLineNumber(caretOffset);
       ranges.add(new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
 
-      if (ranges.isEmpty()) return;
-
       final TextRange selectionRange = new TextRange(caret.getSelectionStart(), caret.getSelectionEnd());
 
       TextRange minimumRange = new TextRange(0, document.getTextLength());
