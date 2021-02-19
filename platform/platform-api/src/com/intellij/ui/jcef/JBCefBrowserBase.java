@@ -48,7 +48,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @Nullable private volatile LoadDeferrer myLoadDeferrer;
   @NotNull private String myLastRequestedUrl = "";
   @NotNull private final Object myLastRequestedUrlLock = new Object();
-  @Nullable private volatile ErrorPage myErrorPage = ErrorPage.DEFAULT;
+  @Nullable private volatile ErrorPage myErrorPage;
 
   private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
     new LazyInitializer.NotNullValue<>() {
@@ -389,8 +389,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
-   * Overrides the error page to display in the browser on load error.
+   * Sets the error page to display in the browser on load error.
    * <p></p>
+   * By default no error page is displayed. To enable displaying default error page pass {@link ErrorPage#DEFAULT}.
    * Passing {@code null} prevents the browser from displaying an error page.
    *
    * @param errorPage the error page producer, or null

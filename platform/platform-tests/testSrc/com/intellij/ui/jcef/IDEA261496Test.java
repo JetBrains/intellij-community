@@ -43,6 +43,7 @@ public class IDEA261496Test {
     CountDownLatch latch = new CountDownLatch(1);
 
     JBCefBrowser jbCefBrowser = new JBCefBrowser("http://maps.google.com"); // heavy page
+    jbCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
 
     jbCefBrowser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
       @Override
