@@ -120,6 +120,20 @@ object GHGQLRequests {
       }
     }
 
+    fun findByBranches(repository: GHRepositoryCoordinates, baseBranch: String, headBranch: String)
+      : GQLQuery<GHGQLPagedRequestResponse<GHPullRequestShort>> =
+      GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findOpenPullRequestsByBranches,
+                                      mapOf("repoOwner" to repository.repositoryPath.owner,
+                                            "repoName" to repository.repositoryPath.repository,
+                                            "baseBranch" to baseBranch,
+                                            "headBranch" to headBranch),
+                                      PullRequestsConnection::class.java,
+                                      "repository", "pullRequests").apply {
+        acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
+      }
+
+    private class PullRequestsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPullRequestShort>)
+      : GHConnection<GHPullRequestShort>(pageInfo, nodes)
 
     fun update(repository: GHRepositoryCoordinates, pullRequestId: String, title: String?, description: String?): GQLQuery<GHPullRequest> {
       val parameters = mutableMapOf<String, Any>("pullRequestId" to pullRequestId)

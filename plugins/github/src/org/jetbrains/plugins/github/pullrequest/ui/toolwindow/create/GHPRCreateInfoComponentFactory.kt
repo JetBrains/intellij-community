@@ -6,7 +6,6 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -19,17 +18,20 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import git4idea.*
-import git4idea.changes.GitChangeUtils
-import git4idea.history.GitHistoryUtils
+import git4idea.GitLocalBranch
+import git4idea.GitRemoteBranch
+import git4idea.GitStandardRemoteBranch
+import git4idea.GitVcs
 import git4idea.push.GitPushOperation
 import git4idea.push.GitPushSource
 import git4idea.push.GitPushSupport
@@ -42,9 +44,8 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
@@ -65,9 +66,11 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
              descriptionDocument: DisableableDocument,
              metadataModel: GHPRCreateMetadataModel,
              commitsCountModel: SingleValueModel<Int?>,
+             existenceCheckLoadingModel: GHIOExecutorLoadingModel<GHPRIdentifier?>,
              createLoadingModel: GHCompletableFutureLoadingModel<GHPullRequestShort>): JComponent {
 
     val progressIndicator = ListenableProgressIndicator()
+    val existenceCheckProgressIndicator = ListenableProgressIndicator()
     val createAction = CreateAction(directionModel, titleDocument, descriptionDocument, metadataModel, false, createLoadingModel,
                                     progressIndicator, GithubBundle.message("pull.request.create.action"))
     val createDraftAction = CreateAction(directionModel, titleDocument, descriptionDocument, metadataModel, true, createLoadingModel,
@@ -87,7 +90,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         createLoadingModel.future = null
       }
     }
-    InfoController(directionModel, createAction, createDraftAction)
+    InfoController(directionModel, existenceCheckLoadingModel, existenceCheckProgressIndicator, createAction, createDraftAction)
     resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
 
     val directionSelector = GHPRCreateDirectionComponentFactory(repositoriesManager, directionModel).create().apply {
@@ -137,6 +140,9 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
       add(createNoChangesWarningLabel(directionModel, commitsCountModel))
       add(createErrorLabel(createLoadingModel))
+      add(createErrorLabel(existenceCheckLoadingModel))
+      add(createErrorAlreadyExistsLabel(existenceCheckLoadingModel))
+      add(createLoadingLabel(existenceCheckLoadingModel, existenceCheckProgressIndicator))
       add(createLoadingLabel(createLoadingModel, progressIndicator))
       add(actionsPanel)
     }
@@ -153,20 +159,46 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
   }
 
-  class InfoController(private val directionModel: GHPRCreateDirectionModel,
-                       private val createAction: AbstractAction,
-                       private val createDraftAction: AbstractAction) {
+  private inner class InfoController(private val directionModel: GHPRCreateDirectionModel,
+                                     private val existenceCheckLoadingModel: GHIOExecutorLoadingModel<GHPRIdentifier?>,
+                                     private val existenceCheckProgressIndicator: ListenableProgressIndicator,
+                                     private val createAction: AbstractAction,
+                                     private val createDraftAction: AbstractAction) {
     init {
       directionModel.addAndInvokeDirectionChangesListener(::update)
+      existenceCheckLoadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
+        override fun onLoadingCompleted() {
+          update()
+        }
+      })
+      directionModel.addAndInvokeDirectionChangesListener {
+        val baseBranch = directionModel.baseBranch
+        val headRepo = directionModel.headRepo
+        val headBranch = findCurrentRemoteHead(directionModel)
+        if (baseBranch == null || headRepo == null || headBranch == null) existenceCheckLoadingModel.reset()
+        else existenceCheckLoadingModel.load(existenceCheckProgressIndicator) {
+          dataContext.creationService.findPullRequest(existenceCheckProgressIndicator, baseBranch, headRepo, headBranch)
+        }
+      }
     }
 
 
     private fun update() {
       val enabled = directionModel.let {
-        it.baseBranch != null && it.headRepo != null && it.headBranch != null
+        it.baseBranch != null && it.headRepo != null && it.headBranch != null &&
+        (findCurrentRemoteHead(it) == null || (existenceCheckLoadingModel.resultAvailable && existenceCheckLoadingModel.result == null))
       }
       createAction.isEnabled = enabled
       createDraftAction.isEnabled = enabled
+    }
+
+    private fun findCurrentRemoteHead(directionModel: GHPRCreateDirectionModel): GitRemoteBranch? {
+      val headRepo = directionModel.headRepo ?: return null
+      val headBranch = directionModel.headBranch ?: return null
+      if (headBranch is GitRemoteBranch) return headBranch
+      else headBranch as GitLocalBranch
+      val gitRemote = headRepo.gitRemote
+      return GithubGitHelper.findPushTarget(gitRemote.repository, gitRemote.remote, headBranch)?.branch
     }
   }
 
@@ -322,6 +354,30 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       if (!descriptionDocument.enabled) descriptionDocument.enabled = true
     }
     metadataModel.reset()
+  }
+
+  private fun createErrorAlreadyExistsLabel(loadingModel: GHSimpleLoadingModel<GHPRIdentifier?>): JComponent {
+    val label = JLabel(AllIcons.Ide.FatalError).apply {
+      foreground = UIUtil.getErrorForeground()
+      text = GithubBundle.message("pull.request.create.already.exists")
+    }
+    val link = ActionLink(GithubBundle.message("pull.request.create.already.exists.view")) {
+      loadingModel.result?.let(viewController::viewPullRequest)
+    }
+    val panel = JPanel(HorizontalLayout(10)).apply {
+      add(label)
+      add(link)
+    }
+
+    fun update() {
+      panel.isVisible = loadingModel.resultAvailable && loadingModel.result != null
+    }
+    loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
+      override fun onLoadingStarted() = update()
+      override fun onLoadingCompleted() = update()
+    })
+    update()
+    return panel
   }
 
   companion object {

@@ -9,6 +9,7 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
@@ -30,7 +31,7 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
     progressManager.submitIOTask(progressIndicator) {
       it.text = GithubBundle.message("pull.request.create.process.title")
 
-      val headRepositoryPrefix = if (baseRepo.repository == headRepo.repository) "" else headRepo.repository.repositoryPath.owner + ":"
+      val headRepositoryPrefix = getHeadRepoPrefix(headRepo)
 
       val actualTitle = title.takeIf(String::isNotBlank) ?: headBranch.nameForRemoteOperations
       val body = description.nullize(true)
@@ -41,4 +42,20 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
                                                                    actualTitle, body, draft
       ))
     }
+
+  override fun findPullRequest(progressIndicator: ProgressIndicator,
+                               baseBranch: GitRemoteBranch,
+                               headRepo: GHGitRepositoryMapping,
+                               headBranch: GitRemoteBranch): GHPRIdentifier? {
+    progressIndicator.text = GithubBundle.message("pull.request.existing.process.title")
+    val headRepositoryPrefix = getHeadRepoPrefix(headRepo)
+    return requestExecutor.execute(progressIndicator,
+                                   GHGQLRequests.PullRequest.findByBranches(baseRepo.repository,
+                                                                            baseBranch.nameForRemoteOperations,
+                                                                     headRepositoryPrefix + headBranch.nameForRemoteOperations
+                                   )).nodes.firstOrNull()
+  }
+
+  private fun getHeadRepoPrefix(headRepo: GHGitRepositoryMapping) =
+    if (baseRepo.repository == headRepo.repository) "" else headRepo.repository.repositoryPath.owner + ":"
 }
