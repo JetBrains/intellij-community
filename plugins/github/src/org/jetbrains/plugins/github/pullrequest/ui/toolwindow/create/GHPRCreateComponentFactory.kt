@@ -34,6 +34,7 @@ import git4idea.repo.GitRepositoryChangeListener
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsBrowserComponentFactory
@@ -142,10 +143,11 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
     val titleDocument = PlainDocument()
     val descriptionDocument = DisableableDocument()
     val metadataModel = GHPRCreateMetadataModel(repositoryDataService, dataContext.securityService.currentUser)
+    val existenceCheckLoadingModel = GHIOExecutorLoadingModel<GHPRIdentifier?>(uiDisposable)
     val createLoadingModel = GHCompletableFutureLoadingModel<GHPullRequestShort>(uiDisposable)
 
     val infoComponent = GHPRCreateInfoComponentFactory(project, repositoriesManager, dataContext, viewController)
-      .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, createLoadingModel)
+      .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel, createLoadingModel)
 
     return GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
       .create(infoComponent, diffController,
