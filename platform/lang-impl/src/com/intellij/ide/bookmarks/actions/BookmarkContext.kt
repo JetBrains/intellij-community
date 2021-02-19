@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.awt.RelativePoint
@@ -72,14 +73,14 @@ internal val DataContext.context: BookmarkContext?
     }
     val psiElement = getData(PlatformDataKeys.PSI_ELEMENT)
     val elementFile = PsiUtilCore.getVirtualFile(psiElement?.containingFile)
-    if (psiElement != null && elementFile != null) {
+    if (psiElement != null && psiElement !is PsiCompiledElement && elementFile != null) {
       if (elementFile is LightVirtualFile) return null
       val line = FileDocumentManager.getInstance().getDocument(elementFile)
                    ?.getLineNumber(psiElement.textOffset) ?: -1
       return BookmarkContext(project, elementFile, null, line)
     }
     val file = getData(PlatformDataKeys.VIRTUAL_FILE)
-    if (file != null) {
+    if (file != null && file !is LightVirtualFile) {
       return BookmarkContext(project, file, null, -1)
     }
     return null

@@ -260,6 +260,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   @Nullable
   public Bookmark findElementBookmark(@NotNull PsiElement element) {
     if (!(element instanceof PsiNameIdentifierOwner) || !element.isValid()) return null;
+    if (element instanceof PsiCompiledElement) return null;
 
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     PsiElement nameIdentifier = virtualFile == null ? null : ((PsiNameIdentifierOwner)element).getNameIdentifier();
