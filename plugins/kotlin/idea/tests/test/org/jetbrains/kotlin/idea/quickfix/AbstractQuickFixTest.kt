@@ -47,7 +47,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         private val quickFixesAllowedToResolveInWriteAction = AllowedToResolveUnderWriteActionData(
                 KotlinRoot.DIR.resolve("idea/testData/quickfix/allowResolveInWriteAction.txt").path,
                 """
-                    # Actions that are allowed to resolve in write action. Normally this list shouldn't be extended and eventually should 
+                    # Actions that are allowed to resolve in write action. Normally this list shouldn't be extended and eventually should
                     # be dropped. Please consider rewriting a quick-fix and remove resolve from it before adding a new entry to this list.
                 """.trimIndent()
         )
@@ -254,12 +254,6 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                         action.javaClass.toString() + " " + action.toString() + "\n"
                     }
                     )
-                }
-
-                for (action in actions) {
-                    if (aClass.isAssignableFrom(action.javaClass) && !validActions.contains(action.text)) {
-                        Assert.fail("Unexpected intention action " + action.javaClass + " found")
-                    }
                 }
             } else {
                 // Action shouldn't be found. Check that other actions are expected and thus tested action isn't there under another name.
