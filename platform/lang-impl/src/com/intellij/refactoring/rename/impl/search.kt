@@ -60,7 +60,7 @@ private fun buildTextResultsQueries(project: Project,
   for ((searchRequest: SearchRequest, usageTextByName: UsageTextByName) in replaceTextTargets) {
     val effectiveSearchScope: SearchScope = searchRequest.searchScope?.let(searchScope::intersectWith) ?: searchScope
     val searchString: String = searchRequest.searchString
-    buildTextQuery(project, searchString, effectiveSearchScope, context.searchContexts).mapToUsages(searchString, usageTextByName)
+    result += buildTextQuery(project, searchString, effectiveSearchScope, context.searchContexts).mapToUsages(searchString, usageTextByName)
   }
   return result
 }
