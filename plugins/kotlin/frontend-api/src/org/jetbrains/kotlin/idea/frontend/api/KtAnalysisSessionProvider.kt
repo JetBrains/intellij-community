@@ -17,7 +17,7 @@ annotation class InvalidWayOfUsingAnalysisSession
 
 /**
  * Provides [KtAnalysisSession] by [contextElement]
- * Should not be used directly, consider using [analyze]/[analyzeWithReadAction]/[analyseInModalWindow] instead
+ * Should not be used directly, consider using [analyse]/[analyseWithReadAction]/[analyseInModalWindow] instead
  */
 @InvalidWayOfUsingAnalysisSession
 abstract class KtAnalysisSessionProvider {
@@ -39,30 +39,30 @@ fun getAnalysisSessionFor(contextElement: KtElement): KtAnalysisSession =
  * To analyse something from EDT thread, consider using [analyseInModalWindow]
  *
  * @see KtAnalysisSession
- * @see analyzeWithReadAction
+ * @see analyseWithReadAction
  */
 @OptIn(InvalidWayOfUsingAnalysisSession::class)
-inline fun <R> analyze(contextElement: KtElement, action: KtAnalysisSession.() -> R): R =
+inline fun <R> analyse(contextElement: KtElement, action: KtAnalysisSession.() -> R): R =
     getAnalysisSessionFor(contextElement).action()
 
 
 /**
- * Execute given [action] in [KtAnalysisSession] context like [analyze] does but execute it in read action
+ * Execute given [action] in [KtAnalysisSession] context like [analyse] does but execute it in read action
  * Uses [contextElement] to get a module from which you would like to see the other modules
  * Usually [contextElement] is some element form the module you currently analysing now
  *
  * Should be called from read action
  * To analyse something from EDT thread, consider using [analyseInModalWindow]
- * If you are already in read action, consider using [analyze]
+ * If you are already in read action, consider using [analyse]
  *
  * @see KtAnalysisSession
- * @see analyze
+ * @see analyse
  */
-inline fun <R> analyzeWithReadAction(
+inline fun <R> analyseWithReadAction(
     contextElement: KtElement,
     crossinline action: KtAnalysisSession.() -> R
 ): R = runReadAction {
-    analyze(contextElement, action)
+    analyse(contextElement, action)
 }
 
 /**
@@ -70,7 +70,7 @@ inline fun <R> analyzeWithReadAction(
  * and execute given [action] task with [KtAnalysisSession] context
  * If [action] throws some exception, then [analyseInModalWindow] will rethrow it
  * Should be executed from EDT only
- * If you want to analyse something from non-EDT thread, consider using [analyze]/[analyzeWithReadAction]
+ * If you want to analyse something from non-EDT thread, consider using [analyse]/[analyseWithReadAction]
  */
 inline fun <R> analyseInModalWindow(
     contextElement: KtElement,
@@ -79,7 +79,7 @@ inline fun <R> analyseInModalWindow(
 ): R {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val task = object : Task.WithResult<R, Exception>(contextElement.project, windowTitle, /*canBeCancelled*/ true) {
-        override fun compute(indicator: ProgressIndicator): R = analyzeWithReadAction(contextElement) { action() }
+        override fun compute(indicator: ProgressIndicator): R = analyseWithReadAction(contextElement) { action() }
     }
     task.queue()
     return task.result
