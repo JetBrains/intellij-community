@@ -59,6 +59,11 @@ public final class FileOffsetsManager {
     return getCorrespondingOffset(offsets.myConvertedLineOffsets, offsets.myOriginalLineOffsets, convertedOffset);
   }
 
+  public int getLineNumber(@NotNull final VirtualFile file, final int offset) {
+    final LineOffsets offsets = getLineOffsets(file);
+    return -Arrays.binarySearch(offsets.myOriginalLineOffsets, offset) - 1;
+  }
+
   private static int getCorrespondingOffset(int[] offsets1, int[] offsets2, int offset1) {
     int line = Arrays.binarySearch(offsets1, offset1);
     if (line < 0) line = -line - 2;
