@@ -104,7 +104,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public void performCut(@NotNull DataContext dataContext) {
-      PsiElement[] elements = validate(getSelectedElements());
+      PsiElement[] elements = validate(getSelectedElements(dataContext));
       if (MoveHandler.adjustForMove(myProject, elements, null) == null) {
         return;
       }
