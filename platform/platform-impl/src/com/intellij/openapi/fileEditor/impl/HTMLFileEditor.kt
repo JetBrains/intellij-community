@@ -19,9 +19,8 @@ import com.intellij.util.Alarm
 import com.intellij.util.AlarmFactory
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
+import org.cef.handler.CefLifeSpanHandlerAdapter
 import org.cef.handler.CefLoadHandlerAdapter
-import org.cef.handler.CefRequestHandlerAdapter
-import org.cef.network.CefRequest
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 
@@ -76,10 +75,11 @@ internal class HTMLFileEditor private constructor() : UserDataHolderBase(), File
       }
     }, contentPanel.cefBrowser)
 
-    contentPanel.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
-      override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean =
-        if (userGesture) { BrowserUtil.browse(request.url); true }
-        else false
+    contentPanel.jbCefClient.addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
+      override fun onBeforePopup(browser: CefBrowser, frame: CefFrame, targetUrl: String, targetFrameName: String?): Boolean {
+        BrowserUtil.browse(targetUrl)
+        return true
+      }
     }, contentPanel.cefBrowser)
 
     multiPanel.select(CONTENT_KEY, true)
