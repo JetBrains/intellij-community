@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,5 +175,15 @@ public class PythonUiService {
                               @Nullable Icon icon) {
     return -1;
 
+  }
+
+  public JPanel createMultipleCheckboxOptionsPanel(final InspectionProfileEntry owner) {
+    return null;
+  }
+
+  public void addRowToOptionsPanel(JPanel optionsPanel, JComponent label, JComponent component) {
+  }
+
+  public void addCheckboxToOptionsPanel(JPanel optionsPanel, @NlsContexts.Checkbox String label, @NonNls String property) {
   }
 }
