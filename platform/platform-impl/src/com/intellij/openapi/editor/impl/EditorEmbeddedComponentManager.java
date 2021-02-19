@@ -5,10 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.InlayModel;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
@@ -216,7 +213,7 @@ public final class EditorEmbeddedComponentManager {
     }
 
     private void synchronizeBoundsWithInlay() {
-      if (myInlay != null && !myResizeListener.isResizeInProgress(this)) {
+      if (myInlay != null && !myResizeListener.isResizeInProgress(this) && !myInlay.getEditor().getDocument().isInBulkUpdate()) {
         Rectangle inlayBounds = myInlay.getBounds();
         boolean shouldUpdateInlay;
         if (inlayBounds != null) {
@@ -343,10 +340,15 @@ public final class EditorEmbeddedComponentManager {
 
         @Override
         public void documentChanged(@NotNull DocumentEvent event) {
-          if (linesBefore != event.getDocument().getLineCount()) {
+          if (linesBefore != event.getDocument().getLineCount() && !event.getDocument().isInBulkUpdate()) {
             int y = myEditor.logicalPositionToXY(new LogicalPosition(event.getDocument().getLineNumber(event.getOffset()), 0)).y;
             revalidateComponents(y);
           }
+        }
+
+        @Override
+        public void bulkUpdateFinished(@NotNull Document document) {
+          revalidateComponents();
         }
       }, this);
       myEditor.getInlayModel().addListener(new InlayModel.SimpleAdapter() {
