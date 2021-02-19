@@ -18,7 +18,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.PsiTestUtil
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -28,13 +27,14 @@ import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
 
-    protected open fun afterFileNameSuffix(): String = ".after"
+    protected open fun afterFileNameSuffix(ktFilePath: File): String = ".after"
 
     protected open fun isApplicableDirectiveName(): String = "IS_APPLICABLE"
 
@@ -204,7 +204,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                 // Don't bother checking if it should have failed.
                 if (shouldFailString.isEmpty()) {
                     for ((filePath, value) in pathToFiles) {
-                        val canonicalPathToExpectedFile = filePath + afterFileNameSuffix()
+                        val canonicalPathToExpectedFile = filePath + afterFileNameSuffix(mainFile)
                         val afterFile = testDataFile(canonicalPathToExpectedFile)
                         if (filePath == mainFilePath) {
                             try {
