@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
@@ -26,7 +27,8 @@ import javax.swing.JPanel
 
 internal class GHPRTimelineFileEditor(private val project: Project,
                                       private val dataContext: GHPRDataContext,
-                                      private val dataProvider: GHPRDataProvider)
+                                      private val dataProvider: GHPRDataProvider,
+                                      private val file: GHRepoVirtualFile)
   : FileEditorBase() {
 
   val securityService = dataContext.securityService
@@ -100,4 +102,6 @@ internal class GHPRTimelineFileEditor(private val project: Project,
     if (timelineLoader.loadedData.isNotEmpty())
       timelineLoader.loadMore(true)
   }
+
+  override fun getFile() = file
 }

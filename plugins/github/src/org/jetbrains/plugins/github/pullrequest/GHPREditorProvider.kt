@@ -29,18 +29,18 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         val dataProvider = dataContext.dataProviderRepository.getDataProvider(file.pullRequest, dataDisposable)
         when (file) {
           is GHPRDiffVirtualFile -> {
-            GHPRDiffFileEditor(project, dataProvider.diffRequestModel).also { editor ->
+            GHPRDiffFileEditor(project, dataProvider.diffRequestModel, file).also { editor ->
               editor.putUserData(EditorWindow.HIDE_TABS, true)
               DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
             }
           }
-          is GHPRTimelineVirtualFile -> GHPRTimelineFileEditor(project, dataContext, dataProvider)
+          is GHPRTimelineVirtualFile -> GHPRTimelineFileEditor(project, dataContext, dataProvider, file)
           else -> error("Unsupported file type")
         }.also {
           Disposer.register(it, dataDisposable)
         }
       }
-      is GHNewPRDiffVirtualFile -> GHPRDiffFileEditor(project, dataContext.newPRDiffModel).also { editor ->
+      is GHNewPRDiffVirtualFile -> GHPRDiffFileEditor(project, dataContext.newPRDiffModel, file).also { editor ->
         editor.putUserData(EditorWindow.HIDE_TABS, true)
         DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
       }
