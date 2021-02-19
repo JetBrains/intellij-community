@@ -374,6 +374,8 @@ public class LongRangeKnownMethods {
     int i = b ? 123 : 456;
     String s = Integer.toString(i);
     if (<warning descr="Condition 's.equals(\"123\") || s.equals(\"456\")' is always 'true'">s.equals("123") || <warning descr="Condition 's.equals(\"456\")' is always 'true' when reached">s.equals("456")</warning></warning>) {}
+    // If we don't use 'b' at this point, 123 & 456 are joined into single LongRangeSet and constant evaluation for 's' doesn't work anymore
+    System.out.println(b);
   }
   
   void testRandom(Random r, SplittableRandom sr, int x) {

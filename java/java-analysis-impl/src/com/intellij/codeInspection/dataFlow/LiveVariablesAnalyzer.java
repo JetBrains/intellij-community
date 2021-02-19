@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiMember;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.MultiMap;
@@ -83,24 +84,26 @@ public final class LiveVariablesAnalyzer {
   }
 
   @NotNull
-  private static List<DfaVariableValue> getReadVariables(Instruction instruction) {
-    if (instruction instanceof PushInstruction && !((PushInstruction)instruction).isReferenceWrite()) {
+  private StreamEx<DfaVariableValue> getReadVariables(Instruction instruction) {
+    if (instruction instanceof PushInstruction) {
       DfaValue value = ((PushInstruction)instruction).getValue();
       if (value instanceof DfaVariableValue) {
-        return Collections.singletonList((DfaVariableValue)value);
+        return StreamEx.of((DfaVariableValue)value);
       }
     }
     else if (instruction instanceof EscapeInstruction) {
-      return StreamEx.of(((EscapeInstruction)instruction).getEscapedVars())
-        .flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v))
-        .distinct().toList();
+      return StreamEx.of(((EscapeInstruction)instruction).getEscapedVars());
     }
-    return Collections.emptyList();
+    else if (instruction instanceof EndOfInitializerInstruction) {
+      return StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class)
+        .filter(var -> var.getPsiVariable() instanceof PsiMember);
+    }
+    return StreamEx.empty();
   }
 
   private boolean isInterestingInstruction(Instruction instruction) {
     if (instruction == myInstructions[0]) return true;
-    if (!getReadVariables(instruction).isEmpty() || getWrittenVariable(instruction) != null) return true;
+    if (getReadVariables(instruction).findFirst().isPresent() || getWrittenVariable(instruction) != null) return true;
     return instruction instanceof FinishElementInstruction ||
            instruction instanceof GotoInstruction ||
            instruction instanceof ConditionalGotoInstruction ||
@@ -132,7 +135,9 @@ public final class LiveVariablesAnalyzer {
         }
       } else {
         boolean cloned = false;
-        for (DfaVariableValue value : getReadVariables(instruction)) {
+        StreamEx<DfaVariableValue> possiblyReadVars =
+          getReadVariables(instruction).flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct();
+        for (DfaVariableValue value : possiblyReadVars) {
           if (!liveVars.get(value.getID())) {
             if (!cloned) {
               liveVars = (BitSet)liveVars.clone();
@@ -178,10 +183,8 @@ public final class LiveVariablesAnalyzer {
     if (ok) {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
         Collection<DfaVariableValue> values = toFlush.get(instruction);
-        // Do not flush special values and this value as they could be used implicitly
         // Assertions disabled variable may be used from CommonDataflow
-        values.removeIf(var -> var.getDescriptor() instanceof SpecialField ||
-                               var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor ||
+        values.removeIf(var -> var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor ||
                                var.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor);
         instruction.getVarsToFlush().addAll(values);
       }

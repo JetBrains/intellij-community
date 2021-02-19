@@ -7,11 +7,13 @@ import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInspection.dataFlow.instructions.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
@@ -369,6 +371,13 @@ public final class DfaPsiUtil {
           protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
                                                                       @NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
+            if (instruction instanceof FinishElementInstruction) {
+              Set<DfaVariableValue> vars = ((FinishElementInstruction)instruction).getVarsToFlush();
+              vars.removeIf(v -> {
+                PsiModifierListOwner variable = v.getPsiVariable();
+                return variable instanceof PsiField && ((PsiField)variable).getContainingClass() == containingClass;
+              });
+            }
             if (currentBlock == body &&
                 (isCallExposingNonInitializedFields(instruction) ||
                  instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {

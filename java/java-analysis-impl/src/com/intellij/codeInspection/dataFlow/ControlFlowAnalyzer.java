@@ -104,6 +104,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   public @Nullable ControlFlow buildControlFlow() {
     myCurrentFlow = new ControlFlow(myFactory);
+    addInstruction(new FinishElementInstruction(null)); // to initialize LVA
     try {
       if(myCodeFragment instanceof PsiClass) {
         // if(unknown) { staticInitializer(); } else { instanceInitializer(); }
@@ -719,23 +720,29 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement thenStatement = statement.getThenBranch();
     PsiStatement elseStatement = statement.getElseBranch();
 
-    ControlFlowOffset offset = elseStatement != null ? getStartOffset(elseStatement) : getEndOffset(statement);
+    ControlFlow.DeferredOffset skipThenOffset = new ControlFlow.DeferredOffset();
 
     if (condition != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-      addInstruction(new ConditionalGotoInstruction(offset, true, condition));
+      addInstruction(new ConditionalGotoInstruction(skipThenOffset, true, condition));
     }
 
     if (thenStatement != null) {
+      addInstruction(new FinishElementInstruction(null));
       thenStatement.accept(this);
     }
 
     if (elseStatement != null) {
-      offset = getEndOffset(statement);
-      Instruction instruction = new GotoInstruction(offset);
+      ControlFlow.DeferredOffset skipElseOffset = new ControlFlow.DeferredOffset();
+      Instruction instruction = new GotoInstruction(skipElseOffset);
       addInstruction(instruction);
+      skipThenOffset.setOffset(getInstructionCount());
+      addInstruction(new FinishElementInstruction(null));
       elseStatement.accept(this);
+      skipElseOffset.setOffset(getInstructionCount());
+    } else {
+      skipThenOffset.setOffset(getInstructionCount());
     }
 
     finishElement(statement);
