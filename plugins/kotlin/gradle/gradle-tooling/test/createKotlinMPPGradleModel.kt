@@ -10,7 +10,7 @@ internal fun createKotlinMPPGradleModel(
 ): KotlinMPPGradleModelImpl {
     return KotlinMPPGradleModelImpl(
         dependencyMap = dependencyMap,
-        sourceSets = sourceSets.associateBy { it.name },
+        sourceSetsByName = sourceSets.associateBy { it.name },
         targets = targets.toList(),
         extraFeatures = extraFeatures,
         kotlinNativeHome = kotlinNativeHome
@@ -31,9 +31,9 @@ internal fun createExtraFeatures(
 
 internal fun createKotlinSourceSet(
     name: String,
-    dependsOnSourceSets: Set<String> = emptySet(),
+    declaredDependsOnSourceSets: Set<String> = emptySet(),
+    allDependsOnSourceSets: Set<String> = declaredDependsOnSourceSets,
     platforms: Set<KotlinPlatform> = emptySet(),
-    isTestModule: Boolean = false,
 ): KotlinSourceSetImpl = KotlinSourceSetImpl(
     name = name,
     languageSettings = KotlinLanguageSettingsImpl(
@@ -49,13 +49,15 @@ internal fun createKotlinSourceSet(
     sourceDirs = emptySet(),
     resourceDirs = emptySet(),
     dependencies = emptyArray(),
-    dependsOnSourceSets = dependsOnSourceSets,
+    declaredDependsOnSourceSets = declaredDependsOnSourceSets,
+    allDependsOnSourceSets = allDependsOnSourceSets,
     defaultPlatform = KotlinPlatformContainerImpl().apply { addSimplePlatforms(platforms) },
 )
 
 internal fun createKotlinCompilation(
     name: String = "main",
-    sourceSets: Set<KotlinSourceSet> = emptySet(),
+    defaultSourceSets: Set<KotlinSourceSet> = emptySet(),
+    allSourceSets: Set<KotlinSourceSet> = emptySet(),
     dependencies: Iterable<KotlinDependencyId> = emptyList(),
     output: KotlinCompilationOutput = createKotlinCompilationOutput(),
     arguments: KotlinCompilationArguments = createKotlinCompilationArguments(),
@@ -66,7 +68,8 @@ internal fun createKotlinCompilation(
 ): KotlinCompilationImpl {
     return KotlinCompilationImpl(
         name = name,
-        sourceSets = sourceSets,
+        defaultSourceSets = defaultSourceSets,
+        allSourceSets = allSourceSets,
         dependencies = dependencies.toList().toTypedArray(),
         output = output,
         arguments = arguments,

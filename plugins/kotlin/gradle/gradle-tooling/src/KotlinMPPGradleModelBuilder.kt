@@ -84,7 +84,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
     private fun filterOrphanSourceSets(
         importingContext: MultiplatformModelImportingContext
     ): Map<String, KotlinSourceSetImpl> {
-        if (importingContext.getProperty(IMPORT_ORPHAN_SOURCE_SETS)) return importingContext.sourceSetsByNames
+        if (importingContext.getProperty(IMPORT_ORPHAN_SOURCE_SETS)) return importingContext.sourceSetsByName
 
         val (orphanSourceSets, nonOrphanSourceSets) = importingContext.sourceSets.partition { importingContext.isOrphanSourceSet(it) }
 
@@ -520,7 +520,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         }
         val nativeExtensions = konanTarget?.let(::KotlinNativeCompilationExtensionsImpl)
 
-        val allSourceSets = kotlinSourceSets.flatMap { it.dependsOnSourceSets }
+        val allSourceSets = kotlinSourceSets.flatMap { it.allDependsOnSourceSets }
             .mapNotNull { importingContext.sourceSetByName(it) }
             .union(kotlinSourceSets)
 

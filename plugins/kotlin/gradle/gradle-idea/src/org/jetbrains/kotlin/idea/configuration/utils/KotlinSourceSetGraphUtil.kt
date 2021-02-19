@@ -12,7 +12,7 @@ internal fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): Immuta
 }
 
 internal fun createSourceSetDependsOnGraph(model: KotlinMPPGradleModel): MutableGraph<KotlinSourceSet> {
-    return createSourceSetDependsOnGraph(model.sourceSets)
+    return createSourceSetDependsOnGraph(model.sourceSetsByName)
 }
 
 internal fun createSourceSetDependsOnGraph(
@@ -54,14 +54,14 @@ private fun getFixedDependsOnSourceSets(
     (Can probably be dropped in Kotlin 1.5)
      */
     val implicitDependsOnEdgeForAndroid = if (
-        sourceSet.actualPlatforms.supports(KotlinPlatform.ANDROID) && sourceSet.dependsOnSourceSets.isEmpty()
+        sourceSet.actualPlatforms.supports(KotlinPlatform.ANDROID) && sourceSet.declaredDependsOnSourceSets.isEmpty()
     ) {
         val commonSourceSetName = if (sourceSet.isTestModule) KotlinSourceSet.COMMON_TEST_SOURCE_SET_NAME
         else KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME
         listOfNotNull(sourceSetsByName[commonSourceSetName])
     } else emptyList()
 
-    return sourceSet.dependsOnSourceSets.map(sourceSetsByName::getValue)
+    return sourceSet.declaredDependsOnSourceSets.map(sourceSetsByName::getValue)
         .plus(implicitDependsOnEdgeForAndroid)
         /*
         Gracefully filter out source sets that declare a dependency on themselves.

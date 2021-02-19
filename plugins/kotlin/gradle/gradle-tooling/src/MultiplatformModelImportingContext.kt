@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.gradle
 import org.gradle.api.Project
 
 
-internal interface MultiplatformModelImportingContext {
+internal interface MultiplatformModelImportingContext: KotlinSourceSetContainer {
     val project: Project
 
     val targets: Collection<KotlinTarget>
@@ -18,8 +18,8 @@ internal interface MultiplatformModelImportingContext {
      * All source sets in a project, including those that are created but not included into any compilations
      * (so-called "orphan" source sets). Use [isOrphanSourceSet] to get only compiled source sets
      */
-    val sourceSets: Collection<KotlinSourceSetImpl>
-    val sourceSetsByNames: Map<String, KotlinSourceSetImpl>
+    val sourceSets: Collection<KotlinSourceSetImpl> get() = sourceSetsByName.values
+    override val sourceSetsByName: Map<String, KotlinSourceSetImpl>
 
     /**
      * Platforms, which are actually used in this project (i.e. platforms, for which targets has been created)
@@ -73,10 +73,8 @@ internal enum class GradleImportProperties(val id: String, val defaultValue: Boo
 
 internal class MultiplatformModelImportingContextImpl(override val project: Project) : MultiplatformModelImportingContext {
     /** see [initializeSourceSets] */
-    override lateinit var sourceSetsByNames: Map<String, KotlinSourceSetImpl>
+    override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
-    override val sourceSets: Collection<KotlinSourceSetImpl>
-        get() = sourceSetsByNames.values
 
 
     /** see [initializeCompilations] */
@@ -94,12 +92,13 @@ internal class MultiplatformModelImportingContextImpl(override val project: Proj
         private set
 
     internal fun initializeSourceSets(sourceSetsByNames: Map<String, KotlinSourceSetImpl>) {
-        require(!this::sourceSetsByNames.isInitialized) {
-            "Attempt to re-initialize source sets for $this. Previous value: ${this.sourceSetsByNames}"
+        require(!this::sourceSetsByName.isInitialized) {
+            "Attempt to re-initialize source sets for $this. Previous value: ${this.sourceSetsByName}"
         }
-        this.sourceSetsByNames = sourceSetsByNames
+        this.sourceSetsByName = sourceSetsByNames
     }
 
+    @OptIn(ExperimentalGradleToolingApi::class)
     internal fun initializeCompilations(compilations: Collection<KotlinCompilation>) {
         require(!this::compilations.isInitialized) { "Attempt to re-initialize compilations for $this. Previous value: ${this.compilations}" }
         this.compilations = compilations
@@ -110,7 +109,7 @@ internal class MultiplatformModelImportingContextImpl(override val project: Proj
             for (compilation in target.compilations) {
                 for (sourceSet in compilation.allSourceSets) {
                     sourceSetToCompilations.getOrPut(sourceSet) { LinkedHashSet() } += compilation
-                    sourceSet.dependsOnSourceSets.mapNotNull { sourceSetByName(it) }.forEach {
+                    resolveAllDependsOnSourceSets(sourceSet).forEach {
                         sourceSetToCompilations.getOrPut(it) { LinkedHashSet() } += compilation
                     }
                 }
@@ -136,5 +135,5 @@ internal class MultiplatformModelImportingContextImpl(override val project: Proj
     override fun compilationsBySourceSet(sourceSet: KotlinSourceSet): Collection<KotlinCompilation>? =
         sourceSetToParticipatedCompilations[sourceSet]
 
-    override fun sourceSetByName(name: String): KotlinSourceSet? = sourceSetsByNames[name]
+    override fun sourceSetByName(name: String): KotlinSourceSet? = sourceSetsByName[name]
 }

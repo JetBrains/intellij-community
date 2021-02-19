@@ -73,8 +73,8 @@ internal fun KotlinCompilation.dependsOnSourceSet(mppModel: KotlinMPPGradleModel
 
 internal fun KotlinSourceSet.isOrDependsOnSourceSet(mppModel: KotlinMPPGradleModel, sourceSet: KotlinSourceSet): Boolean {
     if (this == sourceSet) return true
-    return this.dependsOnSourceSets
-        .map { dependencySourceSetName -> mppModel.sourceSets.getValue(dependencySourceSetName) }
+    return this.declaredDependsOnSourceSets
+        .map { dependencySourceSetName -> mppModel.sourceSetsByName.getValue(dependencySourceSetName) }
         .any { dependencySourceSet -> dependencySourceSet.isOrDependsOnSourceSet(mppModel, sourceSet) }
 }
 

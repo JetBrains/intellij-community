@@ -5,15 +5,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-@OptIn(ExperimentalKotlinMPPGradleModelExtensionsApi::class)
+@OptIn(ExperimentalGradleToolingApi::class)
 class KotlinMppGradleModelExtensionsTest {
 
     @Test
     fun resolveDeclaredDependsOnSourceSets() {
         val commonMain = createKotlinSourceSet("commonMain")
-        val appleMain = createKotlinSourceSet("appleMain", dependsOnSourceSets = setOf("commonMain"))
-        val macosMain = createKotlinSourceSet("macosMain", dependsOnSourceSets = setOf("appleMain"))
-        val iosMain = createKotlinSourceSet("iosMain", dependsOnSourceSets = setOf("appleMain", "commonMain"))
+        val appleMain = createKotlinSourceSet("appleMain", declaredDependsOnSourceSets = setOf("commonMain"))
+        val macosMain = createKotlinSourceSet("macosMain", declaredDependsOnSourceSets = setOf("appleMain"))
+        val iosMain = createKotlinSourceSet("iosMain", declaredDependsOnSourceSets = setOf("appleMain", "commonMain"))
 
         val model = createKotlinMPPGradleModel(
             sourceSets = setOf(commonMain, appleMain, macosMain, iosMain)
@@ -38,7 +38,7 @@ class KotlinMppGradleModelExtensionsTest {
     @Test
     fun `getAllDependsOnSourceSets is graceful for missing source sets`() {
         val commonMain = createKotlinSourceSet("commonMain")
-        val macosMain = createKotlinSourceSet("macosMain", dependsOnSourceSets = setOf("commonMain", "missing"))
+        val macosMain = createKotlinSourceSet("macosMain", declaredDependsOnSourceSets = setOf("commonMain", "missing"))
         val model = createKotlinMPPGradleModel(sourceSets = setOf(commonMain, macosMain))
 
         assertEquals(
@@ -50,11 +50,11 @@ class KotlinMppGradleModelExtensionsTest {
     @Test
     fun resolveAllDependsOnSourceSets() {
         val commonMain = createKotlinSourceSet("commonMain")
-        val appleMain = createKotlinSourceSet("appleMain", dependsOnSourceSets = setOf("commonMain"))
-        val x64Main = createKotlinSourceSet("x64Main", dependsOnSourceSets = setOf("commonMain"))
-        val macosMain = createKotlinSourceSet("macosMain", dependsOnSourceSets = setOf("appleMain"))
-        val macosX64Main = createKotlinSourceSet("macosX64Main", dependsOnSourceSets = setOf("appleMain", "x64Main"))
-        val macosArm64Main = createKotlinSourceSet("macosArm64Main", dependsOnSourceSets = setOf("appleMain"))
+        val appleMain = createKotlinSourceSet("appleMain", declaredDependsOnSourceSets = setOf("commonMain"))
+        val x64Main = createKotlinSourceSet("x64Main", declaredDependsOnSourceSets = setOf("commonMain"))
+        val macosMain = createKotlinSourceSet("macosMain", declaredDependsOnSourceSets = setOf("appleMain"))
+        val macosX64Main = createKotlinSourceSet("macosX64Main", declaredDependsOnSourceSets = setOf("appleMain", "x64Main"))
+        val macosArm64Main = createKotlinSourceSet("macosArm64Main", declaredDependsOnSourceSets = setOf("appleMain"))
 
         val model = createKotlinMPPGradleModel(sourceSets = setOf(commonMain, appleMain, x64Main, macosMain, macosX64Main, macosArm64Main))
 
@@ -88,10 +88,10 @@ class KotlinMppGradleModelExtensionsTest {
     @Test
     fun isDependsOn() {
         val commonMain = createKotlinSourceSet("commonMain")
-        val appleMain = createKotlinSourceSet("appleMain", dependsOnSourceSets = setOf("commonMain"))
-        val x64Main = createKotlinSourceSet("x64Main", dependsOnSourceSets = setOf("commonMain"))
-        val macosX64Main = createKotlinSourceSet("macosX64Main", dependsOnSourceSets = setOf("appleMain", "x64Main"))
-        val macosArm64Main = createKotlinSourceSet("macosArm64Main", dependsOnSourceSets = setOf("appleMain"))
+        val appleMain = createKotlinSourceSet("appleMain", declaredDependsOnSourceSets = setOf("commonMain"))
+        val x64Main = createKotlinSourceSet("x64Main", declaredDependsOnSourceSets = setOf("commonMain"))
+        val macosX64Main = createKotlinSourceSet("macosX64Main", declaredDependsOnSourceSets = setOf("appleMain", "x64Main"))
+        val macosArm64Main = createKotlinSourceSet("macosArm64Main", declaredDependsOnSourceSets = setOf("appleMain"))
 
 
         val model = createKotlinMPPGradleModel(sourceSets = setOf(commonMain, appleMain, x64Main, macosX64Main))
@@ -146,7 +146,7 @@ class KotlinMppGradleModelExtensionsTest {
             "Expected false isDependsOn from macosArm64 to x64Main"
         )
 
-        for (sourceSet in model.sourceSets.values) {
+        for (sourceSet in model.sourceSetsByName.values) {
             assertFalse(
                 model.isDependsOn(from = commonMain, to = sourceSet),
                 "Expected false isDependsOn from commonMain to ${sourceSet.name}"
@@ -167,13 +167,13 @@ class KotlinMppGradleModelExtensionsTest {
     @Test
     fun compilationDependsOnSourceSet() {
         val commonMain = createKotlinSourceSet("commonMain")
-        val appleMain = createKotlinSourceSet("appleMain", dependsOnSourceSets = setOf("commonMain"))
-        val macosMain = createKotlinSourceSet("macosMain", dependsOnSourceSets = setOf("appleMain"))
-        val iosMain = createKotlinSourceSet("iosMain", dependsOnSourceSets = setOf("appleMain"))
+        val appleMain = createKotlinSourceSet("appleMain", declaredDependsOnSourceSets = setOf("commonMain"))
+        val macosMain = createKotlinSourceSet("macosMain", declaredDependsOnSourceSets = setOf("appleMain"))
+        val iosMain = createKotlinSourceSet("iosMain", declaredDependsOnSourceSets = setOf("appleMain"))
 
-        val metadataCompilation = createKotlinCompilation(sourceSets = setOf(commonMain))
-        val macosMainCompilation = createKotlinCompilation(sourceSets = setOf(macosMain))
-        val iosMainCompilation = createKotlinCompilation(sourceSets = setOf(iosMain))
+        val metadataCompilation = createKotlinCompilation(defaultSourceSets = setOf(commonMain))
+        val macosMainCompilation = createKotlinCompilation(defaultSourceSets = setOf(macosMain))
+        val iosMainCompilation = createKotlinCompilation(defaultSourceSets = setOf(iosMain))
 
         val model = createKotlinMPPGradleModel(sourceSets = setOf(commonMain, appleMain, macosMain, iosMain))
 
@@ -241,11 +241,11 @@ class KotlinMppGradleModelExtensionsTest {
     @Test
     fun getCompilations() {
         val commonMain = createKotlinSourceSet("commonMain")
-        val appleMain = createKotlinSourceSet("appleMain", dependsOnSourceSets = setOf("commonMain"))
-        val macosMain = createKotlinSourceSet("macosMain", dependsOnSourceSets = setOf("appleMain"))
+        val appleMain = createKotlinSourceSet("appleMain", declaredDependsOnSourceSets = setOf("commonMain"))
+        val macosMain = createKotlinSourceSet("macosMain", declaredDependsOnSourceSets = setOf("appleMain"))
 
-        val metadataCompilation = createKotlinCompilation(sourceSets = setOf(commonMain))
-        val macosMainCompilation = createKotlinCompilation(sourceSets = setOf(macosMain))
+        val metadataCompilation = createKotlinCompilation(defaultSourceSets = setOf(commonMain))
+        val macosMainCompilation = createKotlinCompilation(defaultSourceSets = setOf(macosMain))
 
         val metadataTarget = createKotlinTarget("metadata", compilations = setOf(metadataCompilation))
         val macosTarget = createKotlinTarget("macos", compilations = setOf(macosMainCompilation))

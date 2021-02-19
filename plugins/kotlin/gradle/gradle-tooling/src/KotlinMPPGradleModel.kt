@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DeprecatedCallableAddReplaceWith")
+
 package org.jetbrains.kotlin.gradle
 
 import org.jetbrains.plugins.gradle.model.ExternalDependency
@@ -53,8 +55,37 @@ interface KotlinSourceSet : KotlinModule {
     val languageSettings: KotlinLanguageSettings
     val sourceDirs: Set<File>
     val resourceDirs: Set<File>
-    val dependsOnSourceSets: Set<String>
     val actualPlatforms: KotlinPlatformContainer
+
+
+    /**
+     * All source sets that this source set explicitly declared a 'dependsOn' relation to
+     */
+    val declaredDependsOnSourceSets: Set<String>
+
+    /**
+     * The whole transitive closure of source sets this source set depends on.
+     * ([declaredDependsOnSourceSets] and their dependencies recursively)
+     */
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        "This property might be misleading. " +
+                "Replace with 'KotlinSourceSetContainer.resolveAllDependsOnSourceSets' to make intention of receiving the full transitive closure explicit",
+        level = DeprecationLevel.ERROR
+    )
+    val dependsOnSourceSets: Set<String> get() = allDependsOnSourceSets
+
+    /**
+     * The whole transitive closure of source sets this source set depends on.
+     * ([declaredDependsOnSourceSets] and their dependencies recursively)
+     */
+    @Deprecated(
+        "This set of source sets might be inconsistent with any KotlinSourceSetContainer different to the one used to build this instance" +
+                "Replace with 'KotlinSourceSetContainer.resolveAllDependsOnSourceSets' to get consistent resolution",
+        level = DeprecationLevel.WARNING
+    )
+    val allDependsOnSourceSets: Set<String>
+
 
     @Deprecated("Returns single target platform", ReplaceWith("actualPlatforms.actualPlatforms"), DeprecationLevel.ERROR)
     val platform: KotlinPlatform
@@ -99,8 +130,10 @@ interface KotlinNativeCompilationExtensions : Serializable {
 
 interface KotlinCompilation : KotlinModule {
 
+    // TODO NOW: Check byte-code
     @Deprecated("Use allSourceSets or defaultSourceSets instead")
-    val sourceSets: Collection<KotlinSourceSet> get() = allSourceSets
+    val sourceSets: Collection<KotlinSourceSet>
+        get() = defaultSourceSets
 
     /**
      * All source sets participated in this compilation, including those available
@@ -194,12 +227,17 @@ interface ExtraFeatures : Serializable {
     val isNativeDependencyPropagationEnabled: Boolean
 }
 
-interface KotlinMPPGradleModel : Serializable {
+interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
     val dependencyMap: Map<KotlinDependencyId, KotlinDependency>
-    val sourceSets: Map<String, KotlinSourceSet>
     val targets: Collection<KotlinTarget>
     val extraFeatures: ExtraFeatures
     val kotlinNativeHome: String
+
+    @Deprecated("Use 'sourceSetsByName' instead", ReplaceWith("sourceSetsByName"), DeprecationLevel.ERROR)
+    val sourceSets: Map<String, KotlinSourceSet>
+        get() = sourceSetsByName
+
+    override val sourceSetsByName: Map<String, KotlinSourceSet>
 
     companion object {
         const val NO_KOTLIN_NATIVE_HOME = ""
