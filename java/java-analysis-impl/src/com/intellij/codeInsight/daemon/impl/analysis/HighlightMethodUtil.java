@@ -628,7 +628,7 @@ public final class HighlightMethodUtil {
     }
   }
 
-  static HighlightInfo checkStaticInterfaceCallQualifier(@NotNull PsiReferenceExpression referenceToMethod,
+  static HighlightInfo checkStaticInterfaceCallQualifier(@NotNull PsiJavaCodeReferenceElement referenceToMethod,
                                                          @NotNull JavaResolveResult resolveResult,
                                                          @NotNull PsiElement elementToHighlight,
                                                          @NotNull PsiClass containingClass) {
@@ -636,40 +636,47 @@ public final class HighlightMethodUtil {
     if (message != null) {
       HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message)
         .range(getFixRange(elementToHighlight)).create();
-      QuickFixAction
-        .registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAccessStaticViaInstanceFix(referenceToMethod, resolveResult));
+      if (referenceToMethod instanceof PsiReferenceExpression) {
+        QuickFixAction
+          .registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAccessStaticViaInstanceFix((PsiReferenceExpression)referenceToMethod, resolveResult));
+      }
       return highlightInfo;
     }
     return null;
   }
 
   /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
-  private static @NlsContexts.DetailedDescription String checkStaticInterfaceMethodCallQualifier(@NotNull PsiReferenceExpression ref,
+  private static @NlsContexts.DetailedDescription String checkStaticInterfaceMethodCallQualifier(@NotNull PsiJavaCodeReferenceElement ref,
                                                                                                  @Nullable PsiElement scope,
                                                                                                  @NotNull PsiClass containingClass) {
-    PsiExpression qualifierExpression = ref.getQualifierExpression();
-    if (qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, ref, true))) {
+    @Nullable PsiElement qualifierExpression = ref.getQualifier();
+    if (qualifierExpression == null && PsiTreeUtil.isAncestor(containingClass, ref, true)) {
       return null;
     }
 
-    if (qualifierExpression instanceof PsiReferenceExpression) {
-      PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-      if (containingClass.getManager().areElementsEquivalent(resolve, containingClass)) {
-        return null;
+    PsiElement resolve = null;
+    if (qualifierExpression == null && scope instanceof PsiImportStaticStatement) {
+      resolve = ((PsiImportStaticStatement)scope).resolveTargetClass();
+    }
+    else if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
+      resolve = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
+    }
+
+    if (containingClass.getManager().areElementsEquivalent(resolve, containingClass)) {
+      return null;
+    }
+
+    if (resolve instanceof PsiTypeParameter) {
+      Set<PsiClass> classes = new HashSet<>();
+      for (PsiClassType type : ((PsiTypeParameter)resolve).getExtendsListTypes()) {
+        PsiClass aClass = type.resolve();
+        if (aClass != null) {
+          classes.add(aClass);
+        }
       }
 
-      if (resolve instanceof PsiTypeParameter) {
-        Set<PsiClass> classes = new HashSet<>();
-        for (PsiClassType type : ((PsiTypeParameter)resolve).getExtendsListTypes()) {
-          PsiClass aClass = type.resolve();
-          if (aClass != null) {
-            classes.add(aClass);
-          }
-        }
-
-        if (classes.size() == 1 && classes.contains(containingClass)) {
-          return null;
-        }
+      if (classes.size() == 1 && classes.contains(containingClass)) {
+        return null;
       }
     }
 
