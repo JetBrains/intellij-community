@@ -501,7 +501,7 @@ public final class CompileDriver {
                                                        compileContext.getMessageCount(CompilerMessageCategory.ERROR) + "," +
                                                        "\n\t\"build_warnings\" : " +
                                                        compileContext.getMessageCount(CompilerMessageCategory.WARNING) + "," +
-                                                       "\n\t\"build_duration\" : " +
+                                                       "\n\t\"build_compilation_duration\" : " +
                                                        duration +
                                                        "\n}");
           }
