@@ -14,7 +14,6 @@ import com.intellij.openapi.components.service
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
 import java.util.*
-import kotlin.collections.HashSet
 
 @State(name = "GraziConfig", presentableName = GrazieConfig.PresentableNameGetter::class, storages = [
   Storage("grazie_global.xml"),

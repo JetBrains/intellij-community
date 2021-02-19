@@ -15,7 +15,6 @@ import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import java.util.*
-import kotlin.collections.ArrayList
 
 internal class GraziePsiElementProcessor<T : PsiElement>(
   private val commonParent: PsiElement,

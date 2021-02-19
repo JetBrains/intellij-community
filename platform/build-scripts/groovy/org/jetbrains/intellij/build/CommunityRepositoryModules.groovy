@@ -188,6 +188,15 @@ final class CommunityRepositoryModules {
     plugin("intellij.android.jpsBuildPlugin") {
       withModule("intellij.android.jpsBuildPlugin.common")
       withModule("intellij.android.jpsBuildPlugin.jps", "jps/android-jps-plugin.jar")
+    },
+    plugin("intellij.grazie") {
+      withModule("intellij.grazie.core")
+      withModule("intellij.grazie.java")
+      withModule("intellij.grazie.json")
+      withModule("intellij.grazie.markdown")
+      withModule("intellij.grazie.properties")
+      withModule("intellij.grazie.xml")
+      withModule("intellij.grazie.yaml")
     }
   ]
 

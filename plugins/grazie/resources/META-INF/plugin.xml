@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.grazie">
   <id>tanvd.grazi</id>
   <name>Grazie</name>
   <vendor>JetBrains</vendor>
@@ -19,12 +19,21 @@
     <p><strong>NOTE:</strong> All verification is performed locally, inside your IDE.</p>
     ]]></description>
 
-  <depends optional="true" config-file="grazie-java.xml">com.intellij.modules.java</depends>
-  <depends optional="true" config-file="grazie-json.xml">com.intellij.modules.json</depends>
-  <depends optional="true" config-file="grazie-markdown.xml">org.intellij.plugins.markdown</depends>
-  <depends optional="true" config-file="properties.xml">com.intellij.properties</depends>
-  <depends optional="true" config-file="grazie-xml.xml">com.intellij.modules.xml</depends>
-  <depends optional="true" config-file="grazie-yaml.xml">org.jetbrains.plugins.yaml</depends>
+  <content>
+    <module name="intellij.grazie.java" package="com.intellij.grazie.ide.language.java"/>
+    <module name="intellij.grazie.json" package="com.intellij.grazie.ide.language.json"/>
+    <module name="intellij.grazie.markdown" package="com.intellij.grazie.ide.language.markdown"/>
+    <module name="intellij.grazie.properties" package="com.intellij.grazie.ide.language.properties"/>
+    <module name="intellij.grazie.xml" package="com.intellij.grazie.ide.language.xml"/>
+    <module name="intellij.grazie.yaml" package="com.intellij.grazie.ide.language.yaml"/>
+  </content>
+
+  <depends optional="true" config-file="intellij.grazie.java.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="intellij.grazie.json.xml">com.intellij.modules.json</depends>
+  <depends optional="true" config-file="intellij.grazie.markdown.xml">org.intellij.plugins.markdown</depends>
+  <depends optional="true" config-file="intellij.grazie.properties.xml">com.intellij.properties</depends>
+  <depends optional="true" config-file="intellij.grazie.xml.xml">com.intellij.modules.xml</depends>
+  <depends optional="true" config-file="intellij.grazie.yaml.xml">org.jetbrains.plugins.yaml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>

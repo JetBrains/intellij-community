@@ -516,7 +516,14 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/intellij.gradle.toolingExtension.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/intellij.gradle.toolingExtension.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-proxy/intellij.gradle.toolingProxy.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-proxy/intellij.gradle.toolingProxy.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/intellij.grazie.iml" filepath="$PROJECT_DIR$/plugins/grazie/intellij.grazie.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/grazie/src/intellij.grazie.core.iml" filepath="$PROJECT_DIR$/plugins/grazie/src/intellij.grazie.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/grazie/java/intellij.grazie.java.iml" filepath="$PROJECT_DIR$/plugins/grazie/java/intellij.grazie.java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/grazie/json/intellij.grazie.json.iml" filepath="$PROJECT_DIR$/plugins/grazie/json/intellij.grazie.json.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/grazie/markdown/intellij.grazie.markdown.iml" filepath="$PROJECT_DIR$/plugins/grazie/markdown/intellij.grazie.markdown.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/grazie/properties/intellij.grazie.properties.iml" filepath="$PROJECT_DIR$/plugins/grazie/properties/intellij.grazie.properties.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/src/test/intellij.grazie.tests.iml" filepath="$PROJECT_DIR$/plugins/grazie/src/test/intellij.grazie.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/grazie/xml/intellij.grazie.xml.iml" filepath="$PROJECT_DIR$/plugins/grazie/xml/intellij.grazie.xml.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/grazie/yaml/intellij.grazie.yaml.iml" filepath="$PROJECT_DIR$/plugins/grazie/yaml/intellij.grazie.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt-constants/intellij.groovy.constants.rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt-constants/intellij.groovy.constants.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.iml" />

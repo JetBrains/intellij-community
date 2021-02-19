@@ -16,7 +16,7 @@ object StrategyUtils {
   private val EMPTY_LINKED_SET = LinkedSet<Nothing>()
 
   @Suppress("UNCHECKED_CAST")
-  internal fun <T> emptyLinkedSet(): LinkedSet<T> = EMPTY_LINKED_SET as LinkedSet<T>
+  fun <T> emptyLinkedSet(): LinkedSet<T> = EMPTY_LINKED_SET as LinkedSet<T>
 
   /**
    * Get extension point of [strategy]
@@ -27,7 +27,7 @@ object StrategyUtils {
     return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("Strategy is not registered")
   }
 
-  internal fun getTextDomainOrDefault(strategy: GrammarCheckingStrategy, root: PsiElement, default: TextDomain): TextDomain {
+  fun getTextDomainOrDefault(strategy: GrammarCheckingStrategy, root: PsiElement, default: TextDomain): TextDomain {
     val extension = getStrategyExtensionPoint(strategy)
     if (extension.language != root.language.id) return default
 

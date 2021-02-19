@@ -10,8 +10,6 @@ import com.intellij.grazie.utils.length
 import com.intellij.grazie.utils.toPointer
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.startOffset
-import java.util.*
-import kotlin.collections.ArrayList
 
 object GrammarChecker {
   private data class ShiftInText(val start: Int, val length: Int, val totalDeleted: Int)
