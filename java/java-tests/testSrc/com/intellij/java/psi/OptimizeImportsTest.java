@@ -60,6 +60,13 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testIDEADEV10716() { doTest(); }
   public void testUnresolvedImports() { doTest(); }
   public void testUnresolvedImports2() { doTest(); }
+  public void testInterfaceMethodThroughInheritance() { 
+    myFixture.addClass("package foo; public interface Foo {" +
+                       "  static void foo() {}" +
+                       "  interface Inner extends Foo {}" +
+                       "}");
+    doTest(); 
+  }
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
 

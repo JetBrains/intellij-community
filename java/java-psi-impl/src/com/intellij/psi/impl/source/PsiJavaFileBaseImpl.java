@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor;
 import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor.ResultWithContext;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.*;
+import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -245,13 +246,26 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     @Override
     public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {
       if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
+        PsiScopeProcessor delegate = getDelegate();
         if (element instanceof PsiNamedElement) {
           final String name = ((PsiNamedElement)element).getName();
           Iterable<ResultWithContext> shadowing = myExplicitlyEnumerated.get(name);
           if (shadowing != null && ContainerUtil.exists(shadowing, rwc -> hasSameDeclarationKind(element, rwc.getElement()))) return true;
+
+          if (delegate instanceof MethodsProcessor && element instanceof PsiMethod) {
+            PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+            if (containingClass != null && containingClass.isInterface()) {
+              PsiElement currentFileContext = ((MethodsProcessor)delegate).getCurrentFileContext();
+              if (currentFileContext instanceof PsiImportStaticStatement &&
+                  ((PsiImportStaticStatement)currentFileContext).isOnDemand() &&
+                  !containingClass.isEquivalentTo(((PsiImportStaticStatement)currentFileContext).resolveTargetClass())) {
+                return true;
+              }
+            }
+          }
         }
         if (myCollectedElements.add(element)) {
-          return getDelegate().execute(element, state);
+          return delegate.execute(element, state);
         }
       }
       return true;

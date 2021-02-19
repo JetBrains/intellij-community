@@ -85,6 +85,10 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     return myIsConstructor;
   }
 
+  public PsiElement getCurrentFileContext() {
+    return myCurrentFileContext;
+  }
+
   public void setIsConstructor(boolean myIsConstructor) {
     this.myIsConstructor = myIsConstructor;
   }
