@@ -40,15 +40,14 @@ internal fun buildTextQuery(
 }
 
 private fun isApplicableOccurrence(occurrence: TextOccurrence, comments: Boolean, strings: Boolean, plainText: Boolean): Boolean {
+  var applicableSearchContext = false
   for ((element, offsetInElement) in walkUp(occurrence.element, occurrence.offsetInElement)) {
-    if (!isApplicableSearchContext(element, comments, strings, plainText)) {
-      return false
-    }
     if (hasReferencesInElement(element, offsetInElement) || hasDeclarationsInElement(element, offsetInElement)) {
       return false
     }
+    applicableSearchContext = applicableSearchContext || isApplicableSearchContext(element, comments, strings, plainText)
   }
-  return true
+  return applicableSearchContext
 }
 
 private fun isApplicableSearchContext(element: PsiElement, comments: Boolean, strings: Boolean, plainText: Boolean): Boolean {
