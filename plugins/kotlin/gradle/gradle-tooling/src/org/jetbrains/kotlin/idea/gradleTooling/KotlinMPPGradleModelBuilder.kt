@@ -950,36 +950,8 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
                 }
             }
 
-        fun Project.getTargets(includeSinglePlatform: Boolean = false): Collection<Named>? {
-            val kotlinExt = project.extensions.findByName("kotlin") ?: return null
-            val getTargets = kotlinExt.javaClass.getMethodOrNull("getTargets")
-            if (getTargets == null && includeSinglePlatform) {
-                val getTarget = kotlinExt.javaClass.getMethodOrNull("getTarget")
-                val target = getTarget?.invoke(kotlinExt) as? Named
-                return if (target == null) emptyList() else listOf(target)
-            }
-            @Suppress("UNCHECKED_CAST")
-            return (getTargets?.invoke(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList()
-        }
-
-        fun getCompilations(target: Named): Collection<Named>? {
-            val getCompilationsMethod = target.javaClass.getMethodOrNull("getCompilations") ?: return null
-            @Suppress("UNCHECKED_CAST")
-            return (getCompilationsMethod.invoke(target) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList()
-        }
-
-        fun getCompileKotlinTaskName(project: Project, compilation: Named): Task? {
-            val compilationClass = compilation.javaClass
-            val getCompileKotlinTaskName = compilationClass.getMethodOrNull("getCompileKotlinTaskName") ?: return null
-
-            @Suppress("UNCHECKED_CAST")
-            val compileKotlinTaskName = (getCompileKotlinTaskName(compilation) as? String) ?: return null
-            return project.tasks.findByName(compileKotlinTaskName)
-        }
-
         private val Task.isCompilerArgumentAware: Boolean
             get() = javaClass.classLoader.loadClassOrNull(COMPILER_ARGUMENT_AWARE_CLASS)?.isAssignableFrom(javaClass) ?: false
-
     }
 }
 

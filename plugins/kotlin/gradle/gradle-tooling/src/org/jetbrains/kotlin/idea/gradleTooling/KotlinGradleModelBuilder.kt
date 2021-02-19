@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.gradleTooling.arguments.CACHE_MAPPER_BRANCHING
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCachingChain
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCachingManager.cacheCompilerArgument
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder.Companion.getTargets
 import org.jetbrains.kotlin.idea.projectModel.CompilerArgumentsCacheAware
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -241,9 +240,9 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         if (androidVariantRequest.shouldSkipBuildAllCall()) return null
         val kotlinPluginId = kotlinPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
         val platformPluginId = platformPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
-        val targets = project.getTargets(includeSinglePlatform = true)
+        val target = project.getTarget()
 
-        if (kotlinPluginId == null && platformPluginId == null && targets == null) {
+        if (kotlinPluginId == null && platformPluginId == null && target == null) {
             return null
         }
 
@@ -253,12 +252,9 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val masterMapper = builderContext?.getData(CACHE_MAPPER_BRANCHING) ?: return null
         val detachableMapper = masterMapper.branchOffDetachable(project.name == "buildSrc")
 
-        val kotlinCompileTasks = if (targets != null) {
-            targets.flatMap { target -> KotlinMPPGradleModelBuilder.getCompilations(target) ?: emptyList() }
-                .mapNotNull { compilation -> KotlinMPPGradleModelBuilder.getCompileKotlinTaskName(project, compilation) }
-        } else {
-            project.getAllTasks(false)[project]?.filter { it.javaClass.name in kotlinCompileTaskClasses } ?: emptyList()
-        }
+        val kotlinCompileTasks = target?.let { it.compilations ?: emptyList() }
+                ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
+                ?: (project.getAllTasks(false)[project]?.filter { it.javaClass.name in kotlinCompileTaskClasses } ?: emptyList())
 
         kotlinCompileTasks.forEach { compileTask ->
             if (compileTask.javaClass.name !in kotlinCompileTaskClasses) return@forEach
