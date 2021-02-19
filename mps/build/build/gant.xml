@@ -124,7 +124,7 @@
         <delete file="${basedir}/../.idea/modules.xml"/>
         <copy file="${community.folder}/.idea/modules.xml" todir="${basedir}/../.idea"/>
         <replaceregexp file="${basedir}/../.idea/modules.xml" flags="g" byline="true">
-            <regexp pattern="(\$PROJECT_DIR\$/)(?!android)"/>
+            <regexp pattern="(\$PROJECT_DIR\$/)"/>
             <substitution expression="\1community/"/>
         </replaceregexp>
         <replaceregexp file="${basedir}/../.idea/modules.xml">
