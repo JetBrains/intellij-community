@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.frontend.api.components
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.executeOnPooledThreadInReadAction
-import org.jetbrains.kotlin.idea.frontend.api.analyze
+import org.jetbrains.kotlin.idea.frontend.api.analyse
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -27,7 +27,7 @@ abstract class AbstractExpectedExpressionTypeTest : KotlinLightCodeInsightFixtur
             ?: error("No element was found at caret or no <caret> is present in the test file")
 
         val actualExpectedTypeText: String? = executeOnPooledThreadInReadAction {
-            analyze(ktFile) {
+            analyse(ktFile) {
                 expressionAtCaret.getExpectedType()?.asStringForDebugging()
             }
         }

@@ -9,7 +9,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.fir.highlighter.visitors.FirAfterResolveHighlightingVisitor
-import org.jetbrains.kotlin.idea.frontend.api.analyze
+import org.jetbrains.kotlin.idea.frontend.api.analyse
 import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinPsiChecker
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.psi.KtElement
@@ -25,7 +25,7 @@ class KotlinFirPsiChecker : AbstractKotlinPsiChecker() {
         if (isDispatchThread()) {
             throw ProcessCanceledException()
         }
-        analyze(element) {
+        analyse(element) {
             FirAfterResolveHighlightingVisitor
                 .createListOfVisitors(this, holder)
                 .forEach(element::accept)
