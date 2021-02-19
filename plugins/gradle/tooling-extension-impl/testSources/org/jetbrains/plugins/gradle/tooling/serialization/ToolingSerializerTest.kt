@@ -102,10 +102,12 @@ class ToolingSerializerTest {
   @Test
   @Throws(Exception::class)
   fun `IDEA project serialization test`() {
+    // do not assert GradleVersion.buildTime and GradleVersion.commitId properties of GradleVersionComparator.myVersion field
+    val gradleVersion = GradleVersion.version(GradleVersion.current().version)
     myRandomParameters
       .randomize(
         ofType(GradleVersionComparator::class.java).and(inClass(InternalIdeaContentRoot::class.java)),
-        Randomizer { GradleVersionComparator(GradleVersion.version("6.8")) }
+        Randomizer { GradleVersionComparator(gradleVersion) }
       )
       .randomize(
         ofType(InternalProjectIdentifier::class.java),
