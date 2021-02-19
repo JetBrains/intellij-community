@@ -749,8 +749,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     if (wndToOpenIn == null) {
-      EditorWindow currentWindow = splitters.getCurrentWindow();
-      wndToOpenIn = currentWindow != null ? currentWindow : splitters.getOrCreateCurrentWindow(file);
+      wndToOpenIn = splitters.getOrCreateCurrentWindow(file);
     }
 
     openAssociatedFile(file, wndToOpenIn, splitters);
