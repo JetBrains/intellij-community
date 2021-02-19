@@ -20,6 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -127,6 +129,41 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
       return super.getMinimumSize();
     }
     return JBUI.emptySize();
+  }
+
+  @Override
+  protected void handleMouseWheelEvent(@NotNull MouseWheelEvent event, @NotNull JScrollBar scrollBar) {
+    // TODO replace with standard JBScrollPane in 2021.2 and remove this method!
+    UISettings settings = UISettings.getInstanceOrNull();
+    if (settings != null && settings.getSmoothScrolling()) {
+      MouseWheelEvent e = event;
+      if (Registry.is("idea.true.smooth.scrolling.pixel.perfect", true)) {
+        // Terminal's scrollBar.getModel() operates with lines, not pixel. So we need to covert back to units
+        // according to com.intellij.ui.components.JBScrollBar.getPreciseDelta implementation.
+        e = copyEventWithScaledRotation(event, JBUIScale.scale(10));
+      }
+      ((JBScrollBar)scrollBar).handleMouseWheelEvent(e);
+    }
+    else {
+      super.handleMouseWheelEvent(event, scrollBar);
+    }
+  }
+
+  private @NotNull MouseWheelEvent copyEventWithScaledRotation(@NotNull MouseWheelEvent e, int rotationScaleFactor) {
+    return new MouseWheelEvent(this,
+                               e.getID(),
+                               e.getWhen(),
+                               e.getModifiers(),
+                               e.getX(),
+                               e.getY(),
+                               e.getXOnScreen(),
+                               e.getYOnScreen(),
+                               e.getClickCount(),
+                               e.isPopupTrigger(),
+                               e.getScrollType(),
+                               e.getScrollAmount(),
+                               e.getWheelRotation() / rotationScaleFactor,
+                               e.getPreciseWheelRotation() / rotationScaleFactor);
   }
 
   private boolean skipKeyEvent(@NotNull KeyEvent e) {
