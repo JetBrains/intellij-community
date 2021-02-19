@@ -29,6 +29,7 @@ public class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontIte
 
   protected FontFamilyCombo(boolean isPrimary) {
     super(new MyModel(!isPrimary));
+    setSwingPopup(false);
     myIsPrimary = isPrimary;
     setRenderer(new MyListCellRenderer());
     FontMetrics fontMetrics = getFontMetrics(getFont());
