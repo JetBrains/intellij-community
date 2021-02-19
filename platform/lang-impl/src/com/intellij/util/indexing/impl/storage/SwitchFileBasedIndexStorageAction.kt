@@ -9,6 +9,8 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.util.indexing.FileBasedIndexSwitcher
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.ListCellRenderer

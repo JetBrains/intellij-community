@@ -22,7 +22,13 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetriever;
-import com.intellij.util.indexing.snapshot.*;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
+import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
+import com.intellij.util.indexing.storage.SnapshotInputMappingIndex;
+import com.intellij.util.indexing.storage.UpdatableSnapshotInputMappingIndex;
+import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -75,13 +81,13 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
                                    @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
                                    @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexMap,
                                    @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                                   @Nullable ThrowableComputable<? extends SnapshotInputMappings<Key, Value>, ? extends IOException> snapshotInputMappings,
+                                   @Nullable ThrowableComputable<? extends SnapshotInputMappingIndex<Key, Value, FileContent>, ? extends IOException> snapshotInputMappings,
                                    @Nullable ReadWriteLock lock) throws IOException {
     super(extension, storage, forwardIndexMap, forwardIndexAccessor, lock);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
-    SnapshotInputMappings<Key, Value> inputMappings;
+    SnapshotInputMappingIndex<Key, Value, FileContent> inputMappings;
     try {
       inputMappings = snapshotInputMappings == null ? null : snapshotInputMappings.compute();
     } catch (IOException e) {
@@ -98,7 +104,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       }
       if (backendStorage instanceof SnapshotSingleValueIndexStorage) {
         LOG.assertTrue(forwardIndexMap instanceof IntForwardIndex);
-        ((SnapshotSingleValueIndexStorage<Key, Value>)backendStorage).init(inputMappings, ((IntForwardIndex)forwardIndexMap));
+        ((SnapshotSingleValueIndexStorage<Key, Value>)backendStorage).init((SnapshotInputMappings<Key, Value>)inputMappings,
+                                                                           ((IntForwardIndex)forwardIndexMap));
       }
     }
     if (isCompositeIndexer(myIndexer)) {
@@ -107,8 +114,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
         mySubIndexerRetriever = new PersistentSubIndexerRetriever((ID)myIndexId,
                                                                   extension.getVersion(),
                                                                   (CompositeDataIndexer)myIndexer);
-        if (inputMappings != null) {
-          inputMappings.setSubIndexerRetriever(mySubIndexerRetriever);
+        if (inputMappings instanceof SnapshotInputMappings) {
+          ((SnapshotInputMappings<?, ?>)inputMappings).setSubIndexerRetriever(mySubIndexerRetriever);
         }
       }
       catch (IOException e) {

@@ -5,6 +5,9 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.*
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
+import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.PagedFileStorage
 import com.intellij.util.io.StorageLockContext

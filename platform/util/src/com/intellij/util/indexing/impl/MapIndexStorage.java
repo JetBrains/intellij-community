@@ -32,7 +32,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private final boolean myReadOnly;
   @NotNull private final ValueContainerInputRemapping myInputRemapping;
 
-  public MapIndexStorage(@NotNull Path storageFile,
+  public MapIndexStorage(Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize,
@@ -40,7 +40,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
   }
 
-  public MapIndexStorage(@NotNull Path storageFile,
+  public MapIndexStorage(Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize,

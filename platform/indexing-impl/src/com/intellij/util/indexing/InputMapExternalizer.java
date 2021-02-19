@@ -11,7 +11,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class InputMapExternalizer<Key, Value> implements DataExternalizer<Map<Key, Value>> {
   private final DataExternalizer<Value> myValueExternalizer;

@@ -10,9 +10,9 @@
     <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
 
     <extensionPoint name="fileBasedIndexLayout"
-                    beanClass="com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutProviderBean"
+                    beanClass="com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean"
                     dynamic="true">
-      <with attribute="providerClass" implements="com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutProvider"/>
+      <with attribute="providerClass" implements="com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider"/>
     </extensionPoint>
 
     <extensionPoint name="indexingFlavor" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">

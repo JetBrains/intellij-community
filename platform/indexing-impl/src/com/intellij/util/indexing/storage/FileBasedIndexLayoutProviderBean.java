@@ -1,15 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.indexing.impl.storage;
+package com.intellij.util.indexing.storage;
 
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ResourceBundle;
 
@@ -53,13 +55,13 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
   @Attribute("version")
   public int version;
 
-  @NotNull @Nls String getLocalizedPresentableName() {
+  public @NotNull @Nls String getLocalizedPresentableName() {
     ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, myPluginDescriptor.getPluginClassLoader());
     return AbstractBundle.message(resourceBundle, presentableNameKey);
   }
 
   private FileBasedIndexLayoutProvider myLayoutProvider;
-  @NotNull synchronized FileBasedIndexLayoutProvider getLayoutProvider() {
+  public @NotNull synchronized FileBasedIndexLayoutProvider getLayoutProvider() {
     if (myLayoutProvider == null) {
       myLayoutProvider = ApplicationManager.getApplication().instantiateClass(providerClass, myPluginDescriptor);
     }

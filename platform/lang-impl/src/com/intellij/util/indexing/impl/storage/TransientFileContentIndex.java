@@ -7,11 +7,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
+import com.intellij.util.indexing.storage.SnapshotInputMappingIndex;
+import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -41,7 +43,7 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
             }
 
             @Override
-            public @Nullable SnapshotInputMappings<Key, Value> createOrClearSnapshotInputMappings() throws IOException {
+            public @Nullable SnapshotInputMappingIndex<Key, Value, FileContent> createOrClearSnapshotInputMappings() throws IOException {
               return indexStorageLayout.createOrClearSnapshotInputMappings();
             }
 

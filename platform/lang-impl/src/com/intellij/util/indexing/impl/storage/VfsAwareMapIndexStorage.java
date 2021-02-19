@@ -27,7 +27,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   private KeyHashLog<Key> myKeyHashToVirtualFileMapping;
 
   @TestOnly
-  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
+  public VfsAwareMapIndexStorage(Path storageFile,
                                  @NotNull KeyDescriptor<Key> keyDescriptor,
                                  @NotNull DataExternalizer<Value> valueExternalizer,
                                  final int cacheSize,
@@ -37,7 +37,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
     myBuildKeyHashToVirtualFileMapping = false;
   }
 
-  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
+  public VfsAwareMapIndexStorage(Path storageFile,
                                  @NotNull KeyDescriptor<Key> keyDescriptor,
                                  @NotNull DataExternalizer<Value> valueExternalizer,
                                  final int cacheSize,
@@ -51,7 +51,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   @Override
   protected void initMapAndCache() throws IOException {
     super.initMapAndCache();
-    if (myBuildKeyHashToVirtualFileMapping) {
+    if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
       FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
       assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
       myKeyHashToVirtualFileMapping = new KeyHashLog<>(myKeyDescriptor, myBaseStorageFile);
