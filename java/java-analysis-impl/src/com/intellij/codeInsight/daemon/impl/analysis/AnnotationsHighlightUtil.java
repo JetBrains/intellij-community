@@ -523,8 +523,7 @@ public final class AnnotationsHighlightUtil {
         String description = JavaErrorBundle.message("annotation.members.may.not.have.throws.list");
         HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
-        QuickFixAction.registerQuickFixAction(info,
-                                              QUICK_FIX_FACTORY.createDeleteFix(list, QuickFixBundle.message("remove.throws.list")));
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(list));
         return info;
       }
     }
@@ -533,8 +532,7 @@ public final class AnnotationsHighlightUtil {
         String description = JavaErrorBundle.message("annotation.may.not.have.extends.list");
         HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
-        QuickFixAction.registerQuickFixAction(info,
-                                              QUICK_FIX_FACTORY.createDeleteFix(list, QuickFixBundle.message("remove.extends.list")));
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(list));
         return info;
       }
     }
