@@ -231,7 +231,10 @@ final class ClassLoaderConfigurator {
           return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
                                          new PluginClassLoader.ResolveScopeManager() {
                                            @Override
-                                           public boolean isDefinitelyAlienClass(String name, String packagePrefix) {
+                                           public boolean isDefinitelyAlienClass(String name, String packagePrefix, boolean force) {
+                                             if (force) {
+                                               return false;
+                                             }
                                              return !name.startsWith(packagePrefix) &&
                                                     !name.startsWith("com.intellij.ultimate.PluginVerifier") &&
                                                     !name.equals("com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider");
@@ -239,30 +242,33 @@ final class ClassLoaderConfigurator {
                                          });
       }
 
-      if (descriptor.packagePrefix != null) {
-        return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
-                                       createPluginDependencyAndContentBasedScope(descriptor));
+      if (descriptor.packagePrefix == null) {
+        return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, null,
+                                     null, resourceFileFactory);
       }
     }
-    else if (!descriptor.contentDescriptor.modules.isEmpty()) {
-      // see "The `content.module` element" section about content handling for a module
-      return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
-                                     createModuleContentBasedScope(descriptor));
+    else {
+      if (!descriptor.contentDescriptor.modules.isEmpty()) {
+        // see "The `content.module` element" section about content handling for a module
+        return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                       createModuleContentBasedScope(descriptor));
+      }
+      else if (descriptor.packagePrefix != null) {
+        return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                       new PluginClassLoader.ResolveScopeManager() {
+                                         @Override
+                                         public boolean isDefinitelyAlienClass(String name, String packagePrefix, boolean force) {
+                                           // force flag is ignored for module - e.g. RailsViewLineMarkerProvider is referenced
+                                           // as extension implementation in several modules
+                                           return !name.startsWith(packagePrefix) &&
+                                                  !name.startsWith("com.intellij.ultimate.PluginVerifier");
+                                         }
+                                       });
+      }
     }
 
-    if (descriptor.packagePrefix == null) {
-      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, null,
-                                   null, resourceFileFactory);
-    }
-    else {
-      return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
-                                     new PluginClassLoader.ResolveScopeManager() {
-                                       @Override
-                                       public boolean isDefinitelyAlienClass(String name, String packagePrefix) {
-                                         return !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier");
-                                       }
-                                     });
-    }
+    return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                   createPluginDependencyAndContentBasedScope(descriptor));
   }
 
   private static @NotNull PluginClassLoader createPluginClassloader(@NotNull ClassLoader @NotNull [] parentLoaders,
@@ -284,7 +290,10 @@ final class ClassLoaderConfigurator {
     return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
                                    new PluginClassLoader.ResolveScopeManager() {
                                      @Override
-                                     public boolean isDefinitelyAlienClass(String name, String packagePrefix) {
+                                     public boolean isDefinitelyAlienClass(String name, String packagePrefix, boolean force) {
+                                       if (force) {
+                                         return false;
+                                       }
                                        return !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier") &&
                                               !name.startsWith(customPackage);
                                      }
@@ -297,7 +306,11 @@ final class ClassLoaderConfigurator {
     List<String> contentPackagePrefixes = getContentPackagePrefixes(descriptor);
     List<String> dependencyPackagePrefixes = getDependencyPackagePrefixes(descriptor);
     String pluginId = descriptor.getPluginId().getIdString();
-    return (name, __) -> {
+    return (name, __, force) -> {
+      if (force) {
+        return false;
+      }
+
       for (String prefix : contentPackagePrefixes) {
         if (name.startsWith(prefix)) {
           getLogger().error("Class " + name + " must be not requested from main classloader of " + pluginId + " plugin");
@@ -355,7 +368,8 @@ final class ClassLoaderConfigurator {
         packagePrefixes.add(packagePrefix + '.');
       }
     }
-    return (name, packagePrefix) -> {
+    // force flag is ignored for module - e.g. RailsViewLineMarkerProvider is referenced as extension implementation in several modules
+    return (name, packagePrefix, force) -> {
       if (name.startsWith(packagePrefix) || name.startsWith("com.intellij.ultimate.PluginVerifier")) {
         return false;
       }

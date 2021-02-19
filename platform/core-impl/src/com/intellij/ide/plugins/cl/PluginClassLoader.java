@@ -129,10 +129,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private final int instanceId;
   private volatile int state = ACTIVE;
 
-  private final @Nullable ResolveScopeManager resolveScopeManager;
+  private final ResolveScopeManager resolveScopeManager;
 
   public interface ResolveScopeManager {
-    boolean isDefinitelyAlienClass(String name, String packagePrefix);
+    boolean isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
   }
 
   public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
@@ -147,7 +147,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
     instanceId = instanceIdProducer.incrementAndGet();
 
-    this.resolveScopeManager = resolveScopeManager;
+    this.resolveScopeManager = resolveScopeManager == null ? (p1, p2, p3) -> false : resolveScopeManager;
     this.parents = parents;
     this.pluginDescriptor = pluginDescriptor;
     pluginId = pluginDescriptor.getPluginId();
@@ -323,8 +323,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   @Override
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
-    if (!forceLoadFromSubPluginClassloader &&
-        (resolveScopeManager != null && resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix))) {
+    if (resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, forceLoadFromSubPluginClassloader)) {
       return null;
     }
 
