@@ -87,6 +87,12 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
   fun `test composite project partial re-import`() {
     createAndImportTestCompositeProject()
 
+    // since Gradle 6.8, included (of the "main" build) builds became visible for `buildSrc` project
+    // there are separate TAPI request per `buildSrc` project in a composite
+    // and hence included build models can be handled more than once
+    // should be fixed with https://github.com/gradle/gradle/issues/14563
+    val includedBuildModelsReceivedQuantity = if (isGradleOlderThan("6.8")) 1 else 2
+
     assertReceivedModels(
       projectPath, "project",
       mapOf("name" to "project", "prop_loaded_1" to "val1"),
@@ -100,12 +106,14 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
     assertReceivedModels(
       path("includedBuild"), "includedBuild",
       mapOf("name" to "includedBuild", "prop_loaded_included" to "val1"),
-      mapOf("name" to "includedBuild", "prop_finished_included" to "val2")
+      mapOf("name" to "includedBuild", "prop_finished_included" to "val2"),
+      includedBuildModelsReceivedQuantity
     )
     assertReceivedModels(
       path("includedBuild"), "subProject",
       mapOf("name" to "subProject", "prop_loaded_included" to "val1"),
-      mapOf("name" to "subProject", "prop_finished_included" to "val2")
+      mapOf("name" to "subProject", "prop_finished_included" to "val2"),
+      includedBuildModelsReceivedQuantity
     )
     assertReceivedModels(
       path("includedBuild/buildSrc"), "buildSrc",
@@ -152,12 +160,14 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
     assertReceivedModels(
       path("includedBuild"), "includedBuild",
       mapOf("name" to "includedBuild", "prop_loaded_included" to "val1_1"),
-      mapOf("name" to "includedBuild", "prop_finished_included" to "val2_2")
+      mapOf("name" to "includedBuild", "prop_finished_included" to "val2_2"),
+      includedBuildModelsReceivedQuantity
     )
     assertReceivedModels(
       path("includedBuild"), "subProject",
       mapOf("name" to "subProject", "prop_loaded_included" to "val1_1"),
-      mapOf("name" to "subProject", "prop_finished_included" to "val2_2")
+      mapOf("name" to "subProject", "prop_finished_included" to "val2_2"),
+      includedBuildModelsReceivedQuantity
     )
     assertReceivedModels(
       path("includedBuild/buildSrc"), "buildSrc",
@@ -283,7 +293,8 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
   private fun assertReceivedModels(
     buildPath: String, projectName: String,
     expectedProjectLoadedModelsMap: Map<String, String>,
-    expectedBuildFinishedModelsMap: Map<String, String>? = null
+    expectedBuildFinishedModelsMap: Map<String, String>? = null,
+    receivedQuantity: Int = 1
   ) {
     val modelConsumer = myProject.getService(ModelConsumer::class.java)
     val projectLoadedPredicate = Predicate<Pair<Project, ProjectLoadedModel>> {
@@ -292,7 +303,7 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       pathsEqual(project.projectIdentifier.buildIdentifier.rootDir.path, buildPath)
     }
     assertThat(modelConsumer.projectLoadedModels)
-      .haveExactly(1, Condition(projectLoadedPredicate, "project loaded model for '$projectName' at '$buildPath'"))
+      .haveExactly(receivedQuantity, Condition(projectLoadedPredicate, "project loaded model for '$projectName' at '$buildPath'"))
     val (_, projectLoadedModel) = modelConsumer.projectLoadedModels.find(projectLoadedPredicate::test)!!
     assertMapsEqual(expectedProjectLoadedModelsMap, projectLoadedModel.map)
     if (expectedBuildFinishedModelsMap != null) {
@@ -302,7 +313,7 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
         pathsEqual(project.projectIdentifier.buildIdentifier.rootDir.path, buildPath)
       }
       assertThat(modelConsumer.buildFinishedModels)
-        .haveExactly(1, Condition(buildFinishedPredicate, "build finished model for '$projectName' at '$buildPath'"))
+        .haveExactly(receivedQuantity, Condition(buildFinishedPredicate, "build finished model for '$projectName' at '$buildPath'"))
       val (_, buildFinishedModel) = modelConsumer.buildFinishedModels.find(buildFinishedPredicate::test)!!
       assertMapsEqual(expectedBuildFinishedModelsMap, buildFinishedModel.map)
     }
