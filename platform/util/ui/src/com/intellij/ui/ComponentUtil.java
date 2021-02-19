@@ -107,7 +107,11 @@ public final class ComponentUtil {
    * @return a scroll pane for the given component or {@code null} if none
    */
   public static @Nullable JScrollPane getScrollPane(@Nullable Component component) {
-    return getScrollPane(getViewport(component));
+    return component instanceof JScrollBar
+           ? getScrollPane((JScrollBar)component)
+           : getScrollPane(component instanceof JViewport
+                           ? (JViewport)component
+                           : getViewport(component));
   }
 
   /**
