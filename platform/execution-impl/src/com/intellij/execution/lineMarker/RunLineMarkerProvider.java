@@ -130,7 +130,8 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     private final DefaultActionGroup myActionGroup;
 
     RunLineMarkerInfo(PsiElement element, Icon icon, Function<? super PsiElement, String> tooltipProvider, DefaultActionGroup actionGroup) {
-      super(element, element.getTextRange(), icon, tooltipProvider, null, GutterIconRenderer.Alignment.CENTER);
+      super(element, element.getTextRange(), icon, tooltipProvider, null, GutterIconRenderer.Alignment.CENTER,
+            () -> tooltipProvider.fun(element));
       myActionGroup = actionGroup;
     }
 
