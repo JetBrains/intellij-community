@@ -831,7 +831,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (outerContainer == null) return;
 
     EditorSettings settings = myEditor.getSettings();
-    int rightMargin = settings.getRightMargin(myEditor.getProject());
+    Project project = myEditor.getProject();
+    if (project != null && project.isDisposed()) return;
+    int rightMargin = settings.getRightMargin(project);
     if (rightMargin <= 0) return;
 
     JComponent editorComponent = myEditor.getComponent();
@@ -1920,7 +1922,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private boolean isDumbMode() {
     Project project = myEditor.getProject();
-    return project != null && DumbService.isDumb(project);
+    return project != null && !project.isDisposed() && DumbService.isDumb(project);
   }
 
   private boolean checkDumbAware(@NotNull Object possiblyDumbAware) {
