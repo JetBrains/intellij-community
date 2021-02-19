@@ -761,6 +761,10 @@ public class EditorMouseHoverPopupManager implements Disposable {
     public Info withQuickDocMessage(@Nls String quickDocMessage) {
       return new Info(highlightInfo, tooltipAction, quickDocMessage, quickDocElement.get(), docProvider);
     }
+
+    public Info withQuickDocElement(PsiElement element) {
+      return new Info(highlightInfo, tooltipAction, quickDocMessage, element, docProvider);
+    }
   }
 
   private static PsiElement extractOriginalElement(PsiElement element) {
