@@ -11,7 +11,7 @@ public final class SnapshotInputMappingsStatistics {
   private final LongAdder totalMisses = new LongAdder();
   private final ID<?, ?> myIndexId;
 
-  public <Value, Key> SnapshotInputMappingsStatistics(@NotNull ID<Key, Value> indexId) {
+  public SnapshotInputMappingsStatistics(@NotNull ID<?, ?> indexId) {
     myIndexId = indexId;
   }
 
