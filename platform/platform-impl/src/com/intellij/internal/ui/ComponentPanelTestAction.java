@@ -529,7 +529,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private JComponent createValidatorsPanel() {
       // JTextField component with browse button
       TextFieldWithBrowseButton tfbb = new TextFieldWithBrowseButton(e -> System.out.println("JTextField browse button pressed"));
-      new ComponentValidator(getDisposable()).withValidator(() -> tfbb.getText().length() != 5 ? new ValidationInfo("Enter 5 symbols",  tfbb) : null).
+      new ComponentValidator(getDisposable()).withValidator(() -> tfbb.getText().length() < 50 ? new ValidationInfo(tfbb.getText() + " is too short. Enter at least 50 symbols",  tfbb) : null).
         withOutlineProvider(ComponentValidator.CWBB_PROVIDER).
         andStartOnFocusLost().
         installOn(tfbb);
