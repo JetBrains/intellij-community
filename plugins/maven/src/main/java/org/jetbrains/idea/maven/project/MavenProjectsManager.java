@@ -5,6 +5,8 @@ import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.ide.impl.TrustChangeNotifier;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
