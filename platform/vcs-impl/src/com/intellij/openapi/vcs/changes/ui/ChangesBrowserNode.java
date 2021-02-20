@@ -276,7 +276,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
    */
   @Nls
   public String getTextPresentation() {
-    DeprecatedMethodException.report("Please implement `ChangesBrowserNode#getTextPresentation()` explicitly. " + this.getClass());
+    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getTextPresentation", "A proper implementation required");
     return userObject == null ? "" : userObject.toString(); //NON-NLS
   }
 
