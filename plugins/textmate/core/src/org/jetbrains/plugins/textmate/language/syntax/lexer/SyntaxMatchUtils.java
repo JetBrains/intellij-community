@@ -209,20 +209,11 @@ public final class SyntaxMatchUtils {
 
   @NotNull
   public static String selectorsToScope(@NotNull Collection<CharSequence> selectors) {
-    return MY_SCOPES_INTERNER.computeIfAbsent(new ArrayList<>(selectors), SyntaxMatchUtils::joinSelectors);
+    return MY_SCOPES_INTERNER.computeIfAbsent(ContainerUtil.skipNulls(selectors), SyntaxMatchUtils::joinSelectors);
   }
 
   private static String joinSelectors(@NotNull List<CharSequence> selectors) {
-    StringBuilder result = new StringBuilder();
-    for (CharSequence selector : selectors) {
-      if (selector != null) {
-        result.append(selector).append(" ");
-      }
-    }
-    if (result.length() > 0) {
-      result.setLength(result.length() - 1);
-    }
-    return result.toString();
+    return StringUtil.join(selectors, " ");
   }
 
   private static final class MatchKey {
