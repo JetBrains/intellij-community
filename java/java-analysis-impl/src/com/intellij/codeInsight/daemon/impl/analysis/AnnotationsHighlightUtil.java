@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.MakeReceiverParameterFirstFix;
@@ -713,9 +712,7 @@ public final class AnnotationsHighlightUtil {
         info,
         QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, false, false)
       );
-      QuickFixAction.registerQuickFixAction(
-        info,
-        QUICK_FIX_FACTORY.createDeleteFix(parameter, QuickFixBundle.message("remove.receiver.parameter")));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(parameter));
       return info;
     }
 
@@ -725,9 +722,7 @@ public final class AnnotationsHighlightUtil {
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
       QuickFixAction.registerQuickFixAction(info, new MakeReceiverParameterFirstFix(parameter));
-      QuickFixAction.registerQuickFixAction(
-        info,
-        QUICK_FIX_FACTORY.createDeleteFix(parameter, QuickFixBundle.message("remove.receiver.parameter")));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(parameter));
       return info;
     }
 

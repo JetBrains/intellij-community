@@ -37,7 +37,8 @@ public enum JavaElementKind {
   UNKNOWN("element.unknown"),
   VARIABLE("element.variable"),
   THROWS_LIST("element.throws.list"),
-  EXTENDS_LIST("element.extends.list");
+  EXTENDS_LIST("element.extends.list"),
+  RECEIVER_PARAMETER("element.receiver.parameter");
   
   private final @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String propertyKey;
 
@@ -147,6 +148,9 @@ public enum JavaElementKind {
     }
     if (element instanceof PsiParameter) {
       return PARAMETER;
+    }
+    if (element instanceof PsiReceiverParameter) {
+      return RECEIVER_PARAMETER;
     }
     if (element instanceof PsiVariable) {
       return VARIABLE;
