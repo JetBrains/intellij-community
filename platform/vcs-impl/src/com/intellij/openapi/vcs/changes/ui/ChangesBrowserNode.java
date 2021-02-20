@@ -63,8 +63,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
     path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
 
-  private SimpleTextAttributes myAttributes;
-
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
   private boolean myHelper;
@@ -72,7 +70,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   protected ChangesBrowserNode(T userObject) {
     super(userObject);
-    myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   @NotNull
@@ -164,7 +161,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return false;
   }
 
-  public void markAsHelperNode() {
+  public final void markAsHelperNode() {
     myHelper = true;
   }
 
@@ -240,7 +237,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    renderer.append(getTextPresentation(), myAttributes);
+    renderer.append(getTextPresentation());
     appendCount(renderer);
   }
 
@@ -310,15 +307,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   public static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
     return ChangesComparator.getFilePathComparator(true).compare(path1, path2);
-  }
-
-  public void setAttributes(@NotNull SimpleTextAttributes attributes) {
-    myAttributes = attributes;
-  }
-
-  @NotNull
-  protected SimpleTextAttributes getAttributes() {
-    return myAttributes;
   }
 
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {

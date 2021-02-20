@@ -17,6 +17,8 @@ public abstract class ChangesBrowserSpecificFilePathsNode<T> extends ChangesBrow
   private final int myManyFileCount;
   private final int myManyDirectoryCount;
 
+  private SimpleTextAttributes myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+
   protected ChangesBrowserSpecificFilePathsNode(T userObject, @NotNull Collection<FilePath> files, @NotNull Runnable shower) {
     super(userObject);
     // if files presented in the same view recalculate number of dirs and files -> provide -1; otherwise use from model
@@ -26,9 +28,15 @@ public abstract class ChangesBrowserSpecificFilePathsNode<T> extends ChangesBrow
     myDialogShower = shower;
   }
 
+  public final void setAttributes(@NotNull SimpleTextAttributes attributes) {
+    myAttributes = attributes;
+  }
+
   @Override
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    super.render(renderer, selected, expanded, hasFocus);
+    renderer.append(getTextPresentation(), myAttributes);
+    appendCount(renderer);
+
     if (isManyFiles()) {
       renderer.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       renderer.append(VcsBundle.message("changes.browse"), SimpleTextAttributes.LINK_ATTRIBUTES, myDialogShower);

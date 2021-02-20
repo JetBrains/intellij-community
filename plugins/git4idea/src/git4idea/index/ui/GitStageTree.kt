@@ -366,12 +366,11 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
 
     init {
       markAsHelperNode()
-      attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
     }
 
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+      renderer.append(textPresentation, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
       if (kind == NodeKind.CONFLICTED) {
-        renderer.append(textPresentation, attributes)
         renderer.append(FontUtil.spaceAndThinSpace(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
         renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"),
                         SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
@@ -381,11 +380,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
                           }.filter { it != null }.toList() as List<VirtualFile>
                           showMergeDialog(conflictedFiles)
                         })
-        appendCount(renderer)
       }
-      else {
-        super.render(renderer, selected, expanded, hasFocus)
-      }
+      appendCount(renderer)
     }
 
     @Nls
@@ -397,7 +393,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.IGNORED, files, { IgnoredViewDialog(project).show() }) {
     init {
       markAsHelperNode()
-      attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
     }
 
     @Nls
@@ -409,7 +405,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project, files).show() }) {
     init {
       markAsHelperNode()
-      attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
     }
 
     @Nls

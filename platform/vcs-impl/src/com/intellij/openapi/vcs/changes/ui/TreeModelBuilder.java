@@ -282,19 +282,26 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   public ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag) {
-    return createTagNode(tag, true);
+    return createTagNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
   }
 
   @NotNull
   public ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag, boolean expandByDefault) {
-    return createTagNode(new ChangesBrowserNode.TagImpl(tag), expandByDefault);
+    return createTagNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault);
   }
 
   @NotNull
-  public ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag, boolean expandByDefault) {
+  public ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag, @NotNull SimpleTextAttributes attributes, boolean expandByDefault) {
+    return createTagNode(new ChangesBrowserNode.TagImpl(tag), attributes, expandByDefault);
+  }
+
+  @NotNull
+  public ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag,
+                                             @NotNull SimpleTextAttributes attributes,
+                                             boolean expandByDefault) {
     if (tag == null) return myRoot;
 
-    ChangesBrowserNode<?> subtreeRoot = new TagChangesBrowserNode(tag, expandByDefault);
+    ChangesBrowserNode<?> subtreeRoot = new TagChangesBrowserNode(tag, attributes, expandByDefault);
     subtreeRoot.markAsHelperNode();
 
     insertSubtreeRoot(subtreeRoot);
@@ -346,8 +353,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @NotNull
   public TreeModelBuilder setSwitchedRoots(@Nullable Map<VirtualFile, @NlsSafe String> switchedRoots) {
     if (ContainerUtil.isEmpty(switchedRoots)) return this;
-    ChangesBrowserNode<?> rootsHeadNode = createTagNode(ChangesBrowserNode.SWITCHED_ROOTS_TAG);
-    rootsHeadNode.setAttributes(SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+    ChangesBrowserNode<?> rootsHeadNode = createTagNode(ChangesBrowserNode.SWITCHED_ROOTS_TAG,
+                                                        SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES,
+                                                        true);
 
     List<VirtualFile> files = sorted(switchedRoots.keySet(), VirtualFileHierarchicalComparator.getInstance());
 
