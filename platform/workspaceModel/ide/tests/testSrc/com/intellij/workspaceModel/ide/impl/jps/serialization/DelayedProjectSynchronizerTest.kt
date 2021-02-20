@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.configLocation
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -65,7 +66,15 @@ class DelayedProjectSynchronizerTest {
 
     val project = loadProject(projectData.projectDir)
 
-    assertTrue((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache)
+    val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+    assertTrue(workspaceModel.loadedFromCache)
+    checkSerializersConsistency(project)
+  }
+
+  private fun checkSerializersConsistency(project: Project) {
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val serializers = JpsProjectModelSynchronizer.getInstance(project)!!.getSerializers()
+    serializers.checkConsistency(project.configLocation!!.baseDirectoryUrlString, storage, VirtualFileUrlManager.getInstance(project))
   }
 
   @Test
@@ -94,6 +103,7 @@ class DelayedProjectSynchronizerTest {
     }
 
     assertTrue((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache)
+    checkSerializersConsistency(project)
   }
 
   private fun loadProject(projectDir: File): Project {
