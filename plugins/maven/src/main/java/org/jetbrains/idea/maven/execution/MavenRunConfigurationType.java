@@ -174,70 +174,19 @@ public final class MavenRunConfigurationType implements ConfigurationType {
                                                                                          project,
                                                                                          generateName(project, params),
                                                                                          isDelegateBuild);
-    boolean reimportAfterRun = false;
-    if (!MavenUtil.isProjectTrustedEnoughToImport(project, false, false)) {
-      if (!MavenUtil.isProjectTrustedEnoughToImport(project, true, true)) {
-        MavenUtil.showError(project,
-                            RunnerBundle.message("notification.title.failed.to.execute.maven.goal"),
-                            RunnerBundle.message("notification.project.is.untrusted"));
-        return;
-      }
-      reimportAfterRun = true;
-    }
 
     ProgramRunner runner = isDelegateBuild ? DelegateBuildRunner.getDelegateRunner() : DefaultJavaProgramRunner.getInstance();
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configSettings, project);
     environment.putUserData(IS_DELEGATE_BUILD, isDelegateBuild);
+    environment.setCallback(callback);
     try {
-      registerCallback(project, callback, environment, reimportAfterRun);
-
       runner.execute(environment);
     }
     catch (ExecutionException e) {
       MavenUtil.showError(project, RunnerBundle.message("notification.title.failed.to.execute.maven.goal"), e);
     }
   }
-
-  private static void registerCallback(Project project,
-                                       ProgramRunner.@Nullable Callback callback,
-                                       ExecutionEnvironment environment,
-                                       boolean finalReimportAfterRun) {
-    environment.setCallback(new ProgramRunner.Callback() {
-      @Override
-      public void processStarted(RunContentDescriptor descriptor) {
-        if (callback != null) {
-          callback.processStarted(descriptor);
-        }
-        if (!finalReimportAfterRun) {
-          return;
-        }
-        ProcessHandler handler = descriptor.getProcessHandler();
-        if (handler != null) {
-          handler.addProcessListener(new ProcessListener() {
-            @Override
-            public void startNotified(@NotNull ProcessEvent event) {
-
-            }
-
-            @Override
-            public void processTerminated(@NotNull ProcessEvent event) {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-              });
-            }
-
-            @Override
-            public void onTextAvailable(@NotNull ProcessEvent event,
-                                        @NotNull Key outputType) {
-
-            }
-          });
-        }
-      }
-    });
-  }
-
 
   @NotNull
 

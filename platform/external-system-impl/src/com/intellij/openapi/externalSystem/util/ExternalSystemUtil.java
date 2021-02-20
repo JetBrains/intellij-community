@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
@@ -22,7 +23,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -109,7 +109,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.intellij.ide.impl.TrustedProjects.*;
+import static com.intellij.ide.impl.TrustedProjects.confirmImportingUntrustedProject;
+import static com.intellij.ide.impl.TrustedProjects.getTrustedState;
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -680,7 +681,8 @@ public final class ExternalSystemUtil {
       case UNSURE:
         String systemName = externalSystemId.getReadableName();
         return confirmImportingUntrustedProject(project, systemName,
-                                                ExternalSystemBundle.message("unlinked.project.notification.load.action", systemName));
+                                                ExternalSystemBundle.message("unlinked.project.notification.load.action", systemName),
+                                                CommonBundle.getCancelButtonText());
       case YES:
         return true;
       case NO:
