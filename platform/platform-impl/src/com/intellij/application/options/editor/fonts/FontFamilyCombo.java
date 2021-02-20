@@ -90,6 +90,10 @@ public class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontIte
     public @NotNull String getFamilyName() {
       return myFamilyName;
     }
+
+    public boolean isSelectable() {
+      return true;
+    }
   }
 
   private static class MyNoFontItem extends MyFontItem {
@@ -103,6 +107,11 @@ public class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontIte
 
     private MySeparatorItem(@NotNull String title, boolean isMonospaced) {
       super(title, isMonospaced);
+    }
+
+    @Override
+    public boolean isSelectable() {
+      return false;
     }
   }
 
@@ -160,7 +169,7 @@ public class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontIte
         mySelectedItem = myNoFontItem;
       }
       else if (anItem instanceof String) {
-        mySelectedItem = ContainerUtil.find(myItems, item -> item.myFamilyName.equals(anItem));
+        mySelectedItem = ContainerUtil.find(myItems, item -> item.isSelectable() && item.myFamilyName.equals(anItem));
       }
       else if (anItem instanceof MySeparatorItem) {
         return;
