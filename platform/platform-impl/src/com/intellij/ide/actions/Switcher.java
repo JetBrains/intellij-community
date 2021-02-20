@@ -86,10 +86,8 @@ import static javax.swing.KeyStroke.getKeyStroke;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public final class Switcher extends AnAction implements DumbAware {
   public static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
-  private static volatile SwitcherPanel SWITCHER = null;
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
   @NonNls private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
 
@@ -98,13 +96,6 @@ public final class Switcher extends AnAction implements DumbAware {
 
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
   private static final Color ON_MOUSE_OVER_BG_COLOR = JBUI.CurrentTheme.List.Hover.background(true);
-  private static int CTRL_KEY;
-  @Nullable public static final Runnable CHECKER = () -> {
-    SwitcherPanel switcher = SWITCHER;
-    if (switcher != null) {
-      switcher.navigate(null);
-    }
-  };
   @NotNull private static final CustomShortcutSet TW_SHORTCUT;
 
   static {
@@ -120,19 +111,20 @@ public final class Switcher extends AnAction implements DumbAware {
     }
     TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(Shortcut.EMPTY_ARRAY));
 
-    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(@NotNull AWTEvent event) {
+    IdeEventQueue.getInstance().addPostprocessor(event -> {
+      if (event instanceof KeyEvent) {
+        KeyEvent keyEvent = (KeyEvent)event;
+        DataContext context = DataManager.getInstance().getDataContext(keyEvent.getComponent());
+        Project project = context.getData(CommonDataKeys.PROJECT);
         ToolWindow tw;
-        SwitcherPanel switcher = SWITCHER;
-        if (switcher != null && event instanceof KeyEvent && !switcher.isPinnedMode()) {
-          final KeyEvent keyEvent = (KeyEvent)event;
-          if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
+        SwitcherPanel switcher = SWITCHER_KEY.get(project);
+        if (switcher != null && !switcher.isPinnedMode()) {
+          if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == switcher.myControlKey) {
             keyEvent.consume();
-            ApplicationManager.getApplication().invokeLater(CHECKER, ModalityState.current());
+            ApplicationManager.getApplication().invokeLater(() -> switcher.navigate(keyEvent), ModalityState.current());
             return true; // because the key event is actually processed
           }
-          else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
+          else if (event.getID() == KEY_PRESSED && event != switcher.myInitEvent
                    && (tw = switcher.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
             keyEvent.consume();
             switcher.myPopup.closeOk(null);
@@ -140,12 +132,10 @@ public final class Switcher extends AnAction implements DumbAware {
             return true; // because the key event is actually processed
           }
         }
-        return false;
       }
+      return false;
     }, null);
   }
-
-  @NonNls private static InputEvent INIT_EVENT;
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -159,7 +149,6 @@ public final class Switcher extends AnAction implements DumbAware {
 
     boolean isNewSwitcher = false;
 
-    INIT_EVENT = e.getInputEvent();
     SwitcherPanel switcher = SWITCHER_KEY.get(project);
     if (switcher != null && switcher.isPinnedMode()) {
       switcher.cancel();
@@ -170,6 +159,7 @@ public final class Switcher extends AnAction implements DumbAware {
       // Assigns SWITCHER field
       boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
       switcher = createAndShowSwitcher(project, IdeBundle.message("window.title.switcher"), false, false, !moveBack);
+      switcher.myInitEvent = e.getInputEvent();
       FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
     }
 
@@ -270,6 +260,8 @@ public final class Switcher extends AnAction implements DumbAware {
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
     private JBPopup myHint;
+    private final int myControlKey;
+    private InputEvent myInitEvent;
 
     @Nullable
     @Override
@@ -584,7 +576,7 @@ public final class Switcher extends AnAction implements DumbAware {
       final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
       final int modifiers = getModifiers(shortcutSet);
       final boolean isAlt = (modifiers & Event.ALT_MASK) != 0;
-      CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
+      myControlKey = isAlt ? VK_ALT : VK_CONTROL;
       files.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
       toolWindows.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
       KeymapUtil.reassignAction(toolWindows, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
@@ -944,7 +936,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
     @Override
     public void keyReleased(@NotNull KeyEvent e) {
-      boolean ctrl = e.getKeyCode() == CTRL_KEY;
+      boolean ctrl = e.getKeyCode() == myControlKey;
       if ((ctrl && isAutoHide())) {
         navigate(e);
       }
@@ -1468,6 +1460,5 @@ public final class Switcher extends AnAction implements DumbAware {
 
   private static void setSwitcher(@NotNull Project project, @Nullable SwitcherPanel switcher) {
     project.putUserData(SWITCHER_KEY, switcher);
-    SWITCHER = switcher;
   }
 }
