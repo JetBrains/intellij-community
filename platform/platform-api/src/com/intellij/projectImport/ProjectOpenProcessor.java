@@ -51,13 +51,6 @@ public abstract class ProjectOpenProcessor {
   public abstract @Nullable Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
 
   /**
-   * If true, then opening the project via this provider might cause execution of arbitrary unverified code.
-   */
-  public boolean executesUnverifiedCode() {
-    return false;
-  }
-
-  /**
    * Return null if not supported.
    */
   public @Nullable CompletableFuture<@Nullable Project> openProjectAsync(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {

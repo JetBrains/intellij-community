@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autolink
 
-import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -63,7 +62,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     findUnlinkedProjectBuildFiles(project, externalProjectPath) {
       val unlinkedProjects = it.filter { (_, buildFiles) -> buildFiles.isNotEmpty() }
       val singleUnlinkedProject = unlinkedProjects.keys.singleOrNull()
-      if (singleUnlinkedProject != null && !Registry.`is`("external.system.auto.import.disabled") && project.isTrusted()) {
+      if (singleUnlinkedProject != null && !Registry.`is`("external.system.auto.import.disabled")) {
         if (LOG.isDebugEnabled) {
           val projectId = singleUnlinkedProject.getProjectId(externalProjectPath)
           LOG.debug("Auto-linked ${projectId.readableName} project")

@@ -13,7 +13,6 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.setTrusted
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.application.ApplicationManager
@@ -190,7 +189,6 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     removeProjectConfigurationAndCaches(projectFile)
 
     val project = instantiateProject(projectFile, options)
-    project.setTrusted(true)
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       initProject(projectFile, project, options.isRefreshVfsNeeded, options.preloadServices, template,
