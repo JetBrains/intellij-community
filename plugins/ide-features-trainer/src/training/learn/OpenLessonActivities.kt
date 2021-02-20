@@ -255,7 +255,6 @@ internal object OpenLessonActivities {
     initLearnProject(null) { project ->
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
-          openReadme(project)
           hideOtherViews(project)
           if (onboarding.properties.canStartInDumbMode) {
             CourseManager.instance.openLesson(project, onboarding)

@@ -78,6 +78,8 @@ class PythonOnboardingTour :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
+      ToolWindowManager.getInstance(project).getToolWindow("Learn")?.hide()
+
       configurations().forEach { runManager().removeConfiguration(it) }
 
       val root = ProjectRootManager.getInstance(project).contentRoots[0]

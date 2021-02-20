@@ -83,6 +83,7 @@ internal object LessonExecutorUtil {
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
       .setCloseButtonEnabled(false)
       .setAnimationCycle(0)
+      .setHideOnAction(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
       .setFillColor(UISettings.instance.backgroundColor)
