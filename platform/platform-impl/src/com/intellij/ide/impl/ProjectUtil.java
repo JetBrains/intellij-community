@@ -381,7 +381,7 @@ public final class ProjectUtil {
                                                    @Nullable Project projectToClose,
                                                    boolean forceOpenInNewFrame) {
     if (processor.executesUnverifiedCode() && !TrustedProjects.isTrustedCheckDisabled()) {
-      OpenUntrustedProjectChoice choice = TrustedProjects.confirmOpeningUntrustedProject(projectFile, processor.getName());
+      OpenUntrustedProjectChoice choice = TrustedProjects.confirmOpeningUntrustedProject(processor.getName());
       switch (choice) {
         case IMPORT:
           Project project = processor.doOpenProject(projectFile, projectToClose, forceOpenInNewFrame);
