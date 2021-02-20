@@ -54,6 +54,7 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNo
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
+import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
@@ -639,7 +640,9 @@ public final class ExternalSystemUtil {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
-    boolean doImport = isPreviewMode || isProjectTrustedEnoughToImport(project, externalSystemId);
+    boolean doImport = isPreviewMode ||
+                       ExternalResolverIsSafe.executesTrustedCodeOnly(externalSystemId) ||
+                       isProjectTrustedEnoughToImport(project, externalSystemId);
     if (!doImport) {
       LOG.debug("Skip " + externalSystemId + " import, because project is not trusted");
       return;
