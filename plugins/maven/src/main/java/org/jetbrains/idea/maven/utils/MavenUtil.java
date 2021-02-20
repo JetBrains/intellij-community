@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -94,8 +95,6 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
-import static com.intellij.ide.impl.TrustedProjects.confirmImportingUntrustedProject;
-import static com.intellij.ide.impl.TrustedProjects.getTrustedState;
 import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -1039,29 +1038,31 @@ public class MavenUtil {
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project,
-                                                       boolean askConfirmationForUnsure,
-                                                       boolean askConfirmationForUntrusted) {
-    if (project.isDefault()) {
+                                                       boolean askConfirmation) {
+    if (project.isDefault() || TrustedProjects.isTrusted(project)) {
       return true;
     }
-    ThreeState state = getTrustedState(project);
-    askConfirmationForUnsure |= askConfirmationForUntrusted;
-    if ((state == ThreeState.UNSURE && askConfirmationForUnsure) || (state == ThreeState.NO && askConfirmationForUntrusted)) {
-      boolean trust = confirmImportingUntrustedProject(project, MAVEN_NAME,
-                                                       ExternalSystemBundle
-                                                         .message(
-                                                           "unlinked.project.notification.load.action",
-                                                           MAVEN_NAME));
-      if (trust) {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          MavenServerManager.getInstance().shutdownServer(project);
-          MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
-        }, SyncBundle.message("maven.sync.restarting"), false, project);
-
-        return true;
-      }
+    ThreeState state = TrustedProjects.getTrustedState(project);
+    if (askConfirmation && (state == ThreeState.UNSURE || state == ThreeState.NO)) {
+      return TrustedProjects.confirmImportingUntrustedProject(project, MAVEN_NAME,
+                                                              ExternalSystemBundle
+                                                                .message(
+                                                                  "unlinked.project.notification.load.action",
+                                                                  MAVEN_NAME),
+                                                              ExternalSystemBundle
+                                                                .message(
+                                                                  "unlinked.project.notification.open.preview.action",
+                                                                  MAVEN_NAME)
+      );
     }
     return state == ThreeState.YES;
+  }
+
+  public static void restartMavenConnectors(Project project) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      MavenServerManager.getInstance().shutdownServer(project);
+      MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
+    }, SyncBundle.message("maven.sync.restarting"), false, project);
   }
 
   public interface MavenTaskHandler {

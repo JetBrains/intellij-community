@@ -116,7 +116,7 @@ class TrustProjectQuickFix : BuildIssueQuickFix {
     val future = CompletableFuture<Void>()
     ApplicationManager.getApplication().invokeLater {
       try {
-        val result = MavenUtil.isProjectTrustedEnoughToImport(project, true, true)
+        val result = MavenUtil.isProjectTrustedEnoughToImport(project, true)
         if (result) {
           MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
         }

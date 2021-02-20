@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.impl.TrustChangeNotifier;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,7 +74,7 @@ public final class MavenServerManager implements Disposable {
   }
 
   public MavenServerManager() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
@@ -83,6 +84,18 @@ public final class MavenServerManager implements Disposable {
             shutdown(true);
           }
         });
+      }
+    });
+
+    connection.subscribe(TrustChangeNotifier.TOPIC, new TrustChangeNotifier() {
+      @Override
+      public void projectTrusted(@NotNull Project project) {
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        if(!manager.isMavenizedProject()) {
+          return;
+        }
+        MavenUtil.restartMavenConnectors(project);
+        manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
       }
     });
   }
@@ -107,7 +120,7 @@ public final class MavenServerManager implements Disposable {
   private MavenServerConnector registerNewConnector(Project project, MavenWorkspaceSettings settings, Sdk jdk) {
     Integer debugPort = getDebugPort(project);
     MavenServerConnector connector;
-    if (MavenUtil.isProjectTrustedEnoughToImport(project, false, false)) {
+    if (MavenUtil.isProjectTrustedEnoughToImport(project, false)) {
       MavenLog.LOG.info("Creating new maven connector for " + project + " in");
       connector = new MavenServerConnectorImpl(project, this, settings, jdk, debugPort);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -170,17 +170,12 @@ public final class MavenRunConfigurationType implements ConfigurationType {
                                                                                          project,
                                                                                          generateName(project, params),
                                                                                          isDelegateBuild);
-    if (!MavenUtil.isProjectTrustedEnoughToImport(project, true, true)) {
-        MavenUtil.showError(project,
-                            RunnerBundle.message("notification.title.failed.to.execute.maven.goal"),
-                            RunnerBundle.message("notification.project.is.untrusted"));
-        return;
-    }
 
     ProgramRunner runner = isDelegateBuild ? DelegateBuildRunner.getDelegateRunner() : DefaultJavaProgramRunner.getInstance();
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configSettings, project);
     environment.putUserData(IS_DELEGATE_BUILD, isDelegateBuild);
+    environment.setCallback(callback);
     try {
       environment.setCallback(callback);
 
