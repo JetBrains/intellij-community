@@ -36,7 +36,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
                                                                                 inlaysManager,
                                                                                 componentsFactory,
                                                                                 cumulative) { fileLine ->
-      val (end, start) = getCommentLinesRange(viewer.editor, fileLine)
+      val (start, end) = getCommentLinesRange(viewer.editor, fileLine)
 
       val (endIndices, side) = viewer.transferLineFromOneside(end)
       val endLine = side.select(endIndices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
@@ -44,7 +44,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
       val (startIndices, _) = viewer.transferLineFromOneside(start)
       val startLine = side.select(startIndices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
 
-      GHPRCommentLocation(side, endLine, startLine, endLine + 1)
+      GHPRCommentLocation(side, endLine, startLine, endLine)
     }
 
     GHPREditorCommentableRangesController(commentableRanges, gutterIconRendererFactory, viewer.editor)
