@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.open
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
@@ -61,6 +62,11 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
                                       ImportSpecBuilder(project, SYSTEM_ID)
                                         .usePreviewMode()
                                         .use(MODAL_SYNC))
+
+    if (!project.isTrusted()) {
+      return
+    }
+
     ExternalSystemUtil.refreshProject(externalProjectPath,
                                       ImportSpecBuilder(project, SYSTEM_ID)
                                         .callback(createFinalImportCallback(project, externalProjectPath)))
