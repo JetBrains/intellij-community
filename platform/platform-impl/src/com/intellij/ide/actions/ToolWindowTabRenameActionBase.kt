@@ -82,6 +82,7 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
               return
             }
             content.displayName = textField.text
+            contentNameUpdated(content)
           }
           balloon.hide()
         }
@@ -100,4 +101,6 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
 
     balloon.show(RelativePoint(baseLabel, Point(baseLabel.width / 2, 0)), Balloon.Position.above)
   }
+
+  open fun contentNameUpdated(content: Content) {}
 }
