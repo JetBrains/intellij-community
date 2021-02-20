@@ -637,7 +637,6 @@ public final class ExternalSystemUtil {
 
     boolean doImport = isProjectTrustedEnoughToImport(project, externalSystemId);
     if (!doImport) {
-      LOG.debug("Skip " + externalSystemId + " import, because project is not trusted");
       return;
     }
 
