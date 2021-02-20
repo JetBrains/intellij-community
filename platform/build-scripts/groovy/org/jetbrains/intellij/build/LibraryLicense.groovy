@@ -156,4 +156,29 @@ class LibraryLicense {
       licenseUrl: licenseUrl ?: "https://opensource.org/licenses/MIT"
     )
   }
+
+  LibraryLicense eplV1() {
+    epl(1)
+  }
+
+  LibraryLicense eplV2() {
+    epl(2)
+  }
+
+  private LibraryLicense epl(int v) {
+    assert v == 1 || v == 2: "Version must be either 1 or 2 for Eclipse Public License"
+    assert license == null: "No need to specify 'license' for Eclipse Public License"
+    assert !licenseUrl?.contains("eclipse.org"): "No need to specify default 'licenseUrl' for Eclipse Public License"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "Eclipse Public License $v.0",
+      licenseUrl: licenseUrl ?: (v == 1 ? "https://www.eclipse.org/org/documents/epl-v10.html" : "https://www.eclipse.org/legal/epl-2.0")
+    )
+  }
 }
