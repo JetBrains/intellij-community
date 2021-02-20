@@ -50,19 +50,13 @@ public abstract class ProjectOpenProcessor {
   /**
    * Create an instance of the project, configure the project according to the needs of this ProjectOpenProcessor, and open it.
    * <p/>
-   * The call to this method is guarded by the "Do you trust this project" check (see TrustedProjects#confirmOpeningUntrustedProject()),
-   * so it is safe for implementations of this method to assume that the project is trusted.
+   * If this processor calls some potentially untrusted code, then the processor should show a confirmation warning to the user,
+   * allowing to load the project in some sort of "preview mode", where the user will be able to view the code, but nothing dangerous
+   * will be executed automatically. See TrustedProjects#confirmOpeningUntrustedProject().
    *
    * @return The created project, or null if it was not possible to create a project for some reason.
    */
   public abstract @Nullable Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
-
-  /**
-   * If true, then opening the project via this provider might cause execution of arbitrary unverified code.
-   */
-  public boolean executesUnverifiedCode() {
-    return false;
-  }
 
   /**
    * Allow opening a directory directly if the project files are located in that directory.
