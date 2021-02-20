@@ -28,7 +28,6 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static com.intellij.ui.jcef.JBCefEventUtils.convertCefKeyEvent;
 import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
