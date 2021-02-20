@@ -1172,7 +1172,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
         return StandardCharsets.ISO_8859_1.name();
       }
-    };
+    }
     TestFileType fileType = new TestFileType();
     FileEncodingProvider encodingProvider = new FileEncodingProvider() {
       @Override
