@@ -364,22 +364,19 @@ final class ActionUpdater {
         return Collections.emptyList();
       }
       if (isPopup) { // popup menu has its own presentation
-        if (hideIfNoVisible) {
-          boolean visibleChildren = hasVisible;
-          if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
-            return Collections.emptyList();
-          }
-          boolean canBePerformed = canBePerformed(actionGroup, strategy);
-          presentation.setEnabled(visibleChildren || canBePerformed);
-          boolean performOnly = canBePerformed && (actionGroup instanceof AlwaysPerformingActionGroup || !visibleChildren);
-          presentation.putClientProperty("actionGroup.perform.only", performOnly ? true : null);
+        if (hideIfNoVisible && !hasVisible && actionGroup.hideIfNoVisibleChildren()) {
+          return Collections.emptyList();
         }
+        boolean canBePerformed = canBePerformed(actionGroup, strategy);
+        presentation.setEnabled(hasVisible || canBePerformed);
+        boolean performOnly = canBePerformed && (actionGroup instanceof AlwaysPerformingActionGroup || !hasVisible);
+        presentation.putClientProperty("actionGroup.perform.only", performOnly ? true : null);
 
         if (myVisitor != null) {
           myVisitor.visitLeaf(child);
         }
         if (hideDisabled && !(child instanceof CompactActionGroup)) {
-          return Collections.singletonList(new EmptyAction.DelegatingCompactActionGroup((ActionGroup) child));
+          return Collections.singletonList(new EmptyAction.DelegatingCompactActionGroup((ActionGroup)child));
         }
         return Collections.singletonList(child);
       }
