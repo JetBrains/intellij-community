@@ -48,7 +48,8 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
   protected void afterMerge(DfaMemoryStateImpl other) {
     super.afterMerge(other);
     assert other instanceof TrackingDfaMemoryState;
-    myHistory = myHistory.merge(((TrackingDfaMemoryState)other).myHistory);
+    MemoryStateChange otherHistory = ((TrackingDfaMemoryState)other).myHistory;
+    myHistory = myHistory == null ? otherHistory : myHistory.merge(otherHistory);
   }
 
   private Map<DfaVariableValue, Set<Relation>> getRelations() {

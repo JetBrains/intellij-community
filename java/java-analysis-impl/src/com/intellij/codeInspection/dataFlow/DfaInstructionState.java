@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -34,7 +33,21 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
   }
 
   public String toString() {
-    return getInstruction().getIndex() + " " + getInstruction() + ":   " + getMemoryState().toString();
+    return getInstruction().getIndex() + " " + getInstruction() + ":   " + getMemoryState();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    DfaInstructionState state = (DfaInstructionState)o;
+    return Objects.equals(myBeforeMemoryState, state.myBeforeMemoryState) &&
+           Objects.equals(myInstruction, state.myInstruction);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myBeforeMemoryState, myInstruction);
   }
 
   @Override
@@ -47,11 +60,15 @@ class StateQueue {
   private static final int FORCE_MERGE_THRESHOLD = 100;
   private boolean myWasForciblyMerged;
   private final PriorityQueue<DfaInstructionState> myQueue = new PriorityQueue<>();
-  private final Set<Pair<Instruction, DfaMemoryState>> mySet = new HashSet<>();
+  private final Map<DfaInstructionState, DfaInstructionState> myMap = new HashMap<>();
 
   void offer(DfaInstructionState state) {
-    if (mySet.add(Pair.create(state.getInstruction(), state.getMemoryState()))) {
+    DfaInstructionState otherState = myMap.putIfAbsent(state, state);
+    if (otherState == null) {
       myQueue.offer(state);
+    }
+    else if (otherState.getMemoryState() instanceof TrackingDfaMemoryState) {
+      ((TrackingDfaMemoryState)otherState.getMemoryState()).afterMerge((TrackingDfaMemoryState)state.getMemoryState());
     }
   }
 
@@ -70,7 +87,7 @@ class StateQueue {
   List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
     DfaInstructionState state = myQueue.remove();
     final Instruction instruction = state.getInstruction();
-    mySet.remove(Pair.create(instruction, state.getMemoryState()));
+    myMap.remove(state);
 
     DfaInstructionState next = myQueue.peek();
     if (next == null || next.compareTo(state) != 0) return Collections.singletonList(state);
@@ -78,8 +95,9 @@ class StateQueue {
     List<DfaMemoryStateImpl> memoryStates = new ArrayList<>();
     memoryStates.add((DfaMemoryStateImpl)state.getMemoryState());
     while (!myQueue.isEmpty() && myQueue.peek().compareTo(state) == 0) {
-      DfaMemoryState anotherState = myQueue.poll().getMemoryState();
-      mySet.remove(Pair.create(instruction, anotherState));
+      DfaInstructionState anotherInstructionState = myQueue.poll();
+      myMap.remove(anotherInstructionState);
+      DfaMemoryState anotherState = anotherInstructionState.getMemoryState();
       memoryStates.add((DfaMemoryStateImpl)anotherState);
     }
 
