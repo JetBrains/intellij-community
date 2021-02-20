@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.ide.actions.Switcher.SwitcherPanel.RECENT_LOCATIONS;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.ui.hover.ListHoverListener.getHoveredIndex;
 
 /**
  * @author Konstantin Bulenkov
@@ -88,6 +89,10 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer<Object> {
 
     if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
       hide = mySpeedSearch.matchingFragments(nameToMatch) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
+    }
+    // update background of hovered list item
+    if (!selected && index == getHoveredIndex(list)) {
+      setBackground(JBUI.CurrentTheme.List.Hover.background(true));
     }
   }
 
