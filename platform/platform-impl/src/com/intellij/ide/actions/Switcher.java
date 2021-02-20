@@ -53,6 +53,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
@@ -95,7 +96,6 @@ public final class Switcher extends AnAction implements DumbAware {
   private static final int MINIMUM_WIDTH = JBUIScale.scale(500);
 
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
-  private static final Color ON_MOUSE_OVER_BG_COLOR = JBUI.CurrentTheme.List.Hover.background(true);
   @NotNull private static final CustomShortcutSet TW_SHORTCUT;
 
   static {
@@ -156,7 +156,6 @@ public final class Switcher extends AnAction implements DumbAware {
     }
     if (switcher == null) {
       isNewSwitcher = true;
-      // Assigns SWITCHER field
       boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
       switcher = createAndShowSwitcher(project, IdeBundle.message("window.title.switcher"), false, false, !moveBack);
       switcher.myInitEvent = e.getInputEvent();
@@ -240,7 +239,7 @@ public final class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider,
+  public static class SwitcherPanel extends JPanel implements KeyListener, DataProvider,
                                                               QuickSearchComponent, Disposable {
     static final int SWITCHER_ELEMENTS_LIMIT = 30;
 
@@ -407,27 +406,10 @@ public final class Switcher extends AnAction implements DumbAware {
 
       toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned, showEdited()) {
-        @NotNull
-        @Override
-        public Component getListCellRendererComponent(@NotNull JList<?> list,
-                                                      Object value,
-                                                      int index,
-                                                      boolean selected,
-                                                      boolean hasFocus) {
-          final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, selected);
-          if (selected) {
-            return renderer;
-          }
-          final Color bgColor = list == mouseMoveSrc && index == mouseMoveListIndex ? ON_MOUSE_OVER_BG_COLOR : list.getBackground();
-          UIUtil.changeBackGround(renderer, bgColor);
-          return renderer;
-        }
-      });
+      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned, showEdited()));
       toolWindows.addKeyListener(this);
       ScrollingUtil.installActions(toolWindows);
-      toolWindows.addMouseListener(this);
-      toolWindows.addMouseMotionListener(this);
+      ListHoverListener.DEFAULT.addTo(toolWindows);
       ScrollingUtil.ensureSelectionExists(toolWindows);
       myClickListener.installOn(toolWindows);
       toolWindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -467,8 +449,9 @@ public final class Switcher extends AnAction implements DumbAware {
           String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
           String location = FileUtil.getLocationRelativeToUserHome(presentableUrl);
           myPanel.getAccessibleContext().setAccessibleDescription(location);
-          if (!selected && list == mouseMoveSrc && index == mouseMoveListIndex) {
-            setBackground(ON_MOUSE_OVER_BG_COLOR);
+          // update background of hovered list item
+          if (!selected && index == ListHoverListener.getHoveredIndex(list)) {
+            setBackground(JBUI.CurrentTheme.List.Hover.background(true));
           }
           return myPanel;
         }
@@ -532,8 +515,7 @@ public final class Switcher extends AnAction implements DumbAware {
       files.setBorder(JBUI.Borders.empty(5));
       files.addKeyListener(this);
       ScrollingUtil.installActions(files);
-      files.addMouseListener(this);
-      files.addMouseMotionListener(this);
+      ListHoverListener.DEFAULT.addTo(files);
       files.addFocusListener(new MyFilesListFocusListener());
       myClickListener.installOn(files);
       ScrollingUtil.ensureSelectionExists(files);
@@ -1212,67 +1194,6 @@ public final class Switcher extends AnAction implements DumbAware {
       }
       final EditorWindow[] windows = info.second.getOwner().getWindows();
       return ArrayUtil.contains(info.second, windows) ? info.second : windows.length > 0 ? windows[0] : null;
-    }
-
-    @Override
-    public void mouseClicked(@NotNull MouseEvent e) {
-    }
-
-    private boolean mouseMovedFirstTime = true;
-    private JList mouseMoveSrc = null;
-    private int mouseMoveListIndex = -1;
-
-    @Override
-    public void mouseMoved(@NotNull MouseEvent e) {
-      if (mouseMovedFirstTime) {
-        mouseMovedFirstTime = false;
-        return;
-      }
-      final Object source = e.getSource();
-      boolean changed = false;
-      if (source instanceof JList) {
-        JList list = (JList)source;
-        int index = list.locationToIndex(e.getPoint());
-        if (0 <= index && index < list.getModel().getSize()) {
-          mouseMoveSrc = list;
-          mouseMoveListIndex = index;
-          changed = true;
-        }
-      }
-      if (!changed) {
-        mouseMoveSrc = null;
-        mouseMoveListIndex = -1;
-      }
-
-      repaintLists();
-    }
-
-    private void repaintLists() {
-      toolWindows.repaint();
-      files.repaint();
-    }
-
-    @Override
-    public void mousePressed(@NotNull MouseEvent e) {
-    }
-
-    @Override
-    public void mouseReleased(@NotNull MouseEvent e) {
-    }
-
-    @Override
-    public void mouseEntered(@NotNull MouseEvent e) {
-    }
-
-    @Override
-    public void mouseExited(@NotNull MouseEvent e) {
-      mouseMoveSrc = null;
-      mouseMoveListIndex = -1;
-      repaintLists();
-    }
-
-    @Override
-    public void mouseDragged(@NotNull MouseEvent e) {
     }
 
     private static class SwitcherSpeedSearch extends SpeedSearchBase<SwitcherPanel> implements PropertyChangeListener {
