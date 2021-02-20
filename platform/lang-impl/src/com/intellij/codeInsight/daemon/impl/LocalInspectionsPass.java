@@ -196,7 +196,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside)),
       iManager, isOnTheFly, progress, inside, session);
     Set<PsiFile> alreadyVisitedInjected = inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers, Collections.emptySet());
-    visitRestElementsAndCleanup(progress, outside, session, init);
+    visitRestElementsAndCleanup(progress, outside, session, init, isOnTheFly);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
     ProgressManager.checkCanceled();
 
@@ -266,7 +266,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile file = session.getFile();
     Processor<LocalInspectionToolWrapper> processor = toolWrapper ->
       AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
-        if (elements.isEmpty()) {
+        if (elements.isEmpty() || isOnTheFly) {
           runToolOnElements(toolWrapper, iManager, isOnTheFly, indicator, elements, session, init);
         } else {
           reportWhenInspectionFinished(
@@ -274,7 +274,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             toolWrapper,
             LOCAL_PRIORITY,
             () -> {
-              runToolOnElements(toolWrapper, iManager, isOnTheFly, indicator, elements, session, init);
+              runToolOnElements(toolWrapper, iManager, false, indicator, elements, session, init);
             });
         }
 
@@ -326,20 +326,24 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void visitRestElementsAndCleanup(final @NotNull ProgressIndicator indicator,
                                            final @NotNull List<? extends PsiElement> elements,
                                            final @NotNull LocalInspectionToolSession session,
-                                           @NotNull List<? extends InspectionContext> init) {
+                                           @NotNull List<? extends InspectionContext> init,
+                                           final boolean isOnTheFly) {
 
     Processor<InspectionContext> processor =
       context -> {
         ProgressManager.checkCanceled();
         ApplicationManager.getApplication().assertReadAccessAllowed();
-        reportWhenInspectionFinished(
-          myInspectTopicPublisher,
-          context.tool,
-          LOCAL,
-          () -> {
-            AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
-          });
-
+        if (isOnTheFly) {
+          AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
+        } else {
+          reportWhenInspectionFinished(
+            myInspectTopicPublisher,
+            context.tool,
+            LOCAL,
+            () -> {
+              AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
+            });
+        }
         advanceProgress(1);
         context.tool.getTool().inspectionFinished(session, context.holder);
 
