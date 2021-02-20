@@ -2,60 +2,48 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-
-public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
-
+public class VcsGroupsWrapper extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(VcsGroupsWrapper.class);
-
-  @NotNull private final PresentationFactory myPresentationFactory = new PresentationFactory();
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      e.getPresentation().setVisible(false);
-      return;
-    }
-
-    Set<String> currentVcses = collectVcses(project, e.getDataContext());
-
-    if (currentVcses.isEmpty()) {
+    DefaultActionGroup vcsGroup = mergeVcsGroups(e);
+    if (vcsGroup == null) {
       e.getPresentation().setVisible(false);
     }
     else {
-      Map<String, StandardVcsGroup> vcsGroupMap = collectVcsGroups(e);
-      StandardVcsGroup firstVcsGroup = vcsGroupMap.get(getFirstItem(currentVcses));
-      DefaultActionGroup allVcsesGroup =
-        currentVcses.size() == 1 && firstVcsGroup != null ? firstVcsGroup : createAllVcsesGroup(vcsGroupMap, currentVcses);
-
-      copyPresentation(allVcsesGroup, e.getPresentation());
-      removeAll();
-      addAll(allVcsesGroup);
+      e.getPresentation().copyFrom(vcsGroup.getTemplatePresentation());
+      vcsGroup.update(e);
     }
   }
 
-  private void copyPresentation(@NotNull AnAction sourceAction, @NotNull Presentation target) {
-    Presentation source = myPresentationFactory.getPresentation(sourceAction);
+  @Override
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    if (e == null) return AnAction.EMPTY_ARRAY;
 
-    target.setDescription(source.getDescription());
-    target.restoreTextWithMnemonic(source);
-    target.setVisible(source.isVisible());
-    target.setEnabled(source.isEnabled());
+    DefaultActionGroup vcsGroup = mergeVcsGroups(e);
+    if (vcsGroup == null) {
+      return AnAction.EMPTY_ARRAY;
+    }
+    else {
+      return vcsGroup.getChildren(e);
+    }
   }
 
   @NotNull
@@ -70,35 +58,37 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
       .toSet();
   }
 
-  @NotNull
-  private static Map<String, StandardVcsGroup> collectVcsGroups(@NotNull AnActionEvent e) {
-    Map<String, StandardVcsGroup> result = new HashMap<>();
-    DefaultActionGroup vcsGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("VcsGroup");
+  @Nullable
+  private static DefaultActionGroup mergeVcsGroups(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return null;
 
+    Set<String> currentVcses = collectVcses(project, e.getDataContext());
+    if (currentVcses.isEmpty()) return null;
+
+    List<StandardVcsGroup> groups = new ArrayList<>();
+
+    DefaultActionGroup vcsGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("VcsGroup");
     for (AnAction child : vcsGroup.getChildren(e)) {
-      if (!(child instanceof StandardVcsGroup)) {
+      StandardVcsGroup standardGroup = ObjectUtils.tryCast(child, StandardVcsGroup.class);
+      if (standardGroup == null) {
         LOG.error(MessageFormat.format("Any version control group should extend {0}. Violated by {1}, {2}.", // NON-NLS
                                        StandardVcsGroup.class,
                                        ActionManager.getInstance().getId(child), child.getClass()));
+        continue;
       }
-      else {
-        StandardVcsGroup group = (StandardVcsGroup)child;
-        result.put(group.getVcsName(e.getProject()), group);
+
+      String vcsName = standardGroup.getVcsName(project);
+      if (currentVcses.contains(vcsName)) {
+        groups.add(standardGroup);
       }
     }
 
-    return result;
-  }
+    if (groups.isEmpty()) return null;
+    if (groups.size() == 1) return ContainerUtil.getOnlyItem(groups);
 
-  @NotNull
-  private static DefaultActionGroup createAllVcsesGroup(@NotNull Map<String, StandardVcsGroup> vcsGroupsMap, @NotNull Set<String> vcses) {
     DefaultActionGroup result = DefaultActionGroup.createPopupGroup(VcsBundle.messagePointer("group.name.version.control"));
-
-    vcsGroupsMap.entrySet().stream()
-      .filter(e -> vcses.contains(e.getKey()))
-      .map(Map.Entry::getValue)
-      .forEach(result::add);
-
+    result.addAll(groups);
     return result;
   }
 }
