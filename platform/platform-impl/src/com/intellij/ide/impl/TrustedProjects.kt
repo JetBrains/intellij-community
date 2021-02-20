@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
@@ -68,7 +67,7 @@ fun Project.setTrusted(value: Boolean) {
 
 internal fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
                                         ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                        SystemProperties.`is`("idea.is.integration.test")
+                                        java.lang.Boolean.getBoolean("idea.is.integration.test")
 
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
