@@ -82,7 +82,6 @@ private fun loadImage(file: Path, failOnMalformedImage: Boolean): BufferedImage?
   }
   catch (e: Exception) {
     if (failOnMalformedImage) throw e
-    e.printStackTrace(System.out)
     return null
   }
 }
