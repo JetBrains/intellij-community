@@ -11,7 +11,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -26,8 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class ProjectStartupRunner implements StartupActivity.DumbAware {
-  private static final Logger LOG = Logger.getInstance(ProjectStartupRunner.class);
-
   @Override
   public void runActivity(@NotNull Project project) {
     ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project);
@@ -148,7 +145,8 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
         myAlarm.addRequest(this, PAUSE);
       }
       // reporting that the task successfully started would require changing the interface of execution subsystem, not it reports errors by itself
-      LOG.info("Starting startup task '" + myName + "'");
+      ProjectStartupTaskManager.NOTIFICATION_GROUP
+        .createNotification(ExecutionBundle.message("0.starting.1", ProjectStartupTaskManager.PREFIX, myName), MessageType.INFO).notify(myProject);
       ProgramRunnerUtil.executeConfiguration(myEnvironment, true, true);
       // same thread always
       if (myAlarm.isEmpty()) Disposer.dispose(myAlarm);
