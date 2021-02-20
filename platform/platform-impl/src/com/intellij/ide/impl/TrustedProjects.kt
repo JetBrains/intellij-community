@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ThreeState
-import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.Nls
 
 fun confirmOpeningUntrustedProject(name: @Nls String): OpenUntrustedProjectChoice {
@@ -69,13 +69,13 @@ fun Project.setTrusted(value: Boolean) {
 class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
 
   class State : BaseState() {
-    @get:Attribute
-    var isTrusted by enum(ThreeState.UNSURE)
+    @get:OptionTag("TRUSTED")
+    var trustedState by enum(ThreeState.UNSURE)
   }
 
   var trustedState: ThreeState
-    get() = state.isTrusted
+    get() = state.trustedState
     set(value) {
-      state.isTrusted = value
+      state.trustedState = value
     }
 }
