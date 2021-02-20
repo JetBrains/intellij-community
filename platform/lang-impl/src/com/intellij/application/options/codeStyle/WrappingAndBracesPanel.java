@@ -232,7 +232,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
         String tooltipText = ApplicationBundle.message("settings.code.style.builder.methods.tooltip");
         if (StringUtil.isEmptyOrSpaces(strValue)) {
           ColoredLabel hintLabel = new ColoredLabel(ApplicationBundle.message("settings.code.style.builder.method.names"), JBColor.gray);
-          UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, hintLabel);
+          UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, hintLabel);
           hintLabel.setToolTipText(tooltipText);
           return hintLabel;
         }
