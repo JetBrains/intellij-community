@@ -12,14 +12,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.SystemProperties
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
 import java.nio.file.Paths
 
 fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String): OpenUntrustedProjectChoice {
+  if (isTrustedCheckDisabled()) {
+    return OpenUntrustedProjectChoice.IMPORT
+  }
   if (service<TrustedPathsSettings>().isPathTrusted(virtualFile.toNioPath())) {
     return OpenUntrustedProjectChoice.IMPORT
   }
@@ -65,6 +68,9 @@ fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String):
 }
 
 fun confirmImportingUntrustedProject(project: Project, @Nls buildSystemName: String, @Nls importButtonText: String): Boolean {
+  if (isTrustedCheckDisabled()) {
+    return true
+  }
   val projectDir = project.basePath?.let { Paths.get(it) }
   if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
     return true
