@@ -6,12 +6,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
@@ -55,12 +50,7 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
     StartupManager.getInstance(project).runAfterOpened(() -> runActivities(project));
   }
 
-  private static void runActivities(@NotNull Project project) {
-    if (!TrustedProjects.isTrusted(project)) {
-      showConfirmationNotification(project);
-      return;
-    }
-
+  private static void runActivities(final Project project) {
     final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project);
     final List<RunnerAndConfigurationSettings> configurations =
       new ArrayList<>(projectStartupTaskManager.getLocalConfigurations());
@@ -87,26 +77,6 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
         pause = MyExecutor.PAUSE;
       }
     }, project.getDisposed());
-  }
-
-  private static void showConfirmationNotification(@NotNull Project project) {
-    Notification notification = ProjectStartupTaskManager.NOTIFICATION_GROUP.createNotification(
-      ExecutionBundle.message("startup.tasks.confirmation.notification.text"),
-      NotificationType.INFORMATION);
-    notification.addAction(NotificationAction.createSimpleExpiring(
-      ExecutionBundle.message("startup.tasks.confirmation.notification.action.allow"), () -> {
-        TrustedProjects.setTrusted(project, true);
-        runActivities(project);
-      }));
-    notification.addAction(NotificationAction.createSimpleExpiring(
-      ExecutionBundle.message("startup.tasks.confirmation.notification.action.disallow"), () -> {
-        TrustedProjects.setTrusted(project, false);
-      }));
-    notification.addAction(NotificationAction.createSimple(
-      ExecutionBundle.message("startup.tasks.confirmation.notification.action.review"), () -> {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, ProjectStartupConfigurable.class);
-      }));
-    notification.notify(project);
   }
 
   private static void showNotification(Project project, @Nls String text) {
