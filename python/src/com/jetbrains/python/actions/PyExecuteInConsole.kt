@@ -188,7 +188,7 @@ object PyExecuteInConsole {
           toolWindow.show(null)
         }
         val contentManager = toolWindow.contentManager
-        contentManager.findContent(descriptor.displayName)?.let {
+        contentManager.findContent(PyExecuteConsoleCustomizer.instance.getDescriptorName(descriptor))?.let {
           contentManager.setSelectedContent(it)
         }
       }

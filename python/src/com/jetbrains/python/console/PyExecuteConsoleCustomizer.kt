@@ -23,6 +23,8 @@ interface PyExecuteConsoleCustomizer {
   fun updateDescriptor(virtualFile: VirtualFile, type: DescriptorType, descriptor: RunContentDescriptor?) {}
 
   fun descriptorNameUpdated(descriptor: RunContentDescriptor, newName: String) {}
+
+  fun getDescriptorName(descriptor: RunContentDescriptor): String = descriptor.displayName
 }
 
 enum class DescriptorType {
