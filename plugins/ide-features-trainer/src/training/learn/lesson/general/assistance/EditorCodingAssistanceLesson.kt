@@ -2,10 +2,12 @@
 package training.learn.lesson.general.assistance
 
 import com.intellij.ide.IdeBundle
+import org.apache.commons.lang.StringEscapeUtils
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.ui.LessonMessagePane
 import training.util.PerformActionUtil
 import javax.swing.JEditorPane
 
@@ -47,7 +49,7 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
 
     task("ShowErrorDescription") {
       text(LessonsBundle.message("editor.coding.assistance.show.warning.description", action(it)))
-      val inspectionInfoLabelText = IdeBundle.message("inspection.message.inspection.info")
+      val inspectionInfoLabelText = StringEscapeUtils.escapeHtml(IdeBundle.message("inspection.message.inspection.info"))  // escapeHtml required in case of hieroglyph localization
       triggerByUiComponentAndHighlight<JEditorPane>(false, false) { ui ->
         ui.text.contains(inspectionInfoLabelText)
       }
