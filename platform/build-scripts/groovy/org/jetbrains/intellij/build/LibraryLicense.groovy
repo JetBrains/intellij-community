@@ -140,4 +140,20 @@ class LibraryLicense {
       licenseUrl: licenseUrl ?: "https://opensource.org/licenses/BSD-3-Clause"
     )
   }
+
+  LibraryLicense mit() {
+    assert license == null: "No need to specify 'license' for MIT"
+    assert !licenseUrl?.contains("opensource.org/licenses"): "No need to specify default 'licenseUrl' for MIT"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "MIT",
+      licenseUrl: licenseUrl ?: "https://opensource.org/licenses/MIT"
+    )
+  }
 }
