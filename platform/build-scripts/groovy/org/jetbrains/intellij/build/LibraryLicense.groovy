@@ -124,4 +124,20 @@ class LibraryLicense {
       licenseUrl: licenseUrl ?: "https://opensource.org/licenses/BSD-2-Clause"
     )
   }
+
+  LibraryLicense newBsd() {
+    assert license == null: "No need to specify 'license' for New BSD"
+    assert !licenseUrl?.contains("opensource.org/licenses"): "No need to specify default 'licenseUrl' for New BSD"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "New BSD",
+      licenseUrl: licenseUrl ?: "https://opensource.org/licenses/BSD-3-Clause"
+    )
+  }
 }
