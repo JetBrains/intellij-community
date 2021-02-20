@@ -135,6 +135,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   @Override
   protected void handleMouseWheelEvent(@NotNull MouseWheelEvent event, @NotNull JScrollBar scrollBar) {
     // TODO replace with standard JBScrollPane in 2021.2 and remove this method!
+    if (event.isShiftDown() || event.getUnitsToScroll() == 0) return;
     if (isNiceScrollingSupported(event)) {
       MouseWheelEvent e = event;
       if (Registry.is("idea.true.smooth.scrolling.pixel.perfect", true)) {
