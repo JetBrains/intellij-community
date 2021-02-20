@@ -1058,7 +1058,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     synchronized (myUiLock) {
       int lowerItemIndex = myList.getFirstVisibleIndex();
       int higherItemIndex = myList.getLastVisibleIndex();
-      if (lowerItemIndex < 0 || higherItemIndex <= 0) return Collections.emptyList();
+      if (lowerItemIndex < 0 || higherItemIndex < 0) return Collections.emptyList();
 
       return getListModel().toList().subList(lowerItemIndex, Math.min(higherItemIndex + 1, itemsCount));
     }
