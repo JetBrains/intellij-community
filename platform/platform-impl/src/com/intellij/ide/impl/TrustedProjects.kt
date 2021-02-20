@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
+import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
 import java.nio.file.Paths
@@ -67,7 +68,10 @@ fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String):
   }
 }
 
-fun confirmImportingUntrustedProject(project: Project, @Nls buildSystemName: String, @Nls importButtonText: String): Boolean {
+fun confirmImportingUntrustedProject(project: Project,
+                                     @Nls buildSystemName: String,
+                                     @Nls yesButtonText: String,
+                                     @Nls noButtonText: String): Boolean {
   if (isTrustedCheckDisabled()) {
     return true
   }
@@ -82,8 +86,8 @@ fun confirmImportingUntrustedProject(project: Project, @Nls buildSystemName: Str
 
   val answer = MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.warning.title", buildSystemName),
                                           message = IdeBundle.message("untrusted.project.import.warning.text", buildSystemName))
-    .yesText(importButtonText)
-    .noText(CommonBundle.getCancelButtonText())
+    .yesText(yesButtonText)
+    .noText(noButtonText)
     .asWarning()
     .ask(project)
 
@@ -103,6 +107,9 @@ fun Project.getTrustedState() = this.service<TrustedProjectSettings>().trustedSt
 
 fun Project.setTrusted(value: Boolean) {
   this.service<TrustedProjectSettings>().trustedState = ThreeState.fromBoolean(value)
+  if(value) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(TrustChangeNotifier.TOPIC).projectTrusted(this)
+  }
 }
 
 internal fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
@@ -123,6 +130,16 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
     set(value) {
       state.isTrusted = value
     }
+}
+
+interface TrustChangeNotifier {
+  fun projectTrusted(project: Project);
+  companion object {
+    @JvmField
+    @Topic.AppLevel
+    val TOPIC = Topic.create("Trusted project status", TrustChangeNotifier::class.java);
+  }
+
 }
 
 private val LOG = Logger.getInstance("com.intellij.ide.impl.TrustedProjects")

@@ -279,7 +279,6 @@
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
     <notificationGroup id="Maven" displayType="BALLOON"/>
     <toolWindowAllowlist id="Maven"/>
-    <editorNotificationProvider implementation="org.jetbrains.idea.maven.project.UntrustedMavenProjectNotificationProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
