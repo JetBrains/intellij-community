@@ -97,10 +97,8 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       else {
         superMethod = superMethods[0];
       }
-      if (superMethod == null || superMethod.hasModifierProperty(PsiModifier.DEFAULT) && superMethods.length > 1) {
-        return;
-      }
-      if (!AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
+      if (superMethod == null ||
+          !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
           !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameReturnTypes(method, superMethod) ||
           !AbstractMethodOverridesAbstractMethodInspection.haveSameExceptionSignatures(method, superMethod) ||
           method.isVarArgs() != superMethod.isVarArgs()) {
