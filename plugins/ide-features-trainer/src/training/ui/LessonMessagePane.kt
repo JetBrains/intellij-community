@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.SystemInfo
@@ -9,6 +10,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
+import training.learn.lesson.LessonManager
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -301,11 +303,11 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
   private fun paintLessonCheckmarks(g: Graphics) {
     for (lessonMessage in allLessonMessages()) {
+      var startOffset = lessonMessage.start
+      if (startOffset != 0) startOffset++
+      val rectangle = modelToView(startOffset)
       if (lessonMessage.state == MessageState.PASSED) {
-        var startOffset = lessonMessage.start
-        if (startOffset != 0) startOffset++
         try {
-          val rectangle = modelToView(startOffset)
           val checkmark = FeaturesTrainerIcons.Img.GreenCheckmark
           if (SystemInfo.isMac) {
             checkmark.paintIcon(this, g, rectangle.x - UISettings.instance.checkIndent, rectangle.y + JBUI.scale(1))
@@ -317,7 +319,9 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
         catch (e: BadLocationException) {
           LOG.warn(e)
         }
-
+      }
+      else if (!LessonManager.instance.lessonIsRunning()) {
+        AllIcons.General.Information.paintIcon(this, g, rectangle.x - UISettings.instance.checkIndent, rectangle.y + JBUI.scale(1))
       }
     }
   }
