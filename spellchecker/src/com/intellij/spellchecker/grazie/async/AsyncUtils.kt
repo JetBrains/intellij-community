@@ -26,7 +26,7 @@ internal object AsyncUtils {
     if (isNonAsyncMode()) {
       body()
     } else {
-      StartupManager.getInstance(project).runWhenProjectIsInitialized {
+      val toRun: () -> Unit = {
         val app = ApplicationManager.getApplication()
 
         app.executeOnPooledThread {
@@ -38,6 +38,13 @@ internal object AsyncUtils {
             restartInspection(app)
           }
         }
+      }
+
+      // prevent registration of startup activities for the default project
+      if (project.isInitialized) {
+        toRun()
+      } else {
+        StartupManager.getInstance(project).runWhenProjectIsInitialized { toRun() }
       }
     }
   }
