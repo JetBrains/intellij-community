@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.containers.ContainerUtil
@@ -12,7 +12,8 @@ import groovy.transform.Immutable
 @CompileStatic
 @Immutable
 class LibraryLicense {
-  private static final Map<String, String> PREDEFINED_LICENSE_URLS = ["Apache 2.0": "http://www.apache.org/licenses/LICENSE-2.0"]
+  private static final String APACHE_LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
+  private static final Map<String, String> PREDEFINED_LICENSE_URLS = ["Apache 2.0": APACHE_LICENSE_URL]
   public static final String JETBRAINS_OWN = "JetBrains"
   /**
    * Denotes version of library built from custom revision
@@ -90,5 +91,21 @@ class LibraryLicense {
 
   String getLibraryLicenseUrl() {
     licenseUrl ?: PREDEFINED_LICENSE_URLS[license]
+  }
+
+  LibraryLicense apache() {
+    assert license == null: "No need to specify 'license' for Apache 2.0"
+    assert !licenseUrl?.contains("apache.org/licenses"): "No need to specify default 'licenseUrl' for Apache 2.0"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "Apache 2.0",
+      licenseUrl: licenseUrl ?: APACHE_LICENSE_URL
+    )
   }
 }
