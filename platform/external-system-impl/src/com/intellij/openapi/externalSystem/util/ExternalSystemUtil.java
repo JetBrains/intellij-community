@@ -629,7 +629,7 @@ public final class ExternalSystemUtil {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
-    boolean doImport = isProjectTrustedEnoughToImport(project, externalSystemId);
+    boolean doImport = isPreviewMode || isProjectTrustedEnoughToImport(project, externalSystemId);
     if (!doImport) {
       return;
     }
