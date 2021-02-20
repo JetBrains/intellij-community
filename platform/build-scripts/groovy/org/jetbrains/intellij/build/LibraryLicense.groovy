@@ -108,4 +108,20 @@ class LibraryLicense {
       licenseUrl: licenseUrl ?: APACHE_LICENSE_URL
     )
   }
+
+  LibraryLicense simplifiedBsd() {
+    assert license == null: "No need to specify 'license' for Simplified BSD"
+    assert !licenseUrl?.contains("opensource.org/licenses"): "No need to specify default 'licenseUrl' for Simplified BSD"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "Simplified BSD",
+      licenseUrl: licenseUrl ?: "https://opensource.org/licenses/BSD-2-Clause"
+    )
+  }
 }
