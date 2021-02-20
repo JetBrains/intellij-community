@@ -1083,8 +1083,7 @@ public class JBUI {
     }
 
     public interface ContextHelp {
-      @NotNull
-      public static Color FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+      @NotNull Color FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
     }
 
     public static final class Arrow {

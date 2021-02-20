@@ -17,7 +17,7 @@ import java.util.List;
  */
 public interface DebuggerBackendExtension {
   ExtensionPointName<DebuggerBackendExtension> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.debuggerBackend");
-  public static final Key<String> RUNTIME_MODULE_DIR_KEY  = Key.create("RUNTIME_MODULE_DIR_KEY");
+  Key<String> RUNTIME_MODULE_DIR_KEY  = Key.create("RUNTIME_MODULE_DIR_KEY");
 
   String id();
 
