@@ -101,8 +101,8 @@ public class NavBarModel {
       updateModel(dataContext);
       return;
     }
-    
-    ReadAction.nonBlocking(() -> createModel(Utils.wrapDataContext(dataContext)))
+    DataContext wrappedDataContext = Utils.wrapDataContext(dataContext);
+    ReadAction.nonBlocking(() -> createModel(wrappedDataContext))
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.current(), model -> {
         setModelWithUpdate(model);
