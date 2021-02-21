@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NonNls;
@@ -290,7 +290,6 @@ public interface IdeActions {
   @NonNls String GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE = "WelcomeScreen.QuickStart.ProjectsState";
   @NonNls String GROUP_WELCOME_SCREEN_DOC = "WelcomeScreen.Documentation";
   @NonNls String GROUP_WELCOME_SCREEN_CONFIGURE = "WelcomeScreen.Configure";
-  @NonNls String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";
   @NonNls String GROUP_WELCOME_SCREEN_OPTIONS = "WelcomeScreen.Options";
   @NonNls String GROUP_WELCOME_SCREEN_LEARN_IDE = "WelcomeScreen.LearnIdeHelp";
   @NonNls String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";

@@ -941,16 +941,6 @@
       <reference ref="CheckForUpdate"/>
     </group>
 
-    <group id="WelcomeScreen.Help">
-      <reference ref="WelcomeScreen.Documentation"/>
-      <separator/>
-      <reference ref="EditCustomProperties"/>
-      <reference ref="EditCustomVmOptions"/>
-      <reference ref="CollectZippedLogs"/>
-      <separator/>
-      <reference ref="CheckForUpdate"/>
-    </group>
-
     <group id="WelcomeScreen.Options">
       <reference ref="About"/>
       <separator/>
