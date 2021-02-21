@@ -41,41 +41,41 @@ class LinearBekController(controller: BekBaseController, permanentGraphInfo: Per
   }
 
   override fun performAction(action: LinearGraphAction): LinearGraphAnswer? {
-    if (action.affectedElement != null) {
-      if (action.type == GraphAction.Type.MOUSE_CLICK) {
-        val graphElement = action.affectedElement!!.graphElement
-        if (graphElement is GraphNode) {
-          val answer = collapseNode(graphElement)
-          if (answer != null) return answer
-          for (dottedEdge in getAllAdjacentDottedEdges(graphElement)) {
-            val expandedAnswer = expandEdge(dottedEdge)
-            if (expandedAnswer != null) return expandedAnswer
-          }
-        }
-        else if (graphElement is GraphEdge) {
-          return expandEdge(graphElement)
-        }
-      }
-      else if (action.type == GraphAction.Type.MOUSE_OVER) {
-        val graphElement = action.affectedElement!!.graphElement
-        if (graphElement is GraphNode) {
-          val answer = highlightNode(graphElement)
-          if (answer != null) return answer
-          for (dottedEdge in getAllAdjacentDottedEdges(graphElement)) {
-            val highlightAnswer = highlightEdge(dottedEdge)
-            if (highlightAnswer != null) return highlightAnswer
-          }
-        }
-        else if (graphElement is GraphEdge) {
-          return highlightEdge(graphElement)
-        }
-      }
-    }
-    else if (action.type == GraphAction.Type.BUTTON_COLLAPSE) {
+    if (action.type == GraphAction.Type.BUTTON_COLLAPSE) {
       return collapseAll()
     }
-    else if (action.type == GraphAction.Type.BUTTON_EXPAND) {
+    if (action.type == GraphAction.Type.BUTTON_EXPAND) {
       return expandAll()
+    }
+    val affectedElement = action.affectedElement ?: return null
+
+    if (action.type == GraphAction.Type.MOUSE_CLICK) {
+      val graphElement = affectedElement.graphElement
+      if (graphElement is GraphNode) {
+        val answer = collapseNode(graphElement)
+        if (answer != null) return answer
+        for (dottedEdge in getAllAdjacentDottedEdges(graphElement)) {
+          val expandedAnswer = expandEdge(dottedEdge)
+          if (expandedAnswer != null) return expandedAnswer
+        }
+      }
+      else if (graphElement is GraphEdge) {
+        return expandEdge(graphElement)
+      }
+    }
+    else if (action.type == GraphAction.Type.MOUSE_OVER) {
+      val graphElement = affectedElement.graphElement
+      if (graphElement is GraphNode) {
+        val answer = highlightNode(graphElement)
+        if (answer != null) return answer
+        for (dottedEdge in getAllAdjacentDottedEdges(graphElement)) {
+          val highlightAnswer = highlightEdge(dottedEdge)
+          if (highlightAnswer != null) return highlightAnswer
+        }
+      }
+      else if (graphElement is GraphEdge) {
+        return highlightEdge(graphElement)
+      }
     }
     return null
   }
@@ -100,8 +100,7 @@ class LinearBekController(controller: BekBaseController, permanentGraphInfo: Per
   private fun collapseAll(): LinearGraphAnswer {
     val workingGraph = WorkingLinearBekGraph(compiledGraph)
     LinearBekGraphBuilder(workingGraph, bekGraphLayout).collapseAll()
-    return object : LinearGraphAnswer(
-      GraphChangesUtil.edgesReplaced(workingGraph.removedEdges, workingGraph.addedEdges, delegateGraph)) {
+    return object : LinearGraphAnswer(GraphChangesUtil.edgesReplaced(workingGraph.removedEdges, workingGraph.addedEdges, delegateGraph)) {
       override fun getGraphUpdater(): Runnable {
         return Runnable { workingGraph.applyChanges() }
       }
@@ -109,53 +108,39 @@ class LinearBekController(controller: BekBaseController, permanentGraphInfo: Per
   }
 
   private fun highlightNode(node: GraphNode): LinearGraphAnswer? {
-    val toCollapse = collectFragmentsToCollapse(node)
-    if (toCollapse.isEmpty()) return null
-    val toHighlight: MutableSet<Int> = HashSet()
-    for (fragment in toCollapse) {
-      toHighlight.addAll(fragment.allNodes)
-    }
-    return LinearGraphUtils.createSelectedAnswer(compiledGraph, toHighlight)
-  }
-
-  private fun highlightEdge(edge: GraphEdge): LinearGraphAnswer? {
-    if (edge.type != GraphEdgeType.DOTTED) return null
-    return LinearGraphUtils.createSelectedAnswer(compiledGraph, setOf(edge.upNodeIndex, edge.downNodeIndex))
+    val fragments = collectChildFragments(node.nodeIndex)
+    if (fragments.isEmpty()) return null
+    return LinearGraphUtils.createSelectedAnswer(compiledGraph, fragments.flatMapTo(mutableSetOf()) { it.allNodes })
   }
 
   private fun collapseNode(node: GraphNode): LinearGraphAnswer? {
-    val toCollapse = collectNodesToCollapse(node)
-    if (toCollapse.isEmpty()) return null
-    for (i in toCollapse) {
+    val fragments = collectChildFragments(node.nodeIndex)
+    if (fragments.isEmpty()) return null
+
+    val nodesToCollapse = fragments.flatMapTo(TreeSet(Comparator.reverseOrder())) { f -> f.tailsAndBody + f.parent }
+    for (i in nodesToCollapse) {
       linearBekGraphBuilder.collapseFragment(i)
     }
     return LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES)
   }
 
-  private fun collectNodesToCollapse(node: GraphNode): SortedSet<Int> {
-    val toCollapse: SortedSet<Int> = TreeSet(Comparator.reverseOrder())
-    for (f in collectFragmentsToCollapse(node)) {
-      toCollapse.add(f.parent)
-      toCollapse.addAll(f.tailsAndBody)
-    }
-    return toCollapse
-  }
-
-  private fun collectFragmentsToCollapse(node: GraphNode): Set<MergeFragment> {
-    val result: MutableSet<MergeFragment> = HashSet()
-    var mergesCount = 0
-    val toProcess = LinkedHashSet<Int>()
-    toProcess.add(node.nodeIndex)
+  private fun collectChildFragments(merge: Int): Set<MergeFragment> {
+    val result = mutableSetOf<MergeFragment>()
+    val toProcess = linkedSetOf(merge)
     while (toProcess.isNotEmpty()) {
-      val i = toProcess.first()
-      toProcess.remove(i)
-      val fragment = linearBekGraphBuilder.getFragment(i) ?: continue
-      result.add(fragment)
-      toProcess.addAll(fragment.tailsAndBody)
-      mergesCount++
-      if (mergesCount > 10) break
+      val nextNode = toProcess.first().also { toProcess.remove(it) }
+      linearBekGraphBuilder.getFragment(nextNode)?.also { fragment ->
+        result.add(fragment)
+        toProcess.addAll(fragment.tailsAndBody)
+      } ?: continue
+      if (result.size > MAX_COLLAPSED_MERGES) break
     }
     return result
+  }
+
+  private fun highlightEdge(edge: GraphEdge): LinearGraphAnswer? {
+    if (edge.type != GraphEdgeType.DOTTED) return null
+    return LinearGraphUtils.createSelectedAnswer(compiledGraph, setOf(edge.upNodeIndex, edge.downNodeIndex))
   }
 
   private fun expandEdge(edge: GraphEdge): LinearGraphAnswer? {
@@ -181,5 +166,6 @@ class LinearBekController(controller: BekBaseController, permanentGraphInfo: Per
 
   companion object {
     private val LOG = Logger.getInstance(LinearBekController::class.java)
+    private const val MAX_COLLAPSED_MERGES = 10
   }
 }
