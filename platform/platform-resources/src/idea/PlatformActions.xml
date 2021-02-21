@@ -936,8 +936,7 @@
 
       <reference ref="EditCustomProperties"/>
       <reference ref="EditCustomVmOptions"/>
-
-      <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
+      <reference ref="CreateDesktopEntry"/>
 
       <reference ref="CheckForUpdate"/>
     </group>
@@ -957,6 +956,7 @@
       <separator/>
       <reference ref="EditCustomProperties"/>
       <reference ref="EditCustomVmOptions"/>
+      <reference ref="CreateDesktopEntry"/>
       <reference ref="CollectZippedLogs"/>
       <separator/>
       <reference ref="CheckForUpdate"/>
