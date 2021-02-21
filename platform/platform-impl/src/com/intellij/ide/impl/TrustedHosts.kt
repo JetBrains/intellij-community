@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.io.isAncestor
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.VisibleForTesting
@@ -15,20 +16,8 @@ import java.nio.file.Paths
 import java.util.*
 
 @NlsSafe
-internal fun getProjectOrigin(projectDir: Path?): String? {
+internal fun getProjectOriginUrl(projectDir: Path?): String? {
   if (projectDir == null) return null
-  try {
-    val url = getProjectOriginUrl(projectDir)
-    return if (url == null) null else getOriginFromUrl(url)
-  }
-  catch (e: Exception) {
-    LOG.warn(e)
-    return null
-  }
-}
-
-@NlsSafe
-private fun getProjectOriginUrl(projectDir: Path): String? {
   val epName = ExtensionPointName.create<ProjectOriginInfoProvider>("com.intellij.projectOriginInfoProvider")
   for (extension in epName.extensions) {
     val url = extension.getOriginUrl(projectDir)
@@ -42,7 +31,10 @@ private fun getProjectOriginUrl(projectDir: Path): String? {
 private val KNOWN_HOSTINGS = listOf("github.com", "bitbucket.org", "gitlab.com")
 
 @VisibleForTesting
-fun getOriginFromUrl(url: String): String? {
+data class Origin(val protocol: String?, val host: String)
+
+@VisibleForTesting
+fun getOriginFromUrl(url: String): Origin? {
   try {
     val urlWithScheme = if (URLUtil.containsScheme(url)) url else "ssh://$url"
     val uri = URI(urlWithScheme)
@@ -58,7 +50,7 @@ fun getOriginFromUrl(url: String): String? {
           host = comma[0]
           if (comma.size > 1) {
             val org = comma[1]
-            return "$host/$org"
+            return Origin(uri.scheme, "$host/$org")
           }
         }
       }
@@ -69,10 +61,10 @@ fun getOriginFromUrl(url: String): String? {
     if (KNOWN_HOSTINGS.contains(host)) {
       val path = uri.path
       val secondSlash = path.indexOf("/", 1) // path always starts with '/'
-      val organization = path.substring(0, secondSlash)
-      return uri.host + organization
+      val organization = if (secondSlash >= 0) path.substring(0, secondSlash) else path
+      return Origin(uri.scheme, uri.host + organization)
     }
-    return uri.host
+    return Origin(uri.scheme, uri.host)
   }
   catch (e: Exception) {
     LOG.warn("Couldn't parse URL $url", e)
@@ -89,7 +81,18 @@ class TrustedHostsSettings : SimplePersistentStateComponent<TrustedHostsSettings
     var trustedHosts by list<String>()
   }
 
-  fun isHostTrusted(host: String): Boolean = state.trustedHosts.map { it.toLowerCase() }.contains(host.toLowerCase())
+  fun isUrlTrusted(url: String): Boolean {
+    val origin = getOriginFromUrl(url) ?: return false
+    return state.trustedHosts.map { it.toLowerCase() }.any { host ->
+      if (host.contains(SCHEME_SEPARATOR)) { // host is defined manually, with a protocol => we compare protocol as well
+        val hostWithTrailingSlash = if (host.endsWith("/")) host else "$host/"
+        url.startsWith(hostWithTrailingSlash, ignoreCase = true)
+      }
+      else {
+        host.equals(origin.host, ignoreCase = true)
+      }
+    }
+  }
 
   fun setHostTrusted(host: String, value: Boolean) {
     if (value) {
