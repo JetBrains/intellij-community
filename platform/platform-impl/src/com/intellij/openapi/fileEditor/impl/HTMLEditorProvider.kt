@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.fileEditor.FileEditor
@@ -18,9 +18,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val fileEditor = file.getUserData(EDITOR_KEY)
     return if (fileEditor != null) fileEditor else {
-      val url = file.getUserData(AFFINITY_KEY)!!
-      val html = (file as LightVirtualFile).content.toString()
-      val newEditor = if (url.isNotEmpty()) HTMLFileEditor(url, html) else HTMLFileEditor(html)
+      val newEditor = HTMLFileEditor(file as LightVirtualFile, file.getUserData(AFFINITY_KEY)!!)
       file.putUserData(EDITOR_KEY, newEditor)
       newEditor
     }
