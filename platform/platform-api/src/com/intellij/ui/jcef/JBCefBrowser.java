@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
@@ -25,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -46,17 +47,10 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
  * @author tav
  */
 public class JBCefBrowser extends JBCefBrowserBase {
-
-  @NotNull private final JPanel myComponent;
-  @NotNull private final CefFocusHandler myCefFocusHandler;
-  @NotNull private final CefKeyboardHandler myKeyboardHandler;
-  @NotNull private static final List<Consumer<? super JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =
+  private static final @NotNull List<Consumer<? super JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =
     Collections.synchronizedList(new ArrayList<>(1));
 
-  private JDialog myDevtoolsFrame = null;
-  protected CefContextMenuHandler myDefaultContextMenuHandler;
-
-  @NotNull private static final Dimension DEF_PREF_SIZE = new Dimension(800, 600);
+  private static final @NotNull Dimension DEF_PREF_SIZE = new Dimension(800, 600);
 
   private static final class ShortcutProvider {
     // Since these CefFrame::* methods are available only with JCEF API 1.1 and higher, we are adding no shortcuts for older JCEF
@@ -107,6 +101,13 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }
   }
 
+  private final @NotNull JPanel myComponent;
+  private final @NotNull CefFocusHandler myCefFocusHandler;
+  private final @NotNull CefKeyboardHandler myKeyboardHandler;
+
+  private JDialog myDevtoolsFrame = null;
+  protected CefContextMenuHandler myDefaultContextMenuHandler;
+
   /**
    * Creates a browser with the provided {@code JBCefClient} and initial URL. The client's lifecycle is the responsibility of the caller.
    */
@@ -134,12 +135,12 @@ public class JBCefBrowser extends JBCefBrowserBase {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) {
-          if (SystemInfoRt.isWindows) {
+          if (SystemInfo.isWindows) {
             myCefBrowser.setFocus(false);
           }
           return true; // suppress focusing the browser on navigation events
         }
-        if (SystemInfoRt.isLinux) {
+        if (SystemInfo.isLinux) {
           browser.getUIComponent().requestFocus();
         }
         else {
@@ -154,7 +155,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       public boolean onKeyEvent(CefBrowser browser, CefKeyEvent cefKeyEvent) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         boolean consume = focusOwner != browser.getUIComponent();
-        if (consume && SystemInfoRt.isMac && isUpDownKeyEvent(cefKeyEvent)) return true; // consume
+        if (consume && SystemInfo.isMac && isUpDownKeyEvent(cefKeyEvent)) return true; // consume
 
         Window focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
         if (focusedWindow == null) {
@@ -170,9 +171,9 @@ public class JBCefBrowser extends JBCefBrowserBase {
     myCefClient.addContextMenuHandler(myDefaultContextMenuHandler, this.getCefBrowser());
   }
 
-  @SuppressWarnings("deprecation") // New API is not available in JBR yet
-  @NotNull
-  private static CefBrowser createBrowser(@Nullable CefBrowser cefBrowser, @NotNull CefClient client, @Nullable String url) {
+  // New API is not available in JBR yet
+  @SuppressWarnings("deprecation")
+  private static @NotNull CefBrowser createBrowser(@Nullable CefBrowser cefBrowser, @NotNull CefClient client, @Nullable String url) {
    // Uncomment when new JBR would arrive
    // CefRendering mode = JBCefApp.isOffScreenRenderingMode() ? CefRendering.OFFSCREEN : CefRendering.DEFAULT;
     boolean mode = JBCefApp.isOffScreenRenderingMode();
@@ -187,8 +188,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
     return new DefaultCefContextMenuHandler(isInternal);
   }
 
-  @NotNull
-  private JPanel createComponent() {
+  private @NotNull JPanel createComponent() {
     Component uiComp = getCefBrowser().getUIComponent();
     JPanel resultPanel = new JPanel(new BorderLayout()) {
       {
@@ -201,7 +201,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       }
       @Override
       public void removeNotify() {
-        if (SystemInfoRt.isWindows) {
+        if (SystemInfo.isWindows) {
           if (myCefBrowser.getUIComponent().hasFocus()) {
             // pass focus before removal
             myCefBrowser.setFocus(false);
@@ -219,12 +219,12 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
     resultPanel.setBackground(JBColor.background());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       // We handle shortcuts manually on MacOS: https://www.magpcss.org/ceforum/viewtopic.php?f=6&t=12561
       ShortcutProvider.registerShortcuts(resultPanel, this);
     }
     resultPanel.add(uiComp, BorderLayout.CENTER);
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       myCefBrowser.getUIComponent().addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent e) {
@@ -294,13 +294,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
     this(JBCefApp.getInstance().createClient(), true, url);
   }
 
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 
-  @Nullable
-  private static Window getActiveFrame() {
+  private static @Nullable Window getActiveFrame() {
     for (Frame frame : Frame.getFrames()) {
       if (frame.isActive()) return frame;
     }
