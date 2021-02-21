@@ -45,7 +45,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
 
-  @NotNull protected VisiblePack myVisiblePack = VisiblePack.EMPTY;
+  @NotNull protected volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
 
   public AbstractVcsLogUi(@NotNull String id,
                           @NotNull VcsLogData logData,
@@ -120,7 +120,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @Override
   @NotNull
   public VisiblePack getDataPack() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myVisiblePack;
   }
 
