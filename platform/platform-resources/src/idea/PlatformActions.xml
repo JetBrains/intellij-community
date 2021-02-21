@@ -937,6 +937,7 @@
       <separator/>
       <reference ref="EditCustomProperties"/>
       <reference ref="EditCustomVmOptions"/>
+      <reference ref="CreateDesktopEntry"/>
       <reference ref="CollectZippedLogs"/>
       <separator/>
       <reference ref="CheckForUpdate"/>
