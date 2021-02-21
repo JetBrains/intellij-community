@@ -87,7 +87,7 @@ internal class HTMLFileEditor(private val file: LightVirtualFile, url: String) :
     }
   }
 
-  override fun getComponent(): MultiPanel = multiPanel
+  override fun getComponent(): JComponent = multiPanel
   override fun getPreferredFocusedComponent(): JComponent = multiPanel
   override fun getName(): String = IdeBundle.message("tab.title.html.preview")
   override fun setState(state: FileEditorState) { }
