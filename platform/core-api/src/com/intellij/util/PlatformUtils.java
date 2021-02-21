@@ -140,7 +140,15 @@ public final class PlatformUtils {
     return is(GOIDE_PREFIX);
   }
 
+  /**
+   * @deprecated IntelliJ Client renamed to Code With Me Guest. Use isCodeWithMeGuest() function instead.
+   */
+  @Deprecated
   public static boolean isIntelliJClient() {
+    return isCodeWithMeGuest();
+  }
+
+  public static boolean isCodeWithMeGuest() {
     return is(CWM_GUEST_PREFIX);
   }
 
