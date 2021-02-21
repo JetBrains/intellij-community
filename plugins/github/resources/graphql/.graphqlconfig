@@ -7,7 +7,8 @@
         "url": "https://api.github.com/graphql",
         "headers": {
           "user-agent": "IntellijIdea",
-          "Authorization": "bearer a273fb5722305559c99168d93760dc35eef1e2fa"
+          "Authorization": "bearer [TOKEN]",
+          "Accept": "application/vnd.github.luke-cage-preview+json,application/vnd.github.antiope-preview+json,application/vnd.github.merge-info-preview+json,application/vnd.github.shadow-cat-preview+json"
         },
         "introspect": true
       }
