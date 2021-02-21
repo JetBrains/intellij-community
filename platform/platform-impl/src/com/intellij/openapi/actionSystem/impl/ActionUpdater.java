@@ -346,31 +346,36 @@ final class ActionUpdater {
       }
 
       boolean isPopup = actionGroup.isPopup(myPlace);
-      boolean hideIfNoVisible = isPopup && actionGroup.disableIfNoVisibleChildren();
       boolean hasEnabled = false, hasVisible = false;
-      if (hideDisabled || hideIfNoVisible) {
+      if (hideDisabled || isPopup) {
         for (AnAction action : childrenIterable) {
           Presentation p = update(action, strategy);
           if (p == null) continue;
           hasVisible |= p.isVisible();
           hasEnabled |= p.isEnabled();
+          // stop early if all the required flags are collected
           if (hasEnabled && hasVisible) break;
-          if (hideDisabled && hasEnabled && !hideIfNoVisible) break;
-          if (hideIfNoVisible && hasVisible && !hideDisabled) break;
+          if (hideDisabled && hasEnabled && !isPopup) break;
+          if (isPopup && hasVisible && !hideDisabled) break;
         }
       }
 
       if (hideDisabled && !hasEnabled) {
         return Collections.emptyList();
       }
-      if (isPopup) { // popup menu has its own presentation
-        if (hideIfNoVisible && !hasVisible && actionGroup.hideIfNoVisibleChildren()) {
-          return Collections.emptyList();
-        }
+      if (isPopup) {
         boolean canBePerformed = canBePerformed(actionGroup, strategy);
-        presentation.setEnabled(hasVisible || canBePerformed);
         boolean performOnly = canBePerformed && (actionGroup instanceof AlwaysPerformingActionGroup || !hasVisible);
         presentation.putClientProperty("actionGroup.perform.only", performOnly ? true : null);
+
+        if (!hasVisible && actionGroup.disableIfNoVisibleChildren()) {
+          if (actionGroup.hideIfNoVisibleChildren()) {
+            return Collections.emptyList();
+          }
+          if (!canBePerformed) {
+            presentation.setEnabled(false);
+          }
+        }
 
         if (myVisitor != null) {
           myVisitor.visitLeaf(child);
@@ -524,11 +529,11 @@ final class ActionUpdater {
   }
 
   private static class UpdateStrategy {
-    final NullableFunction<? super AnAction, ? extends Presentation> update;
+    final NullableFunction<? super AnAction, Presentation> update;
     final NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren;
     final Predicate<? super ActionGroup> canBePerformed;
 
-    UpdateStrategy(NullableFunction<? super AnAction, ? extends Presentation> update,
+    UpdateStrategy(NullableFunction<? super AnAction, Presentation> update,
                    NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren,
                    Predicate<? super ActionGroup> canBePerformed) {
       this.update = update;
