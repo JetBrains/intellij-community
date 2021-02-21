@@ -86,7 +86,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     GetDataRule rule = dataManager.getDataRule(dataId);
     answer = rule == null ? null : dataManager.getDataFromProvider(dataId2 -> {
-      Object o = myCachedData.get(dataId);
+      Object o = myCachedData.get(dataId2);
       return o == NullResult.Initial || o == NullResult.Final ? null : o;
     }, dataId, null, rule);
 
