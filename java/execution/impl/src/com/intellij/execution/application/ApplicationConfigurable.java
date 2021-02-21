@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.impl.SingleConfigurationConfigurable;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -70,9 +71,11 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   }
 
   public void hideUnsupportedFieldsIfNeeded() {
-    boolean localTarget = DataManager.getInstance().getDataContext(myWholePanel)
-                            .getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY) == null;
-    myJrePathEditor.setVisible(localTarget);
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      boolean localTarget = DataManager.getInstance().getDataContext(myWholePanel)
+                              .getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY) == null;
+      myJrePathEditor.setVisible(localTarget);
+    }
   }
 
   @Override
