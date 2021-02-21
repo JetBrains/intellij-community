@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.svg;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -41,12 +41,14 @@ public final class SvgCacheManager {
 
     @Override
     public void accept(Throwable e, MVStore store) {
+      Logger logger = getLogger();
       if (isStoreOpened) {
-        getLogger().error("Icon Cache Error (db=" + store.getFileStore() + ")", e);
+        logger.error("Icon Cache Error, db=" + store.getFileStore());
       }
       else {
-        getLogger().warn("Icon Cache will be recreated or previous version of data reused (db=" + store.getFileStore() + ")", e);
+        logger.warn("Icon Cache will be recreated or previous version of data reused, db=" + store.getFileStore());
       }
+      logger.debug(e);
     }
   }
 
