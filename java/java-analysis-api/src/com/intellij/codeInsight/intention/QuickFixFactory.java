@@ -269,6 +269,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method);
 
   @NotNull
+  public abstract IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method, @NotNull @Nls String text);
+
+  @NotNull
   public abstract IntentionAction createDeleteMethodBodyFix(@NotNull PsiMethod method);
 
   @NotNull

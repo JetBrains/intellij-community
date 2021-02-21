@@ -38,7 +38,8 @@ public enum JavaElementKind {
   VARIABLE("element.variable"),
   THROWS_LIST("element.throws.list"),
   EXTENDS_LIST("element.extends.list"),
-  RECEIVER_PARAMETER("element.receiver.parameter");
+  RECEIVER_PARAMETER("element.receiver.parameter"),
+  METHOD_CALL("element.method.call");
   
   private final @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String propertyKey;
 
@@ -169,6 +170,9 @@ public enum JavaElementKind {
     }
     if (element instanceof PsiStatement) {
       return STATEMENT;
+    }
+    if (element instanceof PsiMethodCallExpression) {
+      return METHOD_CALL;
     }
     if (element instanceof PsiExpression) {
       return EXPRESSION;
