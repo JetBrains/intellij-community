@@ -37,7 +37,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
@@ -236,9 +235,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     myEditor.measureTypingLatency();
 
     Graphics2D gg = (Graphics2D)g;
-    if (Registry.is("editor.legacy.compositing")) {
-      UIUtil.setupComposite(gg);
-    }
     if (myEditor.useEditorAntialiasing()) {
       EditorUIUtil.setupAntialiasing(gg);
     }
