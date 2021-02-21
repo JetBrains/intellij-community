@@ -21,9 +21,10 @@ message()
   fi
 }
 
-if [ -z "$(command -v uname)" ] || [ -z "$(command -v egrep)" ] || [ -z "$(command -v dirname)" ] || [ -z "$(command -v cat)" ]; then
+if [ -z "$(command -v uname)" ] || [ -z "$(command -v realpath)" ] || [ -z "$(command -v dirname)" ] || [ -z "$(command -v cat)" ] || \
+   [ -z "$(command -v egrep)" ]; then
   TOOLS_MSG="Required tools are missing:"
-  for tool in uname egrep dirname cat ; do
+  for tool in uname realpath egrep dirname cat ; do
      test -z "$(command -v $tool)" && TOOLS_MSG="$TOOLS_MSG $tool"
   done
   message "$TOOLS_MSG (SHELL=$SHELL PATH=$PATH)"
@@ -38,11 +39,8 @@ OS_ARCH=$(uname -m)
 # ---------------------------------------------------------------------
 # Ensure $IDE_HOME points to the directory where the IDE is installed.
 # ---------------------------------------------------------------------
-cd "$(dirname "$0")" || exit 2
-IDE_BIN_HOME=$(pwd -P)
-IDE_HOME=$(dirname "$IDE_BIN_HOME")
-cd "${OLDPWD}" || exit 2
-
+IDE_BIN_HOME=$(dirname $(realpath "$0"))
+IDE_HOME=$(dirname "${IDE_BIN_HOME}")
 CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 PRODUCT_VENDOR="__product_vendor__"
 PATHS_SELECTOR="__system_selector__"
