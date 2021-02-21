@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public abstract class BaseRunConfigurationAction extends ActionGroup {
+public abstract class BaseRunConfigurationAction extends ActionGroup implements UpdateInBackground {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
 
   protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
@@ -50,7 +50,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   private AnAction[] getChildren(DataContext dataContext) {
     if (dataContext.getData(ExecutorAction.getOrderKey()) != null) return EMPTY_ARRAY;
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext); //!!! to rule???
     if (!Registry.is("suggest.all.run.configurations.from.context") && findExisting(context) != null) {
       return EMPTY_ARRAY;
     }
