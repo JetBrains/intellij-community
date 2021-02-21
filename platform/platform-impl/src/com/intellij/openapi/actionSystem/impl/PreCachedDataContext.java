@@ -107,12 +107,12 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
         DataKey<?> key = keys[i];
         if (computed.get(i)) continue;
 
-        Object data = key == PlatformDataKeys.IS_MODAL_CONTEXT ? IdeKeyEventDispatcher.isModalContext(c) :
-                      key == PlatformDataKeys.CONTEXT_COMPONENT ? c :
-                      key == PlatformDataKeys.MODALITY_STATE ? ModalityState.stateForComponent(c) :
+        Object data = key == PlatformDataKeys.IS_MODAL_CONTEXT ? IdeKeyEventDispatcher.isModalContext(component) :
+                      key == PlatformDataKeys.CONTEXT_COMPONENT ? component :
+                      key == PlatformDataKeys.MODALITY_STATE ? ModalityState.stateForComponent(component) :
                       dataManager.getDataFromProvider(dataProvider, key.getName(), null, null);
         if (data instanceof Editor) {
-          data = validateEditor((Editor)data, c);
+          data = validateEditor((Editor)data, component);
         }
 
         if (data != null) {
@@ -122,7 +122,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
             ContainerUtil.addAll((Collection<Object>)cachedData.computeIfAbsent(key.getName(), o -> new ArrayList<>()), (Iterable<Object>)data);
           }
           else {
-            cachedData.putIfAbsent(key.getName(), data);
+            cachedData.put(key.getName(), data);
           }
         }
       }
