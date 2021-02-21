@@ -130,27 +130,6 @@ internal class GHPRCommitsBrowserComponentFactory(private val project: Project) 
     return scrollpane
   }
 
-  @NlsSafe
-  private fun getHashAndAuthorText(hash: String, author: GHGitActor?, committer: GHGitActor?): String {
-    val authorUser = createUser(author)
-    val authorTime = author?.date?.time ?: 0L
-    val committerUser = createUser(committer)
-    val committerTime = committer?.date?.time ?: 0L
-
-    return CommitPresentationUtil.formatCommitHashAndAuthor(HashImpl.build(hash), authorUser, authorTime, committerUser, committerTime)
-  }
-
-  private val unknownUser = VcsUserImpl("unknown user", "")
-
-  private fun createUser(actor: GHGitActor?): VcsUser {
-    val name = actor?.name
-    val email = actor?.email
-    return if (name != null && email != null) {
-      VcsUserImpl(name, email)
-    }
-    else unknownUser
-  }
-
   companion object {
     val COMMITS_LIST_KEY = Key.create<JList<VcsCommitMetadata>>("COMMITS_LIST")
   }
