@@ -11,13 +11,19 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 public class UntrustedProjectNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
 
+  public static class TrustedListener implements TrustChangeNotifier {
+    @Override
+    public void projectTrusted(@NotNull Project project) {
+      EditorNotifications.getInstance(project).updateAllNotifications();
+    }
+  }
 
   public static final Key<EditorNotificationPanel> KEY = Key.create("UntrustedProjectNotification");
-
 
   @Override
   public @NotNull Key<EditorNotificationPanel> getKey() {
