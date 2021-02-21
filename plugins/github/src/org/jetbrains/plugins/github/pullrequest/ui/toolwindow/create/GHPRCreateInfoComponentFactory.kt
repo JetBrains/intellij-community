@@ -435,6 +435,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     private class ListenableProgressIndicator : AbstractProgressIndicatorExBase(), StandardProgressIndicator {
       private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
+      override fun isReuseable() = true
       override fun onProgressChange() = invokeAndWaitIfNeeded { eventDispatcher.multicaster.eventOccurred() }
       fun addAndInvokeListener(listener: () -> Unit) = SimpleEventListener.addAndInvokeListener(eventDispatcher, listener)
       override fun cancel() = super.cancel()
