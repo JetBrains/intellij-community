@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -1148,6 +1149,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         if (popup != null) {
           popup.setSize(newSize);
         }
+        else {
+          JComponent parent = getParentLightweightHintComponent(this);
+          if (parent != null) { // a LightweightHint that fits in
+            parent.setSize(parent.getPreferredSize());
+          }
+        }
       }
       else {
         Container parent = getParent();
@@ -1159,6 +1166,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
       repaint();
     }
+  }
+
+  @Nullable
+  private static JComponent getParentLightweightHintComponent(@Nullable JComponent component) {
+    Ref<JComponent> result = Ref.create();
+    UIUtil.uiParents(component, false).reduce((a, b) -> {
+      if (b instanceof JLayeredPane && ((JLayeredPane)b).getLayer(a) == JLayeredPane.POPUP_LAYER) {
+        result.set((JComponent)a);
+      }
+      return b;
+    });
+    return result.get();
   }
 
   @Override
