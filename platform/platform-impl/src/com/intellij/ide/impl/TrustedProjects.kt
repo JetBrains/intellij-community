@@ -30,7 +30,8 @@ fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String):
     return OpenUntrustedProjectChoice.IMPORT
   }
 
-  val origin = (trustedCheckResult as NotTrusted).host
+  val url = (trustedCheckResult as NotTrusted).url
+  val origin = if (url == null) null else getOriginFromUrl(url)?.host
   val dontAskAgain = if (origin != null) {
     object : DialogWrapper.DoNotAskOption.Adapter() {
       override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
@@ -110,7 +111,7 @@ private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUni
 
 private sealed class TrustedCheckResult {
   object Trusted: TrustedCheckResult()
-  class NotTrusted(val host: String?): TrustedCheckResult()
+  class NotTrusted(val url: String?): TrustedCheckResult()
 }
 
 private fun isProjectTrusted(projectDir: Path?): TrustedCheckResult {
@@ -120,11 +121,11 @@ private fun isProjectTrusted(projectDir: Path?): TrustedCheckResult {
   if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
     return Trusted
   }
-  val origin = getProjectOrigin(projectDir)
-  if (origin != null && service<TrustedHostsSettings>().isHostTrusted(origin)) {
+  val url = getProjectOriginUrl(projectDir)
+  if (url != null && service<TrustedHostsSettings>().isUrlTrusted(url)) {
     return Trusted
   }
-  return NotTrusted(origin)
+  return NotTrusted(url)
 }
 
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
