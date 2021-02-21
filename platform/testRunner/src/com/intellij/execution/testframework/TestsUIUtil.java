@@ -3,10 +3,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -18,7 +15,6 @@ import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.NonNls;
@@ -43,33 +39,6 @@ public final class TestsUIUtil {
   }
 
   private TestsUIUtil() {
-  }
-
-  @Nullable
-  public static Object getData(final AbstractTestProxy testProxy, @NotNull String dataId, final TestFrameworkRunningModel model) {
-    final TestConsoleProperties properties = model.getProperties();
-    final Project project = properties.getProject();
-    if (testProxy == null) return null;
-    if (AbstractTestProxy.DATA_KEY.is(dataId)) return testProxy;
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) return getOpenFileDescriptor(testProxy, model);
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      final Location location = testProxy.getLocation(project, properties.getScope());
-      if (location != null) {
-        final PsiElement element = location.getPsiElement();
-        return element.isValid() ? element : null;
-      }
-      else {
-        return null;
-      }
-    }
-    if (Location.DATA_KEY.is(dataId)) return testProxy.getLocation(project, properties.getScope());
-    if (RunConfiguration.DATA_KEY.is(dataId)) {
-      final RunProfile configuration = properties.getConfiguration();
-      if (configuration instanceof RunConfiguration) {
-        return configuration;
-      }
-    }
-    return null;
   }
 
   public static boolean isMultipleSelectionImpossible(DataContext dataContext) {
