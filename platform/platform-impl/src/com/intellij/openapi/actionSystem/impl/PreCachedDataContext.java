@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
@@ -45,6 +46,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     if (!(original instanceof DataManagerImpl.MyDataContext)) {
       throw new AssertionError(original.getClass().getName());
     }
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Component component = original.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
