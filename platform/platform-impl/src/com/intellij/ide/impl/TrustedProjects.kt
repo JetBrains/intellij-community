@@ -5,6 +5,8 @@ package com.intellij.ide.impl
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.TrustedCheckResult.NotTrusted
+import com.intellij.ide.impl.TrustedCheckResult.Trusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
@@ -18,21 +20,17 @@ import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
+import java.nio.file.Path
 import java.nio.file.Paths
 
 fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String): OpenUntrustedProjectChoice {
-  if (isTrustedCheckDisabled()) {
-    return OpenUntrustedProjectChoice.IMPORT
-  }
-  if (service<TrustedPathsSettings>().isPathTrusted(virtualFile.toNioPath())) {
-    return OpenUntrustedProjectChoice.IMPORT
-  }
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
-  val origin = getProjectOrigin(projectDir.toNioPath())
-  if (origin != null && service<TrustedHostsSettings>().isHostTrusted(origin)) {
+  val trustedCheckResult = isProjectTrusted(projectDir.toNioPath())
+  if (trustedCheckResult is Trusted) {
     return OpenUntrustedProjectChoice.IMPORT
   }
 
+  val origin = (trustedCheckResult as NotTrusted).host
   val dontAskAgain = if (origin != null) {
     object : DialogWrapper.DoNotAskOption.Adapter() {
       override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
@@ -72,15 +70,9 @@ fun confirmImportingUntrustedProject(project: Project,
                                      @Nls buildSystemName: String,
                                      @Nls yesButtonText: String,
                                      @Nls noButtonText: String): Boolean {
-  if (isTrustedCheckDisabled()) {
-    return true
-  }
   val projectDir = project.basePath?.let { Paths.get(it) }
-  if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
-    return true
-  }
-  val origin = getProjectOrigin(projectDir)
-  if (origin != null && service<TrustedHostsSettings>().isHostTrusted(origin)) {
+  val trustedCheckResult = isProjectTrusted(projectDir)
+  if (trustedCheckResult is Trusted) {
     return true
   }
 
@@ -112,9 +104,28 @@ fun Project.setTrusted(value: Boolean) {
   }
 }
 
-internal fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
-                                        ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                        SystemProperties.`is`("idea.is.integration.test")
+private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
+                                       ApplicationManager.getApplication().isHeadlessEnvironment ||
+                                       SystemProperties.`is`("idea.is.integration.test")
+
+private sealed class TrustedCheckResult {
+  object Trusted: TrustedCheckResult()
+  class NotTrusted(val host: String?): TrustedCheckResult()
+}
+
+private fun isProjectTrusted(projectDir: Path?): TrustedCheckResult {
+  if (isTrustedCheckDisabled()) {
+    return Trusted
+  }
+  if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
+    return Trusted
+  }
+  val origin = getProjectOrigin(projectDir)
+  if (origin != null && service<TrustedHostsSettings>().isHostTrusted(origin)) {
+    return Trusted
+  }
+  return NotTrusted(origin)
+}
 
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
