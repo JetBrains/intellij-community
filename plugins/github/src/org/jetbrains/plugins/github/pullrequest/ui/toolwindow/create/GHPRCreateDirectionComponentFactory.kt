@@ -221,7 +221,7 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
       it.remote == remote
     }
 
-    val branches = repo.branches.localBranches + remoteBranches
+    val branches = repo.branches.localBranches.sorted() + remoteBranches.sorted()
     branchModel.replaceAll(branches)
   }
 
