@@ -27,7 +27,7 @@ import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
-internal class HTMLFileEditor(private val file: LightVirtualFile, private val url: String) : UserDataHolderBase(), FileEditor {
+internal class HTMLFileEditor(private val file: LightVirtualFile, url: String) : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(null)
   private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
@@ -46,9 +46,6 @@ internal class HTMLFileEditor(private val file: LightVirtualFile, private val ur
     contentPanel.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
       override fun onLoadingStateChange(browser: CefBrowser, isLoading: Boolean, canGoBack: Boolean, canGoForward: Boolean) {
         if (isLoading) {
-          if (url.isNotEmpty()) {
-            alarm.addRequest({ contentPanel.loadHTML(file.content.toString()) }, Registry.intValue("html.editor.timeout", 10000))
-          }
           invokeLater {
             loadingPanel.startLoading()
             multiPanel.select(LOADING_KEY, true)
@@ -82,6 +79,7 @@ internal class HTMLFileEditor(private val file: LightVirtualFile, private val ur
       else {
         contentPanel.setErrorPage(ErrorPage { _, _, _ -> file.content.toString() })
       }
+      alarm.addRequest({ contentPanel.loadHTML(file.content.toString()) }, Registry.intValue("html.editor.timeout", 10000))
       contentPanel.loadURL(url)
     }
     else {
