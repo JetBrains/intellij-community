@@ -9,8 +9,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.HashImpl
@@ -103,7 +105,26 @@ internal class GHPRCommitsBrowserComponentFactory(private val project: Project) 
 
     model.addAndInvokeValueChangedListener {
       val commit = model.value
-      if (commit != null) commitDetailsPanel.setCommit(commit)
+      if (commit != null) {
+        val hashAndAuthor = CommitPresentationUtil.formatCommitHashAndAuthor(commit.id, commit.author, commit.authorTime, commit.committer,
+                                                                             commit.commitTime)
+
+        val presentation = object : CommitPresentationUtil.CommitPresentation(project, commit.root, commit.fullMessage, hashAndAuthor,
+                                                                              MultiMap.empty()) {
+          override fun getText(): String {
+            val separator = myRawMessage.indexOf("\n\n")
+            val subject = if (separator > 0) myRawMessage.substring(0, separator) else myRawMessage
+            val description = myRawMessage.substring(subject.length)
+            if (subject.contains("\n")) {
+              // subject has new lines => that is not a subject
+              return myRawMessage
+            }
+
+            return """<b>$subject</b><br/><br/>$description"""
+          }
+        }
+        commitDetailsPanel.setCommit(CommitId(commit.id, commit.root), presentation)
+      }
       scrollpane.isVisible = commit != null
     }
     return scrollpane

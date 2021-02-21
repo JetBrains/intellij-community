@@ -241,7 +241,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
               commit.parents.map { HashImpl.build(it.oid) },
               commit.committer?.date?.time ?: 0L,
               dataContext.repositoryDataService.remoteCoordinates.repository.root,
-              commit.messageHeadlineHTML,
+              commit.messageHeadline,
               commit.author?.name ?: "unknown user",
               commit.author?.email ?: "",
               commit.messageHeadlineHTML + if (commit.messageBodyHTML.isEmpty()) "" else "\n\n${commit.messageBodyHTML}",
