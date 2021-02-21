@@ -80,7 +80,6 @@ public final class EditorTestUtil {
   };
 
   public static void performTypingAction(Editor editor, char c) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
     if (c == BACKSPACE_FAKE_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_BACKSPACE);
     }

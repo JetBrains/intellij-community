@@ -608,7 +608,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
                          "update in progress: %b, bulk update in progress: %b, dirty: %b, deferred regions: %s" +
                          "\nappliance manager state: %s\nsoft wraps mapping info: %s\nsoft wraps: %s",
                          myUseSoftWraps, myTabWidth, myForceAdditionalColumns, myUpdateInProgress, myBulkUpdateInProgress,
-                         myDirty, myDeferredFoldRegions.toString(),
+                         myDirty, myDeferredFoldRegions,
                          myApplianceManager.dumpState(), myDataMapper.dumpState(), myStorage.dumpState());
   }
 
