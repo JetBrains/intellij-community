@@ -38,10 +38,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -59,7 +57,7 @@ public class DataManagerImpl extends DataManager {
     GetDataRule rule = getDataRule(dataId);
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       for (Component c = focusedComponent; c != null; c = c.getParent()) {
-        final DataProvider dataProvider = getDataProviderEx(c);
+        DataProvider dataProvider = getDataProviderEx(c);
         if (dataProvider == null) continue;
         Object data = getDataFromProvider(dataProvider, dataId, null, rule);
         if (data != null) return data;
@@ -103,7 +101,7 @@ public class DataManagerImpl extends DataManager {
     }
   }
 
-  public static @Nullable DataProvider getDataProviderEx(Object component) {
+  public static @Nullable DataProvider getDataProviderEx(@Nullable Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
       dataProvider = (DataProvider)component;
@@ -123,30 +121,36 @@ public class DataManagerImpl extends DataManager {
   }
 
   public @Nullable GetDataRule getDataRule(@NotNull String dataId) {
-    GetDataRule rule = getRuleFromMap(dataId);
-    if (rule != null) {
-      return rule;
-    }
-
-    final GetDataRule plainRule = getRuleFromMap(AnActionEvent.uninjectedId(dataId));
-    if (plainRule != null) {
-      return dataProvider -> plainRule.getData(id -> dataProvider.getData(AnActionEvent.injectedId(id)));
-    }
-
-    return null;
+    String uninjectedId = AnActionEvent.uninjectedId(dataId);
+    GetDataRule slowRule = dataProvider -> getSlowData(dataId, dataProvider);
+    List<GetDataRule> rules1 = myDataRuleCollector.forKey(dataId);
+    List<GetDataRule> rules2 = dataId.equals(uninjectedId) ? Collections.emptyList() : myDataRuleCollector.forKey(uninjectedId);
+    if (rules1.size() + rules2.size() == 0) return slowRule;
+    return dataProvider -> {
+      Object data = slowRule.getData(dataProvider);
+      if (data != null) return data;
+      for (GetDataRule rule : rules1) {
+        data = rule.getData(dataProvider);
+        if (data != null) return data;
+      }
+      for (GetDataRule rule : rules2) {
+        data = rule.getData(id -> dataProvider.getData(AnActionEvent.injectedId(id)));
+        if (data != null) return data;
+      }
+      return null;
+    };
   }
 
-  private @Nullable GetDataRule getRuleFromMap(@NotNull String dataId) {
-    List<GetDataRule> rules = myDataRuleCollector.forKey(dataId);
-    return rules.isEmpty() ? null :
-           rules.size() == 1 ? rules.get(0) :
-           dataProvider -> {
-             for (GetDataRule rule : rules) {
-               Object data = rule.getData(dataProvider);
-               if (data != null) return data;
-             }
-             return null;
-           };
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
+    Iterable<DataProvider> asyncProviders = PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(dataProvider);
+    if (asyncProviders == null) return null;
+    for (DataProvider provider : asyncProviders) {
+      Object data = provider.getData(dataId);
+      if (data != null) {
+        return data;
+      }
+    }
+    return null;
   }
 
   private static @Nullable Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object dataSource) {

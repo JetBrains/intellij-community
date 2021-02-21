@@ -22,7 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.Map;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
@@ -74,23 +76,19 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
   @Override
   public Object getData(@NotNull String dataId) {
     ProgressManager.checkCanceled();
-
     Object answer = myCachedData.get(dataId);
-    if (answer != null) {
-      if (answer == NullResult.Initial) answer = null;
-      else return answer == NullResult.Final ? null : answer;
+    if (answer != null && answer != NullResult.Initial) {
+      return answer == NullResult.Final ? null : answer;
     }
 
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     GetDataRule rule = dataManager.getDataRule(dataId);
-    if (rule != null) {
-      answer = dataManager.getDataFromProvider(id -> {
-        Object o = myCachedData.get(id);
-        return o == NullResult.Initial || o == NullResult.Final ? null : o;
-      }, dataId, null, rule);
-    }
+    answer = rule == null ? null : dataManager.getDataFromProvider(dataId2 -> {
+      Object o = myCachedData.get(dataId);
+      return o == NullResult.Initial || o == NullResult.Final ? null : o;
+    }, dataId, null, rule);
 
-    myCachedData.put(dataId, answer == null ? NullResult.Final : answer);
+    myCachedData.put(dataId, answer == null || answer == NullResult.Initial ? NullResult.Final : answer);
     return answer;
   }
 
@@ -117,7 +115,13 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
 
         if (data != null) {
           computed.set(i, true);
-          cachedData.put(key.getName(), data);
+          if (key == PlatformDataKeys.SLOW_DATA_PROVIDERS) {
+            //noinspection unchecked
+            ContainerUtil.addAll((Collection<Object>)cachedData.computeIfAbsent(key.getName(), o -> new ArrayList<>()), (Iterable<Object>)data);
+          }
+          else {
+            cachedData.putIfAbsent(key.getName(), data);
+          }
         }
       }
     }
