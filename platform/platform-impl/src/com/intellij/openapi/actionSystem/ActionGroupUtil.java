@@ -32,9 +32,4 @@ public final class ActionGroupUtil {
       .filter(o -> !(o instanceof Separator) && updater.presentation(o).isEnabledAndVisible());
   }
 
-  @Deprecated
-  public static boolean isActionEnabledAndVisible(@NotNull AnAction action,
-                                                  @NotNull AnActionEvent e) {
-    return Utils.getOrCreateUpdateSession(e).presentation(action).isVisible();
-  }
 }
