@@ -168,12 +168,16 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
       @Override
       public void pass(@NlsContexts.DialogMessage String s) {
         setErrorText(s, myDestinationFolderCB);
+        if (s == null) {
+          validateButtons();
+        }
       }
     };
+    validateButtons();
+
     EditorComboBox comboBox = myHavePackages ? myWithBrowseButtonReference.getChildComponent() : myClassPackageChooser.getChildComponent();
     ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, initialTargetDirectory, updater, comboBox);
     UIUtil.setEnabled(myTargetPanel, !getSourceRoots().isEmpty() && isMoveToPackage() && !myTargetDirectoryFixed, true);
-    validateButtons();
 
     myHelpID = HelpID.getMoveHelpID(elementsToMove[0]);
   }
