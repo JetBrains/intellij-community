@@ -6,21 +6,22 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.usages.api.SearchTarget;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 import static com.intellij.find.actions.FindUsagesKt.findUsages;
 import static com.intellij.find.actions.ResolverKt.allTargets;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 
 public class FindUsagesAction extends AnAction {
+
+  static final DataKey<List<SearchTarget>> SEARCH_TARGETS = DataKey.create("search.targets");
 
   public FindUsagesAction() {
     setInjectedContext(true);

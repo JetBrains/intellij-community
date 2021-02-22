@@ -10,7 +10,6 @@ import com.intellij.codeInsight.navigation.targetPopupPresentation
 import com.intellij.find.FindBundle
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.find.usages.impl.searchTargets
 import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -63,7 +62,7 @@ internal fun findShowUsages(project: Project,
  */
 internal fun allTargets(dataContext: DataContext): List<TargetVariant> {
   val allTargets = ArrayList<TargetVariant>()
-  searchTargets(dataContext).mapTo(allTargets, ::SearchTargetVariant)
+  dataContext.getData(FindUsagesAction.SEARCH_TARGETS)?.mapTo(allTargets, ::SearchTargetVariant)
   val usageTargets: Array<out UsageTarget>? = dataContext.getData(UsageView.USAGE_TARGETS_KEY)
   if (usageTargets == null) {
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
@@ -85,12 +84,6 @@ internal fun allTargets(dataContext: DataContext): List<TargetVariant> {
     }
   }
   return allTargets
-}
-
-internal fun searchTargets(dataContext: DataContext): List<SearchTarget> {
-  val file = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return emptyList()
-  val offset: Int = dataContext.getData(CommonDataKeys.CARET)?.offset ?: return emptyList()
-  return searchTargets(file, offset)
 }
 
 internal sealed class TargetVariant {

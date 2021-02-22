@@ -4,6 +4,7 @@ package com.intellij.find.actions;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.FindBundle;
+import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -22,7 +23,8 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.find.actions.ResolverKt.searchTargets;
+import java.util.List;
+
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_HIGHLIGHT_USAGES_IN_FILE;
 
 public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAware {
@@ -85,7 +87,8 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
       return false;
     }
 
-    if (!searchTargets(dataContext).isEmpty()) {
+    List<SearchTarget> searchTargets = dataContext.getData(FindUsagesAction.SEARCH_TARGETS);
+    if (searchTargets != null && !searchTargets.isEmpty()) {
       return true;
     }
 
