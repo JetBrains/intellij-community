@@ -1154,7 +1154,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
             String findInFilesShortcut = KeymapUtil.getFirstKeyboardShortcutText("FindInPath");
             emptyStatus.appendLine(findInFilesText, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, findInFilesAction);
             if (!StringUtil.isEmpty(findInFilesShortcut)) {
-              emptyStatus.appendText(" " + findInFilesShortcut);
+              emptyStatus.appendText(" (" + findInFilesShortcut + ")");
             }
           });
       }
