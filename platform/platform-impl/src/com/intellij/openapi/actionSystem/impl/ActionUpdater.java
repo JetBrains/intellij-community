@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -236,11 +235,11 @@ final class ActionUpdater {
     cancelAndRestartOnUserActivity(promise, indicator);
 
     ourExecutor.execute(() -> {
-      ensureAsyncDataKeysPreCached();
       while (promise.getState() == Promise.State.PENDING) {
         try {
           indicator.checkCanceled();
           boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+            ensureAsyncDataKeysPreCached();
             List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
             ActionUpdateEdtExecutor.computeOnEdt(() -> {
               applyPresentationChanges();
@@ -262,13 +261,12 @@ final class ActionUpdater {
 
   private void ensureAsyncDataKeysPreCached() {
     if (!myPreCacheAsyncDataKeys) return;
-    myPreCacheAsyncDataKeys = false;
     long start = System.currentTimeMillis();
-    ReadAction.nonBlocking(() -> {
-      for (DataKey<?> key : DataKey.allKeys()) {
-        myDataContext.getData(key);
-      }
-    }).executeSynchronously();
+    for (DataKey<?> key : DataKey.allKeys()) {
+      myDataContext.getData(key);
+      myDataContext.getData(AnActionEvent.injectedId(key.getName()));
+    }
+    myPreCacheAsyncDataKeys = false;
     long time = System.currentTimeMillis() - start;
     if (time > 500) {
       LOG.debug("ensureAsyncDataKeysPreCached() took: " + time + " ms");
