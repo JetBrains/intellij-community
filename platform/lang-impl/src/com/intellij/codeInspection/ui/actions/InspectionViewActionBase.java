@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui.actions;
 
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -49,7 +50,7 @@ public abstract class InspectionViewActionBase extends AnAction {
       Project project = event.getProject();
       if (project == null) return null;
       ToolWindowManager twManager = ToolWindowManager.getInstance(project);
-      ToolWindow window = twManager.getToolWindow(ToolWindowId.INSPECTION);
+      ToolWindow window = twManager.getToolWindow(ProblemsView.ID);
       if (window == null) return null;
       Content selectedContent = window.getContentManager().getSelectedContent();
       if (selectedContent == null) return null;
