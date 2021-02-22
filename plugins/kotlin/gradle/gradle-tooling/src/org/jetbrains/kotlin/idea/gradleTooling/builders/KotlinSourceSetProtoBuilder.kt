@@ -89,9 +89,9 @@ class KotlinSourceSetProtoBuilder(val androidDeps: Map<String, List<Any>>?) :
             androidDeps: Map<String, List<Any>>?
         ): List<KotlinDependency> {
             return ArrayList<KotlinDependency>().apply {
-                val androidDependencies = buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet)
-                if (androidDependencies.isNotEmpty()) {
-                    this += androidDependencies
+                val androidDependenciesForSourceSet = buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet)
+                if (androidDependenciesForSourceSet.isNotEmpty()) {
+                    this += androidDependenciesForSourceSet
                     return@apply
                 }
 
