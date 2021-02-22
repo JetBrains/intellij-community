@@ -172,15 +172,15 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<PushDownAction>())
   }
 
-  fun testIntroduceFunctionalParameterFromExpression() {
+  fun testIntroduceFunctionalVariableFromExpression() {
     assertTrue(doActionExists<IntroduceFunctionalVariableAction>())
   }
 
-  fun testIntroduceFunctionalParameterFromStatement() {
+  fun testIntroduceFunctionalVariableFromStatement() {
     assertTrue(doActionExists<IntroduceFunctionalVariableAction>())
   }
 
-  fun testIntroduceFunctionalParameterFiltered() {
+  fun testIntroduceFunctionalVariableFiltered() {
     assertFalse(doActionExists<IntroduceFunctionalVariableAction>())
   }
 
