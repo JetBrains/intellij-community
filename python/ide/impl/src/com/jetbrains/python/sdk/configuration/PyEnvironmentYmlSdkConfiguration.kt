@@ -30,6 +30,7 @@ import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Compan
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.InputData
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.Source
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.listCondaEnvironments
 import com.jetbrains.python.sdk.flavors.runConda
 import java.awt.BorderLayout
@@ -155,7 +156,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
       }
     } ?: return null
 
-    val paths = CondaEnvSdkFlavor.findInRootDirectory(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootDir))
+    val paths = VirtualEnvSdkFlavor.findInRootDirectory(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootDir))
     return paths.singleOrNull().also {
       PySdkConfigurationCollector.logCondaEnv(
         project,
