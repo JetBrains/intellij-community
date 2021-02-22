@@ -486,7 +486,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @NotNull
   protected Future<?> runProcessWithProgressAsync(@NotNull Task.Backgroundable task,
-                                                  @NotNull CompletableFuture<? extends ProgressIndicator> progressIndicator,
+                                                  @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicator,
                                                   @Nullable Runnable continuation,
                                                   @Nullable IndicatorDisposable indicatorDisposable,
                                                   @Nullable ModalityState modalityState) {

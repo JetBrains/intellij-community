@@ -390,7 +390,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return true;
     }
 
-    CompletableFuture<ProgressWindow> progress =
+    CompletableFuture<@NotNull ProgressWindow> progress =
       createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText);
 
     ProgressRunner<?> progressRunner = new ProgressRunner<>(process)
@@ -613,7 +613,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @ApiStatus.Internal
-  public final @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull @NlsContexts.ProgressTitle String progressTitle,
+  public final @NotNull CompletableFuture<@NotNull ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                                                             boolean canBeCanceled,
                                                                                             boolean shouldShowModalWindow,
                                                                                             @Nullable Project project,

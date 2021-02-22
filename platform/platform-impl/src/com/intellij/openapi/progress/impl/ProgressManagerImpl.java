@@ -123,7 +123,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
-    CompletableFuture<ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(
+    CompletableFuture<@NotNull ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(
       () -> {
         if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
           return shouldKeepTasksAsynchronousInHeadlessMode()
@@ -131,7 +131,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
                  : new EmptyProgressIndicator();
         }
         Project project = task.getProject();
-        return project != null && project.isDisposed() ? null : new BackgroundableProcessIndicator(task);
+        return project != null && project.isDisposed() ? new EmptyProgressIndicator() : new BackgroundableProcessIndicator(task);
       }, PlainEdtExecutor.INSTANCE);
     return runProcessWithProgressAsync(task, progressIndicator, null, null, null);
   }

@@ -65,7 +65,7 @@ public final class ProgressRunner<R> {
 
   private final ThreadToUse myThreadToUse;
   @NotNull
-  private final CompletableFuture<? extends ProgressIndicator> myProgressIndicatorFuture;
+  private final CompletableFuture<? extends @NotNull ProgressIndicator> myProgressIndicatorFuture;
 
   /**
    * Creates new {@code ProgressRunner} builder instance dedicated to calculating {@code computation}.
@@ -114,7 +114,7 @@ public final class ProgressRunner<R> {
                          boolean sync,
                          boolean modal,
                          @NotNull ThreadToUse use,
-                         @NotNull CompletableFuture<? extends ProgressIndicator> progressIndicatorFuture) {
+                         @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
     myComputation = ClientId.decorateFunction(computation);
     isSync = sync;
     isModal = modal;
@@ -154,11 +154,12 @@ public final class ProgressRunner<R> {
 
   /**
    * Specifies an asynchronous computation which will be used to obtain progress indicator to be associated with computation under progress.
+   * The future must return not null indicator.
    *
    * @param progressIndicatorFuture future with progress indicator
    */
   @NotNull
-  public ProgressRunner<R> withProgress(@NotNull CompletableFuture<? extends ProgressIndicator> progressIndicatorFuture) {
+  public ProgressRunner<R> withProgress(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
     return new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, progressIndicatorFuture);
   }
 
@@ -199,7 +200,7 @@ public final class ProgressRunner<R> {
 
     boolean forceSyncExec = checkIfForceDirectExecNeeded();
 
-    CompletableFuture<? extends ProgressIndicator> progressFuture = myProgressIndicatorFuture.thenApply(progress -> {
+    CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture = myProgressIndicatorFuture.thenApply(progress -> {
       // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
       // does not have a chance to run, and as a result the progress won't be disposed
       if (progress instanceof Disposable) {
@@ -223,6 +224,9 @@ public final class ProgressRunner<R> {
       }
       catch (Throwable e) {
         throw new RuntimeException("Can't get progress", e);
+      }
+      if (progressIndicator == null) {
+        throw new IllegalStateException("Expected not-null progress indicator but got null from "+myProgressIndicatorFuture);
       }
 
       ProgressManager.getInstance().runProcess(() -> result.set(myComputation.apply(progressIndicator)), progressIndicator);
@@ -278,7 +282,7 @@ public final class ProgressRunner<R> {
   }
 
   @NotNull
-  private CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends ProgressIndicator> progressFuture,
+  private CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
                                            @NotNull Semaphore modalityEntered,
                                            @NotNull Supplier<R> onThreadCallable) {
     CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture);
@@ -323,7 +327,7 @@ public final class ProgressRunner<R> {
   }
 
   @NotNull
-  private CompletableFuture<R> normalExec(@NotNull CompletableFuture<? extends ProgressIndicator> progressFuture,
+  private CompletableFuture<R> normalExec(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
                                           @NotNull Semaphore modalityEntered,
                                           @NotNull Supplier<R> onThreadCallable) {
 
@@ -416,7 +420,7 @@ public final class ProgressRunner<R> {
   }
 
   @NotNull
-  private CompletableFuture<R> launchTask(@NotNull Supplier<R> callable, @NotNull CompletableFuture<? extends ProgressIndicator> progressIndicatorFuture) {
+  private CompletableFuture<R> launchTask(@NotNull Supplier<R> callable, @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
     CompletableFuture<R> resultFuture;
     switch (myThreadToUse) {
       case POOLED:

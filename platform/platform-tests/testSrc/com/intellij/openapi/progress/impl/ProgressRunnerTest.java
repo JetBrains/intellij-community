@@ -354,7 +354,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   }
 
   @NotNull
-  private CompletableFuture<ProgressWindow> createProgressWindow() {
+  private CompletableFuture<@NotNull ProgressWindow> createProgressWindow() {
     if (EDT.isCurrentThreadEdt()) {
       return CompletableFuture.completedFuture(new ProgressWindow(false, getProject()));
     }
