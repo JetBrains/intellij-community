@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.objectTree;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
@@ -27,7 +26,6 @@ import java.util.Objects;
  * The available method Throwable.getStackTrace() unfortunately can't be used for that because it's
  * 1) too slow and 2) explodes Throwable retained size by polluting Throwable.stackTrace fields.
  */
-@ReviseWhenPortedToJDK("11")
 @ApiStatus.Internal
 public final class ThrowableInterner {
   private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
