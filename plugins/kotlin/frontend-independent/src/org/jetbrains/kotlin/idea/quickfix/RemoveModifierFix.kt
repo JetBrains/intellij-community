@@ -62,6 +62,7 @@ class RemoveModifierFix(
                 modifier = KtTokens.OPEN_KEYWORD,
                 isRedundant = true
             )
+        val removeOpenModifier = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD)
 
         @Deprecated(
             "For binary compatibility",

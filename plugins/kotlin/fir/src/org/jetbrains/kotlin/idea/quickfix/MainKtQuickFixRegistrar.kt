@@ -27,6 +27,12 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
             AddModifierFix.addAbstractToContainingClass,
             RemoveModifierFix.removeAbstractModifier
         )
+
+        registerPsiQuickFixes(
+            KtFirDiagnostic.NonFinalMemberInFinalClass::class,
+            AddModifierFix.addOpenToContainingClass,
+            RemoveModifierFix.removeOpenModifier
+        )
     }
 
     private val overrides = KtQuickFixesListBuilder.registerPsiQuickFix {
