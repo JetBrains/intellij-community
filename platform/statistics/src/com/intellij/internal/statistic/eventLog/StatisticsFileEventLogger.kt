@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -28,7 +28,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
 
   init {
-    if (TestModeValidationRule.isTestModeEnabled()) {
+    if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
       eventMergeTimeoutMs = 500L
     }
     else {
@@ -67,7 +67,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       lastEventTime = event.time
       lastEventCreatedTime = createdTime
     }
-    if (TestModeValidationRule.isTestModeEnabled()) {
+    if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
       lastEventFlushFuture?.cancel(false)
       // call flush() instead of logLastEvent() directly so that logLastEvent is executed on the logExecutor thread and not on scheduled executor pool thread
       lastEventFlushFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(this::flush, eventMergeTimeoutMs, TimeUnit.MILLISECONDS)

@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.internal.statistic.toolwindow.eventLogToolWindowsId
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -22,6 +22,6 @@ internal class OpenStatisticsEventLogAction : DumbAwareAction() {
 
   override fun update(event: AnActionEvent) {
     super.update(event)
-    event.presentation.isEnabled = TestModeValidationRule.isTestModeEnabled()
+    event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled("FUS")
   }
 }

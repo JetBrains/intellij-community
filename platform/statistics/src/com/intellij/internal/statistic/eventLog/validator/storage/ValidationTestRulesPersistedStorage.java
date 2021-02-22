@@ -32,11 +32,11 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   private final @NotNull AtomicBoolean myIsInitialized;
 
   ValidationTestRulesPersistedStorage(@NotNull String recorderId) {
+    myRecorderId = recorderId;
     myIsInitialized = new AtomicBoolean(false);
     myTestMetadataPersistence = new EventLogTestMetadataPersistence(recorderId);
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     updateValidators();
-    myRecorderId = recorderId;
   }
 
   @Override
@@ -77,12 +77,12 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   }
 
   @NotNull
-  private static Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
-                                                               @Nullable GroupRemoteRule productionRules) {
+  private Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
+                                                        @Nullable GroupRemoteRule productionRules) {
     final GroupRemoteRule rules = merge(groups.rules, productionRules);
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(rules);
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
-    return ValidationRulesPersistedStorage.createValidators(build, groups, globalRulesHolder);
+    return ValidationRulesPersistedStorage.createValidators(build, groups, globalRulesHolder, myRecorderId);
   }
 
   public void addTestGroup(@NotNull GroupValidationTestRule group) throws IOException {

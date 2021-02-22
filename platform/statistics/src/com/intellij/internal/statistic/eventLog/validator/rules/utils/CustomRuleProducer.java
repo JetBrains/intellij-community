@@ -5,25 +5,37 @@ import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class CustomRuleProducer extends UtilRuleProducer {
+  private final boolean myTestMode;
+
+  public CustomRuleProducer(@NotNull String recorderId) {
+    myTestMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId);
+  }
 
   @Override
   public @Nullable UtilValidationRule createValidationRule(@NotNull String value,
                                                            @NotNull EventGroupContextData contextData) {
     for (CustomValidationRule extension : CustomValidationRule.EP_NAME.getExtensions()) {
-      if (isDevelopedByJetBrains(extension) && extension.acceptRuleId(value)) return extension;
+      if (isAcceptedRule(extension) && extension.acceptRuleId(value)) return extension;
     }
 
     for (CustomWhiteListRule extension : CustomWhiteListRule.EP_NAME.getExtensions()) {
-      if (isDevelopedByJetBrains(extension) && extension.acceptRuleId(value)) return extension;
+      if (isAcceptedRule(extension) && extension.acceptRuleId(value)) return extension;
     }
     return null;
+  }
+
+  private boolean isAcceptedRule(FUSRule extension) {
+    if (extension instanceof TestModeValidationRule && !myTestMode) return false;
+    return isDevelopedByJetBrains(extension);
   }
 
   private static boolean isDevelopedByJetBrains(FUSRule extension) {

@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventsSchemePathSettings
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -62,7 +62,7 @@ class ConfigureEventsSchemeFileAction(private var myRecorderId: String = Statist
   override fun update(event: AnActionEvent) {
     super.update(event)
     val presentation = event.presentation
-    presentation.isEnabled = TestModeValidationRule.isTestModeEnabled()
+    presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(myRecorderId)
     val settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(myRecorderId)
     presentation.icon = if (settings != null && settings.isUseCustomPath) customPathConfiguredIcon else AllIcons.General.Settings
   }

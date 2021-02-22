@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +11,12 @@ import static com.intellij.internal.statistic.eventLog.validator.ValidationResul
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.REJECTED;
 
 public final class TestModeValidationRule extends CustomValidationRule {
+  private final boolean myTestMode;
+
+  public TestModeValidationRule() {
+    myTestMode = StatisticsRecorderUtil.isAnyTestModeEnabled();
+  }
+
   @Override
   public boolean acceptRuleId(@Nullable String ruleId) {
     return "fus_test_mode".equals(ruleId);
@@ -18,10 +24,6 @@ public final class TestModeValidationRule extends CustomValidationRule {
 
   @Override
   protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    return isTestModeEnabled() ? ACCEPTED : REJECTED;
-  }
-
-  public static boolean isTestModeEnabled() {
-    return ApplicationManager.getApplication().isInternal() && "true".equals(System.getProperty("fus.internal.test.mode"));
+    return myTestMode ? ACCEPTED : REJECTED;
   }
 }
