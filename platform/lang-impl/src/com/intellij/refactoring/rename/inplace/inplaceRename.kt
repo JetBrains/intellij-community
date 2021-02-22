@@ -33,10 +33,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.refactoring.InplaceRefactoringContinuation
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.api.*
-import com.intellij.refactoring.rename.impl.PsiRenameUsageRangeUpdater
-import com.intellij.refactoring.rename.impl.RenameOptions
-import com.intellij.refactoring.rename.impl.buildUsageQuery
-import com.intellij.refactoring.rename.impl.rename
+import com.intellij.refactoring.rename.impl.*
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring.PRIMARY_VARIABLE_NAME
 import com.intellij.util.Query
 import java.util.*
@@ -51,8 +48,10 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
   fun performRename(newName: String) {
     // TODO obtain options from the inlay button UI, see registry `enable.rename.options.inplace`
     val options = RenameOptions(
-      renameTextOccurrences = true,
-      renameCommentsStringsOccurrences = true,
+      textOptions = TextOptions(
+        renameTextOccurrences = true,
+        renameCommentsStringsOccurrences = true,
+      ),
       searchScope = GlobalSearchScope.allScope(project)
     )
     rename(project, targetPointer, newName, options)
@@ -67,7 +66,10 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
   val hostFile: PsiFile = PsiDocumentManager.getInstance(project).getPsiFile(hostDocument)
                           ?: return false
 
-  val usageQuery: Query<out RenameUsage> = buildUsageQuery(project, target, RenameOptions(true, true, LocalSearchScope(hostFile)))
+  val usageQuery: Query<out RenameUsage> = buildUsageQuery(
+    project, target,
+    RenameOptions(TextOptions(true, true), LocalSearchScope(hostFile))
+  )
   val usages: Collection<RenameUsage> = usageQuery.findAll()
   val psiUsages: List<PsiRenameUsage> = usages.filterIsInstance<PsiRenameUsage>()
 

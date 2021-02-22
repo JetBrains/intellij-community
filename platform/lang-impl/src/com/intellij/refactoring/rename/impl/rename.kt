@@ -53,8 +53,10 @@ internal fun showDialogAndRename(project: Project, target: RenameTarget, targetN
   val initOptions = RenameDialog.Options(
     targetName = targetName,
     renameOptions = RenameOptions(
-      renameTextOccurrences = if (canRenameTextOccurrences) true else null,
-      renameCommentsStringsOccurrences = if (canRenameCommentAndStringOccurrences) true else null,
+      textOptions = TextOptions(
+        renameTextOccurrences = if (canRenameTextOccurrences) true else null,
+        renameCommentsStringsOccurrences = if (canRenameCommentAndStringOccurrences) true else null,
+      ),
       searchScope = target.maximalSearchScope ?: GlobalSearchScope.allScope(project)
     )
   )
@@ -344,8 +346,10 @@ fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
 
   val targetPointer = target.createPointer()
   val options = RenameOptions(
-    renameTextOccurrences = true,
-    renameCommentsStringsOccurrences = true,
+    textOptions = TextOptions(
+      renameTextOccurrences = true,
+      renameCommentsStringsOccurrences = true,
+    ),
     searchScope = target.maximalSearchScope ?: GlobalSearchScope.projectScope(project)
   )
   runBlocking {
