@@ -4,25 +4,27 @@
 package com.intellij.find.actions
 
 import com.intellij.CommonBundle
-import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.navigation.targetPopupPresentation
 import com.intellij.find.FindBundle
-import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiElement
 import com.intellij.usages.UsageTarget
-import com.intellij.usages.UsageView
 import org.jetbrains.annotations.ApiStatus
 
 /* This file contains weird logic so Symbols will work with PsiElements and UsageTargets. */
+
+private val TARGET_VARIANTS: DataKey<List<TargetVariant>> = DataKey.create("search.target.variants")
+
+internal fun allTargets(dataContext: DataContext): List<TargetVariant> = dataContext.getData(TARGET_VARIANTS) ?: emptyList()
 
 internal interface UsageVariantHandler {
   fun handleTarget(target: SearchTarget)
@@ -56,36 +58,6 @@ internal fun findShowUsages(project: Project,
   }
 }
 
-/**
- * @see FindUsagesAction.findUsageTargetUsages
- * @see com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.doChooseAmbiguousTarget
- */
-internal fun allTargets(dataContext: DataContext): List<TargetVariant> {
-  val allTargets = ArrayList<TargetVariant>()
-  dataContext.getData(FindUsagesAction.SEARCH_TARGETS)?.mapTo(allTargets, ::SearchTargetVariant)
-  val usageTargets: Array<out UsageTarget>? = dataContext.getData(UsageView.USAGE_TARGETS_KEY)
-  if (usageTargets == null) {
-    val editor = dataContext.getData(CommonDataKeys.EDITOR)
-    if (editor != null) {
-      val offset = editor.caretModel.offset
-      val reference = TargetElementUtil.findReference(editor, offset)
-      if (reference != null) {
-        TargetElementUtil.getInstance().getTargetCandidates(reference).mapTo(allTargets, ::PsiTargetVariant)
-      }
-    }
-  }
-  else {
-    val target: UsageTarget = usageTargets[0]
-    allTargets += if (target is PsiElement2UsageTargetAdapter) {
-      PsiTargetVariant(target.element)
-    }
-    else {
-      CustomTargetVariant(target)
-    }
-  }
-  return allTargets
-}
-
 internal sealed class TargetVariant {
   abstract val presentation: TargetPopupPresentation
   abstract fun handle(handler: UsageVariantHandler)
@@ -101,7 +73,7 @@ internal class PsiTargetVariant(private val element: PsiElement) : TargetVariant
   override fun handle(handler: UsageVariantHandler): Unit = handler.handlePsi(element)
 }
 
-private class CustomTargetVariant(private val target: UsageTarget) : TargetVariant() {
+internal class CustomTargetVariant(private val target: UsageTarget) : TargetVariant() {
   override val presentation: TargetPopupPresentation get() = targetPopupPresentation(target.presentation!!)
   override fun handle(handler: UsageVariantHandler): Unit = target.findUsages()
 }
