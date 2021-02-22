@@ -23,8 +23,6 @@ import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.*
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.api.RenameUsage
-import com.intellij.refactoring.rename.api.ReplaceTextTargetContext.IN_COMMENTS_AND_STRINGS
-import com.intellij.refactoring.rename.api.ReplaceTextTargetContext.IN_PLAIN_TEXT
 import com.intellij.refactoring.rename.ui.*
 import com.intellij.util.Query
 import com.intellij.util.text.StringOperation
@@ -48,17 +46,9 @@ internal typealias UsagePointer = Pointer<out RenameUsage>
  */
 internal fun showDialogAndRename(project: Project, target: RenameTarget, targetName: String = target.targetName) {
   ApplicationManager.getApplication().assertIsDispatchThread()
-  val canRenameTextOccurrences = !target.textTargets(IN_PLAIN_TEXT).isEmpty()
-  val canRenameCommentAndStringOccurrences = !target.textTargets(IN_COMMENTS_AND_STRINGS).isEmpty()
   val initOptions = RenameDialog.Options(
     targetName = targetName,
-    renameOptions = RenameOptions(
-      textOptions = TextOptions(
-        renameTextOccurrences = if (canRenameTextOccurrences) true else null,
-        renameCommentsStringsOccurrences = if (canRenameCommentAndStringOccurrences) true else null,
-      ),
-      searchScope = target.maximalSearchScope ?: GlobalSearchScope.allScope(project)
-    )
+    renameOptions = renameOptions(project, target)
   )
   val dialog = RenameDialog(project, target.presentation.presentableText, initOptions)
   if (!dialog.showAndGet()) {

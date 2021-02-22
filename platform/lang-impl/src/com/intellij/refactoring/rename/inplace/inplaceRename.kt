@@ -12,6 +12,7 @@ import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
@@ -28,7 +29,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.refactoring.InplaceRefactoringContinuation
 import com.intellij.refactoring.RefactoringBundle
@@ -46,14 +46,9 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
   val targetPointer: Pointer<out RenameTarget> = target.createPointer()
 
   fun performRename(newName: String) {
-    // TODO obtain options from the inlay button UI, see registry `enable.rename.options.inplace`
-    val options = RenameOptions(
-      textOptions = TextOptions(
-        renameTextOccurrences = true,
-        renameCommentsStringsOccurrences = true,
-      ),
-      searchScope = GlobalSearchScope.allScope(project)
-    )
+    ApplicationManager.getApplication().assertReadAccessAllowed()
+    val restoredTarget = targetPointer.dereference() ?: return
+    val options = renameOptions(project, restoredTarget)
     rename(project, targetPointer, newName, options)
   }
 
