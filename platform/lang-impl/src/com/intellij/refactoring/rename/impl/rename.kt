@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.CoroutineContext
 
 
@@ -78,13 +77,25 @@ internal fun rename(
   newName: String,
   options: RenameOptions,
   preview: Boolean = false
+) {
+  val cs = CoroutineScope(CoroutineName("root rename coroutine"))
+  rename(cs, project, targetPointer, newName, options, preview)
+}
+
+private fun rename(
+  cs: CoroutineScope,
+  project: Project,
+  targetPointer: Pointer<out RenameTarget>,
+  newName: String,
+  options: RenameOptions,
+  preview: Boolean
 ): Job {
-  return CoroutineScope(CoroutineName("root rename coroutine")).launch(Dispatchers.Default) {
-    rename(this, project, targetPointer, newName, options, preview)
+  return cs.launch(Dispatchers.Default) {
+    doRename(this, project, targetPointer, newName, options, preview)
   }
 }
 
-private suspend fun rename(
+private suspend fun doRename(
   cs: CoroutineScope,
   project: Project,
   targetPointer: Pointer<out RenameTarget>,
@@ -337,9 +348,13 @@ fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
     renameCommentsStringsOccurrences = true,
     searchScope = target.maximalSearchScope ?: GlobalSearchScope.projectScope(project)
   )
-  val renameJob = rename(project, targetPointer, newName, options)
-  while (renameJob.isActive) {
-    UIUtil.dispatchAllInvocationEvents()
-    LockSupport.parkNanos(10_000_000)
+  runBlocking {
+    withTimeout(timeMillis = 1000 * 60 * 10) {
+      val renameJob = rename(cs = this@withTimeout, project, targetPointer, newName, options, preview = false)
+      while (renameJob.isActive) {
+        UIUtil.dispatchAllInvocationEvents()
+        delay(timeMillis = 10)
+      }
+    }
   }
 }
