@@ -99,6 +99,9 @@ public class Runner {
 
       checkCaseSensitivity(newFolder);
 
+      logger().info("args: " + Arrays.toString(args));
+      logger().info("case-sensitive: " + ourCaseSensitiveFs);
+
       boolean binary = hasArgument(args, "zip_as_binary");
       boolean strict = hasArgument(args, "strict");
       boolean normalized = hasArgument(args, "normalized");
