@@ -121,11 +121,6 @@ NSArray *allVms() {
     NSBundle *bundle = [NSBundle mainBundle];
     appendBundle([bundle.bundlePath stringByAppendingPathComponent:@"Contents/jbr"], jvmBundlePaths);
 
-    // Android Studio: bundled under "jre" not "jbr"
-    if (!appendBundle([appDir stringByAppendingPathComponent:@"/jbr"], jvmBundlePaths)) {
-        appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
-    }
-
     if (jvmBundlePaths.count == 0 || !satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required)) {
         NSLog(@"Can't get bundled java version. It is probably corrupted.");
 
