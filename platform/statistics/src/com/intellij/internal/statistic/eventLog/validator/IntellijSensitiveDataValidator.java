@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
 import com.intellij.internal.statistic.eventLog.validator.storage.IntellijValidationRulesStorage;
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorageProvider;
 import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -111,8 +112,8 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
       id -> {
         IntellijValidationRulesStorage storage = ValidationRulesStorageProvider.newStorage(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
-               ? new BlindSensitiveDataValidator(storage)
-               : new IntellijSensitiveDataValidator(storage);
+               ? new BlindSensitiveDataValidator(storage, recorderId)
+               : new IntellijSensitiveDataValidator(storage, recorderId);
       }
     );
   }
@@ -121,12 +122,15 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
     return ourInstances.get(recorderId);
   }
 
-  protected IntellijSensitiveDataValidator(@NotNull IntellijValidationRulesStorage storage) {
+  private final String myRecorderId;
+
+  protected IntellijSensitiveDataValidator(@NotNull IntellijValidationRulesStorage storage, @NotNull String recorderId) {
     super(storage);
+    myRecorderId = recorderId;
   }
 
   public boolean isGroupAllowed(@NotNull EventLogGroup group) {
-    if (TestModeValidationRule.isTestModeEnabled()) return true;
+    if (StatisticsRecorderUtil.isTestModeEnabled(myRecorderId)) return true;
 
     IntellijValidationRulesStorage storage = getValidationRulesStorage();
     if (storage.isUnreachable()) return true;
@@ -157,8 +161,8 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
     return validatedData;
   }
 
-  private static boolean isTestModeEnabled(@Nullable EventGroupRules rule) {
-    return TestModeValidationRule.isTestModeEnabled() && rule != null &&
+  private boolean isTestModeEnabled(@Nullable EventGroupRules rule) {
+    return StatisticsRecorderUtil.isTestModeEnabled(myRecorderId) && rule != null &&
            ContainerUtil.exists(rule.getEventIdRules(), r -> r instanceof TestModeValidationRule);
   }
 
@@ -171,8 +175,8 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
   }
 
   private static class BlindSensitiveDataValidator extends IntellijSensitiveDataValidator {
-    protected BlindSensitiveDataValidator(@NotNull IntellijValidationRulesStorage storage) {
-      super(storage);
+    protected BlindSensitiveDataValidator(@NotNull IntellijValidationRulesStorage storage, @NotNull String recorderId) {
+      super(storage, recorderId);
     }
 
     @Override

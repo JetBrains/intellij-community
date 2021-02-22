@@ -14,7 +14,6 @@ import junit.framework.TestCase
 import org.junit.Assert
 import org.junit.Test
 import java.util.*
-import kotlin.collections.HashMap
 
 @Suppress("SameParameterValue")
 class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
@@ -551,7 +550,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
         return true
       }
     }
-    return TestSensitiveDataValidator(storage)
+    return TestSensitiveDataValidator(storage, "TEST")
   }
 
   private fun doTestWithRuleList(fileName: String, func: (TestSensitiveDataValidator) -> Unit) {
