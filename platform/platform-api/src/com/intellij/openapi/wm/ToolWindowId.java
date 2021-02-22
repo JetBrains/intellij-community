@@ -20,9 +20,14 @@ public interface ToolWindowId {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String BUILD = "Build";
 
+  /**
+   * @deprecated Use {@link com.intellij.analysis.problemsView.toolWindow.ProblemsView}
+   */
+  @Deprecated
+  String INSPECTION = "Inspection Results";
+
   String FIND = "Find";
   String HIERARCHY = "Hierarchy";
-  String INSPECTION = "Inspection Results";
   String TODO_VIEW = "TODO";
   String DEPENDENCIES = "Dependency Viewer";
   String VCS = "Version Control";
