@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidatio
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
@@ -86,6 +87,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
   }
 
   override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
     val testSchemeSize = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)?.size() ?: 0
     val text = if (testSchemeSize < 100) testSchemeSize.toString() else "99+"
     val sizeCountIcon = TextIcon(text, JBColor.DARK_GRAY, UIUtil.getLabelBackground(), 1)
