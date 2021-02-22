@@ -104,16 +104,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
-  public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
-    if (file != null) {
-      VirtualFile vFile = file.getViewProvider().getVirtualFile();
-      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
-      if (cachedDocument != null && cachedDocument != document) {
-        throw new IllegalStateException("Can't replace existing document");
-      }
-
-      FileDocumentManagerBase.registerDocument(document, vFile);
+  public void associatePsi(@NotNull Document document, @NotNull PsiFile file) {
+    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+    Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
+    if (cachedDocument != null && cachedDocument != document) {
+      throw new IllegalStateException("Can't replace existing document");
     }
+
+    FileDocumentManagerBase.registerDocument(document, vFile);
   }
 
   @Override
