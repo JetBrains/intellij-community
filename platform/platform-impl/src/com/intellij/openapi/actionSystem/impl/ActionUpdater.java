@@ -4,9 +4,11 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -44,6 +46,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -57,6 +61,7 @@ final class ActionUpdater {
   private final String myPlace;
   private final boolean myContextMenuAction;
   private final boolean myToolbarAction;
+  private final boolean myBeforeActionPerformed;
   private final Project myProject;
 
   private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
@@ -68,6 +73,8 @@ final class ActionUpdater {
 
   private boolean myAllowPartialExpand = true;
   private boolean myPreCacheAsyncDataKeys;
+  private final BiFunction<? super AnAction, ? super Presentation, AnActionEvent> myEventFactory;
+  private final Consumer<Runnable> myLaterInvocator;
 
   ActionUpdater(boolean isInModalContext,
                 PresentationFactory presentationFactory,
@@ -84,6 +91,19 @@ final class ActionUpdater {
                 boolean isContextMenuAction,
                 boolean isToolbarAction,
                 Utils.ActionGroupVisitor visitor) {
+    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, visitor, false, null, null);
+  }
+
+  ActionUpdater(boolean isInModalContext,
+                PresentationFactory presentationFactory,
+                DataContext dataContext,
+                String place,
+                boolean isContextMenuAction,
+                boolean isToolbarAction,
+                Utils.ActionGroupVisitor visitor,
+                boolean beforeActionPerformed,
+                BiFunction<? super AnAction, ? super Presentation, AnActionEvent> eventFactory,
+                Consumer<Runnable> laterInvocator) {
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
     myModalContext = isInModalContext;
     myFactory = presentationFactory;
@@ -92,15 +112,18 @@ final class ActionUpdater {
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
+    myBeforeActionPerformed = beforeActionPerformed;
+    myEventFactory = eventFactory;
+    myLaterInvocator = laterInvocator;
     myPreCacheAsyncDataKeys = Utils.isAsyncDataContext(dataContext);
     boolean forceAsync = Utils.isAsyncDataContext(dataContext) && Registry.is("actionSystem.update.actions.async.unsafe");
     myRealUpdateStrategy = new UpdateStrategy(
       action -> {
         ensureAsyncDataKeysPreCached();
         // clone the presentation to avoid partially changing the cached one if update is interrupted
-        Presentation presentation = ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action).clone());
-        presentation.setEnabledAndVisible(true);
-        Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), myVisitor);
+        Presentation presentation = computeOnEdt(() -> myFactory.getPresentation(action).clone());
+        if (!myBeforeActionPerformed) presentation.setEnabledAndVisible(true); // todo investigate and remove this line
+        Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), myVisitor, myBeforeActionPerformed);
         boolean success = callAction(forceAsync, action, "update", doUpdate);
         return success ? presentation : null;
       },
@@ -109,7 +132,7 @@ final class ActionUpdater {
     myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null), group -> true);
   }
 
-  private void applyPresentationChanges() {
+  void applyPresentationChanges() {
     for (Map.Entry<AnAction, Presentation> entry : myUpdatedPresentations.entrySet()) {
       Presentation original = myFactory.getPresentation(entry.getKey());
       Presentation cloned = entry.getValue();
@@ -141,14 +164,19 @@ final class ActionUpdater {
     });
   }
 
-  private static <T> T callAction(boolean forceAsync, AnAction action, String operation, Supplier<? extends T> call) {
-    if (forceAsync || action instanceof UpdateInBackground || ApplicationManager.getApplication().isDispatchThread()) {
+  private <T> T callAction(boolean forceAsync, @NotNull AnAction action, @NotNull String operation, @NotNull Supplier<? extends T> call) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      try (AccessToken ignored = ProhibitAWTEvents.start(operation)) {
+        return call.get();
+      }
+    }
+    if (forceAsync || action instanceof UpdateInBackground) {
       return call.get();
     }
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressManager.getInstance().getProgressIndicator());
 
-    return ActionUpdateEdtExecutor.computeOnEdt(() -> {
+    return computeOnEdt(() -> {
       long start = System.currentTimeMillis();
       try {
         return ProgressManager.getInstance().runProcess(call::get, ProgressWrapper.wrap(progress));
@@ -226,7 +254,7 @@ final class ActionUpdater {
     ProgressIndicator indicator = new EmptyProgressIndicator();
     promise.onError(__ -> {
       indicator.cancel();
-      ActionUpdateEdtExecutor.computeOnEdt(() -> {
+      computeOnEdt(() -> {
         applyPresentationChanges();
         return null;
       });
@@ -241,7 +269,7 @@ final class ActionUpdater {
           boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
             ensureAsyncDataKeysPreCached();
             List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
-            ActionUpdateEdtExecutor.computeOnEdt(() -> {
+            computeOnEdt(() -> {
               applyPresentationChanges();
               promise.setResult(result);
               return null;
@@ -398,7 +426,7 @@ final class ActionUpdater {
   }
 
   private Presentation orDefault(AnAction action, Presentation presentation) {
-    return presentation != null ? presentation : ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action));
+    return presentation != null ? presentation : computeOnEdt(() -> myFactory.getPresentation(action));
   }
 
   private static List<AnAction> removeUnnecessarySeparators(List<? extends AnAction> visible) {
@@ -416,12 +444,16 @@ final class ActionUpdater {
   }
 
   private AnActionEvent createActionEvent(AnAction action, Presentation presentation) {
-    AnActionEvent event = new AnActionEvent(
+    AnActionEvent event = myEventFactory != null ? myEventFactory.apply(action, presentation) : new AnActionEvent(
       null, getDataContext(action), myPlace, presentation,
       ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
     event.setInjectedContext(action.isInInjectedContext());
     event.setUpdateSession(asUpdateSession());
     return event;
+  }
+
+  private <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier) {
+    return ActionUpdateEdtExecutor.computeOnEdt(supplier, myLaterInvocator);
   }
 
   @NotNull
@@ -495,7 +527,11 @@ final class ActionUpdater {
   }
 
   // returns false if exception was thrown and handled
-  static boolean doUpdate(boolean isInModalContext, AnAction action, AnActionEvent e, Utils.ActionGroupVisitor visitor) {
+  static boolean doUpdate(boolean isInModalContext,
+                          AnAction action,
+                          AnActionEvent e,
+                          Utils.ActionGroupVisitor visitor,
+                          boolean beforeActionPerformed) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
 
     if (visitor != null && !visitor.beginUpdate(action, e)) {
@@ -505,7 +541,7 @@ final class ActionUpdater {
     long startTime = System.currentTimeMillis();
     final boolean result;
     try {
-      result = !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, false);
+      result = !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, beforeActionPerformed);
     }
     catch (ProcessCanceledException ex) {
       throw ex;

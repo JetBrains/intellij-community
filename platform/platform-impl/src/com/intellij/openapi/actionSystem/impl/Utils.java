@@ -4,23 +4,41 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.impl.ActionProcessor;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
@@ -281,6 +299,91 @@ public final class Utils {
       updater = actionUpdater.asUpdateSession();
     }
     return updater;
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  public static <T> T runUpdateSessionForKeyEvent(@NotNull InputEvent inputEvent,
+                                                  @NotNull ActionProcessor actionProcessor,
+                                                  @NotNull DataContext dataContext,
+                                                  @NotNull PresentationFactory factory,
+                                                  @Nullable Key<AnActionEvent> eventKey,
+                                                  @NotNull Function<UpdateSession, T> function) {
+    long start = System.currentTimeMillis();
+    boolean async = isAsyncDataContext(dataContext);
+    // we will manually process "invokeLater" calls using a queue for performance reasons:
+    // direct approach would be to pump events in a custom modality state (enterModal/leaveModal)
+    // EventQueue would add significant overhead (x10), but key events must be processed ASAP.
+    BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionUpdater actionUpdater = new ActionUpdater(
+      LaterInvocator.isInModalContext(), factory, dataContext,
+      ActionPlaces.KEYBOARD_SHORTCUT, false, false, null, true, (action, presentation) -> {
+      AnActionEvent event =
+        actionProcessor.createEvent(inputEvent, dataContext, ActionPlaces.KEYBOARD_SHORTCUT, presentation, actionManager);
+      if (eventKey != null) {
+        presentation.putClientProperty(eventKey, event);
+      }
+      return event;
+    }, async ? queue::offer : null);
+
+    T result;
+    if (async) {
+      AsyncPromise<T> promise = new AsyncPromise<>();
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        try {
+          Ref<T> ref = Ref.create();
+          ProgressManager.getInstance().computePrioritized(() -> {
+            ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+              ref.set(ReadAction.compute(() -> function.apply(actionUpdater.asUpdateSession())));
+            }, new EmptyProgressIndicator());
+            return null;
+          });
+          queue.offer(() -> {
+            actionUpdater.applyPresentationChanges();
+            promise.setResult(ref.get());
+          });
+        }
+        catch (Exception e) {
+          promise.setError(e);
+        }
+      });
+      result = runLoopAndWaitForFuture(promise, null, () -> {
+        Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
+        if (runnable != null) runnable.run();
+      });
+    }
+    else {
+      result = function.apply(actionUpdater.asUpdateSession());
+    }
+    long time = System.currentTimeMillis() - start;
+    if (time > 500) {
+      LOG.debug("runUpdateSessionForKeyEvent() took: " + time + " ms");
+    }
+    return result;
+  }
+
+  private static <T> T runLoopAndWaitForFuture(@NotNull Future<T> promise,
+                                               @Nullable T defValue,
+                                               @NotNull ThrowableRunnable<?> pumpRunnable) {
+    while (!promise.isDone()) {
+      try {
+        pumpRunnable.run();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+    try {
+      return promise.get();
+    }
+    catch (Exception ex) {
+      Throwable cause = ExceptionUtil.getRootCause(ex);
+      if (!(cause instanceof ProcessCanceledException)) {
+        LOG.error(cause);
+      }
+    }
+    return defValue;
   }
 
   public interface ActionGroupVisitor {
