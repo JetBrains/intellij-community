@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 public class UntrustedProjectNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
@@ -39,7 +38,7 @@ public class UntrustedProjectNotificationProvider extends EditorNotifications.Pr
     }
 
     EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText(IdeBundle.message("untrusted.project.notification.desctription"));
+    panel.setText(IdeBundle.message("untrusted.project.notification.description"));
     panel.createActionLabel(IdeBundle.message("untrusted.project.notification.trust.button"), () -> {
       TrustedProjects.confirmImportingUntrustedProject(project, ApplicationNamesInfo.getInstance().getProductName(),
                                                        IdeBundle.message("untrusted.project.notification.trust.button"),
