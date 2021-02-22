@@ -168,7 +168,7 @@ public final class ActionUtil {
         beforeActionPerformed
         ? () -> action.beforeActionPerformedUpdate(e)
         : () -> action.update(e);
-      if (Registry.is("actionSystem.update.actions.async")) {
+      if (!beforeActionPerformed && Registry.is("actionSystem.update.actions.async")) {
         runnable.run();
       }
       else {

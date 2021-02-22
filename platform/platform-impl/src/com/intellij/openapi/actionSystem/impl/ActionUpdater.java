@@ -170,7 +170,9 @@ final class ActionUpdater {
         return call.get();
       }
     }
-    if (forceAsync || action instanceof UpdateInBackground) {
+    // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
+    boolean suppressAsync = myBeforeActionPerformed && "update".equals(operation);
+    if (!suppressAsync && (forceAsync || action instanceof UpdateInBackground)) {
       return call.get();
     }
 
@@ -187,7 +189,6 @@ final class ActionUpdater {
           LOG.warn("Slow (" + elapsed + "ms) '" + operation + "' on action " + action + " of " + action.getClass() +
                    ". Consider speeding it up and/or implementing UpdateInBackground.");
         }
-
       }
     });
   }
