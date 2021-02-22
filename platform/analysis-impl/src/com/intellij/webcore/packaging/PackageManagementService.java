@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.webcore.packaging;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.CatchingConsumer;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -128,7 +130,23 @@ public abstract class PackageManagementService {
    *
    * @return the collection of currently installed packages.
    */
-  public abstract Collection<InstalledPackage> getInstalledPackages() throws IOException;
+  public @NotNull List<? extends InstalledPackage> getInstalledPackagesList() throws ExecutionException {
+    try {
+      return new ArrayList<>(getInstalledPackages());
+    }
+    catch (IOException e) {
+      throw new ExecutionException(e);
+    }
+  }
+
+  /**
+   * @deprecated Please use {@link #getInstalledPackagesList()} instead.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(since = "2020.2", forRemoval = true)
+  public Collection<InstalledPackage> getInstalledPackages() throws IOException {
+    throw new AbstractMethodError("The method is deprecated. Please use `getInstalledPackagesList`.");
+  }
 
   /**
    * Installs the specified package. Called in the event dispatch thread; needs to take care of spawning a background task itself.

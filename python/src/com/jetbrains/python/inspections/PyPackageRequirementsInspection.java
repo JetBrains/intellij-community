@@ -325,7 +325,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       for (VirtualFile metadata : VfsUtil.getChildren(srcRoot, file -> ArrayUtil.contains(file.getExtension(), metadataExtensions))) {
         final String[] nameAndVersionAndRest = metadata.getNameWithoutExtension().split("-", 3);
         if (nameAndVersionAndRest.length >= 2) {
-          result.add(new PyPackage(nameAndVersionAndRest[0], nameAndVersionAndRest[1], null, Collections.emptyList()));
+          result.add(new PyPackage(nameAndVersionAndRest[0], nameAndVersionAndRest[1]));
         }
       }
     }

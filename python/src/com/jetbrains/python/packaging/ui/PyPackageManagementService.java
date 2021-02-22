@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.ui;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.openapi.project.Project;
@@ -29,7 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -164,20 +166,11 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     PyPackageService.getInstance().addSdkToUserSite(mySdk.getHomePath(), newValue);
   }
 
-  @NotNull
   @Override
-  public Collection<InstalledPackage> getInstalledPackages() throws IOException {
-
-    final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
-    final List<PyPackage> packages;
-    try {
-      packages = Lists.newArrayList(manager.refreshAndGetPackages(true));
-    }
-    catch (ExecutionException e) {
-      throw new IOException(e);
-    }
+  public @NotNull List<? extends InstalledPackage> getInstalledPackagesList() throws ExecutionException {
+    List<PyPackage> packages = new ArrayList<>(PyPackageManager.getInstance(mySdk).refreshAndGetPackages(true));
     packages.sort(Comparator.comparing(InstalledPackage::getName));
-    return new ArrayList<>(packages);
+    return packages;
   }
 
   @Override

@@ -337,7 +337,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
     }
 
     private fun isIgnoredStubPackage(name: String, version: String, ignoredStubPackages: List<PyRequirement>): Boolean {
-      val stubPackage = PyPackage(name, version, null, emptyList())
+      val stubPackage = PyPackage(name, version)
       return ignoredStubPackages.any { stubPackage.matches(it) }
     }
   }

@@ -2253,7 +2253,7 @@ public class PyRequirementTest extends PyTestCase {
   // PY-6355
   public void testTrailingZeroesInVersion() {
     final PyRequirement req = fromLine("foo==0.8.0");
-    final PyPackage pkg = new PyPackage("foo", "0.8", null, emptyList());
+    final PyPackage pkg = new PyPackage("foo", "0.8");
     assertNotNull(req);
     assertEquals(pkg, req.match(singletonList(pkg)));
   }
@@ -2261,7 +2261,7 @@ public class PyRequirementTest extends PyTestCase {
   // PY-6438
   public void testUnderscoreMatchesDash() {
     final PyRequirement req = fromLine("pyramid_zcml");
-    final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, emptyList());
+    final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1");
     assertNotNull(req);
     assertEquals(pkg, req.match(singletonList(pkg)));
   }
@@ -2269,15 +2269,15 @@ public class PyRequirementTest extends PyTestCase {
   // PY-20242
   public void testVersionInterpretedAsString() {
     final PyRequirement req = fromLine("foo===version");
-    final PyPackage pkg = new PyPackage("foo", "version", null, emptyList());
+    final PyPackage pkg = new PyPackage("foo", "version");
     assertNotNull(req);
     assertEquals(pkg, req.match(singletonList(pkg)));
   }
 
   // PY-20880
   public void testMatchingLocalVersions() {
-    final PyPackage firstPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0100", null, emptyList());
-    final PyPackage secondPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0101", null, emptyList());
+    final PyPackage firstPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0100");
+    final PyPackage secondPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0101");
 
     final PyRequirement requirement = fromLine("foo==1.0");
     assertEquals(firstPackageWithLocalVersion, requirement.match(singletonList(firstPackageWithLocalVersion)));
@@ -2292,11 +2292,11 @@ public class PyRequirementTest extends PyTestCase {
   // PY-22275
   public void testMatchingStar() {
     final PyRequirement requirement = fromLine("foo==1.1.*");
-    final PyPackage release = new PyPackage("foo", "1.1.2", null, emptyList());
-    final PyPackage pre = new PyPackage("foo", "1.1.2a1", null, emptyList());
-    final PyPackage post = new PyPackage("foo", "1.1.2.post1", null, emptyList());
-    final PyPackage dev = new PyPackage("foo", "1.1.2.dev1", null, emptyList());
-    final PyPackage localVersion = new PyPackage("foo", "1.1.2+local.version", null, emptyList());
+    final PyPackage release = new PyPackage("foo", "1.1.2");
+    final PyPackage pre = new PyPackage("foo", "1.1.2a1");
+    final PyPackage post = new PyPackage("foo", "1.1.2.post1");
+    final PyPackage dev = new PyPackage("foo", "1.1.2.dev1");
+    final PyPackage localVersion = new PyPackage("foo", "1.1.2+local.version");
 
     assertEquals(release, requirement.match(singletonList(release)));
     assertEquals(pre, requirement.match(singletonList(pre)));
@@ -2305,11 +2305,11 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(localVersion, requirement.match(singletonList(localVersion)));
 
     final PyRequirement negativeRequirement = fromLine("foo!=1.1.*");
-    final PyPackage negativeRelease = new PyPackage("foo", "1.2.2", null, emptyList());
-    final PyPackage negativePre = new PyPackage("foo", "1.2.2a1", null, emptyList());
-    final PyPackage negativePost = new PyPackage("foo", "1.2.2.post1", null, emptyList());
-    final PyPackage negativeDev = new PyPackage("foo", "1.2.2.dev1", null, emptyList());
-    final PyPackage negativeLocalVersion = new PyPackage("foo", "1.2.2+local.version", null, emptyList());
+    final PyPackage negativeRelease = new PyPackage("foo", "1.2.2");
+    final PyPackage negativePre = new PyPackage("foo", "1.2.2a1");
+    final PyPackage negativePost = new PyPackage("foo", "1.2.2.post1");
+    final PyPackage negativeDev = new PyPackage("foo", "1.2.2.dev1");
+    final PyPackage negativeLocalVersion = new PyPackage("foo", "1.2.2+local.version");
 
     assertNull(negativeRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
     assertEquals(negativeRelease, negativeRequirement.match(singletonList(negativeRelease)));
@@ -2323,11 +2323,11 @@ public class PyRequirementTest extends PyTestCase {
   // PY-20522
   public void testMatchingCompatible() {
     final PyRequirement requirement = fromLine("foo~=2.2");
-    final PyPackage release = new PyPackage("foo", "2.3", null, emptyList());
-    final PyPackage pre = new PyPackage("foo", "2.3a1", null, emptyList());
-    final PyPackage post = new PyPackage("foo", "2.3.post1", null, emptyList());
-    final PyPackage dev = new PyPackage("foo", "2.3.dev1", null, emptyList());
-    final PyPackage localVersion = new PyPackage("foo", "2.3+local.version", null, emptyList());
+    final PyPackage release = new PyPackage("foo", "2.3");
+    final PyPackage pre = new PyPackage("foo", "2.3a1");
+    final PyPackage post = new PyPackage("foo", "2.3.post1");
+    final PyPackage dev = new PyPackage("foo", "2.3.dev1");
+    final PyPackage localVersion = new PyPackage("foo", "2.3+local.version");
 
     assertEquals(release, requirement.match(singletonList(release)));
     assertEquals(pre, requirement.match(singletonList(pre)));
@@ -2343,11 +2343,11 @@ public class PyRequirementTest extends PyTestCase {
   // PY-20522
   public void testMatchingCompatibleWithTrailingZero() {
     final PyRequirement requirement = fromLine("foo~=2.20.0");
-    final PyPackage release = new PyPackage("foo", "2.20.3", null, emptyList());
-    final PyPackage pre = new PyPackage("foo", "2.20.3a1", null, emptyList());
-    final PyPackage post = new PyPackage("foo", "2.20.3.post1", null, emptyList());
-    final PyPackage dev = new PyPackage("foo", "2.20.3.dev1", null, emptyList());
-    final PyPackage localVersion = new PyPackage("foo", "2.20.3+local.version", null, emptyList());
+    final PyPackage release = new PyPackage("foo", "2.20.3");
+    final PyPackage pre = new PyPackage("foo", "2.20.3a1");
+    final PyPackage post = new PyPackage("foo", "2.20.3.post1");
+    final PyPackage dev = new PyPackage("foo", "2.20.3.dev1");
+    final PyPackage localVersion = new PyPackage("foo", "2.20.3+local.version");
 
     assertEquals(release, requirement.match(singletonList(release)));
     assertEquals(pre, requirement.match(singletonList(pre)));
@@ -2364,7 +2364,7 @@ public class PyRequirementTest extends PyTestCase {
     final PyRequirement requirement1 = fromLine("social-auth-app-django==2.0.*");
     final PyRequirement requirement2 = fromLine("social-auth-app-django~=2.0.0");
 
-    final PyPackage pkg = new PyPackage("social-auth-app-django", "2.0.0", null, emptyList());
+    final PyPackage pkg = new PyPackage("social-auth-app-django", "2.0.0");
 
     assertEquals(pkg, requirement1.match(singletonList(pkg)));
     assertEquals(pkg, requirement2.match(singletonList(pkg)));
