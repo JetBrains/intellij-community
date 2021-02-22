@@ -337,7 +337,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
         @Override
         public void componentMoved(ComponentEvent event) {
           AbstractLayoutCache cache = treeState; // TODO: treeState ???
-          if (cache != null && is("ide.tree.experimental.preferred.width")) {
+          if (cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width")) {
             listener.componentMoved(event);
           }
         }
