@@ -15,7 +15,6 @@ import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
-import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -35,6 +34,8 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.VariableHeightLayoutCache;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -56,8 +57,6 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 public final class DefaultTreeUI extends BasicTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
-  @ApiStatus.Internal @ApiStatus.Experimental
-  public static final Key<Boolean> EXPERIMENTAL_PREFERRED_WIDTH = Key.create("allows to calculate a preferred width for visible nodes");
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
@@ -142,12 +141,6 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   private static boolean isLargeModelAllowed(@Nullable JTree tree) {
     return is("ide.tree.large.model.allowed") || UIUtil.isClientPropertyTrue(tree, LARGE_MODEL_ALLOWED);
-  }
-
-  private static boolean isExperimentalPreferredWidth(@Nullable JTree tree) {
-    if (tree instanceof TreeTableTree) return false;
-    Boolean property = UIUtil.getClientProperty(tree, EXPERIMENTAL_PREFERRED_WIDTH);
-    return property != null ? property : is("ide.tree.experimental.preferred.width");
   }
 
   private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
@@ -338,13 +331,19 @@ public final class DefaultTreeUI extends BasicTreeUI {
   protected void configureLayoutCache() {
     super.configureLayoutCache();
     JTree tree = getTree();
-    AbstractLayoutCache cache = treeState; // TODO: treeState ???
-    if (tree != null && cache != null && isExperimentalPreferredWidth(tree)) {
-      if (null == ReflectionUtil.getField(BasicTreeUI.class, this, null, "componentListener")) {
-        ComponentListener listener = createComponentListener();
-        ReflectionUtil.setField(BasicTreeUI.class, this, null, "componentListener", listener);
-        tree.addComponentListener(listener);
-      }
+    if (tree != null && null == ReflectionUtil.getField(BasicTreeUI.class, this, null, "componentListener")) {
+      ComponentListener listener = createComponentListener();
+      ComponentAdapter adapter = new ComponentAdapter() {
+        @Override
+        public void componentMoved(ComponentEvent event) {
+          AbstractLayoutCache cache = treeState; // TODO: treeState ???
+          if (cache != null && is("ide.tree.experimental.preferred.width")) {
+            listener.componentMoved(event);
+          }
+        }
+      };
+      ReflectionUtil.setField(BasicTreeUI.class, this, null, "componentListener", adapter);
+      tree.addComponentListener(adapter);
     }
   }
 
@@ -352,44 +351,46 @@ public final class DefaultTreeUI extends BasicTreeUI {
   protected void updateCachedPreferredSize() {
     JTree tree = getTree();
     AbstractLayoutCache cache = treeState; // TODO: treeState ???
-    if (tree != null && isValid(tree) && cache != null && isExperimentalPreferredWidth(tree)) {
+    if (tree != null && isValid(tree) && cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width")) {
       Rectangle paintBounds = tree.getVisibleRect();
-      JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
-      if (pane != null) {
-        JScrollBar bar = pane.getHorizontalScrollBar();
-        if (bar != null && bar.isOpaque() && bar.isVisible()) {
-          paintBounds.height += bar.getPreferredSize().height;
-        }
-      }
-      Insets insets = tree.getInsets();
-      TreePath path = cache.getPathClosestTo(0, paintBounds.y - insets.top);
-      int row = cache.getRowForPath(path);
-      if (row >= 0) {
-        Rectangle buffer = new Rectangle();
-        int maxPaintX = paintBounds.x + paintBounds.width;
-        int maxPaintY = paintBounds.y + paintBounds.height;
-        int width = 0;
-        while (path != null) {
-          Rectangle bounds = cache.getBounds(path, buffer);
-          if (bounds == null) continue; // something goes wrong
-          width = Math.max(width, bounds.x + bounds.width);
-          if ((bounds.y + bounds.height) >= maxPaintY) break;
-          path = cache.getPathForRow(++row);
-        }
-        width += insets.left + insets.right;
-        if (width < maxPaintX) {
-          if (!is("ide.tree.prefer.to.shrink.width.on.scroll")) {
-            width = maxPaintX;
-          }
-          else if (paintBounds.width < width || !is("ide.tree.prefer.aggressive.scrolling.to.the.left")) {
-            int margin = intValue("ide.tree.preferable.right.margin", 25);
-            if (margin > 0) width = Math.min(width + paintBounds.width * margin / 100, maxPaintX);
+      if (!paintBounds.isEmpty()) {
+        JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
+        if (pane != null) {
+          JScrollBar bar = pane.getHorizontalScrollBar();
+          if (bar != null && bar.isOpaque() && bar.isVisible()) {
+            paintBounds.height += bar.getPreferredSize().height;
           }
         }
-        preferredSize.width = width;
-        preferredSize.height = insets.top + insets.bottom + cache.getPreferredHeight();
-        validCachedPreferredSize = true;
-        return;
+        Insets insets = tree.getInsets();
+        TreePath path = cache.getPathClosestTo(0, paintBounds.y - insets.top);
+        int row = cache.getRowForPath(path);
+        if (row >= 0) {
+          Rectangle buffer = new Rectangle();
+          int maxPaintX = paintBounds.x + paintBounds.width;
+          int maxPaintY = paintBounds.y + paintBounds.height;
+          int width = 0;
+          while (path != null) {
+            Rectangle bounds = cache.getBounds(path, buffer);
+            if (bounds == null) continue; // something goes wrong
+            width = Math.max(width, bounds.x + bounds.width);
+            if ((bounds.y + bounds.height) >= maxPaintY) break;
+            path = cache.getPathForRow(++row);
+          }
+          width += insets.left + insets.right;
+          if (width < maxPaintX) {
+            if (!is("ide.tree.prefer.to.shrink.width.on.scroll")) {
+              width = maxPaintX;
+            }
+            else if (paintBounds.width < width || !is("ide.tree.prefer.aggressive.scrolling.to.the.left")) {
+              int margin = intValue("ide.tree.preferable.right.margin", 25);
+              if (margin > 0) width = Math.min(width + paintBounds.width * margin / 100, maxPaintX);
+            }
+          }
+          preferredSize.width = width;
+          preferredSize.height = insets.top + insets.bottom + cache.getPreferredHeight();
+          validCachedPreferredSize = true;
+          return;
+        }
       }
     }
     super.updateCachedPreferredSize();

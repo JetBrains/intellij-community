@@ -29,8 +29,6 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.ui.tree.ui.DefaultTreeUI.EXPERIMENTAL_PREFERRED_WIDTH;
-
 public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(OptionTreeWithPreviewPanel.class);
   protected JTree myOptionsTree;
@@ -175,7 +173,6 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     DefaultTreeModel model = new DefaultTreeModel(rootNode);
 
     final Tree optionsTree = new Tree(model);
-    optionsTree.putClientProperty(EXPERIMENTAL_PREFERRED_WIDTH, false);
     TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       optionsTree,
       path -> {
