@@ -53,14 +53,6 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
       if (!PyCondaSdkCustomizer.Companion.getInstance().getDetectBaseEnvironment()) {
         results.removeIf(path -> PythonSdkUtil.isBaseConda(path));
       }
-      if (PyCondaSdkCustomizer.Companion.getInstance().getDisableEnvsSorting()) {
-        List<String> basePaths = ContainerUtil.filter(results, path -> PythonSdkUtil.isBaseConda(path));
-        for (String basePath : basePaths) {
-          if (results.remove(basePath)) {
-            results.add(0, basePath);
-          }
-        }
-      }
     }
     catch (ExecutionException e) {
       return Collections.emptyList();

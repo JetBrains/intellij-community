@@ -21,9 +21,6 @@ interface PyCondaSdkCustomizer {
   val suggestSharedCondaEnvironments: Boolean
     get() = false
 
-  val disableEnvsSorting: Boolean
-    get() = false
-
   companion object {
     val EP_NAME: ExtensionPointName<PyCondaSdkCustomizer> = ExtensionPointName.create("Pythonid.condaSdkCustomizer")
     val instance: PyCondaSdkCustomizer
