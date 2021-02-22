@@ -33,6 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
@@ -116,11 +117,24 @@ public final class Utils {
                                                  @NotNull String place,
                                                  boolean isContextMenu,
                                                  @Nullable ActionGroupVisitor visitor) {
+    boolean async = isAsyncDataContext(context);
+    BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
     ActionUpdater updater = new ActionUpdater(
-      isInModalContext, presentationFactory, context, place, isContextMenu, false, visitor);
-    return DO_FULL_EXPAND ?
-           updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
-           updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+      isInModalContext, presentationFactory, context, place, isContextMenu, false, visitor, false, null, async ? queue::offer : null);
+    List<AnAction> list;
+    if (async) {
+      CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+      list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
+        Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
+        if (runnable != null) runnable.run();
+      });
+    }
+    else {
+      list = DO_FULL_EXPAND ?
+             updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
+             updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+    }
+    return list;
   }
 
   static void fillMenu(@NotNull ActionGroup group,
