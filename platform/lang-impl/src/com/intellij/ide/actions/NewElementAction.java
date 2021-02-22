@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class NewElementAction extends DumbAwareAction implements PopupAction {
+public class NewElementAction extends DumbAwareAction implements PopupAction, UpdateInBackground {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

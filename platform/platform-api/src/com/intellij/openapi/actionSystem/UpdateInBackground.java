@@ -18,4 +18,7 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public interface UpdateInBackground {
+  default boolean isUpdateInBackground() {
+    return true;
+  }
 }

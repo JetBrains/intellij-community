@@ -172,7 +172,7 @@ final class ActionUpdater {
     }
     // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
     boolean suppressAsync = myBeforeActionPerformed && "update".equals(operation);
-    if (!suppressAsync && (forceAsync || action instanceof UpdateInBackground)) {
+    if (!suppressAsync && (forceAsync || action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground())) {
       return call.get();
     }
 
