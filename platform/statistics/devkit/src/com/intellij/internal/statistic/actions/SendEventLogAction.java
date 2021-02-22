@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter;
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -40,6 +41,11 @@ import java.util.List;
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
 public class SendEventLogAction extends AnAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(StatisticsRecorderUtil.isTestModeEnabled("FUS"));
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
