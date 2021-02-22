@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.gradle.AndroidAwareGradleModelProvider
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModelBuilder.Companion.getTargets
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
 import java.io.Serializable
 import java.lang.Exception
@@ -49,7 +51,7 @@ class KaptGradleModelImpl(
 ) : KaptGradleModel
 
 
-class KaptModelBuilderService : AbstractKotlinGradleModelBuilder() {
+class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilderService.Ex  {
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
         return ErrorMessageBuilder.create(project, e, "Gradle import errors")
             .withDescription("Unable to build kotlin-kapt plugin configuration")
@@ -57,15 +59,15 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder() {
 
     override fun canBuild(modelName: String?): Boolean = modelName == KaptGradleModel::class.java.name
 
-    override fun buildAll(modelName: String?, project: Project): KaptGradleModelImpl? {
+    override fun buildAll(modelName: String?, project: Project): KaptGradleModelImpl {
         return buildAll(project, null)
     }
 
-    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KaptGradleModelImpl? {
+    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KaptGradleModelImpl {
         return buildAll(project, builderContext)
     }
 
-    private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KaptGradleModelImpl? {
+    private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KaptGradleModelImpl {
         val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, builderContext?.parameter)
         if (androidVariantRequest.shouldSkipBuildAllCall()) return null
 
@@ -78,6 +80,7 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder() {
             // When running in Android Studio, Android Studio would request specific source sets only to avoid syncing
             // currently not active build variants. We convert names to the lower case to avoid ambiguity with build variants
             // accidentally named starting with upper case.
+            val requestedVariants: Set<String>? = builderContext?.parameter?.splitToSequence(',')?.map { it.toLowerCase() }?.toSet()
 
             val targets = project.getTargets()
 
@@ -113,6 +116,7 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder() {
             } else {
                 project.getAllTasks(false)[project]?.forEach { compileTask ->
                     val sourceSetName = compileTask.getSourceSetName()
+                    if (requestedVariants != null && !requestedVariants.contains(sourceSetName.toLowerCase())) return@forEach
                     handleCompileTask(sourceSetName, compileTask)
                 }
             }
