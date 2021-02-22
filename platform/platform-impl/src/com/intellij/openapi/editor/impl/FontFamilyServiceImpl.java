@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,8 @@ final class FontFamilyServiceImpl extends FontFamilyService {
   private static final AffineTransform SYNTHETIC_ITALICS_TRANSFORM = AffineTransform.getShearInstance(-0.2, 0);
   private static final int PREFERRED_MAIN_WEIGHT = 400;
   private static final int PREFERRED_BOLD_WEIGHT_DIFF = 300;
+
+  private static final String[] ITALIC_NAMES = {"italic", "oblique", "inclined"};
 
   // Fira Code requires specific migration due to naming workaround in JBR used earlier
   private static final Map<String, String[]> FIRA_CODE_MIGRATION_MAP = Map.of(
@@ -250,9 +253,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
           else {
             Collection<String> italicSubFamilyCandidates = italicsByWeight.get(weight);
             for (String italicCandidate : italicSubFamilyCandidates) {
-              if (italicSubFamily == null
-                  // try to match by name, assuming italic variant is named by adding a suffix to the base variant
-                  || italicCandidate.startsWith(subFamily)) {
+              if (italicSubFamily == null || isMatchingItalic(subFamily, italicCandidate)) {
                 italicSubFamily = italicCandidate;
               }
             }
@@ -277,7 +278,23 @@ final class FontFamilyServiceImpl extends FontFamilyService {
 
     private static boolean isItalic(String subFamily) {
       String name = subFamily.toLowerCase(Locale.ENGLISH);
-      return name.contains("italic") || name.contains("oblique") || name.contains("inclined");
+      return ContainerUtil.exists(ITALIC_NAMES, name::contains);
+    }
+
+    private static boolean isMatchingItalic(String mainSubFamily, String italicSubFamily) {
+      String main = mainSubFamily.toLowerCase(Locale.ENGLISH);
+      String candidate = italicSubFamily.toLowerCase(Locale.ENGLISH);
+      // assuming italic variant is named by adding a suffix to the base variant
+      for (String suffix : ITALIC_NAMES) {
+        if (candidate.endsWith(suffix)) {
+          candidate = candidate.substring(0, candidate.length() - suffix.length()).trim();
+          break;
+        }
+      }
+      return candidate.equals(main) ||
+             // 'Regular' is a special case,
+             // corresponding italic variant is usually called 'Italic', not 'Regular Italic'
+             "regular".equals(main) && candidate.isEmpty();
     }
 
     private static int getWeight(Font font) {
