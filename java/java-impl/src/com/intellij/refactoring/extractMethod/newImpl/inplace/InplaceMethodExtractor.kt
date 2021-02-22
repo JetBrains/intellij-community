@@ -229,7 +229,7 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
         Disposer.dispose(disposable)
       }
       return succeed
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
       Disposer.dispose(disposable)
       throw e
     }
