@@ -666,9 +666,9 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
         androidDeps: Map<String, List<Any>>?
     ): List<KotlinDependency> {
         return ArrayList<KotlinDependency>().apply {
-            buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet).let {
-                if (it.isNotEmpty()) {
-                    this += it
+            buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet).let { androidDepsForSourceSet ->
+                if (androidDepsForSourceSet.isNotEmpty()) {
+                    this += androidDepsForSourceSet
                     return@apply
                 }
             }
