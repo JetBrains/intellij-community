@@ -70,7 +70,8 @@ interface KotlinSourceSet : KotlinModule {
     @Suppress("DEPRECATION")
     @Deprecated(
         "This property might be misleading. " +
-                "Replace with 'KotlinSourceSetContainer.resolveAllDependsOnSourceSets' to make intention of receiving the full transitive closure explicit",
+                "Replace with 'KotlinSourceSetContainer.resolveAllDependsOnSourceSets' to make intention of " +
+                "receiving the full transitive closure explicit",
         level = DeprecationLevel.ERROR
     )
     val dependsOnSourceSets: Set<String>
@@ -131,7 +132,6 @@ interface KotlinNativeCompilationExtensions : Serializable {
 
 interface KotlinCompilation : KotlinModule {
 
-    // TODO NOW: Check byte-code
     @Deprecated("Use allSourceSets or declaredSourceSets instead")
     val sourceSets: Collection<KotlinSourceSet>
         get() = declaredSourceSets
