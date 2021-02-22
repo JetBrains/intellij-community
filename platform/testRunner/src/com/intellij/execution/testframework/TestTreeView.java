@@ -106,7 +106,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       return testProxy;
     }
     if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return Collections.<DataProvider>singletonList(o -> getSlowData(dataId, testProxy, myModel));
+      return Collections.<DataProvider>singletonList(dataId1 -> getSlowData(dataId1, testProxy, myModel));
     }
     if (RunConfiguration.DATA_KEY.is(dataId)) {
       RunProfile configuration = myModel.getProperties().getConfiguration();
