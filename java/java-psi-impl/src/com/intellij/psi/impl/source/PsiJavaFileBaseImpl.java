@@ -107,7 +107,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (packageStatement != null) {
       if (!packageName.isEmpty()) {
         final PsiJavaCodeReferenceElement reference = packageStatement.getPackageReference();
-        reference.replace(factory.createReferenceFromText(packageName, packageStatement));
+        reference.replace(factory.createPackageStatement(packageName).getPackageReference());
       }
       else {
         packageStatement.delete();
