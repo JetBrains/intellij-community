@@ -60,7 +60,7 @@ class UsageNodeTreeBuilder {
 
       List<UsageGroup> groups = rule.getParentGroupsFor(usage, myTargets);
       for (UsageGroup group : groups) {
-        groupNode = groupNode.addOrGetGroup(group, i, edtModelToSwingNodeChangesQueue, invalidatedUsagesConsumer);
+        groupNode = groupNode.addOrGetGroup(group, i, edtModelToSwingNodeChangesQueue);
       }
     }
 

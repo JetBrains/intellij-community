@@ -50,21 +50,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
   private FileDocumentManagerImpl myDocumentManager;
-  private Boolean myReloadFromDisk;
+  private Boolean myAskReloadFromDiskResult;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myReloadFromDisk = null;
+    myAskReloadFromDiskResult = null;
     FileDocumentManagerImpl impl = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
     impl.setAskReloadFromDisk(getTestRootDisposable(), new MemoryDiskConflictResolver() {
       @Override
       boolean askReloadFromDisk(VirtualFile file, Document document) {
-        if (myReloadFromDisk == null) {
+        if (myAskReloadFromDiskResult == null) {
           fail();
           return false;
         }
-        return myReloadFromDisk.booleanValue();
+        return myAskReloadFromDiskResult.booleanValue();
       }
     });
     myDocumentManager = impl;
@@ -72,7 +72,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myReloadFromDisk = null;
+    myAskReloadFromDiskResult = null;
     myDocumentManager = null;
     super.tearDown();
   }
@@ -380,7 +380,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "zzz"));
 
 
-    myReloadFromDisk = Boolean.TRUE;
+    myAskReloadFromDiskResult = Boolean.TRUE;
     setFileText(file, "xxx");
     UIUtil.dispatchAllInvocationEvents();
 
@@ -395,7 +395,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertNotNull(file.toString(), document);
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "old "));
 
-    myReloadFromDisk = Boolean.FALSE;
+    myAskReloadFromDiskResult = Boolean.FALSE;
     long oldDocumentStamp = document.getModificationStamp();
 
     setBinaryContent(file, "xxx".getBytes(StandardCharsets.UTF_8));
@@ -441,7 +441,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     document.insertString(0, "zzz");
     file.setContent(null, "xxx", false);
 
-    myReloadFromDisk = Boolean.TRUE;
+    myAskReloadFromDiskResult = Boolean.TRUE;
     myDocumentManager.saveAllDocuments();
     long fileStamp = file.getModificationStamp();
 
@@ -462,7 +462,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       }
     };
 
-    myReloadFromDisk = Boolean.FALSE;
+    myAskReloadFromDiskResult = Boolean.FALSE;
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "old "));
@@ -533,7 +533,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     Document original = documentManager.getDocument(file);
     assertNotNull(file.getPath(), original);
 
-    renameFile(file, "test.wtf");
+    rename(file, "test.wtf");
     Document afterRename = documentManager.getDocument(file);
     assertSame(afterRename + " != " + original, afterRename, original);
   }
@@ -547,16 +547,9 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     Document original = documentManager.getDocument(file);
     assertNotNull(file.getPath(), original);
 
-    renameFile(file, "test.png");
+    rename(file, "test.png");
     Document afterRename = documentManager.getDocument(file);
     assertNull(afterRename + " != null", afterRename);
-  }
-
-  private static void renameFile(VirtualFile file, String newName) throws IOException {
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      file.rename(null, newName);
-      return null;
-    });
   }
 
   public void testNoPSIModificationsDuringSave() {

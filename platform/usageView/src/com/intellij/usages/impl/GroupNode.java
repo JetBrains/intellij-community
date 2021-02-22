@@ -72,8 +72,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   @NotNull
   GroupNode addOrGetGroup(@NotNull UsageGroup group,
                           int ruleIndex,
-                          @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue,
-                          @NotNull Consumer<? super Usage> invalidatedUsagesConsumer) {
+                          @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue) {
     synchronized (this) {
       return insertGroupNode(group, ruleIndex, edtModelToSwingNodeChangesQueue);
     }
@@ -314,7 +313,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   static class NodeComparator implements Comparator<DefaultMutableTreeNode> {
     enum ClassIndex {UNKNOWN, USAGE_TARGET, GROUP, USAGE}
 
-    private static ClassIndex getClassIndex(DefaultMutableTreeNode node) {
+    private static ClassIndex getClassIndex(@NotNull DefaultMutableTreeNode node) {
       if (node instanceof UsageNode) return ClassIndex.USAGE;
       if (node instanceof GroupNode) return ClassIndex.GROUP;
       if (node instanceof UsageTargetNode) return ClassIndex.USAGE_TARGET;

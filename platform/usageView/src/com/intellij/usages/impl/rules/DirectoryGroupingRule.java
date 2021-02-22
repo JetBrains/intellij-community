@@ -95,12 +95,6 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
       update();
     }
 
-    private DirectoryGroup(@NotNull VirtualFile dir, @NotNull String relativePathText) {
-      myDir = dir;
-      this.relativePathText = relativePathText;
-      update();
-    }
-
     @Override
     public void update() {
       if (isValid()) {
