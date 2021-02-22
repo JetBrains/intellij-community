@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.MoveToPackageFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.ListTable;
@@ -21,6 +22,7 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
@@ -163,6 +165,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     super.checkDomElement(element, holder, helper);
 
+    ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
+      new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName, myRegistrationCheckIgnoreClassList, holder);
+
     if (element instanceof IdeaPlugin) {
       Module module = element.getModule();
       if (module != null) {
@@ -171,70 +176,66 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         checkPluginIcon((IdeaPlugin)element, holder, module);
       }
     }
-    else {
-      ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
-        new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName, myRegistrationCheckIgnoreClassList, holder);
-      if (element instanceof Extension) {
-        annotateExtension((Extension)element, holder, componentModuleRegistrationChecker);
+    else if (element instanceof Extension) {
+      annotateExtension((Extension)element, holder, componentModuleRegistrationChecker);
+    }
+    else if (element instanceof ExtensionPoint) {
+      annotateExtensionPoint((ExtensionPoint)element, holder, componentModuleRegistrationChecker);
+    }
+    else if (element instanceof Vendor) {
+      annotateVendor((Vendor)element, holder);
+    }
+    else if (element instanceof ProductDescriptor) {
+      annotateProductDescriptor((ProductDescriptor)element, holder);
+    }
+    else if (element instanceof IdeaVersion) {
+      annotateIdeaVersion((IdeaVersion)element, holder);
+    }
+    else if (element instanceof Dependency) {
+      annotateDependency((Dependency)element, holder);
+    }
+    else if (element instanceof DependencyDescriptor) {
+      annotateDependencyDescriptor((DependencyDescriptor)element, holder);
+    }
+    else if (element instanceof ContentDescriptor) {
+      annotateContentDescriptor((ContentDescriptor)element, holder);
+    }
+    else if (element instanceof ContentDescriptor.ModuleDescriptor) {
+      annotateModuleDescriptor((ContentDescriptor.ModuleDescriptor)element, holder);
+    }
+    else if (element instanceof Extensions) {
+      annotateExtensions((Extensions)element, holder);
+    }
+    else if (element instanceof Extensions.UnresolvedExtension) {
+      annotateUnresolvedExtension((Extensions.UnresolvedExtension)element, holder);
+    }
+    else if (element instanceof AddToGroup) {
+      annotateAddToGroup((AddToGroup)element, holder);
+    }
+    else if (element instanceof Action) {
+      annotateAction((Action)element, holder, componentModuleRegistrationChecker);
+    }
+    else if (element instanceof Synonym) {
+      annotateSynonym((Synonym)element, holder);
+    }
+    else if (element instanceof Group) {
+      annotateGroup((Group)element, holder);
+    }
+    else if (element instanceof Component) {
+      annotateComponent((Component)element, holder, componentModuleRegistrationChecker);
+      if (element instanceof Component.Project) {
+        annotateProjectComponent((Component.Project)element, holder);
       }
-      else if (element instanceof ExtensionPoint) {
-        annotateExtensionPoint((ExtensionPoint)element, holder, componentModuleRegistrationChecker);
-      }
-      else if (element instanceof Vendor) {
-        annotateVendor((Vendor)element, holder);
-      }
-      else if (element instanceof ProductDescriptor) {
-        annotateProductDescriptor((ProductDescriptor)element, holder);
-      }
-      else if (element instanceof IdeaVersion) {
-        annotateIdeaVersion((IdeaVersion)element, holder);
-      }
-      else if (element instanceof Dependency) {
-        annotateDependency((Dependency)element, holder);
-      }
-      else if (element instanceof DependencyDescriptor) {
-        annotateDependencyDescriptor((DependencyDescriptor)element, holder);
-      }
-      else if (element instanceof ContentDescriptor) {
-        annotateContentDescriptor((ContentDescriptor)element, holder);
-      }
-      else if (element instanceof ContentDescriptor.ModuleDescriptor) {
-        annotateModuleDescriptor((ContentDescriptor.ModuleDescriptor)element, holder);
-      }
-      else if (element instanceof Extensions) {
-        annotateExtensions((Extensions)element, holder);
-      }
-      else if (element instanceof Extensions.UnresolvedExtension) {
-        annotateUnresolvedExtension((Extensions.UnresolvedExtension)element, holder);
-      }
-      else if (element instanceof AddToGroup) {
-        annotateAddToGroup((AddToGroup)element, holder);
-      }
-      else if (element instanceof Action) {
-        annotateAction((Action)element, holder, componentModuleRegistrationChecker);
-      }
-      else if (element instanceof Synonym) {
-        annotateSynonym((Synonym)element, holder);
-      }
-      else if (element instanceof Group) {
-        annotateGroup((Group)element, holder);
-      }
-      else if (element instanceof Component) {
-        annotateComponent((Component)element, holder, componentModuleRegistrationChecker);
-        if (element instanceof Component.Project) {
-          annotateProjectComponent((Component.Project)element, holder);
-        }
-      }
-      else //noinspection deprecation
-        if (element instanceof Helpset) {
-          highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
-        }
-        else if (element instanceof Listeners) {
-          annotateListeners((Listeners)element, holder);
-        }
-        else if (element instanceof Listeners.Listener) {
-          annotateListener((Listeners.Listener)element, holder);
-        }
+    }
+    else //noinspection deprecation
+      if (element instanceof Helpset) {
+      highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
+    }
+    else if (element instanceof Listeners) {
+      annotateListeners((Listeners)element, holder);
+    }
+    else if (element instanceof Listeners.Listener) {
+      annotateListener((Listeners.Listener)element, holder);
     }
 
     if (element instanceof GenericDomValue) {
@@ -302,6 +303,28 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       if (psiClass.getContainingClass() != null &&
           !StringUtil.containsChar(StringUtil.notNullize(domValue.getRawText()), '$')) {
         holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.inner.class.must.be.separated.with.dollar"));
+      }
+
+      Module module = domValue.getModule();
+      if (module == null) return;
+
+      if (!isIdeaProjectOrJetBrains(domValue)) return;
+
+      IdeaPlugin ideaPlugin = domValue.getParentOfType(IdeaPlugin.class, true);
+      assert ideaPlugin != null;
+      String pluginPackage = ideaPlugin.getPackage().getStringValue();
+      if (pluginPackage == null) return;
+
+      final String psiClassFqn = psiClass.getQualifiedName();
+      assert psiClassFqn != null;
+
+      // only highlight if located in same module
+      if (!StringUtil.startsWith(psiClassFqn, pluginPackage + ".") &&
+          domValue.getModule() == ModuleUtilCore.findModuleForPsiElement(psiClass)) {
+        holder.createProblem(domValue, HighlightSeverity.ERROR,
+                             DevKitBundle.message("inspections.plugin.xml.dependency.class.located.in.wrong.package",
+                                                  psiClassFqn, pluginPackage),
+                             new MoveToPackageFix(psiClass.getContainingFile(), pluginPackage));
       }
     }
   }

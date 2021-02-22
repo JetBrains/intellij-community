@@ -11,4 +11,9 @@
     <plugin id="<error descr="Cannot resolve plugin 'invalid.plugin.id' in dependencies (Reference: Plugin Dependencies)">invalid.plugin.id</error>"/>
   </dependencies>
 
+  <actions>
+    <action class="mypackage.MyAction"/>
+
+    <action class="<error descr="Class 'wrongpackage.MyWrongPackageAction' must be located in package 'mypackage'">wrongpackage.MyWrongPackageAction</error>"/>
+  </actions>
 </idea-plugin>

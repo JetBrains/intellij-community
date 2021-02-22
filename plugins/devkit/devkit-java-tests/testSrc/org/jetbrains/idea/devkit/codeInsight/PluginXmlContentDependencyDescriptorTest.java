@@ -4,14 +4,17 @@ package org.jetbrains.idea.devkit.codeInsight;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
@@ -24,6 +27,12 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "codeInsight/contentDependencyDescriptor";
+  }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {
+    String editorUIApi = PathUtil.getJarPathForClass(AnAction.class);
+    moduleBuilder.addLibrary("editor-ui-api", editorUIApi);
   }
 
   public void testNonJetBrainsHighlighting() {
