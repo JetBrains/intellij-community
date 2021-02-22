@@ -97,7 +97,7 @@ class IdeaResolverForProject(
             moduleContent,
             this,
             languageVersionSettings,
-            sealedInheritorsProvider = IdeSealedClassInheritorsProvider
+            IdeSealedClassInheritorsProvider,
         )
     }
 
