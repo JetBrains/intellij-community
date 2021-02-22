@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.impl
 
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -36,8 +37,49 @@ internal fun getTextOptions(target: RenameTarget): TextOptions {
   if (!canRenameTextOccurrences && !canRenameCommentAndStringOccurrences) {
     return emptyTextOptions
   }
+  val textOptions = textOptionsService().options[target.javaClass.name]
   return TextOptions(
-    if (!canRenameTextOccurrences) null else true,
-    if (!canRenameCommentAndStringOccurrences) null else true,
+    if (!canRenameTextOccurrences) null else textOptions?.renameTextOccurrences ?: true,
+    if (!canRenameCommentAndStringOccurrences) null else textOptions?.renameCommentsStringsOccurrences ?: true,
   )
+}
+
+internal fun setTextOptions(target: RenameTarget, textOptions: TextOptions) {
+  val options = textOptionsService().options
+  if (emptyTextOptions == textOptions) {
+    options.remove(target.javaClass.name)
+  }
+  else {
+    options[target.javaClass.name] = textOptions
+  }
+}
+
+private fun textOptionsService(): TextOptionsService = service()
+
+@Service
+@State(name = "TextOptionsService", storages = [Storage("renameTextOptions.xml")])
+internal class TextOptionsService : PersistentStateComponent<TextOptionsService.State> {
+
+  class State(var entries: List<StateEntry> = ArrayList())
+
+  class StateEntry(
+    var fqn: String = "",
+    var textOccurrences: Boolean? = null,
+    var commentsStringsOccurrences: Boolean? = null,
+  )
+
+  val options: MutableMap<String, TextOptions> = HashMap() // key is RenameTarget class FQN
+
+  override fun getState(): State = State(
+    options.map { (fqn, textOptions) ->
+      StateEntry(fqn, textOptions.renameTextOccurrences, textOptions.renameCommentsStringsOccurrences)
+    }
+  )
+
+  override fun loadState(state: State) {
+    options.clear()
+    for (entry in state.entries) {
+      options[entry.fqn] = TextOptions(entry.textOccurrences, entry.commentsStringsOccurrences)
+    }
+  }
 }

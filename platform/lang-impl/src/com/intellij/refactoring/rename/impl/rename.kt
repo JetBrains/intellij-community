@@ -56,6 +56,7 @@ internal fun showDialogAndRename(project: Project, target: RenameTarget, targetN
     return
   }
   val (newName: String, options: RenameOptions) = dialog.result()
+  setTextOptions(target, options.textOptions)
   rename(project, target.createPointer(), newName, options, dialog.preview)
 }
 
