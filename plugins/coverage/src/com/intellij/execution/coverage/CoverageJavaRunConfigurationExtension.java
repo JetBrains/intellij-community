@@ -2,7 +2,7 @@
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;
-import com.intellij.coverage.listeners.CoverageListener;
+import com.intellij.coverage.listeners.java.CoverageListener;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
