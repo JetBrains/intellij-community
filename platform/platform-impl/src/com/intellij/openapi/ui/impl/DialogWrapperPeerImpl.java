@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
@@ -41,6 +41,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -632,12 +633,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (isAutoAdjustable) {
         pack();
 
-        Dimension packedSize = getSize();
-        Dimension minSize = getMinimumSize();
         Dimension initial = dialogWrapper.getInitialSize();
-        setSize(max(packedSize, minSize, initial));
-
-        setSize((int)(getWidth() * dialogWrapper.getHorizontalStretch()), (int)(getHeight() * dialogWrapper.getVerticalStretch()));
+        if (initial == null) initial = new Dimension();
+        if (initial.width <= 0 || initial.height <= 0) {
+          maximize(initial, getSize()); // cannot be less than packed size
+          if (!SystemInfo.isLinux) {
+            // [kb] temporary workaround for IDEA-253643
+            maximize(initial, getSizeForTableContainer(getContentPane()));
+          }
+        }
+        maximize(initial, getMinimumSize()); // cannot be less than minimum size
+        initial.width *= dialogWrapper.getHorizontalStretch();
+        initial.height *= dialogWrapper.getVerticalStretch();
+        setSize(initial);
 
         // Restore dialog's size and location
 
@@ -694,16 +702,26 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.show();
     }
 
-    private static Dimension max(Dimension size, Dimension... others) {
-      int maxW = size.width;
-      int maxH = size.height;
-      for (Dimension sz : others) {
-        if (sz != null) {
-          maxW = Math.max(maxW, sz.width);
-          maxH = Math.max(maxH, sz.height);
-        }
+    private static void maximize(@NotNull Dimension size, @Nullable Dimension alternativeSize) {
+      if (alternativeSize != null) {
+        size.width = Math.max(size.width, alternativeSize.width);
+        size.height = Math.max(size.height, alternativeSize.height);
       }
-      return new Dimension(maxW, maxH);
+    }
+
+    private static @Nullable Dimension getSizeForTableContainer(@Nullable Component component) {
+      if (component == null) return null;
+      JBIterable<JTable> tables = UIUtil.uiTraverser(component).filter(JTable.class);
+      if (!tables.isNotEmpty()) return null;
+      Dimension size = component.getPreferredSize();
+      for (JTable table : tables) {
+        Dimension tableSize = table.getPreferredSize();
+        size.width = Math.max(size.width, tableSize.width);
+        size.height = Math.max(size.height, tableSize.height + size.height - table.getParent().getHeight());
+      }
+      size.width = Math.min(1000, Math.max(600, size.width));
+      size.height = Math.min(800, size.height);
+      return size;
     }
 
     @Nullable
