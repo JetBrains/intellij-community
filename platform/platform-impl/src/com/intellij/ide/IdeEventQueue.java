@@ -882,15 +882,8 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void dispatchKeyEvent(@NotNull AWTEvent e) {
-    if (
-      !SystemInfo.isJetBrainsJvm ||
-      (JavaVersion.current().compareTo(JavaVersion.compose(8, 0, 202, 1504, false)) < 0 &&
-       JavaVersion.current().compareTo(JavaVersion.compose(9, 0, 0, 0, false)) < 0) ||
-      JavaVersion.current().compareTo(JavaVersion.compose(11, 0, 0, 0, false)) > 0
-    ) {
-      if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
-        ((KeyEvent)e).consume();
-      }
+    if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
+      ((KeyEvent)e).consume();
     }
     defaultDispatchEvent(e);
   }
