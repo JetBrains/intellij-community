@@ -101,7 +101,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
-  private static @Nullable MemoryKind getOOMErrorKind(Throwable t) {
+  public static @Nullable MemoryKind getOOMErrorKind(Throwable t) {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {

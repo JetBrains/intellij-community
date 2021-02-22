@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.DialogAppender;
@@ -48,7 +48,8 @@ public final class LoggerFactory implements Logger.Factory {
 
   @Override
   public @NotNull Logger getLoggerInstance(@NotNull String name) {
-    return new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
+    IdeaLogger logger = new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
+    return MutedErrorLogger.isEnabled() ? MutedErrorLogger.of(logger) : logger;
   }
 
   private static void configureFromXmlFile(@NotNull Path xmlFile) throws Exception {

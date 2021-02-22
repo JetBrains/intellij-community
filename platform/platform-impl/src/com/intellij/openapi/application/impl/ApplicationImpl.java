@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.ApplicationLoader;
 import com.intellij.idea.Main;
+import com.intellij.idea.MutedLogger;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -597,6 +598,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           exitCode = Main.RESTART_FAILED;
         }
       }
+      MutedLogger.dropCaches();
       System.exit(exitCode);
     }
     finally {
