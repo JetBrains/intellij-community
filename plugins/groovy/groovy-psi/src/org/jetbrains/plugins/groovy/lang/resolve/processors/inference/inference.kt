@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getQualifierType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
@@ -38,21 +39,24 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
     else -> return expression.type
   }
 
-  val inferReturnType = shouldInferReturnType(expression)
-
   return result?.candidate?.let {
     val session = GroovyInferenceSessionBuilder(expression, it, result.contextSubstitutor)
       .resolveMode(false)
       .build()
-    val returnType = if (inferReturnType) PsiUtil.getSmartReturnType(it.method) else it.method.returnType
+    val returnType = getSmartReturnTypeInContext(it.method, expression)
     session.inferSubst().substitute(returnType.devoid(expression))
   }
 }
 
 val forbidInteriorReturnTypeInference : Key<Unit> = Key.create("shouldInferReturnType")
 
-fun shouldInferReturnType(expression: GrExpression): Boolean =
-  expression.parentOfType<GrMethodCall>()?.getUserData(forbidInteriorReturnTypeInference) == null
+fun getSmartReturnTypeInContext(method: PsiMethod, context: PsiElement): PsiType? =
+  if (context.parentOfType<GrMethod>()?.getUserData(forbidInteriorReturnTypeInference) != null) {
+    method.returnType
+  }
+  else {
+    PsiUtil.getSmartReturnType(method)
+  }
 
 
 fun buildQualifier(ref: GrReferenceExpression?, state: ResolveState): Argument {
