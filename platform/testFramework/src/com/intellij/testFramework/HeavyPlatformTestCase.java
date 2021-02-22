@@ -766,7 +766,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected static void rename(@NotNull VirtualFile vFile1, @NotNull String newName) {
+  public static void rename(@NotNull VirtualFile vFile1, @NotNull String newName) {
     try {
       WriteCommandAction.writeCommandAction(null).run(() -> vFile1.rename(vFile1, newName));
     }

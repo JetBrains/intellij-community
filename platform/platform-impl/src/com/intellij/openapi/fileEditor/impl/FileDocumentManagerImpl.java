@@ -545,15 +545,24 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     else if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
       VirtualFile file = event.getFile();
       Document document = getCachedDocument(file);
-      if (document != null) {
-        if (isBinaryWithoutDecompiler(file)) {
-          // a file is linked to a document - chances are it is an "unknown text file" now
-          unbindFileFromDocument(file, document);
-        }
-        else if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor()) && isBinaryWithDecompiler(file)) {
-          reloadFromDisk(document);
-        }
+      if (document == null) {
+        return;
       }
+      if (isBinaryWithoutDecompiler(file)) {
+        // a file is linked to a document - chances are it is an "unknown text file" now
+        unbindFileFromDocument(file, document);
+        // to avoid weird inconsistencies when file opened in an editor tab got renamed to unknown extension and then typed into
+        closeAllEditorsFor(file);
+      }
+      else if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor()) && isBinaryWithDecompiler(file)) {
+        reloadFromDisk(document);
+      }
+    }
+  }
+
+  private static void closeAllEditorsFor(@NotNull VirtualFile file) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      FileEditorManager.getInstance(project).closeFile(file);
     }
   }
 
@@ -620,7 +629,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       };
     }
 
-    private void prepareForRangeMarkerUpdate(Map<VirtualFile, Document> strongRefsToDocuments, VirtualFile virtualFile) {
+    private void prepareForRangeMarkerUpdate(@NotNull Map<? super VirtualFile, ? super Document> strongRefsToDocuments,
+                                             @NotNull VirtualFile virtualFile) {
       Document document = myFileDocumentManager.getCachedDocument(virtualFile);
       if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
         // re-create document with the old contents prior to this event
