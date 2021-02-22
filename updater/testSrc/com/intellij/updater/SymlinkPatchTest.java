@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,7 +17,6 @@ public class SymlinkPatchTest extends PatchTestCase {
 
     super.before();
 
-    FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "hello");
     resetNewerDir();
   }
 
@@ -77,6 +76,18 @@ public class SymlinkPatchTest extends PatchTestCase {
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "Readme.lnk", CHECKSUMS.LINK_TO_DOT_README_TXT),
       new CreateAction(patch, "Readme.link"));
+  }
+
+  @Test
+  public void fileToLink() throws Exception {
+    Files.move(new File(myNewerDir, "Readme.txt").toPath(), new File(myNewerDir, "Readme.md").toPath());
+    IoTestUtil.createSymbolicLink(new File(myNewerDir, "Readme.txt").toPath(), Paths.get("Readme.md"));
+
+    Patch patch = createPatch();
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "Readme.txt", CHECKSUMS.README_TXT),
+      new CreateAction(patch, "Readme.md"),
+      new CreateAction(patch, "Readme.txt"));
   }
 
   @Test

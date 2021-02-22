@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.File;
@@ -25,7 +25,7 @@ public class DiffCalculator {
 
     result.filesToUpdate = new LinkedHashMap<>();
     for (Map.Entry<String, Long> update : toUpdate.entrySet()) {
-      if (Digester.isSymlink(update.getValue())) {
+      if (Digester.isSymlink(update.getValue()) || Digester.isSymlink(newChecksums.get(update.getKey()))) {
         result.filesToDelete.put(update.getKey(), update.getValue());
         result.filesToCreate.put(update.getKey(), Digester.INVALID);
       }
@@ -147,8 +147,7 @@ public class DiffCalculator {
     Map<String, Long> result = new LinkedHashMap<>();
     for (Map.Entry<String, Long> each : newer.entrySet()) {
       String file = each.getKey();
-      Long oldChecksum = older.get(file);
-      Long newChecksum = newer.get(file);
+      Long oldChecksum = older.get(file), newChecksum = newer.get(file);
       if (oldChecksum != null && newChecksum != null && (oldChecksum.equals(newChecksum) && !critical.contains(file)) == equal) {
         result.put(file, oldChecksum);
       }
