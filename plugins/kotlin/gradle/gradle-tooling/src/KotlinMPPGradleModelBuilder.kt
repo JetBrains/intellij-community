@@ -44,41 +44,39 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         return modelName == KotlinMPPGradleModel::class.java.name
     }
 
-    // TODO NOW: Exceptions shall be reported to test -.-
     override fun buildAll(modelName: String, project: Project): Any? {
-        val projectTargets = project.getTargets() ?: return null
-        val dependencyResolver = DependencyResolverImpl(
-            project,
-            false,
-            false,
-            true,
-            SourceSetCachedFinder(project)
-        )
-        val dependencyMapper = KotlinDependencyMapper()
-        val importingContext = MultiplatformModelImportingContextImpl(project)
+        try {
+            val projectTargets = project.getTargets() ?: return null
+            val dependencyResolver = DependencyResolverImpl(project, false, true, SourceSetCachedFinder(project))
+            val dependencyMapper = KotlinDependencyMapper()
+            val importingContext = MultiplatformModelImportingContextImpl(project)
 
-        importingContext.initializeSourceSets(buildSourceSets(importingContext, dependencyResolver, dependencyMapper) ?: return null)
+            importingContext.initializeSourceSets(buildSourceSets(importingContext, dependencyResolver, dependencyMapper) ?: return null)
 
-        val targets = buildTargets(importingContext, projectTargets, dependencyResolver, dependencyMapper)
-        importingContext.initializeTargets(targets)
-        importingContext.initializeCompilations(targets.flatMap { it.compilations })
+            val targets = buildTargets(importingContext, projectTargets, dependencyResolver, dependencyMapper)
+            importingContext.initializeTargets(targets)
+            importingContext.initializeCompilations(targets.flatMap { it.compilations })
 
-        computeSourceSetsDeferredInfo(importingContext)
+            computeSourceSetsDeferredInfo(importingContext)
 
-        val coroutinesState = getCoroutinesState(project)
-        val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: NO_KOTLIN_NATIVE_HOME
-        val model = KotlinMPPGradleModelImpl(
-            filterOrphanSourceSets(importingContext),
-            importingContext.targets,
-            ExtraFeaturesImpl(
-                coroutinesState,
-                importingContext.getProperty(IS_HMPP_ENABLED),
-                importingContext.getProperty(ENABLE_NATIVE_DEPENDENCY_PROPAGATION)
-            ),
-            kotlinNativeHome,
-            dependencyMapper.toDependencyMap()
-        )
-        return model
+            val coroutinesState = getCoroutinesState(project)
+            val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: NO_KOTLIN_NATIVE_HOME
+            val model = KotlinMPPGradleModelImpl(
+                sourceSetsByName = filterOrphanSourceSets(importingContext),
+                targets = importingContext.targets,
+                extraFeatures = ExtraFeaturesImpl(
+                    coroutinesState = coroutinesState,
+                    isHMPPEnabled = importingContext.getProperty(IS_HMPP_ENABLED),
+                    isNativeDependencyPropagationEnabled = importingContext.getProperty(ENABLE_NATIVE_DEPENDENCY_PROPAGATION)
+                ),
+                kotlinNativeHome = kotlinNativeHome,
+                dependencyMap = dependencyMapper.toDependencyMap()
+            )
+            return model
+        } catch (throwable: Throwable) {
+            project.logger.error("Failed building KotlinMPPGradleModel", throwable)
+            throw throwable
+        }
     }
 
     private fun filterOrphanSourceSets(
@@ -332,8 +330,9 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
     ): KotlinTarget? {
         val targetClass = gradleTarget.javaClass
 
-        val metadataTargetClass = targetClass.classLoader.loadClass("org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataTarget")
-        if (metadataTargetClass.isInstance(gradleTarget)) return null
+        /* Loading class safely to still support Kotlin Gradle Plugin 1.3.30 */
+        val metadataTargetClass = targetClass.classLoader.loadClassOrNull("org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataTarget")
+        if (metadataTargetClass?.isInstance(gradleTarget) == true) return null
 
         val getPlatformType = targetClass.getMethodOrNull("getPlatformType") ?: return null
         val getDisambiguationClassifier = targetClass.getMethodOrNull("getDisambiguationClassifier") ?: return null
