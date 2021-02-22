@@ -54,11 +54,11 @@ final class FontFamilyServiceImpl extends FontFamilyService {
       Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
       for (Font font : fonts) {
         Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
-        String fontName = font.getFontName();
+        String fontName = font.getName();
         String font2DName = font2D.getFontName(null);
-        if (!fontName.equals(font2DName)) {
+        if (font2DName.startsWith(Font.DIALOG) && !fontName.startsWith(Font.DIALOG)) {
           // skip fonts that are declared as available, but cannot be used due to some reason,
-          // with JDK substituting them with a different font (on Windows)
+          // with JDK substituting them with Dialog logical font (on Windows)
           if (LOG.isDebugEnabled()) {
             LOG.debug("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
           }
