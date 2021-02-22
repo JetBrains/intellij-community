@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.plugins.javaFX.resources">
   <extensions defaultExtensionNs="com.intellij">
     <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.resources.FxmlResourceReferencesContributor" language="XML"/>
 
