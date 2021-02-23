@@ -109,7 +109,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     return selectedComponent == null ? null : myManager.getContent(selectedComponent);
   }
 
-  private class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
+  public class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
     MyTabbedPaneWrapper(int tabPlacement) {
       super(tabPlacement);
     }
@@ -122,6 +122,10 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     @Override
     protected TabbedPaneHolder createTabbedPaneHolder() {
       return new MyTabbedPaneHolder(this);
+    }
+
+    public ContentManager getContentManager() {
+      return myManager;
     }
 
     private class MyTabbedPane extends TabbedPaneImpl {

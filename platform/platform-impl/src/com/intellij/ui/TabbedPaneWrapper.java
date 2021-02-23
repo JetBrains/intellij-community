@@ -107,7 +107,7 @@ public class TabbedPaneWrapper  {
     insertTab(title, null, component, null, myTabbedPane.getTabCount());
   }
 
-  public synchronized void insertTab(@TabTitle final String title, final Icon icon, final JComponent component, final @NlsContexts.Tooltip String tip, final int index) {
+  public synchronized void insertTab(@TabTitle final String title, @Nullable Icon icon, final JComponent component, final @NlsContexts.Tooltip String tip, final int index) {
     myTabbedPane.insertTab(title, icon, createTabWrapper(component), tip, index);
   }
 
@@ -309,7 +309,12 @@ public class TabbedPaneWrapper  {
     myTabbedPane.removeAll();
   }
 
-  public static final class TabWrapper extends JPanel implements DataProvider{
+  @NotNull
+  public TabbedPane getTabbedPane() {
+    return myTabbedPane;
+  }
+
+  public static final class TabWrapper extends JPanel implements DataProvider {
     private JComponent myComponent;
 
     boolean myCustomFocus = true;
