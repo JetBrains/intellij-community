@@ -74,6 +74,7 @@ fun confirmImportingUntrustedProject(project: Project,
   val projectDir = project.basePath?.let { Paths.get(it) }
   val trustedCheckResult = isProjectTrusted(projectDir)
   if (trustedCheckResult is Trusted) {
+    project.setTrusted(true)
     return true
   }
 
