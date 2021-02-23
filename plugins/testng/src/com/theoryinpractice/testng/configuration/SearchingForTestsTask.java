@@ -236,6 +236,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       }
     }
     catch (Exception e) {
+      LOG.info(e);
       throw new CantRunException(TestngBundle.message("dialog.message.unable.to.parse.suite", e.getMessage()));
     }
   }
