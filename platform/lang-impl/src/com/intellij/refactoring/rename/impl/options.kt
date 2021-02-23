@@ -7,8 +7,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.api.ReplaceTextTargetContext
+import org.jetbrains.annotations.ApiStatus
 
-internal class RenameOptions(
+@ApiStatus.Internal
+class RenameOptions(
   val textOptions: TextOptions,
   val searchScope: SearchScope,
 )
@@ -17,7 +19,8 @@ internal class RenameOptions(
  * @param commentStringOccurrences `null` means the option is not supported
  * @param textOccurrences `null` means the option is not supported
  */
-internal data class TextOptions(
+@ApiStatus.Internal
+data class TextOptions(
   val commentStringOccurrences: Boolean?,
   val textOccurrences: Boolean?,
 )

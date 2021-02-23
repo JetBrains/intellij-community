@@ -55,7 +55,8 @@ private fun ItemPresentation.getContainerText(): String? {
   return if (matcher.matches()) matcher.group(2) else locationString
 }
 
-internal fun targetPopupPresentation(element: PsiElement): TargetPopupPresentation {
+@ApiStatus.Internal
+fun targetPopupPresentation(element: PsiElement): TargetPopupPresentation {
   val project = element.project
   val file = element.containingFile?.virtualFile
   val itemPresentation = (element as? NavigationItem)?.presentation

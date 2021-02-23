@@ -13,8 +13,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
+import org.jetbrains.annotations.ApiStatus
 
-internal fun buildQuery(project: Project, target: RenameTarget, options: RenameOptions): Query<UsagePointer> {
+@ApiStatus.Internal
+fun buildQuery(project: Project, target: RenameTarget, options: RenameOptions): Query<UsagePointer> {
   return buildUsageQuery(project, target, options).mapping {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     it.createPointer()

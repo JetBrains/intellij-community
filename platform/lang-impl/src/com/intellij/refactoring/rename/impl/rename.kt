@@ -33,6 +33,7 @@ import kotlinx.coroutines.channels.toList
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -171,7 +172,8 @@ private suspend fun processUsages(usageChannel: ReceiveChannel<UsagePointer>, ne
   return ProcessUsagesResult(usagePointers, false)
 }
 
-private suspend fun prepareRename(allUsages: Collection<UsagePointer>, newName: String): Pair<FileUpdates?, ModelUpdate?> {
+@ApiStatus.Internal
+suspend fun prepareRename(allUsages: Collection<UsagePointer>, newName: String): Pair<FileUpdates?, ModelUpdate?> {
   return coroutineScope {
     require(!ApplicationManager.getApplication().isReadAccessAllowed)
     val (
