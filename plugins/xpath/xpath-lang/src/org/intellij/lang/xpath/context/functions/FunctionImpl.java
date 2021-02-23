@@ -54,9 +54,9 @@ public class FunctionImpl implements Function {
 
   @Override
   public String buildSignature() {
-    final StringBuilder sb = new StringBuilder(getName()).append("(");
-    sb.append(StringUtil.join(Arrays.asList(parameters), StringUtil.createToStringFunction(Parameter.class), ", "));
-    return sb.append(")").toString();
+    return getName() + "(" +
+           StringUtil.join(Arrays.asList(parameters), ", ") +
+           ")";
   }
 
   @Override

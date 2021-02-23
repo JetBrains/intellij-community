@@ -121,6 +121,11 @@ public class StringUtil extends StringUtilRt {
     return replace(replace(text, "'", "''"), "{", "'{'");
   }
 
+  /**
+   * @deprecated use {@link Object#toString()} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(pure = true)
   public static @NotNull <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
     return Object::toString;

@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -61,8 +60,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isPlusPlusOrMin
 public abstract class GroovyRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(GroovyRefactoringUtil.class);
 
-  public static final Collection<String> KEYWORDS = ContainerUtil.map(
-      TokenSets.KEYWORDS.getTypes(), StringUtil.createToStringFunction(IElementType.class));
+  public static final Collection<String> KEYWORDS = ContainerUtil.map(TokenSets.KEYWORDS.getTypes(), Object::toString);
 
   private static final String[] finalModifiers = new String[]{PsiModifier.FINAL};
 
