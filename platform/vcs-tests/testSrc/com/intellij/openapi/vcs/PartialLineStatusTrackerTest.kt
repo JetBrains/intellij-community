@@ -611,4 +611,20 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  fun testZombieModification() {
+    testPartial("A_B_C_D_E_F") {
+      "E".replace("E1")
+
+      partialTracker.dropBaseRevision()
+
+      createChangeList_SetDefault("Test")
+      "B".replace("B2")
+      "E1".replace("E2")
+
+      partialTracker.setBaseRevision(parseInput("A_B_C_D_E1_F"))
+
+      range(0).assertChangeList("Test")
+      range(1).assertChangeList("Test")
+    }
+  }
 }
