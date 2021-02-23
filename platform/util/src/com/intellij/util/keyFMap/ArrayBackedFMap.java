@@ -9,11 +9,11 @@ import java.util.Arrays;
 
 class ArrayBackedFMap implements KeyFMap {
   static final int ARRAY_THRESHOLD = 8;
-  // Invariant: keys are always sorted
+  // Invariant: keys are always sorted, never mutated inplace
   private final int[] keys;
-  private final Object[] values;
+  private final @NotNull Object @NotNull [] values; //never mutated inplace
 
-  ArrayBackedFMap(int @NotNull [] keys, Object @NotNull [] values) {
+  ArrayBackedFMap(int @NotNull [] keys, @NotNull Object @NotNull [] values) {
     this.keys = keys;
     this.values = values;
   }
@@ -114,7 +114,7 @@ class ArrayBackedFMap implements KeyFMap {
     return getKeysByIndices(keys);
   }
 
-  static @NotNull Key @NotNull [] getKeysByIndices(int[] indexes) {
+  static @NotNull Key @NotNull [] getKeysByIndices(int @NotNull [] indexes) {
     Key[] result = new Key[indexes.length];
 
     int o = 0;
@@ -154,7 +154,7 @@ class ArrayBackedFMap implements KeyFMap {
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap o) {
+  public boolean equalsByReference(@NotNull KeyFMap o) {
     if (this == o) return true;
     if (!(o instanceof ArrayBackedFMap)) return false;
 

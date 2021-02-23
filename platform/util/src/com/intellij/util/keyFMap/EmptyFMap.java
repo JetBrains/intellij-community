@@ -51,7 +51,7 @@ final class EmptyFMap implements KeyFMap {
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap other) {
+  public boolean equalsByReference(@NotNull KeyFMap other) {
     return other == this;
   }
 
