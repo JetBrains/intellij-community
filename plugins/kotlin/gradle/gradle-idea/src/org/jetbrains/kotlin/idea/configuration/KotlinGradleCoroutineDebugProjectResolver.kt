@@ -13,10 +13,10 @@ import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExten
 class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtension() {
     val log = Logger.getInstance(this::class.java)
 
-    override fun enhanceTaskProcessing(taskNames: MutableList<String>, jvmParametersSetup: String?, initScriptConsumer: Consumer<String>) {
+    override fun enhanceTaskProcessing(taskNames: MutableList<String>, initScriptConsumer: Consumer<String>, parameters: Map<String, String>) {
         try {
             val disableCoroutineAgent = KotlinDebuggerSettings.getInstance().debugDisableCoroutineAgent
-            if (!disableCoroutineAgent)
+            if (!disableCoroutineAgent && parameters.containsKey(DEBUG_DISPATCH_PORT_KEY))
                 setupCoroutineAgentForJvmForkedTestTasks(initScriptConsumer)
         } catch (e: Exception) {
             log.error("Gradle: not possible to attach a coroutine debugger agent.", e)
