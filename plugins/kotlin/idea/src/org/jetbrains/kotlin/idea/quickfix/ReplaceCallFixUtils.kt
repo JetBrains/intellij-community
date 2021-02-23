@@ -2,28 +2,19 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.isUnit
-
-fun KtExpression.elvisOrEmpty(notNullNeeded: Boolean): String {
-    if (!notNullNeeded) return ""
-    val binaryExpression = getStrictParentOfType<KtBinaryExpression>()
-    return if (binaryExpression?.left == this && binaryExpression.operationToken == KtTokens.ELVIS) "" else "?:"
-}
 
 fun KtExpression.shouldHaveNotNullType(): Boolean {
     val type = when (val parent = parent) {
@@ -43,13 +34,4 @@ fun KtExpression.shouldHaveNotNullType(): Boolean {
         else -> null
     } ?: return false
     return !type.isMarkedNullable && !type.isUnit() && !type.isTypeParameter()
-}
-
-fun PsiElement.moveCaretToEnd(editor: Editor?, project: Project) {
-    editor?.run {
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
-        val endOffset = if (text.endsWith(")")) endOffset - 1 else endOffset
-        document.insertString(endOffset, " ")
-        caretModel.moveToOffset(endOffset + 1)
-    }
 }

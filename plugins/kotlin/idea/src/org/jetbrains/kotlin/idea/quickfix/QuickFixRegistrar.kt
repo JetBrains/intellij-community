@@ -228,7 +228,7 @@ class QuickFixRegistrar : QuickFixContributor {
         SENSELESS_COMPARISON.registerFactory(SimplifyComparisonFix)
 
         UNNECESSARY_SAFE_CALL.registerFactory(ReplaceWithDotCallFix)
-        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallFix)
+        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallFixFactory)
 
         UNSAFE_CALL.registerFactory(SurroundWithNullCheckFix)
         UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(SurroundWithNullCheckFix)
@@ -251,7 +251,7 @@ class QuickFixRegistrar : QuickFixContributor {
         UNSAFE_OPERATOR_CALL.registerFactory(ReplaceInfixOrOperatorCallFix)
         UNSAFE_CALL.registerFactory(ReplaceInfixOrOperatorCallFix) // [] only
         UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(ReplaceInfixOrOperatorCallFix)
-        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallForScopeFunctionFix)
+        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallForScopeFunctionFixFactory)
 
         AMBIGUOUS_ANONYMOUS_TYPE_INFERRED.registerActions(SpecifyTypeExplicitlyFix())
         PROPERTY_WITH_NO_TYPE_NO_INITIALIZER.registerActions(SpecifyTypeExplicitlyFix())
