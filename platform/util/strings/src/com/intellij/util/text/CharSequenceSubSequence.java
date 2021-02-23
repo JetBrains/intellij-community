@@ -66,7 +66,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
   public int hashCode() {
     int h = hash;
     if (h == 0) {
-      hash = h = Strings.stringHashCode(this, 0, length());
+      hash = h = Strings.stringHashCode(myChars, myStart, myEnd);
     }
     return h;
   }
