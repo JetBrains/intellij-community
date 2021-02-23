@@ -36,7 +36,7 @@ class JavaKeywordsTest {
   }
 
   @Test fun sequences() {
-    assertTrue(JavaLexer.isSoftKeyword(ByteArrayCharSequence.convertToBytesIfPossible("module"), LanguageLevel.JDK_1_9))
+    assertTrue(JavaLexer.isSoftKeyword(ByteArrayCharSequence("module".toByteArray()), LanguageLevel.JDK_1_9))
     assertTrue(JavaLexer.isSoftKeyword(CharArrayCharSequence("[module]".toCharArray(), 1, 7), LanguageLevel.JDK_1_9))
   }
 

@@ -10,11 +10,13 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.BitUtil;
+import com.intellij.util.Functions;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
-import com.intellij.util.text.ByteArrayCharSequence;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -376,16 +378,15 @@ public final class VfsData {
     /**
      * Must be called in synchronized(VfsData)
      */
-    void addAdoptedName(@NotNull CharSequence name, boolean caseSensitive) {
+    void addAdoptedName(@NotNull String name, boolean caseSensitive) {
       Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
-      CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(name);
       synchronized (adopted) {
-        adopted.add(sequence);
+        adopted.add(name);
       }
     }
 
     /**
-     * Optimization: faster than call {@link #addAdoptedName(CharSequence, boolean)} one by one
+     * Optimization: faster than call {@link #addAdoptedName(String, boolean)} one by one
      * Must be called in synchronized(VfsData)
      */
     void addAdoptedNames(@NotNull Collection<? extends CharSequence> names, boolean caseSensitive) {

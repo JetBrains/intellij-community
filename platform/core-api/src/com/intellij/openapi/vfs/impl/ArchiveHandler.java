@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -250,7 +249,7 @@ public abstract class ArchiveHandler {
       else {
         Pair<String, String> path = split(normalizedName);
         EntryInfo parent = directoryEntry(map, logger, path.first);
-        entry = new EntryInfo(ByteArrayCharSequence.convertToBytesIfPossible(path.second), true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
+        entry = new EntryInfo(path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
       }
       map.put(normalizedName, entry);
     }
@@ -280,7 +279,7 @@ public abstract class ArchiveHandler {
         entryName = parentName + '/' + shortName;
       }
       EntryInfo parent = getOrCreate(map, parentName);
-      entry = new EntryInfo(ByteArrayCharSequence.convertToBytesIfPossible(shortName), true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
+      entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
       map.put(entryName, entry);
     }
     return entry;

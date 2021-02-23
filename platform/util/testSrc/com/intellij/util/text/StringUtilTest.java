@@ -850,20 +850,6 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testFirstLastDontConvertCharSequenceToString() {
-    CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
-    assertTrue(s instanceof ByteArrayCharSequence || s.getClass() == String.class);
-    CharSequence first = StringUtil.first(s, 1, false);
-    assertTrue(String.valueOf(first.getClass()),
-               first instanceof CharSequenceSubSequence || s.getClass() == String.class);
-    assertEquals("t", first.toString());
-    CharSequence last = StringUtil.last(s, 1, false);
-    assertTrue(String.valueOf(last.getClass()),
-               last instanceof CharSequenceSubSequence || s.getClass() == String.class);
-    assertEquals("t", last.toString());
-  }
-
-  @Test
   public void testEnglishOrdinals() {
     assertEquals("100th", OrdinalFormat.formatEnglish(100));
     assertEquals("101st", OrdinalFormat.formatEnglish(101));
@@ -886,8 +872,8 @@ public class StringUtilTest {
     assertEquals("mystring", StringUtil.strip("mystring", CharFilter.NOT_WHITESPACE_FILTER));
     assertEquals("\n     ", StringUtil.strip("\n   my string ", CharFilter.WHITESPACE_FILTER));
     assertEquals("", StringUtil.strip("", CharFilter.WHITESPACE_FILTER));
-    assertEquals("", StringUtil.strip("\n   my string ", (ch) -> false));
-    assertEquals("\n   my string ", StringUtil.strip("\n   my string ", (ch) -> true));
+    assertEquals("", StringUtil.strip("\n   my string ", ch -> false));
+    assertEquals("\n   my string ", StringUtil.strip("\n   my string ", ch -> true));
   }
 
   @Test
@@ -899,8 +885,8 @@ public class StringUtilTest {
     assertEquals("mystring", StringUtil.trim("mystring", CharFilter.NOT_WHITESPACE_FILTER));
     assertEquals("\n   my string ", StringUtil.trim("\n   my string ", CharFilter.WHITESPACE_FILTER));
     assertEquals("", StringUtil.trim("", CharFilter.WHITESPACE_FILTER));
-    assertEquals("", StringUtil.trim("\n   my string ", (ch) -> false));
-    assertEquals("\n   my string ", StringUtil.trim("\n   my string ", (ch) -> true));
+    assertEquals("", StringUtil.trim("\n   my string ", ch -> false));
+    assertEquals("\n   my string ", StringUtil.trim("\n   my string ", ch -> true));
   }
 
   @Test

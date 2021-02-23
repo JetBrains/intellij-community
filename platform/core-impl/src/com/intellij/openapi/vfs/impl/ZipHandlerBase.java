@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ResourceHandle;
-import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -62,9 +61,8 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     while (entries.hasMoreElements()) {
       ZipEntry ze = entries.nextElement();
       processEntry(map, logger, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
-        CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(name);
         long fileStamp = USE_CRC_INSTEAD_OF_TIMESTAMP ? ze.getCrc() : getEntryFileStamp();
-        return new EntryInfo(sequence, false, ze.getSize(), fileStamp, parent);
+        return new EntryInfo(name, false, ze.getSize(), fileStamp, parent);
       });
     }
 

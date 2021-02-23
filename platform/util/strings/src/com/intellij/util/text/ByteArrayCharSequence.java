@@ -65,20 +65,20 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
   }
 
   /**
-   * @deprecated use {@link #convertToBytesIfPossible(CharSequence)} instead
+   * @deprecated use {@param name} instead because of JEP 254
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
-    return convertToBytesIfPossible(name);
+    return name;
   }
 
   /**
-   * @return instance of {@link ByteArrayCharSequence} if the supplied string can be stored internally
-   * as a byte array of 8-bit code points (for more compact representation); its {@code string} argument otherwise
+   * @deprecated use {@param string} instead because of JEP 254
    */
-  @ReviseWhenPortedToJDK("9")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull CharSequence convertToBytesIfPossible(@NotNull CharSequence string) {
     if (JAVA_9) return string; // see JEP 254: Compact Strings
     if (string.length() == 0) return "";
@@ -100,11 +100,11 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
     JAVA_9 = hasModuleClass;
   }
 
-  byte @NotNull [] getBytes() {
+  private byte @NotNull [] getBytes() {
     return myStart == 0 && myEnd == myChars.length ? myChars : Arrays.copyOfRange(myChars, myStart , myEnd);
   }
 
-  static byte @Nullable [] toBytesIfPossible(@NotNull CharSequence seq) {
+  private static byte @Nullable [] toBytesIfPossible(@NotNull CharSequence seq) {
     if (seq instanceof ByteArrayCharSequence) {
       return ((ByteArrayCharSequence)seq).getBytes();
     }
