@@ -221,18 +221,18 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     if (project != null && generator != null) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
-    logProjectGeneratedEvent(generator);
+    logProjectGeneratedEvent(generator, project);
 
     return project;
   }
 
-  private static void logProjectGeneratedEvent(@Nullable DirectoryProjectGenerator<?> generator) {
+  private static void logProjectGeneratedEvent(@Nullable DirectoryProjectGenerator<?> generator, @Nullable Project project) {
     FeatureUsageData data = new FeatureUsageData();
     if (generator != null) {
       data.addData("generator_id", generator.getClass().getName());
       data.addPluginInfo(PluginInfoDetectorKt.getPluginInfo(generator.getClass()));
     }
 
-    FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", "project.generated", data);
+    FUCounterUsageLogger.getInstance().logEvent(project, "new.project.wizard", "project.generated", data);
   }
 }
