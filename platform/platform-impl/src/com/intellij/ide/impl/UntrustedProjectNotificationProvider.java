@@ -4,6 +4,7 @@ package com.intellij.ide.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,8 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 public class UntrustedProjectNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
+
+  private static final ExtensionPointName<UntrustedProjectModeProvider> EP_NAME = ExtensionPointName.create("com.intellij.untrustedModeProvider");
 
   public static class TrustedListener implements TrustChangeNotifier {
     @Override
@@ -34,7 +37,7 @@ public class UntrustedProjectNotificationProvider extends EditorNotifications.Pr
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
                                                          @NotNull FileEditor fileEditor,
                                                          @NotNull Project project) {
-    if (TrustedProjects.isTrusted(project)) {
+    if (EP_NAME.extensions().noneMatch(provider -> provider.shouldShowEditorNotification(project))) {
       return null;
     }
 
