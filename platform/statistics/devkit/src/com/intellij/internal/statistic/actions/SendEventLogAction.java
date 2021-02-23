@@ -43,7 +43,8 @@ import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 public class SendEventLogAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(StatisticsRecorderUtil.isTestModeEnabled("FUS"));
+    String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
+    e.getPresentation().setEnabled(StatisticsRecorderUtil.isTestModeEnabled(recorderId));
   }
 
   @Override
@@ -72,7 +73,7 @@ public class SendEventLogAction extends AnAction {
       }
 
       private StatisticsResult send() {
-        String recorderId = Registry.stringValue("usage.statistics.test.action.recorder.id");
+        String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
         EventLogRecorderConfiguration config = EventLogConfiguration.INSTANCE.getOrCreate(recorderId);
         return EventLogStatisticsService.send(
           new DeviceConfiguration(config.getDeviceId(), config.getBucket()),
