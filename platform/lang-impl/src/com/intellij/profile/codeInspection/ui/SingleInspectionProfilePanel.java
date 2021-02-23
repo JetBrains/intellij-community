@@ -26,7 +26,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -235,16 +234,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     configPanelAnchor.removeAll();
     final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
     if (additionalConfigPanel != null) {
-      // assume that the panel does not need scrolling if it already contains a scrollable content
-      if (UIUtil.hasScrollPane(additionalConfigPanel)) {
-        configPanelAnchor.add(additionalConfigPanel);
-      }
-      else {
-        configPanelAnchor.add(ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE));
-      }
-      additionalConfigPanel.setBorder(additionalConfigPanel instanceof DialogPanel
-                                      ? JBUI.Borders.empty(12, 20, 0, 0)
-                                      : JBUI.Borders.empty(10, 17, 0, 0));
+      additionalConfigPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(additionalConfigPanel));
+      configPanelAnchor.add(InspectionUiUtilKt.addScrollPaneIfNecessary(additionalConfigPanel));
     }
 
     if (myOptionsLabel != null)
