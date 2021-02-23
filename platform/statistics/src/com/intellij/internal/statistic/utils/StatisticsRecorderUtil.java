@@ -13,7 +13,7 @@ import static com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt.g
 
 public class StatisticsRecorderUtil {
   private static final String IDEA_FUS_RECORDER_INTERNAL_MODE = "fus.internal.test.mode";
-  private static final String IDEA_RECORDER_INTERNAL_MODE = "idea.recorder.internal.test.mode";
+  private static final String IDEA_RECORDER_INTERNAL_MODE = "fus.recorder.internal.test.mode";
 
   public static boolean isAnyTestModeEnabled() {
     if (ApplicationManager.getApplication().isInternal()) {
