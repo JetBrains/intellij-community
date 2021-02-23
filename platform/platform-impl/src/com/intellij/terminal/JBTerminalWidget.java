@@ -83,6 +83,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   @Nullable
   private LinkResult runFilters(@NotNull Project project, @NotNull String line) {
     Filter.Result r = ReadAction.compute(() -> {
+      if (project.isDisposed()) {
+        return null;
+      }
       try {
         return myCompositeFilterWrapper.getCompositeFilter().applyFilter(line, line.length());
       }
