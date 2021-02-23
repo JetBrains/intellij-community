@@ -5,6 +5,7 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -69,7 +70,9 @@ public final class NewProjectUtil {
 
   public static Project createFromWizard(@NotNull AbstractProjectWizard wizard, @Nullable Project projectToClose) {
     try {
-      return doCreate(wizard, projectToClose);
+      Project newProject = doCreate(wizard, projectToClose);
+      FUCounterUsageLogger.getInstance().logEvent(newProject, "new.project.wizard", "project.created");
+      return newProject;
     }
     catch (IOException e) {
       UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(),
