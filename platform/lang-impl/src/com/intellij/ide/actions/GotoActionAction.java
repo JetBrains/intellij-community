@@ -8,7 +8,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -103,10 +102,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
             }
           }
           else {
-            ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-            manager.fireBeforeActionPerformed(action, context, event);
-            ActionUtil.performActionDumbAware(action, event);
-            manager.fireAfterActionPerformed(action, context, event);
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event, context);
           }
         }
     });
