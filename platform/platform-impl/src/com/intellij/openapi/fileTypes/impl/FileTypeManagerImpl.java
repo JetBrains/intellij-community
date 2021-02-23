@@ -446,7 +446,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       PluginAdvertiserExtensionsStateService pluginAdvertiser = PluginAdvertiserExtensionsStateService.getInstance();
       for (FileNameMatcher matcher : standardFileType.matchers) {
-        pluginAdvertiser.registerLocalPlugin(matcher.getPresentableString(), bean.getPluginDescriptor());
+        pluginAdvertiser.registerLocalPlugin(matcher, bean.getPluginDescriptor());
       }
 
       myPendingAssociations.removeAllAssociations(bean);

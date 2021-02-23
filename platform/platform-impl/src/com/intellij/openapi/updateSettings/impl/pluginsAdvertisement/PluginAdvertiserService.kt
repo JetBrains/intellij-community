@@ -189,7 +189,7 @@ open class PluginAdvertiserService {
     features: MultiMap<PluginId?, UnknownFeature>
   ): @NotificationContent String {
 
-    val ids: MutableSet<PluginId> = LinkedHashSet()
+    val ids = LinkedHashSet<PluginId>()
     plugins.forEach { plugin -> ids.add(plugin.id) }
     disabledPlugins.keys
       .map { it.pluginId }
@@ -205,22 +205,23 @@ open class PluginAdvertiserService {
     val pluginsNumber = ids.size
     val repoPluginsNumber = plugins.size
 
-    return if (addressedFeatures.size() == 1) {
-      val feature = addressedFeatures.entrySet().single()
+    val entries = addressedFeatures.entrySet()
+    return if (entries.size == 1) {
+      val feature = entries.single()
       IdeBundle.message(
         "plugins.advertiser.missing.feature",
         pluginsNumber,
         feature.key,
         feature.value.joinToString(),
-        repoPluginsNumber
+        repoPluginsNumber,
       )
     }
     else {
       IdeBundle.message(
         "plugins.advertiser.missing.features",
         pluginsNumber,
-        addressedFeatures.entrySet().joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") },
-        repoPluginsNumber
+        entries.joinToString(separator = "; ") { it.value.joinToString(prefix = it.key + ": ") },
+        repoPluginsNumber,
       )
     }
   }

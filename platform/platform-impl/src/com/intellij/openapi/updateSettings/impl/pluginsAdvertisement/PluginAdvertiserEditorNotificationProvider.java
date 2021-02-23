@@ -41,20 +41,19 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
                                                          @NotNull FileEditor fileEditor,
                                                          @NotNull Project project) {
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
+    PluginAdvertiserExtensionsStateService extensionsStateService = PluginAdvertiserExtensionsStateService.getInstance();
+    PluginAdvertiserExtensionsStateService.ExtensionDataProvider pluginAdvertiserExtensionsState =
+      extensionsStateService.createExtensionDataProvider(project);
+    PluginAdvertiserExtensionsData extensionsData = pluginAdvertiserExtensionsState.requestExtensionData(file);
 
-    PluginAdvertiserExtensionsState pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsState.getInstance(project);
-    String fullExtension = file.getExtension() != null ? "*." + file.getExtension() : null;
-    PluginAdvertiserExtensionsData extensionsData =
-      pluginAdvertiserExtensionsState.requestExtensionData(file.getName(), file.getFileType(), fullExtension);
     Set<String> jbPluginsIds = MarketplaceRequests.getInstance().getJetBrainsPluginsIds();
     if (extensionsData == null || jbPluginsIds == null) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MarketplaceRequests.getInstance().loadJetBrainsPluginsIds();
-        boolean shouldUpdateNotifications = PluginAdvertiserExtensionsState.getInstance(project).updateCache(file.getName());
+        boolean shouldUpdateNotifications = extensionsStateService.updateCache(file.getName());
+        String fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(file);
         if (fullExtension != null) {
-          shouldUpdateNotifications =
-            PluginAdvertiserExtensionsState.getInstance(project).updateCache(fullExtension) || shouldUpdateNotifications;
+          shouldUpdateNotifications = extensionsStateService.updateCache(fullExtension) || shouldUpdateNotifications;
         }
         if (shouldUpdateNotifications) {
           EditorNotifications.getInstance(project).updateNotifications(file);
@@ -64,9 +63,11 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       });
       return null;
     }
+
     String extensionOrFileName = extensionsData.getExtensionOrFileName();
     Set<PluginsAdvertiser.Plugin> plugins = extensionsData.getPlugins();
 
+    final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(IdeBundle.message("plugins.advertiser.plugins.found", extensionOrFileName));
 
     Runnable onPluginsInstalled = () -> {

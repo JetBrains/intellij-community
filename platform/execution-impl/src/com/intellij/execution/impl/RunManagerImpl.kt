@@ -992,15 +992,22 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   @JvmOverloads
-  fun getFactory(typeId: String?, factoryId: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
-    val type = idToType.value.get(typeId)
-    if (type == null) {
-      if (checkUnknown && typeId != null) {
-        UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId, factoryId)
-      }
-      return UnknownConfigurationType.getInstance()
-    }
-    return getFactory(type, factoryId)
+  fun getFactory(
+    typeId: String?,
+    factoryId: String?,
+    checkUnknown: Boolean = false,
+  ): ConfigurationFactory {
+    return idToType.value[typeId]?.let { getFactory(it, factoryId) }
+           ?: UnknownConfigurationType.getInstance().also {
+             if (checkUnknown && typeId != null) {
+               UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(
+                 CONFIGURATION_TYPE_FEATURE_ID,
+                 "Run Configuration",
+                 typeId,
+                 factoryId ?: typeId,
+               )
+             }
+           }
   }
 
   fun getFactory(type: ConfigurationType, factoryId: String?): ConfigurationFactory? {

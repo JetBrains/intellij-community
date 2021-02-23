@@ -15,37 +15,46 @@
  */
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class UnknownFeature {
-  private final String myFeatureType;
-  private final String myFeatureDisplayName;
-  private final String myImplementationName;
-  private final String myImplementationDisplayName;
+public final class UnknownFeature {
 
-  public UnknownFeature(@NotNull String featureType,
-                        String featureDisplayName,
-                        @NotNull String implementationName,
-                        String implementationDisplayName) {
+  private final @NonNls @NotNull String myFeatureType;
+  private final @Nls @Nullable String myFeatureDisplayName;
+  private final @NonNls @NotNull String myImplementationName;
+  private final @Nls @Nullable String myImplementationDisplayName;
+
+  public UnknownFeature(@NonNls @NotNull String featureType,
+                        @Nls @Nullable String featureDisplayName,
+                        @NonNls @NotNull String implementationName,
+                        @Nls @Nullable String implementationDisplayName) {
     myFeatureType = featureType;
     myFeatureDisplayName = featureDisplayName;
     myImplementationName = implementationName;
     myImplementationDisplayName = implementationDisplayName;
   }
 
-  public String getFeatureType() {
+  public UnknownFeature(@NonNls @NotNull String featureType,
+                        @NonNls @NotNull String implementationName) {
+    this(featureType, null, implementationName, null);
+  }
+
+  public @NonNls @NotNull String getFeatureType() {
     return myFeatureType;
   }
 
-  public String getImplementationName() {
+  public @NonNls @NotNull String getImplementationName() {
     return myImplementationName;
   }
 
-  public String getFeatureDisplayName() {
+  public @Nls @Nullable String getFeatureDisplayName() {
     return myFeatureDisplayName;
   }
 
-  public String getImplementationDisplayName() {
+  public @Nls @Nullable String getImplementationDisplayName() {
     return myImplementationDisplayName;
   }
 
@@ -55,11 +64,8 @@ public class UnknownFeature {
     if (o == null || getClass() != o.getClass()) return false;
 
     UnknownFeature feature = (UnknownFeature)o;
-
-    if (!myFeatureType.equals(feature.myFeatureType)) return false;
-    if (!myImplementationName.equals(feature.myImplementationName)) return false;
-
-    return true;
+    return myFeatureType.equals(feature.myFeatureType) &&
+           myImplementationName.equals(feature.myImplementationName);
   }
 
   @Override

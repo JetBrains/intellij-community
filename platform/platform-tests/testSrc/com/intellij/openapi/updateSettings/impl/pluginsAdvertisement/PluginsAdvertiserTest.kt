@@ -13,6 +13,6 @@ class PluginsAdvertiserTest : UsefulTestCase() {
 
     val knownExtensions = PluginsAdvertiser.loadExtensions()
     assertNotNull("Extensions information for PluginsAdvertiser has not been loaded", knownExtensions)
-    assertEquals("foo", knownExtensions!!.find("foo")!!.single().pluginIdString)
+    assertEquals("foo", knownExtensions!!.find("foo").single().pluginIdString)
   }
 }

@@ -304,9 +304,9 @@ public final class PluginsAdvertiser {
       }
     }
 
-    public @Nullable Set<Plugin> find(@NotNull String extension) {
+    public @NotNull Set<Plugin> find(@NotNull String extension) {
       PluginSet pluginSet = myExtensions.get(extension);
-      return pluginSet == null ? null : pluginSet.myPlugins;
+      return pluginSet == null ? Set.of() : pluginSet.myPlugins;
     }
   }
 
