@@ -1160,60 +1160,53 @@ public final class IdeEventQueue extends EventQueue {
       return e instanceof KeyEvent && dispatchKeyEvent((KeyEvent)e);
     }
 
-    private boolean dispatchKeyEvent(@NotNull KeyEvent keyEvent) {
-      boolean pureAlt = keyEvent.getKeyCode() == KeyEvent.VK_ALT && (keyEvent.getModifiers() | Event.ALT_MASK) == Event.ALT_MASK;
+    private boolean dispatchKeyEvent(@NotNull KeyEvent ke) {
+      boolean dispatch = true;
+      final Component component = ke.getComponent();
+      boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
       if (!pureAlt) {
         myWaitingForAltRelease = false;
-        return false;
       }
-
-      if (!SystemInfoRt.isWindows || !Registry.is("actionSystem.win.suppressAlt", true)) {
-        return false;
-      }
-
-      UISettings uiSettings = UISettings.getInstanceOrNull();
-      if (uiSettings == null || !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
-        return false;
-      }
-
-      if (keyEvent.getID() == KeyEvent.KEY_PRESSED) {
-        return myWaitingForAltRelease;
-      }
-
-      if (keyEvent.getID() != KeyEvent.KEY_RELEASED) {
-        return false;
-      }
-
-      if (myWaitingForAltRelease) {
-        myWaitingForAltRelease = false;
-        return false;
-      }
-
-      Component component = keyEvent.getComponent();
-      if (component == null) {
-        return false;
-      }
-
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        try {
-          Window window = ComponentUtil.getWindow(component);
-          if (window == null || !window.isActive()) {
-            return;
-          }
-
-          myWaitingForAltRelease = true;
-          if (myRobot == null) {
-            myRobot = new Robot();
-          }
-          myRobot.keyPress(KeyEvent.VK_ALT);
-          myRobot.keyRelease(KeyEvent.VK_ALT);
+      else {
+        UISettings uiSettings = UISettings.getInstanceOrNull();
+        if (uiSettings == null ||
+            !SystemInfo.isWindows ||
+            !Registry.is("actionSystem.win.suppressAlt") ||
+            !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
+          return false;
         }
-        catch (AWTException e1) {
-          LOG.debug(e1);
+
+        if (ke.getID() == KeyEvent.KEY_PRESSED) {
+          dispatch = !myWaitingForAltRelease;
         }
-      });
-      return false;
+        else if (ke.getID() == KeyEvent.KEY_RELEASED) {
+          if (myWaitingForAltRelease) {
+            myWaitingForAltRelease = false;
+            dispatch = false;
+          }
+          else if (component != null) {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(() -> {
+              try {
+                final Window window = ComponentUtil.getWindow(component);
+                if (window == null || !window.isActive()) {
+                  return;
+                }
+                myWaitingForAltRelease = true;
+                if (myRobot == null) {
+                  myRobot = new Robot();
+                }
+                myRobot.keyPress(KeyEvent.VK_ALT);
+                myRobot.keyRelease(KeyEvent.VK_ALT);
+              }
+              catch (AWTException e1) {
+                LOG.debug(e1);
+              }
+            });
+          }
+        }
+      }
+      return !dispatch;
     }
   }
 
