@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic
 
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
-import com.intellij.internal.statistic.eventLog.getEventLogProviders
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
@@ -17,7 +17,7 @@ internal object StatisticsDevKitUtil {
     if (allowedRecorders.isEmpty()) {
       return emptyList()
     }
-    return getEventLogProviders().filter { allowedRecorders.contains(it.recorderId) }
+    return StatisticsEventLogProviderUtil.getEventLogProviders().filter { allowedRecorders.contains(it.recorderId) }
   }
 
   fun showNotification(project: Project, type: NotificationType, message: String) {

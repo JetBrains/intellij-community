@@ -8,9 +8,9 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.DEFAULT_RECORDER
 import com.intellij.internal.statistic.StatisticsDevKitUtil.STATISTICS_NOTIFICATION_GROUP_ID
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.getConfig
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.rollOver
-import com.intellij.internal.statistic.eventLog.getEventLogProvider
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationBuilder
@@ -83,7 +83,7 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
   companion object {
 
     fun checkLogRecordingEnabled(project: Project?, recorderId: String?): Boolean {
-      if (getEventLogProvider(recorderId!!).isRecordEnabled()) {
+      if (StatisticsEventLogProviderUtil.getEventLogProvider(recorderId!!).isRecordEnabled()) {
         return true
       }
       NotificationBuilder(STATISTICS_NOTIFICATION_GROUP_ID, StatisticsBundle.message("stats.logging.is.disabled"),

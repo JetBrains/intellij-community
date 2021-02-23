@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
@@ -147,7 +148,7 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   }
 
   public static void cleanupAll() {
-    List<String> recorders = StatisticsEventLoggerKt.getEventLogProviders().stream().
+    List<String> recorders = StatisticsEventLogProviderUtil.getEventLogProviders().stream().
       filter(provider -> provider.isRecordEnabled()).
       map(provider -> provider.getRecorderId()).
       collect(Collectors.toList());

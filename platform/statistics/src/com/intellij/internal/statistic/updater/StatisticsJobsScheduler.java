@@ -5,6 +5,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.StatisticsNotificationManager;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogMigration;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
@@ -69,7 +70,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static void runValidationRulesUpdate() {
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> {
-        final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
+        final List<StatisticsEventLoggerProvider> providers = StatisticsEventLogProviderUtil.getEventLogProviders();
         for (StatisticsEventLoggerProvider provider : providers) {
           if (provider.isRecordEnabled()) {
             IntellijSensitiveDataValidator.getInstance(provider.getRecorderId()).update();
@@ -90,7 +91,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
 
   private static void runEventLogStatisticsService() {
     JobScheduler.getScheduler().schedule(() -> {
-      final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
+      final List<StatisticsEventLoggerProvider> providers = StatisticsEventLogProviderUtil.getEventLogProviders();
       for (StatisticsEventLoggerProvider provider : providers) {
         if (provider.isSendEnabled()) {
           final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService(provider.getRecorderId());
