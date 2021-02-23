@@ -50,7 +50,7 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
 
   @Override
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
-    myLanguageLevelConfigurable = new LanguageLevelConfigurable(myProject, this::fireConfigurationChanged) {
+    myLanguageLevelConfigurable = new LanguageLevelConfigurable(myProject, this::fireModuleConfigurationChanged) {
       @NotNull
       @Override
       public LanguageLevelModuleExtensionImpl getLanguageLevelExtension() {
@@ -59,6 +59,10 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
     };
     mainPanel.add(myLanguageLevelConfigurable.createComponent(), BorderLayout.NORTH);
     myLanguageLevelConfigurable.reset();
+  }
+
+  private void fireModuleConfigurationChanged() {
+    super.fireConfigurationChanged();
   }
 
   @Override
