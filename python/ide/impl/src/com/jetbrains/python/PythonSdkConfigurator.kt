@@ -87,6 +87,8 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
                            module: Module,
                            extension: PyProjectSdkConfigurationExtension?,
                            indicator: ProgressIndicator) {
+    // please keep this method in sync with com.jetbrains.python.inspections.PyInterpreterInspection.Visitor.getSuitableSdkFix
+
     indicator.isIndeterminate = true
 
     val context = UserDataHolderBase()
@@ -96,7 +98,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.previous.interpreter")
     LOGGER.debug("Looking for the previously used interpreter")
-    guardIndicator(indicator) { findExistingAssociatedSdk(module, existingSdks) }?.let {
+    guardIndicator(indicator) { filterAssociatedSdks(module, existingSdks).firstOrNull() }?.let {
       LOGGER.debug { "The previously used interpreter: $it" }
       setReadyToUseSdk(project, module, it)
       return
@@ -106,7 +108,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.related.venv")
     LOGGER.debug("Looking for a virtual environment related to the project")
-    guardIndicator(indicator) { findDetectedAssociatedEnvironment(module, existingSdks, context) }?.let {
+    guardIndicator(indicator) { detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() }?.let {
       LOGGER.debug { "Detected virtual environment related to the project: $it" }
       val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
       LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
@@ -132,12 +134,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     if (PyCondaSdkCustomizer.instance.suggestSharedCondaEnvironments) {
       indicator.text = PyBundle.message("looking.for.shared.conda.environment")
-      guardIndicator(indicator) {
-        existingSdks
-          .asSequence()
-          .filter { it.sdkType is PythonSdkType && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
-          .firstOrNull()
-      }?.let {
+      guardIndicator(indicator) { filterSharedCondaEnvs(module, existingSdks).firstOrNull() }?.let {
         setReadyToUseSdk(project, module, it)
         return
       }
