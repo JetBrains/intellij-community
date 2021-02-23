@@ -1215,7 +1215,8 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkParametersOnRaw(@NotNull PsiReferenceParameterList refParamList) {
+  static HighlightInfo checkParametersOnRaw(@NotNull PsiReferenceParameterList refParamList,
+                                            LanguageLevel languageLevel) {
     JavaResolveResult resolveResult = null;
     PsiElement parent = refParamList.getParent();
     PsiElement qualifier = null;
@@ -1237,13 +1238,10 @@ public final class GenericsHighlightUtil {
       if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiTypeParameter) return null;
       PsiClass containingClass = ((PsiMember)element).getContainingClass();
       if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor())) {
-        if ((parent instanceof PsiCallExpression || parent instanceof PsiMethodReferenceExpression) && PsiUtil.isLanguageLevel7OrHigher(parent)) {
-          return null;
-        }
-
         if (element instanceof PsiMethod) {
+          if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) return null;
           if (((PsiMethod)element).findSuperMethods().length > 0) return null;
-          if (qualifier instanceof PsiReferenceExpression){
+          if (qualifier instanceof PsiReferenceExpression) {
             final PsiType type = ((PsiReferenceExpression)qualifier).getType();
             final boolean isJavac7 = JavaVersionService.getInstance().isAtLeast(containingClass, JavaSdkVersion.JDK_1_7);
             if (type instanceof PsiClassType && isJavac7 && ((PsiClassType)type).isRaw()) return null;
