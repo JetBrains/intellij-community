@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
@@ -18,12 +18,8 @@ internal class JavaSoftKeywordHighlightingPassFactory : TextEditorHighlightingPa
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-    val visit = file is PsiJavaFile &&
-                (file.name == PsiJavaModule.MODULE_INFO_FILE && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_9) ||
-                 file.languageLevel.isAtLeast(LanguageLevel.JDK_10))
-    return if (visit) JavaSoftKeywordHighlightingPass(file as PsiJavaFile, editor.document) else null
-  }
+  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? =
+    if (file is PsiJavaFile) JavaSoftKeywordHighlightingPass(file, editor.document) else null
 }
 
 private class JavaSoftKeywordHighlightingPass(private val file: PsiJavaFile, document: Document) :
@@ -32,7 +28,9 @@ private class JavaSoftKeywordHighlightingPass(private val file: PsiJavaFile, doc
   private val results = mutableListOf<HighlightInfo>()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    file.accept(JavaSoftKeywordHighlightingVisitor(results, file.languageLevel))
+    if (file.name == PsiJavaModule.MODULE_INFO_FILE || file.languageLevel.isAtLeast(LanguageLevel.JDK_10)) {
+      file.accept(JavaSoftKeywordHighlightingVisitor(results, file.languageLevel))
+    }
   }
 
   override fun doApplyInformationToEditor() {
