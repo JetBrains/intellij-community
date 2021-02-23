@@ -99,7 +99,14 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return hard != null ? hard : getDocumentFromCache(file);
   }
 
+  // store file<->document association with hard references to avoid undesired gc.
+  // use for non-physical ViewProviders only to avoid memleaks
   public static void registerDocument(@NotNull Document document, @NotNull VirtualFile virtualFile) {
+    if (!(virtualFile instanceof LightVirtualFile) &&
+        !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) &&
+        virtualFile.isValid()) {
+      throw new IllegalArgumentException("Hard-coding file<->document association is permitted for non-physical files only (see ViewProvider.isPhysical()) to avoid memleaks. virtualFile="+virtualFile);
+    }
     synchronized (lock) {
       document.putUserData(FILE_KEY, virtualFile);
       virtualFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
@@ -124,7 +131,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return document.getUserData(BIG_FILE_PREVIEW) == Boolean.TRUE;
   }
 
-  protected void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
     removeDocumentFromCache(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
