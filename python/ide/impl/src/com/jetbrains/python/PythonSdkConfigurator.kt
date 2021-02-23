@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,12 +46,6 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     private fun getDefaultProjectSdk(): Sdk? {
       return ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk?.takeIf { it.sdkType is PythonSdkType }
     }
-
-    private fun findExistingSystemWideSdk(existingSdks: List<Sdk>) =
-      filterSystemWideSdks(existingSdks).sortedWith(PreferredSdkComparator.INSTANCE).firstOrNull()
-
-    private fun findDetectedSystemWideSdk(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder) =
-      detectSystemWideSdks(module, existingSdks, context).firstOrNull()
 
     private fun <T> guardIndicator(indicator: ProgressIndicator, computable: () -> T): T {
       return ProgressManager.getInstance().runProcess(computable, SensitiveProgressWrapper(indicator))
@@ -99,7 +92,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.previous.interpreter")
     LOGGER.debug("Looking for the previously used interpreter")
-    guardIndicator(indicator) { filterAssociatedSdks(module, existingSdks).firstOrNull() }?.let {
+    guardIndicator(indicator) { mostPreferred(filterAssociatedSdks(module, existingSdks)) }?.let {
       LOGGER.debug { "The previously used interpreter: $it" }
       setReadyToUseSdk(project, module, it)
       return
@@ -147,7 +140,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     if (PyCondaSdkCustomizer.instance.suggestSharedCondaEnvironments) {
       indicator.text = PyBundle.message("looking.for.shared.conda.environment")
-      guardIndicator(indicator) { filterSharedCondaEnvs(module, existingSdks).firstOrNull() }?.let {
+      guardIndicator(indicator) { mostPreferred(filterSharedCondaEnvs(module, existingSdks)) }?.let {
         setReadyToUseSdk(project, module, it)
         return
       }
@@ -176,7 +169,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.previous.system.interpreter")
     LOGGER.debug("Looking for the previously used system-wide interpreter")
-    guardIndicator(indicator) { findExistingSystemWideSdk(existingSdks) }?.let {
+    guardIndicator(indicator) { mostPreferred(filterSystemWideSdks(existingSdks)) }?.let {
       LOGGER.debug { "Previously used system-wide interpreter: $it" }
       setReadyToUseSdk(project, module, it)
       return
@@ -186,7 +179,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.system.interpreter")
     LOGGER.debug("Looking for a system-wide interpreter")
-    guardIndicator(indicator) { findDetectedSystemWideSdk(module, existingSdks, context) }?.let {
+    guardIndicator(indicator) { detectSystemWideSdks(module, existingSdks, context).firstOrNull() }?.let {
       LOGGER.debug { "Detected system-wide interpreter: $it" }
       runInEdt {
         SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {

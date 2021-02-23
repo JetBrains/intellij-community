@@ -164,7 +164,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
       final List<Sdk> existingSdks = getExistingSdks();
 
-      final var associatedSdk = ContainerUtil.getFirstItem(PySdkExtKt.filterAssociatedSdks(module, existingSdks));
+      final var associatedSdk = PySdkExtKt.mostPreferred(PySdkExtKt.filterAssociatedSdks(module, existingSdks));
       if (associatedSdk != null) return new UseExistingInterpreterFix(associatedSdk, module);
 
       final UserDataHolderBase context = new UserDataHolderBase();
@@ -193,14 +193,14 @@ public final class PyInterpreterInspection extends PyInspection {
       }
 
       if (PyCondaSdkCustomizer.Companion.getInstance().getSuggestSharedCondaEnvironments()) {
-        final var sharedCondaEnv = ContainerUtil.getFirstItem(PySdkExtKt.filterSharedCondaEnvs(module, existingSdks));
+        final var sharedCondaEnv = PySdkExtKt.mostPreferred(PySdkExtKt.filterSharedCondaEnvs(module, existingSdks));
         if (sharedCondaEnv != null) return new UseExistingInterpreterFix(sharedCondaEnv, module);
 
         final var detectedCondaEnv = ContainerUtil.getFirstItem(PySdkExtKt.detectCondaEnvs(module, existingSdks, context));
         if (detectedCondaEnv != null) return new UseDetectedInterpreterFix(detectedCondaEnv, existingSdks, false, module);
       }
 
-      final var systemWideSdk = StreamEx.of(PySdkExtKt.filterSystemWideSdks(existingSdks)).min(PreferredSdkComparator.INSTANCE).orElse(null);
+      final var systemWideSdk = PySdkExtKt.mostPreferred(PySdkExtKt.filterSystemWideSdks(existingSdks));
       if (systemWideSdk != null) return new UseExistingInterpreterFix(systemWideSdk, module);
 
       final var detectedSystemWideSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectSystemWideSdks(module, existingSdks));
