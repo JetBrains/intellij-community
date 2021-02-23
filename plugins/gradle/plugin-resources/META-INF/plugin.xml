@@ -141,6 +141,7 @@
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>
+    <untrustedModeProvider implementation="org.jetbrains.plugins.gradle.service.project.GradleUntrustedModeProvider" />
   </extensions>
 
   <actions>
