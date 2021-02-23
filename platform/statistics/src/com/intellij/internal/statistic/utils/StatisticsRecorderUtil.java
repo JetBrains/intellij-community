@@ -11,8 +11,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class StatisticsRecorderUtil {
+  private static final String[] BUILT_IN_RECORDERS = new String[] {"FUS", "MLSE"};
   private static final String IDEA_FUS_RECORDER_INTERNAL_MODE = "fus.internal.test.mode";
   private static final String IDEA_RECORDER_INTERNAL_MODE = "fus.recorder.internal.test.mode";
+
+  public static boolean isBuildInRecorder(@NotNull String recorderId) {
+    return ContainerUtil.find(BUILT_IN_RECORDERS, it -> it.equals(recorderId)) != null;
+  }
 
   public static boolean isAnyTestModeEnabled() {
     if (ApplicationManager.getApplication().isInternal()) {
