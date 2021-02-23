@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.hprof.action.HeapDumpSnapshotRunnable;
@@ -20,32 +20,39 @@ final class LowMemoryNotifier implements Disposable {
 
   private void onLowMemorySignalReceived() {
     if (myNotificationShown.compareAndSet(false, true)) {
-      Notification notification = new Notification(NotificationGroup.createIdWithTitle("Low Memory", IdeBundle.message("low.memory.notification.title")),
-                                                   IdeBundle.message("low.memory.notification.title"),
-                                                   IdeBundle.message("low.memory.notification.content"),
-                                                   NotificationType.WARNING);
-      notification.addAction(new NotificationAction(IdeBundle.message("low.memory.notification.analyze.action")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          new HeapDumpSnapshotRunnable(MemoryReportReason.UserInvoked, HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run();
-          notification.expire();
-        }
-      });
-
-      notification.addAction(new NotificationAction(IdeBundle.message("low.memory.notification.action")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          Runtime rt = Runtime.getRuntime();
-          new EditXmxVMOptionDialog(rt.freeMemory(), rt.maxMemory()).show();
-          notification.expire();
-        }
-      });
-      Notifications.Bus.notify(notification);
+      showNotification(VMOptions.MemoryKind.HEAP, false);
     }
   }
 
   @Override
   public void dispose() {
     myWatcher.stop();
+  }
+
+  static void showNotification(@NotNull VMOptions.MemoryKind kind, boolean error) {
+    String title = IdeBundle.message("low.memory.notification.title");
+    String message = IdeBundle.message("low.memory.notification.content");
+    NotificationType type = error ? NotificationType.ERROR : NotificationType.WARNING;
+    Notification notification = new Notification(NotificationGroup.createIdWithTitle("Low Memory", title), title, message, type);
+
+    notification.addAction(new NotificationAction(IdeBundle.message("low.memory.notification.analyze.action")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        new HeapDumpSnapshotRunnable(MemoryReportReason.UserInvoked, HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run();
+        notification.expire();
+      }
+    });
+
+    if (VMOptions.canWriteOptions()) {
+      notification.addAction(new NotificationAction(IdeBundle.message("low.memory.notification.action")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          new EditMemorySettingsDialog(kind, true).show();
+          notification.expire();
+        }
+      });
+    }
+
+    Notifications.Bus.notify(notification);
   }
 }

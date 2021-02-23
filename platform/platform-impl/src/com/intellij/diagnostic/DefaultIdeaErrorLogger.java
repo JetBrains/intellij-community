@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
@@ -20,8 +20,6 @@ import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author kir
@@ -83,9 +81,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     try {
       Throwable throwable = event.getThrowable();
       MemoryKind kind = getOOMErrorKind(throwable);
-      if (kind != null && System.getProperty("testscript.filename") == null) {
+      if (kind != null) {
         ourOomOccurred = true;
-        SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
+        LowMemoryNotifier.showNotification(kind, true);
       }
       else if (throwable instanceof MappingFailedException) {
         processMappingFailed(event);

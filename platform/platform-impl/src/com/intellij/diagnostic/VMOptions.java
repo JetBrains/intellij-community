@@ -4,14 +4,15 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.system.CpuArch;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,16 +30,25 @@ public final class VMOptions {
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
 
   public enum MemoryKind {
-    HEAP("Xmx", ""), MIN_HEAP("Xms", ""), PERM_GEN("XX:MaxPermSize", "="), METASPACE("XX:MaxMetaspaceSize", "="), CODE_CACHE("XX:ReservedCodeCacheSize", "=");
+    HEAP("Xmx", "", "change.memory.max.heap"),
+    MIN_HEAP("Xms", "", "change.memory.min.heap"),
+    METASPACE("XX:MaxMetaspaceSize", "=", "change.memory.metaspace"),
+    CODE_CACHE("XX:ReservedCodeCacheSize", "=", "change.memory.code.cache");
 
     public final @NlsSafe String optionName;
     public final String option;
     private final Pattern pattern;
+    private final String labelKey;
 
-    MemoryKind(@NonNls String name, String separator) {
+    MemoryKind(String name, String separator, @PropertyKey(resourceBundle = "messages.DiagnosticBundle") String key) {
       optionName = name;
       option = "-" + name + separator;
       pattern = Pattern.compile(option + "(\\d*)([a-zA-Z]*)");
+      labelKey = key;
+    }
+
+    public @NlsContexts.Label String label() {
+      return DiagnosticBundle.message(labelKey);
     }
   }
 
