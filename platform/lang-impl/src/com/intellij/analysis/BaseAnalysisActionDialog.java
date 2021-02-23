@@ -5,29 +5,24 @@ import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.analysis.dialog.ModelScopeItemPresenter;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindSettings;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.ui.TitledSeparator;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -104,75 +99,16 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    BorderLayoutPanel panel = new BorderLayoutPanel();
-    TitledSeparator titledSeparator = new TitledSeparator();
-    titledSeparator.setText(myScopeTitle);
-    panel.addToTop(titledSeparator);
-
-    JPanel scopesPanel = new JPanel(new GridBagLayout());
-    panel.addToCenter(scopesPanel);
-
-    int maxColumns = myViewItems.stream()
-                       .mapToInt(x -> x.additionalComponents.size())
-                       .max().orElse(0) + 1;
-
-    int gridY = 0;
-    JRadioButton[] buttons = new JRadioButton[myViewItems.size()];
-    GridBagConstraints gbc = new GridBagConstraints();
-    for (ModelScopeItemView x: myViewItems) {
-      JRadioButton button = x.button;
-      List<JComponent> components = x.additionalComponents;
-
-      int gridX = 0;
-      buttons[gridY] = button;
-      myGroup.add(button);
-      int countExtraColumns = components.size();
-
-      gbc.gridy = gridY;
-      gbc.gridx = gridX;
-      gbc.gridwidth = countExtraColumns == 0 ? maxColumns : 1;
-      gbc.weightx = 0.0D;
-      gbc.fill = 0;
-      gbc.anchor = GridBagConstraints.WEST;
-      gbc.insets = JBUI.insetsLeft(10);
-      scopesPanel.add(button, gbc);
-      gridX++;
-
-      for (JComponent c : components) {
-        if (c instanceof Disposable) {
-          Disposer.register(myDisposable, (Disposable)c);
-        }
-        gbc.gridy = gridY;
-        gbc.gridx = gridX;
-        gbc.gridwidth = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.insets = JBUI.insetsLeft(5);
-        scopesPanel.add(c, gbc);
-        gridX++;
-      }
-      gridY++;
-    }
-
-    final BorderLayoutPanel optionPanel = new BorderLayoutPanel(10, 0);
     myInspectTestSource.setText(CodeInsightBundle.message("scope.option.include.test.sources"));
     myInspectTestSource.setSelected(myOptions.ANALYZE_TEST_SOURCES);
     myInspectTestSource.setVisible(myShowInspectTestSource);
     myAnalyzeInjectedCode.setText(CodeInsightBundle.message("scope.option.analyze.injected.code"));
     myAnalyzeInjectedCode.setSelected(myOptions.ANALYZE_INJECTED_CODE);
     myAnalyzeInjectedCode.setVisible(false);
-    optionPanel.addToLeft(myInspectTestSource);
-    optionPanel.addToRight(myAnalyzeInjectedCode);
 
-    gbc.gridy = gridY;
-    gbc.gridx = 0;
-    gbc.gridwidth = maxColumns;
-    gbc.weightx = 1.0;
-    gbc.fill = 0;
-    gbc.anchor = GridBagConstraints.WEST;
-    gbc.insets = JBUI.insets(10, 10, 0, 0);
-    scopesPanel.add(optionPanel, gbc);
+    ArrayList<JRadioButton> buttons = new ArrayList<>();
+    JPanel panel = new BaseAnalysisActionDialogUI().panel(myScopeTitle, myViewItems, myInspectTestSource, myAnalyzeInjectedCode, buttons, myDisposable);
+    buttons.forEach(b -> myGroup.add(b));
 
     preselectButton();
 
@@ -182,7 +118,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     if (additionalPanel != null) {
       wholePanel.addToCenter(additionalPanel);
     }
-    new RadioUpDownListener(buttons);
+    new RadioUpDownListener(buttons.toArray(new JRadioButton[0]));
 
     return wholePanel;
   }
