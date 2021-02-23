@@ -111,6 +111,13 @@ abstract class LineStatusTrackerBase<R : Range>(
 
     isInitialized = false
     updateHighlighters()
+
+    documentTracker.doFrozen {
+      updateDocument(Side.LEFT) {
+        vcsDocument.setText(document.immutableCharSequence)
+        documentTracker.setFrozenState(emptyList())
+      }
+    }
   }
 
   fun release() {
