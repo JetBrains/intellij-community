@@ -66,19 +66,26 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   @Override
   @NotNull
   public XmlAttribute createXmlAttribute(@NotNull String name, @NotNull String value) throws IncorrectOperationException {
-    return createAttribute(name, value, XmlFileType.INSTANCE);
+    return createAttribute(name, quoteValue(value), XmlFileType.INSTANCE);
   }
 
   @NotNull
   @Override
   public XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context)
     throws IncorrectOperationException {
-    return createAttribute(name, value, getFileType(context));
+    return createAttribute(name, quoteValue(value), getFileType(context));
+  }
+
+  @Override
+  public @NotNull XmlAttribute createAttribute(@NotNull String name,
+                                               @NotNull String value,
+                                               @Nullable Character quoteStyle,
+                                               @Nullable PsiElement context) throws IncorrectOperationException {
+    return createAttribute(name, quoteValue(value, quoteStyle), getFileType(context));
   }
 
   @NotNull
-  private XmlAttribute createAttribute(@NotNull String name, @NotNull String value, @NotNull FileType fileType) {
-    String quotedValue = quoteValue(value);
+  private XmlAttribute createAttribute(@NotNull String name, @NotNull String quotedValue, @NotNull FileType fileType) {
     final XmlDocument document = createXmlDocument("<tag " + name + "=" + quotedValue + "/>",
                                                    "dummy." + fileType.getDefaultExtension(), fileType);
     XmlTag tag = document.getRootTag();
@@ -86,6 +93,19 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     XmlAttribute[] attributes = tag.getAttributes();
     LOG.assertTrue(attributes.length == 1, document.getText());
     return attributes[0];
+  }
+
+  @NotNull
+  public static String quoteValue(@NotNull String value, @Nullable Character quoteStyle) {
+    if (quoteStyle != null) {
+      if (quoteStyle == '\'') {
+        return quoteStyle + StringUtil.replace(value, "'", "&apos;") + quoteStyle;
+      }
+      else if (quoteStyle == '"') {
+        return quoteStyle + StringUtil.replace(value, "\"", "&quot;") + quoteStyle;
+      }
+    }
+    return quoteValue(value);
   }
 
   @NotNull
