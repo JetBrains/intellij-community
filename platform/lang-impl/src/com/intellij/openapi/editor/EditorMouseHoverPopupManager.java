@@ -490,7 +490,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
 
     @NotNull
-    private VisualPosition getPopupPosition(Editor editor) {
+    protected VisualPosition getPopupPosition(Editor editor) {
       HighlightInfo highlightInfo = getHighlightInfo();
       if (highlightInfo == null) {
         int offset = targetOffset;
