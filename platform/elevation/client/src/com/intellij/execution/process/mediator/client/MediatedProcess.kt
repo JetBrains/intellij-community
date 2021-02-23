@@ -41,8 +41,9 @@ class MediatedProcess private constructor(
       return try {
         MediatedProcess(handle,
                         processBuilder.command(), workingDir, processBuilder.environment(),
-                        inFile, outFile, errFile).also {
-          CLEANER.register(it, handle::releaseAsync)
+                        inFile, outFile, errFile).apply {
+          val cleanable = CLEANER.register(this, handle::releaseAsync)
+          onExit().thenRun { cleanable.clean() }
         }
       }
       catch (e: Throwable) {
@@ -139,6 +140,8 @@ class MediatedProcess private constructor(
   }
 
   fun destroy(force: Boolean, destroyGroup: Boolean = false) {
+    // In case this is called after releasing the handle (due to process termination),
+    // it just does nothing, without throwing any error.
     handle.rpcScope.launch {
       handle.rpc { handleId ->
         destroyProcess(handleId, force, destroyGroup)
