@@ -20,7 +20,6 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslPath;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
@@ -30,7 +29,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,6 +62,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
@@ -359,7 +358,7 @@ public final class BuildManager implements Disposable {
       }
     });
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!application.isHeadlessEnvironment()) {
       configureIdleAutomake();
     }
 
@@ -413,8 +412,9 @@ public final class BuildManager implements Disposable {
   @Nullable
   private static String getFallbackSdkHome() {
     String home = SystemProperties.getJavaHome(); // should point either to jre or jdk
-    if (home == null) return null;
-
+    if (home == null) {
+      return null;
+    }
     if (!JdkUtil.checkForJdk(home)) {
       String parent = new File(home).getParent();
       if (parent != null && JdkUtil.checkForJdk(parent)) {
@@ -676,26 +676,15 @@ public final class BuildManager implements Disposable {
 
     Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (window == null) {
-      return null;
+      window = ComponentUtil.getActiveWindow();
     }
 
-    Component comp = window;
-    while (true) {
-      final Container _parent = comp.getParent();
-      if (_parent == null) {
-        break;
-      }
-      comp = _parent;
-    }
-
+    final Component comp = ComponentUtil.findUltimateParent(window);
     Project project = null;
     if (comp instanceof IdeFrame) {
       project = ((IdeFrame)comp).getProject();
     }
-    if (project == null) {
-      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(comp));
-    }
-
+    
     return isValidProject(project)? project : null;
   }
 
