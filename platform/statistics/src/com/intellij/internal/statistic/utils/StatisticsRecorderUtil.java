@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils;
 
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -8,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt.getEventLogProviders;
 
 public class StatisticsRecorderUtil {
   private static final String IDEA_FUS_RECORDER_INTERNAL_MODE = "fus.internal.test.mode";
@@ -26,7 +25,7 @@ public class StatisticsRecorderUtil {
   public static List<String> getRecordersInTestMode() {
     if (isAnyTestModeEnabled()) {
       if (isFusInternalTestMode()) {
-        return ContainerUtil.map(getEventLogProviders(), it -> it.getRecorderId());
+        return ContainerUtil.map(StatisticsEventLogProviderUtil.getEventLogProviders(), it -> it.getRecorderId());
       }
 
       List<String> custom = getCustomTestModeRecorders();
