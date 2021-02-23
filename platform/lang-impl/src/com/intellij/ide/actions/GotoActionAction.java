@@ -102,7 +102,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
             }
           }
           else {
-            ActionUtil.performActionDumbAwareWithCallbacks(action, event, context);
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event);
           }
         }
     });

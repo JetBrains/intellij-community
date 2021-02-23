@@ -260,11 +260,18 @@ public final class ActionUtil {
     return !visibilityMatters || e.getPresentation().isVisible();
   }
 
+  /** @deprecated use {@link #performActionDumbAware(AnAction, AnActionEvent)} */
+  @Deprecated
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
-    final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-    manager.fireBeforeActionPerformed(action, context, e);
+    LOG.assertTrue(e.getDataContext() == context, "event context does not match the argument");
+    performActionDumbAwareWithCallbacks(action, e);
+  }
+
+  public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e) {
+    ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+    manager.fireBeforeActionPerformed(action, e.getDataContext(), e);
     performActionDumbAware(action, e);
-    manager.fireAfterActionPerformed(action, context, e);
+    manager.fireAfterActionPerformed(action, e.getDataContext(), e);
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {

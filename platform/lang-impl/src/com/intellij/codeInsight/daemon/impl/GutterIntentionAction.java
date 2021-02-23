@@ -52,7 +52,7 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
         .showInBestPositionFor(editor);
     }
     else {
-      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
+      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event);
     }
   }
 

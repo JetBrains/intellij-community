@@ -277,7 +277,7 @@ public class Notification {
       return context == null ? null : context.getData(dataId);
     });
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event, event.getDataContext());
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
   }
 

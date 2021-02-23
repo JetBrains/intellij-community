@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
@@ -48,7 +49,7 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
       val dataContext = DataManager.getInstance().getDataContext(this)
       val event = AnActionEvent.createFromAnAction(diffAction, e, GIT_STASH_UI_PLACE, dataContext)
       val isEnabled = ActionUtil.lastUpdateAndCheckDumb(diffAction, event, true)
-      if (isEnabled) ActionUtil.performActionDumbAwareWithCallbacks(diffAction, event, dataContext)
+      if (isEnabled) performActionDumbAwareWithCallbacks(diffAction, event)
 
       isEnabled
     }

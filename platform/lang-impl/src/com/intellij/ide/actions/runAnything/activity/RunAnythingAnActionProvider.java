@@ -44,7 +44,7 @@ public abstract class RunAnythingAnActionProvider<V extends AnAction> extends Ru
   private static void performAction(@NotNull AnAction action, @NotNull DataContext dataContext) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext);
 
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
+    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
   }
 
   @Nullable

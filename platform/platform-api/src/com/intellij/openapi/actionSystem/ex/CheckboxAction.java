@@ -86,7 +86,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
         DataContext dataContext = ActionToolbar.getDataContextFor(checkBox);
         InputEvent inputEvent = new KeyEvent(checkBox, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, ' ');
         AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, place, dataContext);
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
       }
     });
 

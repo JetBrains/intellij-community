@@ -137,7 +137,7 @@ public class EditorTestFixture {
       return false;
     }
 
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
+    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     return true;
   }
 

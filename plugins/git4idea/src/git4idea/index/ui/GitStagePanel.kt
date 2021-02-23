@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
@@ -224,7 +225,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         val mergeAction = ActionManager.getInstance().getAction("Git.Stage.Merge")
         val event = AnActionEvent.createFromAnAction(mergeAction, e, ActionPlaces.UNKNOWN, dataContext)
         if (ActionUtil.lastUpdateAndCheckDumb(mergeAction, event, true)) {
-          ActionUtil.performActionDumbAwareWithCallbacks(mergeAction, event, dataContext)
+          performActionDumbAwareWithCallbacks(mergeAction, event)
         }
         else {
           OpenSourceUtil.openSourcesFrom(dataContext, true)
