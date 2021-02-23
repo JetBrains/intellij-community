@@ -45,6 +45,7 @@ import java.awt.event.PaintEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -54,6 +55,7 @@ import java.util.function.Supplier;
 final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
+  private static final List<ProgressIndicator> ourIndicators = new CopyOnWriteArrayList<>();
 
   private final boolean myModalContext;
   private final PresentationFactory myFactory;
@@ -263,7 +265,12 @@ final class ActionUpdater {
 
     cancelAndRestartOnUserActivity(promise, indicator);
 
-    ourExecutor.execute(() -> {
+    if (!myToolbarAction) {
+      ourIndicators.forEach(ProgressIndicator::cancel);
+    }
+    ourIndicators.add(indicator);
+
+    ourExecutor.execute(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
       while (promise.getState() == Promise.State.PENDING) {
         try {
           indicator.checkCanceled();
@@ -284,7 +291,8 @@ final class ActionUpdater {
           promise.setError(e);
         }
       }
-    });
+      ourIndicators.remove(indicator);
+    }, indicator));
     return promise;
   }
 
