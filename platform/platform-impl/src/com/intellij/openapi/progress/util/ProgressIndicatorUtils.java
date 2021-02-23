@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
@@ -272,7 +271,7 @@ public final class ProgressIndicatorUtils {
    * Ensure the current EDT activity finishes in case it requires many write actions, with each being delayed a bit
    * by background thread read action (until its first checkCanceled call). Shouldn't be called from under read action.
    */
-  public static void yieldToPendingWriteActions() {
+  public static void yieldToPendingWriteActions(@Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
     if (application.isReadAccessAllowed()) {
       throw new IllegalStateException("Mustn't be called from within read action");
@@ -282,7 +281,12 @@ public final class ProgressIndicatorUtils {
     }
     Semaphore semaphore = new Semaphore(1);
     application.invokeLater(semaphore::up, ModalityState.any());
-    awaitWithCheckCanceled(semaphore, ProgressIndicatorProvider.getGlobalProgressIndicator());
+    awaitWithCheckCanceled(semaphore, indicator);
+  }
+
+    /** @see ProgressIndicatorUtils#yieldToPendingWriteActions(ProgressIndicator) */
+  public static void yieldToPendingWriteActions() {
+    yieldToPendingWriteActions(ProgressIndicatorProvider.getGlobalProgressIndicator());
   }
 
   /**
