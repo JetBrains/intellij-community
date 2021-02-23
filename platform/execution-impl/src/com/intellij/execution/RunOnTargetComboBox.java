@@ -44,7 +44,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
 
     Collection<Type<?>> types = new ArrayList<>();
     for (TargetEnvironmentType<?> type : TargetEnvironmentType.EXTENSION_NAME.getExtensionList()) {
-      if (type.providesNewWizard(myProject, myDefaultRuntimeType)) {
+      if (type.isSystemCompatible() && type.providesNewWizard(myProject, myDefaultRuntimeType)) {
         types.add(new Type<>(type));
       }
     }
