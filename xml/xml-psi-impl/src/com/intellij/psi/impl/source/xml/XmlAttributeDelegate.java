@@ -22,7 +22,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
@@ -33,6 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 
 @ApiStatus.Experimental
 public abstract class XmlAttributeDelegate {
@@ -76,9 +78,16 @@ public abstract class XmlAttributeDelegate {
     return () -> manager.getModificationCount(project);
   }
 
+  private @Nullable Character getPreferredQuoteStyle() {
+    final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(myAttribute.getNode());
+    String currentValue = notNull(doIfNotNull(value, ASTNode::getText), "");
+    return currentValue.startsWith("'") ? Character.valueOf('\'') : currentValue.startsWith("\"") ? Character.valueOf('"') : null;
+  }
+
   void setValue(@NotNull String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(myAttribute.getNode());
-    final XmlAttribute attribute = createAttribute(StringUtil.defaultIfEmpty(myAttribute.getName(), "a"), valueText);
+    final XmlAttribute attribute = createAttribute(StringUtil.defaultIfEmpty(myAttribute.getName(), "a"), valueText,
+                                                   getPreferredQuoteStyle());
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(attribute.getNode());
     final ASTNode att = myAttribute.getNode();
     if (value != null) {
@@ -97,8 +106,8 @@ public abstract class XmlAttributeDelegate {
     }
   }
 
-  protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value) {
-    return XmlElementFactory.getInstance(myAttribute.getProject()).createAttribute(qname, value, myAttribute);
+  protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value, @Nullable Character quoteStyle) {
+    return XmlElementFactory.getInstance(myAttribute.getProject()).createAttribute(qname, value, quoteStyle, myAttribute);
   }
 
   @NotNull
@@ -271,8 +280,8 @@ public abstract class XmlAttributeDelegate {
   @NotNull
   PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(myAttribute.getNode());
-    final String oldValue = ObjectUtils.notNull(myAttribute.getValue(), "");
-    final XmlAttribute newAttribute = createAttribute(nameText, oldValue);
+    final String oldValue = notNull(myAttribute.getValue(), "");
+    final XmlAttribute newAttribute = createAttribute(nameText, oldValue, getPreferredQuoteStyle());
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(newAttribute.getNode());
     if (!oldValue.isEmpty() && myAttribute.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
       CodeEditUtil.replaceChild(myAttribute.getNode().getTreeParent(), myAttribute.getNode(), newAttribute.getNode());
