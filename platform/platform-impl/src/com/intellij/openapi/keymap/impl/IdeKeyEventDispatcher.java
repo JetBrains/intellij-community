@@ -635,8 +635,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
       new ArrayList<>(myContext.getActions()), myPresentationFactory);
   }
 
-  private static final Key<AnActionEvent> ACTION_EVENT_KEY = Key.create("ACTION_EVENT_KEY");
-
   private static boolean processAction(@NotNull InputEvent e,
                                        @NotNull ActionProcessor processor,
                                        @NotNull DataContext context,
@@ -648,13 +646,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     List<AnActionEvent> wouldBeEnabledIfNotDumb = new ArrayList<>();
     Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForKeyEvent(
-      e, processor, context, presentationFactory, ACTION_EVENT_KEY, session -> {
+      e, processor, context, presentationFactory, (session, events) -> {
       rearrangeByPromoters(actions, context);
       for (AnAction action : actions) {
         long startedAt = System.currentTimeMillis();
 
         Presentation presentation = session.presentation(action);
-        AnActionEvent actionEvent = presentation.getClientProperty(ACTION_EVENT_KEY);
+        AnActionEvent actionEvent = events.apply(presentation);
 
         if (dumb && !action.isDumbAware()) {
           if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {

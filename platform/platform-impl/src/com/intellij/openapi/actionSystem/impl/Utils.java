@@ -11,7 +11,6 @@ import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -35,10 +34,9 @@ import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.concurrent.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class Utils {
@@ -321,23 +319,22 @@ public final class Utils {
                                                   @NotNull ActionProcessor actionProcessor,
                                                   @NotNull DataContext dataContext,
                                                   @NotNull PresentationFactory factory,
-                                                  @Nullable Key<AnActionEvent> eventKey,
-                                                  @NotNull Function<UpdateSession, T> function) {
+                                                  @NotNull BiFunction<? super UpdateSession,
+                                                    Function<Presentation, AnActionEvent>, T> function) {
     long start = System.currentTimeMillis();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
     // direct approach would be to pump events in a custom modality state (enterModal/leaveModal)
     // EventQueue would add significant overhead (x10), but key events must be processed ASAP.
     BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
+    Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
     ActionManager actionManager = ActionManager.getInstance();
     ActionUpdater actionUpdater = new ActionUpdater(
       LaterInvocator.isInModalContext(), factory, dataContext,
       ActionPlaces.KEYBOARD_SHORTCUT, false, false, null, true, (action, presentation) -> {
-      AnActionEvent event =
-        actionProcessor.createEvent(inputEvent, dataContext, ActionPlaces.KEYBOARD_SHORTCUT, presentation, actionManager);
-      if (eventKey != null) {
-        presentation.putClientProperty(eventKey, event);
-      }
+      AnActionEvent event = actionProcessor.createEvent(
+        inputEvent, dataContext, ActionPlaces.KEYBOARD_SHORTCUT, presentation, actionManager);
+      events.put(presentation, event);
       return event;
     }, async ? queue::offer : null);
 
@@ -349,7 +346,7 @@ public final class Utils {
           Ref<T> ref = Ref.create();
           ProgressManager.getInstance().computePrioritized(() -> {
             ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-              ref.set(ReadAction.compute(() -> function.apply(actionUpdater.asUpdateSession())));
+              ref.set(ReadAction.compute(() -> function.apply(actionUpdater.asUpdateSession(), events::get)));
             }, new EmptyProgressIndicator());
             return null;
           });
@@ -368,7 +365,7 @@ public final class Utils {
       });
     }
     else {
-      result = function.apply(actionUpdater.asUpdateSession());
+      result = function.apply(actionUpdater.asUpdateSession(), events::get);
     }
     long time = System.currentTimeMillis() - start;
     if (time > 500) {
