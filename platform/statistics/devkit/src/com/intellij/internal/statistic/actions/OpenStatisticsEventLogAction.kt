@@ -22,6 +22,6 @@ internal class OpenStatisticsEventLogAction : DumbAwareAction() {
 
   override fun update(event: AnActionEvent) {
     super.update(event)
-    event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled("FUS")
+    event.presentation.isEnabled = StatisticsRecorderUtil.isAnyTestModeEnabled()
   }
 }
