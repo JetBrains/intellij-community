@@ -316,11 +316,11 @@ public final class Utils {
   @ApiStatus.Internal
   @Nullable
   public static <T> T runUpdateSessionForKeyEvent(@NotNull InputEvent inputEvent,
-                                                  @NotNull ActionProcessor actionProcessor,
                                                   @NotNull DataContext dataContext,
+                                                  @NotNull String place,
+                                                  @NotNull ActionProcessor actionProcessor,
                                                   @NotNull PresentationFactory factory,
-                                                  @NotNull BiFunction<? super UpdateSession,
-                                                    Function<Presentation, AnActionEvent>, T> function) {
+                                                  @NotNull BiFunction<? super UpdateSession, Function<Presentation, AnActionEvent>, T> function) {
     long start = System.currentTimeMillis();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
@@ -331,9 +331,9 @@ public final class Utils {
     ActionManager actionManager = ActionManager.getInstance();
     ActionUpdater actionUpdater = new ActionUpdater(
       LaterInvocator.isInModalContext(), factory, dataContext,
-      ActionPlaces.KEYBOARD_SHORTCUT, false, false, null, true, (action, presentation) -> {
+      place, false, false, null, true, (action, presentation) -> {
       AnActionEvent event = actionProcessor.createEvent(
-        inputEvent, dataContext, ActionPlaces.KEYBOARD_SHORTCUT, presentation, actionManager);
+        inputEvent, dataContext, place, presentation, actionManager);
       events.put(presentation, event);
       return event;
     }, async ? queue::offer : null);

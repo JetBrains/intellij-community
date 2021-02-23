@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher.rearrangeByPromoters;
+import static com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher.doPerformActionImpl;
 import static java.awt.event.MouseEvent.*;
 
 /**
@@ -260,28 +261,35 @@ public final class IdeMouseEventDispatcher {
     fillActionsList(c, shortcut, IdeKeyEventDispatcher.isModalContext(c));
     ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (actionManager != null) {
-      DataContext dataContext = DataManager.getInstance().getDataContext(c);
-      rearrangeByPromoters(myActions, dataContext);
-      AnAction[] actions = myActions.toArray(AnAction.EMPTY_ARRAY);
-      for (AnAction action : actions) {
-        Presentation presentation = myPresentationFactory.getPresentation(action);
-        AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MOUSE_SHORTCUT, presentation,
-                                                      ActionManager.getInstance(),
-                                                      modifiers);
-        if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) {
-          actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
-          final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-
-          if (context != null && !context.isShowing()) continue;
-
-          ActionUtil.performActionDumbAware(action, actionEvent);
-          actionManager.fireAfterActionPerformed(action, dataContext, actionEvent);
-          e.consume();
-          break;
-        }
-      }
+      DataContext context = DataManager.getInstance().getDataContext(c);
+      IdeKeyEventDispatcher.processAction(
+        e, ActionPlaces.MOUSE_SHORTCUT, context, new ArrayList<>(myActions),
+        newActionProcessor(modifiers), myPresentationFactory, actionManager);
     }
     return e.getButton() > 3;
+  }
+
+  private static ActionProcessor newActionProcessor(int modifiers) {
+    return new ActionProcessor() {
+      @NotNull
+      @Override
+      public AnActionEvent createEvent(InputEvent inputEvent,
+                                       @NotNull DataContext context,
+                                       @NotNull String place,
+                                       @NotNull Presentation presentation,
+                                       @NotNull ActionManager manager) {
+        return new AnActionEvent(inputEvent, context, ActionPlaces.MOUSE_SHORTCUT, presentation, manager, modifiers);
+      }
+
+      @Override
+      public void onUpdatePassed(InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
+      }
+
+      @Override
+      public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
+        doPerformActionImpl(e, action, actionEvent);
+      }
+    };
   }
 
   private static void resetPopupTrigger(final MouseEvent e) {

@@ -31,10 +31,7 @@ import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -46,6 +43,7 @@ import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
@@ -67,11 +65,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.im.InputContext;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * This class is automaton with finite number of state.
@@ -590,87 +590,132 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private final ActionProcessor myActionProcessor = new ActionProcessor() {
     @NotNull
     @Override
-    public AnActionEvent createEvent(final InputEvent inputEvent, @NotNull final DataContext context, @NotNull final String place, @NotNull final Presentation presentation,
-                                     @NotNull final ActionManager manager) {
+    public AnActionEvent createEvent(@NotNull InputEvent inputEvent,
+                                     @NotNull DataContext context,
+                                     @NotNull String place,
+                                     @NotNull Presentation presentation,
+                                     @NotNull ActionManager manager) {
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
       return new AnActionEvent(inputEvent, context, place, presentation, manager, 0);
     }
 
     @Override
-    public void onUpdatePassed(final InputEvent inputEvent, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
+    public void onUpdatePassed(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       setState(KeyState.STATE_PROCESSED);
       setPressedWasProcessed(inputEvent.getID() == KeyEvent.KEY_PRESSED);
     }
 
     @Override
     public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
-      e.consume();
-      if (e instanceof KeyEvent) {
-        IdeEventQueue.getInstance().onActionInvoked((KeyEvent)e);
-      }
-
-      DataContext ctx = actionEvent.getDataContext();
-      if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
-        ActionGroup group = (ActionGroup)action;
-        String groupId = ActionManager.getInstance().getId(action);
-        JBPopupFactory.getInstance().createActionGroupPopup(
-          group.getTemplatePresentation().getText(), group, ctx,
-          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-          false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(groupId))
-                      .showInBestPositionFor(ctx);
-      }
-      else {
-        ActionUtil.performActionDumbAware(action, actionEvent);
-      }
-
-      if (Registry.is("actionSystem.fixLostTyping")) {
-        IdeEventQueue.getInstance().doWhenReady(() -> IdeEventQueue.getInstance().getKeyEventDispatcher().resetState());
-      }
+      doPerformActionImpl(e, action, actionEvent);
     }
   };
 
-  public boolean processAction(@NotNull InputEvent e, @NotNull ActionProcessor processor) {
-    return processAction(
-      e, processor, myContext.getDataContext(),
-      new ArrayList<>(myContext.getActions()), myPresentationFactory);
+  static void doPerformActionImpl(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
+    e.consume();
+    if (e instanceof KeyEvent) {
+      IdeEventQueue.getInstance().onActionInvoked((KeyEvent)e);
+    }
+
+    DataContext ctx = actionEvent.getDataContext();
+    if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
+      ActionGroup group = (ActionGroup)action;
+      String groupId = ActionManager.getInstance().getId(action);
+      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+        group.getTemplatePresentation().getText(), group, ctx,
+        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+        false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(groupId));
+      if (e instanceof MouseEvent) {
+        popup.show(new RelativePoint((MouseEvent)e));
+      }
+      else {
+        popup.showInBestPositionFor(ctx);
+      }
+    }
+    else {
+      ActionUtil.performActionDumbAware(action, actionEvent);
+    }
+
+    if (e instanceof KeyEvent && Registry.is("actionSystem.fixLostTyping")) {
+      IdeEventQueue.getInstance().doWhenReady(() -> IdeEventQueue.getInstance().getKeyEventDispatcher().resetState());
+    }
   }
 
-  private static boolean processAction(@NotNull InputEvent e,
-                                       @NotNull ActionProcessor processor,
-                                       @NotNull DataContext context,
-                                       @NotNull List<AnAction> actions,
-                                       @NotNull PresentationFactory presentationFactory) {
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    Project project = CommonDataKeys.PROJECT.getData(context);
+  public boolean processAction(@NotNull InputEvent e, @NotNull ActionProcessor processor) {
+    boolean result = processAction(
+      e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(), new ArrayList<>(myContext.getActions()), processor,
+      myPresentationFactory, ActionManagerEx.getInstanceEx());
+    if (!result) {
+      IdeEventQueue.getInstance().flushDelayedKeyEvents();
+    }
+    return result;
+  }
+
+  static boolean processAction(@NotNull InputEvent e,
+                               @NotNull String place,
+                               @NotNull DataContext context,
+                               @NotNull List<AnAction> actions,
+                               @NotNull ActionProcessor processor,
+                               @NotNull PresentationFactory presentationFactory,
+                               @NotNull ActionManagerEx actionManager) {
+    DataContext wrappedContext = Utils.wrapDataContext(context);
+    Project project = CommonDataKeys.PROJECT.getData(wrappedContext);
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
 
     List<AnActionEvent> wouldBeEnabledIfNotDumb = new ArrayList<>();
     Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForKeyEvent(
-      e, processor, context, presentationFactory, (session, events) -> {
-      rearrangeByPromoters(actions, context);
-      for (AnAction action : actions) {
-        long startedAt = System.currentTimeMillis();
+      e, wrappedContext, place, processor, presentationFactory,
+      (session, events) -> doUpdateActionsInner(wrappedContext, actions, dumb, wouldBeEnabledIfNotDumb, session, events));
 
-        Presentation presentation = session.presentation(action);
-        AnActionEvent actionEvent = events.apply(presentation);
-
-        if (dumb && !action.isDumbAware()) {
-          if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
-            wouldBeEnabledIfNotDumb.add(actionEvent);
-          }
-          logTimeMillis(startedAt, action);
-          continue;
-        }
-
-        if (!presentation.isEnabled()) {
-          logTimeMillis(startedAt, action);
-          continue;
-        }
-        return Trinity.create(action, actionEvent, startedAt);
-      }
-      return null;
+    doPerformActionInner(chosen, e, processor, wrappedContext, actionManager, project, wouldBeEnabledIfNotDumb, () -> {
+      //invokeLater to make sure correct dataContext is taken from focus
+      ApplicationManager.getApplication().invokeLater(() -> {
+        DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(ctx -> {
+          processAction(e, place, ctx, actions, processor, presentationFactory, actionManager);
+        });
+      });
     });
+    return chosen != null;
+  }
 
+  @Nullable
+  private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull DataContext context,
+                                                                             @NotNull List<AnAction> actions,
+                                                                             boolean dumb,
+                                                                             @NotNull List<AnActionEvent> wouldBeEnabledIfNotDumb,
+                                                                             @NotNull UpdateSession session,
+                                                                             @NotNull Function<Presentation, AnActionEvent> events) {
+    rearrangeByPromoters(actions, context);
+    for (AnAction action : actions) {
+      long startedAt = System.currentTimeMillis();
+
+      Presentation presentation = session.presentation(action);
+      AnActionEvent actionEvent = events.apply(presentation);
+
+      if (dumb && !action.isDumbAware()) {
+        if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
+          wouldBeEnabledIfNotDumb.add(actionEvent);
+        }
+        logTimeMillis(startedAt, action);
+        continue;
+      }
+      if (!presentation.isEnabled()) {
+        logTimeMillis(startedAt, action);
+        continue;
+      }
+      return Trinity.create(action, actionEvent, startedAt);
+    }
+    return null;
+  }
+
+  private static void doPerformActionInner(@Nullable Trinity<AnAction, AnActionEvent, Long> chosen,
+                                           @NotNull InputEvent e,
+                                           @NotNull ActionProcessor processor,
+                                           @NotNull DataContext context,
+                                           @NotNull ActionManagerEx actionManager,
+                                           @Nullable Project project,
+                                           @NotNull List<AnActionEvent> wouldBeEnabledIfNotDumb,
+                                           @NotNull Runnable retryRunnable) {
     if (chosen != null) {
       AnAction action = chosen.first;
       AnActionEvent actionEvent = chosen.second;
@@ -683,14 +728,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
       if (isContextComponentNotVisible(actionEvent)) {
         logTimeMillis(startedAt, action);
-        return true;
+        return;
       }
 
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(
         () -> processor.performAction(e, action, actionEvent));
       actionManager.fireAfterActionPerformed(action, actionEvent.getDataContext(), actionEvent);
       logTimeMillis(startedAt, action);
-      return true;
+      return;
     }
 
     if (!wouldBeEnabledIfNotDumb.isEmpty()) {
@@ -701,12 +746,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
         }
       }
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
-
-      showDumbModeBalloonLaterIfNobodyConsumesEvent(project, e, processor, actions, presentationFactory, wouldBeEnabledIfNotDumb);
+      String message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb);
+      showDumbModeBalloonLaterIfNobodyConsumesEvent(project, message, retryRunnable, (__) -> e.isConsumed());
     }
-
-    IdeEventQueue.getInstance().flushDelayedKeyEvents();
-    return false;
   }
 
   private static boolean isContextComponentNotVisible(AnActionEvent actionEvent) {
@@ -715,23 +757,16 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private static void showDumbModeBalloonLaterIfNobodyConsumesEvent(@Nullable Project project,
-                                                                    @NotNull InputEvent e,
-                                                                    @NotNull ActionProcessor processor,
-                                                                    @NotNull List<AnAction> actions,
-                                                                    @NotNull PresentationFactory presentationFactory,
-                                                                    @NotNull List<AnActionEvent> actionEvents) {
-    if (project == null) return;
+                                                                    @NotNull @Nls String message,
+                                                                    @NotNull Runnable retryRunnable,
+                                                                    @NotNull Condition<Object> expired) {
+
+
+    if (project == null || expired.value(null)) return;
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (e.isConsumed()) return;
-      DumbService.getInstance(project).showDumbModeActionBalloon(getActionUnavailableMessage(actionEvents), () -> {
-        //invokeLater to make sure correct dataContext is taken from focus
-        ApplicationManager.getApplication().invokeLater(() -> {
-          DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
-            processAction(e, processor, context, actions, presentationFactory);
-          });
-        });
-      });
-    });
+      if (expired.value(null)) return;
+      DumbService.getInstance(project).showDumbModeActionBalloon(message, retryRunnable);
+    }, Conditions.or(expired, project.getDisposed()));
   }
 
   private static @NotNull @Nls String getActionUnavailableMessage(@NotNull List<AnActionEvent> actionEvents) {
@@ -820,7 +855,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   }
 
-  static void rearrangeByPromoters(List<AnAction> actions, DataContext context) {
+  private static void rearrangeByPromoters(List<AnAction> actions, DataContext context) {
     List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
     for (ActionPromoter promoter : ActionPromoter.EP_NAME.getExtensions()) {
       List<AnAction> promoted = promoter.promote(readOnlyActions, context);
