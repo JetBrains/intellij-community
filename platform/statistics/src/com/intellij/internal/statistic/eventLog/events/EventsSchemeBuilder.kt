@@ -27,7 +27,11 @@ object EventsSchemeBuilder {
                              val className: String)
   data class EventsScheme(val commitHash: String?, val scheme: List<GroupDescriptor>)
 
-  private fun fieldSchema(field: EventField<*>, fieldName: String): Set<FieldDescriptor> {
+  private fun fieldSchema(field: EventField<*>, fieldName: String, eventName: String, groupId: String): Set<FieldDescriptor> {
+    if (field.name.contains(".")) {
+      throw IllegalStateException("Field name should not contains dots, because dots are used to express hierarchy. " +
+                                  "Group=$groupId, event=$eventName, field=${field.name}")
+    }
     if (field == EventFields.PluginInfo || field == EventFields.PluginInfoFromInstance) {
       return hashSetOf(
         FieldDescriptor("plugin", hashSetOf("{util#plugin}")),
@@ -37,8 +41,8 @@ object EventsSchemeBuilder {
     }
 
     return when (field) {
-      is ObjectEventField -> buildObjectEvenScheme(fieldName, field.fields)
-      is ObjectListEventField -> buildObjectEvenScheme(fieldName, field.fields)
+      is ObjectEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
+      is ObjectListEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
       is ListEventField<*> -> {
         hashSetOf(FieldDescriptor(fieldName, field.validationRule.toHashSet(), FieldDataType.ARRAY))
       }
@@ -46,10 +50,11 @@ object EventsSchemeBuilder {
     }
   }
 
-  private fun buildObjectEvenScheme(fieldName: String, fields: Array<out EventField<*>>): Set<FieldDescriptor> {
+  private fun buildObjectEvenScheme(fieldName: String, fields: Array<out EventField<*>>,
+                                    eventName: String, groupId: String): Set<FieldDescriptor> {
     val fieldsDescriptors = hashSetOf<FieldDescriptor>()
     for (eventField in fields) {
-      fieldsDescriptors.addAll(fieldSchema(eventField, fieldName + "." + eventField.name))
+      fieldsDescriptors.addAll(fieldSchema(eventField, fieldName + "." + eventField.name, eventName, groupId))
     }
     return fieldsDescriptors
   }
@@ -91,7 +96,7 @@ object EventsSchemeBuilder {
 
   private fun buildFields(events: List<BaseEventId>, eventName: String, groupId: String): HashSet<FieldDescriptor> {
     return events.flatMap { it.getFields() }
-      .flatMap { field -> fieldSchema(field, field.name) }
+      .flatMap { field -> fieldSchema(field, field.name, eventName, groupId) }
       .groupBy { it.path }
       .map { (name, values) ->
         val type = defineDataType(values, name, eventName, groupId)
