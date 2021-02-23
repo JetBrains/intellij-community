@@ -18,6 +18,7 @@ package com.intellij.codeInspection.actions;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,9 +33,9 @@ import java.awt.event.ActionListener;
  * @author Dmitry Avdeev
  */
 class FileFilterPanel {
-  private JCheckBox myUseFileMask;
-  private JComboBox myFileMask;
-  private JPanel myPanel;
+  private final JCheckBox myUseFileMask = new JCheckBox();
+  private final JComboBox<String> myFileMask = new ComboBox<>();
+  private final JPanel myPanel = new FileFilterPanelUi().panel(myUseFileMask, myFileMask);
 
   void init(AnalysisUIOptions options) {
     FindInProjectUtil.initFileFilter(myFileMask, myUseFileMask);
