@@ -121,6 +121,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
         }
         Object data = !alreadyComputed || key == PlatformDataKeys.SLOW_DATA_PROVIDERS ?
                       dataManager.getDataFromProvider(dataProvider, key.getName(), null, null) : null;
+        if (data instanceof Editor) data = validateEditor((Editor)data, component);
         if (data == null) continue;
 
         computed.set(i, true);
@@ -128,7 +129,6 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
           ContainerUtil.addAll(slowProviders, (Iterable<?>)data);
           continue;
         }
-        if (data instanceof Editor) data = validateEditor((Editor)data, component);
         cachedData.put(key.getName(), data);
       }
     }
