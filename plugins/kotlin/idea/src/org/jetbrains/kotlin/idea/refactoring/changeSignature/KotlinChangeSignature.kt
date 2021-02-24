@@ -24,10 +24,7 @@ import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
@@ -59,7 +56,7 @@ fun runChangeSignature(
     callableDescriptor: CallableDescriptor,
     configuration: KotlinChangeSignatureConfiguration,
     defaultValueContext: PsiElement,
-    commandName: String? = null
+    @NlsContexts.Command commandName: String? = null
 ): Boolean {
     val result = KotlinChangeSignature(project, editor, callableDescriptor, configuration, defaultValueContext, commandName).run()
     if (!result) {
@@ -120,57 +117,59 @@ class KotlinChangeSignature(
     }
 
     private fun runInteractiveRefactoring(descriptor: KotlinMethodDescriptor) {
-        val dialog = when (val baseDeclaration = descriptor.baseDeclaration) {
-            is KtFunction, is KtClass -> KotlinChangeSignatureDialog(project, editor, descriptor, defaultValueContext, commandName)
-            is KtProperty, is KtParameter -> KotlinChangePropertySignatureDialog(project, descriptor, commandName)
-            is PsiMethod -> {
-                // No changes are made from Kotlin side: just run foreign refactoring
-                if (descriptor is KotlinChangeSignatureData) {
-                    ChangeSignatureUtil.invokeChangeSignatureOn(baseDeclaration, project)
-                    return
-                }
+        val dialog = if (descriptor.baseDescriptor is PropertyDescriptor)
+            KotlinChangePropertySignatureDialog(project, descriptor, commandName)
+        else
+            when (val baseDeclaration = descriptor.baseDeclaration) {
+                is KtFunction, is KtClass -> KotlinChangeSignatureDialog(project, editor, descriptor, defaultValueContext, commandName)
+                is PsiMethod -> {
+                    // No changes are made from Kotlin side: just run foreign refactoring
+                    if (descriptor is KotlinChangeSignatureData) {
+                        ChangeSignatureUtil.invokeChangeSignatureOn(baseDeclaration, project)
+                        return
+                    }
 
-                if (baseDeclaration.language != JavaLanguage.INSTANCE) {
-                    Messages.showErrorDialog(
-                        KotlinBundle.message(
-                            "error.text.can.t.change.signature.of.method",
-                            baseDeclaration.language.displayName
-                        ), commandName
-                    )
-                    return
-                }
+                    if (baseDeclaration.language != JavaLanguage.INSTANCE) {
+                        Messages.showErrorDialog(
+                            KotlinBundle.message(
+                                "error.text.can.t.change.signature.of.method",
+                                baseDeclaration.language.displayName
+                            ), commandName
+                        )
+                        return
+                    }
 
-                val (preview, javaChangeInfo) = getPreviewInfoForJavaMethod(descriptor)
-                val javaDescriptor = object : JavaMethodDescriptor(preview) {
-                    @Suppress("UNCHECKED_CAST")
-                    override fun getParameters() = javaChangeInfo.newParameters.toMutableList() as MutableList<ParameterInfoImpl>
-                }
+                    val (preview, javaChangeInfo) = getPreviewInfoForJavaMethod(descriptor)
+                    val javaDescriptor = object : JavaMethodDescriptor(preview) {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun getParameters() = javaChangeInfo.newParameters.toMutableList() as MutableList<ParameterInfoImpl>
+                    }
 
-                object : JavaChangeSignatureDialog(project, javaDescriptor, false, null) {
-                    override fun createRefactoringProcessor(): BaseRefactoringProcessor {
-                        val parameters = parameters
-                        LOG.assertTrue(myMethod.method.isValid)
-                        val newJavaChangeInfo = JavaChangeInfoImpl(
-                            visibility ?: VisibilityUtil.getVisibilityModifier(myMethod.method.modifierList),
-                            javaChangeInfo.method,
-                            methodName,
-                            returnType ?: CanonicalTypes.createTypeWrapper(PsiType.VOID),
-                            parameters.toTypedArray(),
-                            exceptions,
-                            isGenerateDelegate,
-                            myMethodsToPropagateParameters ?: HashSet(),
-                            myMethodsToPropagateExceptions ?: HashSet()
-                        ).also {
-                            it.setCheckUnusedParameter()
+                    object : JavaChangeSignatureDialog(project, javaDescriptor, false, null) {
+                        override fun createRefactoringProcessor(): BaseRefactoringProcessor {
+                            val parameters = parameters
+                            LOG.assertTrue(myMethod.method.isValid)
+                            val newJavaChangeInfo = JavaChangeInfoImpl(
+                                visibility ?: VisibilityUtil.getVisibilityModifier(myMethod.method.modifierList),
+                                javaChangeInfo.method,
+                                methodName,
+                                returnType ?: CanonicalTypes.createTypeWrapper(PsiType.VOID),
+                                parameters.toTypedArray(),
+                                exceptions,
+                                isGenerateDelegate,
+                                myMethodsToPropagateParameters ?: HashSet(),
+                                myMethodsToPropagateExceptions ?: HashSet()
+                            ).also {
+                                it.setCheckUnusedParameter()
+                            }
+
+                            return ChangeSignatureProcessor(myProject, newJavaChangeInfo)
                         }
-
-                        return ChangeSignatureProcessor(myProject, newJavaChangeInfo)
                     }
                 }
-            }
 
-            else -> throwUnexpectedDeclarationException(baseDeclaration)
-        }
+                else -> throwUnexpectedDeclarationException(baseDeclaration)
+            }
 
         if (ApplicationManager.getApplication().isUnitTestMode) {
             try {

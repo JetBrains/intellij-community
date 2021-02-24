@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -76,15 +76,14 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
                 && (elementParent as KtNamedDeclaration).nameIdentifier === element
             ) return elementParent
 
-            if (elementParent is KtParameter) {
-                val primaryConstructor = PsiTreeUtil.getParentOfType(elementParent, KtPrimaryConstructor::class.java)
-                if (elementParent.hasValOrVar()
-                    && (elementParent.nameIdentifier === element || elementParent.valOrVarKeyword === element)
-                    && primaryConstructor != null
-                    && primaryConstructor.valueParameterList === elementParent.parent
-                ) return elementParent
+            if (elementParent is KtParameter &&
+                elementParent.hasValOrVar() &&
+                PsiTreeUtil.getParentOfType(elementParent, KtPrimaryConstructor::class.java)?.valueParameterList === elementParent.parent
+            ) {
+                return elementParent
             }
 
+            if (elementParent is KtProperty && elementParent.valOrVarKeyword === element) return elementParent
             if (elementParent is KtPrimaryConstructor && elementParent.getConstructorKeyword() === element) return elementParent
             if (elementParent is KtSecondaryConstructor && elementParent.getConstructorKeyword() === element) return elementParent
 
