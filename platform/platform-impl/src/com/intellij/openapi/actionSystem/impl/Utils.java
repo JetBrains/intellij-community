@@ -342,6 +342,7 @@ public final class Utils {
 
     T result;
     if (async) {
+      ActionUpdater.cancelAllUpdates();
       AsyncPromise<T> promise = new AsyncPromise<>();
       AppExecutorUtil.getAppExecutorService().execute(() -> {
         try {

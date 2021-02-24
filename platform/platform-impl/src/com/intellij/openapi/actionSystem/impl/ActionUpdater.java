@@ -57,7 +57,7 @@ import java.util.function.Supplier;
 final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
-  private static final List<ProgressIndicator> ourIndicators = new CopyOnWriteArrayList<>();
+  private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
 
   private final boolean myModalContext;
   private final PresentationFactory myFactory;
@@ -270,9 +270,9 @@ final class ActionUpdater {
     cancelAndRestartOnUserActivity(promise, indicator);
 
     if (!myToolbarAction) {
-      ourIndicators.forEach(ProgressIndicator::cancel);
+      cancelAllUpdates();
     }
-    ourIndicators.add(indicator);
+    ourPromises.add(promise);
 
     ourExecutor.execute(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
       while (promise.getState() == Promise.State.PENDING) {
@@ -295,9 +295,17 @@ final class ActionUpdater {
           promise.setError(e);
         }
       }
-      ourIndicators.remove(indicator);
+      ourPromises.remove(promise);
     }, indicator));
     return promise;
+  }
+
+  static void cancelAllUpdates() {
+    ArrayList<CancellablePromise<?>> copy = new ArrayList<>(ourPromises);
+    ourPromises.clear();
+    for (CancellablePromise<?> promise : copy) {
+      promise.cancel();
+    }
   }
 
   private void ensureAsyncDataKeysPreCached() {
