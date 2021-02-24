@@ -400,10 +400,7 @@ public class JBUI {
     }
 
     public static final class ActionsList {
-      @NotNull
-      public static Color numberMnemonicColor() {
-        return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
-      }
+      public static final Color MNEMONIC_FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
 
       @NotNull
       public static Insets numberMnemonicInsets() {
