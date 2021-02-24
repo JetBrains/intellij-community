@@ -34,9 +34,11 @@ import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
-import java.util.function.BiFunction;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class Utils {
@@ -315,26 +317,26 @@ public final class Utils {
 
   @ApiStatus.Internal
   @Nullable
-  public static <T> T runUpdateSessionForKeyEvent(@NotNull InputEvent inputEvent,
-                                                  @NotNull DataContext dataContext,
-                                                  @NotNull String place,
-                                                  @NotNull ActionProcessor actionProcessor,
-                                                  @NotNull PresentationFactory factory,
-                                                  @NotNull BiFunction<? super UpdateSession, Function<Presentation, AnActionEvent>, T> function) {
+  public static <T> T runUpdateSessionForInputEvent(@NotNull InputEvent inputEvent,
+                                                    @NotNull DataContext dataContext,
+                                                    @NotNull String place,
+                                                    @NotNull ActionProcessor actionProcessor,
+                                                    @NotNull PresentationFactory factory,
+                                                    @Nullable Consumer<AnActionEvent> eventTracker,
+                                                    @NotNull Function<? super UpdateSession, T> function) {
     long start = System.currentTimeMillis();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
     // direct approach would be to pump events in a custom modality state (enterModal/leaveModal)
     // EventQueue would add significant overhead (x10), but key events must be processed ASAP.
     BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
-    Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
     ActionManager actionManager = ActionManager.getInstance();
     ActionUpdater actionUpdater = new ActionUpdater(
       LaterInvocator.isInModalContext(), factory, dataContext,
       place, false, false, null, true, (action, presentation) -> {
       AnActionEvent event = actionProcessor.createEvent(
         inputEvent, dataContext, place, presentation, actionManager);
-      events.put(presentation, event);
+      if (eventTracker != null) eventTracker.accept(event);
       return event;
     }, async ? queue::offer : null);
 
@@ -346,7 +348,7 @@ public final class Utils {
           Ref<T> ref = Ref.create();
           ProgressManager.getInstance().computePrioritized(() -> {
             ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-              ref.set(ReadAction.compute(() -> function.apply(actionUpdater.asUpdateSession(), events::get)));
+              ref.set(ReadAction.compute(() -> function.apply(actionUpdater.asUpdateSession())));
             }, new EmptyProgressIndicator());
             return null;
           });
@@ -365,7 +367,7 @@ public final class Utils {
       });
     }
     else {
-      result = function.apply(actionUpdater.asUpdateSession(), events::get);
+      result = function.apply(actionUpdater.asUpdateSession());
     }
     long time = System.currentTimeMillis() - start;
     if (time > 500) {

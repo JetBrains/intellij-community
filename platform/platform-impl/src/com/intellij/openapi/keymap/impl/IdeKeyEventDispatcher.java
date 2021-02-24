@@ -71,6 +71,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -658,14 +659,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
                                @NotNull ActionProcessor processor,
                                @NotNull PresentationFactory presentationFactory,
                                @NotNull ActionManagerEx actionManager) {
+    if (actions.isEmpty()) return false;
     DataContext wrappedContext = Utils.wrapDataContext(context);
     Project project = CommonDataKeys.PROJECT.getData(wrappedContext);
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
 
+    Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
     List<AnActionEvent> wouldBeEnabledIfNotDumb = new ArrayList<>();
-    Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForKeyEvent(
+    Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
       e, wrappedContext, place, processor, presentationFactory,
-      (session, events) -> doUpdateActionsInner(wrappedContext, actions, dumb, wouldBeEnabledIfNotDumb, session, events));
+      event -> events.put(event.getPresentation(), event),
+      session -> doUpdateActionsInner(wrappedContext, actions, dumb, wouldBeEnabledIfNotDumb, session, events::get));
 
     doPerformActionInner(chosen, e, processor, wrappedContext, actionManager, project, wouldBeEnabledIfNotDumb, () -> {
       //invokeLater to make sure correct dataContext is taken from focus
