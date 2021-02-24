@@ -76,8 +76,10 @@ class AddWhenRemainingBranchesFix(
             (whenCloseBrace.prevSibling as? PsiWhiteSpace)?.replace(psiFactory.createNewLine())
             for (case in missingCases) {
                 val branchConditionText = when (case) {
-                    WhenMissingCase.Unknown, WhenMissingCase.NullIsMissing, is WhenMissingCase.BooleanIsMissing, is WhenMissingCase.ConditionTypeIsExpect ->
-                        case.branchConditionText
+                    WhenMissingCase.Unknown,
+                    WhenMissingCase.NullIsMissing,
+                    is WhenMissingCase.BooleanIsMissing,
+                    is WhenMissingCase.ConditionTypeIsExpect -> case.branchConditionText
                     is WhenMissingCase.IsTypeCheckIsMissing ->
                         if (case.isSingleton) {
                             ""
