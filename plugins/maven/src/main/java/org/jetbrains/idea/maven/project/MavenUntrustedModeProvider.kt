@@ -11,7 +11,7 @@ class MavenUntrustedModeProvider : UntrustedProjectModeProvider {
   override val systemId = MavenUtil.SYSTEM_ID
 
   override fun shouldShowEditorNotification(project: Project): Boolean {
-    return MavenProjectsManager.getInstance(project).isMavenizedProject && !project.isTrusted()
+    return MavenProjectsManager.getInstance(project).isMavenizedProject
   }
 
   override fun loadAllLinkedProjects(project: Project) {
