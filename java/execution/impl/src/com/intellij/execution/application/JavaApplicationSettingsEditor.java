@@ -6,13 +6,10 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +61,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     setMinimumWidth(mainClass, 300);
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
       new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
-                                   (configuration, component) -> component.setText(getQName(configuration.getMainClassName())),
+                                   (configuration, component) -> component.setText(StringUtil.notNullize(configuration.getMainClassName()).replaceAll("\\$", "\\.")),
                                    (configuration, component) -> configuration.setMainClassName(component.getText()),
                                    configuration -> true);
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
@@ -76,12 +73,5 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     mainClassFragment.setValidation((configuration) ->
       Collections.singletonList(RuntimeConfigurationException.validate(mainClass, () -> ReadAction.run(() -> configuration.checkClass()))));
     return mainClassFragment;
-  }
-
-  @Nullable
-  private String getQName(@Nullable String className) {
-    if (className == null) return null;
-    PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()));
-    return psiClass == null ? className : psiClass.getQualifiedName();
   }
 }
