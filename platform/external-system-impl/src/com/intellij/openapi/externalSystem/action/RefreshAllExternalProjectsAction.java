@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -76,7 +76,11 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
 
     for (ProjectSystemId externalSystemId : systemIds) {
       ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
-      ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, externalSystemId).forceWhenUptodate(true));
+      ImportSpecBuilder importSpec = new ImportSpecBuilder(project, externalSystemId);
+      if (!ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, externalSystemId)) {
+        importSpec.usePreviewMode();
+      }
+      ExternalSystemUtil.refreshProjects(importSpec.forceWhenUptodate(true));
     }
   }
 

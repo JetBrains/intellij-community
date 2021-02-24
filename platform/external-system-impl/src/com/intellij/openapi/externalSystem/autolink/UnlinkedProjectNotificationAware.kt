@@ -53,12 +53,8 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
     }, notificationDisposable)
 
     notification.addAction(NotificationAction.createSimple(unlinkedProjectAware.getNotificationText()) {
-      val isLoadAllowed = project.isTrusted() ||
-                          confirmImportingUntrustedProject(project, systemName, unlinkedProjectAware.getNotificationText(), CommonBundle.getCancelButtonText())
-      if (isLoadAllowed) {
-        notification.expire()
-        unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
-      }
+      notification.expire()
+      unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
     })
     notification.addAction(NotificationAction.createSimple(message("unlinked.project.notification.skip.action")) {
       notification.expire()
