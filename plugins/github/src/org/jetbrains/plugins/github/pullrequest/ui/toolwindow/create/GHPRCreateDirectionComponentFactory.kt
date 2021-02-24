@@ -183,11 +183,13 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
         }
       }
     }.apply {
+      isFocusCycleRoot = true
       border = JBUI.Borders.empty(8, 8, 0, 8)
     }
 
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(panel, repoComponent.takeIf { it.isEnabled } ?: branchComponent)
+      .setFocusable(false)
       .createPopup().apply {
         setRequestFocus(true)
       }.also { popup ->
