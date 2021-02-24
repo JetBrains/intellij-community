@@ -340,16 +340,21 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         try {
           String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
           PluginId pluginId = PluginManager.getPluginByClassName(javaPsiFacadeFqn);
+          Class<?> facade = null;
           if (pluginId != null) {
             IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
             if (plugin != null) {
-              Class<?> facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
-              Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
-              Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
-              Object result = findClass.invoke(getInstance.invoke(null, myProject), fqn, GlobalSearchScope.allScope(myProject));
-              if (result instanceof PsiElement) {
-                PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
-              }
+              facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
+            }
+          } else {
+            facade = Class.forName(javaPsiFacadeFqn);
+          }
+          if (facade != null) {
+            Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
+            Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
+            Object result = findClass.invoke(getInstance.invoke(null, myProject), fqn, GlobalSearchScope.allScope(myProject));
+            if (result instanceof PsiElement) {
+              PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
             }
           }
         }
