@@ -146,12 +146,14 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
     JBPopup popup = SoftReference.dereference(myPopupRef);
     if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
       final ImplementationViewComponent component = (ImplementationViewComponent)((AbstractPopup)popup).getComponent();
-      component.update(impls, index);
-      updateInBackground(session, component, (AbstractPopup)popup, usageView);
-      if (invokedByShortcut) {
-        ((AbstractPopup)popup).focusPreferredComponent();
+      if (component != null) {
+        component.update(impls, index);
+        updateInBackground(session, component, (AbstractPopup)popup, usageView);
+        if (invokedByShortcut) {
+          ((AbstractPopup)popup).focusPreferredComponent();
+        }
+        return;
       }
-      return;
     }
 
     Consumer<ImplementationViewComponent> processor = couldPinPopup() ? component -> {
@@ -170,6 +172,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
       ComponentPopupBuilder popupBuilder = JBPopupFactory.getInstance()
         .createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
         .setProject(project)
+        .setCancelOnClickOutside(false)
         .addListener(updateProcessor)
         .addUserData(updateProcessor)
         .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
