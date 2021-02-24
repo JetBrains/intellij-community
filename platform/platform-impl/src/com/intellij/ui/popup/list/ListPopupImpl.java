@@ -454,7 +454,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   protected void showNextStepPopup(PopupStep nextStep, Object parentValue) {
     if (nextStep == null) {
-      LOG.warn("Trying to open popup for null step");
+      String valueText = getListStep().getTextFor(parentValue);
+      String message = String.format("Cannot open submenu for '%s' item. PopupStep is null", valueText);
+      LOG.warn(message);
       return;
     }
 
