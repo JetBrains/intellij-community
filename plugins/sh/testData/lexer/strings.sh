@@ -3,6 +3,9 @@ bar"
 #foo
 #bar
 
+# Fix for IDEA-262819
+"$(md5sum <( echo "$(hostname)-$(whoami)" ) | awk '{print $1}')"
+
 echo
 
 echo 'foo

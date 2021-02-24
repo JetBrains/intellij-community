@@ -1005,6 +1005,7 @@ public class _ShLexerGen implements FlexLexer {
     this(null);
   }
 
+  private static final int LT_GT_PARENTHESES = 3;
   private static final int DOUBLE_PARENTHESES = 2;
   private static final int PARENTHESES = 1;
 
@@ -1045,6 +1046,10 @@ public class _ShLexerGen implements FlexLexer {
   private void popParentheses() {
     assert !parenStack.empty() : "Parentheses stack is empty";
     parenStack.pop();
+  }
+
+  private boolean shouldCloseLgGtParen() {
+    return !parenStack.empty() && parenStack.peek() == LT_GT_PARENTHESES;
   }
 
   private boolean shouldCloseDoubleParen() {
@@ -1402,7 +1407,12 @@ public class _ShLexerGen implements FlexLexer {
             // fall through
           case 155: break;
           case 12: 
-            { if (shouldCloseSingleParen()) popParentheses();
+            { if (shouldCloseLgGtParen()) {
+                                      popParentheses();
+                                      return RIGHT_PAREN;
+                                    }
+                                    if (shouldCloseSingleParen())
+                                      popParentheses();
                                     popState(PARENTHESES_COMMAND_SUBSTITUTION); return RIGHT_PAREN;
             } 
             // fall through
@@ -1786,7 +1796,7 @@ public class _ShLexerGen implements FlexLexer {
             // fall through
           case 227: break;
           case 84: 
-            { return OUTPUT_PROCESS_SUBSTITUTION;
+            { pushParentheses(LT_GT_PARENTHESES); return OUTPUT_PROCESS_SUBSTITUTION;
             } 
             // fall through
           case 228: break;
@@ -1806,7 +1816,7 @@ public class _ShLexerGen implements FlexLexer {
             // fall through
           case 231: break;
           case 88: 
-            { return INPUT_PROCESS_SUBSTITUTION;
+            { pushParentheses(LT_GT_PARENTHESES); return INPUT_PROCESS_SUBSTITUTION;
             } 
             // fall through
           case 232: break;

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
     this(null);
   }
 
+  private static final int LT_GT_PARENTHESES = 3;
   private static final int DOUBLE_PARENTHESES = 2;
   private static final int PARENTHESES = 1;
 
@@ -61,6 +62,10 @@ import com.intellij.openapi.util.text.StringUtil;
   private void popParentheses() {
     assert !parenStack.empty() : "Parentheses stack is empty";
     parenStack.pop();
+  }
+
+  private boolean shouldCloseLgGtParen() {
+    return !parenStack.empty() && parenStack.peek() == LT_GT_PARENTHESES;
   }
 
   private boolean shouldCloseDoubleParen() {
@@ -429,7 +434,12 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
     "="                           { return ASSIGN; }
     "$"                           { return DOLLAR; }
     "("                           { pushParentheses(PARENTHESES); return LEFT_PAREN; }
-    ")"                           { if (shouldCloseSingleParen()) popParentheses();
+    ")"                           { if (shouldCloseLgGtParen()) {
+                                      popParentheses();
+                                      return RIGHT_PAREN;
+                                    }
+                                    if (shouldCloseSingleParen())
+                                      popParentheses();
                                     popState(PARENTHESES_COMMAND_SUBSTITUTION); return RIGHT_PAREN; }
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
@@ -455,8 +465,8 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
     "<>"                          { return REDIRECT_LESS_GREATER; }
     "&>"                          { return REDIRECT_AMP_GREATER; }
     ">|"                          { return REDIRECT_GREATER_BAR; }
-    ">("                          { return OUTPUT_PROCESS_SUBSTITUTION; }
-    "<("                          { return INPUT_PROCESS_SUBSTITUTION; }
+    ">("                          { pushParentheses(LT_GT_PARENTHESES); return OUTPUT_PROCESS_SUBSTITUTION; }
+    "<("                          { pushParentheses(LT_GT_PARENTHESES); return INPUT_PROCESS_SUBSTITUTION; }
 
     "<<<"                         { herestringStartPosition = getTokenEnd(); pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
     "<<-"                         { if (yystate() != HERE_DOC_PIPELINE)
