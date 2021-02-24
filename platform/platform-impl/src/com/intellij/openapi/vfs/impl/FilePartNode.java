@@ -103,7 +103,7 @@ class FilePartNode {
   }
 
   @NotNull
-  static String myUrl(Object fileOrUrl) {
+  static String myUrl(@NotNull Object fileOrUrl) {
     return fileOrUrl instanceof VirtualFile ? ((VirtualFile)fileOrUrl).getUrl() : (String)fileOrUrl;
   }
 

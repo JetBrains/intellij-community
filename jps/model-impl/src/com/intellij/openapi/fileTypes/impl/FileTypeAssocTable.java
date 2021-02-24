@@ -94,7 +94,6 @@ public final class FileTypeAssocTable<T> {
       String extension = ((ExtensionFileNameMatcher)matcher).getExtension();
       if (myExtensionMappings.get(extension) == type) {
         myExtensionMappings.remove(extension);
-        return;
       }
       return;
     }

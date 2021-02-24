@@ -187,7 +187,7 @@ public final class Strings {
 
   @Contract(pure = true)
   public static int indexOfAny(final @NotNull CharSequence s, final @NotNull String chars, final int start, int end) {
-    if (chars.length() == 0) return -1;
+    if (chars.isEmpty()) return -1;
 
     end = Math.min(end, s.length());
     for (int i = Math.max(start, 0); i < end; i++) {
@@ -425,7 +425,7 @@ public final class Strings {
   }
 
   @Contract(pure = true)
-  public static int stringHashCode(char[] chars, int from, int to) {
+  public static int stringHashCode(char @NotNull [] chars, int from, int to) {
     int h = 0;
     for (int off = from; off < to; off++) {
       h = 31 * h + chars[off];
