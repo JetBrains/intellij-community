@@ -957,7 +957,7 @@ public class JBUI {
     }
 
     public static final class Advertiser {
-      private static final JBInsets DEFAULT_AD_INSETS = JBInsets.create(8, 8);
+      private static final JBInsets DEFAULT_AD_INSETS = insets(5, 10, 5, 15);
 
       @NotNull
       public static Color foreground() {
