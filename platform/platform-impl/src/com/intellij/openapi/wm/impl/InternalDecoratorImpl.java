@@ -230,7 +230,10 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       ToolWindowManagerImpl toolWindowManager = window.getToolWindowManager();
       WindowInfo windowInfo = window.getWindowInfo();
       if (toolWindowManager.getProject().isDisposed() ||
-          !toolWindowManager.isToolWindowRegistered(window.getId()) || windowInfo.getType() == ToolWindowType.FLOATING || windowInfo.getType() == ToolWindowType.WINDOWED) {
+          !toolWindowManager.isToolWindowRegistered(window.getId()) ||
+          window.isDisposed() ||
+          windowInfo.getType() == ToolWindowType.FLOATING ||
+          windowInfo.getType() == ToolWindowType.WINDOWED) {
         return JBUI.emptyInsets();
       }
 
