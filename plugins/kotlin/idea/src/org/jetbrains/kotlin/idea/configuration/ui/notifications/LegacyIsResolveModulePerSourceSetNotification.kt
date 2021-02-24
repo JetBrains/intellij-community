@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.util.PlatformUtils
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -36,7 +37,7 @@ internal fun notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
     notificationSuppressState: SuppressResolveModulePerSourceSetNotificationState,
     isResolveModulePerSourceSetSetting: IsResolveModulePerSourceSetSetting
 ) {
-    if (PlatformVersion.isAndroidStudio()) return
+    if (PlatformVersion.isAndroidStudio() || PlatformUtils.isMobileIde()) return
     if (notificationSuppressState.isSuppressed) return
     if (isResolveModulePerSourceSetSetting.isResolveModulePerSourceSet) return
     if (previouslyShownNotification.get()?.isExpired == false) return

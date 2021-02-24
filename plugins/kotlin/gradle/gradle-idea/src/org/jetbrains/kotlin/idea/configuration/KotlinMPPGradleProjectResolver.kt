@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.text.VersionComparatorUtil
@@ -100,7 +101,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 nativeDebugAdvertised = true
                 suggestNativeDebug(resolverCtx.projectPath)
             }
-            if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio()) {
+            if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde()) {
                 notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
                 resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())
             }
