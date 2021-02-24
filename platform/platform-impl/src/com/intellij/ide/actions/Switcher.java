@@ -40,10 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -114,8 +111,8 @@ public final class Switcher extends AnAction implements DumbAware {
     IdeEventQueue.getInstance().addPostprocessor(event -> {
       if (event instanceof KeyEvent) {
         KeyEvent keyEvent = (KeyEvent)event;
-        DataContext context = DataManager.getInstance().getDataContext(keyEvent.getComponent());
-        Project project = context.getData(CommonDataKeys.PROJECT);
+        Component parent = UIUtil.findUltimateParent(keyEvent.getComponent());
+        Project project = parent instanceof IdeFrame ? ((IdeFrame)parent).getProject() : null;
         ToolWindow tw;
         SwitcherPanel switcher = SWITCHER_KEY.get(project);
         if (switcher != null && !switcher.isPinnedMode()) {
@@ -346,7 +343,7 @@ public final class Switcher extends AnAction implements DumbAware {
       }
     };
 
-    @SuppressWarnings({"ConstantConditions"})
+    @SuppressWarnings("ConstantConditions")
     SwitcherPanel(@NotNull final Project project, @NotNull @Nls String title, boolean onlyEdited, boolean pinned, boolean moveForward) {
       setLayout(new BorderLayout());
       this.project = project;
