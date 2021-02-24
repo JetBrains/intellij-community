@@ -40,6 +40,8 @@ class Group<Settings : FragmentedSettings>(
   val name: @Nls String
 ) : AbstractFragmentBuilder<Settings>() {
 
+  var onVisibilityChanged: (Settings, Boolean) -> Unit = { _, _ -> }
+
   var visible: (Settings) -> Boolean = { true }
 
   @Nls
@@ -54,6 +56,11 @@ class Group<Settings : FragmentedSettings>(
       }
 
       override fun getChildrenGroupName(): String? = this@Group.childrenGroupName ?: super.getChildrenGroupName()
+
+      override fun applyEditorTo(s: Settings) {
+        onVisibilityChanged(s, component().isVisible)
+        super.applyEditorTo(s)
+      }
     }.also {
       it.actionHint = actionHint
       it.actionDescription = actionDescription
