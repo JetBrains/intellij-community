@@ -5,7 +5,7 @@ query($repoOwner: String!, $repoName: String!, $baseBranch: String!, $headBranch
         ...pageInfo
       }
       nodes {
-        ...pullRequestInfoShort
+        ...pullRequestInfo
       }
     }
   }
