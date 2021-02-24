@@ -24,6 +24,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -37,6 +38,7 @@ import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 /**
  * Base class for windowed and offscreen browsers.
  */
+@SuppressWarnings("unused")
 public abstract class JBCefBrowserBase implements JBCefDisposable {
 
   @NotNull protected static final String BLANK_URI = "about:blank";
@@ -49,6 +51,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @NotNull private String myLastRequestedUrl = "";
   @NotNull private final Object myLastRequestedUrlLock = new Object();
   @Nullable private volatile ErrorPage myErrorPage;
+  @NotNull private final PropertyChangeHelper myPropertyChangeHelper = new PropertyChangeHelper();
 
   private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
     new LazyInitializer.NotNullValue<>() {
@@ -398,6 +401,35 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   public void setErrorPage(@Nullable ErrorPage errorPage) {
     myErrorPage = errorPage;
+  }
+
+  /**
+   * @see JBCefBrowser#setProperty(String, Object)
+   */
+  public void setProperty(@NotNull String name, @Nullable Object value) {
+    myPropertyChangeHelper.setProperty(name, value);
+  }
+
+  /**
+   * @see #setProperty(String, Object)
+   */
+  @Nullable
+  public Object getProperty(@NotNull String name) {
+    return myPropertyChangeHelper.getProperty(name);
+  }
+
+  /**
+   * @see #setProperty(String, Object)
+   */
+  void addPropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
+    myPropertyChangeHelper.addPropertyChangeListener(name, listener);
+  }
+
+  /**
+   * @see #setProperty(String, Object)
+   */
+  void removePropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
+    myPropertyChangeHelper.removePropertyChangeListener(name, listener);
   }
 
   private final class LoadDeferrer {
