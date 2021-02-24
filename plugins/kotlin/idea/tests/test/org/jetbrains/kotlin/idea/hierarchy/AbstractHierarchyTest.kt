@@ -13,6 +13,8 @@ import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
@@ -161,12 +163,15 @@ abstract class AbstractHierarchyTest : KotlinHierarchyViewTestBase() {
             val context = MapDataContext()
             context.put(CommonDataKeys.PROJECT, project)
             context.put(CommonDataKeys.EDITOR, editor)
-            val targetElement = TextEditorPsiDataProvider().getData(
-                CommonDataKeys.PSI_ELEMENT.name,
+
+            @Suppress("UNCHECKED_CAST")
+            val slowDataProvider = TextEditorPsiDataProvider().getData(
+                PlatformDataKeys.SLOW_DATA_PROVIDERS.name,
                 editor,
                 editor.caretModel.currentCaret
-            ) as PsiElement?
-            context.put(CommonDataKeys.PSI_ELEMENT, targetElement)
+            ) as Iterable<DataProvider>
+
+            context.put(CommonDataKeys.PSI_ELEMENT, CommonDataKeys.PSI_ELEMENT.getData(slowDataProvider.first()))
             return context
         }
 
