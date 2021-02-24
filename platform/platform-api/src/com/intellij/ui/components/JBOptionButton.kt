@@ -45,7 +45,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
       firePropertyChange(PROP_OPTION_TOOLTIP, oldValue, optionTooltipText)
     }
 
-  var isOkToProcessDefaultMnemonics = true
+  var isOkToProcessDefaultMnemonics = false
 
   val isSimpleButton: Boolean get() = options.isNullOrEmpty()
 
