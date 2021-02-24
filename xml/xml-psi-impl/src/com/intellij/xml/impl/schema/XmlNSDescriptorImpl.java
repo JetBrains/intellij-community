@@ -115,7 +115,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
   }
 
-  private static boolean checkSchemaNamespace(String name, @NotNull XmlTag context){
+  private static boolean checkSchemaNamespace(@NotNull String name, @NotNull XmlTag context){
     final String namespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(name));
     if(namespace.length() > 0){
       return checkSchemaNamespace(namespace);
@@ -518,7 +518,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Override
-  public TypeDescriptor getTypeDescriptor(final String name, XmlTag context) {
+  public TypeDescriptor getTypeDescriptor(@NotNull String name, XmlTag context) {
     if(checkSchemaNamespace(name, context)){
       final String localNameByQualifiedName = XmlUtil.findLocalNameByQualifiedName(name);
 
