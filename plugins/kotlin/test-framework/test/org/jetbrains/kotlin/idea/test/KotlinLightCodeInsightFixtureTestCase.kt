@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2000-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,13 +8,15 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -33,6 +35,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
+import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -40,6 +43,7 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.apache.log4j.Logger
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
@@ -474,4 +478,20 @@ fun Project.findFileWithCaret(): PsiClassOwner {
     return (allKotlinFiles() + allJavaFiles()).single {
         "<caret>" in VfsUtilCore.loadText(it.virtualFile) && !it.virtualFile.name.endsWith(".after")
     }
+}
+
+fun createTextEditorBasedDataContext(
+    project: Project,
+    editor: Editor,
+    caret: Caret,
+    additionalSteps: SimpleDataContext.Builder.() -> SimpleDataContext.Builder = { this },
+): DataContext {
+    val textEditorPsiDataProvider = TextEditorPsiDataProvider()
+    val parentContext = DataContext { dataId -> textEditorPsiDataProvider.getData(dataId, editor, caret) }
+    return SimpleDataContext.builder()
+        .add(CommonDataKeys.PROJECT, project)
+        .add(CommonDataKeys.EDITOR, editor)
+        .additionalSteps()
+        .setParent(parentContext)
+        .build()
 }

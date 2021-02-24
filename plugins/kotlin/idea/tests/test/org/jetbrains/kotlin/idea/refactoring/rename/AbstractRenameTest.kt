@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,15 +8,11 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser.parseString
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.Property
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -331,20 +327,10 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
 
             editor.caretModel.moveToOffset(marker)
             val currentCaret = editor.caretModel.currentCaret
-
-            val textEditorPsiDataProvider = TextEditorPsiDataProvider()
-
-            val dataContext = DataContext { dataId ->
-                when (dataId) {
-                    CommonDataKeys.PROJECT.name -> project
-                    CommonDataKeys.EDITOR.name -> editor
-                    CommonDataKeys.CARET.name,
-                    CommonDataKeys.PSI_ELEMENT.name,
-                    CommonDataKeys.PSI_FILE.name -> textEditorPsiDataProvider.getData(dataId, editor, currentCaret)
-                    PsiElementRenameHandler.DEFAULT_NAME.name -> newName
-                    else -> null
-                }
+            val dataContext = createTextEditorBasedDataContext(project, editor, currentCaret) {
+                add(PsiElementRenameHandler.DEFAULT_NAME, newName)
             }
+
             var handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext) ?: return@doTestCommittingDocuments
             Assert.assertTrue(handler.isAvailableOnDataContext(dataContext))
             if (handler is KotlinRenameDispatcherHandler) {

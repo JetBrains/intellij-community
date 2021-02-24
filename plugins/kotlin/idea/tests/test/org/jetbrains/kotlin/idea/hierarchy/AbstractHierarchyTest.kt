@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 package org.jetbrains.kotlin.idea.hierarchy
@@ -11,11 +11,7 @@ import com.intellij.ide.hierarchy.type.SubtypesHierarchyTreeStructure
 import com.intellij.ide.hierarchy.type.SupertypesHierarchyTreeStructure
 import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure
 import com.intellij.lang.LanguageExtension
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClass
@@ -25,7 +21,6 @@ import com.intellij.psi.PsiMember
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.rt.execution.junit.ComparisonDetailsExtractor
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.MapDataContext
 import com.intellij.util.ArrayUtil
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
@@ -34,6 +29,7 @@ import org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCalleeTreeStructure
 import org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCallerTreeStructure
 import org.jetbrains.kotlin.idea.hierarchy.overrides.KotlinOverrideTreeStructure
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.createTextEditorBasedDataContext
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.test.KotlinTestUtils
@@ -157,23 +153,7 @@ abstract class AbstractHierarchyTest : KotlinHierarchyViewTestBase() {
             ?: throw RefactoringErrorHintException("Cannot apply action for element at caret")
     }
 
-    private val dataContext: DataContext
-        get() {
-            val editor = editor
-            val context = MapDataContext()
-            context.put(CommonDataKeys.PROJECT, project)
-            context.put(CommonDataKeys.EDITOR, editor)
-
-            @Suppress("UNCHECKED_CAST")
-            val slowDataProvider = TextEditorPsiDataProvider().getData(
-                PlatformDataKeys.SLOW_DATA_PROVIDERS.name,
-                editor,
-                editor.caretModel.currentCaret
-            ) as Iterable<DataProvider>
-
-            context.put(CommonDataKeys.PSI_ELEMENT, CommonDataKeys.PSI_ELEMENT.getData(slowDataProvider.first()))
-            return context
-        }
+    private val dataContext: DataContext get() = createTextEditorBasedDataContext(project, editor, editor.caretModel.currentCaret)
 
     protected val filesToConfigure: Array<String>
         get() {
