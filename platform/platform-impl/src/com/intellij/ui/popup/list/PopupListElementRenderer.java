@@ -108,7 +108,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     panel.add(myShortcutLabel, BorderLayout.EAST);
 
     myMnemonicLabel = new JLabel();
-    Dimension preferredSize = new JLabel("A").getPreferredSize();
+    //noinspection HardCodedStringLiteral
+    Dimension preferredSize = new JLabel("W").getPreferredSize();
     Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
     preferredSize.width += insets.left + insets.right;
     myMnemonicLabel.setPreferredSize(preferredSize);
