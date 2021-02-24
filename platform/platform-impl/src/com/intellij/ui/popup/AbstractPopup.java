@@ -28,6 +28,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -44,10 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -386,16 +384,39 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   public void setAdText(@NotNull String s, int alignment) {
     if (myAdComponent == null) {
       myAdComponent = HintUtil.createAdComponent(s, JBUI.CurrentTheme.Advertiser.border(), alignment);
-      JPanel wrapper = new JPanel(new BorderLayout());
-      wrapper.setOpaque(false);
-      wrapper.add(myAdComponent, BorderLayout.CENTER);
-      myContent.add(wrapper, BorderLayout.SOUTH);
+      myContent.add(myAdComponent, BorderLayout.SOUTH);
       pack(false, true);
     }
 
+    Dimension prefSize = myAdComponent.isVisible() ? myAdComponent.getPreferredSize() : JBUI.emptySize();
     myAdComponent.setVisible(StringUtil.isNotEmpty(s));
-    myAdComponent.setText(s);
+    myAdComponent.setText(wrapToSize(s));
     myAdComponent.setHorizontalAlignment(alignment);
+
+    Dimension newPrefSize = myAdComponent.isVisible() ? myAdComponent.getPreferredSize() : JBUI.emptySize();
+    int delta = newPrefSize.height - prefSize.height;
+
+    // Resize popup to match new advertiser size.
+    if (myPopup != null && !isBusy() && delta != 0) {
+      Window popupWindow = getContentWindow(myContent);
+      if (popupWindow != null) {
+        Dimension size = popupWindow.getSize();
+        size.height += delta;
+        myContent.setPreferredSize(size);
+        popupWindow.pack();
+        updateMaskAndAlpha(popupWindow);
+      }
+    }
+  }
+
+  @NotNull
+  @Nls
+  private String wrapToSize(@NotNull @Nls String hint) {
+    if (StringUtil.isEmpty(hint)) return hint;
+
+    Dimension size = myComponent.getPreferredSize();
+    int width = Math.max(JBUI.CurrentTheme.Popup.minimumHintWidth(), size.width);
+    return HtmlChunk.text(hint).wrapWith(HtmlChunk.div().attr("width", width)).wrapWith(HtmlChunk.html()).toString();
   }
 
   public static @NotNull Point getCenterOf(@NotNull Component aContainer, @NotNull JComponent content) {
