@@ -3,8 +3,8 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
@@ -16,6 +16,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     IdeEventQueue.getInstance().addActivityListener(() -> restartRebuild(), panel);
   }
 
-  private void requestModelUpdate(@Nullable final DataContext context, final @Nullable Object object, boolean requeue) {
+  private void requestModelUpdate(@Nullable DataContext context, @Nullable Object object, boolean requeue) {
     if (myModelUpdating.getAndSet(true) && !requeue) return;
 
     cancelAllUpdates();
@@ -52,7 +53,8 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       public void run() {
         if (context != null || object != null) {
           requestModelUpdateFromContextOrObject(context, object);
-        } else {
+        }
+        else {
           DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(
             dataContext -> requestModelUpdateFromContextOrObject(dataContext, null));
         }
@@ -68,13 +70,15 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
 
   private void requestModelUpdateFromContextOrObject(DataContext dataContext, Object object) {
     try {
-      final NavBarModel model = myPanel.getModel();
+      NavBarModel model = myPanel.getModel();
       if (dataContext != null) {
-        if (CommonDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupActive()) {
+        Component parent = UIUtil.findUltimateParent(PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+        Project project = parent instanceof IdeFrame ? ((IdeFrame)parent).getProject() : null;
+        if (myPanel.getProject() != project || myPanel.isNodePopupActive()) {
           requestModelUpdate(null, myPanel.getContextObject(), true);
           return;
         }
-        final Window window = SwingUtilities.getWindowAncestor(myPanel);
+        Window window = SwingUtilities.getWindowAncestor(myPanel);
         if (window != null && !window.isFocused()) {
           model.updateModelAsync(DataManager.getInstance().getDataContext(myPanel), null);
         }
