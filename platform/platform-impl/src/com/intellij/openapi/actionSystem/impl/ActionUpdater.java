@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -167,15 +169,17 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(boolean forceAsync, @NotNull AnAction action, @NotNull String operation, @NotNull Supplier<? extends T> call) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    Computable<T> adjustedCall = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start(operation)) {
         return call.get();
       }
-    }
+    };
     // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
     boolean suppressAsync = myBeforeActionPerformed && "update".equals(operation);
-    if (!suppressAsync && (forceAsync || action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground())) {
-      return call.get();
+    if (EDT.isCurrentThreadEdt() ||
+        !suppressAsync && forceAsync ||
+        !suppressAsync && action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground()) {
+      return adjustedCall.get();
     }
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressManager.getInstance().getProgressIndicator());
@@ -183,7 +187,7 @@ final class ActionUpdater {
     return computeOnEdt(() -> {
       long start = System.currentTimeMillis();
       try {
-        return ProgressManager.getInstance().runProcess(call::get, ProgressWrapper.wrap(progress));
+        return ProgressManager.getInstance().runProcess(adjustedCall, ProgressWrapper.wrap(progress));
       }
       finally {
         long elapsed = System.currentTimeMillis() - start;
