@@ -210,6 +210,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       ? new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode(), isCompositeBuildsSupported)
       : new ProjectImportAction(resolverCtx.isPreviewMode(), isCompositeBuildsSupported);
 
+    boolean useParallelModelsFetch = Registry.is("gradle.tooling.models.parallel.fetch", false);
+    projectImportAction.setParallelModelsFetch(useParallelModelsFetch);
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
       executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
