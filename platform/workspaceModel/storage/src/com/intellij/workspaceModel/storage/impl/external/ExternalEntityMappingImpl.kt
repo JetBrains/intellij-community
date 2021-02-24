@@ -162,7 +162,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     fun fromMap(other: Map<String, ExternalEntityMappingImpl<*>>): MutableMap<String, MutableExternalEntityMappingImpl<*>> {
       val result = mutableMapOf<String, MutableExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
-        result[identifier] = MutableExternalEntityMappingImpl(index.index.copy(), mutableListOf(), false)
+        result[identifier] = MutableExternalEntityMappingImpl(index.index, mutableListOf(), true)
       }
       return result
     }
