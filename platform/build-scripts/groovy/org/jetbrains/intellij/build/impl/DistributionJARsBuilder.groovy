@@ -459,7 +459,7 @@ final class DistributionJARsBuilder {
       LibraryLicensesListGenerator generator = LibraryLicensesListGenerator.create(buildContext.messages,
                                                                                    buildContext.project,
                                                                                    buildContext.productProperties.allLibraryLicenses,
-                                                                                   projectStructureMapping.includedModules as Set<String>)
+                                                                                   projectStructureMapping.includedModules)
       generator.generateHtml(getThirdPartyLibrariesHtmlFilePath(buildContext))
       generator.generateJson(getThirdPartyLibrariesJsonFilePath(buildContext))
     }
