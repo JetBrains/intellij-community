@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import java.util.concurrent.ConcurrentHashMap;
 import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtilRt;
 import org.gradle.api.Action;
@@ -35,6 +34,7 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Vladislav.Soroka
@@ -48,6 +48,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private boolean myUseProjectsLoadedPhase;
+  private boolean myParallelModelsFetch;
   private AllModels myAllModels = null;
   @Nullable
   private transient GradleBuild myGradleBuild;
@@ -131,6 +132,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
   }
 
+  @ApiStatus.Internal
+  public void setParallelModelsFetch(boolean parallelModelsFetch) {
+    myParallelModelsFetch = parallelModelsFetch;
+  }
+
   @Contract("null -> null")
   private static BuildEnvironment convert(final @Nullable BuildEnvironment buildEnvironment) {
     if (buildEnvironment == null) return null;
@@ -192,7 +198,15 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     // Execute nested build actions.
-    List<List<Runnable>> addFetchedModelActions = controller.run(buildActions);
+    List<List<Runnable>> addFetchedModelActions = new ArrayList<List<Runnable>>(buildActions.size());
+    if (myParallelModelsFetch) {
+      addFetchedModelActions.addAll(controller.run(buildActions));
+    }
+    else {
+      for (BuildAction<List<Runnable>> buildAction : buildActions) {
+        addFetchedModelActions.addAll(controller.run(Collections.singleton(buildAction)));
+      }
+    }
 
     // Execute returned actions sequentially in one thread to populate myAllModels.
     for (List<Runnable> actions : addFetchedModelActions) {
