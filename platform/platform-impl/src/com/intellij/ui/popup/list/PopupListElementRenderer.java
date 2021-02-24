@@ -80,7 +80,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     preferredSize.width += insets.left + insets.right;
     myMnemonicLabel.setPreferredSize(preferredSize);
     myMnemonicLabel.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
-    myMnemonicLabel.setForeground(JBUI.CurrentTheme.ActionsList.numberMnemonicColor());
+    myMnemonicLabel.setForeground(JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
   }
 
@@ -234,6 +234,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       myLeftPart.add(myMnemonicLabel, BorderLayout.WEST);
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
+      myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
     }
 
     if (step.isMnemonicsNavigationEnabled()) {
