@@ -10,6 +10,9 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
@@ -167,22 +170,26 @@ public final class MavenRunConfigurationType implements ConfigurationType {
                                                                                          project,
                                                                                          generateName(project, params),
                                                                                          isDelegateBuild);
+    if (!MavenUtil.isProjectTrustedEnoughToImport(project, true, true)) {
+        MavenUtil.showError(project,
+                            RunnerBundle.message("notification.title.failed.to.execute.maven.goal"),
+                            RunnerBundle.message("notification.project.is.untrusted"));
+        return;
+    }
 
     ProgramRunner runner = isDelegateBuild ? DelegateBuildRunner.getDelegateRunner() : DefaultJavaProgramRunner.getInstance();
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configSettings, project);
     environment.putUserData(IS_DELEGATE_BUILD, isDelegateBuild);
     try {
-      if (callback != null) {
-        environment.setCallback(callback);
-      }
+      environment.setCallback(callback);
+
       runner.execute(environment);
     }
     catch (ExecutionException e) {
       MavenUtil.showError(project, RunnerBundle.message("notification.title.failed.to.execute.maven.goal"), e);
     }
   }
-
 
   @NotNull
 

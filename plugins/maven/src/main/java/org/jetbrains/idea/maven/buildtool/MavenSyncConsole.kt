@@ -51,6 +51,7 @@ class MavenSyncConsole(private val myProject: Project) {
   private var hasUnresolved = false
   private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
   private val delayedActions = ArrayList<() -> Unit>()
+  private val shownIssues = HashSet<String>()
 
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
@@ -77,6 +78,7 @@ class MavenSyncConsole(private val myProject: Project) {
     hasUnresolved = false
     wrapperProgressIndicator = WrapperProgressIndicator()
     mySyncView = syncView
+    shownIssues.clear()
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
     val runDescr = BuildContentDescriptor(null, null, object : JComponent() {}, SyncBundle.message("maven.sync.title"))
     runDescr.isActivateToolWindowWhenFailed = true
@@ -105,11 +107,33 @@ class MavenSyncConsole(private val myProject: Project) {
     mySyncView.onEvent(mySyncId, OutputBuildEventImpl(parentId, toPrint, stdout))
   }
 
+
   @Synchronized
-  fun addWarning(@Nls text: String, @Nls description: String) = doIfImportInProcess {
-    mySyncView.onEvent(mySyncId,
-                       MessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, SyncBundle.message("maven.sync.group.compiler"), text,
-                                        description))
+  fun addWarning(@Nls text: String, @Nls description: String) = addWarning(text, description, null)
+
+  fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcess {
+    if (!newIssue(issue.title + issue.description)) return;
+    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, issue, kind))
+    hasErrors = hasErrors || kind == MessageEvent.Kind.ERROR;
+  }
+
+  @Synchronized
+  fun addWarning(@Nls text: String, @Nls description: String, filePosition: FilePosition?) = doIfImportInProcess {
+    if (!newIssue(text + description + filePosition)) return;
+    if (filePosition == null) {
+      mySyncView.onEvent(mySyncId,
+                         MessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, SyncBundle.message("maven.sync.group.compiler"), text,
+                                          description))
+    }
+    else {
+      mySyncView.onEvent(mySyncId,
+                         FileMessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, SyncBundle.message("maven.sync.group.compiler"), text,
+                                              description, filePosition))
+    }
+  }
+
+  private fun newIssue(s: String): Boolean {
+    return shownIssues.add(s)
   }
 
   @Synchronized

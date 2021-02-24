@@ -22,6 +22,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -62,6 +63,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -69,10 +71,7 @@ import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenServerEmbedder;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
-import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.server.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -95,6 +94,8 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
+import static com.intellij.ide.impl.TrustedProjects.confirmImportingUntrustedProject;
+import static com.intellij.ide.impl.TrustedProjects.getTrustedState;
 import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -103,7 +104,7 @@ import static icons.ExternalSystemIcons.Task;
 
 public class MavenUtil {
   @ApiStatus.Experimental
-  @NonNls public static final String MAVEN_NAME = "Maven";
+  public static final @NlsSafe String MAVEN_NAME = "Maven";
   @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
   public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId(MAVEN_NAME_UPCASE);
   public static final String MAVEN_NOTIFICATION_GROUP = MAVEN_NAME;
@@ -245,6 +246,13 @@ public class MavenUtil {
   public static void showError(Project project, @NlsContexts.NotificationTitle String title, Throwable e) {
     MavenLog.LOG.warn(title, e);
     Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR), project);
+  }
+
+  public static void showError(Project project,
+                               @NlsContexts.NotificationTitle String title,
+                               @NlsContexts.NotificationContent String message) {
+    MavenLog.LOG.warn(title);
+    Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, message, NotificationType.ERROR), project);
   }
 
   @NotNull
@@ -1028,6 +1036,32 @@ public class MavenUtil {
     return LegacyBridgeProjectLifecycleListener.Companion.enabled(project) &&
            (Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
             || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY));
+  }
+
+  public static boolean isProjectTrustedEnoughToImport(Project project,
+                                                       boolean askConfirmationForUnsure,
+                                                       boolean askConfirmationForUntrusted) {
+    if (project.isDefault()) {
+      return true;
+    }
+    ThreeState state = getTrustedState(project);
+    askConfirmationForUnsure |= askConfirmationForUntrusted;
+    if ((state == ThreeState.UNSURE && askConfirmationForUnsure) || (state == ThreeState.NO && askConfirmationForUntrusted)) {
+      boolean trust = confirmImportingUntrustedProject(project, MAVEN_NAME,
+                                                       ExternalSystemBundle
+                                                         .message(
+                                                           "unlinked.project.notification.load.action",
+                                                           MAVEN_NAME));
+      if (trust) {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          MavenServerManager.getInstance().shutdownServer(project);
+          MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
+        }, SyncBundle.message("maven.sync.restarting"), false, project);
+
+        return true;
+      }
+    }
+    return state == ThreeState.YES;
   }
 
   public interface MavenTaskHandler {
