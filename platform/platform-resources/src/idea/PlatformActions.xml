@@ -1378,6 +1378,10 @@
     <group id="EditorTabActionGroup"/>
     <action class="com.intellij.ide.actions.EditSourceNotInEditorAction" id="EditSourceNotInEditor"/>
 
+<!--    <group id="RelatedFilesTabActionGroup" class="com.intellij.openapi.fileEditor.impl.tabActions.related.RelatedFilesTabActionGroup">
+      <add-to-group group-id="EditorTabActionGroup"/>
+    </group>-->
+
     <group id="ActivateToolWindowActions" searchable="false">
       <action id="ActivateFindToolWindow" class="com.intellij.find.actions.ActivateFindToolWindowAction"/>
     </group>
