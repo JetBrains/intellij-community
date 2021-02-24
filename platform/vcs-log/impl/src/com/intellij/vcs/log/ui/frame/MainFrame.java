@@ -276,6 +276,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       if (roots.size() != 1) return null;
       return myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getDiffHandler();
     }
+    else if (VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS.is(dataId)) {
+      return VcsLogUtil.getAllVisibleRoots(myLogData.getRoots(), myFilterUi.getFilters());
+    }
     else if (QuickActionProvider.KEY.is(dataId)) {
       return new QuickActionProvider() {
         @Override

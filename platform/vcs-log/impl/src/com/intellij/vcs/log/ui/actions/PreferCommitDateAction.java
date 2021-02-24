@@ -51,7 +51,12 @@ public class PreferCommitDateAction extends BooleanPropertyToggleAction implemen
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    Set<VcsLogProvider> visibleProviders = ContainerUtil.map2SetNotNull(VcsLogUtil.getVisibleRoots(logUi), root -> providers.get(root));
+    Set<VirtualFile> visibleRoots = e.getData(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS);
+    if (visibleRoots == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    Set<VcsLogProvider> visibleProviders = ContainerUtil.map2SetNotNull(visibleRoots, root -> providers.get(root));
     if (!isDateDisplayed(e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)) ||
         !isCommitDateSupported(visibleProviders)) {
       e.getPresentation().setEnabled(false);

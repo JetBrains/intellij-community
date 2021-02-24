@@ -40,10 +40,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
@@ -236,6 +234,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         return FileHistoryUtil.createVcsVirtualFile(myFileHistoryModel.createRevision(detail));
       })
       .ifEq(CommonDataKeys.VIRTUAL_FILE).thenGet(myFilePath::getVirtualFile)
+      .ifEq(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS).thenGet(() -> Collections.singleton(myRoot))
       .ifEq(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION).then(false)
       .ifEq(VcsLogInternalDataKeys.LOG_DIFF_HANDLER).thenGet(() -> myFileHistoryModel.getDiffHandler())
       .orNull();
