@@ -287,7 +287,7 @@ open class MarketplaceRequests {
           throw e
         }
         catch (e: Exception) {
-          LOG.warn("Error reading Marketplace file: file=${file} URL=${url}")
+          LOG.warn("Error reading Marketplace file: ${e.message} (file=${file} URL=${url})")
           LOG.debug(e)
           if (file != null && LOG.isDebugEnabled) {
             LOG.debug("File content:\n${try { Files.readString(file) } catch (e: Exception) { IoErrorText.message(e) } }")
