@@ -38,13 +38,12 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
-import java.util.*
 
 class MethodExtractor {
 
   data class ExtractedElements(val callElements: List<PsiElement>, val method: PsiMethod)
 
-  fun doExtract(file: PsiFile, range: TextRange, @NlsContexts.DialogTitle refactoringName: String, helpId: String, useLegacyProcessor: Boolean) {
+  fun doExtract(file: PsiFile, range: TextRange, @NlsContexts.DialogTitle refactoringName: String, helpId: String) {
     val project = file.project
     val editor = PsiEditorUtil.findEditor(file) ?: return
     val activeExtractor = InplaceMethodExtractor.getActiveExtractor(editor)
@@ -63,16 +62,13 @@ class MethodExtractor {
         val targetClass = options.anchor.containingClass ?: throw IllegalStateException("Failed to find target class")
         val annotate = PropertiesComponent.getInstance(options.project).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)
         val parameters = ExtractParameters(targetClass, range, "", annotate, false)
-        val extractor = if (useLegacyProcessor) LegacyMethodExtractor() else DefaultMethodExtractor()
+        val extractor = getDefaultInplaceExtractor(options)
         if (Registry.`is`("java.refactoring.extractMethod.inplace") && EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
           val popupSettings = createInplaceSettingsPopup(options)
-          val guessedNames = guessMethodName(options).filterNot { name -> hasConflicts(options.copy(methodName = name)) }
-          val methodName = if (guessedNames.isNotEmpty()) {
-            guessedNames.first()
-          } else {
-            defaultNameCandidates().filterNot { name -> hasConflicts(options.copy(methodName = name)) }.first()
-          }
-          doInplaceExtract(editor, extractor, parameters.copy(methodName = methodName), popupSettings, guessedNames)
+          val guessedNames = suggestSafeMethodNames(options)
+          val methodName = guessedNames.first()
+          val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
+          doInplaceExtract(editor, extractor, parameters.copy(methodName = methodName), popupSettings, suggestedNames)
         }
         else {
           extractor.extractInDialog(parameters)
@@ -86,7 +82,20 @@ class MethodExtractor {
     }
   }
 
-  fun defaultNameCandidates(): Sequence<String> {
+  fun getDefaultInplaceExtractor(options: ExtractOptions): InplaceExtractMethodProvider {
+    val enabled = Registry.`is`("java.refactoring.extractMethod.newImplementation")
+    val possible = ExtractMethodHandler.canUseNewImpl(options.project, options.anchor.containingFile, options.elements.toTypedArray())
+    return if (enabled && possible) DefaultMethodExtractor() else LegacyMethodExtractor()
+  }
+
+  fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
+    val guessedNames = guessMethodName(options).filterNot { name -> hasConflicts(options.copy(methodName = name)) }
+    return guessedNames.ifEmpty {
+      defaultNameCandidates().filterNot { name -> hasConflicts(options.copy(methodName = name)) }.take(1).toList()
+    }
+  }
+
+  private fun defaultNameCandidates(): Sequence<String> {
     return sequenceOf("extracted", "newMethod") + generateSequence(1) { seed -> seed + 1 }.map { number -> "newMethod$number" }
   }
 

@@ -1,0 +1,122 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.java.refactoring
+
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
+import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
+import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.findExtractOptions
+import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
+import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractParameters
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
+import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
+import com.intellij.testFramework.LightJavaCodeInsightTestCase
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.NonNls
+
+class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
+
+  private val BASE_PATH: @NonNls String = "/refactoring/extractMethodInplace"
+
+
+
+  fun testStatement(){
+    doTest()
+  }
+
+  fun testConflictedNamesFiltered(){
+    doTest()
+  }
+
+  fun testVariableGetterSuggested(){
+    doTest()
+  }
+
+  fun testExactDuplicates(){
+    doTest()
+  }
+
+  fun testInvalidRename(){
+    doTest(changedName = "invalid! name", checkResults = false)
+    require(getActiveTemplate() != null)
+  }
+
+  fun testConflictRename(){
+    doTest(changedName = "conflict", checkResults = false)
+    require(getActiveTemplate() != null)
+  }
+
+  fun testValidRename(){
+    doTest(changedName = "valid")
+    require(getActiveTemplate() == null)
+  }
+
+  private fun doTest(checkResults: Boolean = true, changedName: String? = null){
+    templateTest {
+      configureByFile("$BASE_PATH/${getTestName(false)}.java")
+      val template = startRefactoring(editor)
+      if (changedName != null) {
+        renameTemplate(template, changedName)
+      }
+      finishTemplate(template)
+      if (checkResults) {
+        checkResultByFile("$BASE_PATH/${getTestName(false)}_after.java")
+      }
+    }
+  }
+
+  private fun startRefactoring(editor: Editor): TemplateState {
+    val selection = with(editor.selectionModel) { TextRange(selectionStart, selectionEnd) }
+    val elements = ExtractSelector().suggestElementsToExtract(file, selection)
+    require(elements.isNotEmpty())
+    val extractOptions = findExtractOptions(elements)
+    val extractor = MethodExtractor().getDefaultInplaceExtractor(extractOptions)
+    val popupProvider = ExtractMethodPopupProvider(null, null)
+    val containingClass = extractOptions.anchor.containingClass
+    require(containingClass != null)
+    val name = MethodExtractor().suggestSafeMethodNames(extractOptions).first()
+    val parameters = ExtractParameters(containingClass, selection, name, false, false)
+    InplaceMethodExtractor(editor, parameters, extractor, popupProvider).performInplaceRefactoring(LinkedHashSet())
+    val templateState = getActiveTemplate()
+    require(templateState != null) { "Failed to start refactoring" }
+    return templateState
+  }
+
+  private fun getActiveTemplate() = TemplateManagerImpl.getTemplateState(editor)
+
+  private fun finishTemplate(templateState: TemplateState){
+    try {
+      templateState.gotoEnd(false)
+      UIUtil.dispatchAllInvocationEvents()
+    } catch (ignore: RefactoringErrorHintException) {
+    }
+  }
+
+  private fun renameTemplate(templateState: TemplateState, name: String) {
+    WriteCommandAction.runWriteCommandAction(project) {
+      val range = templateState.currentVariableRange!!
+      editor.document.replaceString(range.startOffset, range.endOffset, name)
+    }
+  }
+
+  private inline fun templateTest(test: () -> Unit) {
+    val disposable = Disposer.newDisposable()
+    try {
+      TemplateManagerImpl.setTemplateTesting(disposable)
+      test()
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+  }
+
+  override fun tearDown() {
+    val template = getActiveTemplate()
+    if (template != null) Disposer.dispose(template)
+    super.tearDown()
+  }
+}

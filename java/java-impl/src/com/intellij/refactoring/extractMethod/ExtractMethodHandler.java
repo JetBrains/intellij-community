@@ -170,8 +170,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, PsiElement @NotNull [] elements) {
     TextRange selection = ExtractMethodHelper.findEditorSelection(editor);
     if (selection == null && elements.length == 1) selection = elements[0].getTextRange();
-    boolean useNewExtractor = Registry.is("java.refactoring.extractMethod.newImplementation") && canUseNewImpl(project, file, elements);
-    if (selection != null) new MethodExtractor().doExtract(file, selection, getRefactoringName(), HelpID.EXTRACT_METHOD, ! useNewExtractor);
+    if (selection != null) new MethodExtractor().doExtract(file, selection, getRefactoringName(), HelpID.EXTRACT_METHOD);
   }
 
   private static boolean invokeOnElements(@NotNull Project project, @NotNull Editor editor, @NotNull ExtractMethodProcessor processor, final boolean directTypes) {
