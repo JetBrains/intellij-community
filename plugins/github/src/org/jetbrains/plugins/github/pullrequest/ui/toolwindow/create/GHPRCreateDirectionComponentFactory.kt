@@ -10,9 +10,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
@@ -33,6 +32,7 @@ import java.awt.event.ActionEvent
 import javax.swing.ComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -40,16 +40,16 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
                                           private val model: GHPRCreateDirectionModel) {
 
   fun create(): JComponent {
-    val base = LinkLabel<Any>("", null) { comp, _ ->
-      chooseBaseBranch(comp, model.baseRepo, model.baseBranch, model::baseBranch::set)
-    }.apply {
-      isFocusable = true
+    val base = ActionLink("")
+    base.addActionListener {
+      chooseBaseBranch(base, model.baseRepo, model.baseBranch, model::baseBranch::set)
     }
-    val head = LinkLabel<Any>("", null) { comp, _ ->
-      chooseHeadRepoAndBranch(comp, model.headRepo, model.headBranch, model::setHead)
-    }.apply {
-      isFocusable = true
+
+    val head = ActionLink("")
+    head.addActionListener {
+      chooseHeadRepoAndBranch(head, model.headRepo, model.headBranch, model::setHead)
     }
+
     val changesWarningLabel = JLabel(AllIcons.General.Warning)
 
     model.addAndInvokeDirectionChangesListener {
@@ -87,7 +87,8 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
       }
     }
 
-    return NonOpaquePanel().apply {
+    return JPanel(null).apply {
+      isOpaque = false
       layout = MigLayout(LC()
                            .gridGap("0", "0")
                            .insets("0", "0", "0", "0"))
