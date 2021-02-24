@@ -386,7 +386,9 @@ public final class Switcher extends AnAction implements DumbAware {
       for (ToolWindow window : windows) {
         twModel.add(window);
       }
-      twModel.add(RECENT_LOCATIONS);
+      if (pinned) {
+        twModel.add(RECENT_LOCATIONS);
+      }
 
       toolWindows = new JBList<>(createModel(twModel, getNamer(), mySpeedSearch, pinned));
       toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
