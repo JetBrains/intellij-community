@@ -162,7 +162,8 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
 
   private fun createFilesComponent(): JComponent {
     val panel = BorderLayoutPanel().withBackground(UIUtil.getListBackground())
-    val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel, null,
+    val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,
+                                                    GithubBundle.message("pull.request.create.select.branches"),
                                                     GithubBundle.message("cannot.load.changes"),
                                                     changesLoadingErrorHandler)
       .withContentListener {
@@ -184,7 +185,8 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
     }
 
     val commitsLoadingPanel = GHLoadingPanelFactory(commitsLoadingModel,
-                                                    null, GithubBundle.message("cannot.load.commits"),
+                                                    GithubBundle.message("pull.request.create.select.branches"),
+                                                    GithubBundle.message("cannot.load.commits"),
                                                     commitsLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
         GHPRCommitsBrowserComponentFactory(project).create(model) { commit ->
