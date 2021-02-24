@@ -11,7 +11,6 @@ import com.intellij.ide.hierarchy.type.SubtypesHierarchyTreeStructure
 import com.intellij.ide.hierarchy.type.SupertypesHierarchyTreeStructure
 import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure
 import com.intellij.lang.LanguageExtension
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClass
@@ -43,117 +42,69 @@ Test accept more than one file, file extension should be .java or .kt
 abstract class AbstractHierarchyTest : KotlinHierarchyViewTestBase() {
     protected var folderName: String? = null
 
-    @Throws(Exception::class)
-    protected fun doTypeClassHierarchyTest(folderName: String) {
+    private fun doHierarchyTest(folderName: String, structure: () -> HierarchyTreeStructure) {
         this.folderName = folderName
-        doHierarchyTest(typeHierarchyStructure, *filesToConfigure)
+        doHierarchyTest(structure, *filesToConfigure)
     }
 
-    @Throws(Exception::class)
-    protected fun doSuperClassHierarchyTest(folderName: String) {
-        this.folderName = folderName
-        doHierarchyTest(superTypesHierarchyStructure, *filesToConfigure)
+    protected fun doTypeClassHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        TypeHierarchyTreeStructure(
+            project,
+            getElementAtCaret(LanguageTypeHierarchy.INSTANCE) as PsiClass,
+            HierarchyBrowserBaseEx.SCOPE_PROJECT
+        )
     }
 
-    @Throws(Exception::class)
-    protected fun doSubClassHierarchyTest(folderName: String) {
-        this.folderName = folderName
-        doHierarchyTest(subTypesHierarchyStructure, *filesToConfigure)
+    protected fun doSuperClassHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        SupertypesHierarchyTreeStructure(
+            project,
+            getElementAtCaret(LanguageTypeHierarchy.INSTANCE) as PsiClass
+        )
     }
 
-    @Throws(Exception::class)
-    protected fun doCallerHierarchyTest(folderName: String) {
-        this.folderName = folderName
-        doHierarchyTest(callerHierarchyStructure, *filesToConfigure)
+    protected fun doSubClassHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        SubtypesHierarchyTreeStructure(
+            project,
+            getElementAtCaret(LanguageTypeHierarchy.INSTANCE) as PsiClass,
+            HierarchyBrowserBaseEx.SCOPE_PROJECT
+        )
     }
 
-    @Throws(Exception::class)
-    protected fun doCallerJavaHierarchyTest(folderName: String) {
-        this.folderName = folderName
-        doHierarchyTest(callerJavaHierarchyStructure, *filesToConfigure)
+    protected fun doCallerHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        KotlinCallerTreeStructure(
+            (getElementAtCaret(LanguageCallHierarchy.INSTANCE) as KtElement),
+            HierarchyBrowserBaseEx.SCOPE_PROJECT
+        )
     }
 
-    @Throws(Exception::class)
-    protected fun doCalleeHierarchyTest(folderName: String) {
-        this.folderName = folderName
-        doHierarchyTest(calleeHierarchyStructure, *filesToConfigure)
+    protected fun doCallerJavaHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        CallerMethodsTreeStructure(
+            project,
+            getElementAtCaret(LanguageCallHierarchy.INSTANCE) as PsiMember,
+            HierarchyBrowserBaseEx.SCOPE_PROJECT
+        )
     }
 
-    @Throws(Exception::class)
-    protected fun doOverrideHierarchyTest(folderName: String) {
-        this.folderName = folderName
-        doHierarchyTest(overrideHierarchyStructure, *filesToConfigure)
+    protected fun doCalleeHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        KotlinCalleeTreeStructure(
+            (getElementAtCaret(LanguageCallHierarchy.INSTANCE) as KtElement),
+            HierarchyBrowserBaseEx.SCOPE_PROJECT
+        )
     }
 
-    private val superTypesHierarchyStructure: Computable<HierarchyTreeStructure>
-        get() = Computable {
-            SupertypesHierarchyTreeStructure(
-                project,
-                getElementAtCaret(LanguageTypeHierarchy.INSTANCE) as PsiClass
-            )
-        }
-
-    private val subTypesHierarchyStructure: Computable<HierarchyTreeStructure>
-        get() = Computable {
-            SubtypesHierarchyTreeStructure(
-                project,
-                getElementAtCaret(LanguageTypeHierarchy.INSTANCE) as PsiClass,
-                HierarchyBrowserBaseEx.SCOPE_PROJECT
-            )
-        }
-
-    private val typeHierarchyStructure: Computable<HierarchyTreeStructure>
-        get() = Computable {
-            TypeHierarchyTreeStructure(
-                project,
-                getElementAtCaret(LanguageTypeHierarchy.INSTANCE) as PsiClass,
-                HierarchyBrowserBaseEx.SCOPE_PROJECT
-            )
-        }
-
-    private val callerHierarchyStructure: Computable<HierarchyTreeStructure>
-        get() = Computable {
-            KotlinCallerTreeStructure(
-                (getElementAtCaret(LanguageCallHierarchy.INSTANCE) as KtElement),
-                HierarchyBrowserBaseEx.SCOPE_PROJECT
-            )
-        }
-
-    private val callerJavaHierarchyStructure: Computable<HierarchyTreeStructure>
-        get() = Computable {
-            CallerMethodsTreeStructure(
-                project,
-                getElementAtCaret(LanguageCallHierarchy.INSTANCE) as PsiMember,
-                HierarchyBrowserBaseEx.SCOPE_PROJECT
-            )
-        }
-
-    private val calleeHierarchyStructure: Computable<HierarchyTreeStructure>
-        get() = Computable {
-            KotlinCalleeTreeStructure(
-                (getElementAtCaret(LanguageCallHierarchy.INSTANCE) as KtElement),
-                HierarchyBrowserBaseEx.SCOPE_PROJECT
-            )
-        }
-
-    private val overrideHierarchyStructure: Computable<HierarchyTreeStructure>
-        get() = Computable {
-            KotlinOverrideTreeStructure(
-                project,
-                (getElementAtCaret(LanguageMethodHierarchy.INSTANCE) as KtCallableDeclaration)
-            )
-        }
+    protected fun doOverrideHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        KotlinOverrideTreeStructure(
+            project,
+            (getElementAtCaret(LanguageMethodHierarchy.INSTANCE) as KtCallableDeclaration)
+        )
+    }
 
     private fun getElementAtCaret(extension: LanguageExtension<HierarchyProvider>): PsiElement {
-        val file =
-            PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-        val provider =
-            BrowseHierarchyActionBase.findProvider(extension, file, file, dataContext)
-        return provider?.getTarget(dataContext)
+        val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+        val dataContext = createTextEditorBasedDataContext(project, editor, editor.caretModel.currentCaret)
+        return BrowseHierarchyActionBase.findProvider(extension, file, file, dataContext)?.getTarget(dataContext)
             ?: throw RefactoringErrorHintException("Cannot apply action for element at caret")
     }
-
-    private val dataContext: DataContext get() = createTextEditorBasedDataContext(project, editor, editor.caretModel.currentCaret)
 
     protected val filesToConfigure: Array<String>
         get() {
@@ -194,9 +145,7 @@ abstract class AbstractHierarchyTest : KotlinHierarchyViewTestBase() {
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
-    }
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
     override val testDataDirectory: File
         get() {
