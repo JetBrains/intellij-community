@@ -9,7 +9,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -59,11 +58,6 @@ import java.util.concurrent.CompletableFuture;
 
 public final class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
-
-  private static final String MODE_PROPERTY = "OpenOrAttachDialog.OpenMode";
-  @NonNls private static final String MODE_ATTACH = "attach";
-  private static final String MODE_REPLACE = "replace";
-  private static final String MODE_NEW = "new";
 
   public static final String DEFAULT_PROJECT_NAME = "default";
   public static final String PROJECTS_DIR = "projects";
@@ -527,26 +521,29 @@ public final class ProjectUtil {
    * -1 == CANCEL
    */
   public static int confirmOpenOrAttachProject() {
-    final String mode = PropertiesComponent.getInstance().getValue(MODE_PROPERTY);
-    int exitCode = Messages.showDialog(
-      IdeBundle.message("prompt.open.project.or.attach"),
-      IdeBundle.message("prompt.open.project.or.attach.title"),
-      new String[]{
-        IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
-        IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
-        IdeBundle.message("prompt.open.project.or.attach.button.attach"),
-        CommonBundle.getCancelButtonText()
-      },
-      MODE_NEW.equals(mode) ? 1 : MODE_REPLACE.equals(mode) ? 0 : MODE_ATTACH.equals(mode) ? 2 : 0,
-      Messages.getQuestionIcon());
-    int returnValue = exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
-            exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
-            exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
-            -1;
-    if (returnValue != -1) {
-      LifecycleUsageTriggerCollector.onProjectFrameSelected(returnValue);
+    int mode = GeneralSettings.getInstance().getConfirmOpenNewProject();
+    if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
+      int exitCode = Messages.showDialog(
+        IdeBundle.message("prompt.open.project.or.attach"),
+        IdeBundle.message("prompt.open.project.or.attach.title"),
+        new String[]{
+          IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
+          IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
+          IdeBundle.message("prompt.open.project.or.attach.button.attach"),
+          CommonBundle.getCancelButtonText()
+        },
+        0,
+        Messages.getQuestionIcon(),
+        new ProjectNewWindowDoNotAskOption());
+      mode = exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
+             exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
+             exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
+             -1;
+      if (mode != -1) {
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(mode);
+      }
     }
-    return returnValue;
+    return mode;
   }
 
   /**
