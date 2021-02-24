@@ -138,8 +138,7 @@ open class MarketplaceRequests {
         return Files.newBufferedReader(pluginXmlIdsFile).use(::parseXmlIds)
       }
     }
-    catch (ignore: NoSuchFileException) {
-    }
+    catch (ignore: NoSuchFileException) { }
     return null
   }
 
@@ -432,6 +431,6 @@ private fun logWarnOrPrintIfDebug(message: String, throwable: Throwable) {
     LOG.debug(message, throwable)
   }
   else {
-    LOG.warn("$message:${throwable.message}")
+    LOG.warn("${message}: ${throwable.message}")
   }
 }
