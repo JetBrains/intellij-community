@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.vcs.commit.CommitProgressPanel
@@ -19,7 +19,6 @@ import git4idea.index.ContentVersion
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
 import git4idea.index.createChange
-import java.beans.PropertyChangeListener
 import kotlin.properties.Delegates.observable
 
 private fun GitStageTracker.State.getStaged(): Set<GitFileStatus> =
@@ -31,12 +30,17 @@ private fun GitStageTracker.RootState.getStaged(): Set<GitFileStatus> =
 private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<Change> =
   getStaged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.STAGED) }
 
-class GitStageCommitPanel(private val tree: GitStageTree, project: Project) : NonModalCommitPanel(project) {
+class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
 
   private val progressPanel = GitStageCommitProgressPanel()
 
-  internal val includedRoots get() = tree.getIncludedRoots()
+  var includedRoots: Collection<VirtualFile> by observable(emptySet()) { _, oldValue, newValue ->
+    if (oldValue != newValue) {
+      stagedChanges.drop()
+      fireInclusionChanged()
+    }
+  }
   val rootsToCommit get() = state.stagedRoots.intersect(includedRoots)
 
   private var staged: Set<GitFileStatus> = emptySet()
@@ -57,13 +61,6 @@ class GitStageCommitPanel(private val tree: GitStageTree, project: Project) : No
 
   init {
     Disposer.register(this, commitMessage)
-
-    tree.addIncludedRootsListener(object : IncludedRootsListener {
-      override fun includedRootsChanged() {
-        stagedChanges.drop()
-        fireInclusionChanged()
-      }
-    }, this)
 
     progressPanel.setup(this, commitMessage.editorField)
     bottomPanel = {
