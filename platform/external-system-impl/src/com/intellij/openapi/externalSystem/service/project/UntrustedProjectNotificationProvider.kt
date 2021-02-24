@@ -1,56 +1,46 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.service.project;
+package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.TrustChangeNotifier;
-import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.EditorNotifications;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.TrustChangeNotifier
+import com.intellij.ide.impl.isTrusted
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotifications
 
-public class UntrustedProjectNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
+class UntrustedProjectNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel?>(), DumbAware {
+  override fun getKey() = KEY
 
-  private static final ExtensionPointName<UntrustedProjectModeProvider> EP_NAME = ExtensionPointName.create("com.intellij.untrustedModeProvider");
-
-  public static class TrustedListener implements TrustChangeNotifier {
-    @Override
-    public void projectTrusted(@NotNull Project project) {
-      EditorNotifications.getInstance(project).updateAllNotifications();
+  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+    if (project.isTrusted()) {
+      return null
+    }
+    val provider = EP_NAME.findFirstSafe { it.shouldShowEditorNotification(project) } ?: return null
+    return EditorNotificationPanel().apply {
+      text = IdeBundle.message("untrusted.project.notification.description")
+      createActionLabel(IdeBundle.message("untrusted.project.notification.trust.button", provider.systemId.readableName), {
+        if (confirmLoadingUntrustedProjectIfNeeded(project, provider.systemId, CommonBundle.getCancelButtonText())) {
+          provider.loadAllLinkedProjects(project)
+        }
+      }, false)
     }
   }
 
-  public static final Key<EditorNotificationPanel> KEY = Key.create("UntrustedProjectNotification");
-
-  @Override
-  public @NotNull Key<EditorNotificationPanel> getKey() {
-    return KEY;
+  companion object {
+    private val EP_NAME = ExtensionPointName.create<UntrustedProjectModeProvider>("com.intellij.untrustedModeProvider")
+    private val KEY = Key.create<EditorNotificationPanel?>("UntrustedProjectNotification")
   }
 
-  @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
-                                                         @NotNull FileEditor fileEditor,
-                                                         @NotNull Project project) {
-
-    UntrustedProjectModeProvider provider = EP_NAME.findFirstSafe(p -> p.shouldShowEditorNotification(project));
-    if (provider == null) {
-      return null;
+  class TrustedListener : TrustChangeNotifier {
+    override fun projectTrusted(project: Project) {
+      EditorNotifications.getInstance(project).updateAllNotifications()
     }
-
-    EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText(IdeBundle.message("untrusted.project.notification.description"));
-    String trustButtonText = IdeBundle.message("untrusted.project.notification.trust.button", provider.getBuildSystemName());
-    panel.createActionLabel(trustButtonText, () -> {
-      TrustedProjects.confirmImportingUntrustedProject(project, provider.getBuildSystemName(), trustButtonText,
-                                                       CommonBundle.getCancelButtonText());
-    }, false);
-    return panel;
   }
 }
