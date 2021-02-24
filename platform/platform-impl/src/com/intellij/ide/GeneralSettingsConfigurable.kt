@@ -60,16 +60,18 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
       row {
         checkBox(myConfirmExit)
       }
+
       row {
         cell {
           label(IdeBundle.message("group.settings.process.tab.close"))
           buttonGroup(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation) {
             radioButton(IdeBundle.message("radio.process.close.terminate"), GeneralSettings.ProcessCloseConfirmation.TERMINATE)
-            radioButton(IdeBundle.message("radio.process.close.disaconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT)
+            radioButton(IdeBundle.message("radio.process.close.disconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT)
             radioButton(IdeBundle.message("radio.process.close.ask"), GeneralSettings.ProcessCloseConfirmation.ASK)
           }
         }
       }
+
       titledRow(IdeUICustomization.getInstance().projectMessage("tab.title.project")) {
         row {
           checkBox(myChkReopenLastProject)
@@ -101,11 +103,13 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
           }
         }
       }
+
       titledRow(IdeBundle.message("settings.general.synchronization")) {
         row {
           cell(isFullWidth = true) {
             val autoSaveCheckbox = checkBox(myChkAutoSaveIfInactive)
             intTextField(model::getInactiveTimeout, model::setInactiveTimeout, columns = 4).enableIf(autoSaveCheckbox.selected)
+            @Suppress("DialogTitleCapitalization")
             label(IdeBundle.message("label.inactive.timeout.sec"))
           }
         }

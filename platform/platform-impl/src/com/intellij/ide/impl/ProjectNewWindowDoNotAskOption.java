@@ -38,8 +38,7 @@ public final class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNot
   }
 
   @Override
-  @NotNull
-  public String getDoNotShowMessage() {
+  public @NotNull String getDoNotShowMessage() {
     return UIBundle.message("dialog.options.do.not.ask");
   }
 }

@@ -104,9 +104,7 @@ public final class ProjectUtil {
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
   }
 
-  /**
-   * @deprecated Use {@link ProjectManagerEx#closeAndDispose(Project)}
-   */
+  /** @deprecated Use {@link ProjectManagerEx#closeAndDispose(Project)} */
   @Deprecated
   public static boolean closeAndDispose(@NotNull Project project) {
     return ProjectManagerEx.getInstanceEx().closeAndDispose(project);
@@ -479,9 +477,9 @@ public final class ProjectUtil {
   }
 
   /**
-   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW}
-   * {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW}
-   * {@link Messages#CANCEL} - if user canceled the dialog
+   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} or
+   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} or
+   *         {@link Messages#CANCEL} (when a user cancels the dialog)
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -518,10 +516,10 @@ public final class ProjectUtil {
   }
 
   /**
-   * @return 0 == GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-   * 1 == GeneralSettings.OPEN_PROJECT_SAME_WINDOW
-   * 2 == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH
-   * -1 == CANCEL
+   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} or
+   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} or
+   *         {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW_ATTACH} or
+   *         {@code -1} (when a user cancels the dialog)
    */
   public static int confirmOpenOrAttachProject() {
     int mode = GeneralSettings.getInstance().getConfirmOpenNewProject();
@@ -549,9 +547,7 @@ public final class ProjectUtil {
     return mode;
   }
 
-  /**
-   * @deprecated Use {@link #isSameProject(Path, Project)}
-   */
+  /** @deprecated Use {@link #isSameProject(Path, Project)} */
   @Deprecated
   public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
     return projectFilePath != null && isSameProject(Paths.get(projectFilePath), project);
