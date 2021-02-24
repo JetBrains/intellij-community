@@ -1,11 +1,10 @@
-/*
- * Copyright (c) 2005 Jet Brains. All Rights Reserved.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -437,12 +436,9 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     }
   }
 
-  private class OptionsPanel extends JPanel {
+  private class OptionsPanel extends InspectionOptionsPanel {
     OptionsPanel() {
-      super(new GridBagLayout());
-      GridBagConstraints gc =
-        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                               JBUI.emptyInsets(), 0, 0);
+      super();
 
       String title = JavaBundle.message("inspection.javadoc.dialog.title");
       FieldPanel additionalTagsPanel = new FieldPanel(JavaBundle.message("inspection.javadoc.label.text"), title, null, null);
@@ -463,46 +459,45 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
         }
       });
       additionalTagsPanel.setText(myAdditionalJavadocTags);
-      add(additionalTagsPanel, gc);
-
-      JTabbedPane tabs = new JBTabbedPane(SwingConstants.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT);
-      String[] tags = {"@author", "@version", "@since"};
-      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.package"),
-               createOptionsPanel(new String[]{NONE, PUBLIC}, tags, PACKAGE_OPTIONS));
-      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.module"),
-               createOptionsPanel(new String[]{NONE, PUBLIC}, tags, MODULE_OPTIONS));
-      tags = new String[]{"@author", "@version", "@since", "@param"};
-      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title"),
-               createOptionsPanel(new String[]{NONE, PUBLIC, PACKAGE_LOCAL}, tags, TOP_LEVEL_CLASS_OPTIONS));
-      tags = new String[]{"@return", "@param", JavaBundle.message("inspection.javadoc.throws.or.exception.option")};
-      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.method"),
-               createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE}, tags, METHOD_OPTIONS));
-      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.field"),
-               createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE}, null, FIELD_OPTIONS));
-      tabs.add(JavaBundle.message("inspection.javadoc.option.tab.title.inner.class"),
-               createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE}, null, INNER_CLASS_OPTIONS));
-      add(tabs, gc);
+      add(additionalTagsPanel, "growx, wrap");
 
       JCheckBox checkBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.deprecated"), IGNORE_DEPRECATED);
       checkBox.addActionListener(e -> IGNORE_DEPRECATED = checkBox.isSelected());
-      gc.gridwidth = 1;
-      add(checkBox, gc);
+      add(checkBox);
 
       JCheckBox periodCheckBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.period"), IGNORE_JAVADOC_PERIOD);
       periodCheckBox.addActionListener(e -> IGNORE_JAVADOC_PERIOD = periodCheckBox.isSelected());
-      add(periodCheckBox, gc);
+      add(periodCheckBox);
 
       JCheckBox ignoreDuplicateThrowsCheckBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.throws"), isIgnoreDuplicatedThrows());
       ignoreDuplicateThrowsCheckBox.addActionListener(e -> setIgnoreDuplicatedThrows(ignoreDuplicateThrowsCheckBox.isSelected()));
-      add(ignoreDuplicateThrowsCheckBox, gc);
+      add(ignoreDuplicateThrowsCheckBox);
 
       JCheckBox ignorePointToItselfCheckBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.self.ref"), IGNORE_POINT_TO_ITSELF);
       ignorePointToItselfCheckBox.addActionListener(e -> IGNORE_POINT_TO_ITSELF = ignorePointToItselfCheckBox.isSelected());
-      add(ignorePointToItselfCheckBox, gc);
+      add(ignorePointToItselfCheckBox);
 
       JCheckBox ignoreSimpleAccessorsCheckBox = new JCheckBox(JavaBundle.message("inspection.javadoc.option.ignore.simple"), isIgnoreSimpleAccessors());
       ignoreSimpleAccessorsCheckBox.addActionListener(e -> setIgnoreSimpleAccessors(ignoreSimpleAccessorsCheckBox.isSelected()));
-      add(ignoreSimpleAccessorsCheckBox, gc);
+      add(ignoreSimpleAccessorsCheckBox);
+
+      JTabbedPane tabs = new JBTabbedPane();
+      String[] tags = {"@author", "@version", "@since"};
+      tabs.addTab(JavaBundle.message("inspection.javadoc.option.tab.title.package"),
+                  createOptionsPanel(new String[]{NONE, PUBLIC}, tags, PACKAGE_OPTIONS));
+      tabs.addTab(JavaBundle.message("inspection.javadoc.option.tab.title.module"),
+                  createOptionsPanel(new String[]{NONE, PUBLIC}, tags, MODULE_OPTIONS));
+      tags = new String[]{"@author", "@version", "@since", "@param"};
+      tabs.addTab(JavaBundle.message("inspection.javadoc.option.tab.title"),
+                  createOptionsPanel(new String[]{NONE, PUBLIC, PACKAGE_LOCAL}, tags, TOP_LEVEL_CLASS_OPTIONS));
+      tags = new String[]{"@return", "@param", JavaBundle.message("inspection.javadoc.throws.or.exception.option")};
+      tabs.addTab(JavaBundle.message("inspection.javadoc.option.tab.title.method"),
+                  createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE}, tags, METHOD_OPTIONS));
+      tabs.addTab(JavaBundle.message("inspection.javadoc.option.tab.title.field"),
+                  createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE}, null, FIELD_OPTIONS));
+      tabs.addTab(JavaBundle.message("inspection.javadoc.option.tab.title.inner.class"),
+                  createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE}, null, INNER_CLASS_OPTIONS));
+      add(tabs, "growx, gaptop 20");
     }
 
     private JPanel createOptionsPanel(String[] modifiers, String[] tags, Options options) {
@@ -559,15 +554,15 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
 
     private JPanel createTagsPanel(String[] tags, Options options) {
       JPanel panel = new JPanel(new GridBagLayout());
-      panel.setBorder(BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorder(JavaBundle.message("inspection.javadoc.required.tags.option.title")),
-        BorderFactory.createEmptyBorder(0, 3, 3, 3)));
+      panel.setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message("inspection.javadoc.required.tags.option.title")));
 
       GridBagConstraints gc = new GridBagConstraints();
       gc.weightx = 1;
       gc.weighty = 0;
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
+      gc.insets.bottom = 8;
+      gc.insets.left = -2;
 
       for (int i = 0; i < tags.length; i++) {
         JCheckBox box = new JCheckBox(tags[i]);
