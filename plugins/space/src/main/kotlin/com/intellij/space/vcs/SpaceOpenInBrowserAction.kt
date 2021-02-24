@@ -120,7 +120,6 @@ internal abstract class SpaceUrlBasedActionGroup(@NlsActions.ActionText groupNam
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
     e.presentation.isEnabledAndVisible = (data != null)
-    e.presentation.description = data?.singleOrNull()?.url ?: description
   }
 
   override fun getData(dataContext: DataContext): List<UrlData>? {
@@ -199,10 +198,6 @@ internal class SpaceCopyLinkActionGroup : SpaceUrlBasedActionGroup(SpaceBundle.m
 internal class OpenAction(private val data: UrlData) : DumbAwareAction(
   SpaceBundle.message("open.in.browser.open.for.project.action", data.info.project.name)
 ) {
-  override fun update(e: AnActionEvent) {
-    e.presentation.text = data.url
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
     data.url?.let { BrowserUtil.browse(it) }
   }
@@ -211,10 +206,6 @@ internal class OpenAction(private val data: UrlData) : DumbAwareAction(
 internal class CopyLinkAction(private val data: UrlData) : DumbAwareAction(
   SpaceBundle.messagePointer("copy.link.in.project.action", data.info.project.name)
 ) {
-  override fun update(e: AnActionEvent) {
-    e.presentation.description = data.url
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
     data.url?.let {
       CopyPasteManager.getInstance().setContents(StringSelection(it))
