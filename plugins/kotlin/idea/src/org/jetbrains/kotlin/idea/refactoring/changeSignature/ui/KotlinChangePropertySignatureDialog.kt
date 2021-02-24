@@ -158,6 +158,8 @@ class KotlinChangePropertySignatureDialog(
         invokeRefactoring(KotlinChangeSignatureProcessor(myProject, changeInfo, commandName ?: title))
     }
 
+    override fun getHelpId(): String = "refactoring.changeSignature"
+
     companion object {
         fun createProcessorForSilentRefactoring(
             project: Project,
