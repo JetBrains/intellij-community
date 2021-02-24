@@ -25,34 +25,17 @@ import java.nio.file.Paths
 
 fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String): OpenUntrustedProjectChoice {
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
-  val trustedCheckResult = isProjectTrusted(projectDir.toNioPath())
+  val trustedCheckResult = isProjectImplicitlyTrusted(projectDir.toNioPath())
   if (trustedCheckResult is Trusted) {
     return OpenUntrustedProjectChoice.IMPORT
   }
-
-  val url = (trustedCheckResult as NotTrusted).url
-  val origin = if (url == null) null else getOriginFromUrl(url)?.host
-  val dontAskAgain = if (origin != null) {
-    object : DialogWrapper.DoNotAskOption.Adapter() {
-      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-        if (isSelected && exitCode == Messages.YES) {
-          service<TrustedHostsSettings>().setHostTrusted(origin, true)
-        }
-      }
-
-      override fun getDoNotShowMessage(): String {
-        return IdeBundle.message("untrusted.project.warning.trust.host.checkbox", origin)
-      }
-    }
-  }
-  else null
 
   val choice = MessageDialogBuilder.yesNoCancel(title = IdeBundle.message("untrusted.project.warning.title", name),
                                                 message = IdeBundle.message("untrusted.project.open.warning.text", name))
     .yesText(IdeBundle.message("untrusted.project.open.warning.button.import"))
     .noText(IdeBundle.message("untrusted.project.open.warning.button.open.without.import"))
     .cancelText(CommonBundle.getCancelButtonText())
-    .doNotAsk(dontAskAgain)
+    .doNotAsk(createDoNotAskOptionForHost(trustedCheckResult))
     .asWarning()
     .show(project = null)
 
@@ -71,8 +54,7 @@ fun confirmImportingUntrustedProject(project: Project,
                                      @Nls buildSystemName: String,
                                      @Nls yesButtonText: String,
                                      @Nls noButtonText: String): Boolean {
-  val projectDir = project.basePath?.let { Paths.get(it) }
-  val trustedCheckResult = isProjectTrusted(projectDir)
+  val trustedCheckResult = isProjectImplicitlyTrusted(project)
   if (trustedCheckResult is Trusted) {
     project.setTrusted(true)
     return true
@@ -99,11 +81,48 @@ fun Project.isTrusted() = this.service<TrustedProjectSettings>().trustedState ==
 
 fun Project.getTrustedState() = this.service<TrustedProjectSettings>().trustedState
 
+fun Project.getExplicitTrustedStateOrByHostAndLocation(): ThreeState {
+  val explicit = getTrustedState()
+  if (explicit != ThreeState.UNSURE) return explicit
+
+  return if (isProjectImplicitlyTrusted(this) is Trusted) {
+    ThreeState.YES
+  }
+  else {
+    ThreeState.UNSURE
+  }
+}
+
 fun Project.setTrusted(value: Boolean) {
   this.service<TrustedProjectSettings>().trustedState = ThreeState.fromBoolean(value)
   if(value) {
     ApplicationManager.getApplication().messageBus.syncPublisher(TrustChangeNotifier.TOPIC).projectTrusted(this)
   }
+}
+
+fun createDoNotAskOptionForHost(project: Project): DialogWrapper.DoNotAskOption? {
+  return createDoNotAskOptionForHost(isProjectImplicitlyTrusted(project))
+}
+
+private fun createDoNotAskOptionForHost(trustedCheckResult: TrustedCheckResult): DialogWrapper.DoNotAskOption? {
+  if (trustedCheckResult !is NotTrusted) return null
+
+  val url = trustedCheckResult.url
+  val origin = if (url == null) null else getOriginFromUrl(url)?.host
+  return if (origin != null) {
+    object : DialogWrapper.DoNotAskOption.Adapter() {
+      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+        if (isSelected && exitCode == Messages.YES) {
+          service<TrustedHostsSettings>().setHostTrusted(origin, true)
+        }
+      }
+
+      override fun getDoNotShowMessage(): String {
+        return IdeBundle.message("untrusted.project.warning.trust.host.checkbox", origin)
+      }
+    }
+  }
+  else null
 }
 
 private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
@@ -115,7 +134,9 @@ private sealed class TrustedCheckResult {
   class NotTrusted(val url: String?): TrustedCheckResult()
 }
 
-private fun isProjectTrusted(projectDir: Path?): TrustedCheckResult {
+private fun isProjectImplicitlyTrusted(project: Project): TrustedCheckResult = isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) })
+
+private fun isProjectImplicitlyTrusted(projectDir: Path?): TrustedCheckResult {
   if (isTrustedCheckDisabled()) {
     return Trusted
   }

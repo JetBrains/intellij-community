@@ -2,7 +2,7 @@
 package com.jetbrains.python
 
 import com.intellij.concurrency.SensitiveProgressWrapper
-import com.intellij.ide.impl.getTrustedState
+import com.intellij.ide.impl.getExplicitTrustedStateOrByHostAndLocation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
@@ -105,7 +105,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     LOGGER.debug("Looking for a virtual environment related to the project")
     guardIndicator(indicator) {
       val detectedAssociatedEnvironments = detectAssociatedEnvironments(module, existingSdks, context)
-      chooseEnvironmentToSuggest(module, detectedAssociatedEnvironments, project.getTrustedState())
+      chooseEnvironmentToSuggest(module, detectedAssociatedEnvironments, project.getExplicitTrustedStateOrByHostAndLocation())
     }?.let {
       val detectedAssociatedEnv = it.first
 
