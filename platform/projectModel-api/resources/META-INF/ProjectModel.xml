@@ -5,6 +5,7 @@
     <extensionPoint name="filePropertyPusher" interface="com.intellij.openapi.roots.impl.FilePropertyPusher" dynamic="true"/>
     <extensionPoint name="projectFileScanner" interface="com.intellij.util.indexing.roots.IndexableFileScanner" dynamic="true"/>
     <extensionPoint name="customLibraryTable" interface="com.intellij.openapi.roots.libraries.CustomLibraryTableDescription" dynamic="true"/>
+    <extensionPoint name="primaryModuleManager" interface="com.intellij.openapi.module.PrimaryModuleManager" dynamic="true"/>
     <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
   </extensionPoints>
 </idea-plugin>
