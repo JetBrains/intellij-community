@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.cfg.*
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -75,14 +76,15 @@ class AddWhenRemainingBranchesFix(
             (whenCloseBrace.prevSibling as? PsiWhiteSpace)?.replace(psiFactory.createNewLine())
             for (case in missingCases) {
                 val branchConditionText = when (case) {
-                    UnknownMissingCase, NullMissingCase, is BooleanMissingCase, is ConditionTypeIsExpectMissingCase ->
+                    WhenMissingCase.Unknown, WhenMissingCase.NullIsMissing, is WhenMissingCase.BooleanIsMissing, is WhenMissingCase.ConditionTypeIsExpect ->
                         case.branchConditionText
-                    is ClassMissingCase ->
-                        if (case.classIsSingleton) {
+                    is WhenMissingCase.IsTypeCheckIsMissing ->
+                        if (case.isSingleton) {
                             ""
                         } else {
                             "is "
-                        } + case.descriptor.fqNameSafe.quoteIfNeeded().asString()
+                        } + case.classId.asSingleFqName().quoteIfNeeded().asString()
+                    is WhenMissingCase.EnumCheckIsMissing -> case.callableId.asFqNameForDebugInfo().quoteIfNeeded().asString()
                 }
                 val entry = psiFactory.createWhenEntry("$branchConditionText -> TODO()")
                 if (elseBranch != null) {
