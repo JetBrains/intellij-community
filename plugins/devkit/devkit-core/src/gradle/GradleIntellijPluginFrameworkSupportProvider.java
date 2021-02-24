@@ -57,7 +57,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final @NonNls String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
   private static final @NonNls String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final @NonNls String FALLBACK_VERSION = "0.5.0";
+  private static final @NonNls String FALLBACK_VERSION = "0.7.2";
   protected static final @NonNls String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
 
   private static final @NonNls String TASK_NAME_RUN_IDE = ":runIde";
