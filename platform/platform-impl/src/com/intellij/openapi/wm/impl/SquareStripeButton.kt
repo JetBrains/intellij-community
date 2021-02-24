@@ -87,7 +87,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
     override fun actionPerformed(e: AnActionEvent) {
       toolWindowsPane.onStripeButtonRemoved(e.project!!, toolWindow)
       toolWindow.isVisibleOnLargeStripe = true
-      toolWindowsPane.onStripeButtonAdded(e.project!!, toolWindow, anchor, Comparator { _, _ -> 0 })
+      toolWindow.largeStripeAnchor = anchor
     }
 
     override fun update(e: AnActionEvent) {

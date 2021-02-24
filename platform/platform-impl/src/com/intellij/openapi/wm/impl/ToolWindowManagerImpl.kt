@@ -1488,10 +1488,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     fireStateChanged()
   }
 
-  fun setLargeStripeAnchor(id: String, largeStripeAnchor: ToolWindowAnchor) {
-    val info = getRegisteredMutableInfoOrLogError(id)
-    info.largeStripeAnchor = largeStripeAnchor
-    idToEntry[info.id]!!.applyWindowInfo(info.copy())
+  fun setLargeStripeAnchor(id: String, anchor: ToolWindowAnchor) {
+    val entry = idToEntry[id]!!
+
+    val info = entry.readOnlyWindowInfo
+    if (anchor == info.largeStripeAnchor) return
+
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    setToolWindowLargeAnchorImpl(entry, info, getRegisteredMutableInfoOrLogError(id), anchor)
+    toolWindowPane!!.validateAndRepaint()
     fireStateChanged()
   }
 
@@ -1541,6 +1546,43 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val stripe = toolWindowPane.getStripeFor(anchor)
     addStripeButton(entry.stripeButton, stripe)
     stripe.revalidate()
+  }
+
+  private fun setToolWindowLargeAnchorImpl(entry: ToolWindowEntry,
+                                           currentInfo: WindowInfo,
+                                           layoutInfo: WindowInfoImpl,
+                                           anchor: ToolWindowAnchor) {
+    val toolWindowPane = toolWindowPane!!
+    if (!currentInfo.isVisible || anchor == currentInfo.largeStripeAnchor || currentInfo.type == ToolWindowType.FLOATING || currentInfo.type == ToolWindowType.WINDOWED) {
+      doSetLargeAnchor(entry, layoutInfo, anchor)
+    }
+    else {
+      val wasFocused = entry.toolWindow.isActive
+      // for docked and sliding windows we have to move buttons and window's decorators
+      layoutInfo.isVisible = false
+      toolWindowPane.removeDecorator(currentInfo, entry.toolWindow.decoratorComponent, true, this)
+
+      doSetLargeAnchor(entry, layoutInfo, anchor)
+
+      showToolWindowImpl(entry, layoutInfo, false)
+      if (wasFocused) {
+        entry.toolWindow.requestFocusInToolWindow()
+      }
+    }
+  }
+
+  private fun doSetLargeAnchor(entry: ToolWindowEntry, layoutInfo: WindowInfoImpl, anchor: ToolWindowAnchor) {
+    val toolWindowPane = toolWindowPane!!
+
+    layout.setAnchor(layoutInfo, anchor, -1)
+    layoutInfo.largeStripeAnchor = anchor
+    // update infos for all window. Actually we have to update only infos affected by setAnchor method
+    for (otherEntry in idToEntry.values) {
+      val otherInfo = layout.getInfo(otherEntry.id)?.copy() ?: continue
+      otherEntry.applyWindowInfo(otherInfo)
+    }
+
+    toolWindowPane.onStripeButtonAdded(project, entry.toolWindow, anchor, Comparator { _, _ -> 0 })
   }
 
   internal fun setSideTool(id: String, isSplit: Boolean) {
