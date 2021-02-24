@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.projectImport.ProjectImportProvider;
@@ -58,7 +59,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
       return;
     }
     ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
-    
+
     ProjectImportProvider[] projectImportProviders = new ProjectImportProvider[1];
     for (ProjectImportProvider provider : ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions()) {
       if (provider instanceof AbstractExternalProjectImportProvider
@@ -77,6 +78,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
                                                                           manager.getExternalProjectDescriptor(),
                                                                           projectImportProviders);
     if (wizard != null && (wizard.getStepCount() <= 0 || wizard.showAndGet())) {
+      ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, externalSystemId);
       ImportModuleAction.createFromWizard(project, wizard);
     }
   }

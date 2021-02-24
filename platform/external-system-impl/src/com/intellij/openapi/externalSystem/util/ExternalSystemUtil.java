@@ -75,6 +75,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -95,6 +96,7 @@ import com.intellij.pom.NonNavigatable;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
@@ -104,6 +106,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.impl.TrustedProjects.confirmImportingUntrustedProject;
@@ -669,19 +672,51 @@ public final class ExternalSystemUtil {
     }
   }
 
-  private static boolean isProjectTrustedEnoughToImport(Project project, ProjectSystemId externalSystemId) {
-    switch (getTrustedState(project)) {
-      case UNSURE:
-        String systemName = externalSystemId.getReadableName();
-        return confirmImportingUntrustedProject(project, systemName,
-                                                ExternalSystemBundle.message("unlinked.project.notification.load.action", systemName),
-                                                CommonBundle.getCancelButtonText());
-      case YES:
-        return true;
-      case NO:
-        return false;
+  private static boolean isProjectTrustedEnoughToImport(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId
+  ) {
+    return confirmLoadingUntrustedProjectIfNeeded(project, systemId, CommonBundle.getCancelButtonText(), ThreeState.UNSURE::equals);
+  }
+
+  public static boolean confirmLoadingUntrustedProjectIfNeeded(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId
+  ) {
+    return confirmLoadingUntrustedProjectIfNeeded(project, systemId, __ -> true);
+  }
+
+  public static boolean confirmLoadingUntrustedProjectIfNeeded(
+    @NotNull Project project,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Predicate<ThreeState> confirmation
+  ) {
+    String cancelButtonText = ExternalSystemBundle.message("unlinked.project.notification.open.preview.action");
+    return confirmLoadingUntrustedProjectIfNeeded(project, externalSystemId, cancelButtonText, confirmation);
+  }
+
+  public static boolean confirmLoadingUntrustedProjectIfNeeded(
+    @NotNull Project project,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull @Button String cancelButtonText,
+    @NotNull Predicate<ThreeState> confirmation
+  ) {
+    if (project.isDefault()) {
+      return true;
     }
-    return false;
+    ThreeState state = getTrustedState(project);
+    if (state.equals(ThreeState.YES)) {
+      return true;
+    }
+    if (!confirmation.test(state)) {
+      return false;
+    }
+    String systemName = externalSystemId.getReadableName();
+    return confirmImportingUntrustedProject(
+      project, systemName,
+      ExternalSystemBundle.message("unlinked.project.notification.load.action", systemName),
+      cancelButtonText
+    );
   }
 
   public static boolean isNewProject(Project project) {

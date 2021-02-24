@@ -10,7 +10,6 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -23,7 +22,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.*;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -1037,25 +1036,8 @@ public class MavenUtil {
             || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY));
   }
 
-  public static boolean isProjectTrustedEnoughToImport(Project project,
-                                                       boolean askConfirmation) {
-    if (project.isDefault() || TrustedProjects.isTrusted(project)) {
-      return true;
-    }
-    ThreeState state = TrustedProjects.getTrustedState(project);
-    if (askConfirmation && (state == ThreeState.UNSURE || state == ThreeState.NO)) {
-      return TrustedProjects.confirmImportingUntrustedProject(project, MAVEN_NAME,
-                                                              ExternalSystemBundle
-                                                                .message(
-                                                                  "unlinked.project.notification.load.action",
-                                                                  MAVEN_NAME),
-                                                              ExternalSystemBundle
-                                                                .message(
-                                                                  "unlinked.project.notification.open.preview.action",
-                                                                  MAVEN_NAME)
-      );
-    }
-    return state == ThreeState.YES;
+  public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {
+    return ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, SYSTEM_ID, __ -> askConfirmation);
   }
 
   public static void restartMavenConnectors(Project project) {

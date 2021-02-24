@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import org.jetbrains.annotations.ApiStatus
@@ -12,6 +12,14 @@ interface ExternalSystemProjectReloadContext {
    * Expected, project will be reloaded explicitly if this parameter is `true`
    */
   val isExplicitReload: Boolean
+
+  /**
+   * Project reload should be made in preview mode.
+   * It is fast reload without project build scripts evaluation.
+   *
+   * @see com.intellij.openapi.externalSystem.importing.ImportSpec.isPreviewMode
+   */
+  val isPreviewMode: Boolean
 
   /**
    * Project has undefined modifications
