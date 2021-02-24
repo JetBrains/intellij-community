@@ -44,9 +44,9 @@ public class UntrustedProjectNotificationProvider extends EditorNotifications.Pr
 
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(IdeBundle.message("untrusted.project.notification.description"));
-    panel.createActionLabel(IdeBundle.message("untrusted.project.notification.trust.button"), () -> {
-      TrustedProjects.confirmImportingUntrustedProject(project, provider.getBuildSystemName(),
-                                                       IdeBundle.message("untrusted.project.notification.trust.button"),
+    String trustButtonText = IdeBundle.message("untrusted.project.notification.trust.button", provider.getBuildSystemName());
+    panel.createActionLabel(trustButtonText, () -> {
+      TrustedProjects.confirmImportingUntrustedProject(project, provider.getBuildSystemName(), trustButtonText,
                                                        CommonBundle.getCancelButtonText());
     }, false);
     return panel;
