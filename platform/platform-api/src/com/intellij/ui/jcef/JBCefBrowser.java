@@ -45,16 +45,28 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
  * @see JBCefOsrHandlerBrowser
  * @author tav
  */
+@SuppressWarnings("unused")
 public class JBCefBrowser extends JBCefBrowserBase {
+  /**
+   * Defines whether the browser component should take focus on navigation (loading a new URL).
+   * <p></p>
+   * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
+   *
+   * @see #setProperty(String, Object)
+   */
+  @NotNull public static final String FOCUS_ON_NAVIGATION = "JBCefBrowser.focusOnNavigation";
 
-  @NotNull private final JPanel myComponent;
-  @NotNull private final CefFocusHandler myCefFocusHandler;
-  @NotNull private final CefKeyboardHandler myKeyboardHandler;
-  @NotNull private static final List<Consumer<? super JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =
+  /**
+   * Defines whether the browser component should take focus on show.
+   * <p></p>
+   * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
+   *
+   * @see #setProperty(String, Object)
+   */
+  @NotNull public static final String FOCUS_ON_SHOW = "JBCefBrowser.focusOnShow";
+
+  private static final @NotNull List<Consumer<? super JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =
     Collections.synchronizedList(new ArrayList<>(1));
-
-  private JDialog myDevtoolsFrame = null;
-  protected CefContextMenuHandler myDefaultContextMenuHandler;
 
   @NotNull private static final Dimension DEF_PREF_SIZE = new Dimension(800, 600);
 
@@ -107,6 +119,15 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }
   }
 
+  private final @NotNull JPanel myComponent;
+  private final @NotNull CefFocusHandler myCefFocusHandler;
+  private final @NotNull CefKeyboardHandler myKeyboardHandler;
+
+  private JDialog myDevtoolsFrame = null;
+  protected CefContextMenuHandler myDefaultContextMenuHandler;
+
+  private volatile boolean myFirstShow = true;
+
   /**
    * Creates a browser with the provided {@code JBCefClient} and initial URL. The client's lifecycle is the responsibility of the caller.
    */
@@ -135,8 +156,12 @@ public class JBCefBrowser extends JBCefBrowserBase {
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         boolean componentFocused = focusOwner == getComponent() || focusOwner == getCefBrowser().getUIComponent();
+        boolean focusOnNavigation = (myFirstShow && Boolean.TRUE.equals(getProperty(FOCUS_ON_SHOW))) ||
+                                    Boolean.TRUE.equals(getProperty(FOCUS_ON_NAVIGATION)) ||
+                                    componentFocused;
+        myFirstShow = false;
 
-        if (source == FocusSource.FOCUS_SOURCE_NAVIGATION && !componentFocused) {
+        if (source == FocusSource.FOCUS_SOURCE_NAVIGATION && !focusOnNavigation) {
           if (SystemInfoRt.isWindows) {
             myCefBrowser.setFocus(false);
           }
@@ -209,6 +234,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
             myCefBrowser.setFocus(false);
           }
         }
+        myFirstShow = true;
         super.removeNotify();
       }
       @Override
@@ -308,8 +334,24 @@ public class JBCefBrowser extends JBCefBrowserBase {
     return myComponent;
   }
 
-  @Nullable
-  private static Window getActiveFrame() {
+  /**
+   * Supports the following properties:
+   * <ul>
+   * <li> {@link #FOCUS_ON_SHOW}
+   * <li> {@link #FOCUS_ON_NAVIGATION}
+   * </ul>
+   *
+   * @throws IllegalArgumentException if the value has wrong type or format
+   */
+  @Override
+  public void setProperty(@NotNull String name, @Nullable Object value) {
+    if (FOCUS_ON_NAVIGATION.equals(name) && !(value instanceof Boolean)) {
+      throw new IllegalArgumentException("JBCefBrowserBase.FOCUS_ON_NAVIGATION should be java.lang.Boolean");
+    }
+    super.setProperty(name, value);
+  }
+
+  private static @Nullable Window getActiveFrame() {
     for (Frame frame : Frame.getFrames()) {
       if (frame.isActive()) return frame;
     }

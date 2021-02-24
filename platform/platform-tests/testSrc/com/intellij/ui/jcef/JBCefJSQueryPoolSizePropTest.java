@@ -16,7 +16,7 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
- * Tests {@link JBCefClient#JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP}.
+ * Tests {@link JBCefClient#JS_QUERY_POOL_SIZE}.
  *
  * @author tav
  */
@@ -32,7 +32,7 @@ public class JBCefJSQueryPoolSizePropTest {
     TestScaleHelper.assumeStandalone();
 
     test(client -> {
-      client.setProperty(JBCefClient.JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP, 1);
+      client.setProperty(JBCefClient.JS_QUERY_POOL_SIZE, 1);
       return null;
     });
   }
@@ -42,7 +42,7 @@ public class JBCefJSQueryPoolSizePropTest {
     TestScaleHelper.assumeStandalone();
 
     JBCefJSQueryPoolSizePropTest.test(client -> {
-      client.setProperty(JBCefClient.JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP, Integer.MAX_VALUE); // stress test
+      client.setProperty(JBCefClient.JS_QUERY_POOL_SIZE, Integer.MAX_VALUE); // stress test
       return null;
     });
   }

@@ -46,7 +46,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
   /**
    * Creates a unique JS query.
    *
-   * @see JBCefClient#JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP
+   * @see JBCefClient#JS_QUERY_POOL_SIZE
    * @param browser the associated cef browser
    */
   public static JBCefJSQuery create(@NotNull JBCefBrowserBase browser) {
