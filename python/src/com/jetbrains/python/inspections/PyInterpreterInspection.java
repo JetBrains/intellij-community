@@ -167,7 +167,7 @@ public final class PyInterpreterInspection extends PyInspection {
       final UserDataHolderBase context = new UserDataHolderBase();
 
       final var detectedAssociatedEnvironments = PySdkExtKt.detectAssociatedEnvironments(module, existingSdks, context);
-      final var trustedState = TrustedProjects.getTrustedState(module.getProject());
+      final var trustedState = TrustedProjects.getExplicitTrustedStateOrByHostAndLocation(module.getProject());
       final var detectedEnv = PySdkExtKt.chooseEnvironmentToSuggest(module, detectedAssociatedEnvironments, trustedState);
       if (detectedEnv != null) {
         return new UseDetectedInterpreterFix(detectedEnv.getFirst(), existingSdks, true, module, detectedEnv.getSecond());
@@ -492,7 +492,10 @@ public final class PyInterpreterInspection extends PyInspection {
             CommonBundle.message("button.without.mnemonic.yes"),
             CommonBundle.message("button.without.mnemonic.no")
           )
-        ).asWarning().ask(project);
+        )
+          .asWarning()
+          .doNotAsk(TrustedProjects.createDoNotAskOptionForHost(project))
+          .ask(project);
 
         TrustedProjects.setTrusted(project, confirmation);
 
