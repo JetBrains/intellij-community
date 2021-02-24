@@ -33,7 +33,10 @@ import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 interface KotlinChangeSignatureConfiguration {
@@ -81,37 +84,35 @@ class KotlinChangeSignature(
     override fun forcePerformForSelectedFunctionOnly() = configuration.forcePerformForSelectedFunctionOnly()
 
     private fun runSilentRefactoring(descriptor: KotlinMethodDescriptor) {
-        val processor = when (val baseDeclaration = descriptor.baseDeclaration) {
-            is KtFunction, is KtClass -> KotlinChangeSignatureDialog.createRefactoringProcessorForSilentChangeSignature(
-                project,
-                commandName,
-                descriptor,
-                defaultValueContext
-            )
+        val processor = if (descriptor.baseDescriptor is PropertyDescriptor)
+            KotlinChangePropertySignatureDialog.createProcessorForSilentRefactoring(project, commandName, descriptor)
+        else
+            when (val baseDeclaration = descriptor.baseDeclaration) {
+                is KtFunction, is KtClass -> KotlinChangeSignatureDialog.createRefactoringProcessorForSilentChangeSignature(
+                    project,
+                    commandName,
+                    descriptor,
+                    defaultValueContext
+                )
 
-            is KtProperty, is KtParameter -> KotlinChangePropertySignatureDialog.createProcessorForSilentRefactoring(
-                project,
-                commandName,
-                descriptor
-            )
+                is PsiMethod -> {
+                    if (baseDeclaration.language != JavaLanguage.INSTANCE) {
+                        Messages.showErrorDialog(
+                            KotlinBundle.message(
+                                "error.text.can.t.change.signature.of.method",
+                                baseDeclaration.language.displayName
+                            ),
+                            commandName
+                        )
+                        return
+                    }
 
-            is PsiMethod -> {
-                if (baseDeclaration.language != JavaLanguage.INSTANCE) {
-                    Messages.showErrorDialog(
-                        KotlinBundle.message(
-                            "error.text.can.t.change.signature.of.method",
-                            baseDeclaration.language.displayName
-                        ),
-                        commandName
-                    )
-                    return
+                    ChangeSignatureProcessor(project, getPreviewInfoForJavaMethod(descriptor).second)
                 }
 
-                ChangeSignatureProcessor(project, getPreviewInfoForJavaMethod(descriptor).second)
+                else -> throwUnexpectedDeclarationException(baseDeclaration)
             }
 
-            else -> throwUnexpectedDeclarationException(baseDeclaration)
-        }
 
         processor.run()
     }
