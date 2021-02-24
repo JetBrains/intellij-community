@@ -2,7 +2,6 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.WhatsNewAction
@@ -20,7 +19,7 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SeparatorComponent
-import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.DateFormatUtil
@@ -132,8 +131,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
           val linkLine = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
           val font = JBFont.label().asBold()
           linkLine.add(JBLabel(IdeBundle.message("updates.settings.recommend.toolbox.first.part")).withBorder(JBUI.Borders.emptyRight(5)).withFont(font))
-          linkLine.add(ActionLink(ExternalUpdateManager.TOOLBOX.toolName) { BrowserUtil.browse(TOOLBOX_URL) }
-                         .withIcon(ActionLink.Decoration.EXTERNAL).withFont(font))
+          linkLine.add(BrowserLink(ExternalUpdateManager.TOOLBOX.toolName, TOOLBOX_URL).withFont(font))
 
           val textBlock = JPanel(BorderLayout(0, JBUI.scale(3)))
           textBlock.add(linkLine, BorderLayout.NORTH)

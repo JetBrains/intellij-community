@@ -13,12 +13,6 @@ import javax.swing.JButton
 import javax.swing.SwingConstants
 
 open class ActionLink() : JButton() {
-  enum class Decoration(val icon: Icon, val atRight: Boolean) {
-    HELP(AllIcons.General.ContextHelp, false),
-    EXTERNAL(AllIcons.Ide.External_link_arrow, true),
-    DROP_DOWN(AllIcons.General.LinkDropTriangle, true)
-  }
-
   override fun getUIClassID() = "LinkButtonUI"
 
   init {
@@ -56,6 +50,7 @@ open class ActionLink() : JButton() {
       repaint()
     }
 
+  fun setLinkIcon() = setIcon(AllIcons.Ide.Link, false)
   fun setContextHelpIcon() = setIcon(AllIcons.General.ContextHelp, false)
   fun setExternalLinkIcon() = setIcon(AllIcons.Ide.External_link_arrow, true)
   fun setDropDownLinkIcon() = setIcon(AllIcons.General.LinkDropTriangle, true)
@@ -63,11 +58,6 @@ open class ActionLink() : JButton() {
     icon = anIcon
     iconTextGap = scale(if (atRight) 1 else 4)
     horizontalTextPosition = if (atRight) SwingConstants.LEADING else SwingConstants.TRAILING
-  }
-
-  fun withIcon(icon: Decoration): ActionLink {
-    setIcon(icon.icon, icon.atRight)
-    return this
   }
 
   fun withFont(font: Font): ActionLink {
