@@ -25,11 +25,11 @@ internal fun buildUsageQuery(project: Project, target: RenameTarget, options: Re
   ApplicationManager.getApplication().assertReadAccessAllowed()
   val queries = ArrayList<Query<out RenameUsage>>()
   queries += searchRenameUsages(project, target, options.searchScope)
-  if (options.textOptions.renameTextOccurrences == true) {
-    queries += buildTextResultsQueries(project, target, options.searchScope, ReplaceTextTargetContext.IN_PLAIN_TEXT)
-  }
-  if (options.textOptions.renameCommentsStringsOccurrences == true) {
+  if (options.textOptions.commentStringOccurrences == true) {
     queries += buildTextResultsQueries(project, target, options.searchScope, ReplaceTextTargetContext.IN_COMMENTS_AND_STRINGS)
+  }
+  if (options.textOptions.textOccurrences == true) {
+    queries += buildTextResultsQueries(project, target, options.searchScope, ReplaceTextTargetContext.IN_PLAIN_TEXT)
   }
   return SearchService.getInstance().merge(queries)
 }

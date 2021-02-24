@@ -63,7 +63,7 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
 
   val usageQuery: Query<out RenameUsage> = buildUsageQuery(
     project, target,
-    RenameOptions(TextOptions(true, true), LocalSearchScope(hostFile))
+    RenameOptions(TextOptions(commentStringOccurrences = true, textOccurrences = true), LocalSearchScope(hostFile))
   )
   val usages: Collection<RenameUsage> = usageQuery.findAll()
   val psiUsages: List<PsiRenameUsage> = usages.filterIsInstance<PsiRenameUsage>()

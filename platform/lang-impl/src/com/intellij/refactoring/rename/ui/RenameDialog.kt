@@ -30,8 +30,8 @@ internal class RenameDialog(
 
   // model
   private var myTargetName: String = initOptions.targetName
-  private var myRenameTextOccurrences: Boolean? = initOptions.renameOptions.textOptions.renameTextOccurrences
-  private var myRenameCommentsStringsOccurrences: Boolean? = initOptions.renameOptions.textOptions.renameCommentsStringsOccurrences
+  private var myCommentsStringsOccurrences: Boolean? = initOptions.renameOptions.textOptions.commentStringOccurrences
+  private var myTextOccurrences: Boolean? = initOptions.renameOptions.textOptions.textOccurrences
   private var myScope: SearchScope = initOptions.renameOptions.searchScope
   var preview: Boolean = false
     private set
@@ -96,23 +96,23 @@ internal class RenameDialog(
   }
 
   private fun LayoutBuilder.textOccurrenceCheckboxes() {
-    if (myRenameTextOccurrences == null && myRenameCommentsStringsOccurrences == null) {
+    if (myCommentsStringsOccurrences == null && myTextOccurrences == null) {
       return
     }
     row {
       cell(isFullWidth = true) {
-        myRenameTextOccurrences?.let {
-          checkBox(
-            text = RefactoringBundle.getSearchForTextOccurrencesText(),
-            getter = { it },
-            setter = { myRenameTextOccurrences = it }
-          )
-        }
-        myRenameCommentsStringsOccurrences?.let {
+        myCommentsStringsOccurrences?.let {
           checkBox(
             text = RefactoringBundle.getSearchInCommentsAndStringsText(),
             getter = { it },
-            setter = { myRenameCommentsStringsOccurrences = it }
+            setter = { myCommentsStringsOccurrences = it }
+          )
+        }
+        myTextOccurrences?.let {
+          checkBox(
+            text = RefactoringBundle.getSearchForTextOccurrencesText(),
+            getter = { it },
+            setter = { myTextOccurrences = it }
           )
         }
       }
@@ -141,8 +141,8 @@ internal class RenameDialog(
     targetName = myTargetName,
     renameOptions = RenameOptions(
       textOptions = TextOptions(
-        renameTextOccurrences = myRenameTextOccurrences,
-        renameCommentsStringsOccurrences = myRenameCommentsStringsOccurrences,
+        commentStringOccurrences = myCommentsStringsOccurrences,
+        textOccurrences = myTextOccurrences,
       ),
       searchScope = myScope
     )

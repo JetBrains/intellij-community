@@ -14,13 +14,17 @@ internal class RenameOptions(
 )
 
 /**
- * @param renameTextOccurrences `null` means the option is not supported
- * @param renameCommentsStringsOccurrences `null` means the option is not supported
+ * @param commentStringOccurrences `null` means the option is not supported
+ * @param textOccurrences `null` means the option is not supported
  */
-internal class TextOptions(
-  val renameTextOccurrences: Boolean?,
-  val renameCommentsStringsOccurrences: Boolean?,
+internal data class TextOptions(
+  val commentStringOccurrences: Boolean?,
+  val textOccurrences: Boolean?,
 )
+
+private val emptyTextOptions = TextOptions(null, null)
+
+internal val TextOptions.isEmpty: Boolean get() = this == emptyTextOptions
 
 internal fun renameOptions(project: Project, target: RenameTarget): RenameOptions {
   return RenameOptions(
@@ -29,24 +33,22 @@ internal fun renameOptions(project: Project, target: RenameTarget): RenameOption
   )
 }
 
-private val emptyTextOptions = TextOptions(null, null)
-
 internal fun getTextOptions(target: RenameTarget): TextOptions {
-  val canRenameTextOccurrences = !target.textTargets(ReplaceTextTargetContext.IN_PLAIN_TEXT).isEmpty()
   val canRenameCommentAndStringOccurrences = !target.textTargets(ReplaceTextTargetContext.IN_COMMENTS_AND_STRINGS).isEmpty()
-  if (!canRenameTextOccurrences && !canRenameCommentAndStringOccurrences) {
+  val canRenameTextOccurrences = !target.textTargets(ReplaceTextTargetContext.IN_PLAIN_TEXT).isEmpty()
+  if (!canRenameCommentAndStringOccurrences && !canRenameTextOccurrences) {
     return emptyTextOptions
   }
   val textOptions = textOptionsService().options[target.javaClass.name]
   return TextOptions(
-    if (!canRenameTextOccurrences) null else textOptions?.renameTextOccurrences ?: true,
-    if (!canRenameCommentAndStringOccurrences) null else textOptions?.renameCommentsStringsOccurrences ?: true,
+    commentStringOccurrences = if (!canRenameCommentAndStringOccurrences) null else textOptions?.commentStringOccurrences ?: true,
+    textOccurrences = if (!canRenameTextOccurrences) null else textOptions?.textOccurrences ?: true,
   )
 }
 
 internal fun setTextOptions(target: RenameTarget, textOptions: TextOptions) {
   val options = textOptionsService().options
-  if (emptyTextOptions == textOptions) {
+  if (textOptions.isEmpty) {
     options.remove(target.javaClass.name)
   }
   else {
@@ -64,22 +66,22 @@ internal class TextOptionsService : PersistentStateComponent<TextOptionsService.
 
   class StateEntry(
     var fqn: String = "",
-    var textOccurrences: Boolean? = null,
     var commentsStringsOccurrences: Boolean? = null,
+    var textOccurrences: Boolean? = null,
   )
 
   val options: MutableMap<String, TextOptions> = HashMap() // key is RenameTarget class FQN
 
   override fun getState(): State = State(
     options.map { (fqn, textOptions) ->
-      StateEntry(fqn, textOptions.renameTextOccurrences, textOptions.renameCommentsStringsOccurrences)
+      StateEntry(fqn, textOptions.commentStringOccurrences, textOptions.textOccurrences)
     }
   )
 
   override fun loadState(state: State) {
     options.clear()
     for (entry in state.entries) {
-      options[entry.fqn] = TextOptions(entry.textOccurrences, entry.commentsStringsOccurrences)
+      options[entry.fqn] = TextOptions(commentStringOccurrences = entry.commentsStringsOccurrences, textOccurrences = entry.textOccurrences)
     }
   }
 }

@@ -9,7 +9,7 @@ import java.util.*
 enum class ReplaceTextTargetContext(
   internal val searchContexts: Set<SearchContext>
 ) {
-  IN_PLAIN_TEXT(EnumSet.of(SearchContext.IN_PLAIN_TEXT)),
   IN_COMMENTS_AND_STRINGS(EnumSet.of(IN_COMMENTS, IN_STRINGS)),
+  IN_PLAIN_TEXT(EnumSet.of(SearchContext.IN_PLAIN_TEXT)),
   ;
 }

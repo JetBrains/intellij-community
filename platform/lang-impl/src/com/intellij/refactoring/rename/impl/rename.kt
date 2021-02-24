@@ -338,8 +338,8 @@ fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
   val targetPointer = target.createPointer()
   val options = RenameOptions(
     textOptions = TextOptions(
-      renameTextOccurrences = true,
-      renameCommentsStringsOccurrences = true,
+      commentStringOccurrences = true,
+      textOccurrences = true,
     ),
     searchScope = target.maximalSearchScope ?: GlobalSearchScope.projectScope(project)
   )
