@@ -7966,6 +7966,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testInlineClassDeprecated() throws Exception {
             runTest("idea/testData/quickfix/inlineClass/inlineClassDeprecated.kt");
         }
+
+        @TestMetadata("inlineClassDeprecated_js.kt")
+        public void testInlineClassDeprecated_js() throws Exception {
+            runTest("idea/testData/quickfix/inlineClass/inlineClassDeprecated_js.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
