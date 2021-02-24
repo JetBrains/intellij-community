@@ -9,9 +9,9 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class LinkDestinationReferenceTest extends BasePlatformTestCase {
+public class CommonLinkDestinationReferenceTest extends BasePlatformTestCase {
 
-  public static final Logger LOGGER = Logger.getInstance(LinkDestinationReferenceTest.class);
+  public static final Logger LOGGER = Logger.getInstance(CommonLinkDestinationReferenceTest.class);
 
   @NotNull
   @Override

@@ -106,6 +106,7 @@ Includes the following features:</p>
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.MarkdownHeadersIndex"/>
     <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownElementTypes"/>
+    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MissedExtensionPathReferenceProvider"/>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MarkdownAnchorPathReferenceProvider"/>
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer" />
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" />
