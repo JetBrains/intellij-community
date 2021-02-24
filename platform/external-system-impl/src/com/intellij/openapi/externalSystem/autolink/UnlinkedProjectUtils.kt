@@ -4,12 +4,18 @@ package com.intellij.openapi.externalSystem.autolink
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointUtil
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 
 
 fun ExternalSystemUnlinkedProjectAware.getProjectId(externalProjectPath: String): ExternalSystemProjectId {
   return ExternalSystemProjectId(systemId, externalProjectPath)
+}
+
+fun ExternalSystemUnlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project: Project, externalProjectPath: String) {
+  ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, systemId)
+  linkAndLoadProject(project, externalProjectPath)
 }
 
 fun createExtensionDisposable(project: Project, unlinkedProjectAware: ExternalSystemUnlinkedProjectAware): Disposable {

@@ -68,7 +68,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
           val projectId = singleUnlinkedProject.getProjectId(externalProjectPath)
           LOG.debug("Auto-linked ${projectId.readableName} project")
         }
-        singleUnlinkedProject.linkAndLoadProject(project, externalProjectPath)
+        singleUnlinkedProject.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
       }
       else {
         val notificationAware = UnlinkedProjectNotificationAware.getInstance(project)
