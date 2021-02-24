@@ -891,10 +891,6 @@ public final class IdeEventQueue extends EventQueue {
   private void dispatchMouseEvent(@NotNull AWTEvent e) {
     MouseEvent me = (MouseEvent)e;
 
-    if (me.getClickCount() > 10) {
-      LOG.warn(String.format("Too many mouse clicks (%d)!!!", me.getClickCount()));
-    }
-
     if (me.getID() == MouseEvent.MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0) {
       resetGlobalMouseEventTarget(me);
     }
