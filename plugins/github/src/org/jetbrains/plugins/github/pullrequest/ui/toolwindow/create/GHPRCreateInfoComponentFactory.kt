@@ -52,9 +52,9 @@ import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
+import java.awt.Component
+import java.awt.Container
 import java.awt.event.ActionEvent
-import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.text.Document
@@ -158,6 +158,13 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     return JPanel(null).apply {
       background = UIUtil.getListBackground()
       layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().flowY())
+      isFocusCycleRoot = true
+      focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
+        override fun getDefaultComponent(aContainer: Container?): Component {
+          return if (aContainer == this@apply) titleField
+          else super.getDefaultComponent(aContainer)
+        }
+      }
 
       add(directionSelector, CC().growX().pushX().minWidth("0"))
       add(titleField, CC().growX().pushX().minWidth("0"))
