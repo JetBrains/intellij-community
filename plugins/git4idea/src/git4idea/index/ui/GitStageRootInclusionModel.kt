@@ -8,11 +8,33 @@ import com.intellij.openapi.vcs.changes.ui.BaseInclusionModel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.ThreeStateCheckBox
 import git4idea.index.GitStageTracker
+import git4idea.index.GitStageTrackerListener
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
-class GitStageRootInclusionModel(private val project: Project) : BaseInclusionModel() {
+class GitStageRootInclusionModel(private val project: Project,
+                                 private val tracker: GitStageTracker,
+                                 disposable: Disposable) : BaseInclusionModel() {
+  private var stagedRoots = emptySet<VirtualFile>()
   private val includedRoots = mutableSetOf<VirtualFile>()
+
+  init {
+    tracker.addListener(object : GitStageTrackerListener {
+      override fun update() {
+        val removedRoots = stagedRoots - tracker.state.stagedRoots
+        val addedRoots = tracker.state.stagedRoots - stagedRoots
+
+        stagedRoots = tracker.state.stagedRoots
+
+        includedRoots.removeAll(removedRoots)
+        includedRoots.addAll(addedRoots)
+
+        if (removedRoots.isNotEmpty() || addedRoots.isNotEmpty()) {
+          fireInclusionChanged()
+        }
+      }
+    }, disposable)
+  }
 
   override fun getInclusion(): Set<Any> {
     return includedRoots.asRepositories(project)
