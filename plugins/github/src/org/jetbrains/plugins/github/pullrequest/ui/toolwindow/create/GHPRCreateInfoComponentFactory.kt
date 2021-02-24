@@ -49,9 +49,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
 import java.awt.event.ActionEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.text.Document
@@ -105,6 +108,8 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       font = UIUtil.getLabelFont()
       emptyText.text = GithubBundle.message("pull.request.create.title")
       lineWrap = true
+    }.also {
+      GHUIUtil.registerFocusActions(it)
     }
 
     val descriptionField = JBTextArea(descriptionDocument).apply {
@@ -113,6 +118,8 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       font = UIUtil.getLabelFont()
       emptyText.text = GithubBundle.message("pull.request.create.description")
       lineWrap = true
+    }.also {
+      GHUIUtil.registerFocusActions(it)
     }
     descriptionDocument.addAndInvokeEnabledStateListener {
       descriptionField.isEnabled = descriptionDocument.enabled
