@@ -66,10 +66,12 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void> i
     myFileTypeNameEnumerator = createFileTypeNameEnumerator();
   }
 
+  @Override
   public int getFileTypeId(String name) throws IOException {
     return myFileTypeNameEnumerator.enumerate(name);
   }
 
+  @Override
   public String getFileTypeName(int id) throws IOException {
     return myFileTypeNameEnumerator.valueOf(id);
   }
