@@ -691,16 +691,24 @@ public final class ExternalSystemUtil {
 
   public static boolean confirmLoadingUntrustedProjectIfNeeded(
     @NotNull Project project,
-    @NotNull ProjectSystemId externalSystemId,
-    @NotNull Predicate<ThreeState> confirmation
+    @NotNull ProjectSystemId systemId,
+    @NotNull @Button String cancelButtonText
   ) {
-    String cancelButtonText = ExternalSystemBundle.message("unlinked.project.notification.open.preview.action");
-    return confirmLoadingUntrustedProjectIfNeeded(project, externalSystemId, cancelButtonText, confirmation);
+    return confirmLoadingUntrustedProjectIfNeeded(project, systemId, cancelButtonText, __ -> true);
   }
 
   public static boolean confirmLoadingUntrustedProjectIfNeeded(
     @NotNull Project project,
-    @NotNull ProjectSystemId externalSystemId,
+    @NotNull ProjectSystemId systemId,
+    @NotNull Predicate<ThreeState> confirmation
+  ) {
+    String cancelButtonText = ExternalSystemBundle.message("unlinked.project.notification.open.preview.action");
+    return confirmLoadingUntrustedProjectIfNeeded(project, systemId, cancelButtonText, confirmation);
+  }
+
+  public static boolean confirmLoadingUntrustedProjectIfNeeded(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
     @NotNull @Button String cancelButtonText,
     @NotNull Predicate<ThreeState> confirmation
   ) {
@@ -714,7 +722,7 @@ public final class ExternalSystemUtil {
     if (!confirmation.test(state)) {
       return false;
     }
-    String systemName = externalSystemId.getReadableName();
+    String systemName = systemId.getReadableName();
     return confirmImportingUntrustedProject(
       project, systemName,
       ExternalSystemBundle.message("unlinked.project.notification.load.action", systemName),
