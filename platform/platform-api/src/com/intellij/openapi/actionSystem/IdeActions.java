@@ -290,6 +290,11 @@ public interface IdeActions {
   String GROUP_WELCOME_SCREEN_CONFIGURE = "WelcomeScreen.Configure";
   String GROUP_WELCOME_SCREEN_OPTIONS = "WelcomeScreen.Options";
   String GROUP_WELCOME_SCREEN_LEARN_IDE = "WelcomeScreen.LearnIdeHelp";
+
+  /** @deprecated please use {@link #GROUP_WELCOME_SCREEN_OPTIONS} (and the corresponding action group) instead */
+  @Deprecated
+  String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";
+
   String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";
   String ACTION_MOVE = "Move";
   String ACTION_RENAME = "RenameElement";
