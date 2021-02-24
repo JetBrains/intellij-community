@@ -48,12 +48,13 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
                                headRepo: GHGitRepositoryMapping,
                                headBranch: GitRemoteBranch): GHPRIdentifier? {
     progressIndicator.text = GithubBundle.message("pull.request.existing.process.title")
-    val headRepositoryPrefix = getHeadRepoPrefix(headRepo)
     return requestExecutor.execute(progressIndicator,
                                    GHGQLRequests.PullRequest.findByBranches(baseRepo.repository,
                                                                             baseBranch.nameForRemoteOperations,
-                                                                     headRepositoryPrefix + headBranch.nameForRemoteOperations
-                                   )).nodes.firstOrNull()
+                                                                            headBranch.nameForRemoteOperations
+                                   )).nodes.firstOrNull {
+      it.headRepository?.owner?.login == headRepo.repository.repositoryPath.owner
+    }
   }
 
   private fun getHeadRepoPrefix(headRepo: GHGitRepositoryMapping) =
