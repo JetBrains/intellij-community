@@ -190,10 +190,11 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     }
 
     if (task != null) {
+      boolean longTimeOut = !ApplicationManager.getApplication().isDispatchThread() ||
+                            ApplicationManager.getApplication().isUnitTestMode();
       try {
         int timeout;
-        if (!ApplicationManager.getApplication().isDispatchThread() ||
-            ApplicationManager.getApplication().isUnitTestMode()) timeout = 1000;
+        if (longTimeOut) timeout = 1000;
         else timeout = 20;
 
         task.waitFor(timeout, TimeUnit.MILLISECONDS);
@@ -202,7 +203,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         LOG.debug(e);
       }
       catch (TimeoutException e) {
-        LOG.warn("Wait time out ", e);
+        if (longTimeOut) LOG.warn("Wait time out ", e);
       }
     }
   }
