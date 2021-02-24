@@ -484,9 +484,12 @@ public final class ProjectUtil {
    * {@link Messages#CANCEL} - if user canceled the dialog
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
-    GeneralSettings settings = GeneralSettings.getInstance();
-    int confirmOpenNewProject = ApplicationManager.getApplication().isUnitTestMode() ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : settings.getConfirmOpenNewProject();
-    if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
+    }
+
+    int mode = GeneralSettings.getInstance().getConfirmOpenNewProject();
+    if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
       if (isNewProject) {
         boolean openInExistingFrame =
           MessageDialogBuilder.yesNo(IdeBundle.message("title.new.project"), IdeBundle.message("prompt.open.project.in.new.frame"))
@@ -494,9 +497,7 @@ public final class ProjectUtil {
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(new ProjectNewWindowDoNotAskOption())
             .guessWindowAndAsk();
-        int code = openInExistingFrame ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
-        LifecycleUsageTriggerCollector.onProjectFrameSelected(code);
-        return code;
+        mode = openInExistingFrame ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
       }
       else {
         int exitCode =
@@ -505,13 +506,15 @@ public final class ProjectUtil {
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(new ProjectNewWindowDoNotAskOption())
             .guessWindowAndAsk();
-        int code = exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
-                exitCode == Messages.NO ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
-        LifecycleUsageTriggerCollector.onProjectFrameSelected(code);
-        return code;
+        mode = exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
+               exitCode == Messages.NO ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
+               Messages.CANCEL;
+      }
+      if (mode != Messages.CANCEL) {
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(mode);
       }
     }
-    return confirmOpenNewProject;
+    return mode;
   }
 
   /**
