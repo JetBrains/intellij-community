@@ -36,14 +36,16 @@ public class UntrustedProjectNotificationProvider extends EditorNotifications.Pr
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
                                                          @NotNull FileEditor fileEditor,
                                                          @NotNull Project project) {
-    if (EP_NAME.extensions().noneMatch(provider -> provider.shouldShowEditorNotification(project))) {
+
+    UntrustedProjectModeProvider provider = EP_NAME.findFirstSafe(p -> p.shouldShowEditorNotification(project));
+    if (provider == null) {
       return null;
     }
 
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(IdeBundle.message("untrusted.project.notification.description"));
     panel.createActionLabel(IdeBundle.message("untrusted.project.notification.trust.button"), () -> {
-      TrustedProjects.confirmImportingUntrustedProject(project, ApplicationNamesInfo.getInstance().getProductName(),
+      TrustedProjects.confirmImportingUntrustedProject(project, provider.getBuildSystemName(),
                                                        IdeBundle.message("untrusted.project.notification.trust.button"),
                                                        CommonBundle.getCancelButtonText());
     }, false);
