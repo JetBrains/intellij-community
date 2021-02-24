@@ -4,9 +4,14 @@ package org.jetbrains.idea.maven.project
 import com.intellij.ide.impl.UntrustedProjectModeProvider
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenUntrustedModeProvider : UntrustedProjectModeProvider {
   override fun shouldShowEditorNotification(project: Project): Boolean {
     return MavenProjectsManager.getInstance(project).isMavenizedProject && !project.isTrusted()
+  }
+
+  override fun getBuildSystemName(): String {
+    return MavenUtil.MAVEN_NAME
   }
 }
