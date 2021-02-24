@@ -142,6 +142,7 @@ public final class JBCefClient implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
+  @SuppressWarnings("SameParameterValue")
   void addPropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
     myPropertyChangeHelper.addPropertyChangeListener(name, listener);
   }
