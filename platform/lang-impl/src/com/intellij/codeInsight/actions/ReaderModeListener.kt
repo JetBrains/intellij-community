@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -38,7 +38,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
 
     fun applyToAllEditors(project: Project, preferGlobalSettings: Boolean = false) {
       FileEditorManager.getInstance(project).allEditors.forEach {
-        if (it !is PsiAwareTextEditorImpl) return
+        if (it !is TextEditor) return
         applyReaderMode(project, it.editor, it.file, fileIsOpenAlready = true, preferGlobalSettings = preferGlobalSettings)
       }
 
