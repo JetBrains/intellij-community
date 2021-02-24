@@ -2,6 +2,7 @@
 package com.jetbrains.python
 
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.ide.impl.getTrustedState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
@@ -102,9 +103,21 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.related.venv")
     LOGGER.debug("Looking for a virtual environment related to the project")
-    guardIndicator(indicator) { detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() }?.let {
-      LOGGER.debug { "Detected virtual environment related to the project: $it" }
-      val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
+    guardIndicator(indicator) {
+      val detectedAssociatedEnvironments = detectAssociatedEnvironments(module, existingSdks, context)
+      chooseEnvironmentToSuggest(module, detectedAssociatedEnvironments, project.getTrustedState())
+    }?.let {
+      val detectedAssociatedEnv = it.first
+
+      if (it.second) {
+          // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
+          LOGGER.info("Inner virtual environment has not been configured since project is not trusted")
+          runInEdt { module.excludeInnerVirtualEnv(detectedAssociatedEnv) }
+          return
+      }
+
+      LOGGER.debug { "Detected virtual environment related to the project: $detectedAssociatedEnv" }
+      val newSdk = detectedAssociatedEnv.setupAssociated(existingSdks, module.basePath) ?: return
       LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 
       runInEdt {
