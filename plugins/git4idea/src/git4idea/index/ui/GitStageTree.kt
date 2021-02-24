@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
-import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.ide.dnd.DnDActionInfo
 import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
@@ -18,10 +17,8 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
-import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
@@ -33,7 +30,6 @@ import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.conflicts.getConflictType
@@ -45,7 +41,6 @@ import git4idea.index.ignoredStatus
 import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
 import git4idea.repo.GitConflict
-import git4idea.repo.GitRepository
 import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -53,9 +48,6 @@ import org.jetbrains.annotations.PropertyKey
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.beans.PropertyChangeListener
-import java.util.*
-import java.util.stream.Collectors
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -77,8 +69,6 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   protected abstract val ignoredFilePaths: Map<VirtualFile, List<FilePath>>
   protected abstract val operations: List<StagingAreaOperation>
 
-  private val includedRootsListeners = EventDispatcher.create(IncludedRootsListener::class.java)
-
   init {
     isKeepTreeState = true
     isScrollToSelection = false
@@ -95,15 +85,6 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
         rebuildTree()
       }
     }, parentDisposable)
-
-    groupingSupport.addPropertyChangeListener(PropertyChangeListener {
-      includedRootsListeners.multicaster.includedRootsChanged()
-    })
-    inclusionModel.addInclusionListener(object : InclusionListener {
-      override fun inclusionChanged() {
-        includedRootsListeners.multicaster.includedRootsChanged()
-      }
-    })
   }
 
   abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
@@ -217,43 +198,6 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }
   }
 
-  fun getIncludedRoots(): Collection<VirtualFile> {
-    if (state.rootStates.size == 1 ||
-        !groupingSupport.isAvailable(REPOSITORY_GROUPING) ||
-        !groupingSupport[REPOSITORY_GROUPING]) return state.rootStates.keys
-
-    return inclusionModel.getInclusion().mapNotNull { (it as? GitRepository)?.root }
-  }
-
-  fun addIncludedRootsListener(listener: IncludedRootsListener, disposable: Disposable) {
-    includedRootsListeners.addListener(listener, disposable)
-  }
-
-  override fun isInclusionEnabled(node: ChangesBrowserNode<*>): Boolean {
-    return state.rootStates.size > 1 && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
-  }
-
-  override fun isInclusionVisible(node: ChangesBrowserNode<*>): Boolean {
-    return state.rootStates.size > 1 && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
-  }
-
-  override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): MutableList<Any> {
-    return treeModelData
-      .rawNodesStream()
-      .filter { node: ChangesBrowserNode<*>? -> isIncludable(node!!) }
-      .map { node: ChangesBrowserNode<*> -> node.userObject }
-      .collect(Collectors.toList())
-  }
-
-  override fun getNodeStatus(node: ChangesBrowserNode<*>): ThreeStateCheckBox.State {
-    return inclusionModel.getInclusionState(node.userObject)
-  }
-
-  private fun isUnderKind(node: ChangesBrowserNode<*>, nodeKind: NodeKind): Boolean {
-    val nodePath = node.path?.takeIf { it.isNotEmpty() } ?: return false
-    return (nodePath.find { it is MyKindNode } as? MyKindNode)?.kind == nodeKind
-  }
-
   private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)
     : TreeModelBuilder(project, grouping) {
     private val parentNodes: MutableMap<NodeKind, MyKindNode> = mutableMapOf()
@@ -360,7 +304,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }
   }
 
-  private open inner class MyKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
+  protected open inner class MyKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
     val kind: NodeKind
       get() = userObject as NodeKind
 
@@ -625,8 +569,4 @@ internal fun GitStageTracker.State.hasMatchingRoots(vararg kinds: NodeKind): Boo
 
 internal fun GitFileStatusNode.createConflict(): GitConflict? {
   return GitStagingAreaHolder.createConflict(root, status)
-}
-
-interface IncludedRootsListener: EventListener {
-  fun includedRootsChanged()
 }
