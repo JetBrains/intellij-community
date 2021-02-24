@@ -1132,7 +1132,6 @@
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
-    <editorNotificationProvider implementation="com.intellij.ide.impl.UntrustedProjectNotificationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
@@ -1155,8 +1154,5 @@
               topic="com.intellij.openapi.fileTypes.FileTypeListener" />
     <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingEventsListener" activeInHeadlessMode="true" activeInTestMode="false"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
-    <listener class="com.intellij.ide.impl.UntrustedProjectNotificationProvider$TrustedListener"
-              topic="com.intellij.ide.impl.TrustChangeNotifier"
-              activeInHeadlessMode="false" activeInTestMode="false" />
   </applicationListeners>
 </idea-plugin>
