@@ -98,6 +98,7 @@ class KotlinChangePropertySignatureDialog(
 
     private fun updateSignatureAlarmFired() {
         doUpdateSignature()
+        validateButtons()
     }
 
     private fun doUpdateSignature() {
@@ -215,14 +216,20 @@ class KotlinChangePropertySignatureDialog(
     override fun canRun() {
         val psiFactory = KtPsiFactory(myProject)
 
-        psiFactory.createSimpleName(nameField.text).validateElement(
-            KotlinBundle.message("error.text.invalid.name"))
-        psiFactory.createType(returnTypeField.text).validateElement(
-            KotlinBundle.message("error.text.invalid.return.type"))
+        psiFactory.takeIf { Name.isValidIdentifier(nameField.text) }?.createSimpleName(nameField.text).validateElement(
+            KotlinBundle.message("error.text.invalid.name")
+        )
+
+        psiFactory.createTypeIfPossible(returnTypeField.text).validateElement(
+            KotlinBundle.message("error.text.invalid.return.type")
+        )
+
         if (receiverTypeCheckBox?.isSelected == true) {
-            psiFactory.createType(receiverTypeField.text).validateElement(
-                KotlinBundle.message("error.text.invalid.receiver.type"))
+            psiFactory.createTypeIfPossible(receiverTypeField.text).validateElement(
+                KotlinBundle.message("error.text.invalid.receiver.type")
+            )
         }
+
         getDefaultReceiverValue()?.validateElement(KotlinBundle.message("error.text.invalid.default.receiver.value"))
     }
 
