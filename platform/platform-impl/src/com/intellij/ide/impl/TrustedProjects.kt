@@ -78,7 +78,7 @@ fun confirmImportingUntrustedProject(project: Project,
     return true
   }
 
-  val answer = MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.warning.title", buildSystemName),
+  val answer = MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.import.warning.title", buildSystemName),
                                           message = IdeBundle.message("untrusted.project.import.warning.text", buildSystemName))
     .yesText(yesButtonText)
     .noText(noButtonText)
