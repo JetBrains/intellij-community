@@ -40,7 +40,7 @@ class Group<Settings : FragmentedSettings>(
   val name: @Nls String
 ) : AbstractFragmentBuilder<Settings>() {
 
-  var onVisibilityChanged: (Settings, Boolean) -> Unit = { _, _ -> }
+  var applyVisibility: (Settings, Boolean) -> Unit = NOOP
 
   var visible: (Settings) -> Boolean = { true }
 
@@ -58,13 +58,28 @@ class Group<Settings : FragmentedSettings>(
       override fun getChildrenGroupName(): String? = this@Group.childrenGroupName ?: super.getChildrenGroupName()
 
       override fun applyEditorTo(s: Settings) {
-        onVisibilityChanged(s, component().isVisible)
+        applyVisibility(s, component().isVisible)
         super.applyEditorTo(s)
+      }
+
+      override fun isInitiallyVisible(s: Settings): Boolean {
+        val serializableVisibility = applyVisibility != NOOP
+        return if (serializableVisibility) {
+          visible(s)
+        }
+        else {
+          super.isInitiallyVisible(s)
+        }
       }
     }.also {
       it.actionHint = actionHint
       it.actionDescription = actionDescription
     }
+  }
+
+
+  companion object {
+    val NOOP: (Any, Boolean) -> Unit = { _, _ -> }
   }
 }
 
