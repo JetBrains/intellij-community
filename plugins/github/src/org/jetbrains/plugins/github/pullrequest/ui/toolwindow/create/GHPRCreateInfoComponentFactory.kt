@@ -88,6 +88,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         if (discard == Messages.NO) return
 
         progressIndicator.cancel()
+        existenceCheckProgressIndicator.cancel()
         viewController.viewList()
         resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
         createLoadingModel.future = null
