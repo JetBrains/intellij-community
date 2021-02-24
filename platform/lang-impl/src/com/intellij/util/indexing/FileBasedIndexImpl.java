@@ -66,6 +66,7 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -130,6 +131,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final Lock myReadLock;
   public final Lock myWriteLock;
+  private final UnindexedFilesUpdaterListener myUnindexedFilesUpdaterListener;
 
   private IndexConfiguration getState() {
     return myRegisteredIndexes.getConfigurationState();
@@ -154,7 +156,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myFileDocumentManager = FileDocumentManager.getInstance();
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
-    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
+    MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
+    SimpleMessageBusConnection connection = messageBus.simpleConnect();
+
+    myUnindexedFilesUpdaterListener = messageBus.syncPublisher(UnindexedFilesUpdaterListener.TOPIC);
 
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
@@ -784,6 +789,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void filesUpdateStarted(Project project) {
+    myUnindexedFilesUpdaterListener.updateStarted(project);
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
     myProjectsBeingUpdated.add(project);
@@ -809,6 +815,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   void filesUpdateFinished(@NotNull Project project) {
     myProjectsBeingUpdated.remove(project);
     incrementFilesModCount();
+    myUnindexedFilesUpdaterListener.updateFinished(project);
   }
 
   private final Lock myCalcIndexableFilesLock = new ReentrantLock();

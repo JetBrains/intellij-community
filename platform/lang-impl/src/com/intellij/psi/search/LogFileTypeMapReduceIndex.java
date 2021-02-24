@@ -2,15 +2,18 @@
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.IntPair;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntIntHashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
@@ -20,8 +23,7 @@ import com.intellij.util.indexing.impl.storage.IntLog;
 import com.intellij.util.indexing.impl.storage.MemoryIntLog;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +36,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void, FileContent>, FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(LogFileTypeMapReduceIndex.class);
 
+  private final @NotNull MemorySnapshotHandler myMemorySnapshotHandler = new MemorySnapshotHandler();
   private final @NotNull AbstractIntLog myLog;
   private final @NotNull SimpleStringPersistentEnumerator myFileTypeEnumerator;
   private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
@@ -92,7 +95,16 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
       }
       return true;
     };
-    myLog.processEntries(processor);
+    MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
+    if (snapshot != null) {
+      int fileTypeId = snapshot.getIndexedData(fileId);
+      if (fileTypeId != 0) {
+        foundData[0] = fileTypeId;
+      }
+    }
+    else {
+      myLog.processEntries(processor);
+    }
     myMemoryLog.processEntries(processor);
     if (foundData[0] == 0) {
       return Collections.emptyMap();
@@ -207,7 +219,17 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
       }
       return true;
     };
-    myLog.processEntries(processor);
+    MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
+    if (snapshot != null) {
+      IntIterator intIterator = snapshot.getDataIds(fileTypeId).intIterator();
+      while (intIterator.hasNext()) {
+        int inputId = intIterator.nextInt();
+        inputIds.add(inputId);
+      }
+    }
+    else {
+      myLog.processEntries(processor);
+    }
     myMemoryLog.processEntries(processor);
 
     ValueContainerImpl<Void> result = new ValueContainerImpl<>();
@@ -237,7 +259,16 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
       @Override
       public Boolean compute() {
         try {
-          (myInMemoryMode.get() ? myMemoryLog : myLog).addData(fileTypeId, inputId);
+          if (myInMemoryMode.get()) {
+            myMemoryLog.addData(fileTypeId, inputId);
+          }
+          else {
+            myLog.addData(fileTypeId, inputId);
+            MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
+            if (snapshot != null) {
+              snapshot.addData(fileTypeId, inputId);
+            }
+          }
         }
         catch (StorageException e) {
           LOG.error(e);
@@ -288,5 +319,81 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
       myId2FileNameCache.put(id, fileType = Ref.create(fileTypeName));
     }
     return fileType.get();
+  }
+
+  private class MemorySnapshotHandler {
+    private volatile @Nullable MemorySnapshot mySnapshot;
+    private final @NotNull Set<Project> myIndexBatchUpdatingProjects = new HashSet<>();
+
+    MemorySnapshotHandler() {
+      UnindexedFilesUpdaterListener unindexedFilesUpdaterListener = new UnindexedFilesUpdaterListener() {
+        @Override
+        public void updateStarted(@NotNull Project project) {
+          startMemoryLoading(project);
+        }
+
+        @Override
+        public void updateFinished(@NotNull Project project) {
+          finishMemoryLoading(project);
+        }
+      };
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(UnindexedFilesUpdaterListener.TOPIC,
+                                                                              unindexedFilesUpdaterListener);
+    }
+
+    synchronized void startMemoryLoading(@NotNull Project project) {
+      if (myIndexBatchUpdatingProjects.add(project)) {
+        try {
+          mySnapshot = loadIndexToMemory(myLog);
+        }
+        catch (StorageException e) {
+          LOG.error(e);
+        }
+      }
+    }
+
+    synchronized void finishMemoryLoading(@NotNull Project project) {
+      if (myIndexBatchUpdatingProjects.remove(project) && myIndexBatchUpdatingProjects.isEmpty()) {
+        mySnapshot = null;
+      }
+    }
+
+    @Nullable MemorySnapshot getSnapshot() {
+      return mySnapshot;
+    }
+
+    @NotNull MemorySnapshot loadIndexToMemory(@NotNull AbstractIntLog intLog) throws StorageException {
+      Int2ObjectMap<IntSet> invertedIndex = new Int2ObjectOpenHashMap<>();
+      Int2IntMap forwardIndex = new IntIntHashMap();
+      intLog.processEntries((data, inputId) -> {
+        forwardIndex.put(inputId, data);
+        invertedIndex.computeIfAbsent(data, __ -> new IntOpenHashSet()).add(inputId);
+        return true;
+      });
+      return new MemorySnapshot(invertedIndex, forwardIndex);
+    }
+  }
+
+  private static class MemorySnapshot {
+    private final @NotNull Int2ObjectMap<IntSet> myInvertedIndex;
+    private final @NotNull Int2IntMap myForwardIndex;
+
+    private MemorySnapshot(@NotNull Int2ObjectMap<IntSet> invertedIndex, @NotNull Int2IntMap forwardIndex) {
+      myInvertedIndex = invertedIndex;
+      myForwardIndex = forwardIndex;
+    }
+
+    synchronized void addData(int data, int inputId) {
+      myInvertedIndex.computeIfAbsent(data, __ -> new IntOpenHashSet()).add(inputId);
+      myForwardIndex.put(inputId, data);
+    }
+
+    synchronized @NotNull IntSet getDataIds(int data) {
+      return myInvertedIndex.getOrDefault(data, IntSets.EMPTY_SET);
+    }
+
+    synchronized int getIndexedData(int inputId) {
+      return myForwardIndex.get(inputId);
+    }
   }
 }
