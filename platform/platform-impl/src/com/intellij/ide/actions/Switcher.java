@@ -157,7 +157,7 @@ public final class Switcher extends AnAction implements DumbAware {
     if (switcher == null) {
       isNewSwitcher = true;
       boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
-      switcher = createAndShowSwitcher(project, IdeBundle.message("window.title.switcher"), false, false, !moveBack);
+      switcher = new SwitcherPanel(project, IdeBundle.message("window.title.switcher"), false, false, !moveBack);
       switcher.myInitEvent = e.getInputEvent();
       FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
     }
@@ -190,19 +190,7 @@ public final class Switcher extends AnAction implements DumbAware {
     SwitcherPanel switcher = SWITCHER_KEY.get(project);
     if (switcher != null && Objects.equals(switcher.myTitle, title)) return null;
     boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
-    return createAndShowSwitcher(project, title, onlyEdited, pinned, !moveBack);
-  }
-
-  private static @NotNull SwitcherPanel createAndShowSwitcher(@NotNull Project project,
-                                                              @NotNull @Nls String title,
-                                                              boolean onlyEdited,
-                                                              boolean pinned,
-                                                              boolean moveForward) {
-    SwitcherPanel old = SWITCHER_KEY.get(project);
-    if (old != null) old.cancel();
-    SwitcherPanel switcher = new SwitcherPanel(project, title, onlyEdited, pinned, moveForward);
-    setSwitcher(project, switcher);
-    return switcher;
+    return new SwitcherPanel(project, title, onlyEdited, pinned, !moveBack);
   }
 
   public static class ToggleCheckBoxAction extends DumbAwareAction implements DumbAware, LightEditCompatible {
@@ -580,7 +568,6 @@ public final class Switcher extends AnAction implements DumbAware {
         .setCancelCallback(() -> {
           Container popupFocusAncestor = getPopupFocusAncestor();
           if (popupFocusAncestor != null) popupFocusAncestor.setFocusTraversalPolicy(null);
-          setSwitcher(project, null);
           return true;
         }).createPopup();
       Disposer.register(myPopup, this);
@@ -615,6 +602,11 @@ public final class Switcher extends AnAction implements DumbAware {
       }
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+
+      SwitcherPanel old = project.getUserData(SWITCHER_KEY);
+      if (old != null) old.cancel();
+      project.putUserData(SWITCHER_KEY, this);
+
       myPopup.showInCenterOf(window);
 
       Container popupFocusAncestor = getPopupFocusAncestor();
@@ -631,7 +623,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
     @Override
     public void dispose() {
-      setSwitcher(project, null);
+      project.putUserData(SWITCHER_KEY, null);
     }
 
     @NotNull
@@ -1377,9 +1369,5 @@ public final class Switcher extends AnAction implements DumbAware {
       }
       return myNameForRendering;
     }
-  }
-
-  private static void setSwitcher(@NotNull Project project, @Nullable SwitcherPanel switcher) {
-    project.putUserData(SWITCHER_KEY, switcher);
   }
 }
