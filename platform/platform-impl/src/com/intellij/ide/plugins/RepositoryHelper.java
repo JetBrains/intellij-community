@@ -26,7 +26,10 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.ide.plugins.marketplace.MarketplaceRequests.parsePluginList;
 import static java.util.Collections.singletonMap;
@@ -51,31 +54,6 @@ public final class RepositoryHelper {
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.add(null);  // main plugin repository
     return hosts;
-  }
-
-  /**
-   * Loads list of plugins, compatible with a current build, from all configured repositories
-   */
-  @NotNull
-  public static List<IdeaPluginDescriptor> loadPluginsFromCustomRepositories(@Nullable ProgressIndicator indicator) {
-    List<IdeaPluginDescriptor> result = new ArrayList<>();
-    Set<PluginId> addedPluginIds = new HashSet<>();
-    for (String host : getPluginHosts()) {
-      if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) continue;
-      try {
-        List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
-        for (IdeaPluginDescriptor plugin : plugins) {
-          if (addedPluginIds.add(plugin.getPluginId())) {
-            result.add(plugin);
-          }
-        }
-      }
-      catch (IOException e) {
-        LOG.info("Couldn't load plugins from" + host + ":" + e);
-        LOG.debug(e);
-      }
-    }
-    return result;
   }
 
   /**

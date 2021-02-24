@@ -68,12 +68,12 @@ internal class InstallPluginService : RestService() {
 
     val writer = createJsonWriter(out)
     if (pluginIds.size == 1) {
-      val compatibleUpdateExists = pluginIds.all { MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(it) != null }
+      val compatibleUpdateExists = pluginIds.all { MarketplaceRequests.Instance.getLastCompatiblePluginUpdate(it) != null }
       writer.beginObject()
       writer.name("compatible").value(compatibleUpdateExists)
       writer.endObject()
     } else {
-      val compatibleUpdatesInfo = pluginIds.map { it to (MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(it) != null) }
+      val compatibleUpdatesInfo = pluginIds.map { it to (MarketplaceRequests.Instance.getLastCompatiblePluginUpdate(it) != null) }
       writer.beginObject()
       compatibleUpdatesInfo.forEach {
         writer.name(it.first).value(it.second)

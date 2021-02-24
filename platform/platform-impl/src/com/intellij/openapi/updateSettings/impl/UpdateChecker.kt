@@ -313,7 +313,7 @@ object UpdateChecker {
   private fun getBrokenPlugins(): Map<PluginId, Set<String>> {
     val currentBuild = ApplicationInfoImpl.getInstance().build
     val brokenPluginsMap = HashMap<PluginId, MutableSet<String>>()
-    for (item in MarketplaceRequests.getInstance().getBrokenPlugins()) {
+    for (item in MarketplaceRequests.Instance.getBrokenPlugins()) {
       try {
         val parsedOriginalUntil = item.originalUntil?.trim()?.takeIf { it.isNotEmpty() } ?: continue
         val parsedOriginalSince = item.originalSince?.trim()?.takeIf { it.isNotEmpty() } ?: continue
@@ -374,16 +374,16 @@ object UpdateChecker {
     state: InstalledPluginsState,
     indicator: ProgressIndicator?
   ) {
-    val marketplacePluginIds = MarketplaceRequests.getInstance().getMarketplacePlugins(indicator)
+    val marketplacePluginIds = MarketplaceRequests.Instance.getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.map { it.key.idString }.filter { it in marketplacePluginIds }
-    val updates = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
+    val updates = MarketplaceRequests.Instance.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue
       val isOutdated = descriptor == null ||
                        PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor, buildNumber) > 0
       if (isOutdated) {
         val newDescriptor = try {
-          MarketplaceRequests.getInstance().loadPluginDescriptor(id.idString, lastUpdate, indicator)
+          MarketplaceRequests.Instance.loadPluginDescriptor(id.idString, lastUpdate, indicator)
         }
         catch (e: HttpRequests.HttpStatusException) {
           if (e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) continue

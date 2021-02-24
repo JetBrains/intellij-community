@@ -14,8 +14,11 @@ import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.eventLog.events.StringListEventField;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
@@ -23,13 +26,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -39,16 +45,20 @@ import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class PluginsAdvertiser {
-  static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
+
+  private static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
   private static final @NonNls String CASHED_EXTENSIONS = "extensions.xml";
 
   private static final @NonNls String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
@@ -98,37 +108,8 @@ public final class PluginsAdvertiser {
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
   private static boolean extensionsHaveBeenUpdated = false;
 
-  public static @NotNull List<Plugin> retrieve(@NotNull UnknownFeature unknownFeature) {
-    MarketplaceRequests requests = MarketplaceRequests.getInstance();
-    Map<String, String> params = Map.of("featureType", unknownFeature.getFeatureType(),
-                                        "implementationName", unknownFeature.getImplementationName(),
-                                        "build", requests.getBuildForPluginRepositoryRequests());
-
-    return requests
-      .getFeatures(params)
-      .stream()
-      .flatMap(Plugin::fromFeature)
-      .collect(Collectors.toUnmodifiableList());
-  }
-
   public static @NotNull NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup("Plugins Suggestion");
-  }
-
-  static void loadAllExtensions(@NotNull Set<String> customPluginIds) throws IOException {
-    @SuppressWarnings("deprecation")
-    Map<String, String> params = Collections.singletonMap("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName());
-    List<FeatureImpl> features = MarketplaceRequests.getInstance().getFeatures(params);
-    Map<String, Set<Plugin>> setExtensions = features.stream()
-      .collect(Collectors.groupingBy(FeatureImpl::getImplementationName,
-                                     Collectors
-                                       .flatMapping(feature -> Plugin.fromFeature(feature, customPluginIds.contains(feature.getPluginId())),
-                                                    Collectors.toSet())));
-    saveExtensions(setExtensions);
-  }
-
-  static void ensureDeleted() throws IOException {
-    FileUtil.delete(getExtensionsFile());
   }
 
   public static @Nullable KnownExtensions loadExtensions() {
@@ -153,7 +134,8 @@ public final class PluginsAdvertiser {
     return Path.of(PathManager.getPluginsPath(), CASHED_EXTENSIONS);
   }
 
-  static void saveExtensions(Map<String, Set<Plugin>> extensions) throws IOException {
+  @VisibleForTesting
+  static void saveExtensions(@NotNull Map<String, Set<Plugin>> extensions) throws IOException {
     Path plugins = getExtensionsFile();
     if (!Files.exists(plugins)) {
       FileUtil.ensureCanCreateFile(plugins.toFile());
@@ -236,15 +218,15 @@ public final class PluginsAdvertiser {
                                       @NotNull Runnable onSuccess) {
     ProgressManager.getInstance().run(new Task.Modal(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
-      private List<IdeaPluginDescriptor> myRepositoryPlugins;
-      private List<IdeaPluginDescriptor> myCustomPlugins;
+      private List<? extends IdeaPluginDescriptor> myRepositoryPlugins;
+      private List<? extends IdeaPluginDescriptor> myCustomPlugins;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           List<@NotNull String> ids = ContainerUtil.map(pluginIds, PluginId::getIdString);
           List<PluginNode> marketplacePlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(ids);
-          myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
+          myCustomPlugins = loadPluginsFromCustomRepositories(indicator);
 
           myRepositoryPlugins = UpdateChecker.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true);
 
@@ -400,23 +382,124 @@ public final class PluginsAdvertiser {
       return Comparing.compare(myPluginId, other.myPluginId);
     }
 
-    private static @NotNull Stream<@NotNull Plugin> fromFeature(@NotNull FeatureImpl feature,
-                                                                boolean isFromCustomRepository) {
+    static @Nullable Plugin fromFeature(@NotNull FeatureImpl feature,
+                                        boolean isFromCustomRepository) {
 
 
-      return Stream.ofNullable(unquoteString(feature.getPluginId()))
-        .map(pluginId -> new Plugin(pluginId,
-                                    unquoteString(feature.getPluginName()),
-                                    feature.getBundled(),
-                                    isFromCustomRepository));
+      String pluginId = unquoteString(feature.getPluginId());
+      return pluginId != null ?
+             new Plugin(pluginId,
+                        unquoteString(feature.getPluginName()),
+                        feature.getBundled(),
+                        isFromCustomRepository) :
+             null;
     }
 
-    private static @NotNull Stream<@NotNull Plugin> fromFeature(@NotNull FeatureImpl feature) {
+    static @Nullable Plugin fromFeature(@NotNull FeatureImpl feature) {
       return fromFeature(feature, false);
     }
 
     private static @Nullable String unquoteString(@Nullable String pluginId) {
       return pluginId != null ? StringUtil.unquoteString(pluginId) : null;
+    }
+  }
+
+  /**
+   * Loads list of plugins, compatible with a current build, from all configured repositories
+   */
+  private static @NotNull List<? extends IdeaPluginDescriptor> loadPluginsFromCustomRepositories(@Nullable ProgressIndicator indicator) {
+    List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
+    for (String host : RepositoryHelper.getPluginHosts()) {
+      if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) continue;
+
+      try {
+        descriptors.addAll(RepositoryHelper.loadPlugins(host, indicator));
+      }
+      catch (IOException e) {
+        LOG.info("Couldn't load plugins from " + host + ": " + e);
+        LOG.debug(e);
+      }
+    }
+
+    Set<PluginId> addedPluginIds = new HashSet<>();
+    return descriptors
+      .stream()
+      .filter(descriptor -> addedPluginIds.add(descriptor.getPluginId()))
+      .collect(Collectors.toUnmodifiableList());
+  }
+
+  static final class BackgroundStartupActivity implements StartupActivity.Background {
+
+    private final AtomicBoolean myListRefreshed = new AtomicBoolean();
+
+    @Override
+    public void runActivity(@NotNull Project project) {
+      Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode() ||
+          application.isHeadlessEnvironment() ||
+          !UpdateSettings.getInstance().isPluginsCheckNeeded()) {
+        return;
+      }
+
+      if (myListRefreshed.compareAndSet(false, true)) {
+        try {
+          FileUtil.delete(getExtensionsFile());
+        }
+        catch (IOException ignore) {
+          myListRefreshed.set(false);
+        }
+      }
+
+      List<? extends IdeaPluginDescriptor> customPlugins = loadPluginsFromCustomRepositories(null);
+      if (project.isDisposed()) {
+        return;
+      }
+
+      KnownExtensions extensions = loadExtensions();
+      Set<UnknownFeature> unknownFeatures = UnknownFeaturesCollector.getInstance(project).getUnknownFeatures();
+      if (extensions != null && unknownFeatures.isEmpty()) {
+        return;
+      }
+
+      try {
+        if (extensions == null) {
+          Set<String> pluginIds = customPlugins
+            .stream()
+            .map(IdeaPluginDescriptor::getPluginId)
+            .map(PluginId::getIdString)
+            .collect(Collectors.toSet());
+          loadAllExtensions(pluginIds);
+
+          if (project.isDisposed()) {
+            return;
+          }
+          EditorNotifications.getInstance(project).updateAllNotifications();
+        }
+
+        application.getService(PluginAdvertiserService.class).run(project,
+                                                                  customPlugins,
+                                                                  unknownFeatures);
+      }
+      catch (UnknownHostException e) {
+        LOG.warn("Host name could not be resolved: " + e.getMessage());
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
+    }
+
+    private static void loadAllExtensions(@NotNull Set<String> pluginIds) throws IOException {
+      @SuppressWarnings("deprecation")
+      Map<String, String> params = Map.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName());
+      Map<String, Set<Plugin>> setExtensions = MarketplaceRequests.getInstance()
+        .getFeatures(params)
+        .stream()
+        .collect(Collectors.groupingBy(FeatureImpl::getImplementationName,
+                                       Collectors.flatMapping(
+                                         feature -> Stream
+                                           .ofNullable(Plugin.fromFeature(feature, pluginIds.contains(feature.getPluginId()))),
+                                         Collectors.toSet())));
+      saveExtensions(setExtensions);
     }
   }
 }

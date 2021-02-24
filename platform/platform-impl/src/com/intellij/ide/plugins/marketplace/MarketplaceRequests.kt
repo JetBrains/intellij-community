@@ -14,7 +14,10 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
-import com.intellij.util.io.*
+import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.URLUtil
+import com.intellij.util.io.exists
+import com.intellij.util.io.write
 import com.intellij.util.ui.IoErrorText
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -38,10 +41,9 @@ private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
 @ApiStatus.Internal
 open class MarketplaceRequests {
   companion object {
-    private val INSTANCE = MarketplaceRequests()
 
     @JvmStatic
-    fun getInstance(): MarketplaceRequests = INSTANCE
+    val Instance = MarketplaceRequests()
 
     @JvmStatic
     fun parsePluginList(reader: Reader): List<PluginNode> {
@@ -274,7 +276,7 @@ open class MarketplaceRequests {
             return@connect request.reader.use(parser)
           }
 
-          synchronized(INSTANCE) {
+          synchronized(Instance) {
             request.saveToFile(file, indicator)
             connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
           }

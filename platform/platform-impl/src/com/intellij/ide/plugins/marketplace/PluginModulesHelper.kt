@@ -32,8 +32,9 @@ open class PluginModulesHelper {
       return cachedModule
     }
 
-    val updatesByModule: List<IdeCompatibleUpdate> = MarketplaceRequests.getInstance().getCompatibleUpdatesByModule(pluginModule)
-    return updatesByModule.firstOrNull()
+    return MarketplaceRequests.Instance
+      .getCompatibleUpdatesByModule(pluginModule)
+      .firstOrNull()
       ?.let { PluginId.getId(it.pluginId) }
       ?.also { pluginsModuleCache.put(pluginModule, Optional.ofNullable(it)) }
   }
