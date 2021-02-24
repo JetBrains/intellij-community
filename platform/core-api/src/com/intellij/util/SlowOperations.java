@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -22,8 +25,10 @@ public final class SlowOperations {
     "org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor",
     "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
   };
-  private static boolean ourAllowedFlag = System.getenv("TEAMCITY_VERSION") != null ||
-                                          !ApplicationManager.getApplication().isInternal();
+  private static final boolean ourAlwaysAllow = System.getenv("TEAMCITY_VERSION") != null ||
+                                                ApplicationManager.getApplication().isUnitTestMode() ||
+                                                !ApplicationManager.getApplication().isInternal();
+  private static long ourAllowanceCount;
 
   private SlowOperations() {}
 
@@ -42,14 +47,16 @@ public final class SlowOperations {
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress
    */
   public static void assertSlowOperationsAreAllowed() {
-    if (ourAllowedFlag) {
+    if (ourAlwaysAllow) {
       return;
     }
     if (Registry.is("ide.enable.slow.operations.in.edt")) {
       return;
     }
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || !application.isDispatchThread() || application.isWriteAccessAllowed()) {
+    if (!application.isDispatchThread() ||
+        ourAllowanceCount > 0 ||
+        application.isWriteAccessAllowed()) {
       return;
     }
     String stackTrace = ExceptionUtil.currentStackTrace();
@@ -60,22 +67,30 @@ public final class SlowOperations {
   }
 
   public static <T, E extends Throwable> T allowSlowOperations(@NotNull ThrowableComputable<T, E> computable) throws E {
-    if (ourAllowedFlag || !ApplicationManager.getApplication().isDispatchThread()) {
+    try (AccessToken ignore = allowSlowOperations("generic")) {
       return computable.compute();
-    }
-    ourAllowedFlag = true;
-    try {
-      return computable.compute();
-    }
-    finally {
-      ourAllowedFlag = false;
     }
   }
 
   public static <E extends Throwable> void allowSlowOperations(@NotNull ThrowableRunnable<E> runnable) throws E {
-    allowSlowOperations(() -> {
+    try (AccessToken ignore = allowSlowOperations("generic")) {
       runnable.run();
-      return null;
-    });
+    }
+  }
+
+  /** @noinspection unused*/
+  @NotNull
+  public static AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
+    if (ourAlwaysAllow || !EDT.isCurrentThreadEdt()) {
+      return AccessToken.EMPTY_ACCESS_TOKEN;
+    }
+    ourAllowanceCount++;
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourAllowanceCount--;
+      }
+    };
   }
 }
