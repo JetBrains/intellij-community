@@ -113,11 +113,9 @@ public final class MavenServerManager implements Disposable {
       @Override
       public void projectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-        if(!manager.isMavenizedProject()) {
-          return;
+        if (manager.isMavenizedProject()) {
+          MavenUtil.restartMavenConnectors(project);
         }
-        MavenUtil.restartMavenConnectors(project);
-        manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
       }
     });
   }
