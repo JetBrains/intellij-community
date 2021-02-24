@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
@@ -56,6 +57,8 @@ public interface JBTabs {
   JBTabs addTabMouseListener(@NotNull MouseListener listener);
 
   JBTabs addListener(@NotNull TabsListener listener);
+
+  JBTabs addListener(@NotNull TabsListener listener, @Nullable Disposable disposable);
 
   JBTabs setSelectionChangeHandler(SelectionChangeHandler handler);
 

@@ -2437,7 +2437,15 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public JBTabs addListener(@NotNull TabsListener listener) {
+    return addListener(listener, null);
+  }
+
+  @Override
+  public JBTabs addListener(@NotNull TabsListener listener, @Nullable Disposable disposable) {
     myTabListeners.add(listener);
+    if (disposable != null) {
+      Disposer.register(disposable, () -> myTabListeners.remove(listener));
+    }
     return this;
   }
 
