@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -113,11 +113,9 @@ public final class MavenServerManager implements Disposable {
       @Override
       public void projectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-        if(!manager.isMavenizedProject()) {
-          return;
+        if (manager.isMavenizedProject()) {
+          MavenUtil.restartMavenConnectors(project);
         }
-        MavenUtil.restartMavenConnectors(project);
-        manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
       }
     });
   }
