@@ -30,9 +30,9 @@ public interface DfLongType extends DfIntegralType {
 
   @Override
   default @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op) {
-    if (!(other instanceof DfLongType)) return DfTypes.LONG;
-    LongRangeSet result = op.eval(getRange(), ((DfLongType)other).getRange(), true);
-    LongRangeSet wideResult = op.evalWide(getWideRange(), ((DfLongType)other).getWideRange(), true);
+    if (!(other instanceof DfLongType || other instanceof DfIntType && op.isShift())) return DfTypes.LONG;
+    LongRangeSet result = op.eval(getRange(), ((DfIntegralType)other).getRange(), true);
+    LongRangeSet wideResult = op.evalWide(getWideRange(), ((DfIntegralType)other).getWideRange(), true);
     return DfTypes.longRange(result, wideResult);
   }
 

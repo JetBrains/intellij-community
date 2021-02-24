@@ -1355,7 +1355,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateShortCircuitAndOr(expression, operands, type, false);
     }
     else {
-      generateBinOp(expression, op, operands, type);
+      generateBinOp(expression, op, operands);
     }
     finishElement(expression);
   }
@@ -1378,7 +1378,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     ifNonZero.setOffset(myCurrentFlow.getInstructionCount());
   }
 
-  private void generateBinOp(PsiPolyadicExpression expression, IElementType op, PsiExpression[] operands, PsiType type) {
+  private void generateBinOp(PsiPolyadicExpression expression, @NotNull IElementType op, PsiExpression[] operands) {
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
@@ -1387,21 +1387,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression rExpr = operands[i];
       PsiType rType = rExpr.getType();
 
-      acceptBinaryRightOperand(op, type, lExpr, lType, rExpr, rType);
+      acceptBinaryRightOperand(op, lExpr, lType, rExpr, rType);
       if (isBinaryDivision(op) && rType != null && PsiType.LONG.isAssignableFrom(rType)) {
         Object divisorValue = ExpressionUtils.computeConstantExpression(rExpr);
         if (!(divisorValue instanceof Number) || (((Number)divisorValue).longValue() == 0)) {
           checkZeroDivisor();
         }
       }
-      addInstruction(new BinopInstruction(op, expression, type, i));
+      PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, op, true);
+      addInstruction(new BinopInstruction(op, expression, resType, i));
 
       lExpr = rExpr;
-      lType = rType;
+      lType = resType;
     }
   }
 
-  private void acceptBinaryRightOperand(@Nullable IElementType op, PsiType type,
+  private void acceptBinaryRightOperand(@NotNull IElementType op,
                                         PsiExpression lExpr, @Nullable PsiType lType,
                                         PsiExpression rExpr, @Nullable PsiType rType) {
     boolean comparing = op == JavaTokenType.EQEQ || op == JavaTokenType.NE;
@@ -1419,27 +1420,26 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     boolean shift = op == JavaTokenType.GTGT || op == JavaTokenType.LTLT || op == JavaTokenType.GTGTGT;
 
-    PsiType castType;
-    if (comparingPrimitiveNumeric) {
-      castType = TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
+    PsiType leftCast = null;
+    PsiType rightCast = null;
+    if (comparingObjectAndPrimitive) {
+      leftCast = rightCast = TypeConversionUtil.isNumericType(lType) ? rType : lType;
     }
-    else if (comparingObjectAndPrimitive) {
-      castType = TypeConversionUtil.isNumericType(lType) ? rType : lType;
+    else if (shift) {
+      leftCast = PsiType.LONG.equals(PsiPrimitiveType.getOptionallyUnboxedType(lType)) ? PsiType.LONG : PsiType.INT;
+      rightCast = PsiType.LONG.equals(PsiPrimitiveType.getOptionallyUnboxedType(rType)) ? PsiType.LONG : PsiType.INT;
     }
-    else if (shift && PsiType.LONG.equals(rType)) {
-      castType = rType;
-    }
-    else {
-      castType = type;
+    else if (!comparingRef) {
+      leftCast = rightCast = TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
     }
 
-    if (!comparingRef) {
-      generateBoxingUnboxingInstructionFor(lExpr,castType);
+    if (leftCast != null) {
+      generateBoxingUnboxingInstructionFor(lExpr, leftCast);
     }
 
     rExpr.accept(this);
-    if (!comparingRef) {
-      generateBoxingUnboxingInstructionFor(rExpr, castType);
+    if (rightCast != null) {
+      generateBoxingUnboxingInstructionFor(rExpr, rightCast);
     }
   }
 
