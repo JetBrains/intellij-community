@@ -222,14 +222,15 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
     private val listComponent by lazy { GHPRListComponent.create(project, dataContext, parentDisposable) }
     private val createComponent by lazy {
-      GHPRCreateComponentFactory(ActionManager.getInstance(), project, repositoryManager, dataContext, this,
-                                                             parentDisposable).create()}
+      GHPRCreateComponentFactory(ActionManager.getInstance(), project, repositoryManager, dataContext, this, parentDisposable)
+        .create()
+    }
     private var currentDisposable: Disposable? = null
 
     private var currentPullRequest: GHPRIdentifier? = null
 
     init {
-      viewList()
+      viewList(false)
 
       DataManager.registerDataProvider(wrapper) { dataId ->
         when {
@@ -239,15 +240,16 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       }
     }
 
-    override fun createPullRequest() {
+    override fun createPullRequest(requestFocus: Boolean) {
       tab.displayName = GithubBundle.message("tab.title.pull.requests.new")
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
       wrapper.setContent(createComponent)
       wrapper.repaint()
+      if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
     }
 
-    override fun viewList() {
+    override fun viewList(requestFocus: Boolean) {
       val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::repository)
       tab.displayName = GithubBundle.message("tab.title.pull.requests.in",
                                              GHUIUtil.getRepositoryDisplayName(allRepos,
@@ -256,6 +258,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       currentPullRequest = null
       wrapper.setContent(listComponent)
       wrapper.repaint()
+      if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
     }
 
     override fun refreshList() {
@@ -263,7 +266,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       dataContext.repositoryDataService.resetData()
     }
 
-    override fun viewPullRequest(id: GHPRIdentifier, onShown: ((GHPRViewComponentController?) -> Unit)?) {
+    override fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean, onShown: ((GHPRViewComponentController?) -> Unit)?) {
       tab.displayName = GithubBundle.message("pull.request.num", id.number)
       if (currentPullRequest != id) {
         currentDisposable?.let { Disposer.dispose(it) }
@@ -277,8 +280,8 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
         wrapper.setContent(pullRequestComponent)
         wrapper.repaint()
       }
-      if (onShown == null) GHUIUtil.focusPanel(wrapper.targetComponent)
-      else onShown(UIUtil.getClientProperty(wrapper.targetComponent, GHPRViewComponentController.KEY))
+      if (onShown != null) onShown(UIUtil.getClientProperty(wrapper.targetComponent, GHPRViewComponentController.KEY))
+      if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
     }
 
     override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) =

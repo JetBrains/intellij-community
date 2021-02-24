@@ -6,13 +6,13 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 interface GHPRToolWindowTabComponentController {
 
-  fun createPullRequest()
+  fun createPullRequest(requestFocus: Boolean = true)
 
-  fun viewList()
+  fun viewList(requestFocus: Boolean = true)
 
   fun refreshList()
 
-  fun viewPullRequest(id: GHPRIdentifier, onShown: ((GHPRViewComponentController?) -> Unit)? = null)
+  fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean = true, onShown: ((GHPRViewComponentController?) -> Unit)? = null)
 
   fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean)
 
