@@ -22,6 +22,7 @@
     </exec>
     <propertyset id="intellij.build.properties">
       <propertyref name="build.number"/>
+      <propertyref name="compile.parallel"/>
       <propertyref prefix="intellij.build."/>
     </propertyset>
   </target>
