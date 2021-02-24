@@ -3,6 +3,7 @@ package com.intellij.ide.impl
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 /**
  * Implementors of this interface provide data that is used to check if the project is in the untrusted state now,
@@ -16,4 +17,10 @@ interface UntrustedProjectModeProvider {
    * [com.intellij.ui.EditorNotificationPanel permanent notification].
    */
   fun shouldShowEditorNotification(project: Project): Boolean
+
+  /**
+   * Returns the name of the build system corresponding to this provider.
+   */
+  @Nls
+  fun getBuildSystemName(): String
 }
