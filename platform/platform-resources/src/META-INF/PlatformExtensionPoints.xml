@@ -403,6 +403,5 @@
     <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider"/>
     <extensionPoint name="documentationActionProvider" interface="com.intellij.codeInsight.documentation.DocumentationActionProvider" dynamic="true"/>
     <extensionPoint name="projectOriginInfoProvider" interface="com.intellij.ide.impl.ProjectOriginInfoProvider" dynamic="true"/>
-    <extensionPoint name="untrustedModeProvider" interface="com.intellij.ide.impl.UntrustedProjectModeProvider" dynamic="true" />
   </extensionPoints>
 </idea-plugin>
