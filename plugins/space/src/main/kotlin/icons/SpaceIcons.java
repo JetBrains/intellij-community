@@ -14,6 +14,6 @@ public final class SpaceIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, SpaceIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Main = load("icons/main.svg", 9209017643354815561L, 0);
+  /** 16x16 */ public static final @NotNull Icon Main = load("icons/main.svg", -7031434925463793395L, 0);
   /** 13x13 */ public static final @NotNull Icon SpaceToolWindow = load("icons/spaceToolWindow.svg", 5006933013769975578L, 2);
 }
