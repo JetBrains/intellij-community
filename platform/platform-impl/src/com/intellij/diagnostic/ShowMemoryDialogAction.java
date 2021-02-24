@@ -16,6 +16,6 @@ public class ShowMemoryDialogAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    new EditMemorySettingsDialog(VMOptions.MemoryKind.HEAP, false).show();
+    new EditMemorySettingsDialog().show();
   }
 }

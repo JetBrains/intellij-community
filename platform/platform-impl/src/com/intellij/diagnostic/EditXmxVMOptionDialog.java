@@ -6,8 +6,4 @@ import org.jetbrains.annotations.ApiStatus;
 /** @deprecated use {@link EditMemorySettingsDialog} */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-public class EditXmxVMOptionDialog extends EditMemorySettingsDialog {
-  public EditXmxVMOptionDialog() {
-    super(VMOptions.MemoryKind.HEAP, false);
-  }
-}
+public class EditXmxVMOptionDialog extends EditMemorySettingsDialog { }

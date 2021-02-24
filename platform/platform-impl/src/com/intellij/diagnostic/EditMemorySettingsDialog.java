@@ -26,16 +26,24 @@ import static javax.swing.SwingConstants.RIGHT;
 
 @ApiStatus.NonExtendable
 public class EditMemorySettingsDialog extends DialogWrapper {
-  private static final int MIN_VALUE = 256, STEP = 512;
+  private static final int MIN_VALUE = 256, HEAP_INC = 512;
 
   private final VMOptions.MemoryKind myOption;
-  private final boolean myLowHeap;
+  private final boolean myMemoryLow;
   private JTextField myNewValueField;
 
-  public EditMemorySettingsDialog(@NotNull VMOptions.MemoryKind option, boolean lowHeap) {
+  public EditMemorySettingsDialog() {
+    this(VMOptions.MemoryKind.HEAP, false);
+  }
+
+  EditMemorySettingsDialog(@NotNull VMOptions.MemoryKind option) {
+    this(option, true);
+  }
+
+  private EditMemorySettingsDialog(VMOptions.MemoryKind option, boolean memoryLow) {
     super(false);
     myOption = option;
-    myLowHeap = lowHeap && option == VMOptions.MemoryKind.HEAP;
+    myMemoryLow = memoryLow;
     setTitle(DiagnosticBundle.message("change.memory.title"));
     init();
     initValidation();
@@ -44,10 +52,10 @@ public class EditMemorySettingsDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     int current = VMOptions.readOption(myOption, true), suggested;
-    if (myLowHeap) {
+    if (myMemoryLow && myOption == VMOptions.MemoryKind.HEAP) {
       int cap = CpuArch.isIntel32() ? 800 : Registry.intValue("max.suggested.heap.size");
       if (current > 0) {
-        suggested = current + STEP;
+        suggested = current + HEAP_INC;
         if (suggested > cap) suggested = Math.max(cap, current);
       }
       else {
@@ -65,15 +73,17 @@ public class EditMemorySettingsDialog extends DialogWrapper {
 
     JPanel panel = new JPanel(new GridBagLayout());
 
-    String text;
-    if (myLowHeap) {
-      long free = Runtime.getRuntime().freeMemory() >> 20, max = Runtime.getRuntime().maxMemory() >> 20;
-      text = DiagnosticBundle.message("change.memory.usage", String.valueOf(free), String.valueOf(max));
+    if (myMemoryLow) {
+      String text;
+      if (myOption == VMOptions.MemoryKind.HEAP) {
+        long free = Runtime.getRuntime().freeMemory() >> 20, max = Runtime.getRuntime().maxMemory() >> 20;
+        text = DiagnosticBundle.message("change.memory.usage", String.valueOf(free), String.valueOf(max));
+      }
+      else {
+        text = DiagnosticBundle.message("change.memory.message");
+      }
+      panel.add(new JBLabel(text), new GridBagConstraints(0, 0, 4, 1, 1.0, 1.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
     }
-    else {
-      text = DiagnosticBundle.message("change.memory.message");
-    }
-    panel.add(new JBLabel(text), new GridBagConstraints(0, 0, 4, 1, 1.0, 1.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
 
     panel.add(new JBLabel(DiagnosticBundle.message("change.memory.act")),
               new GridBagConstraints(0, 1, 4, 1, 1.0, 1.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));

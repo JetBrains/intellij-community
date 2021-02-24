@@ -47,7 +47,7 @@ final class LowMemoryNotifier implements Disposable {
       notification.addAction(new NotificationAction(IdeBundle.message("low.memory.notification.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          new EditMemorySettingsDialog(kind, true).show();
+          new EditMemorySettingsDialog(kind).show();
           notification.expire();
         }
       });
