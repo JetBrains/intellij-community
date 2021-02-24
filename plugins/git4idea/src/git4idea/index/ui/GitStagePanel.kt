@@ -234,6 +234,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     private val includedRootsListeners = EventDispatcher.create(IncludedRootsListener::class.java)
 
     init {
+      setInclusionModel(GitStageRootInclusionModel(project))
       groupingSupport.addPropertyChangeListener(PropertyChangeListener {
         includedRootsListeners.multicaster.includedRootsChanged()
       })
