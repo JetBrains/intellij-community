@@ -18,6 +18,9 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -381,13 +384,24 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                 @NotNull RepositoryLibraryProperties properties) throws CantRunException {
     TargetProgressIndicator targetProgressIndicator = getTargetProgressIndicator();
     Collection<OrderRoot> roots;
-    if (targetProgressIndicator == null) {
-      roots = JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
+    try {
+      if (targetProgressIndicator == null) {
+        roots = JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
+      }
+      else {
+        String title = JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1);
+        targetProgressIndicator.addSystemLine(title);
+        roots = ProgressManager.getInstance().run(new Task.WithResult<>(project, title, false) {
+          @Override
+          protected Collection<OrderRoot> compute(@NotNull ProgressIndicator indicator) {
+            return JarRepositoryManager.loadDependenciesSync(project, properties, false, false, null, null,
+                                                             new ProgressIndicatorWrapper(targetProgressIndicator));
+          }
+        });
+      }
     }
-    else {
-      targetProgressIndicator.addSystemLine(JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1));
-      ProgressIndicatorWrapper progressIndicatorWrapper = new ProgressIndicatorWrapper(targetProgressIndicator);
-      roots = JarRepositoryManager.loadDependenciesSync(project, properties, false, false, null, null, progressIndicatorWrapper);
+    catch (Throwable e) {
+      roots = Collections.emptyList();
     }
     if (roots.isEmpty()) {
       throw new CantRunException(JUnitBundle.message("dialog.message.failed.to.resolve.maven.id", properties.getMavenId()));
