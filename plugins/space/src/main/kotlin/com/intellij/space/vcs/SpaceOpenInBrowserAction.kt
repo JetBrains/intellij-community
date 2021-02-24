@@ -45,6 +45,8 @@ abstract class SpaceOpenInBrowserActionGroup<T>(@NlsActions.ActionText groupName
 
   override fun canBePerformed(context: DataContext): Boolean = getData(context)?.size == 1
 
+  override fun disableIfNoVisibleChildren(): Boolean = false
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     e ?: return emptyArray()
     val data = getData(e.dataContext) ?: return emptyArray()
