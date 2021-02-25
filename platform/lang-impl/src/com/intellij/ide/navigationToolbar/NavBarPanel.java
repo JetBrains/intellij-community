@@ -545,23 +545,29 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   protected void doubleClick(final Object object) {
-    if (object instanceof Navigatable) {
-      Navigatable navigatable = (Navigatable)object;
+    Object target = ObjectUtils.notNull(getNavigatable(object), object);
+    if (target instanceof Navigatable) {
+      Navigatable navigatable = (Navigatable)target;
       if (navigatable.canNavigate()) {
         navigatable.navigate(true);
       }
     }
-    else if (object instanceof Module) {
+    else if (target instanceof Module) {
       ProjectView projectView = ProjectView.getInstance(myProject);
       AbstractProjectViewPane projectViewPane = projectView.getProjectViewPaneById(projectView.getCurrentViewId());
       if (projectViewPane != null) {
-        projectViewPane.selectModule((Module)object, true);
+        projectViewPane.selectModule((Module)target, true);
       }
     }
-    else if (object instanceof Project) {
+    else if (target instanceof Project) {
       return;
     }
     hideHint(true);
+  }
+
+  @Nullable
+  private Navigatable getNavigatable(Object object) {
+    return CommonDataKeys.NAVIGATABLE.getData(getDataProvider(() -> JBIterable.of(object)));
   }
 
   private void ctrlClick(final int index) {
@@ -663,16 +669,27 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   @Nullable
   public Object getData(@NotNull String dataId) {
-    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
-      Object data = modelExtension.getData(dataId, this::getDataInner);
-      if (data != null) return data;
-    }
-    return getDataInner(dataId);
+    return getData(dataId, () -> getSelection());
   }
 
   @Nullable
-  private Object getDataInner(String dataId) {
-    return getDataImpl(dataId, this, () -> getSelection());
+  private Object getData(@NotNull String dataId, Getter<JBIterable<?>> selection) {
+    DataProvider dataProvider = getDataProviderInner(selection);
+    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
+      Object data = modelExtension.getData(dataId, dataProvider);
+      if (data != null) return data;
+    }
+    return dataProvider.getData(dataId);
+  }
+
+  @NotNull
+  private DataProvider getDataProvider(Getter<JBIterable<?>> selection) {
+    return d -> getData(d, selection);
+  }
+
+  @NotNull
+  private DataProvider getDataProviderInner(Getter<JBIterable<?>> selection) {
+    return d -> getDataImpl(d, this, selection);
   }
 
   @NotNull
