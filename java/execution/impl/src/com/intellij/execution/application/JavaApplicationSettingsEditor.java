@@ -2,12 +2,19 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -53,7 +60,8 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     setMinimumWidth(mainClass, 300);
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
       new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
-                                   (configuration, component) -> component.setText(StringUtil.notNullize(configuration.getMainClassName()).replaceAll("\\$", "\\.")),
+                                   (configuration, component) -> component.setText(
+                                     StringUtil.notNullize(configuration.getMainClassName()).replaceAll("\\$", "\\.")),
                                    (configuration, component) -> configuration.setMainClassName(component.getText()),
                                    configuration -> true);
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
@@ -63,5 +71,14 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       return editor == null ? field : editor.getContentComponent();
     });
     return mainClassFragment;
+  }
+
+  @Nullable
+  private String getJvmName(@Nullable String className) {
+    if (className == null) return null;
+    return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+      PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()));
+      return aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className;
+    });
   }
 }
