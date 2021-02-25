@@ -69,8 +69,8 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     setMinimumWidth(mainClass, 300);
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
       new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
-                                   (configuration, component) -> component.setText(StringUtil.notNullize(configuration.getMainClassName()).replaceAll("\\$", "\\.")),
-                                   (configuration, component) -> configuration.setMainClassName(component.getText()),
+                                   (configuration, component) -> component.setText(getQName(configuration.getMainClassName())),
+                                   (configuration, component) -> configuration.setMainClassName(getJvmName(component.getText())),
                                    configuration -> true);
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
     mainClassFragment.setRemovable(false);
@@ -81,6 +81,14 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     mainClassFragment.setValidation((configuration) ->
       Collections.singletonList(RuntimeConfigurationException.validate(mainClass, () -> ReadAction.run(() -> configuration.checkClass()))));
     return mainClassFragment;
+  }
+
+  @Nullable
+  private String getQName(@Nullable String className) {
+    if (className == null || className.indexOf('$') < 0) return className;
+    PsiClass psiClass = FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, () -> ClassUtil
+      .findPsiClass(PsiManager.getInstance(getProject()), className));
+    return psiClass == null ? className : psiClass.getQualifiedName();
   }
 
   @Nullable
