@@ -40,12 +40,18 @@ abstract class GitStageShowVersionAction(private val showStaged: Boolean) : Dumb
     else {
       sourceFile.filePath().virtualFile
     } ?: return
-    val targetPosition = getTargetPosition(project, sourceFile, targetFile, e.getData(CommonDataKeys.CARET))
+
+    val caret = e.getData(CommonDataKeys.CARET)
+    if (caret == null) {
+      OpenSourceUtil.navigate(OpenFileDescriptor(project, targetFile))
+      return
+    }
+
+    val targetPosition = getTargetPosition(project, sourceFile, targetFile, caret)
     OpenSourceUtil.navigate(OpenFileDescriptor(project, targetFile, targetPosition.line, targetPosition.column))
   }
 
-  private fun getTargetPosition(project: Project, sourceFile: VirtualFile, targetFile: VirtualFile, caret: Caret?): LogicalPosition {
-    if (caret == null) return LogicalPosition(-1, -1)
+  private fun getTargetPosition(project: Project, sourceFile: VirtualFile, targetFile: VirtualFile, caret: Caret): LogicalPosition {
     val lst = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(if (showStaged) sourceFile else targetFile)
               ?: return caret.logicalPosition
     if (lst !is GitStageLineStatusTracker) return caret.logicalPosition
