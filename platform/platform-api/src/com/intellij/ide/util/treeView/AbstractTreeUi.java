@@ -969,7 +969,7 @@ public class AbstractTreeUi {
   }
 
   private static void processDeferredActions(@NotNull Set<Runnable> actions) {
-    final Runnable[] runnables = actions.toArray(new Runnable[0]);
+    final Runnable[] runnables = actions.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
     actions.clear();
     for (Runnable runnable : runnables) {
       runnable.run();
@@ -2139,7 +2139,7 @@ public class AbstractTreeUi {
       processNodeActionsIfReady(each);
     }
 
-    final Runnable[] actions = myYieldingDoneRunnables.toArray(new Runnable[0]);
+    final Runnable[] actions = myYieldingDoneRunnables.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
     for (Runnable each : actions) {
       if (!isYeildingNow()) {
         myYieldingDoneRunnables.remove(each);

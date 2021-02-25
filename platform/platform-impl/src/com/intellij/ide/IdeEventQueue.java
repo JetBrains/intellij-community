@@ -38,10 +38,7 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
-import com.intellij.util.Alarm;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -1125,7 +1122,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void invokeReadyHandlers() {
-    Runnable[] ready = myReady.toArray(new Runnable[0]);
+    Runnable[] ready = myReady.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
     myReady.clear();
 
     for (Runnable each : ready) {

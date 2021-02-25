@@ -26,6 +26,7 @@ public final class ArrayUtil {
   public static final Class[] EMPTY_CLASS_ARRAY = ArrayUtilRt.EMPTY_CLASS_ARRAY;
   public static final long[] EMPTY_LONG_ARRAY = ArrayUtilRt.EMPTY_LONG_ARRAY;
   public static final File[] EMPTY_FILE_ARRAY = ArrayUtilRt.EMPTY_FILE_ARRAY;
+  public static final Runnable[] EMPTY_RUNNABLE_ARRAY = new Runnable[0];
   /**
    * @deprecated use {@link com.intellij.openapi.util.text.Strings#EMPTY_CHAR_SEQUENCE} instead
    */

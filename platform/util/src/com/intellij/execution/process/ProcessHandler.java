@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -291,7 +292,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     private void runPendingTasks() {
       final Runnable[] tasks;
       synchronized (myPendingTasks) {
-        tasks = myPendingTasks.toArray(new Runnable[0]);
+        tasks = myPendingTasks.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
         myPendingTasks.clear();
       }
       for (Runnable task : tasks) {
