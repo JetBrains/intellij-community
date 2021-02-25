@@ -438,7 +438,7 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
           mySnapshot = loadIndexToMemory(myPersistentLog);
         }
         catch (StorageException e) {
-          LOG.error(e);
+          FileBasedIndex.getInstance().requestRebuild(FileTypeIndex.NAME);
         }
       }
     }
