@@ -100,7 +100,8 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
         try {
             KotlinCodegenFacade.compileCorrectFiles(generationState)
 
-            val classes = generationState.factory.asList().filterClassFiles()
+            val classes = generationState.factory.asList()
+                .filterCodeFragmentClassFiles()
                 .map { ClassToLoad(it.internalClassName, it.relativePath, it.asByteArray()) }
 
             val methodSignature = getMethodSignature(methodDescriptor, parameterInfo, generationState)
@@ -113,6 +114,13 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
             throw CodeFragmentCodegenException(e)
         } finally {
             CodeFragmentCodegen.clearCodeFragmentInfo(codeFragment)
+        }
+    }
+
+    private fun List<OutputFile>.filterCodeFragmentClassFiles(): List<OutputFile> {
+        return filter { classFile ->
+            val path = classFile.relativePath
+            path == "$GENERATED_CLASS_NAME.class" || (path.startsWith("$GENERATED_CLASS_NAME\$") && path.endsWith(".class"))
         }
     }
 
