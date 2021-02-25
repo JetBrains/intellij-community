@@ -23,11 +23,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameInplacePopupUsagesCollector
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
+import com.intellij.refactoring.rename.impl.TextOptions
+import com.intellij.refactoring.rename.impl.isEmpty
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.layout.*
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -151,34 +152,73 @@ object TemplateInlayUtil {
                                 offset: Int,
                                 elementToRename: PsiNamedElement,
                                 restart: Runnable): Inlay<PresentationRenderer>? {
-    val editor = templateState.editor as EditorImpl
     val processor = RenamePsiElementProcessor.forElement(elementToRename)
+    val initOptions = TextOptions(
+      commentStringOccurrences = processor.isToSearchInComments(elementToRename),
+      textOccurrences = if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
+        processor.isToSearchForTextOccurrences(elementToRename)
+      }
+      else {
+        null
+      }
+    )
+    return createRenameSettingsInlay(templateState, offset, initOptions) { (commentStringOccurrences, textOccurrences) ->
+      if (commentStringOccurrences != null) {
+        processor.setToSearchInComments(elementToRename, commentStringOccurrences)
+      }
+      if (textOccurrences != null) {
+        processor.setToSearchForTextOccurrences(elementToRename, textOccurrences)
+      }
+      restart.run()
+    }
+  }
 
+  internal fun createRenameSettingsInlay(
+    templateState: TemplateState,
+    offset: Int,
+    initOptions: TextOptions,
+    optionsListener: (TextOptions) -> Unit,
+  ): Inlay<PresentationRenderer>? {
+    if (initOptions.isEmpty) {
+      return null
+    }
+
+    val editor = templateState.editor as EditorImpl
     val factory = PresentationFactory(editor)
     val colorsScheme = editor.colorsScheme
-    fun button(iconPresentation: IconPresentation, second: Boolean = false) = factory.container(
-      presentation = iconPresentation,
+    fun button(presentation: InlayPresentation, second: Boolean) = factory.container(
+      presentation = presentation,
       padding = InlayPresentationFactory.Padding(if (second) 0 else 4, 4, 4, 4)
     )
 
-    var tooltip = LangBundle.message("inlay.rename.tooltip.comments")
-    val toSearchInComments = processor.isToSearchInComments(elementToRename)
-    val commentsStatusIcon = if (toSearchInComments) AllIcons.Actions.InlayRenameInCommentsActive else AllIcons.Actions.InlayRenameInComments
-
-    var buttonsPresentation = button(factory.icon(commentsStatusIcon))
-    val toSearchForTextOccurrences: Boolean
-    if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
-      toSearchForTextOccurrences = processor.isToSearchForTextOccurrences(elementToRename)
-      val textOccurrencesStatusIcon = if (toSearchForTextOccurrences)
-        AllIcons.Actions.InlayRenameInNoCodeFilesActive
-      else
-        AllIcons.Actions.InlayRenameInNoCodeFiles
-      val inTextOccurrencesIconPresentation = factory.icon(textOccurrencesStatusIcon)
-      buttonsPresentation = factory.seq(buttonsPresentation, button(inTextOccurrencesIconPresentation, true))
+    var tooltip = LangBundle.message("inlay.rename.tooltip.header")
+    val commentStringPresentation = initOptions.commentStringOccurrences?.let { commentStringOccurrences ->
+      tooltip += LangBundle.message("inlay.rename.tooltip.comments.strings")
+      BiStatePresentation(
+        first = { factory.icon(AllIcons.Actions.InlayRenameInCommentsActive) },
+        second = { factory.icon(AllIcons.Actions.InlayRenameInComments) },
+        initiallyFirstEnabled = commentStringOccurrences,
+      )
+    }
+    val textPresentation = initOptions.textOccurrences?.let { textOccurrences ->
       tooltip += LangBundle.message("inlay.rename.tooltip.non.code")
+      BiStatePresentation(
+        first = { factory.icon(AllIcons.Actions.InlayRenameInNoCodeFilesActive) },
+        second = { factory.icon(AllIcons.Actions.InlayRenameInNoCodeFiles) },
+        initiallyFirstEnabled = textOccurrences,
+      )
+    }
+    val buttonsPresentation = if (commentStringPresentation != null && textPresentation != null) {
+      factory.seq(
+        button(commentStringPresentation, false),
+        button(textPresentation, true)
+      )
     }
     else {
-      toSearchForTextOccurrences = false
+      val presentation = commentStringPresentation
+                         ?: textPresentation
+                         ?: error("at least one option should be not null")
+      button(presentation, false)
     }
 
     val shortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement")
@@ -210,10 +250,19 @@ object TemplateInlayUtil {
       }
     }
 
-    val settings = Settings(toSearchInComments, toSearchForTextOccurrences)
-    val panel = renamePanel(elementToRename, editor, settings, restart)
+    var currentOptions: TextOptions = initOptions
+    val panel = renamePanel(editor, initOptions) { newOptions ->
+      currentOptions = newOptions
+      newOptions.commentStringOccurrences?.let {
+        commentStringPresentation?.state = BiStatePresentation.State(it)
+      }
+      newOptions.textOccurrences?.let {
+        textPresentation?.state = BiStatePresentation.State(it)
+      }
+      optionsListener.invoke(newOptions)
+    }
     return createNavigatableButtonWithPopup(templateState, offset, presentation, panel, templateElement) {
-      logStatisticsOnHide(editor, toSearchInComments, settings.inComments, toSearchForTextOccurrences, settings.inTextOccurrences)
+      logStatisticsOnHide(editor, initOptions, currentOptions)
     }
   }
 
@@ -224,62 +273,56 @@ object TemplateInlayUtil {
                                                EventFields.InputEvent.with(FusInputEvent(showEvent, javaClass.simpleName)))
   }
 
-  private data class Settings(var inComments: Boolean, var inTextOccurrences: Boolean)
-
-  private fun logStatisticsOnHide(editor: EditorImpl,
-                                  toSearchInComments: Boolean,
-                                  toSearchInCommentsNew: Boolean,
-                                  toSearchForTextOccurrences: Boolean,
-                                  toSearchForTextOccurrencesNew: Boolean) {
+  private fun logStatisticsOnHide(editor: EditorImpl, initOptions: TextOptions, newOptions: TextOptions) {
     RenameInplacePopupUsagesCollector.hide.log(
       editor.project,
-      RenameInplacePopupUsagesCollector.searchInCommentsOnHide.with(toSearchInCommentsNew),
-      RenameInplacePopupUsagesCollector.searchInTextOccurrencesOnHide.with(toSearchForTextOccurrencesNew)
+      RenameInplacePopupUsagesCollector.searchInCommentsOnHide.with(newOptions.commentStringOccurrences ?: false),
+      RenameInplacePopupUsagesCollector.searchInTextOccurrencesOnHide.with(newOptions.textOccurrences ?: false)
     )
     RenameInplacePopupUsagesCollector.settingsChanged.log(
       editor.project,
-      RenameInplacePopupUsagesCollector.changedOnHide.with(
-        toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew
-      )
+      RenameInplacePopupUsagesCollector.changedOnHide.with(initOptions != newOptions)
     )
   }
 
   private fun renamePanel(
-    elementToRename: PsiElement,
     editor: Editor,
-    settings: Settings,
-    restart: Runnable,
+    initOptions: TextOptions,
+    optionsListener: (TextOptions) -> Unit,
   ): DialogPanel {
-    val processor = RenamePsiElementProcessor.forElement(elementToRename)
     val renameAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME)
+    var (commentsStringsOccurrences, textOccurrences) = initOptions // model
     val panel = panel {
       row(LangBundle.message("inlay.rename.also.rename.options.title")) {
-        row {
-          cell {
-            checkBox(
-              text = RefactoringBundle.message("comments.and.strings"),
-              isSelected = processor.isToSearchInComments(elementToRename),
-              actionListener = { _, cb ->
-                settings.inComments = cb.isSelected
-                processor.setToSearchInComments(elementToRename, cb.isSelected)
-                restart.run()
-              }
-            ).focused()
-            component(JLabel(AllIcons.Actions.InlayRenameInComments))
-          }
-        }
-        if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
+        commentsStringsOccurrences?.let {
           row {
             cell {
               checkBox(
-                text = RefactoringBundle.message("text.occurrences"),
-                isSelected = processor.isToSearchForTextOccurrences(elementToRename),
+                text = RefactoringBundle.message("comments.and.strings"),
+                isSelected = it,
                 actionListener = { _, cb ->
-                  settings.inTextOccurrences = cb.isSelected
-                  processor.setToSearchForTextOccurrences(elementToRename, cb.isSelected)
-                  restart.run()
+                  commentsStringsOccurrences = cb.isSelected
+                  optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
+                }
+              ).focused()
+              component(JLabel(AllIcons.Actions.InlayRenameInComments))
+            }
+          }
+        }
+        textOccurrences?.let {
+          row {
+            cell {
+              val cb = checkBox(
+                text = RefactoringBundle.message("text.occurrences"),
+                isSelected = it,
+                actionListener = { _, cb ->
+                  textOccurrences = cb.isSelected
+                  optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
                 }
               )
+              if (commentsStringsOccurrences == null) {
+                cb.focused()
+              }
               component(JLabel(AllIcons.Actions.InlayRenameInNoCodeFiles))
             }
           }
