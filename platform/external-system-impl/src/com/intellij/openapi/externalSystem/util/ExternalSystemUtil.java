@@ -634,9 +634,7 @@ public final class ExternalSystemUtil {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
-    boolean doImport = isPreviewMode ||
-                       ExternalResolverIsSafe.executesTrustedCodeOnly(externalSystemId) ||
-                       isProjectTrustedEnoughToImport(project, externalSystemId);
+    boolean doImport = isPreviewMode || isProjectTrustedEnoughToImport(project, externalSystemId);
     if (!doImport) {
       return;
     }
@@ -713,6 +711,9 @@ public final class ExternalSystemUtil {
     @NotNull Predicate<ThreeState> confirmation
   ) {
     if (project.isDefault()) {
+      return true;
+    }
+    if (ExternalResolverIsSafe.executesTrustedCodeOnly(systemId)) {
       return true;
     }
     ThreeState state = getTrustedState(project);
