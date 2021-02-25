@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
@@ -34,7 +33,6 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
   public static final class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
     @NotNull private final Project myProject;
-    @NotNull private final NullableLazyValue<VirtualFile> mySchemaFile;
     @NotNull private final @Nls String myFileName;
 
     public boolean isSchemaV4() {
@@ -50,8 +48,6 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     private MyJsonSchemaFileProvider(@NotNull Project project, @NotNull @Nls String fileName) {
       myProject = project;
       myFileName = fileName;
-      // schema file can not be static here, because in schema's user data we cache project-scope objects (i.e. which can refer to project)
-      mySchemaFile = NullableLazyValue.createValue(() -> JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/" + fileName));
     }
 
     @Override
@@ -87,7 +83,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     @Nullable
     @Override
     public VirtualFile getSchemaFile() {
-      return mySchemaFile.getValue();
+      return JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/" + myFileName);
     }
 
     @NotNull
