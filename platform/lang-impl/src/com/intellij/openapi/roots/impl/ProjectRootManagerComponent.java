@@ -16,7 +16,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleEx;
-import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -85,6 +84,10 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (!myProject.isDefault()) {
       registerListeners();
     }
+  }
+
+  @NotNull Set<LocalFileSystem.WatchRequest> getRootsToWatch() {
+    return myRootsToWatch;
   }
 
   private void registerListeners() {
