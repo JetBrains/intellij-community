@@ -61,11 +61,22 @@ internal open class IconsClassGenerator(private val projectHome: Path,
   private val modifiedClasses = ContainerUtil.createConcurrentList<ModifiedClass>()
   private val obsoleteClasses = ContainerUtil.createConcurrentList<Path>()
 
+  private val util: JpsModule by lazy {
+    modules.find { it.name == "intellij.platform.util" } ?: error("Can't load module 'util'")
+  }
+
   internal open fun getIconClassInfo(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?): List<IconClassInfo> {
     val packageName: String
     val className: CharSequence
     val outFile: Path
     when (module.name) {
+      "intellij.platform.icons" -> {
+        packageName = "com.intellij.icons"
+        className = "AllIcons"
+
+        val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
+        outFile = Path.of(dir, "$className.java")
+      }
       "intellij.android.artwork" -> {
         packageName = "icons"
 
@@ -683,10 +694,7 @@ private fun getPluginPackageIfPossible(module: JpsModule): String? {
     }
     catch (ignore: NoSuchFileException) {
     }
-    catch (e: JDOMException) {
-      if (e == null) {
-
-      }
+    catch (ignore: JDOMException) {
     }
   }
   return null
