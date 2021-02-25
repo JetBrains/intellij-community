@@ -308,7 +308,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         FileType result = text != null && text.startsWith("TYPE:")
                           ? fileTypeManager.findFileTypeByName(StringUtil.trimStart(text, "TYPE:"))
                           : null;
-        log("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName())+" (text="+text+")");
+        LOG.debug("T: my detector run for " + file.getName() +
+                  "; result: " + (result == null ? null : result.getName()) +
+                  " (text=" + text + ")");
         return result;
       }
 
@@ -318,56 +320,45 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
     };
     runWithDetector(detector, () -> {
-      log("T: ------ akjdhfksdjgf");
+      LOG.debug("T: ------ akjdhfksdjgf");
       File f = createTempFile("xx.asfdasdfas", "akjdhfksdjgf");
       VirtualFile vFile = getVirtualFile(f);
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
 
-      log("T: ------ TYPE:IDEA_MODULE");
-      setFileText(vFile,  "TYPE:IDEA_MODULE");
+      LOG.debug("T: ------ TYPE:IDEA_MODULE");
+      setFileText(vFile, "TYPE:IDEA_MODULE");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
 
-      log("T: ------ TYPE:IDEA_PROJECT");
+      LOG.debug("T: ------ TYPE:IDEA_PROJECT");
       setFileText(vFile, "TYPE:IDEA_PROJECT");
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);
-      log("T: ------");
+      LOG.debug("T: ------");
     });
   }
 
-  private <T extends Throwable> void runWithDetector(@NotNull FileTypeRegistry.@NotNull FileTypeDetector detector, @NotNull ThrowableRunnable<T> runnable) throws T {
+  private <T extends Throwable> void runWithDetector(@NotNull FileTypeRegistry.FileTypeDetector detector,
+                                                     @NotNull ThrowableRunnable<T> runnable) throws T {
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
-    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
-    fileTypeManager.toLog = true;
-    try {
-      runnable.run();
-    }
-    finally {
-      fileTypeManager.toLog = false;
-    }
-  }
-
-  private static void log(String message) {
-    LOG.debug(message);
-    //System.out.println(message);
+    ((FileTypeManagerImpl)FileTypeManager.getInstance()).runAndLog(runnable);
   }
 
   private void ensureRedetected(VirtualFile vFile, Set<VirtualFile> detectorCalled) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    log("T: ensureRedetected: commit. re-detect queue: "+myFileTypeManager.dumpReDetectQueue());
+    LOG.debug("T: ensureRedetected: commit. re-detect queue: " + myFileTypeManager.dumpReDetectQueue());
     UIUtil.dispatchAllInvocationEvents();
-    log("T: ensureRedetected: dispatch. re-detect queue: "+ myFileTypeManager.dumpReDetectQueue());
+    LOG.debug("T: ensureRedetected: dispatch. re-detect queue: " + myFileTypeManager.dumpReDetectQueue());
     myFileTypeManager.drainReDetectQueue();
-    log("T: ensureRedetected: drain. re-detect queue: "+myFileTypeManager.dumpReDetectQueue());
+    LOG.debug("T: ensureRedetected: drain. re-detect queue: " + myFileTypeManager.dumpReDetectQueue());
     UIUtil.dispatchAllInvocationEvents();
-    log("T: ensureRedetected: dispatch. re-detect queue: "+myFileTypeManager.dumpReDetectQueue());
+    LOG.debug("T: ensureRedetected: dispatch. re-detect queue: " + myFileTypeManager.dumpReDetectQueue());
     FileType type = vFile.getFileType();
-    log("T: ensureRedetected: getFileType ("+type.getName()+") re-detect queue: "+myFileTypeManager.dumpReDetectQueue());
+    LOG.debug("T: ensureRedetected: getFileType (" + type.getName() + ") re-detect queue: " + myFileTypeManager.dumpReDetectQueue());
     assertTrue(detectorCalled.contains(vFile));
     detectorCalled.clear();
-    log("T: ensureRedetected: clear");
+    LOG.debug("T: ensureRedetected: clear");
   }
 
   public void testReassignTextFileType() {
@@ -708,7 +699,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
         detectorCalled.add(file);
         FileType result = FileUtil.isHashBangLine(firstCharsIfText, "stuff") ? stuffType : null;
-        log("T: my detector for file "+file.getName()+" run. result="+(result == null ? null : result.getName()));
+        LOG.debug("T: my detector for file " + file.getName() +
+                  " run. result=" + (result == null ? null : result.getName()));
         return result;
       }
 
@@ -718,24 +710,24 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
     };
     runWithDetector(detector, () -> {
-      log("T: ------ akjdhfksdjgf");
+      LOG.debug("T: ------ akjdhfksdjgf");
       File f = createTempFile("xx.asfdasdfas", "akjdhfksdjgf");
       VirtualFile file = getVirtualFile(f);
       ensureRedetected(file, detectorCalled);
       assertTrue(file.getFileType().toString(), file.getFileType() instanceof PlainTextFileType);
 
-      log("T: ------ my");
-      setFileText(file,  "#!stuff\nxx");
+      LOG.debug("T: ------ my");
+      setFileText(file, "#!stuff\nxx");
       ensureRedetected(file, detectorCalled);
       assertEquals(stuffType, file.getFileType());
 
-      log("T: ------ reload");
+      LOG.debug("T: ------ reload");
       myFileTypeManager.drainReDetectQueue();
       getPsiManager().dropPsiCaches();
 
       ensureRedetected(file, detectorCalled);
       assertSame(file.getFileType().toString(), file.getFileType(), stuffType);
-      log("T: ------");
+      LOG.debug("T: ------");
     });
   }
 

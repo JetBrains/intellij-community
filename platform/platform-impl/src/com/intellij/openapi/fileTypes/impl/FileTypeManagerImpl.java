@@ -56,6 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC)
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element> {
@@ -458,13 +459,36 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  @TestOnly
-  boolean toLog;
-  boolean toLog() {
-    return toLog;
-  }
+  private boolean isLoggingEnabled;
+
   void log(@NonNls String message) {
-    LOG.debug(message + " - " + Thread.currentThread());
+    if (isLoggingEnabled) {
+      logDetailed(message);
+    }
+  }
+
+  void log(@NotNull Supplier<@Nullable String> lazyMessage) {
+    if (isLoggingEnabled) {
+      String message = lazyMessage.get();
+      if (message != null) {
+        logDetailed(message);
+      }
+    }
+  }
+
+  private static void logDetailed(@NonNls String message) {
+    LOG.debug("F:" + message + " - " + Thread.currentThread());
+  }
+
+  @TestOnly
+  <T extends Throwable> void runAndLog(@NotNull ThrowableRunnable<T> runnable) throws T {
+    isLoggingEnabled = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      isLoggingEnabled = false;
+    }
   }
 
   @TestOnly
@@ -548,9 +572,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType fileType = file.isDirectory() ? null : file.getFileType();
     Pair<VirtualFile, FileType> old = FILE_TYPE_FIXED_TEMPORARILY.get();
     FILE_TYPE_FIXED_TEMPORARILY.set(new Pair<>(file, fileType));
-    if (toLog()) {
-      log("F: freezeFileTypeTemporarilyIn(" + file.getName() + ") to " + fileType +" in "+Thread.currentThread());
-    }
+    log("freezeFileTypeTemporarilyIn(" + file.getName() + ") to " + fileType);
     try {
       runnable.run();
     }
@@ -561,9 +583,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       else {
         FILE_TYPE_FIXED_TEMPORARILY.set(old);
       }
-      if (toLog()) {
-        log("F: unfreezeFileType(" + file.getName() + ") in "+Thread.currentThread());
-      }
+      log("unfreezeFileType(" + file.getName() + ")");
     }
   }
 
@@ -609,9 +629,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
     if (fixedType != null && fixedType.getFirst().equals(file)) {
       FileType fileType = fixedType.getSecond();
-      if (toLog()) {
-        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName()+" in "+Thread.currentThread());
-      }
+      log("getByFile(" + file.getName() + ") was frozen to " + fileType.getName());
       return fileType;
     }
 
@@ -624,9 +642,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     for (FileTypeIdentifiableByVirtualFile type : mySpecialFileTypes) {
       if (type.isMyFileType(file)) {
-        if (toLog()) {
-          log("F: getByFile(" + file.getName() + "): Special file type: " + type.getName());
-        }
+        log("getByFile(" + file.getName() + "): Special file type: " + type.getName());
         return type;
       }
     }
@@ -635,9 +651,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (fileType == UnknownFileType.INSTANCE || fileType == DetectedByContentFileType.INSTANCE) {
       fileType = null;
     }
-    if (toLog()) {
-      log("F: getByFile(" + file.getName() + ") By name file type: "+(fileType == null ? null : fileType.getName()));
-    }
+    log("getByFile(" + file.getName() + ") By name file type: " + (fileType == null ? null : fileType.getName()));
     return fileType;
   }
 
