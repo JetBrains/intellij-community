@@ -13,7 +13,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.PyExecuteConsoleCustomizer;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,14 +31,15 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (editor != null && project != null) {
+      PythonRunConfiguration config = PyExecuteConsoleCustomizer.Companion.getInstance().getContextConfig(e.getDataContext());
       final String selectionText = getSelectionText(editor);
       if (selectionText != null) {
-        PyExecuteInConsole.executeCodeInConsole(project, selectionText, editor, true, true, false, null);
+        PyExecuteInConsole.executeCodeInConsole(project, selectionText, editor, true, true, false, config);
       }
       else {
         String line = getLineUnderCaret(editor);
         if (line != null) {
-          PyExecuteInConsole.executeCodeInConsole(project, line.trim(), editor, true, true, false, null);
+          PyExecuteInConsole.executeCodeInConsole(project, line.trim(), editor, true, true, false, config);
           moveCaretDown(editor);
         }
       }

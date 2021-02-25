@@ -2,8 +2,10 @@
 package com.jetbrains.python.console
 
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.run.PythonRunConfiguration
 
 interface PyExecuteConsoleCustomizer {
   companion object {
@@ -25,6 +27,8 @@ interface PyExecuteConsoleCustomizer {
   fun descriptorNameUpdated(descriptor: RunContentDescriptor, newName: String) {}
 
   fun getDescriptorName(descriptor: RunContentDescriptor): String = descriptor.displayName
+
+  fun getContextConfig(dataContext: DataContext): PythonRunConfiguration? = null
 }
 
 enum class DescriptorType {
