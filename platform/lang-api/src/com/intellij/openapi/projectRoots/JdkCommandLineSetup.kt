@@ -28,6 +28,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.THashMap
@@ -40,6 +41,8 @@ import org.jetbrains.concurrency.collectResults
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
+import java.net.URI
+import java.net.URL
 import java.nio.charset.Charset
 import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.StandardCharsets
@@ -815,10 +818,24 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
 
     @Throws(MalformedURLException::class)
-    private fun pathToUrl(path: String): String {
-      val file = File(path)
-      @Suppress("DEPRECATION") val url = if (notEscapeClassPathUrl) file.toURL() else file.toURI().toURL()
+    private fun pathToUrl(targetPath: String): String {
+      val url : URL = if (notEscapeClassPathUrl) {
+        // repeat login of `File(path).toURL()` without using system-dependent java.io.File
+        URL(URLUtil.FILE_PROTOCOL, "", slashify(targetPath))
+      }
+      else {
+        // repeat logic of `File(path).toURI().toURL()` without using system-dependent java.io.File
+        val p = slashify(targetPath)
+        URI(URLUtil.FILE_PROTOCOL, null, if (p.startsWith("//")) "//$p" else p, null).toURL()
+      }
       return url.toString()
+    }
+
+    // counterpart of java.io.File#slashify
+    private fun slashify(path: String): String {
+      return FileUtil.toSystemIndependentName(path).let {
+        if (it.startsWith("/")) it else "/$it"
+      }
     }
   }
 
