@@ -737,6 +737,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       if (getSelectionMode() == SINGLE_SELECTION) {
         int index = findSelectableIndex(index0, getLeadSelectionIndex());
         if (0 <= index) super.setSelectionInterval(index, index);
+        if (index == 0) fireValueChanged(0, 0); // enforce listeners to be notified about initial selection
       }
       else {
         super.setSelectionInterval(index0, index1); // TODO: support when needed

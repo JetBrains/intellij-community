@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -201,11 +202,12 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
                                                                           dataContext,
                                                                           JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                                                                           callback, -1);
+    popup.setHandleAutoSelectionBeforeShow(true);
     popup.addListSelectionListener(e -> {
+      JBPopup jbPopup = PopupUtil.getPopupContainerFor((Component)e.getSource());
       AnActionHolder data = (AnActionHolder)PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)e.getSource());
-      popup.setAdText(getHint(data == null ? null : data.getAction()), SwingConstants.LEFT);
+      jbPopup.setAdText(getHint(data == null ? null : data.getAction()), SwingConstants.LEFT);
     });
-    popup.setAdText(getHint(ContainerUtil.find(group.getChildren(null), action -> !(action instanceof Separator))), SwingConstants.LEFT);
     return popup;
   }
 

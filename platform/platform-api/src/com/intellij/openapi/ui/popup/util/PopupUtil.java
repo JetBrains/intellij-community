@@ -52,7 +52,10 @@ public final class PopupUtil {
 
   public static JBPopup getPopupContainerFor(@Nullable Component c) {
     if (c == null) return null;
-
+    if (c instanceof JComponent) {
+      JBPopup popup = (JBPopup)((JComponent)c).getClientProperty(JBPopup.KEY);
+      if (popup != null) return popup;
+    }
     final Window wnd = SwingUtilities.getWindowAncestor(c);
     if (wnd instanceof JWindow) {
       final JRootPane root = ((JWindow)wnd).getRootPane();
@@ -60,7 +63,6 @@ public final class PopupUtil {
     }
 
     return null;
-
   }
 
   public static void setPopupType(@NotNull final PopupFactory factory, final int type) {
