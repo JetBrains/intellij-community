@@ -2,11 +2,13 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.internal.statistic.StatisticsDevKitUtil
-import com.intellij.internal.statistic.eventLog.EventLogNotificationService
+import com.intellij.internal.statistic.eventLog.EventLogListenersManager
 import com.intellij.internal.statistic.eventLog.LogEvent
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -26,9 +28,13 @@ internal object FusStatesRecorder {
     synchronized(lock) {
       state.clear()
       isRecordingInProgress.getAndSet(true)
-      val subscriber: (LogEvent) -> Unit = { this.recordEvent(it) }
+      val subscriber = object : StatisticsEventLogListener {
+        override fun onLogEvent(validatedEvent: LogEvent, rawGroupId: String, rawEventId: String, rawData: Map<String, Any>) {
+          recordEvent(validatedEvent)
+        }
+      }
       val recorderId = StatisticsDevKitUtil.DEFAULT_RECORDER
-      EventLogNotificationService.subscribe(subscriber, recorderId)
+      service<EventLogListenersManager>().subscribe(subscriber, recorderId)
       try {
         val logApplicationStatesFuture = statesLogger.logApplicationStates()
         val logProjectStatesFuture = statesLogger.logProjectStates(project, indicator)
@@ -44,7 +50,7 @@ internal object FusStatesRecorder {
         return null
       }
       finally {
-        EventLogNotificationService.unsubscribe(subscriber, recorderId)
+        service<EventLogListenersManager>().unsubscribe(subscriber, recorderId)
         isRecordingInProgress.getAndSet(false)
       }
       return state.toList()

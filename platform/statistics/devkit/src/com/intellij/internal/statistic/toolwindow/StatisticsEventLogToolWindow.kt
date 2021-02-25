@@ -6,13 +6,12 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.*
 import com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction
 import com.intellij.internal.statistic.actions.scheme.EditEventsTestSchemeAction
-import com.intellij.internal.statistic.eventLog.EventLogNotificationService
-import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
-import com.intellij.internal.statistic.eventLog.LogEvent
+import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -32,12 +31,16 @@ const val eventLogToolWindowsId = "Statistics Event Log"
 internal class StatisticsEventLogToolWindow(project: Project, private val recorderId: String) : SimpleToolWindowPanel(false, true), Disposable {
   private val consoleLog: StatisticsEventLogConsole
   private val messageBuilder = StatisticsEventLogMessageBuilder()
-  private val eventLogListener: (LogEvent) -> Unit
+  private val eventLogListener: StatisticsEventLogListener
 
   init {
     val model = StatisticsLogFilterModel()
     consoleLog = StatisticsEventLogConsole(project, model, recorderId)
-    eventLogListener = { logEvent -> consoleLog.addLogLine(messageBuilder.buildLogMessage(logEvent)) }
+    eventLogListener = object : StatisticsEventLogListener {
+      override fun onLogEvent(validatedEvent: LogEvent, rawGroupId: String, rawEventId: String, rawData: Map<String, Any>) {
+        consoleLog.addLogLine(messageBuilder.buildLogMessage(validatedEvent, rawGroupId, rawEventId, rawData))
+      }
+    }
 
     val topPanel = JPanel(FlowLayout(FlowLayout.LEFT))
     topPanel.add(createFilter(project, model))
@@ -50,7 +53,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", consoleLog.orCreateActions, false).component
 
     Disposer.register(this, consoleLog)
-    EventLogNotificationService.subscribe(eventLogListener, recorderId)
+    service<EventLogListenersManager>().subscribe(eventLogListener, recorderId)
   }
 
   private fun createActionToolbar(): JComponent {
@@ -85,7 +88,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
   }
 
   override fun dispose() {
-    EventLogNotificationService.unsubscribe(eventLogListener, recorderId)
+    service<EventLogListenersManager>().unsubscribe(eventLogListener, recorderId)
   }
 
   companion object {

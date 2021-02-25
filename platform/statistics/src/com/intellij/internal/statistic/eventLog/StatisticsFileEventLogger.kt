@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.CompletableFuture
@@ -21,7 +22,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val systemEventIdProvider: StatisticsSystemEventIdProvider) : StatisticsEventLogger, Disposable {
   protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId", 1)
 
-  private var lastEvent: LogEvent? = null
+  private var lastEvent: FusEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
   private var eventMergeTimeoutMs: Long
@@ -46,7 +47,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         val event = validator.validate(group.id, group.version.toString(), build, sessionId, bucket, eventTime, recorderVersion, eventId,
                                        data, isState)
         if (event != null) {
-          log(event, System.currentTimeMillis())
+          log(event, System.currentTimeMillis(), group.id, eventId, data)
         }
       }, logExecutor)
     }
@@ -56,14 +57,14 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     }
   }
 
-  private fun log(event: LogEvent, createdTime: Long) {
-    if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && lastEvent!!.shouldMerge(event)) {
+  private fun log(event: LogEvent, createdTime: Long, rawGroupId: String, rawEventId: String, rawData: Map<String, Any>) {
+    if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && lastEvent!!.validatedEvent.shouldMerge(event)) {
       lastEventTime = event.time
-      lastEvent!!.event.increment()
+      lastEvent!!.validatedEvent.event.increment()
     }
     else {
       logLastEvent()
-      lastEvent = event
+      lastEvent = FusEvent(event, rawGroupId, rawEventId, rawData)
       lastEventTime = event.time
       lastEventCreatedTime = createdTime
     }
@@ -76,18 +77,21 @@ open class StatisticsFileEventLogger(private val recorderId: String,
 
   private fun logLastEvent() {
     lastEvent?.let {
-      if (it.event.isEventGroup()) {
-        it.event.addData("last", lastEventTime)
+      val event = it.validatedEvent.event
+      if (event.isEventGroup()) {
+        event.addData("last", lastEventTime)
       }
-      it.event.addData("created", lastEventCreatedTime)
+      event.addData("created", lastEventCreatedTime)
       var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
-      it.event.addData("system_event_id", systemEventId)
+      event.addData("system_event_id", systemEventId)
       systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
 
       if (headless) {
-        it.event.addData("system_headless", true)
+        event.addData("system_headless", true)
       }
-      writer.log(it)
+      writer.log(it.validatedEvent)
+      ServiceManager.getService(EventLogListenersManager::class.java).notifySubscribers(recorderId, it.validatedEvent, it.rawGroupId,
+                                                                                        it.rawEventId, it.rawData)
     }
     lastEvent = null
   }
@@ -119,4 +123,9 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       logLastEvent()
     }, logExecutor)
   }
+
+  private data class FusEvent(val validatedEvent: LogEvent,
+                              val rawGroupId: String,
+                              val rawEventId: String,
+                              val rawData: Map<String, Any>)
 }
