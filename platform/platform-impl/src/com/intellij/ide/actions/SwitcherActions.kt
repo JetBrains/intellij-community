@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -19,7 +20,7 @@ internal abstract class SwitcherRecentFilesAction(val onlyEditedFiles: Boolean) 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files")
-    SwitcherPanel(project, onlyEditedFiles)
+    SwitcherPanel(project, message("title.popup.recent.files"), onlyEditedFiles, null)
   }
 }
 
