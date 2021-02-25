@@ -43,12 +43,12 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
       }
       if (!read && descriptor.isReadOnly()) {
         if (descriptor.isLocked()) {
-          descriptor = new ChannelDescriptor(path, true);
+          descriptor = new ChannelDescriptor(path, false);
         }
         else {
           // re-open as write
           closeChannel(path);
-          descriptor = new ChannelDescriptor(path, true);
+          descriptor = new ChannelDescriptor(path, false);
           myCache.put(path, descriptor);
         }
       }
