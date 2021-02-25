@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.hosting.GitHostingUrlUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -10,7 +11,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubParseException;
-import org.jetbrains.plugins.github.util.GithubUrlUtil;
 
 import java.net.URI;
 import java.util.Objects;
@@ -77,7 +77,7 @@ public class GithubServerPath {
   }
 
   public boolean matches(@NotNull String gitRemoteUrl) {
-    URI uri = GithubUrlUtil.getUriFromRemoteUrl(gitRemoteUrl);
+    URI uri = GitHostingUrlUtil.getUriFromRemoteUrl(gitRemoteUrl);
     if (uri == null) return false;
 
     String host = uri.getHost();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.util.Pair
@@ -25,40 +25,6 @@ class GithubUrlUtilTest : TestCase() {
       val result = func(input)
       assertEquals(input, expectedResult, result)
     }
-  }
-
-  fun testRemoveTrailingSlash() {
-    val tests = TestCase<String>()
-
-    tests.add("http://github.com/", "http://github.com")
-    tests.add("http://github.com", "http://github.com")
-
-    tests.add("http://github.com/user/repo/", "http://github.com/user/repo")
-    tests.add("http://github.com/user/repo", "http://github.com/user/repo")
-
-    runTestCase(tests) { `in` -> removeTrailingSlash(`in`) }
-  }
-
-  fun testRemoveProtocolPrefix() {
-    val tests = TestCase<String>()
-
-    tests.add("github.com/user/repo/", "github.com/user/repo/")
-    tests.add("api.github.com/user/repo/", "api.github.com/user/repo/")
-
-    tests.add("http://github.com/user/repo/", "github.com/user/repo/")
-    tests.add("https://github.com/user/repo/", "github.com/user/repo/")
-    tests.add("git://github.com/user/repo/", "github.com/user/repo/")
-    tests.add("git@github.com:user/repo/", "github.com/user/repo/")
-
-    tests.add("git@github.com:username/repo/", "github.com/username/repo/")
-    tests.add("https://username:password@github.com/user/repo/", "github.com/user/repo/")
-    tests.add("https://username@github.com/user/repo/", "github.com/user/repo/")
-    tests.add("https://github.com:2233/user/repo/", "github.com:2233/user/repo/")
-
-    tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com/user/repo/")
-    tests.add("HttP://GitHub.com/user/repo/", "GitHub.com/user/repo/")
-
-    runTestCase(tests) { `in` -> removeProtocolPrefix(`in`) }
   }
 
   fun testGetUserAndRepositoryFromRemoteUrl() {
@@ -138,34 +104,5 @@ class GithubUrlUtilTest : TestCase() {
     tests.add("HttP://GitHub.com/user/repo/", "GitHub.com")
 
     runTestCase(tests) { `in` -> getHostFromUrl(`in`) }
-  }
-
-  fun testUri() {
-    val tests = TestCase<URI?>()
-
-    tests.add("https://github.com", URI("https", "github.com", null, null))
-    tests.add("https://api.github.com", URI("https", "api.github.com", null, null))
-    tests.add("https://github.com/", URI("https", "github.com", null, null))
-    tests.add("https://api.github.com/", URI("https", "api.github.com", null, null))
-
-    tests.add("https://github.com/user/repo/", URI("https", "github.com", "/user/repo", null))
-    tests.add("https://api.github.com/user/repo/", URI("https", "api.github.com", "/user/repo", null))
-
-    tests.add("http://github.com/user/repo/", URI("http", "github.com", "/user/repo", null))
-    tests.add("https://github.com/user/repo/", URI("https", "github.com", "/user/repo", null))
-    tests.add("git://github.com/user/repo/", URI("git", "github.com", "/user/repo", null))
-    tests.add("ssh://user@github.com/user/repo/", URI("ssh", "user", "github.com", -1, "/user/repo", null, null))
-
-    tests.add("https://username:password@github.com/user/repo/",
-              URI("https", "username:password", "github.com", -1, "/user/repo", null, null))
-    tests.add("https://username@github.com/user/repo/", URI("https", "username", "github.com", -1, "/user/repo", null, null))
-    tests.add("https://github.com:2233/user/repo/", URI("https", null, "github.com", 2233, "/user/repo", null, null))
-
-    tests.add("HTTP://GITHUB.com/user/repo/", URI("HTTP", null, "GITHUB.com", -1, "/user/repo", null, null))
-    tests.add("HttP://GitHub.com/user/repo/", URI("HttP", null, "GitHub.com", -1, "/user/repo", null, null))
-
-    tests.add("git@github.com:user/repo/", URI("https", null, "github.com", -1, "/user/repo", null, null))
-
-    runTestCase(tests) { `in` -> getUriFromRemoteUrl(`in`) }
   }
 }
