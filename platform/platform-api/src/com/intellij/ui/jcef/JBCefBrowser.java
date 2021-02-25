@@ -134,17 +134,22 @@ public class JBCefBrowser extends JBCefBrowserBase {
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
-        if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) {
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        boolean componentFocused = focusOwner == getComponent() || focusOwner == getCefBrowser().getUIComponent();
+
+        if (source == FocusSource.FOCUS_SOURCE_NAVIGATION && !componentFocused) {
           if (SystemInfoRt.isWindows) {
             myCefBrowser.setFocus(false);
           }
           return true; // suppress focusing the browser on navigation events
         }
-        if (SystemInfoRt.isLinux) {
-          browser.getUIComponent().requestFocus();
-        }
-        else {
-          browser.getUIComponent().requestFocusInWindow();
+        if (!browser.getUIComponent().hasFocus()) {
+          if (SystemInfoRt.isLinux) {
+            browser.getUIComponent().requestFocus();
+          }
+          else {
+            browser.getUIComponent().requestFocusInWindow();
+          }
         }
         return false;
       }
@@ -212,6 +217,13 @@ public class JBCefBrowser extends JBCefBrowserBase {
         // Preferred size should not be zero, otherwise the content loading is not triggered
         Dimension size = super.getPreferredSize();
         return size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
+      }
+      @Override
+      protected void processFocusEvent(FocusEvent e) {
+        super.processFocusEvent(e);
+        if (e.getID() == FocusEvent.FOCUS_GAINED) {
+          uiComp.requestFocusInWindow();
+        }
       }
     };
 
