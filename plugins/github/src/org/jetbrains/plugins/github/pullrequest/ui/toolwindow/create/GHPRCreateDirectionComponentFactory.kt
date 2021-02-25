@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
@@ -166,6 +167,8 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
 
     val branchComponent = ComboBox(branchModel).apply {
       renderer = SimpleListCellRenderer.create<GitBranch>("", GitBranch::getName)
+    }.also {
+      ComboboxSpeedSearch.installSpeedSearch(it, GitBranch::getName)
     }
 
     val panel = panel(LCFlags.fill) {
