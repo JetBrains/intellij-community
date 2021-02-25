@@ -22,8 +22,8 @@ import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.vcs.log.impl.VcsLogManager.findLogProviders
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl.getBackgroundColor
 import java.awt.Color
 
 private val ICON_SIZE = scale(14)
@@ -32,11 +32,11 @@ private val BRANCH_BACKGROUND_INSETS = insets(1, 0)
 private fun getBranchLabelAttributes(background: Color) =
   SimpleTextAttributes(getBranchPresentationBackground(background), TEXT_COLOR, null, STYLE_OPAQUE)
 
-class RepositoryChangesBrowserNode(repository: Repository) : ChangesBrowserNode<Repository>(repository) {
-  private val colorManager = getColorManager(repository.project)
+class RepositoryChangesBrowserNode(repository: Repository,
+                                   private val colorManager: VcsLogColorManager = getColorManager(repository.project)) : ChangesBrowserNode<Repository>(repository) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    renderer.icon = ColorIcon(ICON_SIZE, getBackgroundColor(colorManager.getRootColor(getUserObject().root)))
+    renderer.icon = ColorIcon(ICON_SIZE, VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(getUserObject().root)))
     renderer.append(" $textPresentation", REGULAR_ATTRIBUTES)
     appendCount(renderer)
 
