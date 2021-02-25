@@ -409,17 +409,12 @@ public final class ActionMenu extends JBMenu {
     }
   }
   private static final class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
-
     private Component myComponent;
-    private Point myLastMousePoint;
+    private Point myStartMousePoint;
     private Point myUpperTargetPoint;
     private Point myLowerTargetPoint;
     private SingleAlarm myCallbackAlarm;
     private MouseEvent myEventToRedispatch;
-
-    private long myLastEventTime = 0L;
-    private boolean myInBounds = false;
-    private SingleAlarm myCheckAlarm;
 
     private UsabilityHelper(Component component) {
       myCallbackAlarm = new SingleAlarm(() -> {
@@ -429,18 +424,10 @@ public final class ActionMenu extends JBMenu {
           IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
         }
       }, 50, ModalityState.any(), this);
-      myCheckAlarm = new SingleAlarm(() -> {
-        if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
-          if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
-            myCallbackAlarm.request();
-          }
-        }
-        myCheckAlarm.request();
-      }, 100, ModalityState.any(), this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
-      myLastMousePoint = info != null ? info.getLocation() : null;
-      if (myLastMousePoint != null) {
+      myStartMousePoint = info != null ? info.getLocation() : null;
+      if (myStartMousePoint != null) {
         Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK);
         IdeEventQueue.getInstance().addDispatcher(this, this);
       }
@@ -456,11 +443,11 @@ public final class ActionMenu extends JBMenu {
           Rectangle bounds = popup.getBounds();
           if (bounds.isEmpty()) return;
           bounds.setLocation(popup.getLocationOnScreen());
-          if (myLastMousePoint.x < bounds.x) {
+          if (myStartMousePoint.x < bounds.x) {
             myUpperTargetPoint = new Point(bounds.x, bounds.y);
             myLowerTargetPoint = new Point(bounds.x, bounds.y + bounds.height);
           }
-          if (myLastMousePoint.x > bounds.x + bounds.width) {
+          if (myStartMousePoint.x > bounds.x + bounds.width) {
             myUpperTargetPoint = new Point(bounds.x + bounds.width, bounds.y);
             myLowerTargetPoint = new Point(bounds.x + bounds.width, bounds.y + bounds.height);
           }
@@ -477,21 +464,18 @@ public final class ActionMenu extends JBMenu {
         Point point = ((MouseEvent)e).getLocationOnScreen();
         Rectangle bounds = myComponent.getBounds();
         bounds.setLocation(myComponent.getLocationOnScreen());
-        myInBounds = bounds.contains(point);
-        boolean isMouseMovingTowardsSubmenu = myInBounds || new Polygon(
-          new int[]{myLastMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
-          new int[]{myLastMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
+        boolean isMouseMovingTowardsSubmenu = bounds.contains(point) || new Polygon(
+          new int[]{myStartMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
+          new int[]{myStartMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
           3).contains(point);
 
         myEventToRedispatch = (MouseEvent)e;
-        myLastEventTime = System.currentTimeMillis();
 
         if (!isMouseMovingTowardsSubmenu) {
           myCallbackAlarm.request();
         } else {
           myCallbackAlarm.cancel();
         }
-        myLastMousePoint = point;
         return true;
       }
       return false;
@@ -501,7 +485,7 @@ public final class ActionMenu extends JBMenu {
     public void dispose() {
       myComponent = null;
       myEventToRedispatch = null;
-      myLastMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
+      myStartMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     }
   }
