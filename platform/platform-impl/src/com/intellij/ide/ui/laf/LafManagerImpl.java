@@ -1309,9 +1309,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     private static final BooleanSupplier dark = () -> ColorUtil.isDark(UIManager.getColor("MenuItem.selectionBackground"));
 
     private DefaultMenuArrowIcon() {
-      super(() -> AllIcons.Icons.Ide.NextStep,
-            () -> dark.getAsBoolean() ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep,
-            () -> IconLoader.getDisabledIcon(AllIcons.Icons.Ide.NextStep));
+      super(() -> AllIcons.Icons.Ide.MenuArrow,
+            () -> dark.getAsBoolean() ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow,
+            () -> IconLoader.getDisabledIcon(AllIcons.Icons.Ide.MenuArrow));
     }
   }
 

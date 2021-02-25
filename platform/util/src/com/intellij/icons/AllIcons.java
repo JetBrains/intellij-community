@@ -571,6 +571,8 @@ public class AllIcons {
 
   public static final class Icons {
     public static final class Ide {
+      /** 12x12 */ public static final @NotNull Icon MenuArrow = load("icons/ide/menuArrow.svg", -8251521556909223309L, 2);
+      /** 12x12 */ public static final @NotNull Icon MenuArrowSelected = load("icons/ide/menuArrowSelected.svg", -4528787529958590164L, 2);
       /** 12x12 */ public static final @NotNull Icon NextStep = load("icons/ide/nextStep.svg", -3704126782742584898L, 2);
       /** 12x12 */ public static final @NotNull Icon NextStepInverted = load("icons/ide/nextStepInverted.svg", 4350427522257515115L, 0);
     }
