@@ -54,7 +54,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   private static final Key<String> SEARCH_TEXT_KEY = Key.create("SpeedSearch.searchText");
 
-  protected SearchPopup mySearchPopup;
+  private SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
   protected final Comp myComponent;
   private final ToolWindowManagerListener myWindowManagerListener = new ToolWindowManagerListener() {

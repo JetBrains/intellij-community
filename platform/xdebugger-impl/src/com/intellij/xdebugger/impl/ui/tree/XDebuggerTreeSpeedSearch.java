@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -170,9 +171,13 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       .setAwtTooltip(true)
       .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
       .setTextBg(HintUtil.getInformationColor())
-      .setShowImmediately(false);
-    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    hint.show(component, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
+      .setShowImmediately(true);
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      hint.show(component, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
+    });
+
 
     propertiesComponent.setValue(COUNTER_PROPERTY, counter + 1, 0);
   }
@@ -186,7 +191,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     return TreeUtil.treePathTraverser(myComponent)
         .expand(n -> myComponent.isExpanded(n) || (myCanExpand && n.getPathCount() - initialLevel < SEARCH_DEPTH))
         .traverse()
-        .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode));
+        .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode || o.equals(root.getPath())));
   }
 
   protected void setSearchOption(AnAction searchOption) {
@@ -233,7 +238,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     protected void handleInsert(String newText) {
       if (findElement(newText) == null) {
         mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
-        if(!myCanExpand && isShowing()) {
+        if(!myCanExpand) {
           showHint(mySearchOption);
         }
       }
