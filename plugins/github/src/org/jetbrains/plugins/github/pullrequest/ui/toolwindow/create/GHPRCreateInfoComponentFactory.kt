@@ -43,6 +43,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
@@ -60,6 +61,7 @@ import javax.swing.*
 import javax.swing.text.Document
 
 internal class GHPRCreateInfoComponentFactory(private val project: Project,
+                                              private val settings: GithubPullRequestsProjectUISettings,
                                               private val repositoriesManager: GHProjectRepositoriesManager,
                                               private val dataContext: GHPRDataContext,
                                               private val viewController: GHPRToolWindowTabComponentController) {
@@ -234,7 +236,8 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
     val repos = repositoriesManager.knownRepositories
     val baseIsFork = repositoryDataService.isFork
-    val headRepo = if (repos.size == 1) repos.single() else if (baseIsFork) baseRepo else null
+    val recentHead = settings.recentNewPullRequestHead
+    val headRepo = repos.find { it.repository == recentHead } ?: if (repos.size == 1) repos.single() else if (baseIsFork) baseRepo else null
     val headBranch = headRepo?.gitRemote?.repository?.currentBranch
     setHead(headRepo, headBranch)
   }
@@ -285,6 +288,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           }
       }.successOnEdt {
         viewController.viewPullRequest(it)
+        settings.recentNewPullRequestHead = headRepo.repository
         resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
         it
       }
