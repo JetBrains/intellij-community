@@ -9,11 +9,10 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.IntSLRUCache;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntIntHashMap;
-import com.intellij.util.containers.IntObjectLRUMap;
+import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
@@ -41,7 +40,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void, FileContent>, FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(LogFileTypeMapReduceIndex.class);
 
-  private final @NotNull IntSLRUCache<Integer> myLogCache;
+  private final @NotNull SLRUMap<Integer, Integer> myLogCache;
   private final @NotNull MemorySnapshotHandler myMemorySnapshotHandler = new MemorySnapshotHandler();
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
   private final @NotNull SimpleStringPersistentEnumerator myFileTypeEnumerator;
@@ -59,7 +58,7 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
     myPersistentLog = new LogBasedIntIntIndex(new IntLog(IndexInfrastructure.getStorageFile(myIndexId), true));
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(IndexInfrastructure.getStorageFile(myIndexId).resolveSibling("fileType.enum"));
     int cacheSize = extension.getCacheSize();
-    myLogCache = new IntSLRUCache<>(cacheSize, (int)(Math.ceil(cacheSize * 0.25)));
+    myLogCache = new SLRUMap<>(cacheSize, (int)(Math.ceil(cacheSize * 0.25)));
 
     if (myExtension.dependsOnFileContent()) {
       throw new IllegalArgumentException(myExtension.getName() + " should not depend on content");
@@ -258,12 +257,9 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
 
   private int getFileTypeIdFromCache(int fileId) {
     synchronized (myLogCache) {
-      IntObjectLRUMap.MapEntry<Integer> entry = myLogCache.getCachedEntry(fileId);
-      if (entry != null) {
-        Integer data = entry.value;
-        if (data != null) {
-          return data;
-        }
+      Integer data = myLogCache.get(fileId);
+      if (data != null) {
+        return data;
       }
     }
     return 0;
@@ -271,7 +267,7 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
 
   private void updateEntryCache(int inputId, int fileTypeId) {
     synchronized (myLogCache) {
-      myLogCache.cacheEntry(inputId, fileTypeId);
+      myLogCache.put(inputId, fileTypeId);
     }
   }
 
