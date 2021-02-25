@@ -4,9 +4,4 @@
     <ift.language.extension language="Python" implementationClass="com.jetbrains.python.ift.PythonLangSupport"/>
     <ift.learning.course language="Python" implementationClass="com.jetbrains.python.ift.PythonLearningCourse"/>
   </extensions>
-  
-  <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="true" description="Initialize Python learning project with virtual environment."
-                 key="ide.features.trainer.use.venv"/>
-  </extensions>
 </idea-plugin>
