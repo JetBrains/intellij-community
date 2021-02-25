@@ -61,7 +61,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     browseUsingPath(url, browserPath, project = project)
   }
 
-  private fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
+  protected open fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
     val url = signUrl(_url.trim { it <= ' ' })
     LOG.debug { "opening [$url]" }
 
@@ -141,7 +141,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   protected open fun signUrl(url: String): String = url
 
-  final override fun browse(url: String, browser: WebBrowser?, project: Project?) {
+  override fun browse(url: String, browser: WebBrowser?, project: Project?) {
     val effectiveBrowser = getEffectiveBrowser(browser)
     // if browser is not passed, UrlOpener should be not used for non-http(s) urls
     if (effectiveBrowser == null || (browser == null && !url.startsWith(URLUtil.HTTP_PROTOCOL))) {
