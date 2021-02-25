@@ -19,8 +19,6 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
 
   private val BASE_PATH: @NonNls String = "/refactoring/extractMethodInplace"
 
-
-
   fun testStatement(){
     doTest()
   }
@@ -50,6 +48,10 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
   fun testValidRename(){
     doTest(changedName = "valid")
     require(getActiveTemplate() == null)
+  }
+
+  fun testGeneratedDefault(){
+    doTest()
   }
 
   private fun doTest(checkResults: Boolean = true, changedName: String? = null){
