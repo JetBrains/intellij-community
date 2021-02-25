@@ -110,6 +110,7 @@ public final class Utils {
 
   private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
 
+  @NotNull
   public static List<AnAction> expandActionGroup(boolean isInModalContext,
                                                  @NotNull ActionGroup group,
                                                  @NotNull PresentationFactory presentationFactory,
@@ -389,7 +390,7 @@ public final class Utils {
       }
     }
     try {
-      return promise.get();
+      return promise.isCancelled() ? defValue : promise.get();
     }
     catch (Exception ex) {
       Throwable cause = ExceptionUtil.getRootCause(ex);
