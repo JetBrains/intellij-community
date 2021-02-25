@@ -4,13 +4,14 @@
 
   <description>
     <![CDATA[
-            Lets you connect your IDE to your organization in <a href="https://jetbrains.com/space/">JetBrains Space</a> so you can view and clone project repositories.
+            <a href='https://www.jetbrains.com/space/?fromIDE'>JetBrains Space: The Integrated Team Environment</a><br/><br/>
+            An all-in-one collaboration solution that combines a complete toolchain for software development with tools for instant communication as well as team and project management.<br/><br/>
+            <a href='https://www.jetbrains.com/space/?fromIDE'>Explore Space and sign up for free</a><br/><br/>
+            Connect your IDE to your organization in Space. This allows you to clone and share Git repositories, perform code reviews with merge requests, edit Automation scripts with Kotlin plugin support, and more.
         ]]>
   </description>
   <vendor>JetBrains</vendor>
 
-  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
-       on how to target different products -->
   <depends>com.intellij.modules.platform</depends>
   <depends optional="true" config-file="space-automation-kts.xml">org.jetbrains.kotlin</depends>
   <depends>com.intellij.modules.vcs</depends>
