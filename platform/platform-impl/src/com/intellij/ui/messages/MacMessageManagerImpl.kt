@@ -247,7 +247,7 @@ private class NativeMacMessageManager : MacMessages() {
       val result = myResult!! - 1000
 
       if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
-        if (result != Messages.CANCEL || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
+        if (result == Messages.OK || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
           doNotAskDialogOption.setToBeShown(!mySuppress, result)
         }
       }
