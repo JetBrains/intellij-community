@@ -1867,11 +1867,7 @@ public abstract class LongRangeSet {
             plus = modRange(ranges[i], ranges[i + 1], myMod, bits);
           }
           else {
-            long min = ranges[i];
-            while (!isSet(bits, remainder(min, myMod))) min++;
-            long max = ranges[i + 1];
-            while (!isSet(bits, remainder(max, myMod))) max--;
-            plus = range(min, max);
+            plus = range(ranges[i], ranges[i + 1]);
           }
           result = result.unite(plus);
         }
