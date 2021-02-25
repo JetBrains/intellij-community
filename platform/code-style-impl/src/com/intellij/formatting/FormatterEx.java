@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -12,23 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class FormatterEx implements Formatter {
-  private static FormatterEx myTestInstance;
 
   public static FormatterEx getInstance() {
-    final Application application = ApplicationManager.getApplication();
-    return application == null ? getTestInstance() : (FormatterEx)Formatter.getInstance();
-  }
-
-  private static FormatterEx getTestInstance() {
-    if (myTestInstance == null) {
-      try {
-        myTestInstance = (FormatterEx)Class.forName("com.intellij.formatting.FormatterImpl").newInstance();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return myTestInstance;
+    return (FormatterEx)Formatter.getInstance();
   }
 
   public abstract void format(FormattingModel model,
