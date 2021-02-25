@@ -41,6 +41,8 @@ import java.util.Objects;
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class InjectedLanguageUtilBase {
+  public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
+
   @NotNull
   static PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
     if (containingFile instanceof DummyHolder) {
