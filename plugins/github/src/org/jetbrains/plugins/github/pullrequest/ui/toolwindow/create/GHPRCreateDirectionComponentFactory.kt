@@ -229,6 +229,7 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
 
     val branches = repo.branches.localBranches.sorted() + remoteBranches.sorted()
     branchModel.replaceAll(branches)
+    branchModel.selectedItem = repo.currentBranch
   }
 
   companion object {
