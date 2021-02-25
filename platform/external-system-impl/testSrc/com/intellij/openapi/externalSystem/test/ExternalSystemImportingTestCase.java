@@ -60,6 +60,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
@@ -538,7 +539,11 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void printOutput(@NotNull String text, boolean stdOut) {
     if (StringUtil.isEmptyOrSpaces(text)) return;
-    (stdOut ? System.out : System.err).print(text);
+    printOutput(stdOut ? System.out : System.err, text);
+  }
+
+  protected void printOutput(@NotNull PrintStream stream, @NotNull String text) {
+    stream.print(text);
   }
 
   protected void handleImportFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
