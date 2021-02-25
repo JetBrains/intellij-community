@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
@@ -22,7 +21,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -143,31 +141,19 @@ public final class Switcher extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
-
-    boolean isNewSwitcher = false;
-
     SwitcherPanel switcher = SWITCHER_KEY.get(project);
     if (switcher != null && switcher.isPinnedMode()) {
       switcher.cancel();
       switcher = null;
     }
-    if (switcher == null) {
-      isNewSwitcher = true;
+    if (switcher != null) {
+      switcher.go(e.getInputEvent());
+    }
+    else {
       boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
       switcher = new SwitcherPanel(project, IdeBundle.message("window.title.switcher"), false, false, !moveBack);
       switcher.myInitEvent = e.getInputEvent();
       FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
-    }
-
-    if (!switcher.isPinnedMode()) {
-      if (isNewSwitcher && !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
-        switcher.files.setSelectedIndex(0);
-      }
-
-      if (!isNewSwitcher) {
-        if (e.getInputEvent() != null && e.getInputEvent().isShiftDown()) switcher.goBack();
-        else switcher.goForward();
-      }
     }
   }
 
@@ -178,50 +164,12 @@ public final class Switcher extends AnAction implements DumbAware {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
-    return createAndShowSwitcher(e, title, pinned, vFiles != null);
-  }
-
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean onlyEdited, boolean pinned) {
     Project project = e.getProject();
     if (project == null) return null;
     SwitcherPanel switcher = SWITCHER_KEY.get(project);
     if (switcher != null && Objects.equals(switcher.myTitle, title)) return null;
     boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
-    return new SwitcherPanel(project, title, onlyEdited, pinned, !moveBack);
-  }
-
-  public static class ToggleCheckBoxAction extends DumbAwareAction implements DumbAware, LightEditCompatible {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      SwitcherPanel switcherPanel = SWITCHER_KEY.get(project);
-      if (switcherPanel != null) {
-        switcherPanel.toggleShowEditedFiles();
-      }
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      e.getPresentation().setEnabledAndVisible(SWITCHER_KEY.get(project) != null);
-    }
-  }
-
-  public static class IterateItemsAction extends DumbAwareAction implements DumbAware {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      SwitcherPanel switcherPanel = SWITCHER_KEY.get(project);
-      if (switcherPanel != null) {
-        switcherPanel.goForward();
-      }
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      e.getPresentation().setEnabledAndVisible(SWITCHER_KEY.get(project) != null);
-    }
+    return new SwitcherPanel(project, title, vFiles != null, pinned, !moveBack);
   }
 
   public static class SwitcherPanel extends JPanel implements KeyListener, DataProvider,
@@ -343,7 +291,10 @@ public final class Switcher extends AnAction implements DumbAware {
       }
     };
 
-    @SuppressWarnings("ConstantConditions")
+    SwitcherPanel(@NotNull Project project, boolean onlyEditedFiles) {
+      this(project, IdeBundle.message("title.popup.recent.files"), onlyEditedFiles, true, true);
+    }
+
     SwitcherPanel(@NotNull final Project project, @NotNull @Nls String title, boolean onlyEdited, boolean pinned, boolean moveForward) {
       setLayout(new BorderLayout());
       this.project = project;
@@ -452,7 +403,6 @@ public final class Switcher extends AnAction implements DumbAware {
       };
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
-        @Nullable
         private @NlsSafe String getTitle2Text(@Nullable String fullText) {
           int labelWidth = pathLabel.getWidth();
           if (fullText == null || fullText.length() == 0) return " ";
@@ -512,8 +462,8 @@ public final class Switcher extends AnAction implements DumbAware {
                                   isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title,
                                   pinned);
       if (isCheckboxMode()) {
-        myShowOnlyEditedFilesCheckBox.addActionListener(e -> setShowOnlyEditedFiles(myShowOnlyEditedFilesCheckBox.isSelected()));
-        myShowOnlyEditedFilesCheckBox.addActionListener(e -> toolWindows.repaint());
+        myShowOnlyEditedFilesCheckBox.addItemListener(e -> setShowOnlyEditedFiles(myShowOnlyEditedFilesCheckBox.isSelected()));
+        myShowOnlyEditedFilesCheckBox.addItemListener(e -> toolWindows.repaint());
       }
       else {
         myShowOnlyEditedFilesCheckBox.setEnabled(false);
@@ -1027,6 +977,10 @@ public final class Switcher extends AnAction implements DumbAware {
       myPopup.cancel();
     }
 
+    void go(@Nullable InputEvent event) {
+      go(event == null || !event.isShiftDown());
+    }
+
     public void go(boolean forward) {
       JBList selected = getSelectedList();
       JList list = selected;
@@ -1064,10 +1018,6 @@ public final class Switcher extends AnAction implements DumbAware {
 
     boolean isCheckboxMode() {
       return isPinnedMode() && Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together");
-    }
-
-    void toggleShowEditedFiles() {
-      myShowOnlyEditedFilesCheckBox.doClick();
     }
 
     void setShowOnlyEditedFiles(boolean onlyEdited) {
