@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.perf.common
 
-import org.jetbrains.kotlin.idea.perf.*
+import org.jetbrains.kotlin.idea.perf.AbstractPerformanceProjectsTest
+import org.jetbrains.kotlin.idea.perf.Stats
+import org.jetbrains.kotlin.idea.perf.WarmUpProject
 import org.jetbrains.kotlin.idea.perf.util.TeamCity
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
 
@@ -30,7 +32,7 @@ abstract class AbstractWholeProjectPerformanceComparisonTest : AbstractPerforman
                     FILE_NAMES.NAME_RESOLUTION
                 )
 
-                filesToHighlight.forEach { file -> perfHighlightFileEmptyProfile(file, stats = stat) }
+                filesToHighlight.forEach { file -> perfHighlightFileEmptyProfile(file, stats = stat, stopAtException = true) }
             }
         }
     }
@@ -47,7 +49,8 @@ abstract class AbstractWholeProjectPerformanceComparisonTest : AbstractPerforman
                     insertString = "val a = l",
                     highlightFileBeforeStartTyping = true,
                     lookupElements = listOf("line"),
-                    note = "in-method completion"
+                    note = "in-method completion",
+                    stopAtException = true,
                 )
 
                 perfTypeAndAutocomplete(
@@ -57,7 +60,8 @@ abstract class AbstractWholeProjectPerformanceComparisonTest : AbstractPerforman
                     insertString = "\nval a = ",
                     highlightFileBeforeStartTyping = true,
                     lookupElements = listOf("processAssocTypeVariants"),
-                    note = "top-level completion"
+                    note = "top-level completion",
+                    stopAtException = true,
                 )
 
                 perfTypeAndAutocomplete(
@@ -67,7 +71,8 @@ abstract class AbstractWholeProjectPerformanceComparisonTest : AbstractPerforman
                     highlightFileBeforeStartTyping = true,
                     insertString = "\nval a = s",
                     lookupElements = listOf("scope"),
-                    note = "in big method in big file completion"
+                    note = "in big method in big file completion",
+                    stopAtException = true,
                 )
             }
         }
