@@ -267,9 +267,10 @@ final class ActionUpdater {
       });
     });
 
-    cancelAndRestartOnUserActivity(promise, indicator);
-
-    if (!myToolbarAction) {
+    if (myToolbarAction) {
+      cancelAndRestartOnUserActivity(promise);
+    }
+    else {
       cancelAllUpdates();
     }
     ourPromises.add(promise);
@@ -322,11 +323,11 @@ final class ActionUpdater {
     }
   }
 
-  private static void cancelAndRestartOnUserActivity(Promise<?> promise, ProgressIndicator indicator) {
+  private static void cancelAndRestartOnUserActivity(@NotNull CancellablePromise<?> promise) {
     Disposable disposable = Disposer.newDisposable("Action Update");
     IdeEventQueue.getInstance().addPostprocessor(e -> {
       if (e instanceof ComponentEvent && !(e instanceof PaintEvent) && (e.getID() & AWTEvent.MOUSE_MOTION_EVENT_MASK) == 0) {
-        indicator.cancel();
+        promise.cancel();
       }
       return false;
     }, disposable);
