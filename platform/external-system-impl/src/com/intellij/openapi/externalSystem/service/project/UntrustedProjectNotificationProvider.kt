@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.TrustChangeNotifier
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAware
@@ -22,7 +23,10 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
     if (project.isTrusted()) {
       return null
     }
-    val provider = EP_NAME.findFirstSafe { it.shouldShowEditorNotification(project) } ?: return null
+    val provider = EP_NAME.findFirstSafe {
+      !executesTrustedCodeOnly(it.systemId) &&
+      it.shouldShowEditorNotification(project)
+    } ?: return null
     return EditorNotificationPanel().apply {
       text = IdeBundle.message("untrusted.project.notification.desctription")
       createActionLabel(IdeBundle.message("untrusted.project.notification.trust.button", provider.systemId.readableName), {
