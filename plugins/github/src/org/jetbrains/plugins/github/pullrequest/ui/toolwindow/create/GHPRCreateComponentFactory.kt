@@ -33,6 +33,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
@@ -52,6 +53,7 @@ import javax.swing.text.PlainDocument
 
 internal class GHPRCreateComponentFactory(private val actionManager: ActionManager,
                                           private val project: Project,
+                                          private val settings: GithubPullRequestsProjectUISettings,
                                           private val repositoriesManager: GHProjectRepositoriesManager,
                                           private val dataContext: GHPRDataContext,
                                           private val viewController: GHPRToolWindowTabComponentController,
@@ -146,7 +148,7 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
     val existenceCheckLoadingModel = GHIOExecutorLoadingModel<GHPRIdentifier?>(uiDisposable)
     val createLoadingModel = GHCompletableFutureLoadingModel<GHPullRequestShort>(uiDisposable)
 
-    val infoComponent = GHPRCreateInfoComponentFactory(project, repositoriesManager, dataContext, viewController)
+    val infoComponent = GHPRCreateInfoComponentFactory(project, settings, repositoriesManager, dataContext, viewController)
       .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel, createLoadingModel)
 
     return GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
