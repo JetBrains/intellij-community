@@ -38,15 +38,13 @@ import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -105,18 +103,22 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         files = fileList
     }
 
+    private fun findTargetElement(): PsiElement? = KotlinChangeSignatureHandler().findTargetMember(file, editor)
+
     private fun createChangeInfo(): KotlinChangeInfo {
         configureFiles()
 
-        val element = (KotlinChangeSignatureHandler().findTargetMember(file, editor) as KtElement?).sure { "Target element is null" }
+        val element = findTargetElement()?.safeAs<KtElement>().sure { "Target element is null" }
         val context = file
             .findElementAt(editor.caretModel.offset)
             ?.getNonStrictParentOfType<KtElement>()
             .sure { "Context element is null" }
+
         val bindingContext = element.analyze(BodyResolveMode.FULL)
         val callableDescriptor = KotlinChangeSignatureHandler
             .findDescriptor(element, project, editor, bindingContext)
             .sure { "Target descriptor is null" }
+
         return createChangeInfo(project, editor, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, context)!!
     }
 
@@ -249,12 +251,31 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
             KotlinCallableParameterTableModel.getTypeCodeFragmentContext(context),
         ).getTypeInfo(isCovariant, forPreview)
 
+    private inline fun <reified T> doTestTargetElement(code: String) {
+        myFixture.configureByText("dummy.kt", code)
+        val element = findTargetElement()!!
+        TestCase.assertEquals(T::class, element::class)
+    }
+
     // --------------------------------- Tests ---------------------------------
 
     fun testBadSelection() {
         myFixture.configureByFile(getTestName(false) + "Before.kt")
-        TestCase.assertNull(KotlinChangeSignatureHandler().findTargetMember(file, editor))
+        TestCase.assertNull(findTargetElement())
     }
+
+    fun testPositionOnNameForPropertyInsideConstructor() = doTestTargetElement<KtParameter>("class A(val <caret>a: String)")
+    fun testPositionOnValForPropertyInsideConstructor() = doTestTargetElement<KtParameter>("class A(v<caret>al a: String)")
+    fun testPositionOnVarForPropertyInsideConstructor() = doTestTargetElement<KtParameter>("class A(v<caret>ar a: String)")
+    fun testPositionBeforeColonForPropertyInsideConstructor() = doTestTargetElement<KtParameter>("class A(var a<caret>: String)")
+    fun testPositionAfterColonForPropertyInsideConstructor() = doTestTargetElement<KtParameter>("class A(var a:<caret> String)")
+
+    fun testPositionOnTypeForPropertyInsideConstructor() = doTestTargetElement<KtPrimaryConstructor>("class A(var a: St<caret>ring)")
+    fun testPositionParameterInsideConstructor() = doTestTargetElement<KtPrimaryConstructor>("class A(<caret>a: String)")
+
+    fun testPositionOnVarForProperty() = doTestTargetElement<KtProperty>("v<caret>ar a: String = \"\"")
+    fun testPositionOnValForProperty() = doTestTargetElement<KtProperty>("v<caret>al a: String = \"\"")
+    fun testPositionOnNameForProperty() = doTestTargetElement<KtProperty>("val <caret>a: String = \"\"")
 
     fun testSynthesized() = doTestConflict()
 
