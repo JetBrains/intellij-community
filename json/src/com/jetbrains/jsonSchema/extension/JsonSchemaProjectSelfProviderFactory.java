@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.json.JsonBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * @author Irina.Chernushina on 2/24/2016.
  */
-public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderFactory {
+public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderFactory, DumbAware {
   public static final int TOTAL_PROVIDERS = 3;
   private static final String SCHEMA_JSON_FILE_NAME = "schema.json";
   private static final String SCHEMA06_JSON_FILE_NAME = "schema06.json";
