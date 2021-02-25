@@ -120,13 +120,13 @@ fun KtCallableDeclaration.hasDifferentSetsOfUsages(elements1: Collection<KtEleme
     return countUsages(elements1 - elements2) != countUsages(elements2 - elements1)
 }
 
-fun KtExpressionWithLabel.targetLoop(): KtLoopExpression? {
+fun KtExpressionWithLabel.targetLoop(context: BindingContext? = null): KtLoopExpression? {
     val label = getTargetLabel()
     return if (label == null) {
         parents.firstIsInstance<KtLoopExpression>()
     } else {
         //TODO: does PARTIAL always work here?
-        analyze(BodyResolveMode.PARTIAL)[BindingContext.LABEL_TARGET, label] as? KtLoopExpression
+        (context ?: analyze(BodyResolveMode.PARTIAL))[BindingContext.LABEL_TARGET, label] as? KtLoopExpression
     }
 }
 

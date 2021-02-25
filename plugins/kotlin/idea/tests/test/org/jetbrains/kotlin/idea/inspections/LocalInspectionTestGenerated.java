@@ -10651,9 +10651,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasBreak.kt");
         }
 
+        @TestMetadata("defaultValueBlockHasBreak2.kt")
+        public void testDefaultValueBlockHasBreak2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasBreak2.kt");
+        }
+
         @TestMetadata("defaultValueBlockHasContinue.kt")
         public void testDefaultValueBlockHasContinue() throws Exception {
             runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasContinue.kt");
+        }
+
+        @TestMetadata("defaultValueBlockHasContinue2.kt")
+        public void testDefaultValueBlockHasContinue2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasContinue2.kt");
         }
 
         @TestMetadata("defaultValueBlockHasLabeledBreak.kt")
@@ -10661,9 +10671,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasLabeledBreak.kt");
         }
 
+        @TestMetadata("defaultValueBlockHasLabeledBreak2.kt")
+        public void testDefaultValueBlockHasLabeledBreak2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasLabeledBreak2.kt");
+        }
+
         @TestMetadata("defaultValueBlockHasLabeledContinue.kt")
         public void testDefaultValueBlockHasLabeledContinue() throws Exception {
             runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasLabeledContinue.kt");
+        }
+
+        @TestMetadata("defaultValueBlockHasLabeledContinue2.kt")
+        public void testDefaultValueBlockHasLabeledContinue2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasLabeledContinue2.kt");
         }
 
         @TestMetadata("defaultValueBlockHasMultiStatement.kt")

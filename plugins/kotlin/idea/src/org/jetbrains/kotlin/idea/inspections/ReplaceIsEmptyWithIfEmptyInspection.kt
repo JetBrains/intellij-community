@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.name.FqName
@@ -81,7 +82,7 @@ class ReplaceIsEmptyWithIfEmptyInspection : AbstractKotlinInspection() {
         if (loop != null) {
             val defaultValueExpression = (if (replacement.negativeCondition) elseExpression else thenExpression)
             if (defaultValueExpression.anyDescendantOfType<KtExpression> {
-                    (it is KtContinueExpression || it is KtBreakExpression) && it.getStrictParentOfType<KtLoopExpression>() == loop
+                    (it is KtContinueExpression || it is KtBreakExpression) && (it as KtExpressionWithLabel).targetLoop(context) == loop
                 }
             ) return
         }
