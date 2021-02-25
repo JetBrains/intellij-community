@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
@@ -212,23 +211,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
                                                             createPresentationFactory(), false);
 
     popup.setShowSubmenuOnHover(true);
-    RelativePoint point = getContextMenuPoint(e.getDataContext());
-    if (point != null) {
-      popup.show(point);
-    }
-    else {
-      popup.showUnderneathOf(e.getInputEvent().getComponent());
-    }
-  }
-
-  private static RelativePoint getContextMenuPoint(DataContext dataContext) {
-    Point point = PlatformDataKeys.CONTEXT_MENU_POINT.getData(dataContext);
-    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-    if (point != null && component != null) {
-      return new RelativePoint(component, point);
-    }
-
-    return null;
+    popup.showUnderneathOf(e.getInputEvent().getComponent());
   }
 
   // used in Rider, please don't change visibility
