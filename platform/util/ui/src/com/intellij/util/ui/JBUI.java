@@ -957,8 +957,6 @@ public class JBUI {
     }
 
     public static final class Advertiser {
-      private static final JBInsets DEFAULT_AD_INSETS = insets(5, 10, 5, 15);
-
       @NotNull
       public static Color foreground() {
         Color foreground = JBUI.CurrentTheme.BigPopup.advertiserForeground();
@@ -973,7 +971,7 @@ public class JBUI {
 
       @NotNull
       public static Border border() {
-        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", DEFAULT_AD_INSETS));
+        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", insets(5, 10, 5, 15)));
       }
 
       @NotNull
