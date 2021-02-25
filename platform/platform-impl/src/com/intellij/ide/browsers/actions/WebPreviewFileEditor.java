@@ -36,7 +36,6 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
     myPanel = new JCEFHtmlPanel(myFile.getUrl());
-    myPanel.getCefBrowser().createImmediately();
     Alarm alarm = new Alarm(this);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(myFile);
     if (psiFile != null) {
