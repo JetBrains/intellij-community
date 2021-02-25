@@ -29,38 +29,47 @@ internal fun buildTextQuery(
   val comments = SearchContext.IN_COMMENTS in searchContexts
   val strings = SearchContext.IN_STRINGS in searchContexts
   val plainText = SearchContext.IN_PLAIN_TEXT in searchContexts
-  return SearchService.getInstance()
+  val occurrenceQuery = SearchService.getInstance()
     .searchWord(project, searchString)
     .inContexts(searchContexts)
     .inScope(searchScope)
     .buildLeafOccurrenceQuery()
-    .filtering {
+  return if (comments && strings && plainText) {
+    occurrenceQuery.filtering(::isApplicableOccurrence)
+  }
+  else {
+    occurrenceQuery.filtering {
       isApplicableOccurrence(it, comments, strings, plainText)
     }
+  }
+}
+
+private fun isApplicableOccurrence(occurrence: TextOccurrence): Boolean {
+  for ((element, offsetInElement) in occurrence.walkUp()) {
+    if (hasDeclarationsOrReferences(element, offsetInElement)) {
+      return false
+    }
+  }
+  return true
 }
 
 private fun isApplicableOccurrence(occurrence: TextOccurrence, comments: Boolean, strings: Boolean, plainText: Boolean): Boolean {
-  var applicableSearchContext = false
-  for ((element, offsetInElement) in walkUp(occurrence.element, occurrence.offsetInElement)) {
-    if (hasReferencesInElement(element, offsetInElement) || hasDeclarationsInElement(element, offsetInElement)) {
+  var isComment = false
+  var isString = false
+  for ((element, offsetInElement) in occurrence.walkUp()) {
+    if (hasDeclarationsOrReferences(element, offsetInElement)) {
       return false
     }
-    applicableSearchContext = applicableSearchContext || isApplicableSearchContext(element, comments, strings, plainText)
+    isComment = isComment || CommentUtilCore.isCommentTextElement(element)
+    isString = isString || TextOccurrencesUtilBase.isStringLiteralElement(element)
   }
-  return applicableSearchContext
+  return comments && isComment ||
+         strings && isString ||
+         plainText && !isComment && !isString
 }
 
-private fun isApplicableSearchContext(element: PsiElement, comments: Boolean, strings: Boolean, plainText: Boolean): Boolean {
-  if (comments && strings && plainText) {
-    return true
-  }
-  val isComment = CommentUtilCore.isCommentTextElement(element)
-  if (comments && isComment) {
-    return true
-  }
-  val isString = TextOccurrencesUtilBase.isStringLiteralElement(element)
-  if (strings && isString) {
-    return true
-  }
-  return plainText && !isComment && !isString
+private fun TextOccurrence.walkUp(): Iterator<Pair<PsiElement, Int>> = walkUp(element, offsetInElement)
+
+private fun hasDeclarationsOrReferences(element: PsiElement, offsetInElement: Int): Boolean {
+  return hasDeclarationsInElement(element, offsetInElement) || hasReferencesInElement(element, offsetInElement)
 }
