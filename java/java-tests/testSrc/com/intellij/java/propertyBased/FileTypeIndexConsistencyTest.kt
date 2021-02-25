@@ -8,11 +8,15 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteSequence
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester
+import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.PropertyChecker
+import kotlin.test.assertEquals
 
 private const val FILE_NAME = "FileIdentifiableByText"
 
@@ -38,10 +42,21 @@ class FileTypeIndexConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
 
 class MyTextChange(text: String, viaDocument: Boolean) : JavaPsiIndexConsistencyTest.TextChange(text, viaDocument) {
   override fun performAction(model: PsiIndexConsistencyTester.Model) {
-    if (model.vFile.fileType.isBinary && viaDocument) {
+    val file = model.vFile
+    val project = model.project
+
+    if (file.fileType.isBinary && viaDocument) {
       return
     }
     super.performAction(model)
+
+    //ensure we've updated content dependent indexes
+    //file-type index is not very honest
+    FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, file, project)
+
+    val fileTypeFromFile = file.fileType
+    val fileTypeFromIndex = FileTypeIndex.getIndexedFileType(file, project)
+    assertEquals(fileTypeFromFile, fileTypeFromIndex)
   }
 
 }
