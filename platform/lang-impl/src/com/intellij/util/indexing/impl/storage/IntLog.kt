@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.StorageException
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
@@ -20,7 +19,6 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.abs
 
 interface AbstractIntLog : Closeable, Flushable {
@@ -41,47 +39,6 @@ interface AbstractIntLog : Closeable, Flushable {
   fun removeData(data: Int, inputId: Int)
 
   fun clear()
-}
-
-class MemoryIntLog : AbstractIntLog {
-  private data class LogEntry(val data: Int, val inputId: Int)
-
-  @Volatile
-  private var closed = false
-  private val log = ContainerUtil.newConcurrentSet<LogEntry>()
-  private val _modificationStamp = AtomicLong()
-  override val modificationStamp: Long
-    get() = _modificationStamp.get()
-
-  override fun processEntries(processor: AbstractIntLog.IntLogEntryProcessor): Boolean {
-    for (logEntry in log) {
-      if (!processor.process(logEntry.data, logEntry.inputId)) {
-        return false
-      }
-    }
-    return true
-  }
-
-  override fun addData(data: Int, inputId: Int) {
-    log.add(LogEntry(data, inputId))
-    _modificationStamp.incrementAndGet()
-  }
-
-  override fun removeData(data: Int, inputId: Int) {
-    log.remove(LogEntry(data, inputId))
-    _modificationStamp.incrementAndGet()
-  }
-
-  override fun clear() {
-    log.clear()
-    _modificationStamp.incrementAndGet()
-  }
-
-  override fun close() {
-    closed = true
-  }
-
-  override fun flush() = Unit
 }
 
 class IntLog @Throws(IOException::class) constructor(private val baseStorageFile: Path, compact: Boolean) : AbstractIntLog {

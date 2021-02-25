@@ -9,31 +9,39 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.IntPair;
+import com.intellij.util.IntSLRUCache;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntIntHashMap;
+import com.intellij.util.containers.IntObjectLRUMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.storage.AbstractIntLog;
 import com.intellij.util.indexing.impl.storage.IntLog;
-import com.intellij.util.indexing.impl.storage.MemoryIntLog;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void, FileContent>, FileTypeNameEnumerator {
+/**
+ * Implementation of {@link FileTypeIndexImpl} based on plain change log.
+ * Does not support indexing unsaved changes (content-less indexes don't require them).
+ */
+public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void, FileContent>, FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(LogFileTypeMapReduceIndex.class);
 
+  private final @NotNull IntSLRUCache<Integer> myLogCache;
   private final @NotNull MemorySnapshotHandler myMemorySnapshotHandler = new MemorySnapshotHandler();
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
   private final @NotNull SimpleStringPersistentEnumerator myFileTypeEnumerator;
@@ -43,7 +51,6 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
   private final @NotNull ReadWriteLock myLock = new ReentrantReadWriteLock();
 
   private final @NotNull AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  private final @NotNull LogBasedIntIntIndex myMemoryIndex = new LogBasedIntIntIndex(new MemoryIntLog());
   private final @NotNull ID<FileType, Void> myIndexId;
 
   public LogFileTypeMapReduceIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException {
@@ -51,6 +58,12 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
     myIndexId = extension.getName();
     myPersistentLog = new LogBasedIntIntIndex(new IntLog(IndexInfrastructure.getStorageFile(myIndexId), true));
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(IndexInfrastructure.getStorageFile(myIndexId).resolveSibling("fileType.enum"));
+    int cacheSize = extension.getCacheSize();
+    myLogCache = new IntSLRUCache<>(cacheSize, (int)(Math.ceil(cacheSize * 0.25)));
+
+    if (myExtension.dependsOnFileContent()) {
+      throw new IllegalArgumentException(myExtension.getName() + " should not depend on content");
+    }
   }
 
   @Override
@@ -116,27 +129,11 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
 
   @Override
   public long getModificationStamp() {
-    return myPersistentLog.getModificationStamp() +
-           myMemoryIndex.getModificationStamp();
+    return myPersistentLog.getModificationStamp();
   }
 
   @Override
-  public void removeTransientDataForFile(int inputId) {
-    List<IntPair> toDelete = new ArrayList<>();
-    try {
-      AbstractIntLog memoryIndexLog = myMemoryIndex.getLog();
-      memoryIndexLog.processEntries((data, inputId1) -> {
-        toDelete.add(new IntPair(data, inputId1));
-        return true;
-      });
-      for (IntPair pair : toDelete) {
-        memoryIndexLog.removeData(pair.first, pair.second);
-      }
-    }
-    catch (StorageException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  public void removeTransientDataForFile(int inputId) { }
 
   @Override
   public @NotNull IndexExtension<FileType, Void, FileContent> getExtension() {
@@ -157,20 +154,13 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
   @Override
   public void setBufferingEnabled(boolean enabled) {
     myInMemoryMode.set(enabled);
-    if (!enabled) {
-      myMemoryIndex.clear();
-    }
   }
 
   @Override
-  public void cleanupMemoryStorage() {
-    myMemoryIndex.clear();
-  }
+  public void cleanupMemoryStorage() { }
 
   @Override
-  public void cleanupForNextTest() {
-    myMemoryIndex.clear();
-  }
+  public void cleanupForNextTest() { }
 
   @Override
   public @NotNull ValueContainer<Void> getData(@NotNull FileType type) throws StorageException {
@@ -181,15 +171,6 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
     try {
       MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
       inputIds.addAll(snapshot != null ? snapshot.getFileIds(fileTypeId) : myPersistentLog.getFileIds(fileTypeId));
-      myMemoryIndex.getLog().processEntries((data, inputId) -> {
-        if (fileTypeId == data) {
-          inputIds.add(inputId);
-        }
-        else {
-          inputIds.remove(inputId);
-        }
-        return true;
-      });
     }
     finally {
       myLock.readLock().unlock();
@@ -227,15 +208,12 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
   private int getIndexedFileTypeId(int fileId) throws StorageException {
     myLock.readLock().lock();
     try {
-      int data;
-      data = myMemoryIndex.getIndexedData(fileId);
+      int data = getFileTypeIdFromCache(fileId);
       if (data != 0) return data;
       MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
-      if (snapshot != null) {
-        data = snapshot.getIndexedData(fileId);
-        if (data != 0) return data;
-      }
-      return myPersistentLog.getIndexedData(fileId);
+      data = snapshot != null ? snapshot.getIndexedData(fileId) : myPersistentLog.getIndexedData(fileId);
+      updateEntryCache(fileId, data);
+      return data;
     }
     finally {
       myLock.readLock().unlock();
@@ -257,7 +235,7 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
     myLock.writeLock().lock();
     try {
       if (myInMemoryMode.get()) {
-        myMemoryIndex.addData(fileTypeId, inputId);
+        throw new IllegalStateException("file type index should not be updated for unsaved changes");
       }
       else {
         myPersistentLog.addData(fileTypeId, inputId);
@@ -265,6 +243,7 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
         if (snapshot != null) {
           snapshot.addData(fileTypeId, inputId);
         }
+        updateEntryCache(inputId, fileTypeId);
       }
     }
     catch (StorageException e) {
@@ -275,6 +254,25 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
       myLock.writeLock().unlock();
     }
     return Boolean.TRUE;
+  }
+
+  private int getFileTypeIdFromCache(int fileId) {
+    synchronized (myLogCache) {
+      IntObjectLRUMap.MapEntry<Integer> entry = myLogCache.getCachedEntry(fileId);
+      if (entry != null) {
+        Integer data = entry.value;
+        if (data != null) {
+          return data;
+        }
+      }
+    }
+    return 0;
+  }
+
+  private void updateEntryCache(int inputId, int fileTypeId) {
+    synchronized (myLogCache) {
+      myLogCache.cacheEntry(inputId, fileTypeId);
+    }
   }
 
   @Override
@@ -290,7 +288,6 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
   @Override
   public void clear() throws StorageException {
     myPersistentLog.clear();
-    myMemoryIndex.clear();
   }
 
   @Override
@@ -370,8 +367,8 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
       return foundData[0];
     }
 
-    private @NotNull AbstractIntLog getLog() {
-      return myLog;
+    private void processEntries(@NotNull AbstractIntLog.IntLogEntryProcessor processor) throws StorageException {
+      myLog.processEntries(processor);
     }
 
     public long getModificationStamp() {
@@ -442,7 +439,7 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
       if (myIndexBatchUpdatingProjects.add(project) && empty) {
         assert mySnapshot == null;
         try {
-          mySnapshot = loadIndexToMemory(myPersistentLog.getLog());
+          mySnapshot = loadIndexToMemory(myPersistentLog);
         }
         catch (StorageException e) {
           LOG.error(e);
@@ -460,10 +457,10 @@ public class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType, Void,
       return mySnapshot;
     }
 
-    @NotNull MemorySnapshot loadIndexToMemory(@NotNull AbstractIntLog intLog) throws StorageException {
+    @NotNull MemorySnapshot loadIndexToMemory(@NotNull LogBasedIntIntIndex intLogIndex) throws StorageException {
       Int2ObjectMap<IntSet> invertedIndex = new Int2ObjectOpenHashMap<>();
       Int2IntMap forwardIndex = new IntIntHashMap();
-      intLog.processEntries((data, inputId) -> {
+      intLogIndex.processEntries((data, inputId) -> {
         forwardIndex.put(inputId, data);
         invertedIndex.computeIfAbsent(data, __ -> new IntOpenHashSet()).add(inputId);
         return true;
