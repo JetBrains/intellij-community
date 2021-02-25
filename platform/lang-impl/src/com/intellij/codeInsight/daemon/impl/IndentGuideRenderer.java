@@ -18,7 +18,7 @@ import java.util.List;
 
 public class IndentGuideRenderer implements CustomHighlighterRenderer {
     @Override
-    public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
+    public final void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
         int startOffset = highlighter.getStartOffset();
         final Document doc = highlighter.getDocument();
         if (startOffset >= doc.getTextLength()) return;
