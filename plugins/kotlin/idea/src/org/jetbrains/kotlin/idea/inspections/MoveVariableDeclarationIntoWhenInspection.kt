@@ -109,7 +109,8 @@ private class VariableDeclarationIntoWhenFix(
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val property = descriptor.psiElement as? KtProperty ?: return
         val subjectExpression = subjectExpressionPointer.element ?: return
-        val newElement = transform(property)?.copy() ?: return
+        val newElement = property.copy() as? KtProperty ?: return
+        val toReplace = transform(newElement) ?: return
 
         val lastChild = newElement.lastChild
         if (lastChild is PsiComment && lastChild.node.elementType == KtTokens.EOL_COMMENT) {
@@ -125,7 +126,7 @@ private class VariableDeclarationIntoWhenFix(
             lastChild.delete()
         }
 
-        val resultElement = subjectExpression.replace(newElement)
+        val resultElement = subjectExpression.replace(toReplace)
         property.delete()
 
         val editor = resultElement.findExistingEditor() ?: return

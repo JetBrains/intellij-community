@@ -6737,6 +6737,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment3.kt");
         }
 
+        @TestMetadata("withComment4.kt")
+        public void testWithComment4() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment4.kt");
+        }
+
         @TestMetadata("withNewLine.kt")
         public void testWithNewLine() throws Exception {
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withNewLine.kt");
