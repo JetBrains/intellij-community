@@ -48,6 +48,9 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
   private fun allLessonMessages() = activeMessages + restoreMessages + inactiveMessages
 
+  var currentAnimation = 0
+  var totalAnimation = 0
+
   //, fontFace, check_width + check_right_indent
   init {
     UIUtil.doNotScrollToCaret(this)
@@ -147,10 +150,11 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     list.subList(startIdx, endIdx).clear()
   }
 
-  fun clearRestoreMessages(): Rectangle? {
+  fun clearRestoreMessages(): () -> Rectangle? {
     removeMessagesRange(0, restoreMessages.size, restoreMessages)
     redrawMessages()
-    return activeMessages.lastOrNull()?.let { getRectangleToScroll(it) }
+    val lastOrNull = activeMessages.lastOrNull()
+    return { lastOrNull?.let { getRectangleToScroll(it) } }
   }
 
   fun removeInactiveMessages(number: Int) {
@@ -158,7 +162,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     redrawMessages()
   }
 
-  fun resetMessagesNumber(number: Int): Rectangle? {
+  fun resetMessagesNumber(number: Int): () -> Rectangle? {
     val move = activeMessages.subList(number, activeMessages.size)
     move.forEach {
       it.state = MessageState.INACTIVE
@@ -174,7 +178,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     insertOffset += text.length
   }
 
-  fun addMessage(messageParts: List<MessagePart>, state: MessageState = MessageState.NORMAL): Rectangle? {
+  fun addMessage(messageParts: List<MessagePart>, state: MessageState = MessageState.NORMAL): () -> Rectangle? {
     val lessonMessage = LessonMessage(messageParts, state)
     when (state) {
       MessageState.INACTIVE -> inactiveMessages
@@ -184,13 +188,13 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
     redrawMessages()
 
-    return getRectangleToScroll(lessonMessage)
+    return { getRectangleToScroll(lessonMessage) }
   }
 
   private fun getRectangleToScroll(lessonMessage: LessonMessage): Rectangle? {
-    val startRect = modelToView(lessonMessage.start) ?: return null
+    val startRect = modelToView(lessonMessage.start + 1) ?: return null
     val endRect = modelToView(lessonMessage.end - 1) ?: return null
-    return Rectangle(startRect.x, startRect.y, endRect.x + endRect.width - startRect.x,
+    return Rectangle(startRect.x, startRect.y - + activeTaskInset, endRect.x + endRect.width - startRect.x,
                      endRect.y + endRect.height - startRect.y + activeTaskInset * 2)
   }
 
@@ -356,7 +360,10 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
       .takeIf { it != -1 && it < activeMessages.size - 1 }
       ?.let { activeMessages[it + 1] }
     if (panelMode && lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
-      drawRectangleAroundMessage(lastPassedMessage, lastActiveMessage, g2d, UISettings.instance.activeTaskBorder)
+      val c = UISettings.instance.activeTaskBorder
+      val a = if (totalAnimation == 0) 255 else 255*currentAnimation/totalAnimation
+      val needColor = Color(c.red, c.green, c.blue, a)
+      drawRectangleAroundMessage(lastPassedMessage, lastActiveMessage, g2d, needColor)
     }
   }
 
