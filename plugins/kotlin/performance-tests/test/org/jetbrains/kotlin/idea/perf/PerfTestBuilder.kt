@@ -15,6 +15,7 @@ class PerfTestBuilder<SV, TV> {
     private var tearDown: (TestData<SV, TV>) -> Unit = { }
     private var checkStability: Boolean = true
     internal var profilerConfig: ProfilerConfig = ProfilerConfig()
+    private var stopAtException: Boolean = false
 
     internal fun run() {
         stats.perfTest(
@@ -25,7 +26,8 @@ class PerfTestBuilder<SV, TV> {
             setUp = setUp,
             test = test,
             tearDown = tearDown,
-            checkStability = checkStability
+            checkStability = checkStability,
+            stopAtException = stopAtException,
         )
     }
 
@@ -67,6 +69,10 @@ class PerfTestBuilder<SV, TV> {
 
     fun checkStability(checkStability: Boolean) {
         this.checkStability = checkStability
+    }
+
+    fun stopAtException(stopAtException: Boolean) {
+        this.stopAtException = stopAtException
     }
 }
 
