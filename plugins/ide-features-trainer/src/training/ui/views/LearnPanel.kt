@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.border.MatteBorder
+import kotlin.math.max
 
 class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val lessonPanel = JPanel()
@@ -187,16 +188,23 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     val needToShow = lessonMessagePane.addMessage(messageParts, state)
     adjustMessagesArea()
     if (state != LessonMessagePane.MessageState.INACTIVE) {
-      scrollToMessage(needToShow)
+      scrollToMessage(needToShow())
     }
   }
 
   private fun scrollToMessage(needToShow: Rectangle?) {
-    if (scrollToNewMessages && needToShow != null) {
-      lessonMessagePane.scrollRectToVisible(needToShow)
+    if (needToShow == null) return
+
+    val y = needToShow.y + lessonMessagePane.bounds.y + lessonPanel.bounds.y
+    if (scrollToNewMessages) {
+      adjustMessagesArea()
+      val visibleSize = visibleRect.size
+      val needToScroll = max(0, y - visibleSize.height/2)
+      learnToolWindow.scrollTo(needToScroll)
     }
   }
 
+  /** This important magic method is needed for [getPreferredSize]: it calculates the `lessonPanel.minimumSize`  */
   private fun adjustMessagesArea() {
     //invoke #getPreferredSize explicitly to update actual size of LessonMessagePane
     lessonMessagePane.preferredSize
@@ -211,7 +219,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   fun resetMessagesNumber(number: Int) {
     val needToShow = lessonMessagePane.resetMessagesNumber(number)
     adjustMessagesArea()
-    scrollToMessage(needToShow)
+    scrollToMessage(needToShow())
   }
 
   fun removeInactiveMessages(number: Int) {
@@ -223,20 +231,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   fun setPreviousMessagesPassed() {
     lessonMessagePane.passPreviousMessages()
-    lessonMessagePane.revalidate()
-    lessonMessagePane.repaint()
-  }
-
-  fun setLessonPassed() {
-    setButtonToNext()
-    revalidate()
-    this.repaint()
-  }
-
-  private fun setButtonToNext() {
-    nextButton.isVisible = true
-    lessonPanel.revalidate()
-    lessonPanel.repaint()
+    adjustMessagesArea()
   }
 
   private fun clearMessages() {
@@ -288,6 +283,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   @NlsSafe
   private fun getNextLessonKeyStrokeText() = "Enter"
 
+  /** It is a magic implementation and need to invoke [adjustMessagesArea] before the use of this method (from Swing library code) */
   override fun getPreferredSize(): Dimension {
     if (lessonPanel.minimumSize == null) return Dimension(10, 10)
     return Dimension(lessonPanel.minimumSize.getWidth().toInt() + UISettings.instance.westInset + UISettings.instance.eastInset,
@@ -307,13 +303,14 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     nextButton.isFocusable = true
     nextButton.requestFocus()
     if (scrollToNewMessages) {
-      nextButton.scrollRectToVisible(Rectangle(0, 0, nextButton.width, nextButton.height))
+      adjustMessagesArea()
+      learnToolWindow.scrollToTheEnd()
     }
   }
 
   fun clearRestoreMessage() {
     val needToShow = lessonMessagePane.clearRestoreMessages()
-    scrollToMessage(needToShow)
+    scrollToMessage(needToShow())
   }
 
   class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {

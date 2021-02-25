@@ -114,5 +114,9 @@
                  description="Whether IFT show feedback link in the modules panel."
                  defaultValue="TRUE"
                  restartRequired="false"/>
+    <registryKey key="ift.use.scroll.animation"
+                 description="Use scroll animation in IFT lessons."
+                 defaultValue="TRUE"
+                 restartRequired="false"/>
   </extensions>
 </idea-plugin>
