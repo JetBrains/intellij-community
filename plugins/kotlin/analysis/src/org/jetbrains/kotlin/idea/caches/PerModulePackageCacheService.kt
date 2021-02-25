@@ -123,10 +123,21 @@ class KotlinPackageContentModificationListener : StartupActivity {
 
 class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
-        val eFile = event.file ?: event.child as? PsiFile
-        if (eFile == null) {
-            LOG.debugIfEnabled(project, true) { "Got PsiEvent: $event without file" }
+        // skip events out of scope of this processor
+        when (event.code) {
+            PsiTreeChangeEventImpl.PsiEventType.CHILD_ADDED,
+            PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED,
+            PsiTreeChangeEventImpl.PsiEventType.CHILD_REPLACED,
+            PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED,
+            PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED -> Unit
+            else -> return
         }
+
+        val eFile = event.file ?: event.child as? PsiFile ?: run {
+            LOG.debugIfEnabled(project, true) { "Got PsiEvent: $event without file" }
+            return
+        }
+
         val file = eFile as? KtFile ?: return
 
         when (event.code) {
@@ -154,8 +165,7 @@ class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Proje
                     ServiceManager.getService(project, PerModulePackageCacheService::class.java).notifyPackageChange(file)
                 }
             }
-            else -> {
-            }
+            else -> error("unsupported event code ${event.code} for PsiEvent $event")
         }
     }
 
