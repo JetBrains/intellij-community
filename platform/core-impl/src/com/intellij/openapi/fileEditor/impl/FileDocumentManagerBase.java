@@ -103,8 +103,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   // use for non-physical ViewProviders only to avoid memleaks
   public static void registerDocument(@NotNull Document document, @NotNull VirtualFile virtualFile) {
     if (!(virtualFile instanceof LightVirtualFile) &&
-        !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) &&
-        virtualFile.isValid()) {
+        !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem)) {
       throw new IllegalArgumentException("Hard-coding file<->document association is permitted for non-physical files only (see ViewProvider.isPhysical()) to avoid memleaks. virtualFile="+virtualFile);
     }
     synchronized (lock) {
