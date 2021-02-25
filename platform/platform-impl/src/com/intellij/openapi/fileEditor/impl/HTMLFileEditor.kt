@@ -106,9 +106,7 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
       if (file.content.isEmpty()) {
         file.setContent(this, EditorBundle.message("message.html.editor.timeout"), false)
       }
-      else {
-        contentPanel.setErrorPage(ErrorPage { _, _, _ -> file.content.toString() })
-      }
+      alarm.addRequest({ contentPanel.loadHTML(file.content.toString()) }, Registry.intValue("html.editor.timeout", 10000))
       contentPanel.loadURL(url)
     }
     else {
