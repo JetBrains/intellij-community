@@ -18,7 +18,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val fileEditor = file.getUserData(EDITOR_KEY)
     return if (fileEditor != null) fileEditor else {
-      val newEditor = HTMLFileEditor(file as LightVirtualFile, file.getUserData(AFFINITY_KEY)!!)
+      val newEditor = HTMLFileEditor(project, file as LightVirtualFile, file.getUserData(AFFINITY_KEY)!!)
       file.putUserData(EDITOR_KEY, newEditor)
       newEditor
     }

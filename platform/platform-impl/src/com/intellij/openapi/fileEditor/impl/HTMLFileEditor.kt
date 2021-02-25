@@ -10,10 +10,13 @@ import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.StatusBar
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.jcef.JBCefBrowserBase.ErrorPage
@@ -23,6 +26,7 @@ import com.intellij.util.AlarmFactory
 import com.intellij.util.ui.UIUtil
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
+import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefLifeSpanHandlerAdapter
 import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.handler.CefRequestHandlerAdapter
@@ -31,7 +35,7 @@ import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
-internal class HTMLFileEditor(private val file: LightVirtualFile, private val url: String) : UserDataHolderBase(), FileEditor {
+internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, url: String) : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(null)
   private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
@@ -89,6 +93,11 @@ internal class HTMLFileEditor(private val file: LightVirtualFile, private val ur
       }
     }, contentPanel.cefBrowser)
 
+    contentPanel.jbCefClient.addDisplayHandler(object : CefDisplayHandlerAdapter() {
+      override fun onStatusMessage(browser: CefBrowser, @NlsSafe text: String) =
+        StatusBar.Info.set(text, project)
+    }, contentPanel.cefBrowser)
+
     contentPanel.setErrorPage(ErrorPage.DEFAULT)
 
     multiPanel.select(CONTENT_KEY, true)
@@ -107,7 +116,7 @@ internal class HTMLFileEditor(private val file: LightVirtualFile, private val ur
     }
   }
 
-  override fun getComponent(): MultiPanel = multiPanel
+  override fun getComponent(): JComponent = multiPanel
   override fun getPreferredFocusedComponent(): JComponent = multiPanel
   override fun getName(): String = IdeBundle.message("tab.title.html.preview")
   override fun setState(state: FileEditorState) { }
