@@ -4,7 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -86,7 +85,7 @@ public final class RepositoryHelper {
     if (repositoryUrl == null) {
       LOG.error("Using deprecated API for getting plugins from Marketplace");
       String base = ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
-      url = Urls.newFromEncoded(base).addParameters(Map.of("uuid", PermanentInstallationID.get()));  // NON-NLS
+      url = Urls.newFromEncoded(base).addParameters(Map.of("uuid", PluginDownloader.getMarketplaceDownloadsUUID()));  // NON-NLS
       pluginListFile = Paths.get(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     }
     else {

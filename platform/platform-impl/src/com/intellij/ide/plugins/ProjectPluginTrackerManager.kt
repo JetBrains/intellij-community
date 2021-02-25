@@ -5,6 +5,7 @@ import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -164,6 +165,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
         parentComponent,
       )
     }
+    PluginManagerUsageCollector.pluginsStateChanged(project, pluginIds, action)
     return when (action) {
       PluginEnableDisableAction.ENABLE_GLOBALLY -> {
         PluginEnabler.HEADLESS.enablePlugins(descriptors)

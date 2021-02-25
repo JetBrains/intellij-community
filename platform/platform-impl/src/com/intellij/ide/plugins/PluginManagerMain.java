@@ -3,6 +3,8 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.notification.Notification;
@@ -452,6 +454,7 @@ public final class PluginManagerMain {
     UpdateSettings updateSettings = UpdateSettings.getInstance();
 
     if (updateSettings.isThirdPartyPluginsAllowed()) {
+      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);
       return true;
     }
 
@@ -464,8 +467,10 @@ public final class PluginManagerMain {
         String noText = IdeBundle.message("third.party.plugins.privacy.note.no");
         if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
           updateSettings.setThirdPartyPluginsAllowed(true);
+          PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
           return true;
         } else {
+          PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
           return false;
         }
       }
