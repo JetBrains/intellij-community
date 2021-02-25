@@ -8,6 +8,8 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
@@ -22,9 +24,11 @@ internal class IndexingFinishedListener : IndexDiagnosticDumper.ProjectIndexingH
   override fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory) {
     if (Registry.`is`(SHOW_NOTIFICATION_REGISTRY, false)) {
       val project = projectIndexingHistory.project
-      //TODO: check that it's a java project
       val language = Language.findLanguageByID("JAVA") ?: return
-      if (!PropertiesComponent.getInstance(project).getBoolean(NOTIFICATION_EXPIRED_KEY)) {
+      val isJavaProject = ModuleManager.getInstance(project).modules.any {
+        it.moduleTypeName == ModuleTypeId.JAVA_MODULE
+      }
+      if (isJavaProject && !PropertiesComponent.getInstance(project).getBoolean(NOTIFICATION_EXPIRED_KEY)) {
         TrainingNotification(project, language).notify(project)
       }
     }
