@@ -19,6 +19,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
@@ -550,7 +551,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
      */
     @JvmStatic
     val defFontScale: Float
-      get() = if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else JBUIScale.sysScale()
+      get() = when {
+        JreHiDpiUtil.isJreHiDPIEnabled() -> JBUIScale.getFontScale(JBFont.label().size2D)
+        else -> JBUIScale.sysScale()
+      }
 
     /**
      * Returns the default font size scaled by #defFontScale
