@@ -4,7 +4,6 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,6 +90,6 @@ public abstract class UserFileType<T extends UserFileType<T>> implements FileTyp
 
   @Override
   public String toString() {
-    return myName;
+    return getName();
   }
 }
