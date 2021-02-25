@@ -354,9 +354,10 @@ open class VirtualFileIndex internal constructor(
     companion object {
       private val LOG = logger<MutableVirtualFileIndex>()
       const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
-      fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.entityId2VirtualFileUrl,
-                                                                                           other.vfu2EntityId,
-                                                                                           other.entityId2JarDir)
+      fun from(other: VirtualFileIndex): MutableVirtualFileIndex {
+        if (other is MutableVirtualFileIndex) other.freezed = true
+        return MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId, other.entityId2JarDir)
+      }
     }
   }
 }

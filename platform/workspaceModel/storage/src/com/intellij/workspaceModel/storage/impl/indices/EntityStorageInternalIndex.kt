@@ -62,18 +62,14 @@ open class EntityStorageInternalIndex<T> private constructor(
     }
 
     fun toImmutable(): EntityStorageInternalIndex<T> {
-      return EntityStorageInternalIndex(leakIndex(), this.oneToOneAssociation)
-    }
-
-    private fun leakIndex(): BidirectionalSetMap<EntityId, T> {
       freezed = true
-      return this.index
+      return EntityStorageInternalIndex(this.index, this.oneToOneAssociation)
     }
 
     companion object {
       fun <T> from(other: EntityStorageInternalIndex<T>): MutableEntityStorageInternalIndex<T> {
-        val thisIndex = if (other is MutableEntityStorageInternalIndex<T>) other.leakIndex() else other.index
-        return MutableEntityStorageInternalIndex(thisIndex, other.oneToOneAssociation)
+        if (other is MutableEntityStorageInternalIndex<T>) other.freezed = true
+        return MutableEntityStorageInternalIndex(other.index, other.oneToOneAssociation)
       }
     }
   }
