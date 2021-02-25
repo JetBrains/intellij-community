@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
@@ -30,7 +31,6 @@ import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.util.expectedDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -78,7 +78,7 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
 
             if (elementParent is KtParameter &&
                 elementParent.hasValOrVar() &&
-                PsiTreeUtil.getParentOfType(elementParent, KtPrimaryConstructor::class.java)?.valueParameterList === elementParent.parent
+                elementParent.parentOfType<KtPrimaryConstructor>()?.valueParameterList === elementParent.parent
             ) {
                 return elementParent
             }
@@ -87,11 +87,11 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
             if (elementParent is KtPrimaryConstructor && elementParent.getConstructorKeyword() === element) return elementParent
             if (elementParent is KtSecondaryConstructor && elementParent.getConstructorKeyword() === element) return elementParent
 
-            element.getStrictParentOfType<KtParameterList>()?.let { parameterList ->
+            element.parentOfType<KtParameterList>()?.let { parameterList ->
                 return PsiTreeUtil.getParentOfType(parameterList, KtFunction::class.java, KtProperty::class.java, KtClass::class.java)
             }
 
-            element.getStrictParentOfType<KtTypeParameterList>()?.let { typeParameterList ->
+            element.parentOfType<KtTypeParameterList>()?.let { typeParameterList ->
                 return PsiTreeUtil.getParentOfType(typeParameterList, KtFunction::class.java, KtProperty::class.java, KtClass::class.java)
             }
 
@@ -101,13 +101,14 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
                 KtSuperTypeCallEntry::class.java,
                 KtConstructorDelegationCall::class.java
             )
+
             val calleeExpr = call?.let {
                 val callee = it.calleeExpression
                 (callee as? KtConstructorCalleeExpression)?.constructorReferenceExpression ?: callee
-            } ?: element.getStrictParentOfType<KtSimpleNameExpression>()
+            } ?: element.parentOfType<KtSimpleNameExpression>()
 
             if (calleeExpr is KtSimpleNameExpression || calleeExpr is KtConstructorDelegationReferenceExpression) {
-                val jetElement = element.getStrictParentOfType<KtElement>() ?: return null
+                val jetElement = element.parentOfType<KtElement>() ?: return null
 
                 val bindingContext = jetElement.analyze(BodyResolveMode.FULL)
                 val descriptor = bindingContext[BindingContext.REFERENCE_TARGET, calleeExpr as KtReferenceExpression]
