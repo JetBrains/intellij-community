@@ -156,10 +156,10 @@ object TemplateInlayUtil {
 
     val factory = PresentationFactory(editor)
     val colorsScheme = editor.colorsScheme
-    fun button(iconPresentation: IconPresentation, second: Boolean = false) = factory.container(factory.container(
+    fun button(iconPresentation: IconPresentation, second: Boolean = false) = factory.container(
       presentation = iconPresentation,
       padding = InlayPresentationFactory.Padding(if (second) 0 else 4, 4, 4, 4)
-    ))
+    )
 
     var tooltip = LangBundle.message("inlay.rename.tooltip.comments")
     val toSearchInComments = processor.isToSearchInComments(elementToRename)
@@ -187,12 +187,10 @@ object TemplateInlayUtil {
     }
 
     fun withBackground(bgKey: ColorKey) = factory.container(
-      presentation = factory.container(
-        presentation = buttonsPresentation,
-        roundedCorners = InlayPresentationFactory.RoundedCorners(3, 3),
-        background = colorsScheme.getColor(bgKey)
-      ),
-      padding = InlayPresentationFactory.Padding(4, 0, 0, 0)
+      presentation = buttonsPresentation,
+      roundedCorners = InlayPresentationFactory.RoundedCorners(3, 3),
+      background = colorsScheme.getColor(bgKey),
+      padding = InlayPresentationFactory.Padding(4, 0, 0, 0),
     )
 
     val presentation = object : SelectableInlayButton(editor,
