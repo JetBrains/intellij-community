@@ -70,7 +70,7 @@ private class SpaceShareProjectAction : DumbAwareAction() {
     }
 
     val context = SpaceProjectContext.getInstance(project)
-    if (context.context.value.isAssociatedWithSpaceRepository) {
+    if (context.currentContext.isAssociatedWithSpaceRepository) {
       e.presentation.isEnabledAndVisible = false
       return
     }

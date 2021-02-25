@@ -52,7 +52,9 @@ internal class GitHostingUrlUtilTest {
       "https://github.com:2233/user/repo/" to URI("https", null, "github.com", 2233, "/user/repo", null, null),
       "HTTP://GITHUB.com/user/repo/" to URI("HTTP", null, "GITHUB.com", -1, "/user/repo", null, null),
       "HttP://GitHub.com/user/repo/" to URI("HttP", null, "GitHub.com", -1, "/user/repo", null, null),
-      "git@github.com:user/repo/" to URI("https", null, "github.com", -1, "/user/repo", null, null)
+      "git@github.com:user/repo/" to URI("https", null, "github.com", -1, "/user/repo", null, null),
+      "ssh://git@git.jetbrains.space/company/project/repository.git" to URI("ssh", "git", "git.jetbrains.space", -1, "/company/project/repository", null, null),
+      "https://git.jetbrains.space/company/project/repository.git" to URI("https", null, "git.jetbrains.space", -1, "/company/project/repository", null, null)
     ), GitHostingUrlUtil::getUriFromRemoteUrl)
   }
 }
