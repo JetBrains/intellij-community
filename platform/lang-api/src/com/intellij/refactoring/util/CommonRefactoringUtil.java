@@ -3,8 +3,10 @@ package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -136,7 +138,10 @@ public final class CommonRefactoringUtil {
     Collection<VirtualFile> failed = new HashSet<>();  // those located in read-only filesystem
 
     boolean seenNonWritablePsiFilesWithoutVirtualFile =
-      checkReadOnlyStatus(flat, false, readonly, failed) || checkReadOnlyStatus(recursive, true, readonly, failed);
+      ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> checkReadOnlyStatus(flat, false, readonly, failed) || checkReadOnlyStatus(recursive, true, readonly, failed)),
+                                             RefactoringBundle.message("progress.title.collect.read.only.files"),
+                                             false, project);
 
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readonly);
     ContainerUtil.addAll(failed, status.getReadonlyFiles());
