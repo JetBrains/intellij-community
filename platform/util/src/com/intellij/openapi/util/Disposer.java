@@ -34,7 +34,7 @@ public final class Disposer {
   @Contract(pure = true, value = "->new")
   public static Disposable newDisposable() {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
-    return newDisposable("");
+    return newDisposable("newDisposable");
   }
 
   @NotNull
