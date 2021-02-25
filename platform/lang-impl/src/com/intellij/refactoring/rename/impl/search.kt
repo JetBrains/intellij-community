@@ -62,18 +62,20 @@ private fun buildTextResultsQueries(project: Project,
   for ((searchRequest: SearchRequest, usageTextByName: UsageTextByName) in replaceTextTargets) {
     val effectiveSearchScope: SearchScope = searchRequest.searchScope?.let(searchScope::intersectWith) ?: searchScope
     val searchString: String = searchRequest.searchString
-    result += buildTextQuery(project, searchString, effectiveSearchScope, context.searchContexts).mapToUsages(searchString, usageTextByName)
+    result += buildTextQuery(project, searchString, effectiveSearchScope, context.searchContexts)
+      .mapToUsages(searchString, usageTextByName, context)
   }
   return result
 }
 
 private fun Query<out TextOccurrence>.mapToUsages(
   searchString: String,
-  usageTextByName: UsageTextByName
+  usageTextByName: UsageTextByName,
+  context: ReplaceTextTargetContext,
 ): Query<out RenameUsage> {
   val fileUpdater = fileRangeUpdater(usageTextByName)
   return mapping { occurrence: TextOccurrence ->
     val rangeInElement = TextRange.from(occurrence.offsetInElement, searchString.length)
-    TextRenameUsage(PsiUsage.textUsage(occurrence.element, rangeInElement), fileUpdater)
+    TextRenameUsage(PsiUsage.textUsage(occurrence.element, rangeInElement), fileUpdater, context)
   }
 }
