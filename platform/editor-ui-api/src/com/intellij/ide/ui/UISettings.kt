@@ -551,7 +551,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     @JvmStatic
     val defFontScale: Float
       get() = when {
-        instance.presentationMode -> JBUIScale.getFontScale(instance.presentationModeFontSize.toFloat())
         JreHiDpiUtil.isJreHiDPIEnabled() -> 1f
         else -> JBUIScale.sysScale()
       }
