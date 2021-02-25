@@ -492,7 +492,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       return true;
     };
     ThrowableConvertor<UpdatableIndex<K, V, FileContent>, IntSet, StorageException> convertor = index -> {
-      return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, keyChecker, valueChecker, idChecker);
+      IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
+      try {
+        return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, keyChecker, valueChecker, idChecker);
+      }
+      finally {
+        IndexDebugProperties.DEBUG_INDEX_ID.remove();
+      }
     };
 
     return processExceptions(indexId, null, filter, convertor);
