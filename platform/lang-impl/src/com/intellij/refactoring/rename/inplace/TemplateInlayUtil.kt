@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
@@ -63,13 +63,13 @@ object TemplateInlayUtil {
     Disposer.register(templateState, inlay)
     return inlay
   }
-  
+
   open class SelectableTemplateElement(val presentation: SelectableInlayPresentation) : VirtualTemplateElement {
+
     override fun onSelect(templateState: TemplateState) {
       presentation.isSelected = true
       templateState.focusCurrentHighlighter(false)
     }
-
   }
 
   @JvmStatic
@@ -78,7 +78,7 @@ object TemplateInlayUtil {
                                        presentation: SelectableInlayPresentation,
                                        panel: DialogPanel,
                                        templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
-                                       logStatisticsOnHide : () -> Unit = {}): Inlay<PresentationRenderer>? {
+                                       logStatisticsOnHide: () -> Unit = {}): Inlay<PresentationRenderer>? {
     val editor = templateState.editor
     val inlay = createNavigatableButton(templateState, inEditorOffset, presentation, templateElement) ?: return null
     fun showPopup() {
@@ -135,10 +135,10 @@ object TemplateInlayUtil {
       val tooltip = RefactoringBundle.message("refactoring.extract.method.inplace.options.tooltip", KeymapUtil.getShortcutText(shortcut))
       hovered = factory.withTooltip(tooltip, hovered)
     }
-    return object: SelectableInlayButton(editor,
-                                        default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
-                                        active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
-                                        hovered) {
+    return object : SelectableInlayButton(editor,
+                                          default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
+                                          active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
+                                          hovered) {
       override fun mouseClicked(event: MouseEvent, translated: Point) {
         super.mouseClicked(event, translated)
         onClick(event)
@@ -170,9 +170,9 @@ object TemplateInlayUtil {
     if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
       toSearchForTextOccurrences = processor.isToSearchForTextOccurrences(elementToRename)
       val textOccurrencesStatusIcon = if (toSearchForTextOccurrences)
-                                                AllIcons.Actions.InlayRenameInNoCodeFilesActive 
-                                            else 
-                                                AllIcons.Actions.InlayRenameInNoCodeFiles
+        AllIcons.Actions.InlayRenameInNoCodeFilesActive
+      else
+        AllIcons.Actions.InlayRenameInNoCodeFiles
       val inTextOccurrencesIconPresentation = factory.icon(textOccurrencesStatusIcon)
       buttonsPresentation = factory.seq(buttonsPresentation, button(inTextOccurrencesIconPresentation, true))
       tooltip += LangBundle.message("inlay.rename.tooltip.non.code")
@@ -186,12 +186,14 @@ object TemplateInlayUtil {
       tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement", KeymapUtil.getShortcutText(shortcut))
     }
 
-    fun withBackground(bgKey: ColorKey) =
-      factory.container(factory.container(buttonsPresentation,
-                                          roundedCorners = InlayPresentationFactory.RoundedCorners(3, 3),
-                                          background = colorsScheme.getColor(bgKey)),
-        padding = InlayPresentationFactory.Padding(4, 0,0, 0)
-      )
+    fun withBackground(bgKey: ColorKey) = factory.container(
+      presentation = factory.container(
+        presentation = buttonsPresentation,
+        roundedCorners = InlayPresentationFactory.RoundedCorners(3, 3),
+        background = colorsScheme.getColor(bgKey)
+      ),
+      padding = InlayPresentationFactory.Padding(4, 0, 0, 0)
+    )
 
     val presentation = object : SelectableInlayButton(editor,
                                                       withBackground(INLINE_REFACTORING_SETTINGS_DEFAULT),
@@ -202,7 +204,7 @@ object TemplateInlayUtil {
         logStatisticsOnShow(editor, event)
       }
     }
-    
+
     val templateElement = object : SelectableTemplateElement(presentation) {
       override fun onSelect(templateState: TemplateState) {
         super.onSelect(templateState)
@@ -224,36 +226,46 @@ object TemplateInlayUtil {
                                                EventFields.InputEvent.with(FusInputEvent(showEvent, javaClass.simpleName)))
   }
 
-  private data class Settings (var inComments : Boolean, var inTextOccurrences : Boolean) 
+  private data class Settings(var inComments: Boolean, var inTextOccurrences: Boolean)
 
   private fun logStatisticsOnHide(editor: EditorImpl,
                                   toSearchInComments: Boolean,
                                   toSearchInCommentsNew: Boolean,
                                   toSearchForTextOccurrences: Boolean,
                                   toSearchForTextOccurrencesNew: Boolean) {
-    RenameInplacePopupUsagesCollector.hide.log(editor.project,
-                                               RenameInplacePopupUsagesCollector.searchInCommentsOnHide.with(toSearchInCommentsNew),
-                                               RenameInplacePopupUsagesCollector.searchInTextOccurrencesOnHide.with(toSearchForTextOccurrencesNew))
-    RenameInplacePopupUsagesCollector.settingsChanged.log(editor.project, RenameInplacePopupUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
+    RenameInplacePopupUsagesCollector.hide.log(
+      editor.project,
+      RenameInplacePopupUsagesCollector.searchInCommentsOnHide.with(toSearchInCommentsNew),
+      RenameInplacePopupUsagesCollector.searchInTextOccurrencesOnHide.with(toSearchForTextOccurrencesNew)
+    )
+    RenameInplacePopupUsagesCollector.settingsChanged.log(
+      editor.project,
+      RenameInplacePopupUsagesCollector.changedOnHide.with(
+        toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew
+      )
+    )
   }
 
-  private fun renamePanel(elementToRename: PsiElement,
-                          editor: Editor,
-                          settings : Settings,
-                          restart: Runnable): DialogPanel {
+  private fun renamePanel(
+    elementToRename: PsiElement,
+    editor: Editor,
+    settings: Settings,
+    restart: Runnable,
+  ): DialogPanel {
     val processor = RenamePsiElementProcessor.forElement(elementToRename)
     val renameAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME)
     val panel = panel {
       row(LangBundle.message("inlay.rename.also.rename.options.title")) {
         row {
           cell {
-            checkBox(RefactoringBundle.message("comments.and.strings"),
-                     processor.isToSearchInComments(elementToRename),
-                     actionListener = { _, cb ->
-                       settings.inComments = cb.isSelected
-                       processor.setToSearchInComments(elementToRename, cb.isSelected)
-                       restart.run()
-                     }
+            checkBox(
+              text = RefactoringBundle.message("comments.and.strings"),
+              isSelected = processor.isToSearchInComments(elementToRename),
+              actionListener = { _, cb ->
+                settings.inComments = cb.isSelected
+                processor.setToSearchInComments(elementToRename, cb.isSelected)
+                restart.run()
+              }
             ).focused()
             component(JLabel(AllIcons.Actions.InlayRenameInComments))
           }
@@ -261,13 +273,15 @@ object TemplateInlayUtil {
         if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
           row {
             cell {
-              checkBox(RefactoringBundle.message("text.occurrences"),
-                       processor.isToSearchForTextOccurrences(elementToRename),
-                       actionListener = { _, cb ->
-                         settings.inTextOccurrences = cb.isSelected
-                         processor.setToSearchForTextOccurrences(elementToRename, cb.isSelected)
-                         restart.run()
-                       })
+              checkBox(
+                text = RefactoringBundle.message("text.occurrences"),
+                isSelected = processor.isToSearchForTextOccurrences(elementToRename),
+                actionListener = { _, cb ->
+                  settings.inTextOccurrences = cb.isSelected
+                  processor.setToSearchForTextOccurrences(elementToRename, cb.isSelected)
+                  restart.run()
+                }
+              )
               component(JLabel(AllIcons.Actions.InlayRenameInNoCodeFiles))
             }
           }
