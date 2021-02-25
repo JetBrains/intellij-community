@@ -1,6 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -22,6 +21,7 @@ import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
@@ -171,7 +171,7 @@ public class _LastInSuiteTest extends TestCase {
     if (Boolean.getBoolean("idea.test.guimode")) {
       Application application = ApplicationManager.getApplication();
       application.invokeAndWait(() -> {
-        IdeEventQueue.getInstance().flushQueue();
+        UIUtil.dispatchAllInvocationEvents();
         application.exit(true, true, false);
       });
       ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);

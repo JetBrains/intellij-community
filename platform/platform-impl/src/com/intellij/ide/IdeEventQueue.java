@@ -43,10 +43,10 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -989,7 +989,11 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
+  @ApiStatus.Internal
   public void flushQueue() {
+    if (!EventQueue.isDispatchThread()) {
+      throw new IllegalStateException("Must be called from EDT but got: " + Thread.currentThread());
+    }
     while (true) {
       AWTEvent event = peekEvent();
       if (event == null) return;

@@ -70,7 +70,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     postCarefully(pressX);
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched, ideEventQueue.myKeyboardEventsDispatched.get());
-    dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue);
+    dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and consumed all events via IdeEventQueue.pumpEventsForHierarchy
     assertTrue(isDispatched.contains(pressX) || isConsumed(pressX));
 
@@ -83,7 +83,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
 
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
-    dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue);
+    dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and dispatched all events via IdeEventQueue.pumpEventsForHierarchy by itself
     assertTrue(isDispatched.contains(ev2));
 
@@ -96,7 +96,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
 
-    dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue);
+    dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and consumed all events via IdeEventQueue.pumpEventsForHierarchy
     assertTrue(isDispatched.contains(keyRelease) || isConsumed(keyRelease));
 
@@ -118,17 +118,17 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   // need this because everybody can post some crazy stuff to IdeEventQueue, so we have to filter InvocationEvents out
-  private static AWTEvent dispatchAllInvocationEventsUntilOtherEvent(IdeEventQueue ideEventQueue) throws InterruptedException {
+  private static void dispatchAllInvocationEventsUntilOtherEvent() throws InterruptedException {
     while (true) {
-      AWTEvent event = PlatformTestUtil.dispatchNextEventIfAny(ideEventQueue);
+      AWTEvent event = PlatformTestUtil.dispatchNextEventIfAny();
       LOG.debug("event dispatched in dispatchAll() "+event+"; -"+(event instanceof InvocationEvent ? "continuing" : "returning"));
-      if (!(event instanceof InvocationEvent)) return event;
+      if (!(event instanceof InvocationEvent)) break;
     }
   }
 
   private static class MyException extends RuntimeException {
   }
-  private void throwMyException() {
+  private static void throwMyException() {
     throw new MyException();
   }
 

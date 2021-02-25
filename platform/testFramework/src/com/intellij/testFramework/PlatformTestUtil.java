@@ -295,17 +295,20 @@ public final class PlatformTestUtil {
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
-    assertDispatchThreadWithoutWriteAccess(ApplicationManager.getApplication());
-  }
-
-  private static void assertDispatchThreadWithoutWriteAccess(Application application) {
-    if (application != null) {
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      // do not check for write access in simple tests
+      assertEventQueueDispatchThread();
+    }
+    else {
       assert !application.isWriteAccessAllowed() : "do not wait under write action to avoid possible deadlock";
       assert application.isDispatchThread();
     }
-    else {
-      // do not check for write access in simple tests
-      assert EventQueue.isDispatchThread();
+  }
+
+  private static void assertEventQueueDispatchThread() {
+    if (!EventQueue.isDispatchThread()) {
+      throw new IllegalStateException("Must be called from EDT but got: " + Thread.currentThread());
     }
   }
 
@@ -462,6 +465,7 @@ public final class PlatformTestUtil {
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
   public static void dispatchAllInvocationEventsInIdeEventQueue() {
+    assertEventQueueDispatchThread();
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
@@ -480,13 +484,13 @@ public final class PlatformTestUtil {
 
   /**
    * Dispatch all pending events (if any) in the {@link IdeEventQueue}.
-   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   * Should only be invoked in Swing thread
    */
   public static void dispatchAllEventsInIdeEventQueue() {
-    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
+    assertEventQueueDispatchThread();
     while (true) {
       try {
-        if (dispatchNextEventIfAny(eventQueue) == null) break;
+        if (dispatchNextEventIfAny() == null) break;
       }
       catch (InterruptedException e) {
         throw new RuntimeException(e);
@@ -496,10 +500,11 @@ public final class PlatformTestUtil {
 
   /**
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}.
-   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   * Should only be invoked in Swing thread
    */
-  public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+  public static AWTEvent dispatchNextEventIfAny() throws InterruptedException {
+    assertEventQueueDispatchThread();
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     AWTEvent event = eventQueue.peekEvent();
     if (event == null) return null;
     AWTEvent event1 = eventQueue.getNextEvent();
