@@ -104,6 +104,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
+  @SuppressWarnings("MethodMayBeStatic") // to minimize chances of using the wrong project
   public void associatePsi(@NotNull Document document, @NotNull PsiFile file) {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
@@ -308,12 +309,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @ApiStatus.Internal
   public void addRunOnCommit(@NotNull Document document, @NotNull Runnable action) {
-    myActionsAfterCommit.computeIfAbsent(document, __ -> new SmartList<>()).add(action);
+    myActionsAfterCommit.computeIfAbsent(document, __ -> ContainerUtil.createConcurrentList()).add(action);
   }
 
-  private List<Runnable> getAndClearActionsAfterCommit(@NotNull Document document) {
+  @NotNull
+  private Runnable @NotNull [] getAndClearActionsAfterCommit(@NotNull Document document) {
     List<Runnable> list = myActionsAfterCommit.remove(document);
-    return list != null ? new ArrayList<>(list) : null;
+    return list == null ? ArrayUtil.EMPTY_RUNNABLE_ARRAY : list.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
   }
 
   @Override
@@ -653,15 +655,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (!app.isDispatchThread() && isEventSystemEnabled(document)) {
       // have to run in EDT to guarantee data structure safe access and "execute in EDT" callbacks contract
       app.invokeLater(()-> {
-        if (!myProject.isDisposed() && isCommitted(document)) runAfterCommitActions(document);
+        if (!myProject.isDisposed() && isCommitted(document)) {
+          runAfterCommitActions(document);
+        }
       });
       return;
     }
-    List<Runnable> list = getAndClearActionsAfterCommit(document);
-    if (list != null) {
-      for (Runnable runnable : list) {
-        runnable.run();
-      }
+    Runnable[] list = getAndClearActionsAfterCommit(document);
+    for (Runnable runnable : list) {
+      runnable.run();
     }
 
     if (mayRunActionsWhenAllCommitted()) {
