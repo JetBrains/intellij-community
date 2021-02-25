@@ -68,7 +68,7 @@ abstract class SpaceOpenInBrowserAction(@NlsActions.ActionText groupName: String
     val project = e.project
     if (project != null) {
       val projectContext = SpaceProjectContext.getInstance(project)
-      if (projectContext.context.value.isAssociatedWithSpaceRepository) {
+      if (projectContext.currentContext.isAssociatedWithSpaceRepository) {
         e.presentation.isEnabledAndVisible = true
 
         return
@@ -88,7 +88,7 @@ abstract class SpaceOpenInBrowserAction(@NlsActions.ActionText groupName: String
       urlsBuilder: (ProjectKey) -> String
     ): List<Pair<SpaceProjectInfo, String>>? {
       val project = context.getData(CommonDataKeys.PROJECT) ?: return null
-      val description = SpaceProjectContext.getInstance(project).context.value
+      val description = SpaceProjectContext.getInstance(project).currentContext
 
       return description.reposInProject.keys.map {
         it to urlsBuilder(it.key)

@@ -112,7 +112,7 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
                                         { SpaceCloneAction.runClone(project) },
                                         showSeparatorAbove = true)
     val projectContext = SpaceProjectContext.getInstance(project)
-    val context = projectContext.context.value
+    val context = projectContext.currentContext
     if (context.isAssociatedWithSpaceRepository) {
       val descriptions = context.reposInProject.keys
       if (descriptions.size > 1) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -23,7 +23,7 @@ class SpaceShowReviewsAction : DumbAwareAction(SpaceBundle.messagePointer("actio
 
   private fun isAssociatedWithSpaceRepository(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
-    return SpaceProjectContext.getInstance(project).context.value.isAssociatedWithSpaceRepository
+    return SpaceProjectContext.getInstance(project).currentContext.isAssociatedWithSpaceRepository
   }
 }
 
