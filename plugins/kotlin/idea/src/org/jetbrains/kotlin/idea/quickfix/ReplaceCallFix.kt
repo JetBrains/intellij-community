@@ -107,8 +107,11 @@ class ReplaceWithSafeCallFix(
                 val call = qualifiedExpression.callExpression
                 if (call != null) {
                     val context = qualifiedExpression.analyze(BodyResolveMode.PARTIAL)
-                    val safeQualifiedExpression =
-                        KtPsiFactory(psiElement).createExpressionByPattern("$0?.$1", qualifiedExpression.receiverExpression, call)
+                    val ktPsiFactory = KtPsiFactory(psiElement)
+                    val safeQualifiedExpression = ktPsiFactory.createExpressionByPattern(
+                        "$0?.$1", qualifiedExpression.receiverExpression, call,
+                        reformat = false
+                    )
                     val newContext = safeQualifiedExpression.analyzeAsReplacement(qualifiedExpression, context)
                     if (safeQualifiedExpression.getResolvedCall(newContext)?.canBeReplacedWithInvokeCall() == true) {
                         return ReplaceInfixOrOperatorCallFix(call, call.shouldHaveNotNullType())
