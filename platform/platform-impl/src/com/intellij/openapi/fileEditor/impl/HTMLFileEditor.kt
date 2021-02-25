@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,6 +20,7 @@ import com.intellij.ui.jcef.JBCefBrowserBase.ErrorPage
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.Alarm
 import com.intellij.util.AlarmFactory
+import com.intellij.util.ui.UIUtil
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLifeSpanHandlerAdapter
@@ -39,6 +41,14 @@ internal class HTMLFileEditor(private val file: LightVirtualFile, private val ur
       LOADING_KEY -> loadingPanel
       CONTENT_KEY -> contentPanel.component
       else -> throw IllegalArgumentException("Unknown key: ${key}")
+    }
+
+    override fun select(key: Int, now: Boolean): ActionCallback {
+      val callback = super.select(key, now)
+      if (key == CONTENT_KEY) {
+        UIUtil.invokeLaterIfNeeded { contentPanel.component.requestFocusInWindow() }
+      }
+      return callback
     }
   }
 
