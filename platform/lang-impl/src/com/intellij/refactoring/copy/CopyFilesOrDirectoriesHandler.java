@@ -326,8 +326,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
           thrown.set(e);
         }
       };
-      app.runWriteActionWithNonCancellableProgressInDispatchThread(ObjectUtils.notNull(title, RefactoringBundle.message("command.name.copy")),
-                                                                   targetDirectory.getProject(), null, copyAction);
+      app.runWriteActionWithCancellableProgressInDispatchThread(ObjectUtils.notNull(title, RefactoringBundle.message("command.name.copy")), 
+                                                                targetDirectory.getProject(), null, copyAction);
       rethrow(thrown.get());
     }
     else {
