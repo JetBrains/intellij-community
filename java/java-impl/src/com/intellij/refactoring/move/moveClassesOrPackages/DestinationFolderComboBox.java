@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -158,8 +159,19 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
             selection[0] = fileIndex.getSourceRootForFile(directory.getVirtualFile());
           }
         }
+        updateTooltipText(initialSourceRoot);
       }
     });
+  }
+
+  private void updateTooltipText(VirtualFile initialSourceRoot) {
+    JComboBox<?> comboBox = getComboBox();
+    if (comboBox.getSelectedItem() == NULL_WRAPPER) {
+      comboBox.setToolTipText(ProjectUtil.calcRelativeToProjectPath(initialSourceRoot, myProject, true, false, true));
+    }
+    else {
+      comboBox.setToolTipText(null);
+    }
   }
 
   @Nullable
@@ -269,6 +281,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         root.setSize(preferredSize);
       }
     }
+    updateTooltipText(initialTargetDirectorySourceRoot);
   }
 
   @Nullable
