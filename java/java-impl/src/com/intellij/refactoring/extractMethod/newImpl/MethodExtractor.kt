@@ -89,14 +89,13 @@ class MethodExtractor {
   }
 
   fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
-    val guessedNames = guessMethodName(options).filterNot { name -> hasConflicts(options.copy(methodName = name)) }
-    return guessedNames.ifEmpty {
-      defaultNameCandidates().filterNot { name -> hasConflicts(options.copy(methodName = name)) }.take(1).toList()
-    }
-  }
+    val unsafeNames = guessMethodName(options)
+    val safeNames = unsafeNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }
+    if (safeNames.isNotEmpty()) return safeNames
 
-  private fun defaultNameCandidates(): Sequence<String> {
-    return sequenceOf("extracted", "newMethod") + generateSequence(1) { seed -> seed + 1 }.map { number -> "newMethod$number" }
+    val baseName = unsafeNames.firstOrNull() ?: "extracted"
+    val generatedNames = sequenceOf(baseName) + generateSequence(1) { seed -> seed + 1 }.map { number -> "$baseName$number" }
+    return generatedNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }.take(1).toList()
   }
 
   private fun hasConflicts(options: ExtractOptions): Boolean {
