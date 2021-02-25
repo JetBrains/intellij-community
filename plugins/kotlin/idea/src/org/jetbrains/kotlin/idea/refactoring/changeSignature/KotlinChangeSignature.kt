@@ -20,6 +20,7 @@ import com.intellij.psi.PsiType
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.*
+import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.annotations.TestOnly
@@ -83,94 +84,118 @@ class KotlinChangeSignature(
 ) {
     override fun forcePerformForSelectedFunctionOnly() = configuration.forcePerformForSelectedFunctionOnly()
 
-    private fun runSilentRefactoring(descriptor: KotlinMethodDescriptor) {
-        val processor = if (descriptor.baseDescriptor is PropertyDescriptor)
-            KotlinChangePropertySignatureDialog.createProcessorForSilentRefactoring(project, commandName, descriptor)
-        else
-            when (val baseDeclaration = descriptor.baseDeclaration) {
-                is KtFunction, is KtClass -> KotlinChangeSignatureDialog.createRefactoringProcessorForSilentChangeSignature(
-                    project,
-                    commandName,
-                    descriptor,
-                    defaultValueContext
-                )
+    /**
+     * @param propertyProcessor:
+     * - top level
+     * - member level
+     * - primary constructor
+     *
+     * @param functionProcessor:
+     * - top level
+     * - member level
+     * - constructors
+     *
+     * @param javaProcessor:
+     * - member level
+     */
+    private fun <T> selectRefactoringProcessor(
+        descriptor: KotlinMethodDescriptor,
+        propertyProcessor: (KotlinMethodDescriptor) -> T?,
+        functionProcessor: (KotlinMethodDescriptor) -> T?,
+        javaProcessor: (KotlinMethodDescriptor, PsiMethod) -> T?,
+    ): T? {
+        if (descriptor.baseDescriptor is PropertyDescriptor) {
+            return propertyProcessor(descriptor)
+        }
 
-                is PsiMethod -> {
-                    if (baseDeclaration.language != JavaLanguage.INSTANCE) {
-                        Messages.showErrorDialog(
-                            KotlinBundle.message(
-                                "error.text.can.t.change.signature.of.method",
-                                baseDeclaration.language.displayName
-                            ),
-                            commandName
-                        )
-                        return
-                    }
+        return when (val baseDeclaration = descriptor.baseDeclaration) {
+            /**
+             * functions:
+             * - top level
+             * - member level
+             * - constructors
+             *
+             * class:
+             * - primary constructor
+             */
+            is KtFunction, is KtClass -> functionProcessor(descriptor)
+            is PsiMethod -> {
+                if (baseDeclaration.language != JavaLanguage.INSTANCE) {
+                    Messages.showErrorDialog(
+                        KotlinBundle.message("error.text.can.t.change.signature.of.method", baseDeclaration.language.displayName),
+                        commandName
+                    )
 
-                    ChangeSignatureProcessor(project, getPreviewInfoForJavaMethod(descriptor).second)
+                    return null
                 }
 
-                else -> throwUnexpectedDeclarationException(baseDeclaration)
+                javaProcessor(descriptor, baseDeclaration)
             }
 
+            else -> throw KotlinExceptionWithAttachments("Unexpected declaration: ${baseDeclaration::class}")
+                .withAttachment("element", baseDeclaration.text)
+                .withAttachment("file", baseDeclaration.containingFile.text)
+        }
+    }
+
+    private fun runSilentRefactoring(methodDescriptor: KotlinMethodDescriptor) {
+        val processor = selectRefactoringProcessor(
+            methodDescriptor,
+            propertyProcessor = { KotlinChangePropertySignatureDialog.createProcessorForSilentRefactoring(project, commandName, it) },
+            functionProcessor = {
+                KotlinChangeSignatureDialog.createRefactoringProcessorForSilentChangeSignature(
+                    project,
+                    commandName,
+                    it,
+                    defaultValueContext
+                )
+            },
+            javaProcessor = { descriptor, _ -> ChangeSignatureProcessor(project, getPreviewInfoForJavaMethod(descriptor).second) }
+        ) ?: return
 
         processor.run()
     }
 
-    private fun runInteractiveRefactoring(descriptor: KotlinMethodDescriptor) {
-        val dialog = if (descriptor.baseDescriptor is PropertyDescriptor)
-            KotlinChangePropertySignatureDialog(project, descriptor, commandName)
-        else
-            when (val baseDeclaration = descriptor.baseDeclaration) {
-                is KtFunction, is KtClass -> KotlinChangeSignatureDialog(project, editor, descriptor, defaultValueContext, commandName)
-                is PsiMethod -> {
-                    // No changes are made from Kotlin side: just run foreign refactoring
-                    if (descriptor is KotlinChangeSignatureData) {
-                        ChangeSignatureUtil.invokeChangeSignatureOn(baseDeclaration, project)
-                        return
-                    }
-
-                    if (baseDeclaration.language != JavaLanguage.INSTANCE) {
-                        Messages.showErrorDialog(
-                            KotlinBundle.message(
-                                "error.text.can.t.change.signature.of.method",
-                                baseDeclaration.language.displayName
-                            ), commandName
-                        )
-                        return
-                    }
-
-                    val (preview, javaChangeInfo) = getPreviewInfoForJavaMethod(descriptor)
-                    val javaDescriptor = object : JavaMethodDescriptor(preview) {
-                        @Suppress("UNCHECKED_CAST")
-                        override fun getParameters() = javaChangeInfo.newParameters.toMutableList() as MutableList<ParameterInfoImpl>
-                    }
-
-                    object : JavaChangeSignatureDialog(project, javaDescriptor, false, null) {
-                        override fun createRefactoringProcessor(): BaseRefactoringProcessor {
-                            val parameters = parameters
-                            LOG.assertTrue(myMethod.method.isValid)
-                            val newJavaChangeInfo = JavaChangeInfoImpl(
-                                visibility ?: VisibilityUtil.getVisibilityModifier(myMethod.method.modifierList),
-                                javaChangeInfo.method,
-                                methodName,
-                                returnType ?: CanonicalTypes.createTypeWrapper(PsiType.VOID),
-                                parameters.toTypedArray(),
-                                exceptions,
-                                isGenerateDelegate,
-                                myMethodsToPropagateParameters ?: HashSet(),
-                                myMethodsToPropagateExceptions ?: HashSet()
-                            ).also {
-                                it.setCheckUnusedParameter()
-                            }
-
-                            return ChangeSignatureProcessor(myProject, newJavaChangeInfo)
-                        }
-                    }
+    private fun runInteractiveRefactoring(methodDescriptor: KotlinMethodDescriptor) {
+        val dialog = selectRefactoringProcessor(
+            methodDescriptor,
+            propertyProcessor = { KotlinChangePropertySignatureDialog(project, it, commandName) },
+            functionProcessor = { KotlinChangeSignatureDialog(project, editor, it, defaultValueContext, commandName) },
+            javaProcessor = fun(descriptor: KotlinMethodDescriptor, method: PsiMethod): RefactoringDialog? {
+                if (descriptor is KotlinChangeSignatureData) {
+                    ChangeSignatureUtil.invokeChangeSignatureOn(method, project)
+                    return null
                 }
 
-                else -> throwUnexpectedDeclarationException(baseDeclaration)
-            }
+                val (preview, javaChangeInfo) = getPreviewInfoForJavaMethod(descriptor)
+                val javaDescriptor = object : JavaMethodDescriptor(preview) {
+                    @Suppress("UNCHECKED_CAST")
+                    override fun getParameters() = javaChangeInfo.newParameters.toMutableList() as MutableList<ParameterInfoImpl>
+                }
+
+                return object : JavaChangeSignatureDialog(project, javaDescriptor, false, null) {
+                    override fun createRefactoringProcessor(): BaseRefactoringProcessor {
+                        val parameters = parameters
+                        LOG.assertTrue(myMethod.method.isValid)
+                        val newJavaChangeInfo = JavaChangeInfoImpl(
+                            visibility ?: VisibilityUtil.getVisibilityModifier(myMethod.method.modifierList),
+                            javaChangeInfo.method,
+                            methodName,
+                            returnType ?: CanonicalTypes.createTypeWrapper(PsiType.VOID),
+                            parameters.toTypedArray(),
+                            exceptions,
+                            isGenerateDelegate,
+                            myMethodsToPropagateParameters ?: HashSet(),
+                            myMethodsToPropagateExceptions ?: HashSet()
+                        ).also {
+                            it.setCheckUnusedParameter()
+                        }
+
+                        return ChangeSignatureProcessor(myProject, newJavaChangeInfo)
+                    }
+                }
+            },
+        ) ?: return
 
         if (ApplicationManager.getApplication().isUnitTestMode) {
             try {
@@ -269,12 +294,6 @@ class KotlinChangeSignature(
     companion object {
         private val LOG = logger<KotlinChangeSignature>()
     }
-}
-
-private fun throwUnexpectedDeclarationException(baseDeclaration: PsiElement): Nothing {
-    throw KotlinExceptionWithAttachments("Unexpected declaration: $baseDeclaration")
-        .withAttachment("element", baseDeclaration.text)
-        .withAttachment("file", baseDeclaration.containingFile.text)
 }
 
 @TestOnly
