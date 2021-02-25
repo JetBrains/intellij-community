@@ -731,7 +731,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         is WorkspaceEntityStorageBuilderImpl -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
           val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
-          val copiedIndexes = storage.indexes.toImmutable().toMutable()
+          val copiedIndexes = storage.indexes.toMutable()
           WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndexes, consistencyCheckingMode)
         }
       }
