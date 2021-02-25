@@ -6,6 +6,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -37,9 +38,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     .register(COLLECTION_STREAM, call -> new CountFix(SimplificationMode.COLLECTION_SIZE))
     .register(STREAM_FLAT_MAP, call -> doesFlatMapCallCollectionStream(call) ? new CountFix(SimplificationMode.SUM) : null)
     .register(STREAM_FILTER, call -> extractComparisonWithZero(call) != null ? new CountFix(SimplificationMode.ANY_MATCH) : null)
-    .register(STREAM_FILTER, call -> extractComparisonWithZeroEq(call) != null ? new CountFix(SimplificationMode.NONE_MATCH) : null)
-    .register(STREAM_COUNT, call -> extractComparisonWithZero(call) != null ? new CountFix(SimplificationMode.IS_PRESENT) : null)
-    .register(STREAM_COUNT, call -> extractComparisonWithZeroEq(call) != null ? new CountFix(SimplificationMode.IS_EMPTY) : null);
+    .register(STREAM_FILTER, call -> extractComparisonWithZeroEq(call) != null ? new CountFix(SimplificationMode.NONE_MATCH) : null);
 
   private static final Logger LOG = Logger.getInstance(ReplaceInefficientStreamCountInspection.class);
 
@@ -64,7 +63,13 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
         if (STREAM_COUNT.test(methodCall)) {
           PsiMethodCallExpression qualifierCall = getQualifierMethodCall(methodCall);
           CountFix fix = FIX_MAPPER.mapFirst(qualifierCall);
-          fix = fix != null ? fix : FIX_MAPPER.mapFirst(methodCall);
+          if (fix == null) {
+            if (extractComparisonWithZero(methodCall) != null) {
+              fix = new CountFix(SimplificationMode.IS_PRESENT);
+            } else if (extractComparisonWithZeroEq(methodCall) != null) {
+              fix = new CountFix(SimplificationMode.IS_EMPTY);
+            }
+          }
           if (fix != null) {
             PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
             LOG.assertTrue(nameElement != null);
@@ -305,8 +310,16 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       if (countQualifier == null) return;
       String base = countQualifier.getText();
       CommentTracker ct = new CommentTracker();
-      //ct.markUnchanged(qualifierCall);
-      ct.replaceAndRestoreComments(comparison, base + "." + "findAny()." + (isPresent ? "isPresent" : "isEmpty") + "()");
+      if (isPresent) {
+        ct.replaceAndRestoreComments(comparison, base + "." + "findAny().isPresent()");
+      } else {
+        if (PsiUtil.getLanguageLevel(countCall).isAtLeast(LanguageLevel.JDK_11)) {
+          ct.replaceAndRestoreComments(comparison, base + "." + "findAny().isEmpty()");
+        } else {
+          ct.replaceAndRestoreComments(comparison, "!" + base + "." + "findAny().isPresent()");
+        }
+      }
+
     }
 
     public @InspectionMessage String getMessage() {
