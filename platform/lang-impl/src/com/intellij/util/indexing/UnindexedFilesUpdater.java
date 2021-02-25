@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -337,7 +338,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     // PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible may finish earlier than all its spawned tasks have completed.
     // And some scanning statistics may be tried to be added to the [projectIndexingHistory],
     // leading to ConcurrentModificationException in the statistics' processor.
-    AtomicBoolean allTasksFinished = new AtomicBoolean();
+    Ref<Boolean> allTasksFinished = Ref.create(false);
     List<Runnable> tasks = ContainerUtil.map(providers, provider -> {
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(1);
       List<VirtualFile> files = new ArrayList<>();
@@ -379,7 +380,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
         }
         finally {
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
-          synchronized (projectIndexingHistory) {
+          synchronized (allTasksFinished) {
             if (!allTasksFinished.get()) {
               projectIndexingHistory.addScanningStatistics(scanningStatistics);
             }
@@ -392,7 +393,9 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     try {
       PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(tasks);
     } finally {
-      allTasksFinished.set(true);
+      synchronized (allTasksFinished) {
+        allTasksFinished.set(true);
+      }
     }
     return providerToFiles;
   }
