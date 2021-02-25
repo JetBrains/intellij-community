@@ -29,6 +29,8 @@ import org.cef.browser.CefFrame
 import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefLifeSpanHandlerAdapter
 import org.cef.handler.CefLoadHandlerAdapter
+import org.cef.handler.CefRequestHandlerAdapter
+import org.cef.network.CefRequest
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -73,6 +75,12 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
           }
         }
       }
+    }, contentPanel.cefBrowser)
+
+    contentPanel.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
+      override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean =
+        if (userGesture) { BrowserUtil.browse(request.url); true }
+        else false
     }, contentPanel.cefBrowser)
 
     contentPanel.jbCefClient.addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
