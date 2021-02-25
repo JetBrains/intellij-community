@@ -26,4 +26,8 @@ object MarkdownNotifier {
   fun notifyPandocDetectionFailed(project: Project, @NlsSafe msg: String) {
     NOTIFICATION_GROUP.createNotification(msg, NotificationType.ERROR).notify(project)
   }
+
+  fun notifyIfConvertFailed(project: Project, @NlsSafe msg: String) {
+    NOTIFICATION_GROUP.createNotification(msg, NotificationType.ERROR).notify(project)
+  }
 }
