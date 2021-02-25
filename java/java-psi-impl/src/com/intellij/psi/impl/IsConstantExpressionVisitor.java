@@ -106,6 +106,11 @@ final class IsConstantExpressionVisitor extends JavaElementVisitor {
 
   @Override
   public void visitReferenceExpression(PsiReferenceExpression expression) {
+    PsiExpression qualifierExpression = expression.getQualifierExpression();
+    if (qualifierExpression != null && !(qualifierExpression instanceof PsiReferenceExpression)) {
+      myIsConstant = false;
+      return;
+    }
     PsiElement refElement = expression.resolve();
     if (!(refElement instanceof PsiVariable)) {
       myIsConstant = false;
