@@ -246,6 +246,13 @@ public class JBCefBrowser extends JBCefBrowserBase {
         Dimension size = super.getPreferredSize();
         return size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
       }
+      @Override
+      protected void processFocusEvent(FocusEvent e) {
+        super.processFocusEvent(e);
+        if (e.getID() == FocusEvent.FOCUS_GAINED) {
+          uiComp.requestFocusInWindow();
+        }
+      }
     };
 
     resultPanel.setBackground(JBColor.background());
