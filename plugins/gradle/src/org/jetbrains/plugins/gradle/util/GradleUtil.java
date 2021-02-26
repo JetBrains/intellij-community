@@ -213,8 +213,8 @@ public final class GradleUtil {
       return null;
     }
 
-    try {
-      List<Path> candidates = Files.list(wrapperDir)
+    try (Stream<Path> pathsStream = Files.list(wrapperDir)) {
+      List<Path> candidates = pathsStream
         .filter(path -> FileUtilRt.extensionEquals(path.getFileName().toString(), "properties") && Files.isRegularFile(path))
         .collect(Collectors.toList());
 
