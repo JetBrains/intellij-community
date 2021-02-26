@@ -10,7 +10,7 @@ import circlet.platform.client.resolve
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import kotlinx.coroutines.CancellationException
-import libraries.coroutines.extra.LifetimeSource
+import libraries.coroutines.extra.Lifetime
 import org.jetbrains.annotations.Nls
 import runtime.batch.batchAll
 import runtime.batch.map
@@ -19,7 +19,7 @@ import runtime.reactive.awaitFirst
 import runtime.reactive.filter
 import runtime.reactive.property.mapInit
 
-class SpaceShareProjectVM(val lifetime: LifetimeSource) {
+class SpaceShareProjectVM(val lifetime: Lifetime) {
   @Suppress("RemoveExplicitTypeArguments")
   internal val projectsListState: MutableProperty<ProjectListState> = lifetime.mapInit<ProjectListState>(ProjectListState.Loading) {
     val ws = SpaceWorkspaceComponent.getInstance().workspace.value ?: return@mapInit ProjectListState.Error()
