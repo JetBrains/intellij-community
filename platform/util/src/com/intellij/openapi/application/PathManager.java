@@ -257,8 +257,9 @@ public final class PathManager {
     return getHomePath() + '/' + PLUGINS_DIRECTORY;
   }
 
+  /** <b>Note</b>: on macOS, the method returns a "functional" home, pointing to a JRE subdirectory inside a bundle. */
   public static @NotNull String getBundledRuntimePath() {
-    return getHomePath() + '/' + JRE_DIRECTORY;
+    return getHomePath() + '/' + JRE_DIRECTORY + (SystemInfoRt.isMac ? "/Contents/Home" : "");
   }
 
   // config paths

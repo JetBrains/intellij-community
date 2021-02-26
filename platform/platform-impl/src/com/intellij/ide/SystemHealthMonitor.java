@@ -111,7 +111,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static boolean isJbrOperational() {
-    Path bin = Path.of(PathManager.getBundledRuntimePath(), SystemInfo.isWindows ? "bin/java.exe" : SystemInfo.isMac ? "Contents/Home/bin/java" : "bin/java");
+    Path bin = Path.of(PathManager.getBundledRuntimePath(), SystemInfo.isWindows ? "bin/java.exe": "bin/java");
     if (Files.isRegularFile(bin) && (SystemInfo.isWindows || Files.isExecutable(bin))) {
       try {
         return new CapturingProcessHandler(new GeneralCommandLine(bin.toString(), "-version")).runProcess(30_000).getExitCode() == 0;
