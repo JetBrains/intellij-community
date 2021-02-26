@@ -2,7 +2,6 @@
 package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.TemplateResultListener.TemplateResult
@@ -20,8 +19,6 @@ import com.intellij.openapi.command.impl.StartMarkAction.AlreadyStartedException
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Segment
@@ -240,38 +237,6 @@ private fun runLiveTemplate(
   }
   restoreCaretAndSelection.run()
   return state
-}
-
-/**
- * @return a handle to remove highlights
- */
-private fun highlightTemplateVariables(
-  project: Project,
-  editor: Editor,
-  template: Template,
-  templateState: TemplateState,
-): Disposable {
-  val highlighters = ArrayList<RangeHighlighter>()
-  val highlightManager: HighlightManager = HighlightManager.getInstance(project)
-  for (i in 0 until templateState.segmentsCount) {
-    val range = templateState.getSegmentRange(i)
-    val key = if (template.getSegmentName(i) == PRIMARY_VARIABLE_NAME) {
-      EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES
-    }
-    else {
-      EditorColors.SEARCH_RESULT_ATTRIBUTES
-    }
-    highlightManager.addOccurrenceHighlight(editor, range.startOffset, range.endOffset, key, 0, highlighters)
-  }
-  for (highlighter: RangeHighlighter in highlighters) {
-    highlighter.isGreedyToLeft = true
-    highlighter.isGreedyToRight = true
-  }
-  return Disposable {
-    for (highlighter: RangeHighlighter in highlighters) {
-      highlightManager.removeSegmentHighlighter(editor, highlighter)
-    }
-  }
 }
 
 /**
