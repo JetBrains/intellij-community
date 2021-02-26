@@ -4,7 +4,6 @@ package com.intellij.application.options.editor.fonts;
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.FontEditorPreview;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontCache;
@@ -12,7 +11,6 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.ui.JBUI;
-import com.intellij.ui.components.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,20 +23,17 @@ public class AppEditorFontPanel implements Disposable {
   @NotNull private final FontEditorPreview myPreview;
   @NotNull private final EditorColorsScheme myPreviewScheme;
   @NotNull private final JPanel myTopPanel;
-  @NotNull private final ActionLink myRestoreLabel;
 
   public AppEditorFontPanel() {
     myTopPanel = new JPanel(new BorderLayout());
     JPanel restorePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-    myRestoreLabel = createRestoreLabel();
-    restorePanel.add(myRestoreLabel);
     myTopPanel.add(restorePanel, BorderLayout.NORTH);
 
     JPanel innerPanel = new JPanel(new BorderLayout());
     innerPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0,0,0));
     JBSplitter splitter = new JBSplitter(false, 0.3f);
     myPreviewScheme = createPreviewScheme();
-    myOptionsPanel = new AppEditorFontOptionsPanel(this, myPreviewScheme);
+    myOptionsPanel = new AppEditorFontOptionsPanel(myPreviewScheme);
     myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(5));
     myPreview = new FontEditorPreview(()-> myPreviewScheme, true) {
       @Override
@@ -58,17 +53,6 @@ public class AppEditorFontPanel implements Disposable {
       }
     );
     myTopPanel.add(innerPanel, BorderLayout.CENTER);
-  }
-
-  void setRestoreLabelEnabled(boolean isEnabled) {
-    myRestoreLabel.setEnabled(isEnabled);
-  }
-
-  @NotNull
-  private ActionLink createRestoreLabel() {
-    return new ActionLink(ApplicationBundle.message("settings.editor.font.restored.defaults"), e -> {
-        myOptionsPanel.restoreDefaults();
-    });
   }
 
   public void updatePreview() {
