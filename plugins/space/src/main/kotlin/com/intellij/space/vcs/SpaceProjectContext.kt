@@ -27,18 +27,20 @@ import runtime.reactive.property.mapInit
 @Service
 class SpaceProjectContext(project: Project) : LifetimedDisposable by LifetimedDisposableImpl() {
 
-  private val remoteUrls: MutableProperty<Set<GitRemoteUrlCoordinates>> = Property.createMutable(findRemoteUrls(project))
+  private val remoteUrls: MutableProperty<Set<GitRemoteUrlCoordinates>> = Property.createMutable(emptySet())
 
   private val hostingChecker = SpaceGitHostingChecker()
-
-  val probablyContainsSpaceRepo = lifetime.mapInit(remoteUrls, false) { urls ->
-    hostingChecker.check(urls.map { it.remote }.toSet())
-  }
 
   val context: LoadingProperty<Context> = lifetime.load(SpaceWorkspaceComponent.getInstance().workspace, remoteUrls) { ws, urls ->
     ws ?: return@load EMPTY
     ws.client.connectionStatus.filter { it is ConnectionStatus.Connected }.awaitFirst(ws.lifetime)
     reloadProjectKeys(ws, urls)
+  }
+
+  // true if project is associated with Space repository
+  val probablyContainsSpaceRepo = lifetime.mapInit(remoteUrls, context, false) { urls, context ->
+    val loadedContext = (context as? LoadingValue.Loaded)?.value
+    (loadedContext != null && loadedContext.isAssociatedWithSpaceRepository) || hostingChecker.check(urls.map { it.remote }.toSet())
   }
 
   // use it as rare as possible
@@ -55,6 +57,7 @@ class SpaceProjectContext(project: Project) : LifetimedDisposable by LifetimedDi
           remoteUrls.value = newUrls
         }
       })
+    remoteUrls.value = findRemoteUrls(project)
   }
 
   fun getRepoDescriptionByUrl(remoteUrl: String): SpaceRepoInfo? {
