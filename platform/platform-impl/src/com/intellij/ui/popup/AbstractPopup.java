@@ -414,7 +414,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private String wrapToSize(@NotNull @Nls String hint) {
     if (StringUtil.isEmpty(hint)) return hint;
 
-    Dimension size = myComponent.getPreferredSize();
+    Dimension size = myContent.computePreferredSize();
     int width = Math.max(JBUI.CurrentTheme.Popup.minimumHintWidth(), size.width);
     return HtmlChunk.text(hint).wrapWith(HtmlChunk.div().attr("width", width)).wrapWith(HtmlChunk.html()).toString();
   }
