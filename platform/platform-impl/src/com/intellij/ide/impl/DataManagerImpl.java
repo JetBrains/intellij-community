@@ -40,13 +40,12 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
 
-  private static final ThreadLocal<AtomicInteger> ourGetDataLevel = ThreadLocal.withInitial(AtomicInteger::new);
+  private static final ThreadLocal<int[]> ourGetDataLevel = ThreadLocal.withInitial(() -> new int[1]);
 
   private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
 
@@ -80,8 +79,9 @@ public class DataManagerImpl extends DataManager {
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
     }
+    int[] depth = ourGetDataLevel.get();
     try {
-      ourGetDataLevel.get().incrementAndGet();
+      depth[0]++;
       Object data = provider.getData(dataId);
       if (data != null) return validated(data, dataId, provider);
 
@@ -96,7 +96,7 @@ public class DataManagerImpl extends DataManager {
       return null;
     }
     finally {
-      ourGetDataLevel.get().decrementAndGet();
+      depth[0]--;
       if (alreadyComputedIds != null) alreadyComputedIds.remove(dataId);
     }
   }
@@ -169,7 +169,7 @@ public class DataManagerImpl extends DataManager {
   public @NotNull DataContext getDataContext(Component component) {
     if (Registry.is("actionSystem.dataContextAssertions")) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      if (ourGetDataLevel.get().get() > 0) {
+      if (ourGetDataLevel.get()[0] > 0) {
         LOG.error("DataContext shall not be created and queried inside another getData() call.");
       }
     }
