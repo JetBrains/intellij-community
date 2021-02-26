@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.IntIntHashMap;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
@@ -25,13 +24,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.IntStream;
 
 /**
  * Implementation of {@link FileTypeIndexImpl} based on plain change log.
@@ -169,7 +166,8 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
     myLock.readLock().lock();
     try {
       MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
-      inputIds.addAll(snapshot != null ? snapshot.getFileIds(fileTypeId) : myPersistentLog.getFileIds(fileTypeId));
+      IntStream fileIds = snapshot != null ? snapshot.getFileIds(fileTypeId) : myPersistentLog.getFileIds(fileTypeId);
+      fileIds.forEach(inputIds::add);
     }
     finally {
       myLock.readLock().unlock();
@@ -315,7 +313,7 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
   private interface IntIntIndex {
     void addData(int data, int inputId) throws StorageException;
 
-    @NotNull IntSet getFileIds(int data) throws StorageException;
+    @NotNull IntStream getFileIds(int data) throws StorageException;
 
     int getIndexedData(int inputId) throws StorageException;
   }
@@ -333,7 +331,7 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
     }
 
     @Override
-    public @NotNull IntSet getFileIds(int dataKey) throws StorageException {
+    public @NotNull IntStream getFileIds(int dataKey) throws StorageException {
       IntSet inputIds = new IntOpenHashSet();
 
       AbstractIntLog.IntLogEntryProcessor processor = (data, inputId) -> {
@@ -347,7 +345,7 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
       };
 
       myLog.processEntries(processor);
-      return inputIds;
+      return inputIds.intStream();
     }
 
     @Override
@@ -385,23 +383,24 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
   }
 
   private static class MemorySnapshot implements IntIntIndex {
-    private final @NotNull Int2ObjectMap<IntSet> myInvertedIndex;
-    private final @NotNull Int2IntMap myForwardIndex;
+    private final @NotNull Int2ObjectMap<BitSet> myInvertedIndex;
+    private final @NotNull IntList myForwardIndex;
 
-    private MemorySnapshot(@NotNull Int2ObjectMap<IntSet> invertedIndex, @NotNull Int2IntMap forwardIndex) {
+    private MemorySnapshot(@NotNull Int2ObjectMap<BitSet> invertedIndex, @NotNull IntList forwardIndex) {
       myInvertedIndex = invertedIndex;
       myForwardIndex = forwardIndex;
     }
 
     @Override
     public synchronized void addData(int data, int inputId) {
-      myInvertedIndex.computeIfAbsent(data, __ -> new IntOpenHashSet()).add(inputId);
-      myForwardIndex.put(inputId, data);
+      myInvertedIndex.computeIfAbsent(data, __ -> new BitSet()).set(inputId);
+      setForwardIndexData(myForwardIndex, data, inputId);
     }
 
     @Override
-    public synchronized @NotNull IntSet getFileIds(int data) {
-      return myInvertedIndex.getOrDefault(data, IntSets.EMPTY_SET);
+    public synchronized @NotNull IntStream getFileIds(int data) {
+      BitSet fileIds = myInvertedIndex.get(data);
+      return fileIds == null ? IntStream.empty() : fileIds.stream();
     }
 
     @Override
@@ -454,14 +453,21 @@ public final class LogFileTypeMapReduceIndex implements UpdatableIndex<FileType,
     }
 
     @NotNull MemorySnapshot loadIndexToMemory(@NotNull LogBasedIntIntIndex intLogIndex) throws StorageException {
-      Int2ObjectMap<IntSet> invertedIndex = new Int2ObjectOpenHashMap<>();
-      Int2IntMap forwardIndex = new IntIntHashMap();
+      Int2ObjectMap<BitSet> invertedIndex = new Int2ObjectOpenHashMap<>();
+      IntList forwardIndex = new IntArrayList();
       intLogIndex.processEntries((data, inputId) -> {
-        forwardIndex.put(inputId, data);
-        invertedIndex.computeIfAbsent(data, __ -> new IntOpenHashSet()).add(inputId);
+        setForwardIndexData(forwardIndex, data, inputId);
+        invertedIndex.computeIfAbsent(data, __ -> new BitSet()).set(inputId);
         return true;
       });
       return new MemorySnapshot(invertedIndex, forwardIndex);
     }
+  }
+
+  private static void setForwardIndexData(@NotNull IntList forwardIndex, int data, int inputId) {
+    if (inputId >= forwardIndex.size()) {
+      forwardIndex.size(inputId + 1);
+    }
+    forwardIndex.set(inputId, data);
   }
 }
