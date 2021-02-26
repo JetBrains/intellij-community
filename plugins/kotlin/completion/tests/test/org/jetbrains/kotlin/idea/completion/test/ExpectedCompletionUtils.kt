@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.test.uitls.IgnoreTests
 import org.junit.Assert
 
 /**
@@ -141,7 +142,8 @@ object ExpectedCompletionUtils {
         COMPLETION_TYPE_PREFIX,
         BLOCK_CODE_FRAGMENT,
         LightClassComputationControl.LIGHT_CLASS_DIRECTIVE,
-        AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE
+        AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE,
+        IgnoreTests.DIRECTIVES.FIR_COMPARISON,
     )
 
     fun itemsShouldExist(fileText: String, platform: TargetPlatform?): Array<CompletionProposal> = when {
