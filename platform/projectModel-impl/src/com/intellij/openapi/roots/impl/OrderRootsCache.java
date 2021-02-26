@@ -87,11 +87,11 @@ public class OrderRootsCache {
     myRoots.set(null);
   }
 
-  private static final class CacheKey {
+  protected static final class CacheKey {
     private final OrderRootType myRootType;
     private final int myFlags;
 
-    private CacheKey(@NotNull OrderRootType rootType, int flags) {
+    public CacheKey(@NotNull OrderRootType rootType, int flags) {
       myRootType = rootType;
       myFlags = flags;
     }

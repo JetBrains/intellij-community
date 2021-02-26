@@ -63,7 +63,6 @@ internal class RootsChangeWatcher(val project: Project) {
     VirtualFileManager.getInstance().addAsyncFileListener(object : AsyncFileListener {
       @Volatile
       private var result: ProjectRootManagerImpl.RootsChangeType? = null
-      private val excludedUrlsForManualCheck = ContainerUtil.newConcurrentSet<String>()
       private val changedUrlsList = ContainerUtil.createConcurrentList<Pair<String, String>>()
       private val changedModuleStorePaths = ContainerUtil.createConcurrentList<Pair<Module, Path>>()
 
@@ -71,12 +70,6 @@ internal class RootsChangeWatcher(val project: Project) {
         result = null
         changedUrlsList.clear()
         changedModuleStorePaths.clear()
-        excludedUrlsForManualCheck.clear()
-
-        // Changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
-        for (excludePolicy in DirectoryIndexExcludePolicy.EP_NAME.getExtensionList(project)) {
-          Collections.addAll(excludedUrlsForManualCheck, *excludePolicy.excludeUrlsForProject)
-        }
 
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
         events.forEach { event ->
@@ -152,8 +145,7 @@ internal class RootsChangeWatcher(val project: Project) {
         val affectedEntities = mutableListOf<EntityWithVirtualFileUrl>()
         calculateAffectedEntities(storage, virtualFileUrl, affectedEntities)
         virtualFileUrl.subTreeFileUrls.forEach { fileUrl -> calculateAffectedEntities(storage, fileUrl, affectedEntities) }
-        if (affectedEntities.none { shouldFireRootsChanged(it.entity, project) } && virtualFileUrl.url !in excludedUrlsForManualCheck
-            && virtualFileUrl.url !in projectFilePaths) return
+        if (affectedEntities.none { shouldFireRootsChanged(it.entity, project) } && virtualFileUrl.url !in projectFilePaths) return
         result = calculateRootsChangeType(result, currentRootsChangeType)
       }
 

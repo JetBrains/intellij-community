@@ -51,6 +51,4 @@ class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable):
       ConcurrencyUtil.cacheOrGet(myRootVirtualFiles, ConcurrentHashMap()).computeIfAbsent(key) { virtualFileUrls.mapNotNull { it.file }.toTypedArray() }
     }
   }
-
-  private data class CacheKey(private val myRootType: OrderRootType, private val myFlags: Int)
 }
