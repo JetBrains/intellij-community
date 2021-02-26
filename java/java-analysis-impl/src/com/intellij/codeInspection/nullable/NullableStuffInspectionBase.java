@@ -630,8 +630,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
     @NotNull static Annotated from(@NotNull PsiModifierListOwner owner) {
       NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-      return new Annotated(manager.findExplicitNullabilityAnnotation(owner, Set.of(Nullability.NOT_NULL)),
-                           manager.findExplicitNullabilityAnnotation(owner, Set.of(Nullability.NULLABLE)));
+      return new Annotated(manager.findExplicitNullabilityAnnotation(owner, Collections.singleton(Nullability.NOT_NULL)),
+                           manager.findExplicitNullabilityAnnotation(owner, Collections.singleton(Nullability.NULLABLE)));
     }
   }
 
