@@ -5,13 +5,11 @@ import com.intellij.documentation.mdn.MdnSymbolDocumentation;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -109,6 +107,25 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     }
     if (result == null && object instanceof String && element != null) {
       result = XmlDocumentationProvider.findDeclWithName((String)object, element);
+    }
+    return result;
+  }
+
+  @Override
+  public @Nullable PsiElement getCustomDocumentationElement(@NotNull Editor editor,
+                                                            @NotNull PsiFile file,
+                                                            @Nullable PsiElement contextElement, int targetOffset) {
+
+    DocumentationProvider styleProvider = getStyleProvider();
+    PsiElement result = null;
+    if (styleProvider != null) {
+      result = styleProvider.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
+    }
+    if (result == null) {
+      DocumentationProvider scriptProvider = getScriptDocumentationProvider();
+      if (scriptProvider != null) {
+        result = scriptProvider.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
+      }
     }
     return result;
   }
