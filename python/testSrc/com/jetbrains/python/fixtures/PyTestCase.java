@@ -71,11 +71,9 @@ import java.util.function.Consumer;
  */
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
-  public static final String PYTHON_2_MOCK_SDK = "2.7";
-  public static final String PYTHON_3_MOCK_SDK = "3.7";
 
-  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
-  protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
+  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON27);
+  protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON37);
 
   protected CodeInsightTestFixture myFixture;
 
@@ -510,7 +508,6 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @NotNull
   protected CommonCodeStyleSettings.IndentOptions getIndentOptions() {
-    //noinspection ConstantConditions
     return getCommonCodeStyleSettings().getIndentOptions();
   }
 
