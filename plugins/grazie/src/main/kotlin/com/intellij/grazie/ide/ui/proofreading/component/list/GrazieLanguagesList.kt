@@ -10,7 +10,6 @@ import com.intellij.grazie.ide.ui.components.utils.ConfigurableListCellRenderer
 import com.intellij.grazie.ide.ui.components.utils.configure
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.toSet
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.ui.*
 import com.intellij.ui.CommonActionsPanel.Buttons
@@ -27,7 +26,7 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
 
   private val decorator: ToolbarDecorator = MyToolbarDecorator(myList)
     .setAddAction { findItemToAdd() }
-    .setAddIcon(LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
+    .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
     .setToolbarPosition(ActionToolbarPosition.BOTTOM)
     .setRemoveAction {
       myList.selectedValuesList.forEach(onLanguageRemoved)

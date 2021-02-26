@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -60,7 +59,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
             .wrapInHtml(VcsBundle.message("settings.issue.navigation.patterns", ApplicationNamesInfo.getInstance().getFullProductName()))),
         BorderLayout.NORTH);
     DefaultActionGroup addGroup = new DefaultActionGroup(new AddYouTrackLinkAction(), new AddJiraLinkAction(), new AddIssueNavigationLinkAction());
-    addGroup.getTemplatePresentation().setIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown));
+    addGroup.getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
     addGroup.getTemplatePresentation().setText(UIBundle.messagePointer("button.text.add.with.ellipsis"));
     addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
 

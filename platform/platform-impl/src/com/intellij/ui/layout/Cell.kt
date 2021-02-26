@@ -511,7 +511,7 @@ abstract class Cell : BaseBuilder {
   }
 
   fun gearButton(vararg actions: AnAction): CellBuilder<JComponent> {
-    val label = JLabel(LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown))
+    val label = JLabel(LayeredIcon.GEAR_WITH_DROPDOWN)
     label.disabledIcon = AllIcons.General.GearPlain
     object : ClickListener() {
       override fun onClick(e: MouseEvent, clickCount: Int): Boolean {

@@ -884,7 +884,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         final ToolbarDecorator wrappedTable = ToolbarDecorator
             .createDecorator(scopesAndScopesAndSeveritiesTable)
             .disableUpDownActions()
-            .setAddIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
+            .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
             .setRemoveActionUpdater(
           __ -> {
             final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();

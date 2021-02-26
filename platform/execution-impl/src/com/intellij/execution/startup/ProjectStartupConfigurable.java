@@ -14,7 +14,6 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -129,7 +128,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     installRenderers();
     myDecorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(this::selectAndAddConfiguration)
-      .setAddIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
+      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {

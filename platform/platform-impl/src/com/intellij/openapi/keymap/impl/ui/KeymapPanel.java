@@ -787,7 +787,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private class EditShortcutAction extends AnAction {
     private EditShortcutAction() {
       super(KeyMapBundle.message("edit.shortcut.action.text"), KeyMapBundle.message("edit.shortcut.action.description"),
-            new LayeredIcon(AllIcons.Actions.Edit, AllIcons.General.Dropdown));
+            LayeredIcon.EDIT_WITH_DROPDOWN);
       registerCustomShortcutSet(CommonShortcuts.ENTER, myActionsTree.getTree());
     }
 

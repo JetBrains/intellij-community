@@ -348,7 +348,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       super(IdeBundle.message("add.scope.popup.title"), true);
       myFromPopup = fromPopup;
       final Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown));
+      presentation.setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
     }
 

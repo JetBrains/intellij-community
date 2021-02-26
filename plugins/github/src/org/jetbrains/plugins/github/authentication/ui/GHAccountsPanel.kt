@@ -74,7 +74,7 @@ internal class GHAccountsPanel(
     addToCenter(ToolbarDecorator.createDecorator(accountList)
                   .disableUpDownActions()
                   .setAddAction { showAddAccountActions(it.preferredPopupPoint ?: getCenterOf(accountList)) }
-                  .setAddIcon(LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
+                  .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
                   .addExtraAction(object : ToolbarDecorator.ElementActionButton(GithubBundle.message("accounts.set.default"),
                                                                                 AllIcons.Actions.Checked) {
                     override fun actionPerformed(e: AnActionEvent) {

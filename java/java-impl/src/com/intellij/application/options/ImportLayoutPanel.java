@@ -100,7 +100,7 @@ public abstract class ImportLayoutPanel extends JPanel {
     add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
 
     ActionGroup addGroup = new DefaultActionGroup(new AddPackageAction(), new AddBlankLineAction());
-    addGroup.getTemplatePresentation().setIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown));
+    addGroup.getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
     addGroup.getTemplatePresentation().setText(JavaBundle.messagePointer("button.add"));
     addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
 

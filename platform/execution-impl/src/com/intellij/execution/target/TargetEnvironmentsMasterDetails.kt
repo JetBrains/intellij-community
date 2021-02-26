@@ -151,7 +151,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   }
 
   private inner class CreateNewTargetGroup : ActionGroup(ExecutionBundle.message("targets.details.action.add.text"),
-                                                         "", LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown)),
+                                                         "", LayeredIcon.ADD_WITH_DROPDOWN),
                                              ActionGroupWithPreselection, DumbAware {
     init {
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree)

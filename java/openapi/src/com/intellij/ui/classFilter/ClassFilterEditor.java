@@ -76,7 +76,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable);
     if (addPatternButtonVisible()) {
       DefaultActionGroup addGroup = new DefaultActionGroup(new AddClassFilterAction(), new AddPatternFilterAction());
-      addGroup.getTemplatePresentation().setIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown));
+      addGroup.getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
       addGroup.getTemplatePresentation().setText(JavaBundle.messagePointer("button.add"));
       addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
       decorator.addExtraAction(new AnActionButton.GroupPopupWrapper(addGroup));

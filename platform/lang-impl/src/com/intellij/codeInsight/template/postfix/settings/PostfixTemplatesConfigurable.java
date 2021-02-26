@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTempla
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -105,7 +104,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     panel.add(ToolbarDecorator.createDecorator(myCheckboxTree)
                               .setAddActionUpdater(e -> canAddTemplate)
                               .setAddAction(button -> myCheckboxTree.addTemplate(button))
-                              .setAddIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
+                              .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
                               .setEditActionUpdater(e -> myCheckboxTree.canEditSelectedTemplate())
                               .setEditAction(button -> myCheckboxTree.editSelectedTemplate())
                               .setRemoveActionUpdater(e -> myCheckboxTree.canRemoveSelectedTemplates())
