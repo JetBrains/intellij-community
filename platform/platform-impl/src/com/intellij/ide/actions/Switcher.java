@@ -767,7 +767,17 @@ public final class Switcher extends DumbAwareAction {
     }
 
     private void closeTabOrToolWindow(@Nullable InputEvent event) {
-      if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) return;
+      if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
+        JTextField field = mySpeedSearch.getSearchField();
+        if (field != null) {
+          String text = field.getText();
+          int length = text == null ? 0 : text.length() - 1;
+          boolean empty = length <= 0;
+          field.setText(empty ? "" : text.substring(0, length));
+          if (empty) mySpeedSearch.hidePopup();
+        }
+        return;
+      }
       final JBList selectedList = getSelectedList();
       final int[] selected = selectedList.getSelectedIndices();
       Arrays.sort(selected);
@@ -1117,10 +1127,6 @@ public final class Switcher extends DumbAwareAction {
       public void propertyChange(@NotNull PropertyChangeEvent evt) {
         if (myComponent.project.isDisposed()) {
           myComponent.cancel();
-          return;
-        }
-        if (StringUtil.isEmpty(getEnteredPrefix())) {
-          hidePopup();
           return;
         }
         ((NameFilteringListModel)myComponent.files.getModel()).refilter();
