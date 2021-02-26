@@ -7,7 +7,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
@@ -166,6 +166,7 @@ class MdnSymbolDocumentationAdapter(private val name: String,
 interface MdnRawSymbolDocumentation {
   val url: String
   val status: Set<MdnApiStatus>?
+  val compatibility: Map<MdnJavaScriptRuntime, String>?
   val doc: String?
   val sections: Map<String, String>?
 }
@@ -192,17 +193,20 @@ data class MdnCssDocumentation(override val lang: String,
 
 data class MdnHtmlElementDocumentation(override val url: String,
                                        override val status: Set<MdnApiStatus>?,
+                                       override val compatibility: Map<MdnJavaScriptRuntime, String>?,
                                        override val doc: String,
                                        override val sections: Map<String, String>?,
                                        val attrs: Map<String, MdnHtmlAttributeDocumentation>?) : MdnRawSymbolDocumentation
 
 data class MdnHtmlAttributeDocumentation(override val url: String,
                                          override val status: Set<MdnApiStatus>?,
+                                         override val compatibility: Map<MdnJavaScriptRuntime, String>?,
                                          override val doc: String?,
                                          override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
 
 data class MdnJsSymbolDocumentation(override val url: String,
                                     override val status: Set<MdnApiStatus>?,
+                                    override val compatibility: Map<MdnJavaScriptRuntime, String>?,
                                     override val doc: String?,
                                     val parameters: Map<String, String>?,
                                     val returns: String?,
@@ -223,17 +227,20 @@ data class MdnJsSymbolDocumentation(override val url: String,
 
 data class MdnCssBasicSymbolDocumentation(override val url: String,
                                           override val status: Set<MdnApiStatus>?,
+                                          override val compatibility: Map<MdnJavaScriptRuntime, String>?,
                                           override val doc: String?,
                                           override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
 
 data class MdnCssAtRuleSymbolDocumentation(override val url: String,
                                            override val status: Set<MdnApiStatus>?,
+                                           override val compatibility: Map<MdnJavaScriptRuntime, String>?,
                                            override val doc: String?,
                                            override val sections: Map<String, String>?,
                                            val properties: Map<String, MdnCssPropertySymbolDocumentation>?) : MdnRawSymbolDocumentation
 
 data class MdnCssPropertySymbolDocumentation(override val url: String,
                                              override val status: Set<MdnApiStatus>?,
+                                             override val compatibility: Map<MdnJavaScriptRuntime, String>?,
                                              override val doc: String?,
                                              val values: Map<String, String>?) : MdnRawSymbolDocumentation {
   override val sections: Map<String, String>?
@@ -259,6 +266,22 @@ enum class MdnApiStatus {
   Experimental,
   StandardTrack,
   Deprecated
+}
+
+enum class MdnJavaScriptRuntime(displayName: String? = null, mdnId: String? = null, val firstVersion: String = "1") {
+  Chrome,
+  ChromeAndroid(displayName = "Chrome Android", mdnId = "chrome_android", firstVersion = "18"),
+  Edge(firstVersion = "12"),
+  Firefox,
+  IE,
+  Opera,
+  Safari,
+  SafariIOS(displayName = "Safari iOS", mdnId = "safari_ios"),
+  Nodejs(displayName = "Node.js", firstVersion = "0.10.0");
+
+  val mdnId: String = mdnId ?: toLowerCase(name)
+  val displayName: String = displayName ?: name
+
 }
 
 enum class MdnCssSymbolKind {
@@ -373,16 +396,31 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
       .append(DocumentationMarkup.DEFINITION_END)
 
   buf.append(DocumentationMarkup.CONTENT_START)
-    .append(StringUtil.capitalize(doc.doc ?: ""))
+    .append(capitalize(doc.doc ?: ""))
     .append(DocumentationMarkup.CONTENT_END)
 
-  val sections = doc.sections
+  val sections = doc.sections?.toMutableMap() ?: mutableMapOf()
+  if (doc.compatibility != null) {
+    sections["Supported by:"] = doc.compatibility!!.entries
+      .joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
+      .ifBlank { "none" }
+  }
+  doc.status?.asSequence()
+    ?.filter { it != MdnApiStatus.StandardTrack }
+    ?.map { Pair(it.name, "") }
+    ?.toMap(sections)
   if (!sections.isNullOrEmpty() && !docOnHover) {
     buf.append(DocumentationMarkup.SECTIONS_START)
     for (entry in sections) {
-      buf.append(DocumentationMarkup.SECTION_HEADER_START).append(entry.key)
-        .append(DocumentationMarkup.SECTION_SEPARATOR).append(entry.value)
-        .append(DocumentationMarkup.SECTION_END)
+      buf.append(DocumentationMarkup.SECTION_HEADER_START)
+        .append(entry.key)
+      if (entry.value.isNotEmpty()) {
+        if (!entry.key.endsWith(":"))
+          buf.append(':')
+        buf.append(DocumentationMarkup.SECTION_SEPARATOR)
+          .append(entry.value)
+      }
+      buf.append(DocumentationMarkup.SECTION_END)
     }
     additionalSectionsContent?.accept(buf)
     buf.append(DocumentationMarkup.SECTIONS_END)

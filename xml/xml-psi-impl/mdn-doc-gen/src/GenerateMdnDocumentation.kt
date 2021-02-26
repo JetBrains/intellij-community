@@ -1,8 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import com.google.gson.JsonPrimitive
+import com.google.gson.*
 import com.google.gson.stream.JsonReader
 import com.intellij.application.options.CodeStyle
 import com.intellij.documentation.mdn.*
@@ -60,6 +57,8 @@ val htmlSpecialMappings = mapOf(
 )
 
 val webApiBlockList = setOf("index")
+
+val jsRuntimesMap = MdnJavaScriptRuntime.values().associateBy { it.mdnId }
 
 val YARI_BUILD_PATH = PathManager.getCommunityHomePath() + "/xml/xml-psi-impl/mdn-doc-gen/work/yari/client/build"
 const val BUILT_LANG = "en-us"
@@ -219,6 +218,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       .let { RawProse(it) }
 
     val status = extractStatus(compatData)
+    val compatibility = extractCompatibilityInfo(compatData)
     val doc = processElementDocumentation(elementDoc)
 
     val documentation = doc.first
@@ -230,13 +230,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                        ?.second
                        ?.takeIf { it.isNotEmpty() }
 
-    return MdnHtmlElementDocumentation(getMdnDocsUrl(dir), status, documentation, properties,
+    return MdnHtmlElementDocumentation(getMdnDocsUrl(dir), status, compatibility, documentation, properties,
                                        buildAttributes(dir, attributesDoc, compatData, commonAttributes))
   }
 
   private fun extractAttributeDocumentation(dir: File): MdnHtmlAttributeDocumentation {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
     return MdnHtmlAttributeDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
+                                         extractCompatibilityInfo(compatData),
                                          extractDescription(indexDataProseValues), null)
   }
 
@@ -246,6 +247,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       return extractInformationFull(dir, blockList = webApiBlockList) { subDir ->
         extractJavascriptDocumentation(subDir, "$name.${subDir.name}")
       }.toList() + Pair(name, MdnJsSymbolDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
+                                                       extractCompatibilityInfo(compatData),
                                                        extractDescription(indexDataProseValues),
                                                        extractParameters(indexDataProseValues),
                                                        extractReturns(indexDataProseValues)?.patch(),
@@ -301,14 +303,15 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
     val url = getMdnDocsUrl(dir)
     val status = extractStatus(compatData)
+    val compatibility = extractCompatibilityInfo(compatData)
     val description = extractDescription(indexDataProseValues)
     val dirName = dir.name
     return when {
       dirName.startsWith('_') || dirName.endsWith("()") ->
-        MdnCssBasicSymbolDocumentation(url, status, description, null)
+        MdnCssBasicSymbolDocumentation(url, status, compatibility, description, null)
       dirName.startsWith('@') ->
         MdnCssAtRuleSymbolDocumentation(
-          url, status, description, null,
+          url, status, compatibility, description, null,
           extractInformationFull(dir,
                                  { !it.contains('_') },
                                  { docDir ->
@@ -323,7 +326,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         )
       else ->
         MdnCssPropertySymbolDocumentation(
-          url, status, description, extractPropertyValues(indexDataProseValues))
+          url, status, compatibility, description, extractPropertyValues(indexDataProseValues))
     }
   }
 
@@ -378,7 +381,10 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     }.toMap()
     val compatAttrs = elementCompatData?.entrySet()?.asSequence()
                         ?.filter { data -> !data.key.any { it == '_' || it == '-' } }
-                        ?.map { Pair(it.key.toLowerCase(), extractStatus(it.value.asJsonObject)) }
+                        ?.map {
+                          Pair(it.key.toLowerCase(),
+                               Pair(extractStatus(it.value.asJsonObject), extractCompatibilityInfo(it.value.asJsonObject)))
+                        }
                         ?.toMap() ?: emptyMap()
 
     val tagName = tagDir.name
@@ -391,7 +397,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     return docAttrs.keys.asSequence()
       .plus(compatAttrs.keys).distinct()
       .map { StringUtil.toLowerCase(it) }
-      .map { Pair(it, MdnHtmlAttributeDocumentation(urlPrefix + it, compatAttrs[it], docAttrs[it], null)) }
+      .map { Pair(it, MdnHtmlAttributeDocumentation(urlPrefix + it, compatAttrs[it]?.first, compatAttrs[it]?.second, docAttrs[it], null)) }
       .sortedBy { it.first }
       .toMap()
       .takeIf { it.isNotEmpty() }
@@ -643,6 +649,68 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       ?.map { MdnApiStatus.valueOf(it.key.toPascalCase()) }
       ?.toSet()
 
+  @Suppress("UNCHECKED_CAST")
+  private fun extractCompatibilityInfo(compatData: JsonObject?): Map<MdnJavaScriptRuntime, String>? =
+    compatData?.get("__compat")
+      ?.castSafelyTo<JsonObject>()
+      ?.getAsJsonObject("support")
+      ?.entrySet()
+      ?.asSequence()
+      ?.mapNotNull { entry ->
+        jsRuntimesMap[entry.key]?.let { runtime ->
+          Pair(runtime, entry.value?.let { extractBrowserVersion(runtime, it) })
+        }
+      }
+      ?.toMap()
+      ?.takeIf { map -> map.values.any { it == null || it.isNotEmpty() } }
+      ?.filterValues { it != null } as Map<MdnJavaScriptRuntime, String>?
+
+  private fun extractBrowserVersion(runtime: MdnJavaScriptRuntime, versionInfo: JsonElement): String? {
+    fun extractVersion(element: JsonElement?): String? {
+      if (element == null || element.isJsonNull)
+        return null
+      else if (element is JsonPrimitive) {
+        if (element.isBoolean) {
+          return if (element.asBoolean) "" else null
+        }
+        else if (element.isString) {
+          val value = element.asString
+          return when {
+            value.isEmpty() -> null
+            value == runtime.firstVersion -> ""
+            else -> value.removePrefix("≤")
+          }
+        }
+      }
+      throw IllegalStateException(element.toString())
+    }
+
+    val versions = (if (versionInfo is JsonArray) versionInfo.asSequence() else sequenceOf(versionInfo))
+      .onEach { if (it !is JsonObject) throw IllegalStateException(it.toString()) }
+      .filterIsInstance<JsonObject>()
+      .filter { !it.has("prefix") && !it.has("flags") && !it.has("alternative_name") && !it.has("partial_implementation") }
+      .map {
+        Triple(extractVersion(it.get("version_added")), extractVersion(it.get("version_removed")), it.has("notes"))
+      }
+      .filter { it.first != null && it.second == null }
+      .sortedBy { it.first!! }
+      .toList()
+    if (versions.size > 1) {
+      if (versions.all { it.third }) {
+        return versions.joinToString(",") { it.first!! + "*" }
+      }
+      val withoutNotes = versions.filter { !it.third }
+      if (withoutNotes.size == 1) {
+        return withoutNotes[0].first!!
+      }
+      throw IllegalStateException(versionInfo.toString())
+    }
+    else if (versions.size == 1) {
+      return versions[0].first
+    }
+    return null
+  }
+
   private fun createDtsMdnIndex(symbols: Map<String, MdnJsSymbolDocumentation>): Map<String, String> {
     val context = JSCorePredefinedLibrariesProvider.getAllJSPredefinedLibraryFiles()
       .find { it.name == "lib.dom.d.ts" }
@@ -701,7 +769,7 @@ private fun String.patchProse(): String =
   replace("/en-US/docs", MDN_DOCS_URL_PREFIX, true)
     .replace("&apos;", "'")
     .replace("&quot;", "\"")
-    .replace("&nbsp;"," ")
+    .replace("&nbsp;", " ")
     .also { fixedProse ->
       Regex("&(?!lt|gt|amp)[a-z]*;").find(fixedProse)?.let {
         throw Exception("Unknown entity found in prose: ${it.value}")
