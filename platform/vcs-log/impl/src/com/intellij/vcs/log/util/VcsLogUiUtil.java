@@ -26,7 +26,6 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
-import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
@@ -208,7 +207,7 @@ public final class VcsLogUiUtil {
       CommitId commitId = (CommitId)value;
       ActionCallback callback = new ActionCallback();
 
-      ListenableFuture<Boolean> future = ((VcsLogImpl)myUi.getVcsLog()).jumpToCommit(commitId.getHash(), commitId.getRoot());
+      ListenableFuture<Boolean> future = (ListenableFuture<Boolean>)myUi.getVcsLog().jumpToCommit(commitId.getHash(), commitId.getRoot());
 
       Futures.addCallback(future, new FutureCallback<>() {
         @Override

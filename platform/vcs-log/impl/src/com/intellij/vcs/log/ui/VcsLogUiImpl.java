@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -116,7 +116,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       @Override
       public void run() {
         getFilterUi().clearFilters();
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false),
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
                        pack -> pack.getFilters().isEmpty());
       }
     });
@@ -127,7 +127,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
         public void run() {
           MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());
           if (ui != null) {
-            VcsLogUtil.invokeOnChange(ui, () -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false),
+            VcsLogUtil.invokeOnChange(ui, () -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
                                       pack -> pack.getFilters().isEmpty());
           }
         }

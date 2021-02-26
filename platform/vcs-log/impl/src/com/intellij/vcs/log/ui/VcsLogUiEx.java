@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -62,5 +62,6 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   <T> void jumpTo(@NotNull T commitId,
                   @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
                   @NotNull SettableFuture<? super Boolean> future,
-                  boolean silently);
+                  boolean silently,
+                  boolean focus);
 }

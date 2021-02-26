@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -134,7 +134,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                                          getCommitPresentation(commitId), myPath.getName());
       showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false));
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
       });
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -483,11 +483,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES) && myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES);
   }
 
-  public void jumpToRow(int rowIndex) {
+  public void jumpToRow(int rowIndex, boolean focus) {
     if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
       setRowSelectionInterval(rowIndex, rowIndex);
-      if (!hasFocus()) {
+      if (focus && !hasFocus()) {
         IdeFocusManager.getInstance(myLogData.getProject()).requestFocus(this, true);
       }
     }
