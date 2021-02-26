@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
@@ -30,6 +31,7 @@ import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.*;
 import java.io.File;
@@ -81,7 +83,9 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
-    if (!(SystemInfo.isJetBrainsJvm || PathManager.isUnderHomeDirectory(SystemProperties.getJavaHome()))) {
+    String jreHome = SystemProperties.getJavaHome();
+    if (!(PathManager.isUnderHomeDirectory(jreHome) || isModernJBR())) {
+      // the JRE is non-bundled and is either non-JB or older than bundled
       NotificationAction switchAction = null;
 
       if ((SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
@@ -105,9 +109,18 @@ final class SystemHealthMonitor extends PreloadingActivity {
         }
       }
 
-      String current = JavaVersion.current() + " by " + SystemInfo.JAVA_VENDOR;
-      showNotification("bundled.jre.version.message", switchAction, current);
+      jreHome = StringUtil.trimEnd(jreHome, "/Contents/Home");
+      showNotification("bundled.jre.version.message", switchAction, JavaVersion.current(), SystemInfo.JAVA_VENDOR, jreHome);
     }
+  }
+
+  private static boolean isModernJBR() {
+    if (!SystemInfo.isJetBrainsJvm) {
+      return false;
+    }
+    // when can't detect a JBR version, give a user the benefit of the doubt
+    JdkVersionDetector.JdkVersionInfo jbrVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(PathManager.getBundledRuntimePath());
+    return jbrVersion == null || JavaVersion.current().compareTo(jbrVersion.version) >= 0;
   }
 
   private static boolean isJbrOperational() {
