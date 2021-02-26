@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
@@ -71,15 +70,8 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
     }
 
     protected fun addFile(text: String, fileName: String, dirName: String?): VirtualFile {
-        return runWriteAction {
-            val root = LightPlatformTestCase.getSourceRoot()!!
-            val virtualDir = dirName?.let {
-                root.findChild(it) ?: root.createChildDirectory(null, it)
-            } ?: root
-            val virtualFile = virtualDir.createChildData(null, fileName)
-            virtualFile.getOutputStream(null)!!.writer().use { it.write(text) }
-            virtualFile
-        }
+        val filePath = (if (dirName != null) "$dirName/" else "") + fileName
+        return myFixture.addFileToProject(filePath, text).virtualFile
     }
 
     protected fun deleteFile(virtualFile: VirtualFile) {
