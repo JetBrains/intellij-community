@@ -108,20 +108,24 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       background = UIUtil.getListBackground()
       border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
                                                   JBUI.Borders.empty(8))
-      font = UIUtil.getLabelFont()
       emptyText.text = GithubBundle.message("pull.request.create.title")
       lineWrap = true
     }.also {
+      GHUIUtil.overrideUIDependentProperty(it) {
+        font = UIUtil.getLabelFont()
+      }
       GHUIUtil.registerFocusActions(it)
     }
 
     val descriptionField = JBTextArea(descriptionDocument).apply {
       background = UIUtil.getListBackground()
       border = JBUI.Borders.empty(8, 8, 0, 8)
-      font = UIUtil.getLabelFont()
       emptyText.text = GithubBundle.message("pull.request.create.description")
       lineWrap = true
     }.also {
+      GHUIUtil.overrideUIDependentProperty(it) {
+        font = UIUtil.getLabelFont()
+      }
       GHUIUtil.registerFocusActions(it)
     }
     descriptionDocument.addAndInvokeEnabledStateListener {
