@@ -64,15 +64,15 @@ bind '"\e\e[D": backward-word'
 bind '"\e\O[C":forward-word'
 bind '"\e\O[D": backward-word'
 
-if [ -n "$JEDITERM_USER_RCFILE" ]
+if [ -n "${JEDITERM_USER_RCFILE-}" ]
 then
   source "$JEDITERM_USER_RCFILE"
   unset JEDITERM_USER_RCFILE
 fi
 
-if [ -n "$JEDITERM_SOURCE" ]
+if [ -n "${JEDITERM_SOURCE-}" ]
 then
-  source "$JEDITERM_SOURCE" $JEDITERM_SOURCE_ARGS
+  source "$JEDITERM_SOURCE" ${JEDITERM_SOURCE_ARGS-}
   unset JEDITERM_SOURCE
   unset JEDITERM_SOURCE_ARGS
 fi
