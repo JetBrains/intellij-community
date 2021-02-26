@@ -31,8 +31,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -43,9 +41,8 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
@@ -86,7 +83,6 @@ import static javax.swing.KeyStroke.getKeyStroke;
 public final class Switcher extends DumbAwareAction {
   public static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
-  @NonNls private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
 
   private static final int MINIMUM_HEIGHT = JBUIScale.scale(400);
   private static final int MINIMUM_WIDTH = JBUIScale.scale(500);
@@ -134,10 +130,8 @@ public final class Switcher extends DumbAwareAction {
     final JBList<Object> toolWindows;
     final JBList<FileInfo> files;
     final ToolWindowManager toolWindowManager;
-    JBCheckBox myShowOnlyEditedFilesCheckBox;
+    final JCheckBox cbShowOnlyEditedFiles;
     final JLabel pathLabel = new JLabel(" ");
-    final JPanel myTopPanel;
-    final JPanel descriptions;
     final Project project;
     final boolean pinned;
     final boolean wasAltDown;
@@ -261,6 +255,8 @@ public final class Switcher extends DumbAwareAction {
       boolean onlyEdited = Boolean.TRUE.equals(onlyEditedFiles);
       myTitle = title;
       mySpeedSearch = pinned ? new SwitcherSpeedSearch(this) : null;
+      cbShowOnlyEditedFiles = !pinned || !Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together")
+                                      ? null : new JCheckBox(IdeBundle.message("recent.files.checkbox.label"));
 
       setBorder(JBUI.Borders.empty());
       setBackground(JBColor.background());
@@ -268,16 +264,39 @@ public final class Switcher extends DumbAwareAction {
 
       final Font font = pathLabel.getFont();
       pathLabel.setFont(font.deriveFont(Math.max(10f, font.getSize() - 4f)));
-
-      descriptions = new JPanel(new BorderLayout());
-
       pathLabel.setBorder(JBUI.CurrentTheme.Advertiser.border());
       pathLabel.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
       pathLabel.setBackground(JBUI.CurrentTheme.Advertiser.background());
       pathLabel.setOpaque(true);
 
-      descriptions.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
-      descriptions.add(pathLabel, BorderLayout.CENTER);
+      BorderLayoutPanel footer = new BorderLayoutPanel();
+      footer.setBackground(JBUI.CurrentTheme.Advertiser.background());
+      footer.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
+      footer.addToCenter(pathLabel);
+
+      JPanel header = new JPanel(new HorizontalLayout(5));
+      header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
+      header.setBorder(JBUI.Borders.empty(4, 8));
+      header.add(HorizontalLayout.LEFT, RelativeFont.BOLD.install(new JLabel(title)));
+
+      if (cbShowOnlyEditedFiles != null) {
+        cbShowOnlyEditedFiles.setOpaque(false);
+        cbShowOnlyEditedFiles.setSelected(onlyEdited);
+        cbShowOnlyEditedFiles.addItemListener(this::updateFilesByCheckBox);
+        header.add(HorizontalLayout.RIGHT, cbShowOnlyEditedFiles);
+
+        WindowMoveListener moveListener = new WindowMoveListener(header);
+        header.addMouseListener(moveListener);
+        header.addMouseMotionListener(moveListener);
+
+        ShortcutSet shortcuts = getActiveKeymapShortcuts("SwitcherRecentEditedChangedToggleCheckBox");
+        if (shortcuts.getShortcuts().length > 0) {
+          JLabel label = new JLabel(KeymapUtil.getShortcutsText(shortcuts.getShortcuts()));
+          label.setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
+          header.add(HorizontalLayout.RIGHT, label);
+        }
+      }
+
       toolWindowManager = ToolWindowManager.getInstance(project);
       CollectionListModel<Object> twModel = new CollectionListModel<>();
       List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
@@ -304,7 +323,7 @@ public final class Switcher extends DumbAwareAction {
 
       toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, pinned, showEdited()));
+      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, pinned, this::isOnlyEditedFilesShown));
       toolWindows.addKeyListener(onKeyRelease);
       ScrollingUtil.installActions(toolWindows);
       ListHoverListener.DEFAULT.addTo(toolWindows);
@@ -417,25 +436,10 @@ public final class Switcher extends DumbAwareAction {
       myClickListener.installOn(files);
       ScrollingUtil.ensureSelectionExists(files);
 
-      myShowOnlyEditedFilesCheckBox = new MyCheckBox(TOGGLE_CHECK_BOX_ACTION_ID, onlyEdited);
-      myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox,
-                                  isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title,
-                                  pinned);
-      if (isCheckboxMode()) {
-        myShowOnlyEditedFilesCheckBox.addItemListener(e -> setShowOnlyEditedFiles(myShowOnlyEditedFilesCheckBox.isSelected()));
-        myShowOnlyEditedFilesCheckBox.addItemListener(e -> toolWindows.repaint());
-      }
-      else {
-        myShowOnlyEditedFilesCheckBox.setEnabled(false);
-        myShowOnlyEditedFilesCheckBox.setVisible(false);
-      }
-
-      this.add(myTopPanel, BorderLayout.NORTH);
-      this.add(toolWindows, BorderLayout.WEST);
       if (filesModel.getSize() > 0) {
         files.setAlignmentY(1f);
         final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
-        pane.setPreferredSize(new Dimension(Math.max(myTopPanel.getPreferredSize().width - toolWindows.getPreferredSize().width,
+        pane.setPreferredSize(new Dimension(Math.max(header.getPreferredSize().width - toolWindows.getPreferredSize().width,
                                                      files.getPreferredSize().width),
                                             20 * 20));
         Border border = JBUI.Borders.merge(
@@ -444,13 +448,15 @@ public final class Switcher extends DumbAwareAction {
           true
         );
         pane.setBorder(border);
-        this.add(pane, BorderLayout.CENTER);
+        addToCenter(pane);
         int selectionIndex = getFilesSelectedIndex(project, files, event == null || !event.isShiftDown());
         if (selectionIndex > -1) {
           files.setSelectedIndex(selectionIndex);
         }
       }
-      this.add(descriptions, BorderLayout.SOUTH);
+      addToTop(header);
+      addToLeft(toolWindows);
+      addToBottom(footer);
 
       files.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
       toolWindows.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
@@ -517,9 +523,8 @@ public final class Switcher extends DumbAwareAction {
       project.putUserData(SWITCHER_KEY, null);
     }
 
-    @NotNull
-    private Supplier<Boolean> showEdited() {
-      return () -> myShowOnlyEditedFilesCheckBox != null && myShowOnlyEditedFilesCheckBox.isSelected();
+    private boolean isOnlyEditedFilesShown() {
+      return cbShowOnlyEditedFiles != null && cbShowOnlyEditedFiles.isSelected();
     }
 
     @NotNull
@@ -529,7 +534,7 @@ public final class Switcher extends DumbAwareAction {
           return ((ToolWindow)value).getStripeTitle();
         }
         if (value == RECENT_LOCATIONS) {
-          return getRecentLocationsLabel(showEdited());
+          return getRecentLocationsLabel(this::isOnlyEditedFilesShown);
         }
 
         throw new IllegalStateException();
@@ -679,32 +684,6 @@ public final class Switcher extends DumbAwareAction {
 
     private static boolean isTheSameTab(EditorWindow currentWindow, VirtualFile currentFile, FileInfo fileInfo) {
       return fileInfo.first.equals(currentFile) && (fileInfo.second == null || fileInfo.second.equals(currentWindow));
-    }
-
-    @NotNull
-    private static JPanel createTopPanel(@NotNull JBCheckBox showOnlyEditedFilesCheckBox,
-                                         @NotNull @NlsContexts.Label String title,
-                                         boolean isMovable) {
-      JPanel topPanel = new CaptionPanel();
-      JBLabel titleLabel = new JBLabel(title);
-      titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
-      topPanel.add(titleLabel, BorderLayout.WEST);
-      topPanel.add(showOnlyEditedFilesCheckBox, BorderLayout.EAST);
-
-      Dimension size = topPanel.getPreferredSize();
-      size.height = JBUIScale.scale(29);
-      size.width = titleLabel.getPreferredSize().width + showOnlyEditedFilesCheckBox.getPreferredSize().width + JBUIScale.scale(50);
-      topPanel.setPreferredSize(size);
-      topPanel.setMinimumSize(size);
-      topPanel.setBorder(JBUI.Borders.empty(5, 8));
-
-      if (isMovable) {
-        WindowMoveListener moveListener = new WindowMoveListener(topPanel);
-        topPanel.addMouseListener(moveListener);
-        topPanel.addMouseMotionListener(moveListener);
-      }
-
-      return topPanel;
     }
 
     private static void  addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
@@ -930,15 +909,8 @@ public final class Switcher extends DumbAwareAction {
       return files.hasFocus() ? files : toolWindows.hasFocus() ? toolWindows : preferable;
     }
 
-    boolean isCheckboxMode() {
-      return pinned && Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together");
-    }
-
-    void setShowOnlyEditedFiles(boolean onlyEdited) {
-      if (myShowOnlyEditedFilesCheckBox.isSelected() != onlyEdited) {
-        myShowOnlyEditedFilesCheckBox.setSelected(onlyEdited);
-      }
-
+    private void updateFilesByCheckBox(@NotNull ItemEvent event) {
+      boolean onlyEdited = ItemEvent.SELECTED == event.getStateChange();
       final boolean listWasSelected = files.getSelectedIndex() != -1;
 
       final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
@@ -965,7 +937,7 @@ public final class Switcher extends DumbAwareAction {
         tryToOpenFileSearch(e, searchQuery);
       }
       else if (values.get(0) == RECENT_LOCATIONS) {
-        RecentLocationsAction.showPopup(project, myShowOnlyEditedFilesCheckBox.isSelected());
+        RecentLocationsAction.showPopup(project, isOnlyEditedFilesShown());
 
       } else if (values.get(0) instanceof ToolWindow) {
         ToolWindow toolWindow = (ToolWindow)values.get(0);
@@ -1163,26 +1135,6 @@ public final class Switcher extends DumbAwareAction {
         }
         refreshSelection();
       }
-    }
-  }
-
-  private static final class MyCheckBox extends JBCheckBox {
-    private MyCheckBox(@NotNull String actionId, boolean selected) {
-      super(layoutText(actionId), selected);
-      setOpaque(false);
-      setFocusable(false);
-    }
-
-    private static @NlsContexts.Checkbox String layoutText(@NotNull String actionId) {
-      HtmlBuilder html = new HtmlBuilder().append(IdeBundle.message("recent.files.checkbox.label"));
-      ShortcutSet shortcuts = getActiveKeymapShortcuts(actionId);
-      if (shortcuts.getShortcuts().length > 0) {
-        html
-          .append(" ")
-          .append(HtmlChunk.font(RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR)
-                    .addText(KeymapUtil.getShortcutsText(shortcuts.getShortcuts())));
-      }
-      return html.wrapWithHtmlBody().toString();
     }
   }
 

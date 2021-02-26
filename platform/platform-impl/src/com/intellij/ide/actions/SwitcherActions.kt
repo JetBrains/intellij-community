@@ -38,10 +38,10 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
 
 internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
   private fun getCheckBox(event: AnActionEvent) =
-    Switcher.SWITCHER_KEY.get(event.project)?.myShowOnlyEditedFilesCheckBox
+    Switcher.SWITCHER_KEY.get(event.project)?.cbShowOnlyEditedFiles
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabledAndVisible = getCheckBox(event)?.isEnabled == true
+    event.presentation.isEnabledAndVisible = getCheckBox(event) != null
   }
 
   override fun isSelected(event: AnActionEvent) = getCheckBox(event)?.isSelected ?: false
