@@ -61,7 +61,7 @@ val htmlSpecialMappings = mapOf(
 
 val webApiBlockList = setOf("index")
 
-const val YARI_BUILD_PATH = "/Users/piotr.tomiak/WebstormProjects/yari/client/build"
+val YARI_BUILD_PATH = PathManager.getCommunityHomePath() + "/xml/xml-psi-impl/mdn-doc-gen/work/yari/client/build"
 const val BUILT_LANG = "en-us"
 const val WEB_DOCS = "docs/web"
 const val MDN_DOCS_URL_PREFIX = "\$MDN_URL\$"
@@ -70,7 +70,7 @@ const val OUTPUT_DIR = "xml/xml-psi-impl/gen/com/intellij/documentation/mdn/"
 /* It's so much easier to run a test, than to setup the whole IJ environment */
 class GenerateMdnDocumentation : BasePlatformTestCase() {
 
-  /* Run these tests to generate documentation */
+  /* Run these tests to generate documentation. Prepare MDN documentation repositories with `prepare-mdn.sh` */
   fun testGenHtml() {
     val attributes = extractInformationSimple("html/global_attributes", this::extractAttributeDocumentation)
     outputJson(MdnApiNamespace.Html.name, mapOf(
