@@ -1115,9 +1115,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractHighLevelQuickFixTest> {
             val pattern = "^([\\w\\-_]+)\\.kt$".toRegex()
             model("quickfix/abstract", pattern = pattern)
+            model("quickfix/expressions", pattern = pattern)
             model("quickfix/lateinit", pattern = pattern)
             model("quickfix/modifiers", pattern = pattern, isRecursive = false)
             model("quickfix/override/typeMismatchOnOverride", pattern = pattern, isRecursive = false)
+            model("quickfix/replaceWithSafeCall", pattern = pattern)
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
         }
 
