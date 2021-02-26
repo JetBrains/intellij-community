@@ -27,6 +27,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;

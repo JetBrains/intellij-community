@@ -59,6 +59,8 @@ import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter;
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
@@ -68,8 +70,6 @@ import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -78,7 +78,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -87,7 +86,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
@@ -105,6 +103,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private volatile RegisteredIndexes myRegisteredIndexes;
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
+
+  private final ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
 
   // findExtensionOrFail is thread safe
   private final NotNullLazyValue<ChangedFilesCollector> myChangedFilesCollector =
@@ -126,7 +126,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
-  private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
   private final IntSet myStaleIds = new IntOpenHashSet();
 
   private final Lock myReadLock;
@@ -141,7 +140,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ScheduledFuture<?> flushingFuture = myFlushingFuture;
     LOG.assertTrue(flushingFuture == null || flushingFuture.isCancelled() || flushingFuture.isDone());
     LOG.assertTrue(myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty());
-    LOG.assertTrue(myProjectsBeingUpdated.isEmpty());
     LOG.assertTrue(!getChangedFilesCollector().isUpdateInProgress());
     LOG.assertTrue(myTransactionMap.isEmpty());
 
@@ -210,6 +208,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ID.unloadId(extension.getName());
       }
     }, null);
+
+    myIndexableFilesFilterHolder = new ProjectIndexableFilesFilterHolder(this);
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -766,7 +766,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     throw IndexNotReadyException.create(project == null ? null : DumbServiceImpl.getInstance(project).getDumbModeStartTrace());
   }
 
-  private static final Key<SoftReference<ProjectIndexableFilesFilter>> ourProjectFilesSetKey = Key.create("projectFiles");
 
   @TestOnly
   public void cleanupForNextTest() {
@@ -788,11 +787,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myFilesModCount.incrementAndGet();
   }
 
+  public int getFilesModCount() {
+    return myFilesModCount.get();
+  }
+
   void filesUpdateStarted(Project project) {
     myUnindexedFilesUpdaterListener.updateStarted(project);
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
-    myProjectsBeingUpdated.add(project);
     incrementFilesModCount();
   }
 
@@ -813,59 +815,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void filesUpdateFinished(@NotNull Project project) {
-    myProjectsBeingUpdated.remove(project);
     incrementFilesModCount();
     myUnindexedFilesUpdaterListener.updateFinished(project);
   }
 
-  private final Lock myCalcIndexableFilesLock = new ReentrantLock();
 
   @Override
   @Nullable
   public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
-    if (project == null || project.isDefault() || getChangedFilesCollector().isUpdateInProgress()) return null;
-    if (myProjectsBeingUpdated.contains(project) || !UnindexedFilesUpdater.isProjectContentFullyScanned(project)) return null;
-
-    SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
-    ProjectIndexableFilesFilter data = com.intellij.reference.SoftReference.dereference(reference);
-    int currentFileModCount = myFilesModCount.get();
-    if (data != null && data.getModificationCount() == currentFileModCount) return data;
-
-    if (myCalcIndexableFilesLock.tryLock()) { // make best effort for calculating filter
-      try {
-        reference = project.getUserData(ourProjectFilesSetKey);
-        data = com.intellij.reference.SoftReference.dereference(reference);
-        if (data != null) {
-          if (data.getModificationCount() == currentFileModCount) {
-            return data;
-          }
-        }
-        else if (!IndexUpToDateCheckIn.isUpToDateCheckEnabled()) {
-          return null;
-        }
-
-        long start = System.currentTimeMillis();
-
-        IntList fileSet = new IntArrayList();
-        iterateIndexableFiles(fileOrDir -> {
-          if (fileOrDir instanceof VirtualFileWithId) {
-            fileSet.add(((VirtualFileWithId)fileOrDir).getId());
-          }
-          return true;
-        }, project, null);
-        ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(fileSet, currentFileModCount);
-        project.putUserData(ourProjectFilesSetKey, new SoftReference<>(filter));
-
-        long finish = System.currentTimeMillis();
-        LOG.debug(fileSet.size() + " files iterated in " + (finish - start) + " ms");
-
-        return filter;
-      }
-      finally {
-        myCalcIndexableFilesLock.unlock();
-      }
-    }
-    return null; // ok, no filtering
+    return myIndexableFilesFilterHolder.projectIndexableFiles(project);
   }
 
   @Nullable

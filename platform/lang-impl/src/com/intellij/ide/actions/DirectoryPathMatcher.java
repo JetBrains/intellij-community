@@ -20,7 +20,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.ProjectIndexableFilesFilter;
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

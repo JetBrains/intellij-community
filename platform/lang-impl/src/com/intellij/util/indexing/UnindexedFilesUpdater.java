@@ -39,6 +39,7 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -48,9 +49,9 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class UnindexedFilesUpdater extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
@@ -286,7 +287,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     });
   }
 
-  static boolean isProjectContentFullyScanned(@NotNull Project project) {
+  public static boolean isProjectContentFullyScanned(@NotNull Project project) {
     return Boolean.TRUE.equals(project.getUserData(CONTENT_SCANNED));
   }
 
