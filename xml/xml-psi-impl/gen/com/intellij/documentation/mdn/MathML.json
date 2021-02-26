@@ -56,14 +56,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/maction#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color and also the fraction line color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color and also the fraction line color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "selection": {
           "url": "$MDN_URL$/web/mathml/element/maction#attr-selection",
@@ -116,14 +116,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/math#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mode": {
           "url": "$MDN_URL$/web/mathml/element/math#attr-mode",
@@ -135,9 +135,6 @@
         },
         "overflow": {
           "url": "$MDN_URL$/web/mathml/element/math#attr-overflow",
-          "status": [
-            "StandardTrack"
-          ],
           "doc": "Specifies how an expression behaves if it is too long to fit in the allowed width.\n<br>\nPossible values are:\n<code>linebreak</code>\n(default),\n<code>scroll</code>\n,\n<code>elide</code>\n,\n<code>truncate</code>\n,\n<code>scale</code>\n."
         },
         "style": {
@@ -177,21 +174,21 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/menclose#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "notation": {
           "url": "$MDN_URL$/web/mathml/element/menclose#attr-notation",
           "status": [
             "StandardTrack"
           ],
-          "doc": "A list of notations, separated by white space, to apply to the child elements. The symbols are each drawn as if the others are not present, and therefore may overlap. Possible values are:\n<table class=\"standard-table\">\n<tbody>\n<tr>\n<th>Value</th>\n<th>Sample Rendering</th>\n<th>Rendering in<br>\nyour browser</th>\n<th>Description</th>\n</tr>\n<tr>\n<td><code>longdiv</code> (default)</td>\n<td><math> <menclose notation=\"longdiv\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>long division symbol</td>\n</tr>\n<tr>\n<td><code>actuarial</code></td>\n<td><math> <menclose notation=\"actuarial\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td><a class=\"external\" href=\"http://en.wikipedia.org/wiki/Actuarial_notation\" >actuarial symbol</a></td>\n</tr>\n<tr>\n<td><code>radical</code> 👎</td>\n<td><math> <menclose notation=\"radical\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>square root symbol. Deprecated. Use <code><a href=\"$MDN_URL$/Web/MathML/Element/msqrt\" >&lt;msqrt&gt;</a></code> instead.</td>\n</tr>\n<tr>\n<td><code>box</code></td>\n<td><math> <menclose notation=\"box\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>box</td>\n</tr>\n<tr>\n<td><code>roundedbox</code></td>\n<td><math> <menclose notation=\"roundedbox\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>rounded box</td>\n</tr>\n<tr>\n<td><code>circle</code></td>\n<td><math> <menclose notation=\"circle\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>circle</td>\n</tr>\n<tr>\n<td><code>left</code></td>\n<td><math> <menclose notation=\"left\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line to the left of the contents</td>\n</tr>\n<tr>\n<td><code>right</code></td>\n<td><math> <menclose notation=\"right\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line to the right of the contents</td>\n</tr>\n<tr>\n<td><code>top</code></td>\n<td><math> <menclose notation=\"top\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line above of the contents</td>\n</tr>\n<tr>\n<td><code>bottom</code></td>\n<td><math> <menclose notation=\"bottom\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line below of the contents</td>\n</tr>\n<tr>\n<td><code>updiagonalstrike</code></td>\n<td><math> <menclose notation=\"updiagonalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>strikeout line through contents from lower left to upper right</td>\n</tr>\n<tr>\n<td><code>downdiagonalstrike</code></td>\n<td><math> <menclose notation=\"downdiagonalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>strikeout line through contents from upper left to lower right</td>\n</tr>\n<tr>\n<td><code>verticalstrike</code></td>\n<td><math> <menclose notation=\"verticalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>vertical strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>horizontalstrike</code></td>\n<td><math> <menclose notation=\"horizontalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>horizontal strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>madruwb</code></td>\n<td><math> <menclose notation=\"madruwb\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td><a class=\"external\" href=\"http://en.wikipedia.org/wiki/Modern_Arabic_mathematical_notation#Arithmetic_and_algebra\" >Arabic factorial symbol</a></td>\n</tr>\n<tr>\n<td><code>updiagonalarrow</code></td>\n<td><math> <menclose notation=\"updiagonalarrow\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>diagonal arrow</td>\n</tr>\n<tr>\n<td><code>phasorangle</code></td>\n<td><math> <menclose notation=\"phasorangle\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>phasor angle</td>\n</tr>\n</tbody>\n</table>"
+          "doc": "A list of notations, separated by white space, to apply to the child elements. The symbols are each drawn as if the others are not present, and therefore may overlap. Possible values are:\n<table class=\"standard-table\">\n<tbody>\n<tr>\n<th>Value</th>\n<th>Sample Rendering</th>\n<th>Rendering in<br>\nyour browser</th>\n<th>Description</th>\n</tr>\n<tr>\n<td><code>longdiv</code> (default)</td>\n<td><math> <menclose notation=\"longdiv\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>long division symbol</td>\n</tr>\n<tr>\n<td><code>actuarial</code></td>\n<td><math> <menclose notation=\"actuarial\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td><a href=\"https://en.wikipedia.org/wiki/Actuarial_notation\" class=\"external\" rel=\" noopener\">actuarial symbol</a></td>\n</tr>\n<tr>\n<td><code>radical</code> 👎</td>\n<td><math> <menclose notation=\"radical\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>square root symbol. Deprecated. Use <code><a href=\"$MDN_URL$/Web/MathML/Element/msqrt\" >&lt;msqrt&gt;</a></code> instead.</td>\n</tr>\n<tr>\n<td><code>box</code></td>\n<td><math> <menclose notation=\"box\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>box</td>\n</tr>\n<tr>\n<td><code>roundedbox</code></td>\n<td><math> <menclose notation=\"roundedbox\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>rounded box</td>\n</tr>\n<tr>\n<td><code>circle</code></td>\n<td><math> <menclose notation=\"circle\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>circle</td>\n</tr>\n<tr>\n<td><code>left</code></td>\n<td><math> <menclose notation=\"left\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line to the left of the contents</td>\n</tr>\n<tr>\n<td><code>right</code></td>\n<td><math> <menclose notation=\"right\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line to the right of the contents</td>\n</tr>\n<tr>\n<td><code>top</code></td>\n<td><math> <menclose notation=\"top\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line above of the contents</td>\n</tr>\n<tr>\n<td><code>bottom</code></td>\n<td><math> <menclose notation=\"bottom\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line below of the contents</td>\n</tr>\n<tr>\n<td><code>updiagonalstrike</code></td>\n<td><math> <menclose notation=\"updiagonalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>strikeout line through contents from lower left to upper right</td>\n</tr>\n<tr>\n<td><code>downdiagonalstrike</code></td>\n<td><math> <menclose notation=\"downdiagonalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>strikeout line through contents from upper left to lower right</td>\n</tr>\n<tr>\n<td><code>verticalstrike</code></td>\n<td><math> <menclose notation=\"verticalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>vertical strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>horizontalstrike</code></td>\n<td><math> <menclose notation=\"horizontalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>horizontal strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>madruwb</code></td>\n<td><math> <menclose notation=\"madruwb\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td><a href=\"https://en.wikipedia.org/wiki/Modern_Arabic_mathematical_notation#Arithmetic_and_algebra\" class=\"external\" rel=\" noopener\">Arabic factorial symbol</a></td>\n</tr>\n<tr>\n<td><code>updiagonalarrow</code></td>\n<td><math> <menclose notation=\"updiagonalarrow\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>diagonal arrow</td>\n</tr>\n<tr>\n<td><code>phasorangle</code></td>\n<td><math> <menclose notation=\"phasorangle\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>phasor angle</td>\n</tr>\n</tbody>\n</table>"
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/menclose#attr-style",
@@ -204,7 +201,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;merror&gt;</code> element is used to display contents as error messages. In Firefox this error message is rendered similar to the typical XML error message. Note that this error is<strong> not</strong> thrown when your MathML markup is wrong or not well-formed XML. You will still get an XML parsing error (in case of the XHTML notation of MathML), which has nothing to do with <code>&lt;merror&gt;</code>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;merror&gt;</code> element is used to display contents as error messages. In Firefox this error message is rendered similar to the typical XML error message. Note that this error is <strong>not</strong> thrown when your MathML markup is wrong or not well-formed XML. You will still get an XML parsing error (in case of the XHTML notation of MathML), which has nothing to do with <code>&lt;merror&gt;</code>.</p>",
       "attrs": {
         "class": {
           "url": "$MDN_URL$/web/mathml/element/merror#attr-class",
@@ -233,14 +230,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/merror#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color and also the fraction line color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color and also the fraction line color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/merror#attr-style",
@@ -279,14 +276,14 @@
           "status": [
             "Deprecated"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mfenced#attr-mathcolor",
           "status": [
             "Deprecated"
           ],
-          "doc": "The text color and also the fraction line color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color and also the fraction line color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "open": {
           "url": "$MDN_URL$/web/mathml/element/mfenced#attr-open",
@@ -358,14 +355,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mfrac#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color and also the fraction line color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+          "doc": "The text color and also the fraction line color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link4\">HTML color names</a>\n."
         },
         "numalign": {
           "url": "$MDN_URL$/web/mathml/element/mfrac#attr-numalign",
@@ -383,18 +380,15 @@
     },
     "mglyph": {
       "url": "$MDN_URL$/web/mathml/element/mglyph",
-      "status": [
-        "StandardTrack"
-      ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;mglyph&gt;</code> element is used to display non-standard symbols where existing Unicode characters are not available. It may be used within <a href=\"$MDN_URL$/tag/MathML:Token%20Elements\" data-flaw=\"link1\">token elements</a>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mglyph&gt;</code> element is used to display non-standard symbols where existing Unicode characters are not available. It may be used within token elements.</p>",
       "attrs": {
         "alt": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-alt",
-          "doc": "This attribute defines the alternative text describing the image. Users will see this displayed if the image URL is wrong, the image is not in one of the\n<a href=\"$MDN_URL$/Web/HTML/Element/Img#Supported_image_formats\" data-flaw=\"link2\">supported formats</a>\n, or until the image is downloaded."
+          "doc": "This attribute defines the alternative text describing the image. Users will see this displayed if the image URL is wrong, the image is not in one of the\n<a href=\"$MDN_URL$/Web/HTML/Element/img#supported_image_formats\">supported formats</a>\n, or until the image is downloaded."
         },
         "class": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-class",
-          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link3\">stylesheets</a>\n."
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\">stylesheets</a>\n."
         },
         "height": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-height",
@@ -406,11 +400,11 @@
         },
         "id": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-id",
-          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link3\">stylesheets</a>\n."
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-mathbackground",
-          "doc": "The background color (if the image has transparency). You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+          "doc": "The background color (if the image has transparency). You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\">HTML color names</a>\n."
         },
         "src": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-src",
@@ -418,7 +412,7 @@
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-style",
-          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link3\">stylesheets</a>\n."
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\">stylesheets</a>\n."
         },
         "valign": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-valign",
@@ -468,11 +462,11 @@
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mi#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mi#attr-mathcolor",
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathsize": {
           "url": "$MDN_URL$/web/mathml/element/mi#attr-mathsize",
@@ -496,9 +490,6 @@
     },
     "mlabeledtr": {
       "url": "$MDN_URL$/web/mathml/element/mlabeledtr",
-      "status": [
-        "StandardTrack"
-      ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;mlabeledtr&gt;</code> element is used to represent a label in a row either on the left or on the right side (determined using the <code>side</code> attribute on the <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code> element). Child elements of <code>&lt;mlabeledtr&gt;</code> must be <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" >&lt;mtd&gt;</a></code> elements. The first child is the label whereas all other children are representing row contents and are treated identically to children of <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code> elements.</p>",
       "attrs": {
         "class": {
@@ -519,11 +510,11 @@
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-mathcolor",
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "rowalign": {
           "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-rowalign",
@@ -540,7 +531,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;mmultiscripts&gt;</code> element allows you to create tensor-like objects. In a descriptive way <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" >tensors</a> are multidimensional matrices (mathematical imprecise but exemplified). The degree of a tensor depends on the dimensionality of a representative array. For example, a number is a 0-dimensional array, or a 0th-order tensor. A 1-dimensional array (e.g. vectors) is a 1st-order tensor and so 2nd-order tensors are needed to represent square matrices. To learn more about the mathematical background of tensors refer to the <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" >entry on Wikipedia</a>.</p>\n<p>MathML uses a special syntax to describe subscripts and superscripts for both, postscripts and prescripts, attached to a base expression:</p>\n<pre class=\"syntaxbox notranslate\">&lt;mmultiscripts&gt;\n<em>base</em>\n(<em>subscript superscript</em>)*\n[ &lt;mprescripts/&gt; (<em>presubscript presuperscript</em>)* ]\n&lt;/mmultiscripts&gt;\n</pre>\n<p>After the base expression you can specify a postsubscript and a postsuperscript. Prescripts are optional and are separated by the empty tag <code>&lt;mprescripts/&gt;</code> (only one &lt;mprescripts /&gt; element is allowed, otherwise you will get an <code>DuplicateMprescripts</code> error in the <a href=\"$MDN_URL$/Error_Console\"  data-flaw=\"link1\">Error Console</a> and \"invalid-markup\" in your rendering). In addition you are able to use <code>&lt;none/&gt;</code> as a placeholder for empty scripts (not for the base). See the examples section for a correct usage.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mmultiscripts&gt;</code> element allows you to create tensor-like objects. In a descriptive way <a href=\"https://en.wikipedia.org/wiki/Tensor\" class=\"external\" rel=\" noopener\">tensors</a> are multidimensional matrices (mathematical imprecise but exemplified). The degree of a tensor depends on the dimensionality of a representative array. For example, a number is a 0-dimensional array, or a 0th-order tensor. A 1-dimensional array (e.g. vectors) is a 1st-order tensor and so 2nd-order tensors are needed to represent square matrices. To learn more about the mathematical background of tensors refer to the <a href=\"https://en.wikipedia.org/wiki/Tensor\" class=\"external\" rel=\" noopener\">entry on Wikipedia</a>.</p>\n<p>MathML uses a special syntax to describe subscripts and superscripts for both, postscripts and prescripts, attached to a base expression:</p>\n<pre class=\"brush: html notranslate\"><code>&lt;mmultiscripts&gt;\n    base\n     (subscript superscript)*\n     [ &lt;mprescripts/&gt; (presubscript presuperscript)* ]\n&lt;/mmultiscripts&gt;\n</code></pre>\n<p>After the base expression you can specify a postsubscript and a postsuperscript. Prescripts are optional and are separated by the empty tag <code>&lt;mprescripts/&gt;</code> (only one &lt;mprescripts /&gt; element is allowed, otherwise you will get an <code>DuplicateMprescripts</code> error in the <a href=\"$MDN_URL$/Error_Console\" data-flaw=\"link1\">Error Console</a> and \"invalid-markup\" in your rendering). In addition you are able to use <code>&lt;none/&gt;</code> as a placeholder for empty scripts (not for the base). See the examples section for a correct usage.</p>",
       "attrs": {
         "class": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-class",
@@ -572,14 +563,14 @@
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link4\">HTML color names</a>\n."
         },
         "mathsize": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-mathsize",
@@ -639,11 +630,11 @@
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mn#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mn#attr-mathcolor",
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathsize": {
           "url": "$MDN_URL$/web/mathml/element/mn#attr-mathsize",
@@ -703,9 +694,6 @@
         },
         "form": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-form",
-          "status": [
-            "StandardTrack"
-          ],
           "doc": "Specifies the role of the operator in an enclosed expression, which affects spacing and other default properties. For ordinary operators (+, -, etc. ) you usually do not need to specify this attribute explicitly.\n<br>\nPossible values are:\n<ul>\n<li><code>prefix</code>, for opening fences. (It is the default value if the operator is the first argument in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> element with more than one argument.)</li>\n<li><code>infix</code>, for separators. (It is the default value if the operator is not included in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> element.)</li>\n<li><code>postfix</code>, closing fences. (It is the default value if the operator is the last argument in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> element with more than one argument.)</li>\n</ul>"
         },
         "href": {
@@ -721,9 +709,6 @@
         },
         "largeop": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-largeop",
-          "status": [
-            "StandardTrack"
-          ],
           "doc": "Specifies whether the operator should be drawn larger than normal when\n<code>displaystyle=\"true\"</code>\nis set. Allowed values are either\n<code>true</code>\nor\n<code>false</code>\n."
         },
         "lspace": {
@@ -731,15 +716,15 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The amount of space before the operator (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link4\">length</a>\nfor values and units). The constant\n<code>thickmathspace</code>\n(5/18em) is the default value."
+          "doc": "The amount of space before the operator (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link4\">length</a>\nfor values and units). The constant\n<code>thickmathspace</code>\n(5/18em) is the default value."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link5\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link5\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-mathcolor",
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link6\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link6\">HTML color names</a>\n."
         },
         "mathsize": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-mathsize",
@@ -760,14 +745,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "If\n<code>stretchy</code>\nis\n<code>true</code>\n, this attribute specifies the maximum size of the operator. Allowed values are:\n<ul>\n<li><code>infinity</code></li>\n<li>an arbitrary <a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link8\">length</a></li>\n</ul>"
+          "doc": "If\n<code>stretchy</code>\nis\n<code>true</code>\n, this attribute specifies the maximum size of the operator. Allowed values are:\n<ul>\n<li><code>infinity</code></li>\n<li>an arbitrary <a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link8\">length</a></li>\n</ul>"
         },
         "minsize": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-minsize",
           "status": [
             "StandardTrack"
           ],
-          "doc": "If\n<code>stretchy</code>\nis\n<code>true</code>\n, this attribute specifies the minimum size of the operator. Allowed values are:\n<ul>\n<li><code>infinity</code></li>\n<li>an arbitrary <a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link9\">length</a></li>\n</ul>"
+          "doc": "If\n<code>stretchy</code>\nis\n<code>true</code>\n, this attribute specifies the minimum size of the operator. Allowed values are:\n<ul>\n<li><code>infinity</code></li>\n<li>an arbitrary <a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link9\">length</a></li>\n</ul>"
         },
         "movablelimits": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-movablelimits",
@@ -784,7 +769,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The amount of space after the operator (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link10\">length</a>\nfor values and units). The constant\n<code>thickmathspace</code>\n(5/18em) is the default value."
+          "doc": "The amount of space after the operator (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link10\">length</a>\nfor values and units). The constant\n<code>thickmathspace</code>\n(5/18em) is the default value."
         },
         "separator": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-separator",
@@ -859,14 +844,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mover#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/mover#attr-style",
@@ -887,7 +872,7 @@
         },
         "depth": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-depth",
-          "doc": "Sets or increments the depth. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link2\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
+          "doc": "Sets or increments the depth. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link2\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
         },
         "displaystyle": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-displaystyle",
@@ -901,7 +886,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Sets or increments the height. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link3\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
+          "doc": "Sets or increments the height. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link3\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-href",
@@ -919,21 +904,21 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Sets or increments the horizontal position. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link4\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
+          "doc": "Sets or increments the horizontal position. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link4\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-mathbackground",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link5\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link5\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link6\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link6\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-style",
@@ -944,14 +929,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Sets or increments the vertical position. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link7\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
+          "doc": "Sets or increments the vertical position. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link7\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
         },
         "width": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-width",
           "status": [
             "StandardTrack"
           ],
-          "doc": "Sets or increments the width. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link8\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
+          "doc": "Sets or increments the width. Possible values: Any\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link8\">length</a>\nor an increment/decrement (a length prefixed with \"+\" or \"-\") ."
         }
       }
     },
@@ -982,7 +967,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/mphantom#attr-style",
@@ -1024,14 +1009,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mroot#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color and also the color of the root symbol itself. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color and also the color of the root symbol itself. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/mroot#attr-style",
@@ -1080,14 +1065,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mrow#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link4\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/mrow#attr-style",
@@ -1137,11 +1122,11 @@
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/ms#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/ms#attr-mathcolor",
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathsize": {
           "url": "$MDN_URL$/web/mathml/element/ms#attr-mathsize",
@@ -1183,7 +1168,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The desired depth (below the baseline) of the space (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link2\">length</a>\nfor values and units)."
+          "doc": "The desired depth (below the baseline) of the space (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link2\">length</a>\nfor values and units)."
         },
         "displaystyle": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-displaystyle",
@@ -1197,7 +1182,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The desired height (above the baseline) of the space (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link3\">length</a>\nfor values and units)."
+          "doc": "The desired height (above the baseline) of the space (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link3\">length</a>\nfor values and units)."
         },
         "id": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-id",
@@ -1205,14 +1190,11 @@
         },
         "linebreak": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-linebreak",
-          "status": [
-            "StandardTrack"
-          ],
           "doc": "Indicates a line-break at the space. Possible values:\n<code>auto</code>\n(default value),\n<code>newline</code>\n,\n<code>nobreak</code>\n,\n<code>goodbreak</code>\n,\n<code>badbreak</code>\n.\n<br>\nStarting with MathML 3, it is preferred to use\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\nto control linebreaking."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link4\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-style",
@@ -1223,7 +1205,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The desired width of the space (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link5\">length</a>\nfor values and units)."
+          "doc": "The desired width of the space (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link5\">length</a>\nfor values and units)."
         }
       }
     },
@@ -1261,14 +1243,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/msqrt#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color and also the color of the root symbol itself. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color and also the color of the root symbol itself. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/msqrt#attr-style",
@@ -1285,9 +1267,6 @@
       "attrs": {
         "decimalpoint": {
           "url": "$MDN_URL$/web/mathml/element/mstyle#attr-decimalpoint",
-          "status": [
-            "StandardTrack"
-          ],
           "doc": "This attribute is specifying the character for the alignment point within\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mstack\" >&lt;mstack&gt;</a></code>\nand\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code>\ncolumns, if the\n<code>decimalpoint</code>\nvalue is used to specify the alignment."
         },
         "dir": {
@@ -1303,12 +1282,6 @@
             "StandardTrack"
           ],
           "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
-        },
-        "infixbreakstyle": {
-          "url": "$MDN_URL$/web/mathml/element/mstyle#attr-infixbreakstyle",
-          "status": [
-            "StandardTrack"
-          ]
         },
         "infixlinebreakstyle": {
           "url": "$MDN_URL$/web/mathml/element/mstyle#attr-infixlinebreakstyle",
@@ -1371,14 +1344,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/msub#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/msub#attr-style",
@@ -1389,7 +1362,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The minimum space by which to shift the subscript below the baseline of the expression, as a\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link4\">length value</a>\n.\n<br>\nThis attribute is deprecated and will be removed in the future."
+          "doc": "The minimum space by which to shift the subscript below the baseline of the expression, as a\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link4\">length value</a>\n.\n<br>\nThis attribute is deprecated and will be removed in the future."
         }
       }
     },
@@ -1427,14 +1400,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/msubsup#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/msubsup#attr-style",
@@ -1445,14 +1418,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The minimum space by which to shift the subscript below the baseline of the expression, as a\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link4\">length value.</a>\n<br>\nThis attribute is deprecated and will be removed in the future."
+          "doc": "The minimum space by which to shift the subscript below the baseline of the expression, as a\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link4\">length value.</a>\n<br>\nThis attribute is deprecated and will be removed in the future."
         },
         "superscriptshift": {
           "url": "$MDN_URL$/web/mathml/element/msubsup#attr-superscriptshift",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The minimum space by which to shift the superscript above the baseline of the expression, as a\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link5\">length value.</a>\n<br>\nThis attribute is deprecated and will be removed in the future."
+          "doc": "The minimum space by which to shift the superscript above the baseline of the expression, as a\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link5\">length value.</a>\n<br>\nThis attribute is deprecated and will be removed in the future."
         }
       }
     },
@@ -1490,14 +1463,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/msup#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/msup#attr-style",
@@ -1508,7 +1481,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The minimum space by which to shift the superscript up from the baseline of the expression, as a\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link4\">length value.</a>\n<br>\nThis attribute is deprecated and will be removed in the future."
+          "doc": "The minimum space by which to shift the superscript up from the baseline of the expression, as a\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link4\">length value.</a>\n<br>\nThis attribute is deprecated and will be removed in the future."
         }
       }
     },
@@ -1517,20 +1490,14 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;mtable&gt;</code> element allows you to create tables or matrices. Inside a <code>&lt;mtable&gt;</code> only <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" >&lt;mtd&gt;</a></code> elements may appear. These elements are similar to <a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a> , <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>\n<div class=\"note notecard\">\n<p><strong>Note: </strong>The <code>&lt;mtable&gt;</code> element resets the <code>displaystyle</code> attribute to <code>false</code>. If you want to use this element as an inline-block, you might want to set <code>&lt;mtable displaystyle=\"true\"&gt;...&lt;/mtable&gt;</code>.</p>\n</div>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mtable&gt;</code> element allows you to create tables or matrices. Inside a <code>&lt;mtable&gt;</code> only <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" >&lt;mtd&gt;</a></code> elements may appear. These elements are similar to <a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a> , <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> The <code>&lt;mtable&gt;</code> element resets the <code>displaystyle</code> attribute to <code>false</code>. If you want to use this element as an inline-block, you might want to set <code>&lt;mtable displaystyle=\"true\"&gt;...&lt;/mtable&gt;</code>.</p>\n</div>",
       "attrs": {
         "align": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-align",
           "status": [
             "StandardTrack"
           ],
-          "doc": "Specifies the\n<strong>vertical</strong>\nalignment of the table with respect to its environment.\n<br>\nPossible values are:\n<ul>\n<li><code>axis</code> (default): The vertical center of the table aligns on the environment's axis (typically the minus sign).</li>\n<li><code>baseline</code>: The vertical center of the table aligns on the environment's baseline.</li>\n<li><code>bottom</code>: The bottom of the table aligns on the environments baseline.</li>\n<li><code>center</code>: See baseline.</li>\n<li><code>top</code>: The top of the table aligns on the environments baseline.</li>\n</ul>\nIn addition, values of the\n<code>align</code>\nattribute can end with a\n<em>rownumber</em>\n(e.g.\n<code>align=\"center 3\"</code>\n). This allows you to align the specified row of the table rather than the whole table. A negative Integer value counts rows from the bottom of the table. Starting with Gecko 8.0 (Firefox 8.0 / Thunderbird 8.0 / SeaMonkey 2.5) the interpretation of\n<em>negative</em>\nvalues has been corrected (\n<a href=\"https://bugzilla.mozilla.org/show_bug.cgi?id=601436\">bug 601436</a>\n). In Gecko 17.0 (Firefox 17.0 / Thunderbird 17.0 / SeaMonkey 2.14) the parsing has been updated to treat whitespace correctly."
-        },
-        "alignmentscope": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#attr-alignmentscope",
-          "status": [
-            "StandardTrack"
-          ]
+          "doc": "Specifies the\n<strong>vertical</strong>\nalignment of the table with respect to its environment.\n<br>\nPossible values are:\n<ul>\n<li><code>axis</code> (default): The vertical center of the table aligns on the environment's axis (typically the minus sign).</li>\n<li><code>baseline</code>: The vertical center of the table aligns on the environment's baseline.</li>\n<li><code>bottom</code>: The bottom of the table aligns on the environments baseline.</li>\n<li><code>center</code>: See baseline.</li>\n<li><code>top</code>: The top of the table aligns on the environments baseline.</li>\n</ul>\nIn addition, values of the\n<code>align</code>\nattribute can end with a\n<em>rownumber</em>\n(e.g.\n<code>align=\"center 3\"</code>\n). This allows you to align the specified row of the table rather than the whole table. A negative Integer value counts rows from the bottom of the table. Starting with Gecko 8.0 (Firefox 8.0 / Thunderbird 8.0 / SeaMonkey 2.5) the interpretation of\n<em>negative</em>\nvalues has been corrected (\n<a href=\"https://bugzilla.mozilla.org/show_bug.cgi?id=601436\" class=\"external\" rel=\" noopener\">bug 601436</a>\n). In Gecko 17.0 (Firefox 17.0 / Thunderbird 17.0 / SeaMonkey 2.14) the parsing has been updated to treat whitespace correctly."
         },
         "class": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-class",
@@ -1559,9 +1526,6 @@
         },
         "columnwidth": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-columnwidth",
-          "status": [
-            "StandardTrack"
-          ],
           "doc": "Specifies the width of table columns."
         },
         "displaystyle": {
@@ -1573,16 +1537,10 @@
         },
         "equalcolumns": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-equalcolumns",
-          "status": [
-            "StandardTrack"
-          ],
           "doc": "A Boolean value indicating whether to force all columns to have the same total height.\n<code>false</code>\nis default."
         },
         "equalrows": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-equalrows",
-          "status": [
-            "StandardTrack"
-          ],
           "doc": "A Boolean value indicating whether to force all rows to have the same total height.\n<code>false</code>\nis default."
         },
         "frame": {
@@ -1598,12 +1556,6 @@
             "StandardTrack"
           ],
           "doc": "Specifies additional space added between the table and frame."
-        },
-        "groupalign": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#attr-groupalign",
-          "status": [
-            "StandardTrack"
-          ]
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-href",
@@ -1621,21 +1573,18 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link4\">HTML color names</a>\n."
         },
         "minlabelspacing": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-minlabelspacing",
-          "status": [
-            "StandardTrack"
-          ],
-          "doc": "A length value specifing the minimum space between a\n<a href=\"$MDN_URL$/Web/MathML/Element/mlabeledtr\" data-flaw=\"link5\">label</a>\nand the adjacent cell in the row."
+          "doc": "A length value specifying the minimum space between a\n<a href=\"$MDN_URL$/Web/MathML/Element/mlabeledtr\" data-flaw=\"link5\">label</a>\nand the adjacent cell in the row."
         },
         "rowalign": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-rowalign",
@@ -1660,9 +1609,6 @@
         },
         "side": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-side",
-          "status": [
-            "StandardTrack"
-          ],
           "doc": "Specifies the position where\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mlabeledtr\" >&lt;mlabeledtr&gt;</a></code>\nlabel elements should be placed. Possible values are:\n<code>left</code>\n,\n<code>right</code>\n(default),\n<code>leftoverlap</code>\nand\n<code>rightoverlap</code>\n."
         },
         "style": {
@@ -1674,7 +1620,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Specifies the width of the entire table. Accepts\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link6\">length values</a>\n."
+          "doc": "Specifies the width of the entire table. Accepts\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#lengths\" data-flaw=\"link6\">length values</a>\n."
         }
       }
     },
@@ -1710,12 +1656,6 @@
           ],
           "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
-        "groupalign": {
-          "url": "$MDN_URL$/web/mathml/element/mtd#attr-groupalign",
-          "status": [
-            "StandardTrack"
-          ]
-        },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-href",
           "status": [
@@ -1729,11 +1669,11 @@
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-mathcolor",
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link4\">HTML color names</a>\n."
         },
         "rowalign": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-rowalign",
@@ -1793,11 +1733,11 @@
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mtext#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mtext#attr-mathcolor",
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathsize": {
           "url": "$MDN_URL$/web/mathml/element/mtext#attr-mathsize",
@@ -1844,12 +1784,6 @@
           ],
           "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
-        "groupalign": {
-          "url": "$MDN_URL$/web/mathml/element/mtr#attr-groupalign",
-          "status": [
-            "StandardTrack"
-          ]
-        },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-href",
           "status": [
@@ -1863,11 +1797,11 @@
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-mathbackground",
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-mathcolor",
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link4\">HTML color names</a>\n."
         },
         "rowalign": {
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-rowalign",
@@ -1906,7 +1840,7 @@
         },
         "class": {
           "url": "$MDN_URL$/web/mathml/element/munder#attr-class",
-          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\">stylesheets</a>\n."
         },
         "displaystyle": {
           "url": "$MDN_URL$/web/mathml/element/munder#attr-displaystyle",
@@ -1924,25 +1858,25 @@
         },
         "id": {
           "url": "$MDN_URL$/web/mathml/element/munder#attr-id",
-          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/munder#attr-mathbackground",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link1\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/munder#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/munder#attr-style",
-          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\">stylesheets</a>\n."
         }
       }
     },
@@ -2002,14 +1936,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+          "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link2\">HTML color names</a>\n."
         },
         "mathcolor": {
           "url": "$MDN_URL$/web/mathml/element/munderover#attr-mathcolor",
           "status": [
             "StandardTrack"
           ],
-          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+          "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#color_keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
         "style": {
           "url": "$MDN_URL$/web/mathml/element/munderover#attr-style",
@@ -2022,7 +1956,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">In MathML there are two ways to mark up mathematics: <em>Presentation</em> MathML is used to control the layout of equations, whereas <em>Content</em> MathML is designed to encode the semantic mathematical meaning and to make expressions understandable to computer algebra systems. The MathML elements <code>&lt;semantics&gt;</code>, <code>&lt;annotation&gt;</code> and <code>&lt;annotation-xml&gt;</code> are used to combine presentation and content markup and to provide both, layout information and semantic meaning of mathematical expressions.</p>\n<p>The <code>&lt;semantics&gt;</code> element acts as a container element associating annotations and must have child elements (it will raise an <em>invalid markup </em>error otherwise). The <code>&lt;annotation&gt;</code> element is the container element containing semantic information in a non-XML format, whereas the <code>&lt;annotation-xml&gt;</code> element contains content in an XML format, e.g. Content MathML or OpenMath.</p>\n<p>The rules of determining the visible child in a <code>&lt;semantics&gt;</code> element are the following:</p>\n<ul>\n<li>If no rule other rule applies: By default only the first child is rendered, which is supposed to be presentation markup.</li>\n<li>If the first child is a presentation MathML element other than <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code>, render the first child.</li>\n<li>If no Presentation MathML is found, render the first <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code> child element of <code>&lt;semantics&gt;</code>.<br>\nBeware that <code>&lt;annotation-xml&gt;</code> elements are only recognized, if the encoding attribute is set to one of the following:\n<ul>\n<li><code><span id=\"the-code\"><span class=\"s\">\"application/mathml-presentation+xml</span></span></code>\"</li>\n<li><code><span id=\"the-code\"><span class=\"s\">\"MathML-Presentation</span></span></code>\"</li>\n<li><span id=\"the-code\"><span class=\"s\"><code>\"SVG1.1</code></span></span>\"</li>\n<li><code>\"text/html\"</code></li>\n<li><code>\"image/svg+xml\"</code></li>\n<li><code><span class=\"st\">\"application/xml</span></code>\".</li>\n</ul>\nNote that<span id=\"the-code\"><span class=\"c\"> \"application/mathml+xml</span></span>\" is <em>not</em> mentioned here as it does not distinguish between Content or Presentation MathML.</li>\n</ul>",
+      "doc": "<p class=\"summary\">In MathML there are two ways to mark up mathematics: <em>Presentation</em> MathML is used to control the layout of equations, whereas <em>Content</em> MathML is designed to encode the semantic mathematical meaning and to make expressions understandable to computer algebra systems. The MathML elements <code>&lt;semantics&gt;</code>, <code>&lt;annotation&gt;</code> and <code>&lt;annotation-xml&gt;</code> are used to combine presentation and content markup and to provide both, layout information and semantic meaning of mathematical expressions.</p>\n<p>The <code>&lt;semantics&gt;</code> element acts as a container element associating annotations and must have child elements (it will raise an <em>invalid markup</em> error otherwise). The <code>&lt;annotation&gt;</code> element is the container element containing semantic information in a non-XML format, whereas the <code>&lt;annotation-xml&gt;</code> element contains content in an XML format, e.g. Content MathML or OpenMath.</p>\n<p>The rules of determining the visible child in a <code>&lt;semantics&gt;</code> element are the following:</p>\n<ul>\n<li>If no rule other rule applies: By default only the first child is rendered, which is supposed to be presentation markup.</li>\n<li>If the first child is a presentation MathML element other than <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code>, render the first child.</li>\n<li>If no Presentation MathML is found, render the first <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code> child element of <code>&lt;semantics&gt;</code>.<br>\nBeware that <code>&lt;annotation-xml&gt;</code> elements are only recognized, if the encoding attribute is set to one of the following:\n<ul>\n<li><code>\"application/mathml-presentation+xml\"</code></li>\n<li><code>\"MathML-Presentation\"</code></li>\n<li><code>\"SVG1.1\"</code></li>\n<li><code>\"text/html\"</code></li>\n<li><code>\"image/svg+xml\"</code></li>\n<li><code>\"application/xml</code>\".</li>\n</ul>\nNote that <code>\"application/mathml+xml\"</code> is <em>not</em> mentioned here as it does not distinguish between Content or Presentation MathML.</li>\n</ul>",
       "attrs": {
         "cd": {
           "url": "$MDN_URL$/web/mathml/element/semantics#attr-cd",
