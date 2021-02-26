@@ -507,6 +507,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
   public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
+    myFileTypeManager.getRegisteredFileTypes();
     ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.IGNORE);
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin"));
 
