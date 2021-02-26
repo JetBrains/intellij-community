@@ -24,32 +24,43 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PythonMockSdk;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Project descriptor (extracted from {@link com.jetbrains.python.fixtures.PyTestCase}) and should be used with it.
  * @author Ilya.Kazakevich
 */
 public class PyLightProjectDescriptor extends LightProjectDescriptor {
-  private final String myPythonVersion;
 
-  public PyLightProjectDescriptor(String pythonVersion) {
-    myPythonVersion = pythonVersion;
-  }
+  @Nullable
+  private final String myName;
 
   @NotNull
-  @Override
-  public String getModuleTypeId() {
-    return "EMPTY_MODULE";
+  private final LanguageLevel myLevel;
+
+  public PyLightProjectDescriptor(@NotNull LanguageLevel level) {
+    this(null, level);
+  }
+
+  public PyLightProjectDescriptor(@NotNull String name) {
+    this(name, LanguageLevel.getLatest());
+  }
+
+  private PyLightProjectDescriptor(@Nullable String name, @NotNull LanguageLevel level) {
+    myName = name;
+    myLevel = level;
   }
 
   @Override
   public Sdk getSdk() {
-    return PythonMockSdk.create(myPythonVersion, getAdditionalRoots());
+    return myName == null ? PythonMockSdk.create(myLevel, getAdditionalRoots()) : PythonMockSdk.create(myName);
   }
 
   /**
    * @return additional roots to add to mock python
+   * @apiNote ignored when name is provided.
    */
   protected VirtualFile @NotNull [] getAdditionalRoots() {
     return VirtualFile.EMPTY_ARRAY;
