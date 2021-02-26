@@ -92,7 +92,7 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
     return false
   }
 
-  val data = prepareTemplate(hostDocument, hostFile, psiUsages, originUsage)
+  val data = prepareTemplate(hostDocument, hostFile, originUsage, psiUsages)
              ?: return false
   val commandName: String = RefactoringBundle.message("rename.command.name.0.in.place.template", target.presentation.presentableText)
   val startMarkAction: StartMarkAction = try {
@@ -109,20 +109,17 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
     FinishMarkAction.finish(project, hostEditor, startMarkAction)
   }
 
-  WriteCommandAction
-    .writeCommandAction(project)
-    .withName(commandName)
-    .run<Throwable> {
-      try {
-        val disposable = runLiveTemplate(project, hostEditor, data, ::performRename)
-        Disposer.register(disposable, storeInplaceContinuation(hostEditor, InplaceRenameContinuation(targetPointer)))
-        Disposer.register(disposable, finishMarkAction::run)
-      }
-      catch (e: Throwable) {
-        finishMarkAction.run()
-        throw e
-      }
+  WriteCommandAction.writeCommandAction(project).withName(commandName).run<Throwable> {
+    try {
+      val disposable = runLiveTemplate(project, hostEditor, data, ::performRename)
+      Disposer.register(disposable, storeInplaceContinuation(hostEditor, InplaceRenameContinuation(targetPointer)))
+      Disposer.register(disposable, finishMarkAction::run)
     }
+    catch (e: Throwable) {
+      finishMarkAction.run()
+      throw e
+    }
+  }
   return true
 }
 
@@ -134,25 +131,25 @@ private class TemplateData(
 private fun prepareTemplate(
   hostDocument: Document,
   hostFile: PsiFile,
-  psiUsages: Collection<PsiRenameUsage>,
-  originUsage: PsiRenameUsage
+  originUsage: PsiRenameUsage,
+  usages: Collection<PsiRenameUsage>,
 ): TemplateData? {
   val originUsageRange: TextRange = usageRangeInHost(hostFile, originUsage)
                                     ?: return null // can't start inplace rename from a usage broken into pieces
 
   val usageReplacements = HashMap<TextRange, UsageTextByName>()
-  for (psiUsage: PsiRenameUsage in psiUsages) {
-    if (psiUsage === originUsage) {
+  for (usage: PsiRenameUsage in usages) {
+    if (usage === originUsage) {
       continue // already handled
     }
-    if (psiUsage !is ModifiableRenameUsage) {
+    if (usage !is ModifiableRenameUsage) {
       continue // don't know how to update the usage
     }
-    val fileUpdater = psiUsage.fileUpdater
+    val fileUpdater = usage.fileUpdater
     if (fileUpdater !is PsiRenameUsageRangeUpdater) {
       continue
     }
-    val usageRangeInHost: TextRange = usageRangeInHost(hostFile, psiUsage)
+    val usageRangeInHost: TextRange = usageRangeInHost(hostFile, usage)
                                       ?: continue // the usage is inside injection, and it's split into several chunks in host
     if (usageReplacements.containsKey(usageRangeInHost)) {
       continue
@@ -181,7 +178,7 @@ private fun templateVariableNames(originUsageRange: TextRange, usageRanges: Coll
 private fun buildTemplate(
   project: Project,
   hostDocumentContent: String,
-  allVariables: SortedMap<TextRange, String>
+  allVariables: SortedMap<TextRange, String>,
 ): Template {
   val template = TemplateManager.getInstance(project).createTemplate("", "")
   var lastOffset = 0
@@ -198,7 +195,7 @@ private fun assignTemplateExpressionsToVariables(
   template: Template,
   originUsageText: String,
   usageReplacements: HashMap<TextRange, UsageTextByName>,
-  allVariables: SortedMap<TextRange, String>
+  allVariables: SortedMap<TextRange, String>,
 ) {
   // add primary variable first, because variables added before it won't be recomputed
   val originUsageExpression = MyLookupExpression(originUsageText, null, null, null, false, null)
@@ -214,7 +211,7 @@ private fun runLiveTemplate(
   project: Project,
   hostEditor: Editor,
   data: TemplateData,
-  newNameConsumer: (String) -> Unit
+  newNameConsumer: (String) -> Unit,
 ): Disposable {
 
   val template = data.template
@@ -252,7 +249,7 @@ private fun highlightTemplateVariables(
   project: Project,
   editor: Editor,
   template: Template,
-  templateState: TemplateState
+  templateState: TemplateState,
 ): Disposable {
   val highlighters = ArrayList<RangeHighlighter>()
   val highlightManager: HighlightManager = HighlightManager.getInstance(project)
