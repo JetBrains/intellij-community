@@ -36,35 +36,24 @@ import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.caches.resolve.util.enlargedSearchScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
-import org.jetbrains.kotlin.idea.configuration.BuildSystemType
-import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.framework.platform
-import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.idea.project.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.isInSourceContentWithoutInjected
 import org.jetbrains.kotlin.idea.util.rootManager
-import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.compat.toOldPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
-import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.platform.konan.NativePlatform
-import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.TopPackageNamesProvider
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.*
 
 internal val LOG = Logger.getInstance(IdeaModuleInfo::class.java)
 
@@ -82,37 +71,6 @@ interface IdeaModuleInfo : org.jetbrains.kotlin.idea.caches.resolve.IdeaModuleIn
     override fun dependencies(): List<IdeaModuleInfo>
 }
 
-private fun orderEntryToModuleInfo(project: Project, orderEntry: OrderEntry, forProduction: Boolean): List<IdeaModuleInfo> {
-    fun Module.toInfos() = correspondingModuleInfos().filter { !forProduction || it is ModuleProductionSourceInfo }
-
-    if (!orderEntry.isValid) return emptyList()
-
-    return when (orderEntry) {
-        is ModuleSourceOrderEntry -> {
-            orderEntry.getOwnerModule().toInfos()
-        }
-        is ModuleOrderEntry -> {
-            val module = orderEntry.module ?: return emptyList()
-            if (forProduction && orderEntry.isProductionOnTestDependency) {
-                listOfNotNull(module.testSourceInfo())
-            } else {
-                module.toInfos()
-            }
-        }
-        is LibraryOrderEntry -> {
-            val library = orderEntry.library ?: return listOf()
-            createLibraryInfo(project, library)
-        }
-        is JdkOrderEntry -> {
-            val sdk = orderEntry.jdk ?: return listOf()
-            listOfNotNull(SdkInfo(project, sdk))
-        }
-        else -> {
-            throw IllegalStateException("Unexpected order entry $orderEntry")
-        }
-    }
-}
-
 private val Project.libraryInfoCache: MutableMap<Library, List<LibraryInfo>>
     get() = cacheInvalidatingOnRootModifications { ContainerUtil.createConcurrentWeakMap() }
 
@@ -128,72 +86,6 @@ fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> =
         approximatePlatform.idePlatformKind.resolution.createLibraryInfo(project, library)
     }
 
-private fun OrderEntry.acceptAsDependency(forProduction: Boolean): Boolean {
-    return this !is ExportableOrderEntry
-            || !forProduction
-            // this is needed for Maven/Gradle projects with "production-on-test" dependency
-            || this is ModuleOrderEntry && isProductionOnTestDependency
-            || scope.isForProductionCompile
-}
-
-private fun ideaModelDependencies(
-    module: Module,
-    forProduction: Boolean,
-    platform: TargetPlatform
-): List<IdeaModuleInfo> {
-    // Use StringBuilder so that all lines are written into the log atomically (otherwise
-    // logs of call to ideaModelDependencies for several different modules interleave, leading
-    // to unreadable mess)
-    val debugString: StringBuilder? = if (LOG.isDebugEnabled) StringBuilder() else null
-    debugString?.appendLine("Building idea model dependencies for module $module, platform=${platform}, forProduction=$forProduction")
-
-    //NOTE: lib dependencies can be processed several times during recursive traversal
-    val result = LinkedHashSet<IdeaModuleInfo>()
-    val dependencyEnumerator = ModuleRootManager.getInstance(module).orderEntries().compileOnly().recursively().exportedOnly()
-    if (forProduction && module.getBuildSystemType() == BuildSystemType.JPS) {
-        dependencyEnumerator.productionOnly()
-    }
-
-    debugString?.append("    IDEA dependencies: [")
-    dependencyEnumerator.forEach { orderEntry ->
-        debugString?.append("${orderEntry.presentableName} ")
-        if (orderEntry.acceptAsDependency(forProduction)) {
-            result.addAll(orderEntryToModuleInfo(module.project, orderEntry!!, forProduction))
-            debugString?.append("OK; ")
-        } else {
-            debugString?.append("SKIP; ")
-        }
-        true
-    }
-    debugString?.appendLine("]")
-
-    // Some dependencies prohibited (e.g. common can not depend on a platform)
-    val correctedResult = result.filterNot { it is LibraryInfo && !platform.canDependOn(it, module.isHMPPEnabled) }
-    debugString?.appendLine("    Corrected result: ${correctedResult.joinToString(prefix = "[", postfix = "]", separator = ";") { it.displayedName }}")
-
-    LOG.debug(debugString?.toString())
-
-    return correctedResult
-}
-
-private fun TargetPlatform.canDependOn(other: IdeaModuleInfo, isHmppEnabled: Boolean): Boolean {
-    if (isHmppEnabled) {
-        // HACK: allow depending on stdlib even if platforms do not match
-        if (isNative() && other is AbstractKlibLibraryInfo && other.libraryRoot.endsWith(KONAN_STDLIB_NAME)) return true
-
-        val platformsWhichAreNotContainedInOther = this.componentPlatforms - other.platform.componentPlatforms
-        if (platformsWhichAreNotContainedInOther.isEmpty()) return true
-
-        // unspecifiedNativePlatform is effectively a wildcard for NativePlatform
-        return platformsWhichAreNotContainedInOther.all { it is NativePlatform } &&
-                NativePlatforms.unspecifiedNativePlatform.componentPlatforms.single() in other.platform.componentPlatforms
-    } else {
-        return this.isJvm() && other.platform.isJvm() ||
-                this.isJs() && other.platform.isJs() ||
-                this.isNative() && other.platform.isNative() ||
-                this.isCommon() && other.platform.isCommon()
-    }
-}
 
 interface ModuleSourceInfo : IdeaModuleInfo, TrackableModuleInfo {
     val module: Module
@@ -234,7 +126,7 @@ sealed class ModuleSourceInfoWithExpectedBy(private val forProduction: Boolean) 
         }
 
     override fun dependencies(): List<IdeaModuleInfo> = module.cacheByClassInvalidatingOnRootModifications(this::class.java) {
-        ideaModelDependencies(module, forProduction, platform)
+        module.getIdeaModelDependencies(forProduction, platform)
     }
 }
 
@@ -286,7 +178,7 @@ fun Module.productionSourceInfo(): ModuleProductionSourceInfo? = if (hasProducti
 
 fun Module.testSourceInfo(): ModuleTestSourceInfo? = if (hasTestRoots()) ModuleTestSourceInfo(this) else null
 
-internal fun Module.correspondingModuleInfos(): List<ModuleSourceInfo> = listOf(testSourceInfo(), productionSourceInfo()).filterNotNull()
+internal fun Module.correspondingModuleInfos(): List<ModuleSourceInfo> = listOfNotNull(testSourceInfo(), productionSourceInfo())
 
 private fun Module.hasProductionRoots() =
     hasRootsOfType(JavaSourceRootType.SOURCE) || hasRootsOfType(SourceKotlinRootType) || (isNewMPPModule && sourceType == SourceType.PRODUCTION)

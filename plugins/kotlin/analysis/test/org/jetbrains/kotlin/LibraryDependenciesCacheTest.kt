@@ -222,16 +222,5 @@ class LibraryDependenciesCacheTest {
     }
 }
 
-data class TestPlatform(val name: String) : SimplePlatform(name) {
-    override val oldFashionedDescription = name
-    override fun toString(): String {
-        return name
-    }
-}
-
-private fun platform(vararg simplePlatform: SimplePlatform) = TargetPlatform(setOf(*simplePlatform))
-
-private fun platform(vararg konanTarget: KonanTarget) = TargetPlatform(konanTarget.map(::NativePlatformWithTarget).toSet())
-
 private fun candidate(platform: TargetPlatform, uniqueName: String = "arbitrary"): DependencyCandidate =
     DependencyCandidate(containingLibraryId = uniqueName, platform = platform, libraries = emptyList())
