@@ -92,10 +92,10 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         if (discard == Messages.NO) return
 
         progressIndicator.cancel()
-        existenceCheckProgressIndicator.cancel()
         viewController.viewList()
         resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
         createLoadingModel.future = null
+        existenceCheckLoadingModel.reset()
       }
     }
     InfoController(directionModel, existenceCheckLoadingModel, existenceCheckProgressIndicator, createAction, createDraftAction)
@@ -199,8 +199,8 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         val headRepo = directionModel.headRepo
         val headBranch = findCurrentRemoteHead(directionModel)
         if (baseBranch == null || headRepo == null || headBranch == null) existenceCheckLoadingModel.reset()
-        else existenceCheckLoadingModel.load(existenceCheckProgressIndicator) {
-          dataContext.creationService.findPullRequest(existenceCheckProgressIndicator, baseBranch, headRepo, headBranch)
+        else existenceCheckLoadingModel.load(ProgressWrapper.wrap(existenceCheckProgressIndicator)) {
+          dataContext.creationService.findPullRequest(it, baseBranch, headRepo, headBranch)
         }
       }
     }
