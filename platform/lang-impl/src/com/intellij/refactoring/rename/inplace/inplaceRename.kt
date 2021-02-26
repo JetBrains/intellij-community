@@ -111,9 +111,10 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
 
   WriteCommandAction.writeCommandAction(project).withName(commandName).run<Throwable> {
     try {
-      val disposable = runLiveTemplate(project, hostEditor, data, ::performRename)
-      Disposer.register(disposable, storeInplaceContinuation(hostEditor, InplaceRenameContinuation(targetPointer)))
-      Disposer.register(disposable, finishMarkAction::run)
+      val templateState = runLiveTemplate(project, hostEditor, data, ::performRename)
+      Disposer.register(templateState, highlightTemplateVariables(project, hostEditor, data.template, templateState))
+      Disposer.register(templateState, storeInplaceContinuation(hostEditor, InplaceRenameContinuation(targetPointer)))
+      Disposer.register(templateState, finishMarkAction::run)
     }
     catch (e: Throwable) {
       finishMarkAction.run()
@@ -212,7 +213,7 @@ private fun runLiveTemplate(
   hostEditor: Editor,
   data: TemplateData,
   newNameConsumer: (String) -> Unit,
-): Disposable {
+): TemplateState {
 
   val template = data.template
   template.setInline(true)
@@ -224,7 +225,6 @@ private fun runLiveTemplate(
   val restoreDocument = deleteInplaceTemplateSegments(project, hostEditor.document, data.templateSegmentRanges)
   val state: TemplateState = TemplateManager.getInstance(project).runTemplate(hostEditor, template)
   DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(state)
-  Disposer.register(state, highlightTemplateVariables(project, hostEditor, template, state))
   state.addTemplateResultListener { result: TemplateResult ->
     when (result) {
       TemplateResult.Canceled -> Unit // don't restore document inside undo
