@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="intellij-test-discovery" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-test-discovery-agent:1.0.577" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-test-discovery-agent:1.0.578" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.577/intellij-test-discovery-agent-1.0.577.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.578/intellij-test-discovery-agent-1.0.578.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
