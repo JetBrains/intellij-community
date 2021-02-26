@@ -63,7 +63,7 @@ public final class PluginsAdvertiser {
   private static final EventLogGroup GROUP = new EventLogGroup(FUS_GROUP_ID,
                                                                1);
 
-  enum Source {EDITOR, NOTIFICATION}
+  public enum Source {EDITOR, NOTIFICATION}
 
   private static final EnumEventField<Source> SOURCE_FIELD = new EnumEventField<>("source",
                                                                                   Source.class,
@@ -179,11 +179,11 @@ public final class PluginsAdvertiser {
     CONFIGURE_PLUGINS_EVENT.log(project, source);
   }
 
-  static boolean isIgnoreUltimate() {
+  public static boolean isIgnoreUltimate() {
     return PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION);
   }
 
-  static void doIgnoreUltimateAndLog(@NotNull Source source,
+  public static void doIgnoreUltimateAndLog(@NotNull Source source,
                                      @Nullable Project project) {
     PropertiesComponent.getInstance().setValue(IGNORE_ULTIMATE_EDITION, true);
     IGNORE_ULTIMATE_EVENT.log(project, source);
