@@ -33,6 +33,8 @@ import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTes
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.AbstractSurroundWithTest
 import org.jetbrains.kotlin.idea.codeInsight.unwrap.AbstractUnwrapRemoveTest
+import org.jetbrains.kotlin.idea.completion.AbstractHighLevelJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.*
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionCharFilterTest
@@ -1147,19 +1149,23 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("fir", testDataPath = "../completion/testData") {
-        testClass<AbstractHighLevelJvmBasicCompletionTest> {
-            model("basic/common")
-            model("basic/java")
-        }
+            testClass<AbstractHighLevelJvmBasicCompletionTest> {
+                model("basic/common")
+                model("basic/java")
+            }
 
-        testClass<AbstractHighLevelBasicCompletionHandlerTest> {
-            model("handlers/basic", pattern = KT_WITHOUT_DOTS)
-        }
+            testClass<AbstractHighLevelBasicCompletionHandlerTest> {
+                model("handlers/basic", pattern = KT_WITHOUT_DOTS)
+            }
 
-        testClass<AbstractHighLevelWeigherTest> {
-            model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS)
+            testClass<AbstractHighLevelWeigherTest> {
+                model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS_IN_NAME)
+            }
+
+            testClass<AbstractHighLevelMultiFileJvmBasicCompletionTest> {
+                model("basic/multifile", extension = null, recursive = false)
+            }
         }
-    }
 
     testGroup("fir", testDataPath = "../idea/testData/findUsages") {
         testClass<AbstractFindUsagesFirTest> {
@@ -1330,12 +1336,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("basic/multifile", pattern = DIRECTORY, isRecursive = false)
         }
 
-        testClass<AbstractMultiFileJvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.MultiFilePrimitiveJvmBasicCompletionTestGenerated") {
-            model("basic/multifilePrimitive", pattern = DIRECTORY, isRecursive = false)
+        testClass<AbstractMultiFileJvmBasicCompletionTest>("MultiFilePrimitiveJvmBasicCompletionTestGenerated") {
+            model("basic/multifilePrimitive", extension = null, recursive = false)
         }
 
         testClass<AbstractMultiFileSmartCompletionTest> {
-            model("smartMultiFile", pattern = DIRECTORY, isRecursive = false)
+            model("smartMultiFile", extension = null, recursive = false)
         }
 
         testClass<AbstractJvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.KDocCompletionTestGenerated") {
