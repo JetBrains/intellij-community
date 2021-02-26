@@ -39,7 +39,7 @@ OS_ARCH=$(uname -m)
 # ---------------------------------------------------------------------
 # Ensure $IDE_HOME points to the directory where the IDE is installed.
 # ---------------------------------------------------------------------
-IDE_BIN_HOME=$(dirname $(realpath "$0"))
+IDE_BIN_HOME=$(dirname "$(realpath "$0")")
 IDE_HOME=$(dirname "${IDE_BIN_HOME}")
 CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 PRODUCT_VENDOR="__product_vendor__"
