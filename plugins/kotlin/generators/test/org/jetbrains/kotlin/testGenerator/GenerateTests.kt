@@ -64,6 +64,7 @@ import org.jetbrains.kotlin.idea.editor.AbstractMultiLineStringIndentTest
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.AbstractDiagnosticTraversalCounterTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.frontend.api.components.AbstractOverriddenDeclarationProviderTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
@@ -1083,6 +1084,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
         testClass<AbstractFileStructureTest> {
             model("fileStructure")
+        }
+        testClass<AbstractDiagnosticTraversalCounterTest> {
+            model("diagnosticTraversalCounter")
         }
         testClass<AbstractSessionsInvalidationTest> {
             model("sessionInvalidation", isRecursive = false, pattern = DIRECTORY)
