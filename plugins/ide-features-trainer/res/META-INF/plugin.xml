@@ -22,6 +22,11 @@
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
 
+  <applicationListeners>
+    <listener class="training.statistic.NonLearningProjectOpenedListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
+
   <extensionPoints>
     <extensionPoint name="ift.language.extension"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -47,6 +52,8 @@
     <statistics.validation.customValidationRule
       implementation="training.statistic.KeymapSchemeRuleValidator"/>
     <statistics.counterUsagesCollector implementationClass="training.statistic.StatisticBase"/>
+    <applicationService
+      serviceImplementation="training.statistic.LearnProjectState"/>
 
     <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>
 

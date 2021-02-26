@@ -34,6 +34,7 @@ import training.learn.course.Lesson
 import training.learn.course.LessonType
 import training.learn.lesson.LessonManager
 import training.project.ProjectUtils
+import training.statistic.StatisticBase
 import training.statistic.StatisticLessonListener
 import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
@@ -252,6 +253,7 @@ internal object OpenLessonActivities {
   }
 
   fun openOnboardingFromWelcomeScreen(onboarding: Lesson) {
+    StatisticBase.logLearnProjectOpenedForTheFirstTime(StatisticBase.LearnProjectOpeningWay.ONBOARDING_PROMOTER)
     initLearnProject(null) { project ->
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
@@ -265,6 +267,7 @@ internal object OpenLessonActivities {
   }
 
   fun openLearnProjectFromWelcomeScreen() {
+    StatisticBase.logLearnProjectOpenedForTheFirstTime(StatisticBase.LearnProjectOpeningWay.LEARN_IDE)
     initLearnProject(null) { project ->
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
