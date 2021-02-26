@@ -88,7 +88,13 @@ public final class LoggerFactory implements Logger.Factory {
 
     PatternLayout layout = new PatternLayout("%d [%7r] %6p - %30.30c - %m \n");
 
-    RollingFileAppender ideaLog = new RollingFileAppender(layout, PathManager.getLogPath() + "/idea.log", true);
+    RollingFileAppender ideaLog = new RollingFileAppender(layout, PathManager.getLogPath() + "/idea.log", true) {
+      @Override
+      public void rollOver() {
+        super.rollOver();
+        MutedLogger.dropCaches();
+      }
+    };
     ideaLog.setEncoding(StandardCharsets.UTF_8.name());
     ideaLog.setMaxBackupIndex(12);
     ideaLog.setMaximumFileSize(10_000_000);
