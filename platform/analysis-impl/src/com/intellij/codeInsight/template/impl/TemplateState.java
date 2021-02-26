@@ -135,14 +135,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       @Override
       public void beforeCommandFinished(@NotNull CommandEvent event) {
         if (started && !isDisposed() && !isUndoOrRedoInProgress()) {
-          Runnable runnable = () -> afterChangedUpdate();
-          final LookupEx lookup = getEditor() != null ? LookupManager.getActiveLookup(getEditor()) : null;
-          if (lookup != null) {
-            lookup.performGuardedChange(runnable);
-          }
-          else {
-            runnable.run();
-          }
+          LookupUtil.performGuardedChange(getEditor(), () -> afterChangedUpdate());
         }
       }
     });
