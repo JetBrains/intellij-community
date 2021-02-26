@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerUtilsEx
@@ -936,19 +936,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (document == null || line >= document.getLineCount()) {
       return Collections.emptyList();
     }
-    PsiElement element = position.getElementAt();
+    TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
+    // always start from the beginning of the line for consistency
+    PsiElement element = file.findElementAt(lineRange.getStartOffset());
     if (element == null) {
       return Collections.emptyList();
     }
-    final TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
-    do {
-      PsiElement parent = element.getParent();
-      if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
-        break;
-      }
-      element = parent;
-    }
-    while (true);
 
     final List<PsiLambdaExpression> lambdas = new SmartList<>();
     final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
