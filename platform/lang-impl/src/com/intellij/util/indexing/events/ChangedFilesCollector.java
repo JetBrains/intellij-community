@@ -16,11 +16,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
@@ -81,10 +78,15 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   @Override
   protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
-    for (IndexableFileSet set : myManager.getIndexableSets()) {
-      if (set.isInSet(file)) {
-        IndexableFileSetUtil.iterateIndexableFilesRecursively(file, set, iterator);
-      }
+    if (myManager.belongsToIndexableFiles(file)) {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file11) {
+          if (!myManager.belongsToIndexableFiles(file11)) return false;
+          iterator.processFile(file11);
+          return true;
+        }
+      });
     }
   }
 
@@ -98,8 +100,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
     int fileId = FileBasedIndex.getFileId(file);
     if (!(file instanceof DeletedVirtualFileStub)) {
-      IndexableFileSet setForFile = myManager.getIndexableSetForFile(file);
-      if (setForFile == null) {
+      if (!myManager.belongsToIndexableFiles(file)) {
         removeNonIndexableFileData(file, fileId);
         return;
       }

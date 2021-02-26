@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -52,12 +51,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
         if (file instanceof VirtualFileWithId && myFileBasedIndex != null) {
-          for (IndexableFileSet set : myFileBasedIndex.getIndexableSets()) {
-            if (set.isInSet(file) && myFileBasedIndex.containsIndexableSet(set, myProject)) {
-              return true;
-            }
-          }
-          return false;
+          return myFileBasedIndex.belongsToProjectIndexableFiles(file, myProject);
         }
 
         RootType rootType = RootType.forFile(file);

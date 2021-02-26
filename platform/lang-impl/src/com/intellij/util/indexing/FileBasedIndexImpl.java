@@ -110,8 +110,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final NotNullLazyValue<ChangedFilesCollector> myChangedFilesCollector =
     NotNullLazyValue.createValue(() -> AsyncEventSupport.EP_NAME.findExtensionOrFail(ChangedFilesCollector.class));
 
-  private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new HashMap<>();
+  private final List<Pair<IndexableFileSet, Project>> myIndexableSets = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final SimpleMessageBusConnection myConnection;
   private final FileDocumentManager myFileDocumentManager;
@@ -273,18 +272,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public void removeProjectFileSets(@NotNull Project project) {
-    Set<IndexableFileSet> toRemove = new HashSet<>();
-
-    for (Map.Entry<IndexableFileSet, Project> entry : myIndexableSetToProjectMap.entrySet()) {
-      if (entry.getValue().equals(project)) {
-        toRemove.add(entry.getKey());
-      }
-    }
-
-    for (IndexableFileSet set : toRemove) {
-      myIndexableSets.remove(set);
-      myIndexableSetToProjectMap.remove(set);
-    }
+    myIndexableSets.removeIf(p -> p.second.equals(project));
   }
 
   boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
@@ -1184,12 +1172,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         return true;
       }
 
-      for (IndexableFileSet set : myIndexableSets) {
-        final Project proj = myIndexableSetToProjectMap.get(set);
+      for (Pair<IndexableFileSet, Project> set : myIndexableSets) {
+        final Project proj = set.second;
         if (proj != null && !proj.equals(project)) {
           continue; // skip this set as associated with a different project
         }
-        if (ReadAction.compute(() -> set.isInSet(virtualFile))) {
+        if (ReadAction.compute(() -> set.first.isInSet(virtualFile))) {
           return true;
         }
       }
@@ -1557,22 +1545,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myRegisteredIndexes.isContentDependentIndex(indexId);
   }
 
-  public @Nullable IndexableFileSet getIndexableSetForFile(VirtualFile file) {
-    for (IndexableFileSet set : myIndexableSets) {
-      if (set.isInSet(file)) {
-        return set;
-      }
-    }
-    return null;
+  public boolean belongsToProjectIndexableFiles(@NotNull VirtualFile file, @NotNull Project project) {
+    return ContainerUtil.find(myIndexableSets, pair -> pair.second.equals(project) && pair.first.isInSet(file)) != null;
   }
 
-  @NotNull
-  public List<IndexableFileSet> getIndexableSets() {
-    return myIndexableSets;
+  public boolean belongsToIndexableFiles(@NotNull VirtualFile file) {
+    return ContainerUtil.find(myIndexableSets, pair -> pair.first.isInSet(file)) != null;
   }
 
   public boolean containsIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
-    return project.equals(myIndexableSetToProjectMap.get(set));
+    return ContainerUtil.find(myIndexableSets, pair -> pair.first == set && pair.second.equals(project)) != null;
   }
 
   @ApiStatus.Internal
@@ -1780,8 +1762,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
-    myIndexableSets.add(set);
-    myIndexableSetToProjectMap.put(set, project);
+    myIndexableSets.add(Pair.create(set, project));
   }
 
   private boolean acceptsInput(@NotNull ID<?, ?> indexId, @NotNull IndexedFile indexedFile) {
@@ -1790,9 +1771,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
-    if (!myIndexableSetToProjectMap.containsKey(set)) return;
-    myIndexableSets.remove(set);
-    myIndexableSetToProjectMap.remove(set);
+    if (!myIndexableSets.removeIf(p -> p.first == set)) return;
 
     ChangedFilesCollector changedFilesCollector = getChangedFilesCollector();
     for (VirtualFile file : changedFilesCollector.getAllFilesToUpdate()) {
@@ -1801,7 +1780,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         removeDataFromIndicesForFile(fileId, file);
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       }
-      else if (getIndexableSetForFile(file) == null) {
+      else if (!belongsToIndexableFiles(file)) {
         if (ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA) {
           removeDataFromIndicesForFile(fileId, file);
         }
