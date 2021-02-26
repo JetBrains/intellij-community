@@ -289,16 +289,15 @@ public final class DfaPsiUtil {
     PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return false;
 
-    if (field.hasModifierProperty(PsiModifier.STATIC)) {
-      for (PsiClassInitializer initializer : containingClass.getInitializers()) {
-        if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
-            initializer.hasModifierProperty(PsiModifier.STATIC) &&
-            getBlockNotNullFields(containingClass, initializer.getBody()).contains(field)) {
-          return true;
-        }
+    boolean staticField = field.hasModifierProperty(PsiModifier.STATIC);
+    for (PsiClassInitializer initializer : containingClass.getInitializers()) {
+      if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
+          initializer.hasModifierProperty(PsiModifier.STATIC) == staticField &&
+          getBlockNotNullFields(containingClass, initializer.getBody()).contains(field)) {
+        return true;
       }
-      return false;
     }
+    if (staticField) return false;
 
     PsiMethod[] constructors = containingClass.getConstructors();
     if (constructors.length == 0) return false;
