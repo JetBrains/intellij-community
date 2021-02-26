@@ -52,6 +52,10 @@
       <mouse-shortcut keystroke="button1 doubleClick" keymap="$default"/>
       <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
     </action>
+    <action id="Git.Log.Branches.Navigate.Log.To.Selected.Branch"
+            icon="AllIcons.General.Locate"
+            use-shortcut-of="SelectIn"
+            class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NavigateLogToSelectedBranchAction"/>
     <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
             icon="AllIcons.Actions.ArrowCollapse"/>
     <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain">

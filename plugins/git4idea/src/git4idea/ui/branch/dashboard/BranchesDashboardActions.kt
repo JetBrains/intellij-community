@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
@@ -26,7 +26,6 @@ import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
 import git4idea.fetch.GitFetchSupport
-import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.isRemoteBranchProtected
@@ -567,6 +566,27 @@ internal object BranchesDashboardActions {
 
     override fun actionPerformed(e: AnActionEvent) {
       e.getRequiredData(BRANCHES_UI_CONTROLLER).updateLogBranchFilter()
+    }
+  }
+
+  class NavigateLogToSelectedBranchAction : DumbAwareAction() {
+
+    override fun update(e: AnActionEvent) {
+      val branchFilters = e.getData(GIT_BRANCH_FILTERS)
+      val uiController = e.getData(BRANCHES_UI_CONTROLLER)
+      val project = e.project
+      val visible = project != null && uiController != null
+      if (!visible) {
+        e.presentation.isEnabledAndVisible = visible
+        return
+      }
+      val enabled = branchFilters != null && branchFilters.size == 1
+
+      e.presentation.isEnabled = enabled
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      e.getRequiredData(BRANCHES_UI_CONTROLLER).navigateLogToSelectedBranch()
     }
   }
 

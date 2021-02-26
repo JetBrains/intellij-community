@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.icons.AllIcons
@@ -190,6 +190,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     group.add(showMyBranchesAction)
     group.add(fetchAction)
     group.add(toggleFavoriteAction)
+    group.add(actionManager.getAction("Git.Log.Branches.Navigate.Log.To.Selected.Branch"))
     group.add(Separator())
     group.add(settings)
     group.add(groupByDirectoryAction)
