@@ -89,6 +89,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -903,8 +904,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       EditorEventMulticasterEx ex = (EditorEventMulticasterEx)multicaster;
       ex.addFocusChangeListener(new FocusChangeListener() {
         @Override
-        public void focusGained(@NotNull Editor editor) {
-          if (isAutoscrollFromSourceAllowedHere()) {
+        public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
+          if (event.getCause() != FocusEvent.Cause.ACTIVATION && isAutoscrollFromSourceAllowedHere()) {
             FileEditorManager manager = myProject.isDisposed() ? null : FileEditorManager.getInstance(myProject);
             if (manager != null) {
               JComponent component = editor.getComponent();
