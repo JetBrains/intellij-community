@@ -52,6 +52,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
   }
   private var showingSelectors: Boolean? = null
 
+  override var initialView = GHPRToolWindowInitialView.LIST
   override val componentController: GHPRToolWindowTabComponentController?
     get() {
       for (component in mainPanel.components) {
@@ -230,7 +231,10 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     private var currentPullRequest: GHPRIdentifier? = null
 
     init {
-      viewList(false)
+      when (initialView) {
+        GHPRToolWindowInitialView.LIST -> viewList(false)
+        GHPRToolWindowInitialView.NEW -> createPullRequest(false)
+      }
 
       DataManager.registerDataProvider(wrapper) { dataId ->
         when {
