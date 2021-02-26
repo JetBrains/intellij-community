@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.target
 
+import com.intellij.execution.Platform
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.*
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
@@ -27,6 +28,7 @@ import org.gradle.wrapper.WrapperExecutor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup.Companion.targetJavaExecutablePathMappingKey
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.toGroovyString
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -151,6 +153,19 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
         val targetPath = pathMappingSettings.convertToRemote(localPath)
         mapperInitScript.append("ext.pathMapper.put(\"${toGroovyString(localPath)}\", \"${toGroovyString(targetPath)}\")\n")
       }
+    }
+
+    // add target java executable mapping
+    val platform = request.targetPlatform.platform
+    val java = if (platform == Platform.WINDOWS) "java.exe" else "java"
+    val javaRuntime = environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java)
+    if (javaRuntime != null) {
+      val targetJavaExecutablePath = arrayOf(javaRuntime.homePath, "bin", java).joinToString(platform.fileSeparator.toString())
+      mapperInitScript.append(
+        "ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${toGroovyString(targetJavaExecutablePath)}\")\n")
+    }
+    else {
+      mapperInitScript.append("ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${java}\")\n")
     }
     mapperInitScript.append("ext.mapPath = { path -> pathMapper.get(path) ?: path }")
 
