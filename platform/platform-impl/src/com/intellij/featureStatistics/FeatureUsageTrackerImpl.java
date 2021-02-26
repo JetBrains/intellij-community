@@ -87,9 +87,12 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
 
   @Override
   public boolean isToBeAdvertisedInLookup(@NonNls String featureId, Project project) {
-    FeatureDescriptor descriptor = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
-    if (descriptor != null && System.currentTimeMillis() - descriptor.getLastTimeUsed() > 10 * DAY) {
-      return true;
+    ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+    if (registry != null) {
+      FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
+      if (descriptor != null && System.currentTimeMillis() - descriptor.getLastTimeUsed() > 10 * DAY) {
+        return true;
+      }
     }
 
     return isToBeShown(featureId, project, HOUR);
