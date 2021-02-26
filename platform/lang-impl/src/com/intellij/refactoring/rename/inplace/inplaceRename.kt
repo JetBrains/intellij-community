@@ -31,8 +31,11 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.refactoring.InplaceRefactoringContinuation
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.api.*
+import com.intellij.refactoring.rename.api.ReplaceTextTargetContext.IN_COMMENTS_AND_STRINGS
+import com.intellij.refactoring.rename.api.ReplaceTextTargetContext.IN_PLAIN_TEXT
 import com.intellij.refactoring.rename.impl.*
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring.PRIMARY_VARIABLE_NAME
+import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.createRenameSettingsInlay
 import com.intellij.util.Query
 
 /**
@@ -88,8 +91,8 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
     //  and we don't need this ability when we are 100% sure they are the same (idFileRangeUpdater).
     return false
   }
-
-  val data = prepareTemplate(hostDocument, hostFile, originUsage, psiUsages)
+  var textOptions: TextOptions = getTextOptions(target)
+  val data = prepareTemplate(hostDocument, hostFile, originUsage, psiUsages, textOptionsRef = { textOptions })
              ?: return false
   val commandName: String = RefactoringBundle.message("rename.command.name.0.in.place.template", target.presentation.presentableText)
   val startMarkAction: StartMarkAction = try {
@@ -109,7 +112,15 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
   WriteCommandAction.writeCommandAction(project).withName(commandName).run<Throwable> {
     try {
       val templateState = runLiveTemplate(project, hostEditor, data, ::performRename)
-      Disposer.register(templateState, highlightTemplateVariables(project, hostEditor, data.template, templateState))
+      val templateHighlighting = highlightTemplateVariables(project, hostEditor, data.template, templateState, textOptions)
+      templateHighlighting.updateHighlighters(textOptions)
+      createRenameSettingsInlay(templateState, templateState.getOriginSegmentEndOffset(), textOptions) { newOptions ->
+        textOptions = newOptions
+        templateState.update()
+        templateHighlighting.updateHighlighters(textOptions)
+        setTextOptions(targetPointer, textOptions)
+      }
+      Disposer.register(templateState, templateHighlighting)
       Disposer.register(templateState, storeInplaceContinuation(hostEditor, InplaceRenameContinuation(targetPointer)))
       Disposer.register(templateState, finishMarkAction::run)
     }
@@ -133,12 +144,15 @@ private data class SegmentData(
 )
 
 private const val usageVariablePrefix = "inplace_usage_"
+internal const val commentStringUsageVariablePrefix = "comment_string_usage_"
+internal const val plainTextUsageVariablePrefix = "plain_text_usage_"
 
 private fun prepareTemplate(
   hostDocument: Document,
   hostFile: PsiFile,
   originUsage: PsiRenameUsage,
   usages: Collection<PsiRenameUsage>,
+  textOptionsRef: () -> TextOptions,
 ): TemplateData? {
   val originUsageRange: TextRange = usageRangeInHost(hostFile, originUsage)
                                     ?: return null // can't start inplace rename from a usage broken into pieces
@@ -148,6 +162,9 @@ private fun prepareTemplate(
     originUsageRange, PRIMARY_VARIABLE_NAME,
     MyLookupExpression(originUsageText, null, null, null, false, null)
   )
+
+  val isCommentStringActive = { textOptionsRef().commentStringOccurrences == true }
+  val isPlainTextActive = { textOptionsRef().textOccurrences == true }
 
   val segments = ArrayList<SegmentData>(usages.size)
   segments += originSegment
@@ -166,11 +183,29 @@ private fun prepareTemplate(
     val usageRangeInHost: TextRange = usageRangeInHost(hostFile, usage)
                                       ?: continue // the usage is inside injection, and it's split into several chunks in host
     val usageTextByName = fileUpdater.usageTextByName
-    segments += SegmentData(
-      range = usageRangeInHost,
-      variableName = usageVariablePrefix + variableCounter,
-      expression = InplaceRenameUsageExpression(usageTextByName),
-    )
+    val segment = if (usage is TextRenameUsage) {
+      val originalText = usageRangeInHost.substring(hostDocumentContent)
+      when (usage.context) {
+        IN_COMMENTS_AND_STRINGS -> SegmentData(
+          range = usageRangeInHost,
+          variableName = commentStringUsageVariablePrefix + variableCounter,
+          expression = InplaceRenameTextUsageExpression(usageTextByName, originalText, isCommentStringActive)
+        )
+        IN_PLAIN_TEXT -> SegmentData(
+          range = usageRangeInHost,
+          variableName = plainTextUsageVariablePrefix + variableCounter,
+          expression = InplaceRenameTextUsageExpression(usageTextByName, originalText, isPlainTextActive)
+        )
+      }
+    }
+    else {
+      SegmentData(
+        range = usageRangeInHost,
+        variableName = usageVariablePrefix + variableCounter,
+        expression = InplaceRenameUsageExpression(usageTextByName),
+      )
+    }
+    segments += segment
     variableCounter++
   }
   segments.sortWith(Comparator.comparing(SegmentData::range, Segment.BY_START_OFFSET_THEN_END_OFFSET))
@@ -271,8 +306,18 @@ private fun moveCaretForTemplate(editor: Editor): Runnable {
   }
 }
 
+private fun setTextOptions(targetPointer: Pointer<out RenameTarget>, newOptions: TextOptions) {
+  targetPointer.dereference()?.let { restoredTarget ->
+    setTextOptions(restoredTarget, newOptions)
+  }
+}
+
 fun TemplateState.getNewName(): String {
   return requireNotNull(getVariableValue(PRIMARY_VARIABLE_NAME)).text
+}
+
+private fun TemplateState.getOriginSegmentEndOffset(): Int {
+  return requireNotNull(getVariableRange(PRIMARY_VARIABLE_NAME)).endOffset
 }
 
 private fun storeInplaceContinuation(editor: Editor, continuation: InplaceRefactoringContinuation): Disposable {

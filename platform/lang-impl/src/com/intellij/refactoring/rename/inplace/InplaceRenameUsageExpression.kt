@@ -9,13 +9,13 @@ import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.refactoring.rename.api.UsageTextByName
 
-internal class InplaceRenameUsageExpression(
+internal open class InplaceRenameUsageExpression(
   private val usageTextByName: UsageTextByName
 ) : Expression() {
 
-  override fun requiresCommittedPSI(): Boolean = false
+  final override fun requiresCommittedPSI(): Boolean = false
 
-  override fun calculateLookupItems(context: ExpressionContext?): Array<LookupElement> = LookupElement.EMPTY_ARRAY
+  final override fun calculateLookupItems(context: ExpressionContext?): Array<LookupElement> = LookupElement.EMPTY_ARRAY
 
   override fun calculateResult(context: ExpressionContext): Result? {
     val editor = context.editor ?: return null

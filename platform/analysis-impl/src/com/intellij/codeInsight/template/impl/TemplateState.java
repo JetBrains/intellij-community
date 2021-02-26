@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.*;
@@ -557,6 +557,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   private void unblockDocument() {
     PsiDocumentManager.getInstance(myProject).commitDocument(getDocument());
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(getDocument());
+  }
+
+  @ApiStatus.Internal
+  public void update() {
+    calcResults(false);
   }
 
   // Hours spent fixing code : 3.5
