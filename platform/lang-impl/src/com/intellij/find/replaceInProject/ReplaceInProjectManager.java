@@ -17,6 +17,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -434,6 +435,7 @@ public final class ReplaceInProjectManager {
             }
           });
         }
+        FileDocumentManager.getInstance().saveAllDocuments();
       }
     );
     success[0] &= result;
