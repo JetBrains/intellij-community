@@ -150,7 +150,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
     indicator.checkCanceled()
     val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
     return GHPRDataContext(searchHolder, listLoader, listUpdatesChecker, dataProviderRepository,
-                           securityService, repoDataService, creationService, avatarIconsProvider, filesManager,
+                           securityService, repoDataService, creationService, detailsService, avatarIconsProvider, filesManager,
                            GHPRDiffRequestModelImpl())
   }
 

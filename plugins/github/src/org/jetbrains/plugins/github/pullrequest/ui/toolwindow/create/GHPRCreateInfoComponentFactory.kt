@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.MessagesService
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.IdeBorderFactory
@@ -41,6 +40,9 @@ import git4idea.repo.GitRepository
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -274,27 +276,18 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       }.thenCompose { remoteHeadBranch ->
         dataContext.creationService
           .createPullRequest(progressIndicator, baseBranch, headRepo, remoteHeadBranch,
-                             titleDocument.text, descriptionDocument.text, draft).thenApply { pullRequest ->
-            val disposable = Disposer.newDisposable()
-            try {
-              val detailsData = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable).detailsData
-              if (reviewers.isNotEmpty()) detailsData.adjustReviewers(ProgressWrapper.wrap(progressIndicator),
-                                                                      CollectionDelta(emptyList(), reviewers))
-              if (assignees.isNotEmpty()) detailsData.adjustAssignees(ProgressWrapper.wrap(progressIndicator),
-                                                                      CollectionDelta(emptyList(), assignees))
-              if (labels.isNotEmpty()) detailsData.adjustLabels(ProgressWrapper.wrap(progressIndicator),
-                                                                CollectionDelta(emptyList(), labels))
+                             titleDocument.text, descriptionDocument.text, draft)
+          .thenCompose { adjustReviewers(it, reviewers) }
+          .thenCompose { adjustAssignees(it, assignees) }
+          .thenCompose { adjustLabels(it, labels) }
+          .successOnEdt {
+            if (!progressIndicator.isCanceled) {
+              viewController.viewPullRequest(it)
+              settings.recentNewPullRequestHead = headRepo.repository
+              resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
             }
-            finally {
-              Disposer.dispose(disposable)
-            }
-            pullRequest
+            it
           }
-      }.successOnEdt {
-        viewController.viewPullRequest(it)
-        settings.recentNewPullRequestHead = headRepo.repository
-        resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
-        it
       }
     }
 
@@ -356,6 +349,36 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
                        ?: return null
       //always set tracking
       return GitPushTarget(GitStandardRemoteBranch(remote, branchName), true)
+    }
+
+    private fun adjustReviewers(pullRequest: GHPullRequestShort, reviewers: List<GHPullRequestRequestedReviewer>)
+      : CompletableFuture<GHPullRequestShort> {
+      return if (reviewers.isNotEmpty()) {
+        dataContext.detailsService.adjustReviewers(ProgressWrapper.wrap(progressIndicator), pullRequest,
+                                                   CollectionDelta(emptyList(), reviewers))
+          .thenApply { pullRequest }
+      }
+      else CompletableFuture.completedFuture(pullRequest)
+    }
+
+    private fun adjustAssignees(pullRequest: GHPullRequestShort, assignees: List<GHUser>)
+      : CompletableFuture<GHPullRequestShort> {
+      return if (assignees.isNotEmpty()) {
+        dataContext.detailsService.adjustAssignees(ProgressWrapper.wrap(progressIndicator), pullRequest,
+                                                   CollectionDelta(emptyList(), assignees))
+          .thenApply { pullRequest }
+      }
+      else CompletableFuture.completedFuture(pullRequest)
+    }
+
+    private fun adjustLabels(pullRequest: GHPullRequestShort, labels: List<GHLabel>)
+      : CompletableFuture<GHPullRequestShort> {
+      return if (labels.isNotEmpty()) {
+        dataContext.detailsService.adjustLabels(ProgressWrapper.wrap(progressIndicator), pullRequest,
+                                                CollectionDelta(emptyList(), labels))
+          .thenApply { pullRequest }
+      }
+      else CompletableFuture.completedFuture(pullRequest)
     }
   }
 
