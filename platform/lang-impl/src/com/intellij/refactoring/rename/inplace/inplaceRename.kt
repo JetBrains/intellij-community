@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.template.Expression
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.TemplateResultListener.TemplateResult
@@ -33,7 +34,6 @@ import com.intellij.refactoring.rename.api.*
 import com.intellij.refactoring.rename.impl.*
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring.PRIMARY_VARIABLE_NAME
 import com.intellij.util.Query
-import java.util.*
 
 /**
  * @return `false` if the template cannot be started,
@@ -126,6 +126,14 @@ private class TemplateData(
   val templateSegmentRanges: List<TextRange>
 )
 
+private data class SegmentData(
+  val range: TextRange,
+  val variableName: String,
+  val expression: Expression,
+)
+
+private const val usageVariablePrefix = "inplace_usage_"
+
 private fun prepareTemplate(
   hostDocument: Document,
   hostFile: PsiFile,
@@ -134,9 +142,17 @@ private fun prepareTemplate(
 ): TemplateData? {
   val originUsageRange: TextRange = usageRangeInHost(hostFile, originUsage)
                                     ?: return null // can't start inplace rename from a usage broken into pieces
+  val hostDocumentContent = hostDocument.text
+  val originUsageText = originUsageRange.substring(hostDocumentContent)
+  val originSegment = SegmentData(
+    originUsageRange, PRIMARY_VARIABLE_NAME,
+    MyLookupExpression(originUsageText, null, null, null, false, null)
+  )
 
-  val usageReplacements = HashMap<TextRange, UsageTextByName>()
-  for (usage: PsiRenameUsage in usages) {
+  val segments = ArrayList<SegmentData>(usages.size)
+  segments += originSegment
+  var variableCounter = 0
+  for (usage in usages) {
     if (usage === originUsage) {
       continue // already handled
     }
@@ -149,41 +165,32 @@ private fun prepareTemplate(
     }
     val usageRangeInHost: TextRange = usageRangeInHost(hostFile, usage)
                                       ?: continue // the usage is inside injection, and it's split into several chunks in host
-    if (usageReplacements.containsKey(usageRangeInHost)) {
-      continue
-    }
-    usageReplacements[usageRangeInHost] = fileUpdater.usageTextByName
+    val usageTextByName = fileUpdater.usageTextByName
+    segments += SegmentData(
+      range = usageRangeInHost,
+      variableName = usageVariablePrefix + variableCounter,
+      expression = InplaceRenameUsageExpression(usageTextByName),
+    )
+    variableCounter++
   }
+  segments.sortWith(Comparator.comparing(SegmentData::range, Segment.BY_START_OFFSET_THEN_END_OFFSET))
 
-  val allVariables: SortedMap<TextRange, String> = templateVariableNames(originUsageRange, usageReplacements.keys)
-  val hostDocumentContent = hostDocument.text
-  val template: Template = buildTemplate(hostFile.project, hostDocumentContent, allVariables)
-  val originUsageText = originUsageRange.substring(hostDocumentContent)
-  assignTemplateExpressionsToVariables(template, originUsageText, usageReplacements, allVariables)
-  return TemplateData(template, allVariables.keys.toList())
-}
-
-private fun templateVariableNames(originUsageRange: TextRange, usageRanges: Collection<TextRange>): SortedMap<TextRange, String> {
-  val allVariables = TreeMap<TextRange, String>(Segment.BY_START_OFFSET_THEN_END_OFFSET)
-  allVariables[originUsageRange] = PRIMARY_VARIABLE_NAME
-  var usageCounter = 0
-  for (usageRange in usageRanges) {
-    allVariables[usageRange] = "inplace_usage_${usageCounter++}"
-  }
-  return allVariables
+  val template: Template = buildTemplate(hostFile.project, hostDocumentContent, segments)
+  assignTemplateExpressionsToVariables(template, originSegment, segments)
+  return TemplateData(template, segments.map(SegmentData::range))
 }
 
 private fun buildTemplate(
   project: Project,
   hostDocumentContent: String,
-  allVariables: SortedMap<TextRange, String>,
+  segments: List<SegmentData>,
 ): Template {
   val template = TemplateManager.getInstance(project).createTemplate("", "")
   var lastOffset = 0
-  for ((usageRange, variableName) in allVariables) {
-    template.addTextSegment(hostDocumentContent.substring(lastOffset, usageRange.startOffset))
+  for ((range, variableName, _) in segments) {
+    template.addTextSegment(hostDocumentContent.substring(lastOffset, range.startOffset))
     template.addVariableSegment(variableName)
-    lastOffset = usageRange.endOffset
+    lastOffset = range.endOffset
   }
   template.addTextSegment(hostDocumentContent.substring(lastOffset))
   return template
@@ -191,17 +198,16 @@ private fun buildTemplate(
 
 private fun assignTemplateExpressionsToVariables(
   template: Template,
-  originUsageText: String,
-  usageReplacements: HashMap<TextRange, UsageTextByName>,
-  allVariables: SortedMap<TextRange, String>,
+  originSegment: SegmentData,
+  segments: List<SegmentData>,
 ) {
   // add primary variable first, because variables added before it won't be recomputed
-  val originUsageExpression = MyLookupExpression(originUsageText, null, null, null, false, null)
-  template.addVariable(Variable(PRIMARY_VARIABLE_NAME, originUsageExpression, originUsageExpression, true, false))
-  for ((usageRange, usageTextByName) in usageReplacements) {
-    val variableName = requireNotNull(allVariables[usageRange])
-    val usageExpression = InplaceRenameUsageExpression(usageTextByName)
-    template.addVariable(Variable(variableName, usageExpression, null, false, false))
+  template.addVariable(Variable(originSegment.variableName, originSegment.expression, originSegment.expression, true, false))
+  for ((_, variableName, expression) in segments) {
+    if (variableName == originSegment.variableName) {
+      continue
+    }
+    template.addVariable(Variable(variableName, expression, null, false, false))
   }
 }
 
