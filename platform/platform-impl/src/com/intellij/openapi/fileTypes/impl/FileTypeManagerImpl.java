@@ -291,7 +291,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     });
 
     for (StandardFileType pair : myStandardFileTypes.values()) {
-      registerFileTypeWithoutNotification(pair.fileType, pair.matchers, Collections.emptyList(), true);
+      registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);
     }
 
     try {
@@ -441,8 +441,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       StandardFileType standardFileType = new StandardFileType(fileType, bean.getMatchers());
       myStandardFileTypes.put(bean.name, standardFileType);
-      List<String> hashBangs = bean.hashBangs == null ? Collections.emptyList() : StringUtil.split(bean.hashBangs, ";");
-      registerFileTypeWithoutNotification(fileType, standardFileType.matchers, hashBangs, true);
+      registerFileTypeWithoutNotification(fileType, standardFileType.matchers, true);
+
+      if (bean.hashBangs != null) {
+        for (String hashBang : StringUtil.split(bean.hashBangs, ";")) {
+          myPatternsTable.addHashBangPattern(hashBang, fileType);
+          myInitialAssociations.addHashBangPattern(hashBang, fileType);
+        }
+      }
 
       PluginAdvertiserExtensionsStateService pluginAdvertiser = PluginAdvertiserExtensionsStateService.getInstance();
       for (FileNameMatcher matcher : standardFileType.matchers) {
@@ -711,7 +717,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     DeprecatedMethodException.report("Use fileType extension instead.");
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
-      registerFileTypeWithoutNotification(type, defaultAssociations, Collections.emptyList(), true);
+      registerFileTypeWithoutNotification(type, defaultAssociations, true);
       fireFileTypesChanged(type, null);
     });
   }
@@ -1155,7 +1161,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
    */
   private void registerFileTypeWithoutNotification(@NotNull FileType newFileType,
                                                    @NotNull List<? extends FileNameMatcher> matchers,
-                                                   @NotNull List<String> hashBangPatterns,
                                                    boolean addScheme) {
     if (addScheme) {
       mySchemeManager.addScheme(newFileType);
@@ -1179,10 +1184,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       myInitialAssociations.addAssociation(matcher, newFileType);
-    }
-    for (String hashBang : hashBangPatterns) {
-      myPatternsTable.addHashBangPattern(hashBang, newFileType);
-      myInitialAssociations.addHashBangPattern(hashBang, newFileType);
     }
 
     if (newFileType instanceof FileTypeIdentifiableByVirtualFile) {
@@ -1232,7 +1233,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     @NlsSafe String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
     String iconPath = typeElement.getAttributeValue("icon");
     setFileTypeAttributes((UserFileType<?>)type, fileTypeName, fileTypeDescr, iconPath);
-    registerFileTypeWithoutNotification(type, parseExtensions(context, extensionsStr), Collections.emptyList(), isDefault);
+    registerFileTypeWithoutNotification(type, parseExtensions(context, extensionsStr), isDefault);
 
     if (isDefault) {
       myDefaultTypes.add(type);
