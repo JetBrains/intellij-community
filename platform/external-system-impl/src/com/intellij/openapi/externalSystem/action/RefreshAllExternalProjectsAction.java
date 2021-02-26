@@ -73,10 +73,11 @@ public class RefreshAllExternalProjectsAction extends DumbAwareAction {
     // We save all documents because there is a possible case that there is an external system config file changed inside the ide.
     FileDocumentManager.getInstance().saveAllDocuments();
 
+    boolean isPreviewMode = ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, systemIds.toArray(new ProjectSystemId[0]));
     for (ProjectSystemId externalSystemId : systemIds) {
       ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
       ImportSpecBuilder importSpec = new ImportSpecBuilder(project, externalSystemId);
-      if (!ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, externalSystemId)) {
+      if (!isPreviewMode) {
         importSpec.usePreviewMode();
       }
       ExternalSystemUtil.refreshProjects(importSpec.forceWhenUptodate(true));

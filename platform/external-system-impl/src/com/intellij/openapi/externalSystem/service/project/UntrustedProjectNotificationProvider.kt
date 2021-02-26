@@ -1,12 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.CommonBundle
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.TrustChangeNotifier
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAware
@@ -23,15 +22,19 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
     if (project.isTrusted()) {
       return null
     }
-    val provider = EP_NAME.findFirstSafe {
-      !executesTrustedCodeOnly(it.systemId) &&
-      it.shouldShowEditorNotification(project)
-    } ?: return null
+    val providers = EP_NAME.extensions.filter { it.shouldShowEditorNotification(project) }
+    val systemIds = providers.map { it.systemId }.toTypedArray()
+    if (providers.isEmpty() || executesTrustedCodeOnly(*systemIds)) {
+      return null
+    }
+    val systemsPresentation = systemIds.joinToString { it.readableName }
     return EditorNotificationPanel().apply {
-      text = IdeBundle.message("untrusted.project.notification.description")
-      createActionLabel(IdeBundle.message("untrusted.project.notification.trust.button", provider.systemId.readableName), {
-        if (confirmLoadingUntrustedProjectIfNeeded(project, provider.systemId, CommonBundle.getCancelButtonText())) {
-          provider.loadAllLinkedProjects(project)
+      text = ExternalSystemBundle.message("untrusted.project.notification.description")
+      createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.trust.button", systemsPresentation, systemIds.size), {
+        if (confirmLoadingUntrustedProjectIfNeeded(project, *systemIds)) {
+          for (provider in providers) {
+            provider.loadAllLinkedProjects(project)
+          }
         }
       }, false)
     }

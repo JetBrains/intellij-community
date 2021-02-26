@@ -54,19 +54,24 @@ fun confirmImportingUntrustedProject(project: Project,
                                      @Nls buildSystemName: String,
                                      @Nls yesButtonText: String,
                                      @Nls noButtonText: String): Boolean {
+  return confirmImportingUntrustedProject(project) {
+    MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.import.warning.title", buildSystemName),
+                               message = IdeBundle.message("untrusted.project.import.warning.text", buildSystemName))
+      .yesText(yesButtonText)
+      .noText(noButtonText)
+      .asWarning()
+      .ask(project)
+  }
+}
+
+fun confirmImportingUntrustedProject(project: Project, confirm: () -> Boolean): Boolean {
   val trustedCheckResult = isProjectImplicitlyTrusted(project)
   if (trustedCheckResult is Trusted) {
     project.setTrusted(true)
     return true
   }
 
-  val answer = MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.import.warning.title", buildSystemName),
-                                          message = IdeBundle.message("untrusted.project.import.warning.text", buildSystemName))
-    .yesText(yesButtonText)
-    .noText(noButtonText)
-    .asWarning()
-    .ask(project)
-
+  val answer = confirm()
   project.setTrusted(answer)
   return answer
 }
@@ -167,11 +172,11 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
 }
 
 interface TrustChangeNotifier {
-  fun projectTrusted(project: Project);
+  fun projectTrusted(project: Project)
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic.create("Trusted project status", TrustChangeNotifier::class.java);
+    val TOPIC = Topic.create("Trusted project status", TrustChangeNotifier::class.java)
   }
 
 }

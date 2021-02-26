@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.ide.file.BatchFileChangeListener
+import com.intellij.ide.impl.getTrustedState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -27,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.LocalTimeCounter.currentTime
+import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -126,6 +128,9 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     if (isDisabled.get() || Registry.`is`("external.system.auto.import.disabled")) return
     if (!projectChangeOperation.isOperationCompleted()) return
     if (smart && !projectRefreshOperation.isOperationCompleted()) return
+    val systemIds = projectDataMap.keys.map { it.systemId }.toSet().toTypedArray()
+    val isAllowedDialogs = !smart || project.getTrustedState() == ThreeState.UNSURE
+    val isPreviewMode = isAllowedDialogs && !ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, *systemIds)
     var isSkippedProjectRefresh = true
     for ((projectId, projectData) in projectDataMap) {
       val isAllowAutoReload = !smart || projectData.isActivated
@@ -134,7 +139,6 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
         LOG.debug("${projectId.readableName}: Project refresh")
         val hasUndefinedModifications = !projectData.status.isUpToDate()
         val settingsContext = projectData.settingsTracker.getSettingsContext()
-        val isPreviewMode = !smart && !ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, projectId.systemId)
         val context = ProjectReloadContext(!smart, isPreviewMode, hasUndefinedModifications, settingsContext)
         projectData.projectAware.reloadProject(context)
       }

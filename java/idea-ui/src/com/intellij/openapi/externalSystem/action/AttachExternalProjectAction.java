@@ -83,7 +83,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
       projectImportProvider
     );
     if (wizard != null && (wizard.getStepCount() <= 0 || wizard.showAndGet())) {
-      ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, externalSystemId);
+      ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, externalSystemId);
       ImportModuleAction.createFromWizard(project, wizard);
     }
   }

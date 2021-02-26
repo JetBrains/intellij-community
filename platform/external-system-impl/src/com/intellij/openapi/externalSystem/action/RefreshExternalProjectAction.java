@@ -82,7 +82,7 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
                                        : linkedProjectSettings.getExternalProjectPath();
 
     ImportSpecBuilder importSpec = new ImportSpecBuilder(project, projectSystemId);
-    if (!ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, projectSystemId)) {
+    if (!ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, projectSystemId)) {
       importSpec.usePreviewMode();
     }
     ExternalSystemUtil.refreshProject(externalProjectPath, importSpec);
