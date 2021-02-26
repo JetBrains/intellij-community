@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeWithMe
 
 import com.intellij.diagnostic.LoadingState
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 
 interface ClientIdService {
@@ -17,4 +18,8 @@ interface ClientIdService {
   var clientIdValue: String?
 
   val checkLongActivity: Boolean
+
+  fun isValid(clientId: ClientId?): Boolean
+
+  fun toDisposable(clientId: ClientId?): Disposable
 }

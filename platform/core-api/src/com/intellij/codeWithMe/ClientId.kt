@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeWithMe
 
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.Processor
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
@@ -100,6 +103,32 @@ data class ClientId(val value: String) {
             get() = this == null || this == localId
 
         /**
+         * Returns true if the given ID is local or a client is still in the session.
+         * Consider subscribing to a proper lifetime instead of this check.
+         */
+        @JvmStatic
+        fun isValidId(clientId: ClientId?): Boolean {
+            return clientId.isValid
+        }
+
+        /**
+         * Is true if the given ID is local or a client is still in the session.
+         * Consider subscribing to a proper lifetime instead of this check
+         */
+        @JvmStatic
+        val ClientId?.isValid: Boolean
+            get() = ClientIdService.tryGetInstance()?.isValid(this) ?: true
+
+        /**
+         * Returns a disposable object associated with the given ID.
+         * Consider using a lifetime that is usually passed along with the ID
+         */
+        @JvmStatic
+        fun ClientId?.toDisposable(): Disposable {
+            return ClientIdService.tryGetInstance()?.toDisposable(this) ?: Disposer.newDisposable()
+        }
+
+        /**
          * Invokes a runnable under the given ClientId
          */
         @JvmStatic
@@ -117,6 +146,12 @@ data class ClientId(val value: String) {
         @JvmStatic
         inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
             val clientIdService = ClientIdService.tryGetInstance() ?: return action()
+
+            if (!clientIdService.isValid(clientId)) {
+                val pce = ProcessCanceledException()
+                Logger.getInstance(ClientId::class.java).debug("Invalid clientId: $clientId. Skipping execution", pce)
+                throw pce
+            }
 
             val foreignMainThreadActivity = clientIdService.checkLongActivity &&
                                             ApplicationManager.getApplication().isDispatchThread &&
