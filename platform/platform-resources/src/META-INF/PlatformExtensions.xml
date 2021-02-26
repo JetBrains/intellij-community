@@ -110,7 +110,7 @@
     <experimentalFeature id="wsl.p9.support" percentOfUsers="100">
       <description>Allow IDE to use the \\wsl$\ paths to access the WSL filesystem using 9P protocol (available since Windows 10 update 1903).</description>
     </experimentalFeature>
-    <experimentalFeature id="wsl.prefer.p9.support" percentOfUsers="0">
+    <experimentalFeature id="wsl.prefer.p9.support" percentOfUsers="100">
       <description>Prefer 9P FS access protocol even if direct access to WSL FS is available.</description>
     </experimentalFeature>
     <experimentalFeature id="wsl.p9.show.roots.in.file.chooser" percentOfUsers="100">
