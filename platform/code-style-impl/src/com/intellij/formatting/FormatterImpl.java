@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.formatting.FormatProcessor.FormatOptions;
@@ -45,7 +43,6 @@ public class FormatterImpl extends FormatterEx
 
   private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<>();
 
-  private final AtomicInteger myIsDisabledCount = new AtomicInteger();
   private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
   private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(Indent.Type.NONE, true, false);
   private final IndentImpl myLabelIndent = new IndentImpl(Indent.Type.LABEL, false, false);
@@ -264,26 +261,16 @@ public class FormatterImpl extends FormatterEx
   }
 
   private void execute(@NotNull SequentialTask task) {
-    disableFormatting();
     Application application = ApplicationManager.getApplication();
     FormattingProgressTask progressTask = myProgressTask.getAndSet(null);
     if (progressTask == null || !application.isDispatchThread() || application.isUnitTestMode()) {
-      try {
-        task.prepare();
-        while (!task.isDone()) {
-          task.iteration();
-        }
-      }
-      finally {
-        enableFormatting();
+      task.prepare();
+      while (!task.isDone()) {
+        task.iteration();
       }
     }
     else {
       progressTask.setTask(task);
-      Runnable callback = () -> enableFormatting();
-      for (FormattingProgressCallback.EventType eventType : FormattingProgressCallback.EventType.values()) {
-        progressTask.addCallback(eventType, callback);
-      }
       ProgressManager.getInstance().run(progressTask);
     }
   }
@@ -293,7 +280,6 @@ public class FormatterImpl extends FormatterEx
                                         final CodeStyleSettings settings,
                                         final CommonCodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange rangeToAdjust) {
-    disableFormatting();
     try {
       validateModel(model);
       final FormattingDocumentModel documentModel = model.getDocumentModel();
@@ -316,9 +302,6 @@ public class FormatterImpl extends FormatterEx
     catch (FormattingModelInconsistencyException e) {
       LOG.error(e);
     }
-    finally {
-      enableFormatting();
-    }
   }
 
   @Override
@@ -326,7 +309,6 @@ public class FormatterImpl extends FormatterEx
                                 CodeStyleSettings settings,
                                 PsiFile file,
                                 TextRange textRange) {
-    disableFormatting();
     try {
       validateModel(model);
       final FormattingDocumentModel documentModel = model.getDocumentModel();
@@ -358,9 +340,6 @@ public class FormatterImpl extends FormatterEx
     catch (FormattingModelInconsistencyException e) {
       LOG.error(e);
     }
-    finally{
-      enableFormatting();
-    }
   }
 
   @Override
@@ -369,7 +348,6 @@ public class FormatterImpl extends FormatterEx
                               final CommonCodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
-    disableFormatting();
     try {
       validateModel(model);
       if (model instanceof PsiBasedFormattingModel) {
@@ -387,9 +365,6 @@ public class FormatterImpl extends FormatterEx
     }
     catch (FormattingModelInconsistencyException e) {
       LOG.error(e);
-    }
-    finally {
-      enableFormatting();
     }
     return offset;
   }
@@ -657,33 +632,6 @@ public class FormatterImpl extends FormatterEx
   @Override
   public Indent getContinuationWithoutFirstIndent(boolean relative) {
     return relative ? myContinuationWithoutFirstIndentRelativeToDirectParent : myContinuationWithoutFirstIndentNotRelativeToDirectParent;
-  }
-
-  @Override
-  public boolean isDisabled() {
-    return myIsDisabledCount.get() > 0;
-  }
-
-  private void disableFormatting() {
-    myIsDisabledCount.incrementAndGet();
-  }
-
-  private void enableFormatting() {
-    int old = myIsDisabledCount.getAndDecrement();
-    if (old <= 0) {
-      LOG.error("enableFormatting()/disableFormatting() not paired. DisabledLevel = " + old);
-    }
-  }
-
-  @Nullable
-  public <T> T runWithFormattingDisabled(@NotNull Computable<T> runnable) {
-    disableFormatting();
-    try {
-      return runnable.compute();
-    }
-    finally {
-      enableFormatting();
-    }
   }
 
   private abstract static class MyFormattingTask implements SequentialTask {

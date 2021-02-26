@@ -33,9 +33,6 @@ public abstract class FormatterEx implements Formatter {
                                        final int offset,
                                        final TextRange affectedRange);
 
-  public abstract boolean isDisabled();
-
-
 
   public abstract void adjustLineIndentsForRange(final FormattingModel model,
                                                  final CodeStyleSettings settings,

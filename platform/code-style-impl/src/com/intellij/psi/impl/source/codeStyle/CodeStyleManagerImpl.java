@@ -752,10 +752,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public <T> T performActionWithFormatterDisabled(final Computable<T> r) {
-    return ((FormatterImpl)FormatterEx.getInstance()).runWithFormattingDisabled(() -> {
-      final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
-      return component.disablePostprocessFormattingInside(r);
-    });
+    final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
+    return component.disablePostprocessFormattingInside(r);
   }
 
   private static class RangeFormatInfo{
