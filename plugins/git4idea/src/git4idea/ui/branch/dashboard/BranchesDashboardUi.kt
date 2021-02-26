@@ -88,10 +88,13 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val ui = logUi
 
     val properties = ui.properties
-    val changeLogFilterAllowed = properties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]
-    if (!changeLogFilterAllowed) return@TreeSelectionListener
 
-    updateLogBranchFilter()
+    if (properties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) {
+      updateLogBranchFilter()
+    }
+    else if (properties[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY]) {
+      navigateToSelectedBranch(false)
+    }
   }
 
   internal fun updateLogBranchFilter() {
@@ -104,6 +107,12 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
       oldFilters.without(VcsLogBranchLikeFilter::class.java)
     }
     ui.filterUi.filters = newFilters
+  }
+
+  internal fun navigateToSelectedBranch(focus: Boolean) {
+    val selectedReference = tree.getSelectedBranchFilters().singleOrNull() ?: return
+
+    logUi.vcsLog.jumpToReference(selectedReference, focus)
   }
 
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
@@ -335,6 +344,11 @@ internal val SHOW_GIT_BRANCHES_LOG_PROPERTY =
 
 internal val CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY =
   object : VcsLogApplicationSettings.CustomBooleanProperty("Change.Log.Filter.on.Branch.Selection") {
+    override fun defaultValue() = false
+  }
+
+internal val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY =
+  object : VcsLogApplicationSettings.CustomBooleanProperty("Navigate.Log.To.Branch.on.Branch.Selection") {
     override fun defaultValue() = false
   }
 

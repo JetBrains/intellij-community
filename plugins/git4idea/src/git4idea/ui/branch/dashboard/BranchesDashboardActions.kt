@@ -401,7 +401,26 @@ internal object BranchesDashboardActions {
   }
 
   class ChangeBranchFilterAction : BooleanPropertyToggleAction() {
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      super.setSelected(e, state)
+      e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY] = false
+    }
+
     override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
+  }
+
+  class NavigateLogToBranchAction : BooleanPropertyToggleAction() {
+    override fun isSelected(e: AnActionEvent): Boolean {
+      return super.isSelected(e) &&
+             !e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      super.setSelected(e, state)
+      e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY] = false
+    }
+
+    override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY
   }
 
   class GroupBranchByDirectoryAction(private val tree: FilteringBranchesTree) : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY,
