@@ -115,7 +115,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   public @Nullable PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                             @NotNull PsiFile file,
                                                             @Nullable PsiElement contextElement, int targetOffset) {
-
+    if (contextElement instanceof XmlElement) return null;
     DocumentationProvider styleProvider = getStyleProvider();
     PsiElement result = null;
     if (styleProvider != null) {
