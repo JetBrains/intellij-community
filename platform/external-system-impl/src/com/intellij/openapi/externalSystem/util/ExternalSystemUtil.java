@@ -52,7 +52,6 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNo
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
@@ -75,8 +74,8 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -107,11 +106,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.intellij.ide.impl.TrustedProjects.confirmImportingUntrustedProject;
-import static com.intellij.ide.impl.TrustedProjects.getTrustedState;
+import static com.intellij.ide.impl.TrustedProjects.*;
+import static com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly;
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
 
@@ -677,58 +675,59 @@ public final class ExternalSystemUtil {
     @NotNull Project project,
     @NotNull ProjectSystemId systemId
   ) {
-    return confirmLoadingUntrustedProjectIfNeeded(project, systemId, CommonBundle.getCancelButtonText(), ThreeState.UNSURE::equals);
+    return confirmLoadingUntrustedProjectIfNeeded(project, () -> ThreeState.UNSURE.equals(getTrustedState(project)), systemId);
+  }
+
+  public static boolean confirmFullLoadingUntrustedProjectIfNeeded(
+    @NotNull Project project,
+    ProjectSystemId... systemIds
+  ) {
+    return confirmFullLoadingUntrustedProjectIfNeeded(project, () -> true, systemIds);
   }
 
   public static boolean confirmLoadingUntrustedProjectIfNeeded(
     @NotNull Project project,
-    @NotNull ProjectSystemId systemId
+    ProjectSystemId... systemIds
   ) {
-    return confirmLoadingUntrustedProjectIfNeeded(project, systemId, __ -> true);
+    return confirmLoadingUntrustedProjectIfNeeded(project, () -> true, systemIds);
+  }
+
+  public static boolean confirmFullLoadingUntrustedProjectIfNeeded(
+    @NotNull Project project,
+    @NotNull Supplier<Boolean> confirmation,
+    ProjectSystemId... systemIds
+  ) {
+    String systemsPresentation = StringUtil.join(systemIds, it -> it.getReadableName(), ", ");
+    return isTrusted(project) || project.isDefault() || executesTrustedCodeOnly(systemIds) ||
+           confirmation.get() && confirmImportingUntrustedProject(project, () ->
+             MessageDialogBuilder.yesNo(
+               ExternalSystemBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.length),
+               ExternalSystemBundle.message("untrusted.project.notification.text", systemsPresentation, systemIds.length)
+             )
+               .yesText(ExternalSystemBundle.message("untrusted.project.notification.trust.button", systemsPresentation, systemIds.length))
+               .noText(ExternalSystemBundle.message("untrusted.project.notification.open.preview.action"))
+               .asWarning()
+               .ask(project)
+           );
   }
 
   public static boolean confirmLoadingUntrustedProjectIfNeeded(
     @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull @Button String cancelButtonText
+    @NotNull Supplier<Boolean> confirmation,
+    ProjectSystemId... systemIds
   ) {
-    return confirmLoadingUntrustedProjectIfNeeded(project, systemId, cancelButtonText, __ -> true);
-  }
-
-  public static boolean confirmLoadingUntrustedProjectIfNeeded(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull Predicate<ThreeState> confirmation
-  ) {
-    String cancelButtonText = ExternalSystemBundle.message("unlinked.project.notification.open.preview.action");
-    return confirmLoadingUntrustedProjectIfNeeded(project, systemId, cancelButtonText, confirmation);
-  }
-
-  public static boolean confirmLoadingUntrustedProjectIfNeeded(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull @Button String cancelButtonText,
-    @NotNull Predicate<ThreeState> confirmation
-  ) {
-    if (project.isDefault()) {
-      return true;
-    }
-    if (ExternalResolverIsSafe.executesTrustedCodeOnly(systemId)) {
-      return true;
-    }
-    ThreeState state = getTrustedState(project);
-    if (state.equals(ThreeState.YES)) {
-      return true;
-    }
-    if (!confirmation.test(state)) {
-      return false;
-    }
-    String systemName = systemId.getReadableName();
-    return confirmImportingUntrustedProject(
-      project, systemName,
-      ExternalSystemBundle.message("unlinked.project.notification.load.action", systemName),
-      cancelButtonText
-    );
+    String systemsPresentation = StringUtil.join(systemIds, it -> it.getReadableName(), ", ");
+    return isTrusted(project) || project.isDefault() || executesTrustedCodeOnly(systemIds) ||
+           confirmation.get() && confirmImportingUntrustedProject(project, () ->
+             MessageDialogBuilder.yesNo(
+               ExternalSystemBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.length),
+               ExternalSystemBundle.message("untrusted.project.notification.text", systemsPresentation, systemIds.length)
+             )
+               .yesText(ExternalSystemBundle.message("untrusted.project.notification.trust.button", systemsPresentation, systemIds.length))
+               .noText(CommonBundle.getCancelButtonText())
+               .asWarning()
+               .ask(project)
+           );
   }
 
   public static boolean isNewProject(Project project) {
