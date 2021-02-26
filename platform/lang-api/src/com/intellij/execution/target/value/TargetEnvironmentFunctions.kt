@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TargetEnvironmentFunctions")
 
 package com.intellij.execution.target.value
@@ -36,17 +36,22 @@ fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: C
   JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator)
 
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
-  val targetFileSeparator = targetPlatform.platform.fileSeparator
-  val (uploadRoot, relativePath) = uploadVolumes.mapNotNull { uploadRoot ->
-    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath.toString(),
-                              file = localPath,
-                              targetFileSeparator = targetFileSeparator)?.let { relativePath -> uploadRoot to relativePath }
-  }.firstOrNull() ?: throw IllegalArgumentException("Local path \"$localPath\" is not registered within uploads in the request")
+  val (uploadRoot, relativePath) = getUploadRootForLocalPath(localPath)
+                             ?: throw IllegalArgumentException("Local path \"$localPath\" is not registered within uploads in the request")
   return TargetEnvironmentFunction { targetEnvironment ->
     val volume = targetEnvironment.uploadVolumes[uploadRoot]
                  ?: throw IllegalStateException("Upload root \"$uploadRoot\" is expected to be created in the target environment")
     return@TargetEnvironmentFunction joinPaths(volume.targetRoot, relativePath, targetEnvironment.targetPlatform)
   }
+}
+
+fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<TargetEnvironment.UploadRoot, String>? {
+  val targetFileSeparator = targetPlatform.platform.fileSeparator
+  return uploadVolumes.mapNotNull { uploadRoot ->
+    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath.toString(),
+                              file = localPath,
+                              targetFileSeparator = targetFileSeparator)?.let { relativePath -> uploadRoot to relativePath }
+  }.firstOrNull()
 }
 
 private fun getRelativePathIfAncestor(ancestor: String, file: String, targetFileSeparator: Char): String? =
