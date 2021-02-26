@@ -61,15 +61,19 @@ class ExecutionEnvironmentProviderImpl : ExecutionEnvironmentProvider {
     }
 
     private fun copyCommonRunProfileOptions(runProfile: RunProfile, environmentRunProfile: RunProfile) {
-      if (environmentRunProfile is RunConfiguration && runProfile is RunConfiguration) {
-        environmentRunProfile.isAllowRunningInParallel = runProfile.isAllowRunningInParallel
-      }
       if (environmentRunProfile is RunConfigurationBase<*> && runProfile is RunConfigurationBase<*>) {
-        for (logFile in runProfile.logFiles) {
-          if (!environmentRunProfile.logFiles.contains(logFile)) {
-            environmentRunProfile.addLogFile(logFile.pathPattern, logFile.name, logFile.isEnabled,
-                                             logFile.isSkipContent, logFile.isShowAll)
-          }
+        val options = runProfile.state as? RunConfigurationOptions ?: return
+        val environmentOption = environmentRunProfile.state as? RunConfigurationOptions ?: return
+        environmentOption.apply {
+          fileOutput.copyFrom(options.fileOutput)
+          predefinedLogFiles.addAll(options.predefinedLogFiles)
+          isShowConsoleOnStdOut = options.isShowConsoleOnStdOut
+          isShowConsoleOnStdErr = options.isShowConsoleOnStdErr
+          logFiles.addAll(options.logFiles)
+          isAllowRunningInParallel = options.isAllowRunningInParallel
+          remoteTarget = options.remoteTarget
+          projectPathOnTarget = options.projectPathOnTarget
+          selectedOptions.addAll(options.selectedOptions)
         }
       }
     }
