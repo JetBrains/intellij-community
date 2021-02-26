@@ -9,7 +9,6 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.util.DetailView;
-import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -168,9 +167,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
     XBreakpointCustomPropertiesPanel customConditionPanel = breakpointType.createCustomConditionsPanel();
     if (customConditionPanel != null) {
-      GridConstraints constraints = new GridConstraints();
-      constraints.setFill(GridConstraints.FILL_BOTH);
-      myCustomConditionsPanelWrapper.add(customConditionPanel.getComponent(), constraints);
+      myCustomConditionsPanelWrapper.add(customConditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customConditionPanel);
     }
     else {
