@@ -2,10 +2,12 @@
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nullable;
 
 public interface InspectionToolWrapperWithHint {
   /**
    * Hint will be displayed in gray after inspection name
    */
-  @NlsContexts.Label String getHint();
+  @NlsContexts.Label
+  @Nullable String getHint();
 }
