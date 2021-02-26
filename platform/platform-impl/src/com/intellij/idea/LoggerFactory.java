@@ -64,7 +64,7 @@ public final class LoggerFactory implements Logger.Factory {
       @Override
       public org.w3c.dom.Document createDocument() throws JDOMException {
         String key = "javax.xml.parsers.DocumentBuilderFactory";
-        @SuppressWarnings("SpellCheckingInspection") String property = System.setProperty(key, "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+        String property = System.setProperty(key, "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
         try {
           return super.createDocument();
         }
