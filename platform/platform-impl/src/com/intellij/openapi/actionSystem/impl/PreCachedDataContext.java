@@ -26,6 +26,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
@@ -64,7 +65,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
         return;
       }
 
-      myCachedData = ContainerUtil.createConcurrentWeakValueMap();
+      myCachedData = new ConcurrentHashMap<>();
 
       preGetAllData(component, myCachedData);
 
