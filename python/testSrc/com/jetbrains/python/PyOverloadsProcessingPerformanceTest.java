@@ -168,6 +168,6 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
 
   @Override
   protected @Nullable LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 }

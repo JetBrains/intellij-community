@@ -25,6 +25,6 @@ public class PyAsyncCallQuickFixTest extends PyQuickFixTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 }

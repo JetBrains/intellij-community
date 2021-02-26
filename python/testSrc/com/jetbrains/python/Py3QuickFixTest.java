@@ -34,7 +34,7 @@ import java.util.List;
 public class Py3QuickFixTest extends PyTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PyTestCase.ourPy3Descriptor;
+    return PyTestCase.ourPyLatestDescriptor;
   }
 
   // PY-13685

@@ -14,7 +14,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   @NotNull
@@ -31,18 +31,6 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   @Override
   protected String getTestCaseDirectory() {
     return TEST_DIRECTORY;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setLanguageLevel(LanguageLevel.getLatest());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    setLanguageLevel(null);
-    super.tearDown();
   }
 
   // PY-9289
@@ -437,67 +425,53 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-41847
   public void testTypingAnnotatedType() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> {
-        doTestByText("from typing import Annotated\n" +
-                     "A = Annotated[bool, 'Some constraint']\n" +
-                     "a: A = <warning descr=\"Expected type 'bool', got 'str' instead\">'str'</warning>\n" +
-                     "b: A = True\n" +
-                     "c: Annotated[bool, 'Some constraint'] = <warning descr=\"Expected type 'bool', got 'str' instead\">'str'</warning>\n" +
-                     "d: Annotated[str, 'Some constraint'] = 'str'\n");
-      }
-    );
+    doTestByText("from typing import Annotated\n" +
+                 "A = Annotated[bool, 'Some constraint']\n" +
+                 "a: A = <warning descr=\"Expected type 'bool', got 'str' instead\">'str'</warning>\n" +
+                 "b: A = True\n" +
+                 "c: Annotated[bool, 'Some constraint'] = <warning descr=\"Expected type 'bool', got 'str' instead\">'str'</warning>\n" +
+                 "d: Annotated[str, 'Some constraint'] = 'str'\n");
   }
 
   // PY-41847
   public void testTypingAnnotatedTypeMultiFile() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   // PY-43838
   public void testParameterizedClassAgainstType() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTestByText("from typing import Type, Any, List\n" +
-                         "\n" +
-                         "def my_function(param: Type[Any]):\n" +
-                         "    pass\n" +
-                         "\n" +
-                         "my_function(List[str])")
-    );
+    doTestByText("from typing import Type, Any, List\n" +
+                 "\n" +
+                 "def my_function(param: Type[Any]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "my_function(List[str])");
   }
 
   // PY-43838
   public void testUnionAgainstType() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTestByText("from typing import Type, Any, Union\n" +
-                         "\n" +
-                         "def my_function(param: Type[Any]):\n" +
-                         "    pass\n" +
-                         "\n" +
-                         "my_function(Union[int, str])")
-    );
+    doTestByText("from typing import Type, Any, Union\n" +
+                 "\n" +
+                 "def my_function(param: Type[Any]):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "my_function(Union[int, str])");
   }
 
   // PY-44575
   public void testArgsCallableAgainstOneParameterCallable() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTestByText("from typing import Any, Callable, Iterable, TypeVar\n" +
-                         "_T1 = TypeVar(\"_T1\")\n" +
-                         "def mymap(c: Callable[[_T1], Any], i: Iterable[_T1]) -> Iterable[_T1]:\n" +
-                         "  pass\n" +
-                         "def myfoo(*args: int) -> int:\n" +
-                         "  pass\n" +
-                         "mymap(myfoo, [1, 2, 3])\n")
-    );
+    doTestByText("from typing import Any, Callable, Iterable, TypeVar\n" +
+                 "_T1 = TypeVar(\"_T1\")\n" +
+                 "def mymap(c: Callable[[_T1], Any], i: Iterable[_T1]) -> Iterable[_T1]:\n" +
+                 "  pass\n" +
+                 "def myfoo(*args: int) -> int:\n" +
+                 "  pass\n" +
+                 "mymap(myfoo, [1, 2, 3])\n");
   }
 
   // PY-36062
   public void testModuleTypeParameter() {
     // `types.ModuleType` class qualified name is `_importlib_modulespec.ModuleType` in Python 3
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+    doMultiFileTest();
   }
 }

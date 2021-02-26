@@ -25,7 +25,7 @@ public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   // PY-18965

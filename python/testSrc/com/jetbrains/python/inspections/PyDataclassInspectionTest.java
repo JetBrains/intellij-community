@@ -5,7 +5,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -317,20 +316,15 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   @Override
   protected void doTest() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> {
-        myFixture.copyFileToProject(getTestCaseDirectory() + "/dataclasses.py", "dataclasses.py");
-        super.doTest();
-        assertProjectFilesNotParsed(myFixture.getFile());
-      }
-    );
+    myFixture.copyFileToProject(getTestCaseDirectory() + "/dataclasses.py", "dataclasses.py");
+    super.doTest();
+    assertProjectFilesNotParsed(myFixture.getFile());
   }
 
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   @NotNull

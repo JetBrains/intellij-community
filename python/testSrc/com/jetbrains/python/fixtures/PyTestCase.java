@@ -73,7 +73,7 @@ import java.util.function.Consumer;
 public abstract class PyTestCase extends UsefulTestCase {
 
   protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON27);
-  protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON37);
+  protected static final PyLightProjectDescriptor ourPyLatestDescriptor = new PyLightProjectDescriptor(LanguageLevel.getLatest());
 
   protected CodeInsightTestFixture myFixture;
 
