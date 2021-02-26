@@ -3,12 +3,19 @@ package com.intellij.workspaceModel.storage.impl.containers
 
 import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import org.jetbrains.annotations.TestOnly
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-internal class BidirectionalMap<K, V> private constructor(private val keyToValueMap: Object2ObjectOpenHashMap<K, V>,
-                                                          private val valueToKeysMap: MutableMap<V, MutableList<K>>) : MutableMap<K, V> {
-  constructor() : this(Object2ObjectOpenHashMap<K, V>(), HashMap<V, MutableList<K>>())
+/**
+ * Most of the time this collection stores unique keys and values. Base on this information we can speed up the collection copy
+ * by using [Object2ObjectOpenHashMap.clone] method and only if several keys contain same value we store as list at [valueToKeysMap]
+ * field and at collection copying, we additionally clone only field which contains the list inside
+ */
+internal class BidirectionalMap<K, V> private constructor(private val slotsWithList: HashSet<V>,
+                                                          private val keyToValueMap: Object2ObjectOpenHashMap<K, V>,
+                                                          private val valueToKeysMap: Object2ObjectOpenHashMap<V, Any>) : MutableMap<K, V> {
+  constructor() : this(HashSet<V>(), Object2ObjectOpenHashMap<K, V>(), Object2ObjectOpenHashMap<V, Any>())
 
   override fun put(key: K, value: V): V? {
     val oldValue = keyToValueMap.put(key, value)
@@ -16,23 +23,47 @@ internal class BidirectionalMap<K, V> private constructor(private val keyToValue
       if (oldValue == value) {
         return oldValue
       }
-      val array = valueToKeysMap[oldValue]!!
-      array.remove(key)
-      if (array.isEmpty()) {
+      val keys = valueToKeysMap[oldValue]!!
+      if (keys is MutableList<*>) {
+        keys.remove(key)
+        if (keys.size == 1) {
+          valueToKeysMap[value] = keys[0]
+          slotsWithList.remove(oldValue)
+        } else if (keys.isEmpty()) {
+          valueToKeysMap.remove(oldValue)
+          slotsWithList.remove(oldValue)
+        }
+      } else {
         valueToKeysMap.remove(oldValue)
       }
     }
-    valueToKeysMap.computeIfAbsent(value) { SmartList() }.add(key)
+
+    val existingKeys = valueToKeysMap[value]
+    if (existingKeys == null) {
+      valueToKeysMap[value] = key
+      return oldValue
+    }
+    if (existingKeys is MutableList<*>) {
+      existingKeys as MutableList<K>
+      existingKeys.add(key)
+    } else {
+      valueToKeysMap[value] = SmartList(existingKeys as K, key)
+      slotsWithList.add(value)
+    }
     return oldValue
   }
 
   override fun clear() {
+    slotsWithList.clear()
     keyToValueMap.clear()
     valueToKeysMap.clear()
   }
 
   fun getKeysByValue(value: V): List<K>? {
-    return valueToKeysMap[value]
+    return valueToKeysMap[value]?.let { keys ->
+      if (keys is MutableList<*>) return@let keys as MutableList<K>
+      return@let SmartList(keys as K)
+    }
   }
 
   override val keys: MutableSet<K>
@@ -58,22 +89,31 @@ internal class BidirectionalMap<K, V> private constructor(private val keyToValue
   }
 
   fun removeValue(v: V) {
-    val ks: List<K>? = valueToKeysMap.remove(v)
-    if (ks != null) {
-      for (k in ks) {
-        keyToValueMap.remove(k)
+    val keys = valueToKeysMap.remove(v)
+    if (keys != null) {
+      if (keys is MutableList<*>) {
+        for (k in keys) {
+          keyToValueMap.remove(k)
+        }
+        slotsWithList.remove(v)
+      } else {
+        keyToValueMap.remove(keys as K)
       }
     }
   }
 
   override fun remove(key: K): V? {
     val value = keyToValueMap.remove(key)
-    val ks: MutableList<K>? = valueToKeysMap[value]
-    if (ks != null) {
-      if (ks.size > 1) {
-        ks.remove(key)
-      }
-      else {
+    val keys = valueToKeysMap[value]
+    if (keys != null) {
+      if (keys is MutableList<*> && keys.size > 1) {
+        keys.remove(key)
+        if (keys.size == 1) {
+          valueToKeysMap[value] = keys[0]
+          slotsWithList.remove(value)
+        }
+      } else {
+        if (keys is MutableList<*>) slotsWithList.remove(value)
         valueToKeysMap.remove(value)
       }
     }
@@ -93,10 +133,13 @@ internal class BidirectionalMap<K, V> private constructor(private val keyToValue
     get() = keyToValueMap.entries
 
   fun copy(): BidirectionalMap<K, V> {
-    val valueToKeys = HashMap<V, MutableList<K>>(valueToKeysMap.size)
-    valueToKeysMap.forEach { (key, value) -> valueToKeys[key] = SmartList(value) }
-    return BidirectionalMap(keyToValueMap.clone(), valueToKeys)
+    val clonedValueToKeysMap = valueToKeysMap.clone()
+    slotsWithList.forEach { value -> clonedValueToKeysMap[value] = SmartList(valueToKeysMap[value]) }
+    return BidirectionalMap(HashSet(slotsWithList), keyToValueMap.clone(), clonedValueToKeysMap)
   }
+
+  @TestOnly
+  fun getSlotsWithList() = slotsWithList
 
   override fun toString(): String {
     return keyToValueMap.toString()
