@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -73,10 +73,11 @@ public class RefreshAllExternalProjectsAction extends DumbAwareAction {
     // We save all documents because there is a possible case that there is an external system config file changed inside the ide.
     FileDocumentManager.getInstance().saveAllDocuments();
 
+    boolean isPreviewMode = ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, systemIds.toArray(new ProjectSystemId[0]));
     for (ProjectSystemId externalSystemId : systemIds) {
       ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
       ImportSpecBuilder importSpec = new ImportSpecBuilder(project, externalSystemId);
-      if (!ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, externalSystemId)) {
+      if (!isPreviewMode) {
         importSpec.usePreviewMode();
       }
       ExternalSystemUtil.refreshProjects(importSpec.forceWhenUptodate(true));

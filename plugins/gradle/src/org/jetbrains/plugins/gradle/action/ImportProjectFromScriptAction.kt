@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,7 +27,7 @@ class ImportProjectFromScriptAction: ExternalSystemAction() {
     val virtualFile = e.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE) ?: return
     val project = e.getData<Project>(CommonDataKeys.PROJECT) ?: return
     val externalProjectPath = getDefaultPath(virtualFile)
-    ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, GradleConstants.SYSTEM_ID)
+    ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, GradleConstants.SYSTEM_ID)
     linkAndRefreshGradleProject(externalProjectPath, project)
   }
 

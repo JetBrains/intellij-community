@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
@@ -83,7 +83,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
       projectImportProvider
     );
     if (wizard != null && (wizard.getStepCount() <= 0 || wizard.showAndGet())) {
-      ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, externalSystemId);
+      ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, externalSystemId);
       ImportModuleAction.createFromWizard(project, wizard);
     }
   }
