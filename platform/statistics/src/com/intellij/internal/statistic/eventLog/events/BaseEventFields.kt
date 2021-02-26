@@ -134,7 +134,7 @@ abstract class StringListEventField(override val name: String) : PrimitiveEventF
   data class ValidatedByAllowedValues(@NonNls override val name: String,
                                       val allowedValues: List<String>) : StringListEventField(name) {
     override val validationRule: List<String>
-      get() = allowedValues
+      get() = listOf("{enum:${allowedValues.joinToString("|")}}")
   }
 
   data class ValidatedByEnum(@NonNls override val name: String, @NonNls val enumRef: String) : StringListEventField(name) {
