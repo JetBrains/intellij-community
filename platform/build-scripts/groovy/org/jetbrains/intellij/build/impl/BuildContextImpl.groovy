@@ -81,6 +81,7 @@ final class BuildContextImpl extends BuildContext {
 
     bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar")
     dependenciesProperties = new DependenciesProperties(this)
+    messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }
 
   @Override
