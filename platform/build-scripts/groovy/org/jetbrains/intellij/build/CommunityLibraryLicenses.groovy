@@ -642,7 +642,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
     new LibraryLicense(name: "zip-signer", libraryName: "zip-signer",
-                       url: "https://bintray.com/jetbrains/intellij-plugin-service/zip-signer").apache(),
+                       url: "https://github.com/JetBrains/marketplace-zip-signer").apache(),
     new LibraryLicense(name: "Zstd-JNI", libraryName: "com.github.luben:zstd",
                        url: "https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE").simplifiedBsd(),
 
