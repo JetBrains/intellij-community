@@ -104,8 +104,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
-  @SuppressWarnings("MethodMayBeStatic") // to minimize chances of using the wrong project
   public void associatePsi(@NotNull Document document, @NotNull PsiFile file) {
+    if (file.getProject() != myProject) {
+      throw new IllegalArgumentException("Method associatePsi() called with file from the wrong project. Expected: "+myProject+" but got: "+file.getProject());
+    }
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
     if (cachedDocument != null && cachedDocument != document) {
