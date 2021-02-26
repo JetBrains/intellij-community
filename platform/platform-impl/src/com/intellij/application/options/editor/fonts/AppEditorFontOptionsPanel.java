@@ -35,6 +35,7 @@ import com.intellij.ui.AbstractFontCombo;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +51,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
-  private final AppEditorFontPanel myMainPanel;
   private final EditorColorsScheme myScheme;
   private JPanel myWarningPanel;
   private JLabel myEditorFontLabel;
@@ -58,8 +58,9 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   private FontWeightCombo myRegularWeightCombo;
   private FontWeightCombo myBoldWeightCombo;
 
-  protected AppEditorFontOptionsPanel(@NotNull AppEditorFontPanel mainPanel, EditorColorsScheme scheme) {
-    myMainPanel = mainPanel;
+  private ActionLink myRestoreLabel;
+
+  protected AppEditorFontOptionsPanel(EditorColorsScheme scheme) {
     myScheme = scheme;
     myDefaultPreferences = new FontPreferencesImpl();
     AppEditorFontOptions.initDefaults((ModifiableFontPreferences)myDefaultPreferences);
@@ -78,7 +79,10 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     topPanel.add(myWarningPanel, c);
     c.gridy ++;
     topPanel.add(createFontSettingsPanel(), c);
-    c.insets = JBUI.insets(5, 0, 0, 0);
+    c.gridy ++;
+    c.insets = JBUI.insets(ADDITIONAL_VERTICAL_GAP, BASE_INSET, 0, 0);
+    myRestoreLabel = createRestoreLabel();
+    topPanel.add(myRestoreLabel, c);
     c.fill = GridBagConstraints.HORIZONTAL;
     c.gridy ++;
     c.insets = JBUI.insets(ADDITIONAL_VERTICAL_GAP, 0);
@@ -103,8 +107,9 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     JPanel typographyPanel = new JPanel(new BorderLayout());
 
     JPanel expansionPanel = new JPanel(new BorderLayout());
+    expansionPanel.setBorder(JBUI.Borders.empty());
     JPanel titlePanel = new JPanel(new BorderLayout());
-    titlePanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.editor.font.typography.settings")));
+    titlePanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.editor.font.typography.settings"), false, JBUI.emptyInsets()));
     expansionPanel.add(titlePanel, BorderLayout.CENTER);
     JLabel arrowLabel = new JLabel(AllIcons.General.ArrowRight);
     arrowLabel.setBorder(JBUI.Borders.empty(0, 0, 10, 5));
@@ -122,6 +127,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     if (isAdvancedFontFamiliesUI()) {
       internalPanel.add(new JLabel(ApplicationBundle.message("settings.editor.font.main.weight")), c);
       c.gridx = 1;
+      c.insets = JBUI.insets(0, BASE_INSET, 0, 0);
       myRegularWeightCombo = new MyRegularFontWeightCombo();
       int comboWidth = myRegularWeightCombo.getFontMetrics(myRegularWeightCombo.getFont()).stringWidth(StringUtil.repeat("M", 20));
       fixComboWidth(myRegularWeightCombo, comboWidth);
@@ -143,6 +149,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
       c.gridx = 0;
       internalPanel.add(new JLabel(ApplicationBundle.message("settings.editor.font.bold.weight")), c);
       c.gridx = 1;
+      c.insets = getInsets(0, 0);
       myBoldWeightCombo = new MyBoldFontWeightCombo();
       myBoldWeightCombo.addActionListener(new ActionListener() {
         @Override
@@ -188,13 +195,21 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     updateOnChangedFont();
   }
 
+
+  @NotNull
+  private ActionLink createRestoreLabel() {
+    return new ActionLink(ApplicationBundle.message("settings.editor.font.restored.defaults"), e -> {
+      restoreDefaults();
+    });
+  }
+
   public void updateOnChangedFont() {
     updateOptionsList();
     fireFontChanged();
   }
 
   private void updateRestoreButtonState() {
-    myMainPanel.setRestoreLabelEnabled(!myDefaultPreferences.equals(getFontPreferences()));
+    myRestoreLabel.setEnabled(!myDefaultPreferences.equals(getFontPreferences()));
   }
 
   private JPanel createMessagePanel() {
