@@ -29,7 +29,7 @@ public class Py3HighlightingTest extends PyTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   // PY-20770

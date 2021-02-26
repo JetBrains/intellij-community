@@ -30,7 +30,7 @@ public class Py3StringFormatInspectionTest extends PyInspectionTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   // PY-16938

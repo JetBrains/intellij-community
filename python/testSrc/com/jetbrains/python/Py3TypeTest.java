@@ -18,7 +18,7 @@ public class Py3TypeTest extends PyTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   // PY-6702
@@ -171,7 +171,7 @@ public class Py3TypeTest extends PyTestCase {
            "async def bar():\n" +
            "    expr = await foo()\n"));
   }
-  
+
   // PY-16987
   public void testNoTypeInGoogleDocstringParamAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int", "def f(x: int):\n" +
@@ -181,7 +181,7 @@ public class Py3TypeTest extends PyTestCase {
                                                                  "    \"\"\"    \n" +
                                                                  "    expr = x"));
   }
-  
+
   // PY-16987
   public void testUnfilledTypeInGoogleDocstringParamAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int", "def f(x: int):\n" +
@@ -191,7 +191,7 @@ public class Py3TypeTest extends PyTestCase {
                                                                  "    \"\"\"    \n" +
                                                                  "    expr = x"));
   }
-  
+
   // PY-16987
   public void testNoTypeInNumpyDocstringParamAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int", "def f(x: int):\n" +
@@ -203,7 +203,7 @@ public class Py3TypeTest extends PyTestCase {
                                                                  "    \"\"\"\n" +
                                                                  "    expr = x"));
   }
-  
+
   // PY-17010
   public void testAnnotatedReturnTypePrecedesDocstring() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int", "def func() -> int:\n" +
@@ -551,7 +551,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-22513
   public void testGenericKwargs() {
-    doTest("Dict[str, Union[int, str]]",
+    doTest("dict[str, Union[int, str]]",
            "from typing import Any, Dict, TypeVar\n" +
            "\n" +
            "T = TypeVar('T')\n" +
@@ -598,13 +598,13 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-24445
   public void testIsSubclassInsideListComprehension() {
-    doTest("List[Type[A]]",
+    doTest("list[Type[A]]",
            "class A: pass\n" +
            "expr = [e for e in [] if issubclass(e, A)]");
   }
 
   public void testIsInstanceInsideListComprehension() {
-    doTest("List[A]",
+    doTest("list[A]",
            "class A: pass\n" +
            "expr = [e for e in [] if isinstance(e, A)]");
   }
@@ -1091,44 +1091,38 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-27783
   public void testApplyingSuperSubstitutionToGenericClass() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTest("dict[T, int]",
-                   "from typing import TypeVar, Generic, Dict, List\n" +
-                   "\n" +
-                   "T = TypeVar('T')\n" +
-                   "\n" +
-                   "class A(Generic[T]):\n" +
-                   "    pass\n" +
-                   "\n" +
-                   "class B(A[List[T]], Generic[T]):\n" +
-                   "    def __init__(self) -> None:\n" +
-                   "        self.value_set: Dict[T, int] = {}\n" +
-                   "\n" +
-                   "    def foo(self) -> None:\n" +
-                   "        expr = self.value_set")
-    );
+    doTest("dict[T, int]",
+           "from typing import TypeVar, Generic, Dict, List\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class A(Generic[T]):\n" +
+           "    pass\n" +
+           "\n" +
+           "class B(A[List[T]], Generic[T]):\n" +
+           "    def __init__(self) -> None:\n" +
+           "        self.value_set: Dict[T, int] = {}\n" +
+           "\n" +
+           "    def foo(self) -> None:\n" +
+           "        expr = self.value_set");
   }
 
   // PY-27783
   public void testApplyingSuperSubstitutionToBoundedGenericClass() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTest("dict[T, int]",
-                   "from typing import TypeVar, Generic, Dict, List\n" +
-                   "\n" +
-                   "T = TypeVar('T', bound=str)\n" +
-                   "\n" +
-                   "class A(Generic[T]):\n" +
-                   "    pass\n" +
-                   "\n" +
-                   "class B(A[List[T]], Generic[T]):\n" +
-                   "    def __init__(self) -> None:\n" +
-                   "        self.value_set: Dict[T, int] = {}\n" +
-                   "\n" +
-                   "    def foo(self) -> None:\n" +
-                   "        expr = self.value_set")
-    );
+    doTest("dict[T, int]",
+           "from typing import TypeVar, Generic, Dict, List\n" +
+           "\n" +
+           "T = TypeVar('T', bound=str)\n" +
+           "\n" +
+           "class A(Generic[T]):\n" +
+           "    pass\n" +
+           "\n" +
+           "class B(A[List[T]], Generic[T]):\n" +
+           "    def __init__(self) -> None:\n" +
+           "        self.value_set: Dict[T, int] = {}\n" +
+           "\n" +
+           "    def foo(self) -> None:\n" +
+           "        expr = self.value_set");
   }
 
   // PY-13750
@@ -1165,28 +1159,22 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-29891
   public void testContextManagerType() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTest("str",
-                   "from typing import Type, ContextManager\n" +
-                   "def example():\n" +
-                   "  manager: Type[ContextManager[str]]\n" +
-                   "  with manager() as m:\n" +
-                   "        expr = m")
-    );
+    doTest("str",
+           "from typing import Type, ContextManager\n" +
+           "def example():\n" +
+           "  manager: Type[ContextManager[str]]\n" +
+           "  with manager() as m:\n" +
+           "        expr = m");
   }
 
   // PY-29891
   public void testAsyncContextManager() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTest("str",
-                   "from typing import AsyncContextManager\n" +
-                   "async def example():\n" +
-                   "    manager: AsyncContextManager[str]\n" +
-                   "    async with manager as m:\n" +
-                   "        expr = m")
-    );
+    doTest("str",
+           "from typing import AsyncContextManager\n" +
+           "async def example():\n" +
+           "    manager: AsyncContextManager[str]\n" +
+           "    async with manager as m:\n" +
+           "        expr = m");
   }
 
   private void doTest(final String expectedType, final String text) {
