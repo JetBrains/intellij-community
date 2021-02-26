@@ -6,34 +6,30 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.actions.MethodSmartStepTarget
-import com.intellij.debugger.engine.*
-import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.BasicStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.impl.PositionUtil
-import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.request.StepRequest
-import junit.framework.TestCase
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
-import org.jetbrains.kotlin.idea.debugger.stepping.*
 import org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.*
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
@@ -75,12 +71,14 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private fun SuspendContextImpl.getKotlinStackFrame(): KotlinStackFrame? {
         val proxy = frameProxy ?: return null
-        val positionManager = KotlinPositionManager(debugProcess)
-        val stackFrame = positionManager.createStackFrame(
-            proxy, debugProcess, proxy.location()
-        )
-
-        return stackFrame as? KotlinStackFrame
+        if (myInProgress) {
+            val positionManager = KotlinPositionManager(debugProcess)
+            val stackFrame = positionManager.createStackFrame(
+                proxy, debugProcess, proxy.location()
+            )
+            return stackFrame as? KotlinStackFrame
+        }
+        return null
     }
 
     override fun createEvaluationContext(suspendContext: SuspendContextImpl): EvaluationContextImpl? {
