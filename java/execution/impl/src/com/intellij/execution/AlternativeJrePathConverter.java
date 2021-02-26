@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.xmlb.Converter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,16 +12,12 @@ import java.nio.file.Path;
 
 public class AlternativeJrePathConverter extends Converter<String> {
   public static final NullableLazyValue<String> BUNDLED_JRE_PATH = NullableLazyValue.createValue(() -> {
-    String jbr = getPatchedJrePath(Path.of(PathManager.getBundledRuntimePath()).toString());
+    String jbr = Path.of(PathManager.getBundledRuntimePath()).toString();
     JdkVersionDetector.JdkVersionInfo versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jbr);
     return versionInfo != null ? jbr : null;
   });
 
   private static final String BUNDLED = "BUNDLED";
-
-  public static @NotNull String getPatchedJrePath(@NotNull String path) {
-    return SystemInfo.isMac && !path.endsWith("/Contents/Home") ? path + "/Contents/Home" : path;
-  }
 
   @Override
   public @Nullable String fromString(@NotNull String value) {
