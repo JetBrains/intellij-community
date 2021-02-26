@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
@@ -22,8 +23,11 @@ import training.statistic.FeatureUsageStatisticConsts.DURATION
 import training.statistic.FeatureUsageStatisticConsts.EXPAND_WELCOME_PANEL
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
+import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENED_FIRST_TIME
+import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
 import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
+import training.statistic.FeatureUsageStatisticConsts.NON_LEARNING_PROJECT_OPENED
 import training.statistic.FeatureUsageStatisticConsts.PASSED
 import training.statistic.FeatureUsageStatisticConsts.PROGRESS
 import training.statistic.FeatureUsageStatisticConsts.RESTORE
@@ -41,11 +45,15 @@ internal class StatisticBase : CounterUsagesCollector() {
 
   private data class LessonProgress(val lessonId: String, val taskId: Int)
 
+  enum class LearnProjectOpeningWay {
+    LEARN_IDE, ONBOARDING_PROMOTER
+  }
+
   companion object {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 7)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 8)
 
     // FIELDS
     private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, LESSON_ID)
@@ -58,6 +66,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val keymapSchemeField = EventFields.StringValidatedByCustomRule(KEYMAP_SCHEME, KEYMAP_SCHEME)
     private val versionField = EventFields.Version
     private val inputEventField = EventFields.InputEvent
+    private val learnProjectOpeningWayField = EventFields.Enum<LearnProjectOpeningWay>(LEARN_PROJECT_OPENING_WAY)
 
     // EVENTS
     private val lessonStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START, lessonIdField, languageField)
@@ -70,6 +79,10 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val shortcutClickedEvent = GROUP.registerVarargEvent(SHORTCUT_CLICKED, inputEventField, keymapSchemeField,
                                                                  lessonIdField, taskIdField, actionIdField, versionField)
     private val restorePerformedEvent = GROUP.registerVarargEvent(RESTORE, lessonIdField, taskIdField, versionField)
+    private val learnProjectOpenedFirstTimeEvent: EventId2<LearnProjectOpeningWay, String?> =
+      GROUP.registerEvent(LEARN_PROJECT_OPENED_FIRST_TIME, learnProjectOpeningWayField, languageField)
+    private val nonLearningProjectOpened: EventId1<LearnProjectOpeningWay> =
+      GROUP.registerEvent(NON_LEARNING_PROJECT_OPENED, learnProjectOpeningWayField)
 
     // LOGGING
     fun logLessonStarted(lesson: Lesson) {
@@ -121,6 +134,17 @@ internal class StatisticBase : CounterUsagesCollector() {
                                   taskIdField with taskId.toString(),
                                   versionField with getPluginVersion(lesson))
       }
+    }
+
+    fun logLearnProjectOpenedForTheFirstTime(way: LearnProjectOpeningWay) {
+      if (RecentProjectsManagerBase.instanceEx.getRecentPaths().isEmpty()) {
+        LearnProjectState.instance.firstTimeOpenedWay = way
+        learnProjectOpenedFirstTimeEvent.log(way, courseLanguage())
+      }
+    }
+
+    fun logNonLearningProjectOpened(way: LearnProjectOpeningWay) {
+      nonLearningProjectOpened.log(way)
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
