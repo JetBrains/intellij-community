@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowInitialView
 import java.util.function.Supplier
 
 class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.create.action"),
@@ -16,23 +17,26 @@ class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer(
 
   override fun update(e: AnActionEvent) {
     with(e) {
-      val tabController = project?.service<GHPRToolWindowController>()?.getTabController()
-      val twActive = project != null && tabController != null
-      val twInitialized = project != null && tabController?.componentController != null
+      val twController = project?.service<GHPRToolWindowController>()
+      val twAvailable = project != null && twController != null && twController.isAvailable()
+      val componentController = twController?.getTabController()?.componentController
+      val twInitialized = project != null && componentController != null
 
       if (isFromActionToolbar) {
         presentation.isEnabledAndVisible = twInitialized
         presentation.icon = AllIcons.General.Add
       }
       else {
-        presentation.isEnabledAndVisible = twActive
+        presentation.isEnabledAndVisible = twAvailable
         presentation.icon = AllIcons.Vcs.Vendors.Github
       }
     }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowController>().show {
+    val twController = e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowController>()
+    twController.show {
+      it.initialView = GHPRToolWindowInitialView.NEW
       it.componentController?.createPullRequest()
     }
   }

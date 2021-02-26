@@ -5,6 +5,11 @@ import com.intellij.openapi.util.Key
 
 interface GHPRToolWindowTabController {
 
+  /**
+   * Initial view that will be displayed after login and data pre-loading
+   */
+  var initialView: GHPRToolWindowInitialView
+
   val componentController: GHPRToolWindowTabComponentController?
 
   fun canResetRemoteOrAccount(): Boolean
