@@ -7,7 +7,6 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 
-
 static void _onDestroyWindow(void) {
     gtk_main_quit();
     return;
@@ -30,23 +29,16 @@ int main (int argv, char ** argc) {
     WndInfo* wi = registerWindow(wndxid, &_testHandler);
 
     // populate menu
-    DbusmenuMenuitem* root1 = addRootMenu(wi, 1);
-    setItemLabel(root1, "root1");
+    DbusmenuMenuitem* root1 = addRootMenu(wi, 1, "root1");
 
     FILE *f;
     char buffer[1024*1024];
     gsize length;
 
-    f = fopen ("../test.png", "r");
-    length = fread (buffer, 1, sizeof(buffer), f);
-    fclose (f);
-
-    DbusmenuMenuitem* item1 = addMenuItem(root1, 2, true);
-    setItemLabel(item1, "item1");
-    setItemIcon(item1, buffer, length);
-    DbusmenuMenuitem* sub1 = addMenuItem(sub1, 3, false);
-    setItemLabel(sub1, "sub1");
-    setItemIcon(sub1, buffer, length);
+    DbusmenuMenuitem* item1 = addMenuItem(root1, 2, "item1", ITEM_SIMPLE, 0);
+//    setItemIcon(item1, buffer, length);
+    DbusmenuMenuitem* sub1 = addMenuItem(item1, 3, "sub1", ITEM_SUBMENU, 0);
+//    setItemIcon(sub1, buffer, length);
 
     // run main loop
     gtk_main();

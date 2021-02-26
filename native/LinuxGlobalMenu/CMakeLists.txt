@@ -23,14 +23,14 @@ endif (__DBUSMENU_HAVE_W_ALL)
 find_library(LIB_GLIB NAMES glib libglib libglib-2.0.so.0 PATHS /lib/x86_64-linux-gnu)
 MESSAGE("LIB_GLIB: " ${LIB_GLIB})
 
-find_library(LIB_DBUSMENU NAMES libdbusmenu-glib.so PATHS /usr/lib/x86_64-linux-gnu)
-MESSAGE("LIB_DBUSMENU: " ${LIB_DBUSMENU})
-
 find_library(LIB_GIO NAMES libgio-2.0.so.0 PATHS /usr/lib/x86_64-linux-gnu)
 MESSAGE("LIB_GIO: " ${LIB_GIO})
 
 find_library(LIB_GOBJ NAMES libgobject-2.0.so.0 PATHS /usr/lib/x86_64-linux-gnu)
 MESSAGE("LIB_GOBJ: " ${LIB_GOBJ})
+
+# use patched library
+set(LIB_DBUSMENU "${PROJECT_SOURCE_DIR}/libdbusmenu-glib.a")
 
 set(GLIB_INCLUDE_DIRS /usr/include/glib-2.0 /usr/lib/x86_64-linux-gnu/glib-2.0/include)
 set(DBUSMENU_GLIB_INCLUDE_DIRS /usr/include/libdbusmenu-glib-0.4)
@@ -48,12 +48,16 @@ set(SOURCE_FILES DbusMenuWrapper.c)
 add_library(dbm SHARED ${SOURCE_FILES})
 target_link_libraries(dbm ${LIB_GLIB} ${LIB_GIO} ${LIB_DBUSMENU} ${LIB_GOBJ})
 
-add_executable(dbmexec test.cc)
-target_link_libraries(dbmexec dbm ${LIB_GLIB} ${LIB_GIO} ${LIB_DBUSMENU} ${LIB_DBUSMENU_GTK} ${LIB_GOBJ} ${LIB_GTK} ${LIB_GDK})
+if (TESTS_ENABLED)
+  find_library(LIB_GTK NAMES libgtk-3.so PATHS /usr/lib/x86_64-linux-gnu)
+  MESSAGE("LIB_GTK: " ${LIB_GTK})
 
-add_custom_command(TARGET dbm POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        $<TARGET_FILE:dbm> /home/parallels/projects/IDEA/community/bin/linux/libdbm64.so)
-add_custom_command(TARGET dbm POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        $<TARGET_FILE:dbm> /home/parallels/IdeaProjects/TestMenu/libdbm.so)
+  set(GTK_INCLUDE_DIRS /usr/include/gtk-3.0)
+  include_directories(${GTK_INCLUDE_DIRS} /usr/include/pango-1.0 /usr/include/harfbuzz /usr/include/cairo /usr/include/gdk-pixbuf-2.0 /usr/include/atk-1.0)
+
+  find_library(LIB_GDK NAMES libgdk-3.so PATHS /usr/lib/x86_64-linux-gnu) # needs to get xid from GtkWidget
+  MESSAGE("LIB_GDK: " ${LIB_GDK})
+
+  add_executable(dbmexec test.cc)
+  target_link_libraries(dbmexec dbm ${LIB_GLIB} ${LIB_GIO} ${LIB_DBUSMENU} ${LIB_DBUSMENU_GTK} ${LIB_GOBJ} ${LIB_GTK} ${LIB_GDK})
+endif(TESTS_ENABLED)

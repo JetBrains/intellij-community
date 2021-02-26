@@ -21,7 +21,8 @@
 static jlogger _ourLogger = NULL;
 static jrunnable _ourOnServiceAppearedCallback = NULL;
 static jrunnable _ourOnServiceVanishedCallback = NULL;
-static guint _ourServiceNameWatcher = 0;
+
+static GMainContext * glib_main_context = NULL;
 
 typedef struct _WndInfo {
   guint32 xid;
@@ -79,25 +80,20 @@ static void _onNameVanished(GDBusConnection *connection, const gchar *name, gpoi
     (*((jrunnable) _ourOnServiceVanishedCallback))();
 }
 
-void startWatchDbus(jlogger jlog, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished) {
-  // NOTE: main-loop is necessary for communication with dbus (via glib and it's signals)
-  // It is started in java (see invocation com.sun.javafx.application.PlatformImpl.startup())
-  _ourLogger = jlog;
+// NOTE: main-loop is necessary for communication with dbus (via glib and it's signals)
+void runMainLoop(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished) {
+  glib_main_context = g_main_context_new();
+  g_main_context_push_thread_default(glib_main_context);  // make this ctx default for current thread
+
+  _ourLogger = jlogger;
   _ourOnServiceAppearedCallback = onAppmenuServiceAppeared;
   _ourOnServiceVanishedCallback = onAppmenuServiceVanished;
-  _ourServiceNameWatcher = g_bus_watch_name(G_BUS_TYPE_SESSION, DBUS_NAME, G_BUS_NAME_WATCHER_FLAGS_NONE, _onNameAppeared, _onNameVanished, NULL, NULL);
+  g_bus_watch_name(G_BUS_TYPE_SESSION, DBUS_NAME, G_BUS_NAME_WATCHER_FLAGS_NONE, _onNameAppeared, _onNameVanished, NULL, NULL);
+  // NOTE: Callbacks will be invoked in the thread-default main context of the thread you are calling g_bus_watch_name from.
   // _info("start watching for dbus name 'com.canonical.AppMenu.Registrar'");
-}
 
-void stopWatchDbus() {
-  g_bus_unwatch_name(_ourServiceNameWatcher);
-  // _info("glib main loop is stopped");
-}
-
-// used when javaFX can't be started
-void runMainLoop(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished) {
-  startWatchDbus(jlogger, onAppmenuServiceAppeared, onAppmenuServiceVanished);
-  g_main_loop_run(g_main_loop_new(g_main_context_new(), FALSE));
+  GMainLoop * main_loop = g_main_loop_new(glib_main_context, FALSE);
+  g_main_loop_run(main_loop);
 }
 
 static void _onDbusOwnerChange(GObject *gobject, GParamSpec *pspec, gpointer user_data) {
@@ -199,8 +195,10 @@ static void _releaseWindow(WndInfo *wi) {
   if (wi->registrar != NULL) {
     _unregisterWindow(wi->xid, wi->registrar);
     if (wi->linkedXids != NULL) {
-      for (GList* l = wi->linkedXids; l != NULL; l = l->next)
-        _unregisterWindow((guint32)l->data, wi->registrar);
+      for (GList* l = wi->linkedXids; l != NULL; l = l->next) {
+          const guint32 xid = ((unsigned long)l->data) & 0xFFFFFFFF;
+          _unregisterWindow(xid, wi->registrar);
+      }
     }
 
     g_object_unref(wi->registrar);
@@ -326,7 +324,7 @@ void bindNewWindow(WndInfo * wi, guint32 windowXid) {
   }
 
   // _logmsg(LOG_LEVEL_INFO, "bind new window 0x%lx", windowXid);
-  wi->linkedXids = g_list_append(wi->linkedXids, (gpointer)windowXid);
+  wi->linkedXids = g_list_append(wi->linkedXids, (void *)(unsigned long)windowXid);
 }
 
 void unbindWindow(WndInfo * wi, guint32 windowXid) {
@@ -337,7 +335,7 @@ void unbindWindow(WndInfo * wi, guint32 windowXid) {
   _unregisterWindow(windowXid, wi->registrar);
 
   if (wi->linkedXids != NULL)
-    wi->linkedXids = g_list_remove(wi->linkedXids, (gpointer)windowXid);
+    wi->linkedXids = g_list_remove(wi->linkedXids, (void *)(unsigned long)windowXid);
 }
 
 static gboolean _execReleaseWindow(gpointer user_data) {
@@ -510,7 +508,18 @@ static gboolean _showMenuItem(gpointer item) {
     return FALSE;
 }
 
-void showMenuItem(DbusmenuMenuitem* item) { g_idle_add(_showMenuItem, item); }
+static guint
+execInMainContext(GSourceFunc func, gpointer data) {
+    GSource *source = g_timeout_source_new(0);
+    g_source_set_callback(source, func, data, NULL);
+    guint result = g_source_attach(source, glib_main_context);
+    g_source_unref(source);
+    return result;
+}
+
+void showMenuItem(DbusmenuMenuitem* item) {
+    execInMainContext(_showMenuItem, item);
+}
 
 void setItemLabel(DbusmenuMenuitem *item, const char *label) {
   dbusmenu_menuitem_property_set(item, DBUSMENU_MENUITEM_PROP_LABEL, label);
@@ -577,5 +586,10 @@ static gboolean _execJRunnable(gpointer user_data) {
 
 void execOnMainLoop(jrunnable run) {
   // _info("scheduled execOnMain");
-  g_idle_add(_execJRunnable, run);
+  if (glib_main_context == NULL) {
+      _logmsg(LOG_LEVEL_ERROR, "execOnMainLoop: glib_main_context wasn't initialized");
+      return;
+  }
+
+  execInMainContext(_execJRunnable, run);
 }
