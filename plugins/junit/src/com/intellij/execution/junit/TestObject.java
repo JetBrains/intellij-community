@@ -14,13 +14,14 @@ import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -382,25 +383,27 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private void downloadDependenciesWhenRequired(@NotNull Project project,
                                                 @NotNull List<String> classPath,
                                                 @NotNull RepositoryLibraryProperties properties) throws CantRunException {
-    TargetProgressIndicator targetProgressIndicator = getTargetProgressIndicator();
     Collection<OrderRoot> roots;
     try {
-      if (targetProgressIndicator == null) {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
         roots = JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
       }
       else {
-        String title = JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1);
-        targetProgressIndicator.addSystemLine(title);
-        roots = ProgressManager.getInstance().run(new Task.WithResult<>(project, title, false) {
-          @Override
-          protected Collection<OrderRoot> compute(@NotNull ProgressIndicator indicator) {
-            return JarRepositoryManager.loadDependenciesSync(project, properties, false, false, null, null,
-                                                             new ProgressIndicatorWrapper(targetProgressIndicator));
-          }
-        });
+        TargetProgressIndicator targetProgressIndicator = getTargetProgressIndicator();
+        if (targetProgressIndicator != null) {
+          String title = JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1);
+          targetProgressIndicator.addSystemLine(title);
+        }
+        roots = JarRepositoryManager.loadDependenciesSync(project, properties, false, false, null, null,
+                                                          targetProgressIndicator != null ? new ProgressIndicatorWrapper(targetProgressIndicator) 
+                                                                                          : ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new DumbProgressIndicator()));
       }
     }
-    catch (Throwable e) {
+    catch (ProcessCanceledException e) {
+      roots = Collections.emptyList();
+    }
+    catch (Throwable e) { 
+      LOG.error(e);
       roots = Collections.emptyList();
     }
     if (roots.isEmpty()) {
