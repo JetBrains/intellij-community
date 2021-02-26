@@ -28,7 +28,7 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor() {
   private object MyCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
       val position = parameters.position
-      val argumentIndex = getArgumentIndex(position) ?: return
+      val argumentExplicitIndex = getArgumentIndex(position) ?: return
 
       val call = PsiTreeUtil.getParentOfType(position, PyCallExpression::class.java) ?: return
       val typeEvalContext = parameters.getTypeEvalContext()
@@ -41,9 +41,14 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor() {
 
       callableTypes.forEach { callableType ->
         val callableParameters = callableType.getParameters(typeEvalContext)
-        if (callableParameters == null || callableParameters.any { it.isKeywordContainer || it.isPositionalContainer }) return@forEach
+        val argumentIndex = callableType.implicitOffset + argumentExplicitIndex
+        if (callableParameters == null ||
+            argumentIndex >= callableParameters.size ||
+            callableParameters.any { it.isKeywordContainer || it.isPositionalContainer }) {
+              return@forEach
+        }
 
-        val unfilledParameters = ContainerUtil.subList(callableParameters, argumentIndex + callableType.implicitOffset)
+        val unfilledParameters = ContainerUtil.subList(callableParameters, argumentIndex)
         val variables = collectVariablesToComplete(unfilledParameters, names)
         if (variables.size > 1) {
           result.addElement(createParametersLookupElement(variables, call))
