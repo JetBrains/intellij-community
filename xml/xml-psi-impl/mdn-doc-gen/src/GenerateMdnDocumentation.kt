@@ -4,6 +4,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import com.google.gson.stream.JsonReader
+import com.intellij.application.options.CodeStyle
 import com.intellij.documentation.mdn.*
 import com.intellij.ide.highlighter.HtmlFileType
 import com.intellij.lang.html.HTMLLanguage
@@ -17,12 +18,12 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings
 import com.intellij.psi.impl.source.html.HtmlFileImpl
 import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.xml.XmlAttribute
-import com.intellij.psi.xml.XmlElement
-import com.intellij.psi.xml.XmlTag
-import com.intellij.psi.xml.XmlText
+import com.intellij.psi.xml.*
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.castSafelyTo
 import com.intellij.util.text.NameUtilCore
@@ -123,6 +124,23 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   fun testGenCss() {
     outputJson(MdnApiNamespace.Css.name, buildCssDocs())
+  }
+
+  override fun setUp() {
+    super.setUp()
+    val manager = CodeStyleSettingsManager.getInstance(project)
+    val currSettings = manager.currentSettings
+    val clone = CodeStyle.createTestSettings(currSettings)
+    manager.setTemporarySettings(clone)
+    val htmlSettings = clone.getCustomSettings(HtmlCodeStyleSettings::class.java)
+    htmlSettings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    htmlSettings.HTML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    clone.getCommonSettings(HTMLLanguage.INSTANCE).softMargins.clear()
+  }
+
+  override fun tearDown() {
+    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()
+    super.tearDown()
   }
 
   private fun outputJson(outputFile: String, data: Map<String, Any>) {
@@ -417,9 +435,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun createHtmlFile(contents: RawProse): HtmlFileImpl {
     val htmlFile = PsiFileFactory.getInstance(project)
       .createFileFromText("dummy.html", HTMLLanguage.INSTANCE, contents.content, false, true)
-    val toRemove = mutableSetOf<XmlElement>()
+    val toRemove = mutableSetOf<PsiElement>()
     val toSimplify = mutableSetOf<XmlTag>()
     htmlFile.acceptChildren(object : XmlRecursiveElementVisitor() {
+
+      override fun visitXmlComment(comment: XmlComment) {
+        toRemove.add(comment)
+      }
+
       override fun visitXmlTag(tag: XmlTag) {
         if (tag.name == "pre"
             && tag.getAttributeValue("class")?.matches(Regex("brush: ?(js|html|css|xml)[a-z0-9-;\\[\\] ]*")) == true) {
@@ -678,6 +701,7 @@ private fun String.patchProse(): String =
   replace("/en-US/docs", MDN_DOCS_URL_PREFIX, true)
     .replace("&apos;", "'")
     .replace("&quot;", "\"")
+    .replace("&nbsp;"," ")
     .also { fixedProse ->
       Regex("&(?!lt|gt|amp)[a-z]*;").find(fixedProse)?.let {
         throw Exception("Unknown entity found in prose: ${it.value}")
