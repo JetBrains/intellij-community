@@ -62,9 +62,6 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
     contentPanel.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
       override fun onLoadingStateChange(browser: CefBrowser, isLoading: Boolean, canGoBack: Boolean, canGoForward: Boolean) {
         if (isLoading) {
-          if (url.isNotEmpty()) {
-            alarm.addRequest({ contentPanel.loadHTML(file.content.toString()) }, Registry.intValue("html.editor.timeout", 10000))
-          }
           invokeLater {
             loadingPanel.startLoading()
             multiPanel.select(LOADING_KEY, true)
