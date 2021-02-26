@@ -304,7 +304,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   protected void updateItems() {
-    for (NavBarItem item : myList) {
+    for (NavBarItem item : new ArrayList<>(myList)) {
       item.update();
     }
     if (UISettings.getInstance().getShowNavigationBar()) {
