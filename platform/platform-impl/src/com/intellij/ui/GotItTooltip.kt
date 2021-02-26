@@ -54,7 +54,7 @@ import javax.swing.text.html.StyleSheet
  * with gotItTooltipAllowlist extension point. Prefix can cover a whole class of different gotit tooltips.
  * If prefix is shorter than the whole ID then all different tooltip usages will be reported in one category described by the prefix.
  */
-class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposable: Disposable) : Disposable {
+class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val parentDisposable: Disposable) : Disposable {
   private class ActionContext(val tooltip: GotItTooltip, val pointProvider: (Component) -> Point)
 
   @Nls
@@ -522,6 +522,21 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
 
   override fun dispose() {
     hideBalloon()
+    removeMeFromQueue()
+  }
+
+  private fun removeMeFromQueue() {
+    if (currentlyShown === this) currentlyShown = nextToShow
+    else {
+      var tooltip = currentlyShown
+      while(tooltip != null) {
+        if (tooltip.nextToShow === this) {
+          tooltip.nextToShow = nextToShow
+          break
+        }
+        tooltip = tooltip.nextToShow
+      }
+    }
   }
 
   private fun hideBalloon() {
