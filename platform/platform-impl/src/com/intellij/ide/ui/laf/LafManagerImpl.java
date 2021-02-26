@@ -85,7 +85,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NonNls private static final String ATTRIBUTE_THEME_NAME = "themeId";
 
   private static final String DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme";
-  private static final String HIGH_CONTAST_THEME_ID = "JetBrainsHighContrastTheme";
+  private static final String HIGH_CONTRAST_THEME_ID = "JetBrainsHighContrastTheme";
   private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme";
   private static final String DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme";
 
@@ -554,7 +554,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == Boolean.TRUE) {
       for (UIManager.LookAndFeelInfo laf : myLaFs.getValue()) {
         if (laf instanceof UIThemeBasedLookAndFeelInfo &&
-             HIGH_CONTAST_THEME_ID.equals(((UIThemeBasedLookAndFeelInfo)laf).getTheme().getId())) {
+            HIGH_CONTRAST_THEME_ID.equals(((UIThemeBasedLookAndFeelInfo)laf).getTheme().getId())) {
           return laf;
         }
       }
