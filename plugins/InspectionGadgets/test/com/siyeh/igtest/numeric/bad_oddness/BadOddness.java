@@ -19,4 +19,10 @@ public class BadOddness {
             throw new IllegalArgumentException("Illegal side length");
         }
     }
+    
+    public void parenthesized(Double intervals) {
+      if (<warning descr="Test for oddness '((intervals) % (2)) == (1)' will fail on negative values">((intervals) % (2)) == (1)</warning>) {
+        throw new IllegalArgumentException("Odd intervals!");
+      }
+    }
 }

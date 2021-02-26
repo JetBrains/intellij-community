@@ -23,6 +23,8 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -55,7 +57,7 @@ public class BadOddnessInspection extends BaseInspection {
       if (!ComparisonUtils.isEqualityComparison(expression)) {
         return;
       }
-      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
       final PsiExpression rhs = expression.getROperand();
       if (isModTwo(lhs) && hasValue(rhs, 1)) {
         registerError(expression, expression);
