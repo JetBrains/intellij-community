@@ -94,7 +94,6 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @Override
   public void setUp() throws Exception {
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
-    myJdkHome = requireRealJdkHome();
     super.setUp();
     removedSdks.clear();
     WriteAction.runAndWait(() -> {
@@ -234,6 +233,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @Override
   protected void collectAllowedRoots(final List<String> roots) {
     super.collectAllowedRoots(roots);
+    myJdkHome = requireRealJdkHome();
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
