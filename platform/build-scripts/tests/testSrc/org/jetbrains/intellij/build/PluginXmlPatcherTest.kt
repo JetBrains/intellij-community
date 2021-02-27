@@ -229,17 +229,40 @@ class PluginXmlPatcherTest {
     toPublish = true,
   )
 
-  private fun assertTransform(before: String,
-                              after: String,
-                              productName: String = "UnExistent",
-                              toPublish: Boolean = false,
-                              isEap: Boolean = false) {
+  @Test
+  fun retainProductDescriptorForBundledPluginFlag() = assertTransform(
+    """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>com</id>
+        <product-descriptor code="PCWMP" release-date="__DATE__" release-version="__VERSION__" optional="true"/>
+      </idea-plugin>
+    """.trimIndent(),
+    """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>com</id>
+        <version>x-plugin-version</version>
+        <idea-version since-build="new-since" until-build="new-until"/>
+        <product-descriptor code="PCWMP" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" optional="true"/>
+      </idea-plugin>
+    """.trimIndent(),
+    retainProductDescriptorForBundledPlugin = true,
+    toPublish = false,
+  )
+
+  private fun assertTransform(
+    before: String,
+    after: String,
+    productName: String = "UnExistent",
+    toPublish: Boolean = false,
+    isEap: Boolean = false,
+    retainProductDescriptorForBundledPlugin: Boolean = false,
+  ) {
     val tempFile = File.createTempFile("temp", ".xml").toPath()
     try {
       Files.writeString(tempFile, before)
 
       val patcher = PluginXmlPatcher(MockBuildMessages(), "X-RELEASE-DATE-X", "X-RELEASE-VERSION-X", productName, isEap)
-      patcher.patchPluginXml(tempFile, "x-plugin-module-name", "x-plugin-version", Pair("new-since", "new-until"), toPublish)
+      patcher.patchPluginXml(tempFile, "x-plugin-module-name", "x-plugin-version", Pair("new-since", "new-until"), toPublish, retainProductDescriptorForBundledPlugin)
 
       Assert.assertEquals(after, Files.readString(tempFile))
     }

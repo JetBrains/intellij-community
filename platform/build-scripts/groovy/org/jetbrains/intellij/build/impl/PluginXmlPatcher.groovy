@@ -34,7 +34,8 @@ class PluginXmlPatcher {
                       String pluginModuleName,
                       String pluginVersion,
                       Pair<String, String> compatibleSinceUntil,
-                      boolean toPublish) {
+                      boolean toPublish,
+                      boolean retainProductDescriptorForBundledPlugin) {
     Document doc = XMLParser.parse(Files.readString(pluginXmlFile))
 
     def ideaVersionElement = getOrCreateTopElement(doc, "idea-version", ["id", "name"])
@@ -53,7 +54,7 @@ class PluginXmlPatcher {
       productDescriptor.setAttribute("release-date", myReleaseDate)
       productDescriptor.setAttribute("release-version", myReleaseVersion)
 
-      if (!toPublish) {
+      if (!toPublish && !retainProductDescriptorForBundledPlugin) {
         removeTextBeforeElement(productDescriptor)
         productDescriptor.remove()
       }
