@@ -37,7 +37,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -133,28 +133,27 @@ public class RegistryUi implements Disposable {
 
     myContent.add(tb.getComponent(), BorderLayout.NORTH);
     final TableSpeedSearch search = new TableSpeedSearch(myTable);
-    search.setComparator(new SpeedSearchComparator(false));
     search.setFilteringMode(true);
     myTable.setRowSorter(new TableRowSorter<>(myTable.getModel()));
-    myTable.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(@NotNull KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-          int row = myTable.getSelectedRow();
-          if (row != -1) {
+    myTable.registerKeyboardAction(
+      new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          int[] rows = myTable.getSelectedRows();
+          if (rows.length == 0) return;
+          for (int row : rows) {
             int modelRow = myTable.convertRowIndexToModel(row);
             RegistryValue rv = myModel.getRegistryValue(modelRow);
             if (rv.isBoolean()) {
               setValue(rv, !rv.asBoolean());
               keyChanged(rv.getKey());
-              for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
-              invalidateActions();
-              if (search.isPopupActive()) search.hidePopup();
+              for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(modelRow, i);
             }
           }
+          invalidateActions();
         }
-      }
-    });
+      },
+      KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
   }
 
   private final class RevertAction extends AnAction {
@@ -538,6 +537,10 @@ public class RegistryUi implements Disposable {
     private ComboBox<String> myComboBox;
     private RegistryValue myValue;
 
+    {
+      myCheckBox.addActionListener(e -> stopCellEditing());
+    }
+
     @Override
     @Nullable
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
@@ -550,15 +553,18 @@ public class RegistryUi implements Disposable {
           keyChanged(myValue.getKey());
         }
         return null;
-      } else if (myValue.isBoolean()) {
+      }
+      else if (myValue.isBoolean()) {
         myCheckBox.setSelected(myValue.asBoolean());
         myCheckBox.setBackground(table.getBackground());
         return myCheckBox;
-      } else if (myValue.isMultiValue()) {
+      }
+      else if (myValue.isMultiValue()) {
         myComboBox = new ComboBox<>(getOptions(myValue));
         myComboBox.setSelectedItem(myValue.getSelectedOption());
         return myComboBox;
-      } else {
+      }
+      else {
         myField.setText(myValue.asString());
         myField.setBorder(null);
         myField.selectAll();
@@ -571,10 +577,12 @@ public class RegistryUi implements Disposable {
       if (myValue != null) {
         if (myValue.isBoolean()) {
           setValue(myValue, myCheckBox.isSelected());
-        } else if (myValue.isMultiValue()) {
+        }
+        else if (myValue.isMultiValue()) {
           String selected = (String)myComboBox.getSelectedItem();
           myValue.setSelectedOption(selected);
-        } else {
+        }
+        else {
           setValue(myValue, myField.getText().trim());
         }
         keyChanged(myValue.getKey());

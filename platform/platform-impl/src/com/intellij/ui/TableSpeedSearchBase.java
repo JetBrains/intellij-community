@@ -4,10 +4,12 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import java.awt.event.KeyEvent;
 
 /**
  * @author gregsh
@@ -22,6 +24,13 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
     super(component);
   }
 
+  /**
+   * Turns on filtering the table when searching
+   * Do not forget to configure a row sorter, e.g. {@code table.setRowSorter(new TableRowSorter<>(table.getModel()))},
+   * make sure all the code uses view and model rows correctly using
+   * {@link JTable#convertRowIndexToModel(int)} and {@link JTable#convertRowIndexToView(int)},
+   * and note that {@link JTable#getRowCount()} will return the number of visible rows.
+   * */
   public void setFilteringMode(boolean filteringMode) {
     myFilteringMode = filteringMode;
   }
@@ -74,6 +83,22 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
       myComponent.setColumnSelectionInterval(0, 0);
     }
     TableUtil.scrollSelectionToVisible(myComponent);
+  }
+
+  @Override
+  protected @NotNull SearchPopup createPopup(String s) {
+    // table with checkboxes may use SPACE-bound action to toggle checkboxes
+    boolean ignoreSpaceTyped = myComponent.getActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)) != null;
+    return new SearchPopup(s) {
+      @Override
+      public void processKeyEvent(KeyEvent e) {
+        if (ignoreSpaceTyped && e.getModifiersEx() == 0 &&
+            e.getID() == KeyEvent.KEY_TYPED && e.getKeyCode() == KeyEvent.VK_SPACE) {
+          return;
+        }
+        super.processKeyEvent(e);
+      }
+    };
   }
 
   protected boolean isMatchingRow(int modelRow, String pattern) {
