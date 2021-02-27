@@ -4,6 +4,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
@@ -361,7 +362,14 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                               boolean showNonPopupGroups) {
     DataContext context = myProject == null ? DataContext.EMPTY_CONTEXT : SimpleDataContext.getProjectContext(myProject);
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, context);
-    AnAction[] actions = SlowOperations.allowSlowOperations(() -> group.getChildren(event));
+    AnAction[] actions;
+    try {
+      actions = SlowOperations.allowSlowOperations(() -> group.getChildren(event));
+    }
+    catch (PluginException e) {
+      LOG.error(e);
+      return;
+    }
 
     boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasMeaningfulChildren) {
