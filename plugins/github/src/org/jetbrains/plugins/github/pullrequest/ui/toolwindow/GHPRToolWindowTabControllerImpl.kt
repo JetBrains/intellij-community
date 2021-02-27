@@ -187,6 +187,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       ComponentController(result, wrapper, disposable).also {
         UIUtil.putClientProperty(parent, GHPRToolWindowTabComponentController.KEY, it)
       }
+      initialView = GHPRToolWindowInitialView.LIST
       wrapper
     }
 
