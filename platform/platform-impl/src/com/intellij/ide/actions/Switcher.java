@@ -75,7 +75,6 @@ import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.Re
 import static com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode.*;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.KeyEvent.*;
-import static javax.swing.KeyStroke.getKeyStroke;
 
 /**
  * @author Konstantin Bulenkov
@@ -168,58 +167,6 @@ public final class Switcher extends DumbAwareAction {
       return null;
     }
 
-
-    private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
-
-      @Override
-      public Component getComponentAfter(Container aContainer, Component aComponent) {
-        return aComponent == toolWindows ? files : toolWindows;
-      }
-
-      @Override
-      public Component getComponentBefore(Container aContainer, Component aComponent) {
-        return aComponent == toolWindows ? files : toolWindows;
-      }
-
-      @Override
-      public Component getFirstComponent(Container aContainer) {
-        return toolWindows;
-      }
-
-      @Override
-      public Component getLastComponent(Container aContainer) {
-        return files;
-      }
-
-      @Override
-      public Component getDefaultComponent(Container aContainer) {
-        return files;
-      }
-    }
-
-    private static void exchangeSelectionState (JBList toClear, JBList toSelect) {
-      if (toSelect.getModel().getSize() > 0) {
-        int index = Math.min(toClear.getSelectedIndex(), toSelect.getModel().getSize() - 1);
-        toSelect.setSelectedIndex(index);
-        toSelect.ensureIndexIsVisible(index);
-        toClear.clearSelection();
-      }
-    }
-
-    private class MyToolWindowsListFocusListener extends FocusAdapter {
-      @Override
-      public void focusGained(FocusEvent e) {
-        exchangeSelectionState(files, toolWindows);
-      }
-    }
-
-    private class MyFilesListFocusListener extends FocusAdapter {
-      @Override
-      public void focusGained(FocusEvent e) {
-        exchangeSelectionState(toolWindows, files);
-      }
-    }
-
     final ClickListener myClickListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -281,6 +228,7 @@ public final class Switcher extends DumbAwareAction {
 
       if (cbShowOnlyEditedFiles != null) {
         cbShowOnlyEditedFiles.setOpaque(false);
+        cbShowOnlyEditedFiles.setFocusable(false);
         cbShowOnlyEditedFiles.setSelected(onlyEdited);
         cbShowOnlyEditedFiles.addItemListener(this::updateFilesByCheckBox);
         header.add(HorizontalLayout.RIGHT, cbShowOnlyEditedFiles);
@@ -318,7 +266,6 @@ public final class Switcher extends DumbAwareAction {
       }
 
       toolWindows = new JBList<>(createModel(twModel, getNamer(), mySpeedSearch, pinned));
-      toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
       toolWindows.setPreferredSize(new Dimension(JBUI.scale(200), toolWindows.getPreferredSize().height));
 
       toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
@@ -432,7 +379,6 @@ public final class Switcher extends DumbAwareAction {
       files.addKeyListener(onKeyRelease);
       ScrollingUtil.installActions(files);
       ListHoverListener.DEFAULT.addTo(files);
-      files.addFocusListener(new MyFilesListFocusListener());
       myClickListener.installOn(files);
       ScrollingUtil.ensureSelectionExists(files);
 
@@ -458,12 +404,12 @@ public final class Switcher extends DumbAwareAction {
       addToLeft(toolWindows);
       addToBottom(footer);
 
-      files.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
-      toolWindows.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
-      KeymapUtil.reassignAction(toolWindows, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
-      KeymapUtil.reassignAction(toolWindows, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
-      KeymapUtil.reassignAction(files, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
-      KeymapUtil.reassignAction(files, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
+      if (mySpeedSearch != null) {
+        // copy a speed search listener from the panel to the lists
+        KeyListener listener = ArrayUtil.getLastElement(getKeyListeners());
+        files.addKeyListener(listener);
+        toolWindows.addKeyListener(listener);
+      }
 
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, filesModel.getSize() > 0 ? files : toolWindows)
         .setResizable(pinned)
@@ -476,23 +422,31 @@ public final class Switcher extends DumbAwareAction {
         .setMinSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT))
         .setDimensionServiceKey(pinned ? project : null, pinned ? "SwitcherDM" : null , false)
         .setCancelKeyEnabled(false)
-        .setCancelCallback(() -> {
-          Container popupFocusAncestor = getPopupFocusAncestor();
-          if (popupFocusAncestor != null) popupFocusAncestor.setFocusTraversalPolicy(null);
-          return true;
-        }).createPopup();
+        .createPopup();
       Disposer.register(myPopup, this);
 
       registerAction(this::navigate, "ENTER");
       registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
       registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
       if (!pinned) {
+        registerSwingAction(ListActions.Up.ID, "KP_UP", "UP");
+        registerSwingAction(ListActions.Down.ID, "KP_DOWN", "DOWN");
+        registerSwingAction(ListActions.Left.ID, "KP_LEFT", "LEFT");
+        registerSwingAction(ListActions.Right.ID, "KP_RIGHT", "RIGHT");
+        registerSwingAction(ListActions.PageUp.ID, "PAGE_UP");
+        registerSwingAction(ListActions.PageDown.ID, "PAGE_DOWN");
         //noinspection SpellCheckingInspection
         String mnemonics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         for (int i = 0; i < mnemonics.length(); i++) {
           registerToolWindowAction(mnemonics.substring(i, i + 1));
         }
       }
+      setFocusCycleRoot(true);
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+
+      new SwitcherListFocusAction(files, toolWindows, ListActions.Left.ID);
+      new SwitcherListFocusAction(toolWindows, files, ListActions.Right.ID);
+
       Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
       if (window == null) {
         window = WindowManager.getInstance().getFrame(project);
@@ -505,17 +459,6 @@ public final class Switcher extends DumbAwareAction {
       project.putUserData(SWITCHER_KEY, this);
 
       myPopup.showInCenterOf(window);
-
-      Container popupFocusAncestor = getPopupFocusAncestor();
-      popupFocusAncestor.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
-
-      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "RIGHT");
-      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "LEFT");
-      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "control RIGHT");
-      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "control LEFT");
-
-      fromListToList(toolWindows, files);
-      fromListToList(files, toolWindows);
     }
 
     @Override
@@ -573,22 +516,6 @@ public final class Switcher extends DumbAwareAction {
         listModel = baseModel;
       }
       return listModel;
-    }
-
-    private static void fromListToList(JBList from, JBList to) {
-      AbstractAction action = new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-          to.requestFocus();
-        }
-      };
-      ActionMap map = from.getActionMap();
-      map.put(ListActions.Left.ID, action);
-      map.put(ListActions.Right.ID, action);
-    }
-
-    private Container getPopupFocusAncestor() {
-      return myPopup.isDisposed() ? null : myPopup.getContent().getFocusCycleRootAncestor();
     }
 
     static @NotNull List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
@@ -684,14 +611,6 @@ public final class Switcher extends DumbAwareAction {
 
     private static boolean isTheSameTab(EditorWindow currentWindow, VirtualFile currentFile, FileInfo fileInfo) {
       return fileInfo.first.equals(currentFile) && (fileInfo.second == null || fileInfo.second.equals(currentWindow));
-    }
-
-    private static void  addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
-      Set<AWTKeyStroke> focusTraversalKeySet = focusCycleRoot.getFocusTraversalKeys(focusTraversalType);
-
-      Set<AWTKeyStroke> set = new HashSet<>(focusTraversalKeySet);
-      set.add(getKeyStroke(keyStroke));
-      focusCycleRoot.setFocusTraversalKeys(focusTraversalType, set);
     }
 
     @NotNull
@@ -936,6 +855,8 @@ public final class Switcher extends DumbAwareAction {
       }
       files.revalidate();
       files.repaint();
+      // refresh the Recent Locations item
+      toolWindows.repaint();
     }
 
     void navigate(final InputEvent e) {
@@ -1039,6 +960,10 @@ public final class Switcher extends DumbAwareAction {
           action.consume(event.getInputEvent());
         }
       }.registerCustomShortcutSet(getShortcuts(keys), this, myPopup);
+    }
+
+    private void registerSwingAction(@NonNls @NotNull String id, @NonNls String @NotNull ... keys) {
+      registerAction(event -> SwingActionDelegate.performAction(id, getSelectedList(null)), keys);
     }
 
     private void registerToolWindowAction(@NonNls @NotNull String key) {

@@ -8,6 +8,11 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
+import java.awt.event.ActionEvent
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import javax.swing.AbstractAction
+import javax.swing.JList
 
 internal class ShowRecentFilesAction : LightEditCompatible, SwitcherRecentFilesAction(false)
 internal class ShowRecentlyEditedFilesAction : SwitcherRecentFilesAction(true)
@@ -47,5 +52,39 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
   override fun isSelected(event: AnActionEvent) = getCheckBox(event)?.isSelected ?: false
   override fun setSelected(event: AnActionEvent, selected: Boolean) {
     getCheckBox(event)?.isSelected = selected
+  }
+}
+
+
+internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList<*>, vararg listActionIds: String)
+  : FocusListener, AbstractAction() {
+
+  override fun actionPerformed(event: ActionEvent) {
+    if (toList.isShowing) toList.requestFocusInWindow()
+  }
+
+  override fun focusLost(event: FocusEvent) = Unit
+  override fun focusGained(event: FocusEvent) {
+    val size = toList.model.size
+    if (size > 0) {
+      val fromIndex = fromList.selectedIndex
+      when {
+        fromIndex >= 0 -> toIndex = fromIndex.coerceAtMost(size - 1)
+        toIndex < 0 -> toIndex = 0
+      }
+    }
+  }
+
+  private var toIndex: Int
+    get() = toList.selectedIndex
+    set(index) {
+      fromList.clearSelection()
+      toList.selectedIndex = index
+      toList.ensureIndexIsVisible(index)
+    }
+
+  init {
+    listActionIds.forEach { fromList.actionMap.put(it, this) }
+    toList.addFocusListener(this)
   }
 }
