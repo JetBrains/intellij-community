@@ -14,6 +14,7 @@ class TomlFileTypeTest : TomlTestBase() {
 
     fun `test toml file by extension`() = doTest("example.toml")
     fun `test Cargo lock`() = doTest("Cargo.lock")
+    fun `test Cargo toml orig`() = doTest("Cargo.toml.orig")
     fun `test Gopkg lock`() = doTest("Gopkg.lock")
     fun `test Pipfile`() = doTest("Pipfile")
     fun `test Cargo config`() = doTest(".cargo/config")
