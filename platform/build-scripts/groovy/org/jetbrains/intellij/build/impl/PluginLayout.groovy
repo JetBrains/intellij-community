@@ -28,6 +28,7 @@ final class PluginLayout extends BaseLayout {
   BiPredicate<BuildContext, File> scrambleClasspathFilter = { context, file -> return true } as BiPredicate<BuildContext, File>
   String zkmScriptStub
   Boolean pluginCompatibilityExactVersion = false
+  Boolean retainProductDescriptorForBundledPlugin = false
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -184,6 +185,14 @@ final class PluginLayout extends BaseLayout {
      */
     void pluginCompatibilityExactVersion() {
       layout.pluginCompatibilityExactVersion = true
+    }
+
+    /**
+     * <product-description> is usually removed for bundled plugins.
+     * Call this method to retain it in plugin.xml
+     */
+    void retainProductDescriptorForBundledPlugin() {
+      layout.retainProductDescriptorForBundledPlugin = true
     }
 
     /**
