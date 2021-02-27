@@ -6,10 +6,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
 import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,13 +74,6 @@ public final class VcsLogApplicationSettings implements PersistentStateComponent
         List<String> order = myState.COLUMN_ID_ORDER;
         if (order != null && !order.isEmpty()) {
           return order;
-        }
-        List<Integer> oldOrder = myState.COLUMN_ORDER;
-        if (oldOrder != null && !oldOrder.isEmpty()) {
-          List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumnDeprecated.getVcsLogColumnEx(it).getId());
-          myState.COLUMN_ID_ORDER = oldIdOrder;
-          myState.COLUMN_ORDER = new ArrayList<>();
-          return oldIdOrder;
         }
         return ContainerUtil.map(Arrays.asList(Root.INSTANCE, Commit.INSTANCE, Author.INSTANCE, Date.INSTANCE), VcsLogColumn::getId);
       })
@@ -155,9 +146,6 @@ public final class VcsLogApplicationSettings implements PersistentStateComponent
     public boolean SHOW_DIFF_PREVIEW = false;
     public boolean DIFF_PREVIEW_VERTICAL_SPLIT = true;
     public boolean PREFER_COMMIT_DATE = false;
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-    public List<Integer> COLUMN_ORDER = new ArrayList<>();
     public List<String> COLUMN_ID_ORDER = new ArrayList<>();
     public Map<String, Boolean> COLUMN_ID_VISIBILITY = new HashMap<>();
     public Map<String, Boolean> CUSTOM_BOOLEAN_PROPERTIES = new HashMap<>();
