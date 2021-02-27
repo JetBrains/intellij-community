@@ -67,6 +67,7 @@ final class DistributionJARsBuilder {
   final PlatformLayout platform
   private final Path patchedApplicationInfo
   private final LinkedHashSet<PluginLayout> pluginsToPublish
+  private final PluginXmlPatcher pluginXmlPatcher
 
   @CompileStatic(TypeCheckingMode.SKIP)
   DistributionJARsBuilder(BuildContext buildContext,
@@ -75,6 +76,12 @@ final class DistributionJARsBuilder {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish)
+
+    def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
+                      ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
+    def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
+    this.pluginXmlPatcher = new PluginXmlPatcher(buildContext.messages, releaseDate, releaseVersion, buildContext.applicationInfo.productName, buildContext.applicationInfo.isEAP)
+
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -859,7 +866,10 @@ final class DistributionJARsBuilder {
 
     def pluginVersion = plugin.versionEvaluator.apply(patchedPluginXmlFile, defaultPluginVersion)
 
-    setPluginVersionAndSince(patchedPluginXmlFile, pluginVersion, compatibleBuildRange, pluginsToPublish.contains(plugin))
+    Pair<String, String> sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, buildContext.buildNumber)
+
+    pluginXmlPatcher.patchPluginXml(patchedPluginXmlFile, plugin.mainModule, pluginVersion, sinceUntil, pluginsToPublish.contains(plugin))
+
     layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
   }
 
@@ -1207,51 +1217,6 @@ final class DistributionJARsBuilder {
 
   private LayoutBuilder createLayoutBuilder() {
     new LayoutBuilder(buildContext, COMPRESS_JARS)
-  }
-
-  private void setPluginVersionAndSince(@NotNull Path pluginXmlFile, String pluginVersion, CompatibleBuildRange compatibleBuildRange, boolean toPublish) {
-    Pair<String, String> sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, buildContext.buildNumber)
-    def text = Files.readString(pluginXmlFile)
-            .replaceFirst(
-                    "<version>[\\d.]*</version>",
-                    "<version>${pluginVersion}</version>")
-            .replaceFirst(
-                    "<idea-version\\s+since-build=\"(\\d+\\.)+\\d+\"\\s+until-build=\"(\\d+\\.)+\\d+\"",
-                    "<idea-version since-build=\"${sinceUntil.first}\" until-build=\"${sinceUntil.second}\"")
-            .replaceFirst(
-                    "<idea-version\\s+since-build=\"(\\d+\\.)+\\d+\"",
-                    "<idea-version since-build=\"${sinceUntil.first}\"")
-            .replaceFirst(
-                    "<change-notes>\\s+<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
-                    "<change-notes>\n<![CDATA[\nPlugin version: ${pluginVersion}")
-
-    if (text.contains("<product-descriptor ")) {
-      def eapAttribute = buildContext.applicationInfo.isEAP ? "eap=\"true\"" : ""
-      def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
-              ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
-      def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
-      text = text.replaceFirst(
-              "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"([^/]*)/>",
-              !toPublish ? "" :
-              "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\" $eapAttribute \$2 />")
-      buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${pluginXmlFile.parent.parent.fileName} <product-descriptor/>")
-
-      //hack for publishing: we plugin is compatible only with WebStorm
-      if (toPublish && text.contains("code=\"PDB\"") &&
-          buildContext.getApplicationInfo().productName == "WebStorm") {
-        text = text.replace("Database Tools and SQL", "Database Tools and SQL for WebStorm")
-        text = text.replace("IntelliJ-based IDEs", "WebStorm")
-      }
-    }
-
-    def anchor = text.contains("</id>") ? "</id>" : "</name>"
-    if (!text.contains("<version>")) {
-      text = text.replace(anchor, "${anchor}\n  <version>${pluginVersion}</version>")
-    }
-    if (!text.contains("<idea-version since-build")) {
-      text = text.replace(anchor, "${anchor}\n  <idea-version since-build=\"${sinceUntil.first}\" until-build=\"${sinceUntil.second}\"/>")
-    }
-    Files.writeString(pluginXmlFile, text)
   }
 
   static Pair<String, String> getCompatiblePlatformVersionRange(CompatibleBuildRange compatibleBuildRange, String buildNumber) {
