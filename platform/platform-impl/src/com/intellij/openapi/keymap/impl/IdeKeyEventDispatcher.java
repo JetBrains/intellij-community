@@ -600,9 +600,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   static void doPerformActionImpl(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
     e.consume();
-    if (e instanceof KeyEvent) {
-      IdeEventQueue.getInstance().onActionInvoked((KeyEvent)e);
-    }
 
     DataContext ctx = actionEvent.getDataContext();
     if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
@@ -638,7 +635,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return result;
   }
 
-  static boolean processAction(@NotNull InputEvent e,
+  boolean processAction(@NotNull InputEvent e,
                                @NotNull String place,
                                @NotNull DataContext context,
                                @NotNull List<AnAction> actions,
@@ -698,7 +695,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return null;
   }
 
-  private static void doPerformActionInner(@Nullable Trinity<AnAction, AnActionEvent, Long> chosen,
+  private void doPerformActionInner(@Nullable Trinity<AnAction, AnActionEvent, Long> chosen,
                                            @NotNull InputEvent e,
                                            @NotNull ActionProcessor processor,
                                            @NotNull DataContext context,
@@ -721,6 +718,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
         return;
       }
 
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        myIgnoreNextKeyTypedEvent = true;
+      }
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(
         () -> processor.performAction(e, action, actionEvent));
       actionManager.fireAfterActionPerformed(action, actionEvent.getDataContext(), actionEvent);
@@ -729,11 +729,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     if (!wouldBeEnabledIfNotDumb.isEmpty()) {
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        myIgnoreNextKeyTypedEvent = true;
+      }
       if (dumbModeWarningListener != null) {
         dumbModeWarningListener.actionCanceledBecauseOfDumbMode();
-        if (e instanceof KeyEvent) { //IDEA-222847
-          IdeEventQueue.getInstance().onActionInvoked((KeyEvent)e);
-        }
       }
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
       String message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb);

@@ -84,7 +84,6 @@ public final class IdeEventQueue extends EventQueue {
   private static final boolean ourActionAwareTypeaheadEnabled = !SystemInfoRt.isMac && Boolean.getBoolean("action.aware.typeAhead");
   private static final boolean ourTypeAheadSearchEverywhereEnabled =
     SystemProperties.getBooleanProperty("action.aware.typeAhead.searchEverywhere", false);
-  private static final boolean ourSkipTypedEvent = SystemProperties.getBooleanProperty("skip.typed.event", true);
   private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
@@ -131,7 +130,6 @@ public final class IdeEventQueue extends EventQueue {
     myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
   private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new HashMap<>();
-  private MyLastShortcut myLastShortcut;
 
   public void executeWhenAllFocusEventsLeftTheQueue(@NotNull Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
@@ -370,8 +368,6 @@ public final class IdeEventQueue extends EventQueue {
     ourAppIsLoaded = false;
   }
 
-  private boolean skipTypedEvents;
-
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
@@ -398,12 +394,7 @@ public final class IdeEventQueue extends EventQueue {
         ActiveWindowsWatcher.addActiveWindow((Window)e.getSource());
       }
 
-      if (ourSkipTypedEvent && skipTypedKeyEventsIfFocusReturnsToOwner(e)) {
-        return;
-      }
-
       if (isMetaKeyPressedOnLinux(e)) return;
-      if (isSpecialSymbolMatchingShortcut(e)) return;
 
       if (e.getSource() instanceof TrayIcon) {
         dispatchTrayIconEvent(e);
@@ -575,32 +566,6 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  /**
-   * Checks if typed key event should be ignored. This method solves a problem with international keyboards,
-   * when special symbols will be typed just after invoking an action with the corresponding shortcut.
-   * Example: In German keyboard to enter the symbol 'µ' one can press Ctrl+Alt+M. This shortcut is also mapped on
-   * Extract Method feature. As a result, two events will be put into Event Queue. The first is 'Ctrl+Alt+M', and it triggers
-   * Extract Method dialog to show up. The second is KeyEvent with ID KeyEvent.KEY_TYPED with symbol 'µ' inside,
-   * and it will insert 'µ' the focused text component in Extract Method dialog.
-   *
-   * See more examples <a href="https://youtrack.jetbrains.com/issue/IDEA-187355">here</a>
-   */
-  private boolean isSpecialSymbolMatchingShortcut(AWTEvent e) {
-    final MyLastShortcut shortcut = myLastShortcut;
-    if (shortcut != null && e instanceof KeyEvent && e.getID() == KeyEvent.KEY_TYPED) {
-      KeyEvent symbol = (KeyEvent)e;
-      long time = symbol.getWhen() - shortcut.when;
-      //todo[kb] this is a double check based on time of events. We assume that the shortcut and special symbol will be received one by one.
-      // Try to avoid using timing checks and create a more solid solution
-      return time < 17 && shortcut.keyChar == symbol.getKeyChar();
-    }
-    return false;
-  }
-
-  public void onActionInvoked(@NotNull KeyEvent e) {
-    myLastShortcut = new MyLastShortcut(e.getWhen(), e.getKeyChar());
-  }
-
   @Nullable
   private static ProgressManager obtainProgressManager() {
     ProgressManager manager = ourProgressManager;
@@ -634,27 +599,6 @@ public final class IdeEventQueue extends EventQueue {
     boolean metaIsPressed = e instanceof InputEvent && (((InputEvent)e).getModifiersEx() & InputEvent.META_DOWN_MASK) != 0;
     boolean typedKeyEvent = e.getID() == KeyEvent.KEY_TYPED;
     return SystemInfoRt.isLinux && typedKeyEvent && metaIsPressed;
-  }
-
-  private boolean skipTypedKeyEventsIfFocusReturnsToOwner(@NotNull AWTEvent e) {
-    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-      WindowEvent wfe = (WindowEvent)e;
-      if (wfe.getWindow().getParent() != null && wfe.getWindow().getParent() == wfe.getOppositeWindow()) {
-        skipTypedEvents = true;
-      }
-    }
-
-    if (skipTypedEvents && e instanceof KeyEvent) {
-      if (e.getID() == KeyEvent.KEY_TYPED) {
-        ((KeyEvent)e).consume();
-        return true;
-      }
-      else {
-        skipTypedEvents = false;
-      }
-    }
-
-    return false;
   }
 
   // as we rely on system time monotonicity in many places let's log anomalies at least.
@@ -796,13 +740,6 @@ public final class IdeEventQueue extends EventQueue {
       if (e instanceof InputEvent) {
         processIdleActivityListeners(e);
       }
-    }
-
-    // We must ignore typed events that are dispatched between KEY_PRESSED and KEY_RELEASED.
-    // Key event dispatcher resets its state on KEY_RELEASED event
-    if (e.getID() == KeyEvent.KEY_TYPED && myKeyEventDispatcher.isPressedWasProcessed()) {
-      assert e instanceof KeyEvent;
-      ((KeyEvent)e).consume();
     }
 
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {

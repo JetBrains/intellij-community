@@ -262,7 +262,7 @@ public final class IdeMouseEventDispatcher {
     ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (actionManager != null && !myActions.isEmpty()) {
       DataContext context = DataManager.getInstance().getDataContext(c);
-      IdeKeyEventDispatcher.processAction(
+      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction(
         e, ActionPlaces.MOUSE_SHORTCUT, context, new ArrayList<>(myActions),
         newActionProcessor(modifiers), myPresentationFactory, actionManager);
     }
