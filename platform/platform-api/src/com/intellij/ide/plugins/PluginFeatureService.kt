@@ -7,7 +7,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.Attribute
 
 @Service
-@State(name = "PluginFeatureService", storages = [Storage("pluginAdvertiser.xml")])
+@State(
+  name = "PluginFeatureService",
+  storages = [Storage(StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED)],
+)
 class PluginFeatureService : PersistentStateComponent<PluginFeatureService.State> {
   private val featureMappingsCollected = mutableSetOf<String>()
 
@@ -15,7 +18,7 @@ class PluginFeatureService : PersistentStateComponent<PluginFeatureService.State
     @Attribute("displayName") val displayName: String = "",
     @Attribute("pluginName") val pluginName: String = "",
     @Attribute("pluginId") val pluginId: String = "",
-    @Attribute("bundled") val bundled: Boolean = false
+    @Attribute("bundled") val bundled: Boolean = false,
   )
 
   class FeaturePluginsList {
@@ -28,7 +31,8 @@ class PluginFeatureService : PersistentStateComponent<PluginFeatureService.State
 
   companion object {
     @JvmStatic
-    fun getInstance(): PluginFeatureService = ApplicationManager.getApplication().getService(PluginFeatureService::class.java)
+    val instance: PluginFeatureService
+      get() = ApplicationManager.getApplication().getService(PluginFeatureService::class.java)
   }
 
   private var state = State()
@@ -39,20 +43,29 @@ class PluginFeatureService : PersistentStateComponent<PluginFeatureService.State
     this.state = state
   }
 
-  fun <T> collectFeatureMapping(featureType: String, ep: ExtensionPointName<T>, idMapping: (T) -> String, displayNameMapping: (T) -> String) {
+  fun <T> collectFeatureMapping(
+    featureType: String,
+    ep: ExtensionPointName<T>,
+    idMapping: (T) -> String,
+    displayNameMapping: (T) -> String,
+  ) {
     if (!featureMappingsCollected.add(featureType)) return
 
     val pluginsList = state.features.getOrPut(featureType) { FeaturePluginsList() }
     ep.processWithPluginDescriptor { ext, pluginDescriptor ->
       val id = idMapping(ext)
-      val displayName = displayNameMapping(ext)
       pluginsList.featureMap[id] = FeaturePluginData(
-        displayName, pluginDescriptor.name, pluginDescriptor.pluginId.idString, pluginDescriptor.isBundled)
+        displayNameMapping(ext),
+        pluginDescriptor.name,
+        pluginDescriptor.pluginId.idString,
+        pluginDescriptor.isBundled,
+      )
     }
   }
 
   fun getPluginForFeature(featureType: String, implementationName: String): FeaturePluginData? {
-    val pluginList = state.features[featureType] ?: return null
-    return pluginList.featureMap[implementationName] ?: return null
+    return state.features[featureType]?.let {
+      it.featureMap[implementationName]
+    }
   }
 }

@@ -36,7 +36,7 @@ open class PluginAdvertiserService {
       ProgressManager.checkCanceled()
       val featureType = feature.featureType
       val implementationName = feature.implementationName
-      val installedPlugin = PluginFeatureService.getInstance()
+      val installedPlugin = PluginFeatureService.instance
         .getPluginForFeature(featureType, implementationName)
 
       if (installedPlugin != null) {

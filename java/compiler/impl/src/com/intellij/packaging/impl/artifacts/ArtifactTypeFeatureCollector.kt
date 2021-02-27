@@ -8,7 +8,11 @@ import com.intellij.packaging.artifacts.ArtifactType
 
 private class ArtifactTypeFeatureCollector : StartupActivity.Background {
   override fun runActivity(project: Project) {
-    PluginFeatureService.getInstance().collectFeatureMapping(ArtifactManagerImpl.FEATURE_TYPE, ArtifactType.EP_NAME,
-      ArtifactType::getId, ArtifactType::getPresentableName)
+    PluginFeatureService.instance.collectFeatureMapping(
+      ArtifactManagerImpl.FEATURE_TYPE,
+      ArtifactType.EP_NAME,
+      ArtifactType::getId,
+      ArtifactType::getPresentableName,
+    )
   }
 }
