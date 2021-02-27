@@ -958,7 +958,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   }
 
-  public void resetState() {
+  private void resetState() {
     setState(KeyState.STATE_INIT);
     setPressedWasProcessed(false);
   }

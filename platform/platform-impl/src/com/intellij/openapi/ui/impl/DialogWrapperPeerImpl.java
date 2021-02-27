@@ -684,14 +684,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setBounds(bounds);
       }
 
-      if (Registry.is("actionSystem.fixLostTyping", true)) {
-        final IdeEventQueue queue = IdeEventQueue.getInstance();
-        if (queue != null) {
-          queue.getKeyEventDispatcher().resetState();
-        }
-
-      }
-
       // Workaround for switching workspaces on dialog show
       if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing", false) && !dialogWrapper.isModalProgress()) {
         final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject.get());
