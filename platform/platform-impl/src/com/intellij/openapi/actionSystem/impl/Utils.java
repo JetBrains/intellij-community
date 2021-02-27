@@ -21,7 +21,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -120,7 +119,7 @@ public final class Utils {
     boolean async = isAsyncDataContext(context);
     BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
     ActionUpdater updater = new ActionUpdater(
-      isInModalContext, presentationFactory, context, place, isContextMenu, false, visitor, false, null, async ? queue::offer : null);
+      isInModalContext, presentationFactory, context, place, isContextMenu, false, visitor, null, async ? queue::offer : null);
     List<AnAction> list;
     if (async) {
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
@@ -333,7 +332,7 @@ public final class Utils {
     ActionManager actionManager = ActionManager.getInstance();
     ActionUpdater actionUpdater = new ActionUpdater(
       LaterInvocator.isInModalContext(), factory, dataContext,
-      place, false, false, null, true, (action, presentation) -> {
+      place, false, false, null, (action, presentation) -> {
       AnActionEvent event = actionProcessor.createEvent(
         inputEvent, dataContext, place, presentation, actionManager);
       if (eventTracker != null) eventTracker.accept(event);
@@ -349,7 +348,7 @@ public final class Utils {
           Ref<T> ref = Ref.create();
           ProgressManager.getInstance().computePrioritized(() -> {
             ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-              ref.set(function.apply(actionUpdater.asUpdateSession()));
+              ref.set(function.apply(actionUpdater.asBeforeActionPerformedUpdateSession()));
             }, new EmptyProgressIndicator());
             return null;
           });
@@ -368,7 +367,7 @@ public final class Utils {
       });
     }
     else {
-      result = function.apply(actionUpdater.asUpdateSession());
+      result = function.apply(actionUpdater.asBeforeActionPerformedUpdateSession());
     }
     long time = System.currentTimeMillis() - start;
     if (time > 500) {

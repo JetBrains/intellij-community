@@ -66,7 +66,6 @@ final class ActionUpdater {
   private final String myPlace;
   private final boolean myContextMenuAction;
   private final boolean myToolbarAction;
-  private final boolean myBeforeActionPerformed;
   private final Project myProject;
 
   private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
@@ -96,7 +95,7 @@ final class ActionUpdater {
                 boolean isContextMenuAction,
                 boolean isToolbarAction,
                 Utils.ActionGroupVisitor visitor) {
-    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, visitor, false, null, null);
+    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, visitor, null, null);
   }
 
   ActionUpdater(boolean isInModalContext,
@@ -106,7 +105,6 @@ final class ActionUpdater {
                 boolean isContextMenuAction,
                 boolean isToolbarAction,
                 Utils.ActionGroupVisitor visitor,
-                boolean beforeActionPerformed,
                 BiFunction<? super AnAction, ? super Presentation, AnActionEvent> eventFactory,
                 Consumer<Runnable> laterInvocator) {
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
@@ -117,24 +115,26 @@ final class ActionUpdater {
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
-    myBeforeActionPerformed = beforeActionPerformed;
     myEventFactory = eventFactory;
     myLaterInvocator = laterInvocator;
     myPreCacheAsyncDataKeys = Utils.isAsyncDataContext(dataContext);
-    boolean forceAsync = Utils.isAsyncDataContext(dataContext) && Registry.is("actionSystem.update.actions.async.unsafe");
     myRealUpdateStrategy = new UpdateStrategy(
-      action -> {
-        if (myPreCacheAsyncDataKeys) ReadAction.run(this::ensureAsyncDataKeysPreCached);
-        // clone the presentation to avoid partially changing the cached one if update is interrupted
-        Presentation presentation = computeOnEdt(() -> myFactory.getPresentation(action).clone());
-        if (!myBeforeActionPerformed) presentation.setEnabledAndVisible(true); // todo investigate and remove this line
-        Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), myVisitor, myBeforeActionPerformed);
-        boolean success = callAction(forceAsync, action, "update", doUpdate);
-        return success ? presentation : null;
-      },
-      group -> callAction(forceAsync, group, "getChildren", () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
-      group -> callAction(forceAsync, group, "canBePerformed", () -> group.canBePerformed(getDataContext(group))));
+      action -> updateActionReal(action, Op.update),
+      group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
+      group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(getDataContext(group))));
     myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null), group -> true);
+  }
+
+  @Nullable
+  private Presentation updateActionReal(@NotNull AnAction action, @NotNull Op operation) {
+    if (myPreCacheAsyncDataKeys) ReadAction.run(this::ensureAsyncDataKeysPreCached);
+    // clone the presentation to avoid partially changing the cached one if update is interrupted
+    Presentation presentation = computeOnEdt(() -> myFactory.getPresentation(action).clone());
+    boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
+    if (!isBeforePerformed) presentation.setEnabledAndVisible(true); // todo investigate and remove this line
+    Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), myVisitor, isBeforePerformed);
+    boolean success = callAction(action, operation, doUpdate);
+    return success ? presentation : null;
   }
 
   void applyPresentationChanges() {
@@ -169,16 +169,17 @@ final class ActionUpdater {
     });
   }
 
-  private <T> T callAction(boolean forceAsync, @NotNull AnAction action, @NotNull String operation, @NotNull Supplier<? extends T> call) {
+  private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
     Computable<T> adjustedCall = () -> {
-      try (AccessToken ignored = ProhibitAWTEvents.start(operation)) {
+      try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
         return call.get();
       }
     };
     // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
-    boolean suppressAsync = myBeforeActionPerformed && "update".equals(operation);
-    if (EDT.isCurrentThreadEdt() ||
-        !suppressAsync && forceAsync ||
+    boolean suppressAsync = operation == Op.beforeActionPerformedUpdate;
+    boolean forceAsync = !suppressAsync && Utils.isAsyncDataContext(myDataContext) && Registry.is("actionSystem.update.actions.async.unsafe");
+    if (forceAsync ||
+        EDT.isCurrentThreadEdt() ||
         !suppressAsync && action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground()) {
       return adjustedCall.get();
     }
@@ -485,6 +486,14 @@ final class ActionUpdater {
   }
 
   @NotNull
+  UpdateSession asBeforeActionPerformedUpdateSession() {
+    return asUpdateSession(new UpdateStrategy(
+      action -> updateActionReal(action, Op.beforeActionPerformedUpdate),
+      myRealUpdateStrategy.getChildren,
+      myRealUpdateStrategy.canBePerformed));
+  }
+
+  @NotNull
   private UpdateSession asUpdateSession(UpdateStrategy strategy) {
     return new UpdateSession() {
       @NotNull
@@ -584,6 +593,8 @@ final class ActionUpdater {
     }
     return result;
   }
+
+  private enum Op { update, beforeActionPerformedUpdate, getChildren, canBePerformed }
 
   private static class UpdateStrategy {
     final NullableFunction<? super AnAction, Presentation> update;
