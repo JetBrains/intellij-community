@@ -126,7 +126,7 @@ private fun InputStream.consume(process: Process, timeout: Timeout, consume: (St
   bufferedReader().use { reader ->
     var linesCount = 0
     var linesBuffer = StringBuilder()
-    while (!timeout.isElapsed && process.isAlive || reader.ready()) {
+    while (!timeout.isElapsed && (process.isAlive || reader.ready())) {
       if (reader.ready()) {
         val char = reader.read().takeIf { it != -1 }?.toChar()
         if (char == '\n' || char == '\r') linesCount++
