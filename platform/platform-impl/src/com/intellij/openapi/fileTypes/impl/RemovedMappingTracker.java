@@ -5,9 +5,7 @@ import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -47,6 +45,25 @@ final class RemovedMappingTracker {
     public String toString() {
       return "Removed mapping '" + myFileNameMatcher + "' -> " + myFileTypeName;
     }
+
+    // must not look at myApproved
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      RemovedMapping mapping = (RemovedMapping)o;
+
+      if (!myFileNameMatcher.equals(mapping.myFileNameMatcher)) return false;
+      return myFileTypeName.equals(mapping.myFileTypeName);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myFileNameMatcher.hashCode();
+      result = 31 * result + myFileTypeName.hashCode();
+      return result;
+    }
   }
 
   private final MultiMap<FileNameMatcher, RemovedMapping> myRemovedMappings = new MultiMap<>();
@@ -77,18 +94,9 @@ final class RemovedMappingTracker {
 
   void load(@NotNull Element e) {
     myRemovedMappings.clear();
-    Set<RemovedMapping> uniques = CollectionFactory.createSmallMemoryFootprintSet(new HashingStrategy<>() {
-      @Override
-      public int hashCode(RemovedMapping object) {
-        return object.myFileNameMatcher.hashCode();
-      }
-
-      @Override
-      public boolean equals(RemovedMapping o1, RemovedMapping o2) {
-        return o1 != null && o2 != null && o1.getFileNameMatcher().equals(o2.getFileNameMatcher()) && o1.getFileTypeName().equals(o2.getFileTypeName());
-      }
-    });
-    for (RemovedMapping mapping : readRemovedMappings(e)) {
+    List<RemovedMapping> removedMappings = readRemovedMappings(e);
+    Set<RemovedMapping> uniques = new HashSet<>(removedMappings.size());
+    for (RemovedMapping mapping : removedMappings) {
       if (!uniques.add(mapping)) {
         throw new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping);
       }
