@@ -19,7 +19,7 @@ public class DeployToServerConfigurationTypesRegistrar implements ApplicationIni
       .registerExtensions(ContainerUtil.map(ServerType.EP_NAME.getExtensionList(), type -> new DeployToServerConfigurationType(type)));
 
     ServerType.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<ServerType>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull ServerType addedServer, @NotNull PluginDescriptor pluginDescriptor) {
           getConfigurationTypesExtPoint().registerExtension(new DeployToServerConfigurationType(addedServer));

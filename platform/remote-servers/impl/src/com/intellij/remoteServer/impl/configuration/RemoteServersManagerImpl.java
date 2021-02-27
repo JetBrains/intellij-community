@@ -36,7 +36,7 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
 
   public RemoteServersManagerImpl(MessageBus messageBus) {
     myMessageBus = messageBus;
-    ServerType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<ServerType>() {
+    ServerType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ServerType addedType, @NotNull PluginDescriptor pluginDescriptor) {
         List<RemoteServerState> nowKnownStates = ContainerUtil.filter(myUnknownServers, next -> addedType.getId().equals(next.myTypeId));

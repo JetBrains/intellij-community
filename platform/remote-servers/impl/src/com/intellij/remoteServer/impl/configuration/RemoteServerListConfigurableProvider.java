@@ -6,13 +6,13 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Provides default configurable for server configurations of different
@@ -36,23 +36,19 @@ public final class RemoteServerListConfigurableProvider extends ConfigurableProv
 
   @NotNull
   private static List<ServerType<?>> getServerTypesIncludedInList() {
-    return ContainerUtil.map(IncludeServerType.EP_NAME.getExtensionList(), IncludeServerType::getInstance);
+    Set<String> includedTypes = IncludeServerType.EP_NAME.extensions().map(type -> type.myServerType).collect(Collectors.toSet());
+    return ContainerUtil.filter(ServerType.EP_NAME.getExtensionList(), type -> includedTypes.contains(type.getClass().getName()));
   }
 
   /**
    * Includes server configurations of specific {@link ServerType} to default
    * configurable.
    */
-  public static class IncludeServerType extends BaseKeyedLazyInstance<ServerType<?>> {
+  public static class IncludeServerType {
     public static final ExtensionPointName<IncludeServerType> EP_NAME =
       ExtensionPointName.create("com.intellij.remoteServer.defaultConfigurable.includeServerType");
 
     @Attribute("serverType")
     public String myServerType;
-
-    @Override
-    protected @Nullable String getImplementationClassName() {
-      return myServerType;
-    }
   }
 }
