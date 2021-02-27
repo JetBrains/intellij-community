@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,20 +34,35 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
 
   @Override
   public final void update(@NotNull AnActionEvent event) {
-    event.getPresentation().setEnabled(null != getSwingAction(getComponent(event)));
+    event.getPresentation().setEnabled(null != getAction(mySwingActionId, getComponent(event)));
   }
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent event) {
-    JComponent component = getComponent(event);
-    Action action = getSwingAction(component);
-    if (action != null) action.actionPerformed(new ActionEvent(component, ActionEvent.ACTION_PERFORMED, mySwingActionId));
+    performAction(mySwingActionId, getComponent(event));
   }
 
-  private Action getSwingAction(JComponent component) {
-    if (component == null) return null;
+  /**
+   * @param id        a string identifier of an action to perform
+   * @param component a Swing component that provides an action map
+   * @return {@code true} if action is performed, {@code false} otherwise
+   */
+  public static boolean performAction(@Nullable String id, @Nullable JComponent component) {
+    Action action = getAction(id, component);
+    if (action == null) return false;
+    action.actionPerformed(new ActionEvent(component, ActionEvent.ACTION_PERFORMED, id));
+    return true;
+  }
+
+  /**
+   * @param id        a string identifier of an action to find
+   * @param component a Swing component that provides an action map
+   * @return {@code null} if the given component does not provide the specified action
+   */
+  public static @Nullable Action getAction(@Nullable String id, @Nullable JComponent component) {
+    if (id == null || component == null) return null;
     ActionMap map = component.getActionMap();
-    return map == null ? null : map.get(mySwingActionId);
+    return map == null ? null : map.get(id);
   }
 
   /**
@@ -62,7 +77,7 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
 
   /**
    * @param base      the base component that delegates performing of actions to the dependant component
-   * @param dependant the dependant component that should perform suported actions instead of the base component
+   * @param dependant the dependant component that should perform supported actions instead of the base component
    * @param actions   a list of supported actions
    */
   @ApiStatus.Experimental
