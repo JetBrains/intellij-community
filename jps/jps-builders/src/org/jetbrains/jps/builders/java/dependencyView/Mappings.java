@@ -552,8 +552,10 @@ public class Mappings {
       return false;
     }
 
-    boolean isSAMInterface(ClassRepr cls) {
-      if (!cls.isInterface()) {
+    // test if a ClassRepr is a SAM interface
+    boolean isLambdaTarget(int name) {
+      final ClassRepr cls = classReprByName(name);
+      if (cls == null || !cls.isInterface()) {
         return false;
       }
       int amFound = 0;
@@ -845,6 +847,18 @@ public class Mappings {
           }
         }
       }.perform(moduleName);
+    }
+
+    void affectLambdaInstantiations(Differential.DiffState state, final int className) {
+      getAllSubclasses(className).forEach(name -> {
+        if (isLambdaTarget(name)) {
+          debug("The interface could be not a SAM interface anymore or lambda target method name has changed => affecting lambda instantiations for ", name);
+          if (state.myAffectedUsages.add(UsageRepr.createClassNewUsage(myContext, name))) {
+            appendDependents(name, state.myDependants);
+          }
+        }
+        return true;
+      });
     }
 
     public class FileFilterConstraint implements UsageConstraint {
@@ -1201,8 +1215,8 @@ public class Mappings {
       if (it.isInterface()) {
         for (final MethodRepr m : added) {
           if (!m.isPrivate() && m.isAbstract()) {
-            debug("Method: ", m.name);
-            affectLambdaInstantiations(state, it.name);
+            debug("Added non-private abstract method: ", m.name);
+            myPresent.affectLambdaInstantiations(state, it.name);
             break;
           }
         }
@@ -1308,20 +1322,6 @@ public class Mappings {
         }
       }
       debug("End of added methods processing");
-    }
-
-    private void affectLambdaInstantiations(DiffState state, final int className) {
-      assert myPresent != null;
-      
-      getAllSubclasses(className).forEach(name -> {
-        @SuppressWarnings("ConstantConditions")
-        final ClassRepr cr = myPresent.classReprByName(name);
-        if (cr != null && myPresent.isSAMInterface(cr)) {
-          debug("Abstract method added to a SAM interface => affecting lambda instantiations for ", name);
-          state.myAffectedUsages.add(UsageRepr.createClassNewUsage(myContext, name));
-        }
-        return true;
-      });
     }
 
     private void processRemovedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
@@ -1445,8 +1445,19 @@ public class Mappings {
       }
       debug("Processing changed methods:");
 
+      assert myPresent != null;
       assert myFuture != null;
       assert myAffectedFiles != null;
+
+      if (it.isInterface()) {
+        for (final Pair<MethodRepr, MethodRepr.Diff> mr : changed) {
+          if ((mr.second.removedModifiers() & Opcodes.ACC_ABSTRACT) != 0) {
+            debug("Method became non-abstract: ", mr.first.name);
+            myPresent.affectLambdaInstantiations(state, it.name);
+            break;
+          }
+        }
+      }
 
       for (final Pair<MethodRepr, MethodRepr.Diff> mr : changed) {
         final MethodRepr m = mr.first;
@@ -1550,7 +1561,7 @@ public class Mappings {
                 debug("Added final, public or abstract specifier --- affecting subclasses");
                 myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
                 if (it.isInterface() && (d.addedModifiers() & Opcodes.ACC_ABSTRACT) != 0) {
-                  affectLambdaInstantiations(state, it.name);
+                  myPresent.affectLambdaInstantiations(state, it.name);
                 }
               }
 
@@ -3036,18 +3047,13 @@ public class Mappings {
     }
   }
 
-  private static boolean addAll(final TIntHashSet whereToAdd, TIntHashSet whatToAdd) {
-    if (whatToAdd.isEmpty()) {
-      return false;
+  private static void addAll(final TIntHashSet whereToAdd, TIntHashSet whatToAdd) {
+    if (!whatToAdd.isEmpty()) {
+      whatToAdd.forEach(value -> {
+        whereToAdd.add(value);
+        return true;
+      });
     }
-    final Ref<Boolean> changed = new Ref<>(Boolean.FALSE);
-    whatToAdd.forEach(value -> {
-      if (whereToAdd.add(value)) {
-        changed.set(Boolean.TRUE);
-      }
-      return true;
-    });
-    return changed.get();
   }
 
   private static void addAllKeys(final TIntHashSet whereToAdd, final IntIntMultiMaplet maplet) {

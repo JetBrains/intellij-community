@@ -1,4 +1,5 @@
 interface Service {
   void foo();
-  void bar(int a);
+
+  default void bar() {}
 }
