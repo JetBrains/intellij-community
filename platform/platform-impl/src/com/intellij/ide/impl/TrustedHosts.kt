@@ -28,7 +28,11 @@ internal fun getProjectOriginUrl(projectDir: Path?): String? {
   return null
 }
 
-private val KNOWN_HOSTINGS = listOf("github.com", "bitbucket.org", "gitlab.com")
+private val KNOWN_HOSTINGS = listOf(
+  "git.jetbrains.space",
+  "github.com",
+  "bitbucket.org",
+  "gitlab.com")
 
 @VisibleForTesting
 data class Origin(val protocol: String?, val host: String)
