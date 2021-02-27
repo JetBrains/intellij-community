@@ -22,6 +22,9 @@ import java.util.function.BiConsumer;
 
 final class FontFamilyServiceImpl extends FontFamilyService {
   private static final Logger LOG = Logger.getInstance(FontFamilyServiceImpl.class);
+  // DebugLogManager might be initialized after this class, so using the standard way to enable debug logging
+  // might have no effect on logging performed in constructor
+  private static final boolean VERBOSE_LOGGING = Boolean.getBoolean("font.family.service.verbose");
 
   private static final Method GET_FONT_2D_METHOD = ReflectionUtil.getDeclaredMethod(Font.class, "getFont2D");
   private static final Method GET_TYPO_FAMILY_METHOD = ReflectionUtil.getDeclaredMethod(Font2D.class, "getTypographicFamilyName");
@@ -62,8 +65,8 @@ final class FontFamilyServiceImpl extends FontFamilyService {
         if (font2DName.startsWith(Font.DIALOG) && !fontName.startsWith(Font.DIALOG)) {
           // skip fonts that are declared as available, but cannot be used due to some reason,
           // with JDK substituting them with Dialog logical font (on Windows)
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
+          if (VERBOSE_LOGGING) {
+            LOG.info("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
           }
           continue;
         }
@@ -151,23 +154,23 @@ final class FontFamilyServiceImpl extends FontFamilyService {
           String boldTypoSubfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(boldFont2D);
 
           if (!family.equals(baseFamily) || !family.equals(boldFamily)) {
-            LOG.debug("Cannot migrate " + family + ": unexpected resolved families - " + baseFamily + ", " + boldFamily);
+            LOG.info("Cannot migrate " + family + ": unexpected resolved families - " + baseFamily + ", " + boldFamily);
           }
           else if (!Objects.equals(baseTypoFamily, boldTypoFamily)) {
-            LOG.debug("Cannot migrate " + family + ": normal and bold variations resolve to different typographic families - "
+            LOG.info("Cannot migrate " + family + ": normal and bold variations resolve to different typographic families - "
                       + baseTypoFamily + ", " + boldTypoFamily);
           }
           else {
             FontFamily fontFamily = myFamilies.get(baseTypoFamily);
             if (fontFamily == null) {
-              LOG.debug("Cannot migrate " + family + ": typographic font family not found - " + baseTypoFamily);
+              LOG.info("Cannot migrate " + family + ": typographic font family not found - " + baseTypoFamily);
             }
             else if (!fontFamily.hasSubFamily(baseTypoSubfamily)) {
-              LOG.debug("Cannot migrate " + family + ": subfamily " + baseTypoSubfamily
+              LOG.info("Cannot migrate " + family + ": subfamily " + baseTypoSubfamily
                         + " not found in typographic font family " + baseTypoFamily);
             }
             else if (!fontFamily.hasSubFamily(boldTypoSubfamily)) {
-              LOG.debug("Cannot migrate " + family + ": subfamily " + boldTypoSubfamily
+              LOG.info("Cannot migrate " + family + ": subfamily " + boldTypoSubfamily
                         + " not found in typographic font family " + baseTypoFamily);
             }
             else {
@@ -197,8 +200,8 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     private FontFamily(@NotNull String family) {this.family = family;}
 
     private void addFont(@NotNull String subFamily, @NotNull Font font) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Adding " + font.getName() + " as " + subFamily + " variant to " + family + " family");
+      if (VERBOSE_LOGGING) {
+        LOG.info("Adding " + font.getName() + " as " + subFamily + " variant to " + family + " family");
       }
       members.put(subFamily, font);
     }
@@ -215,8 +218,8 @@ final class FontFamilyServiceImpl extends FontFamilyService {
           Font font = e.getValue();
           int weight = getWeight(font);
           boolean isItalic = isItalic(subFamily);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(family + "(" + subFamily + "): weight=" + weight + (isItalic ? ", italic" : ""));
+          if (VERBOSE_LOGGING) {
+            LOG.info(family + "(" + subFamily + "): weight=" + weight + (isItalic ? ", italic" : ""));
           }
           (isItalic ? italicsByWeight : nonItalicsByWeight).putValue(weight, subFamily);
         }
