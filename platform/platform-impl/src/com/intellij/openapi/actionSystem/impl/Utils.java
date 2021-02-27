@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
@@ -350,7 +349,7 @@ public final class Utils {
           Ref<T> ref = Ref.create();
           ProgressManager.getInstance().computePrioritized(() -> {
             ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-              ref.set(ReadAction.compute(() -> function.apply(actionUpdater.asUpdateSession())));
+              ref.set(function.apply(actionUpdater.asUpdateSession()));
             }, new EmptyProgressIndicator());
             return null;
           });

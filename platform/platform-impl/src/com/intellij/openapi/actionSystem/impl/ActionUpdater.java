@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -123,7 +124,7 @@ final class ActionUpdater {
     boolean forceAsync = Utils.isAsyncDataContext(dataContext) && Registry.is("actionSystem.update.actions.async.unsafe");
     myRealUpdateStrategy = new UpdateStrategy(
       action -> {
-        ensureAsyncDataKeysPreCached();
+        if (myPreCacheAsyncDataKeys) ReadAction.run(this::ensureAsyncDataKeysPreCached);
         // clone the presentation to avoid partially changing the cached one if update is interrupted
         Presentation presentation = computeOnEdt(() -> myFactory.getPresentation(action).clone());
         if (!myBeforeActionPerformed) presentation.setEnabledAndVisible(true); // todo investigate and remove this line
