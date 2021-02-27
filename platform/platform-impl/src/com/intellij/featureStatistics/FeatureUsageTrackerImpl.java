@@ -57,6 +57,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
 
   private boolean isToBeShown(String featureId, Project project, final long timeUnit) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+    if (registry == null) return false;
     FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
     if (descriptor == null || !descriptor.isUnused()) {
       return false;
@@ -202,9 +203,12 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
 
   @Override
   public void triggerFeatureShown(String featureId) {
-    FeatureDescriptor descriptor = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
-    if (descriptor != null) {
-      descriptor.triggerShown();
+    ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+    if (registry != null) {
+      FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
+      if (descriptor != null) {
+        descriptor.triggerShown();
+      }
     }
   }
 
@@ -224,7 +228,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
       final String group = getEventDataField(context, "group");
       if (isValid(data, id, group)) {
         ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-        FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
+        FeatureDescriptor descriptor = registry == null ? null : registry.getFeatureDescriptor(id);
         if (descriptor != null) {
           final String actualGroup = descriptor.getGroupId();
           if (StringUtil.equals(group, "unknown") || StringUtil.equals(group, actualGroup)) {
