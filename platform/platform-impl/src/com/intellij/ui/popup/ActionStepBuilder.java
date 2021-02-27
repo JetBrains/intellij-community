@@ -74,8 +74,9 @@ class ActionStepBuilder {
     appendActionsFromGroup(actionGroup);
 
     if (myListModel.isEmpty()) {
-      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, myShowNumbers, null,
-                                                      false, null, null, false, null, null));
+      myListModel.add(new PopupFactoryImpl.ActionItem(
+        Utils.EMPTY_MENU_FILLER, Objects.requireNonNull(Utils.EMPTY_MENU_FILLER.getTemplateText()), null, myShowNumbers, null,
+        false, null, null, false, null, null));
     }
   }
 

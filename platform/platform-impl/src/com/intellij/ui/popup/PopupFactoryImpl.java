@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.CollectionListModel;
@@ -667,7 +664,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   public static class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
     private final AnAction myAction;
-    private @NlsContexts.ListItem String myText;
+    private @NlsActions.ActionText String myText;
     private final Character myMnemonicChar;
     private final boolean myMnemonicsEnabled;
     private final boolean myIsEnabled;
@@ -679,7 +676,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final @NlsContexts.ListItem String myValue;
 
     ActionItem(@NotNull AnAction action,
-               @NotNull @NlsContexts.ListItem String text,
+               @NotNull @NlsActions.ActionText String text,
                @Nullable Character mnemonicChar,
                boolean mnemonicsEnabled,
                @Nullable @NlsContexts.DetailedDescription String description,
@@ -725,8 +722,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     @NotNull
-    @NlsContexts.ListItem
-    public String getText() {
+    public @NlsActions.ActionText String getText() {
       return myText;
     }
 
