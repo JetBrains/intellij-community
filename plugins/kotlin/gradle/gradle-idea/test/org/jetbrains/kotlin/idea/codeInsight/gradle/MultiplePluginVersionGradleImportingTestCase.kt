@@ -45,10 +45,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         }
     }
 
-    override fun importProject() {
-        super.importProject(true)
-    }
-
     companion object {
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
