@@ -75,12 +75,17 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
-      <library name="kotlin-scripting" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:scripting:212-1.4.21-release-IJ22" />
+      <library name="kotlin-scripting-intellij" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-intellij:1.4.0-release-329">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+          </exclude>
+        </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting/212-1.4.21-release-IJ22/scripting-212-1.4.21-release-IJ22.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/212-1.4.21-release-IJ22/kotlin-stdlib-jdk8-212-1.4.21-release-IJ22.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/212-1.4.21-release-IJ22/kotlin-scripting-common-212-1.4.21-release-IJ22.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-intellij/1.4.0-release-329/kotlin-scripting-intellij-1.4.0-release-329.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.4.0-release-329/kotlin-script-runtime-1.4.0-release-329.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.0-release-329/kotlin-scripting-common-1.4.0-release-329.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -122,47 +127,40 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="intellij-markdown" level="project" />
     <orderEntry type="module-library">
-      <library name="kotlin-scripting-common" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-common:1.4.21-release-351" />
+      <library name="kotlin-scripting-dependencies" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:1.4.10">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-scripting-common" />
+            <dependency maven-id="org.jetbrains:annotations" />
+          </exclude>
+        </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.21-release-351/kotlin-scripting-common-1.4.21-release-351.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.4.21-release-351/kotlin-stdlib-1.4.21-release-351.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.21-release-351/kotlin-stdlib-common-1.4.21-release-351.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.3.7/kotlinx-coroutines-core-1.3.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/1.4.10/kotlin-scripting-dependencies-1.4.10.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.21-release-351/kotlin-scripting-common-1.4.21-release-351-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.4.21-release-351/kotlin-stdlib-1.4.21-release-351-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.21-release-351/kotlin-stdlib-common-1.4.21-release-351-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.3.7/kotlinx-coroutines-core-1.3.7-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="kotlin-scripting-jvm" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.4.21-release-351" />
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.4.10">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-script-runtime" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-scripting-common" />
+            <dependency maven-id="org.jetbrains:annotations" />
+          </exclude>
+        </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.4.21-release-351/kotlin-scripting-jvm-1.4.21-release-351.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.4.21-release-351/kotlin-script-runtime-1.4.21-release-351.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.4.21-release-351/kotlin-stdlib-1.4.21-release-351.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.21-release-351/kotlin-stdlib-common-1.4.21-release-351.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.21-release-351/kotlin-scripting-common-1.4.21-release-351.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.3.7/kotlinx-coroutines-core-1.3.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.4.10/kotlin-scripting-jvm-1.4.10.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.4.21-release-351/kotlin-scripting-jvm-1.4.21-release-351-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.4.21-release-351/kotlin-script-runtime-1.4.21-release-351-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.4.21-release-351/kotlin-stdlib-1.4.21-release-351-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.21-release-351/kotlin-stdlib-common-1.4.21-release-351-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.21-release-351/kotlin-scripting-common-1.4.21-release-351-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.3.7/kotlinx-coroutines-core-1.3.7-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
