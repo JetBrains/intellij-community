@@ -268,7 +268,7 @@ class XDebugSessionTab3(
       val topMiddleToolbar = DefaultActionGroup().apply {
         if (singleContent == null || headerVisible) return@apply
 
-        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Close) {
+        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Cancel) {
           override fun actionPerformed(e: AnActionEvent) {
             toolWindow.contentManager.removeContent(singleContent, true)
           }
