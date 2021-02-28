@@ -7,13 +7,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.sam-with-receiver-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:sam-with-receiver-compiler-plugin-for-ide:1.4.30-release-310" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:sam-with-receiver-compiler-plugin-for-ide:1.4.31-release-345" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.4.30-release-310/sam-with-receiver-compiler-plugin-for-ide-1.4.30-release-310.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.4.31-release-345/sam-with-receiver-compiler-plugin-for-ide-1.4.31-release-345.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.4.30-release-310/sam-with-receiver-compiler-plugin-for-ide-1.4.30-release-310-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.4.31-release-345/sam-with-receiver-compiler-plugin-for-ide-1.4.31-release-345-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
