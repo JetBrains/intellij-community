@@ -39,15 +39,7 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
   private void doMultiFileTest() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     myFixture.configureByFile("a.py");
-
-    final Editor editor = myFixture.getEditor();
-    final Project project = myFixture.getProject();
-
-    new ListTemplatesAction().actionPerformedImpl(project, editor);
-    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    assertNotNull(lookup);
-    lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
-
+    myFixture.type("\t");
     myFixture.checkResultByFile(getTestName(false) + "/a_after.py");
   }
 
@@ -62,5 +54,21 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
     manager.startTemplate(myFixture.getEditor(), template);
 
     myFixture.checkResult("# comment ");
+  }
+
+  public void testMainInDef() {
+    doMultiFileTest();
+  }
+
+  public void testMainInImport() {
+    doMultiFileTest();
+  }
+
+  public void testMainInMain() {
+    doMultiFileTest();
+  }
+
+  public void testMainTopLevel() {
+    doMultiFileTest();
   }
 }
