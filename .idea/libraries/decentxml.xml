@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="decentxml" type="repository">
+    <properties maven-id="de.pdark:decentxml:1.4" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/de/pdark/decentxml/1.4/decentxml-1.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/de/pdark/decentxml/1.4/decentxml-1.4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
