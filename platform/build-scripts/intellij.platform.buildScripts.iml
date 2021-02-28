@@ -12,5 +12,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" name="jps-build-script-dependencies-bootstrap" level="project" />
     <orderEntry type="library" exported="" scope="PROVIDED" name="commons-cli" level="project" />
+    <orderEntry type="library" name="decentxml" level="project" />
   </component>
 </module>
