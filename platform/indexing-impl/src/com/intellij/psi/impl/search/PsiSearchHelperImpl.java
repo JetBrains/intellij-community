@@ -53,6 +53,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -512,6 +513,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private void processVirtualFile(@NotNull VirtualFile vfile,
                                   @NotNull AtomicBoolean stopped,
                                   @NotNull Processor<? super PsiFile> localProcessor) throws ApplicationUtil.CannotRunReadActionException {
+    // try to pre-cache virtual file content outside read action to avoid stalling EDT
+    if (!vfile.isDirectory() && !vfile.getFileType().isBinary()) {
+      try {
+        vfile.contentsToByteArray();
+      }
+      catch (IOException ignored) {
+      }
+    }
     if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
       PsiFile file = vfile.isValid() ? myManager.findFile(vfile) : null;
       if (file != null && !(file instanceof PsiBinaryFile)) {
@@ -521,12 +530,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           throw ApplicationUtil.CannotRunReadActionException.create();
         }
 
-        List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
+        FileViewProvider provider = file.getViewProvider();
+        List<PsiFile> psiRoots = provider.getAllFiles();
         Set<PsiFile> processed = new HashSet<>(psiRoots.size() * 2, (float)0.5);
         for (PsiFile psiRoot : psiRoots) {
           ProgressManager.checkCanceled();
           assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots + "; ViewProvider: " +
-                                   file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
+                                   provider + "; Virtual file: " + provider.getVirtualFile();
           if (!processed.add(psiRoot)) continue;
           if (!psiRoot.isValid()) {
             continue;
@@ -1209,7 +1219,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                            @NotNull Set<Integer> trigrams,
                            @Nullable Short context,
                            boolean useOnlyWeakHashToSearch,
-                           Collection<String> initialWords) {
+                           @NotNull Collection<String> initialWords) {
       myIdIndexEntries = idIndexEntries;
       myTrigrams = trigrams;
       myContext = context;
