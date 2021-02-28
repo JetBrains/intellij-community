@@ -7,6 +7,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
+import kotlinx.coroutines.CancellationException
 
 internal class SpaceGitHostingChecker {
   companion object {
@@ -17,13 +18,21 @@ internal class SpaceGitHostingChecker {
 
   suspend fun check(remotes: Set<GitRemote>): Boolean {
     for (remote in remotes) {
-      val url = remote.firstUrl ?: continue
-      val hosting = GitHostingUrlUtil.getUriFromRemoteUrl(url) ?: continue
-      val port = hosting.port.takeIf { it != -1 } ?: URLProtocol.HTTPS.defaultPort
-      val urlToCheck = URLBuilder(protocol = URLProtocol.HTTPS, host = hosting.host, port = port).build()
-      val isSpaceRepo = httpClient.get<String>(urlToCheck).contains(SPACE_HOSTING_RESPONSE_CONTENT)
-      if (isSpaceRepo) {
-        return true
+      try {
+        val url = remote.firstUrl ?: continue
+        val hosting = GitHostingUrlUtil.getUriFromRemoteUrl(url) ?: continue
+        val port = hosting.port.takeIf { it != -1 } ?: URLProtocol.HTTPS.defaultPort
+        val urlToCheck = URLBuilder(protocol = URLProtocol.HTTPS, host = hosting.host, port = port).build()
+        val isSpaceRepo = httpClient.get<String>(urlToCheck).contains(SPACE_HOSTING_RESPONSE_CONTENT)
+        if (isSpaceRepo) {
+          return true
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (th: Throwable) {
+        // continue checking
       }
     }
     return false
