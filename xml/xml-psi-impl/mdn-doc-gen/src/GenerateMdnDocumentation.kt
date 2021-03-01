@@ -71,10 +71,10 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   /* Run these tests to generate documentation. Prepare MDN documentation repositories with `prepare-mdn.sh` */
   fun testGenHtml() {
-    val attributes = extractInformationSimple("html/global_attributes", this::extractAttributeDocumentation)
+    val attributes = extractInformationSimple("html/global_attributes", listOf('_', '-'), this::extractAttributeDocumentation)
     outputJson(MdnApiNamespace.Html.name, mapOf(
       "attrs" to attributes,
-      "tags" to extractInformationSimple("html/element", allowList = htmlSpecialMappings.keys) {
+      "tags" to extractInformationSimple("html/element", listOf('_', '-'), allowList = htmlSpecialMappings.keys) {
         this.extractElementDocumentation(it, attributes)
       },
       "tagAliases" to reversedAliasesMap(htmlSpecialMappings)
@@ -82,23 +82,23 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   }
 
   fun testGenMathML() {
-    val attributes = extractInformationSimple("mathml/attribute", this::extractAttributeDocumentation)
+    val attributes = extractInformationSimple("mathml/attribute", emptyList(), this::extractAttributeDocumentation)
     outputJson(MdnApiNamespace.MathML.name, mapOf(
       "attrs" to attributes,
-      "tags" to extractInformationSimple("mathml/element") { this.extractElementDocumentation(it, attributes) }
+      "tags" to extractInformationSimple("mathml/element", emptyList()) { this.extractElementDocumentation(it, attributes) }
     ))
   }
 
   fun testGenSvg() {
-    val attributes = extractInformationSimple("svg/attribute", this::extractAttributeDocumentation)
+    val attributes = extractInformationSimple("svg/attribute", listOf('_'), this::extractAttributeDocumentation)
     outputJson(MdnApiNamespace.Svg.name, mapOf(
       "attrs" to attributes,
-      "tags" to extractInformationSimple("svg/element") { this.extractElementDocumentation(it, attributes) }
+      "tags" to extractInformationSimple("svg/element", listOf('_')) { this.extractElementDocumentation(it, attributes) }
     ))
   }
 
   fun testGenJsWebApi() {
-    val symbols = extractInformation("api", blockList = webApiBlockList) { extractJavascriptDocumentation(it, it.name) }
+    val symbols = extractInformation("api", listOf('_', '-'), blockList = webApiBlockList) { extractJavascriptDocumentation(it, it.name) }
     val fragments = webApiFragmentStarts.map { Pair(it, sortedMapOf<String, MdnJsSymbolDocumentation>()) }.toMap(TreeMap())
     symbols.forEach { (name, doc) ->
       fragments.floorEntry(name[0]).value[name] = doc
@@ -117,7 +117,9 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   fun testGenJsGlobalObjects() {
     outputJson(MdnApiNamespace.GlobalObjects.name, mapOf(
-      "symbols" to extractInformation("javascript/reference/global_objects") { extractJavascriptDocumentation(it, it.name) }
+      "symbols" to extractInformation("javascript/reference/global_objects", listOf('-', '_')) {
+        extractJavascriptDocumentation(it, it.name)
+      }
     ))
   }
 
@@ -148,11 +150,12 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                            .toJson(additionalMetadata() + data))
   }
 
-  private fun <T> extractInformationSimple(mdnPath: String, extractor: (File) -> T): Map<String, T> =
-    extractInformationSimple(mdnPath, emptySet(), extractor)
+  private fun <T> extractInformationSimple(mdnPath: String, disallowedChars: List<Char>, extractor: (File) -> T): Map<String, T> =
+    extractInformationSimple(mdnPath, disallowedChars, emptySet(), extractor)
 
-  private fun <T> extractInformationSimple(mdnPath: String, allowList: Set<String>, extractor: (File) -> T): Map<String, T> =
-    extractInformation(mdnPath, allowList) { docDir ->
+  private fun <T> extractInformationSimple(mdnPath: String, disallowedChars: List<Char>,
+                                           allowList: Set<String>, extractor: (File) -> T): Map<String, T> =
+    extractInformation(mdnPath, disallowedChars, allowList) { docDir ->
       try {
         listOf(Pair(docDir.name, extractor(docDir)))
       }
@@ -166,16 +169,18 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     Path.of(YARI_BUILD_PATH, BUILT_LANG, WEB_DOCS, mdnPath).toFile()
 
   private fun <T> extractInformation(mdnPath: String,
+                                     disallowedChars: List<Char>,
                                      allowList: Set<String> = emptySet(),
                                      blockList: Set<String> = emptySet(),
                                      extractor: (File) -> List<Pair<String, T>>): Map<String, T> =
-    extractInformationFull(getMdnDir(mdnPath), allowList, blockList, extractor)
+    extractInformationFull(getMdnDir(mdnPath), disallowedChars, allowList, blockList, extractor)
 
   private fun <T> extractInformationFull(dir: File,
+                                         disallowedChars: List<Char>,
                                          allowList: Set<String> = emptySet(),
                                          blockList: Set<String> = emptySet(),
                                          extractor: (File) -> List<Pair<String, T>>): Map<String, T> =
-    extractInformationFull(dir, { ((!it.contains('-') && !it.contains('_')) || allowList.contains(it)) && !blockList.contains(it) },
+    extractInformationFull(dir, { (disallowedChars.none { ch -> it.contains(ch) } || allowList.contains(it)) && !blockList.contains(it) },
                            extractor)
 
   private fun <T> extractInformationFull(dir: File,
@@ -244,7 +249,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun extractJavascriptDocumentation(dir: File, name: String): List<Pair<String, MdnJsSymbolDocumentation>> {
     try {
       val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
-      return extractInformationFull(dir, blockList = webApiBlockList) { subDir ->
+      return extractInformationFull(dir, listOf('_', '-'), blockList = webApiBlockList) { subDir ->
         extractJavascriptDocumentation(subDir, "$name.${subDir.name}")
       }.toList() + Pair(name, MdnJsSymbolDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
                                                        extractCompatibilityInfo(compatData),

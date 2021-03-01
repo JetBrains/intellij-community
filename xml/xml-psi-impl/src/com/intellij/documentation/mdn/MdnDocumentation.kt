@@ -49,14 +49,15 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
   return when {
     // Directly from the file
     element is XmlTag && !element.containingFile.name.endsWith(".xsd", true) -> {
-      symbolName = element.localName.let { if (element.isCaseSensitive) it else toLowerCase(it) }
-      getTagDocumentation(getApiNamespace(element.namespace, element, symbolName), symbolName)
+      symbolName = element.localName
+      getTagDocumentation(getApiNamespace(element.namespace, element, toLowerCase(symbolName)), toLowerCase(symbolName))
     }
     // TODO support special documentation for attribute values
     element is XmlAttribute || element is XmlAttributeValue -> {
       PsiTreeUtil.getParentOfType(element, XmlAttribute::class.java, false)?.let { attr ->
-        symbolName = attr.localName.let { if (attr.parent.isCaseSensitive) it else toLowerCase(it) }
-        getAttributeDocumentation(getApiNamespace(attr.namespace, attr, symbolName!!), attr.parent.localName, symbolName!!)
+        symbolName = attr.localName
+        getAttributeDocumentation(getApiNamespace(attr.namespace, attr, toLowerCase(symbolName)),
+                                  attr.parent.localName, toLowerCase(symbolName))
       }
     }
     else -> {
@@ -71,30 +72,33 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
         }
         // DTD
         is XmlElementDecl -> {
-          symbolName = toLowerCase(element.name)
+          symbolName = element.name
         }
         is XmlAttributeDecl -> {
           isTag = false
-          symbolName = element.nameElement.text.let { toLowerCase(it) }
+          symbolName = element.nameElement.text
         }
         is HtmlSymbolDeclaration -> {
           isTag = element.kind == HtmlSymbolDeclaration.Kind.ELEMENT
-          symbolName = toLowerCase(element.name)
+          symbolName = element.name
         }
       }
       symbolName?.let {
-        val namespace = getApiNamespace(context?.namespace, context, it)
+        val lcName = toLowerCase(it)
+        val namespace = getApiNamespace(context?.namespace, context, lcName)
         if (isTag) {
-          getTagDocumentation(namespace, it)
+          getTagDocumentation(namespace, lcName)
         }
         else {
-          getAttributeDocumentation(namespace, context?.localName?.let(::toLowerCase), it)
+          getAttributeDocumentation(namespace, context?.localName?.let(::toLowerCase), lcName)
         }
       }
     }
   }
     ?.takeIf { symbolName != null }
-    ?.let { (source, doc) -> MdnSymbolDocumentationAdapter(symbolName!!.toLowerCase(Locale.US), source, doc) }
+    ?.let { (source, doc) ->
+      MdnSymbolDocumentationAdapter(if (context?.isCaseSensitive == true) symbolName!! else toLowerCase(symbolName!!), source, doc)
+    }
 }
 
 fun getHtmlMdnTagDocumentation(namespace: MdnApiNamespace, tagName: String): MdnSymbolDocumentation? {
@@ -125,12 +129,26 @@ private fun getAttributeDocumentation(namespace: MdnApiNamespace,
   val documentation = documentationCache[Pair(namespace, null)] as? MdnHtmlDocumentation ?: return null
   return tagName
            ?.let { name ->
-             getTagDocumentation(namespace, name)?.let { (source, tagDoc) ->
-               tagDoc.attrs?.get(attributeName)?.let { Pair(source, it) }
-             }
+             getTagDocumentation(namespace, name)
+               ?.let { (source, tagDoc) ->
+                 tagDoc.attrs?.get(attributeName)
+                   ?.let { mergeWithGlobal(it, documentation.attrs[attributeName]) }
+                   ?.let { Pair(source, it) }
+               }
            }
          ?: documentation.attrs[attributeName]?.let { Pair(documentation, it) }
 }
+
+private fun mergeWithGlobal(tag: MdnHtmlAttributeDocumentation, global: MdnHtmlAttributeDocumentation?): MdnHtmlAttributeDocumentation =
+  global?.let {
+    MdnHtmlAttributeDocumentation(
+      tag.url,
+      tag.status ?: global.status,
+      tag.compatibility ?: global.compatibility,
+      tag.doc ?: global.doc,
+      tag.sections ?: global.sections
+    )
+  } ?: tag
 
 interface MdnSymbolDocumentation {
   val url: String
