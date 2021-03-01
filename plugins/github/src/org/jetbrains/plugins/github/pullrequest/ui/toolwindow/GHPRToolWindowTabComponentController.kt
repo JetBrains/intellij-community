@@ -8,6 +8,8 @@ interface GHPRToolWindowTabComponentController {
 
   fun createPullRequest(requestFocus: Boolean = true)
 
+  fun resetNewPullRequestView()
+
   fun viewList(requestFocus: Boolean = true)
 
   fun refreshList()
