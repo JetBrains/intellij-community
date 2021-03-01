@@ -37,6 +37,7 @@ import git4idea.push.GitPushSupport
 import git4idea.push.GitPushTarget
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import git4idea.validators.GitRefNameValidator
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -360,7 +361,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                                                                           localBranch.name, remote.name))
                        ?: return null
       //always set tracking
-      return GitPushTarget(GitStandardRemoteBranch(remote, branchName), true)
+      return GitPushTarget(GitStandardRemoteBranch(remote, GitRefNameValidator.getInstance().cleanUpBranchName(branchName)), true)
     }
 
     private fun adjustReviewers(pullRequest: GHPullRequestShort, reviewers: List<GHPullRequestRequestedReviewer>)
