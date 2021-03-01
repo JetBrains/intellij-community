@@ -32,7 +32,7 @@ class EventLogConfigurationTest : BasePlatformTestCase() {
 
   private fun doTest(function: (configuration: EventLogRecorderConfiguration) -> Any,
                      values: Map<String, String>): Pair<Any, Any> {
-    val recorderId = UUID.randomUUID().toString()
+    val recorderId = "ABC"
     val configuration = EventLogConfiguration.getOrCreate(recorderId)
     val initialValue = function(configuration)
 
