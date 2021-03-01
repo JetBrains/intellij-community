@@ -84,7 +84,7 @@ fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superType: P
 
   val extendsBound =
     if (filteredSupertypes.isNotEmpty()) {
-      " extends ${filteredSupertypes.joinToString("&") { it.getCanonicalText(true) }}"
+      " extends ${filteredSupertypes.joinToString("&") { it.getCanonicalText(false) }}"
     }
     else {
       ""
