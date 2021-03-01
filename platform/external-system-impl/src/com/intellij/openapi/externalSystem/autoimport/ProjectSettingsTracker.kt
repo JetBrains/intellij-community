@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -108,6 +108,7 @@ class ProjectSettingsTracker(
       val settingsFilesStatus = settingsFilesStatus.updateAndGet {
         createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
       }
+      LOG.info("Settings file status: ${settingsFilesStatus}")
       when (settingsFilesStatus.hasChanges()) {
         true -> status.markDirty(currentTime(), EXTERNAL)
         else -> status.markReverted(currentTime())
