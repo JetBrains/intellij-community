@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.PathMapper
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -40,6 +41,7 @@ import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
 import org.jetbrains.plugins.gradle.util.nonblockingResolveGradleJvmInfo
 import java.lang.System.currentTimeMillis
 
+@ApiStatus.Internal
 class GradleExecutionAware : ExternalSystemExecutionAware {
   override fun prepareExecution(
     task: ExternalSystemTask,
@@ -55,7 +57,7 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
                                                    taskNotificationListener: ExternalSystemTaskNotificationListener,
                                                    project: Project): TargetEnvironmentConfigurationProvider? {
     val targetEnvironmentConfiguration = getEnvironmentConfiguration(runConfiguration, project) ?: return null
-    return GradleTargetEnvironmentConfigurationProvider(targetEnvironmentConfiguration)
+    return GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration)
   }
 
   override fun getEnvironmentConfigurationProvider(projectPath: String,
@@ -63,10 +65,10 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
                                                    taskNotificationListener: ExternalSystemTaskNotificationListener,
                                                    project: Project): TargetEnvironmentConfigurationProvider? {
     val targetEnvironmentConfiguration = localEnvironment() ?: return null
-    return GradleTargetEnvironmentConfigurationProvider(targetEnvironmentConfiguration)
+    return GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration)
   }
 
-  inner class GradleTargetEnvironmentConfigurationProvider(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) : TargetEnvironmentConfigurationProvider {
+  private class GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) : GradleServerConfigurationProvider {
     override val environmentConfiguration = targetEnvironmentConfiguration
     override val pathMapper: PathMapper? = null
   }
