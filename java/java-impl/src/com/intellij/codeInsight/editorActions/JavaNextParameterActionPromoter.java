@@ -32,7 +32,8 @@ public class JavaNextParameterActionPromoter implements ActionPromoter {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
     int caretOffset = editor.getCaretModel().getOffset();
-    PsiDocumentManager.getInstance(project).commitDocument(document);
+    //todo[dima.batrak] IDEA-263310 Can't type after a completion inside lambda
+    //PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiElement argumentList = ParameterInfoControllerBase.findArgumentList(file, caretOffset, -1);
     if (argumentList == null) return null;
     int lbraceOffset = argumentList.getTextRange().getStartOffset();
