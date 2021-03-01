@@ -112,6 +112,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
       myPanel.isVisible = myPanelWrapper.isVisible
       myLeftPanel.isVisible = myPanelWrapper.isVisible
       myRightPanel.isVisible = myPanelWrapper.isVisible
+      logger.info("finish revalidate newtoolbar")
     }
     else {
       myPanel.isVisible = false

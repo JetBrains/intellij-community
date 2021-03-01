@@ -8,6 +8,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -25,6 +26,8 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
+  private Logger logger = Logger.getInstance(NavBarRootPaneExtension.class);
+
   private JComponent myWrapperPanel;
   @NonNls public static final String NAV_BAR = "NavBar";
   @SuppressWarnings("StatefulEp")
@@ -51,6 +54,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   @Override
   public void revalidate() {
     final UISettings settings = UISettings.getInstance();
+    logger.info("Revalidate in the navbarRootPane, toolbar visible: " + isShowToolPanel(settings));
     if (isShowToolPanel(settings)) {
       toggleRunPanel(false);
       toggleRunPanel(true);
@@ -63,8 +67,10 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   public boolean isMainToolbarVisible() {
-    return !UISettings.getInstance().getPresentationMode() &&
+    var b = !UISettings.getInstance().getPresentationMode() &&
            (UISettings.getInstance().getShowMainToolbar() || !myNavToolbarGroupExist);
+    logger.info("Toolbar visibility: " + b);
+    return  b;
   }
 
   public static boolean runToolbarExists() {
@@ -91,7 +97,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       };
 
       addNavigationBarPanel(myWrapperPanel);
-
       toggleRunPanel(isShowToolPanel(UISettings.getInstance()));
     }
     return myWrapperPanel;
@@ -150,13 +155,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       myWrapperPanel.remove(myRunPanel);
       myRunPanel = null;
     }
-  }
-
-  private boolean isUndocked() {
-    final Window ancestor = SwingUtilities.getWindowAncestor(myWrapperPanel);
-    return (ancestor != null && !(ancestor instanceof IdeFrameImpl))
-           || !UISettings.getInstance().getShowMainToolbar()
-           || !UISettings.getInstance().getPresentationMode();
   }
 
   private static boolean isNeedGap(final AnAction group) {
