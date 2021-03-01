@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.application.subscribe
 import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessDeviceIdProperty
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessSaltProperty
@@ -16,10 +17,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.MathUtil
 import com.intellij.util.io.DigestUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nullable
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 import java.util.prefs.Preferences
 
 @ApiStatus.Internal
@@ -92,14 +95,34 @@ object EventLogConfiguration {
   }
 }
 
-class EventLogRecorderConfiguration internal constructor(recorderId: String) {
+class EventLogRecorderConfiguration internal constructor(private val recorderId: String) {
   val sessionId: String = generateSessionId()
 
-  val deviceId: String = getOrGenerateDeviceId(recorderId)
+  val deviceId: String = getOrGenerateDeviceId()
   val bucket: Int = deviceId.asBucket()
 
-  private val salt: ByteArray = getOrGenerateSalt(recorderId)
+  private val salt: ByteArray = getOrGenerateSalt()
   private val anonymizedCache = HashMap<String, String>()
+  private val machineIdConfigurationReference: AtomicReference<MachineIdConfiguration>
+
+  val machineIdConfiguration: MachineIdConfiguration
+    get() = machineIdConfigurationReference.get()
+
+  init {
+    val configOptionsService = EventLogConfigOptionsService.getInstance()
+    machineIdConfigurationReference = AtomicReference(MachineIdConfiguration(configOptionsService.getMachineIdSalt(recorderId) ?: "",
+                                                                             getNonNegative(configOptionsService.getMachineIdRevision(recorderId))))
+
+    EventLogConfigOptionsService.TOPIC.subscribe(null, object : EventLogRecorderConfigOptionsListener(recorderId) {
+      override fun onMachineIdConfigurationChanged(salt: @Nullable String?, revision: Int) {
+        machineIdConfigurationReference.updateAndGet { prevValue ->
+          if (salt != null && revision != -1 && revision > prevValue.revision) {
+            MachineIdConfiguration(salt, revision)
+          } else prevValue
+        }
+      }
+    })
+  }
 
   fun anonymize(data: String): String {
     if (data.isBlank()) {
@@ -114,6 +137,8 @@ class EventLogRecorderConfiguration internal constructor(recorderId: String) {
     anonymizedCache[data] = result
     return result
   }
+
+  private fun getNonNegative(value: Int): Int = if (value >= 0) value else 0
 
   private fun String.shortedUUID(): String {
     val start = this.lastIndexOf('-')
@@ -132,7 +157,7 @@ class EventLogRecorderConfiguration internal constructor(recorderId: String) {
     return "$presentableHour-${UUID.randomUUID().toString().shortedUUID()}"
   }
 
-  private fun getOrGenerateDeviceId(recorderId: String): String {
+  private fun getOrGenerateDeviceId(): String {
     val app = ApplicationManager.getApplication()
     if (app != null && app.isHeadlessEnvironment) {
       val property = getHeadlessDeviceIdProperty(recorderId)
@@ -143,7 +168,7 @@ class EventLogRecorderConfiguration internal constructor(recorderId: String) {
     return DeviceIdManager.getOrGenerateId(recorderId)
   }
 
-  private fun getOrGenerateSalt(recorderId: String): ByteArray {
+  private fun getOrGenerateSalt(): ByteArray {
     val app = ApplicationManager.getApplication()
     if (app != null && app.isHeadlessEnvironment) {
       val property = getHeadlessSaltProperty(recorderId)
@@ -167,3 +192,5 @@ class EventLogRecorderConfiguration internal constructor(recorderId: String) {
     return salt
   }
 }
+
+data class MachineIdConfiguration(val salt: String, val revision: Int)
