@@ -50,8 +50,9 @@ private val excludeAction = object : MarkExcludeRootAction() {
   fun exclude(module: Module, dirs: Collection<VirtualFile>) = runInEdt { modifyRoots(module, dirs.toTypedArray()) }
 }
 
+// Not internal service. Can be used directly in related modules.
 @Service
-internal class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateListener, FilesProcessorImpl(project, project) {
+class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateListener, FilesProcessorImpl(project, project) {
 
   override val askedBeforeProperty = ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
   override val doForCurrentProjectProperty: String? = null
