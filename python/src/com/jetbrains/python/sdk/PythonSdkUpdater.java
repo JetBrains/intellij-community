@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,13 +27,13 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
@@ -49,9 +50,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.LinkOption;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 import java.util.*;
@@ -132,6 +130,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       @Nullable Sdk sdk = PythonSdkUtil.findSdkByKey(mySdkKey);
       if (sdk == null) {
         LOG.warn("SDK for " + mySdkKey + " was removed from the SDK list");
+        return;
+      }
+      if (sdk instanceof Disposable && Disposer.isDisposed((Disposable)sdk)) {
         return;
       }
       if (Trigger.LOG.isDebugEnabled()) {
