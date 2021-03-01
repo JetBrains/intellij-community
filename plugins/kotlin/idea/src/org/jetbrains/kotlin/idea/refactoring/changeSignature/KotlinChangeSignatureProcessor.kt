@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,18 @@ import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinFunctionCallUsage
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinImplicitReceiverUsage
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinUsageInfo
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinWrapperForJavaUsageInfos
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 
 class KotlinChangeSignatureProcessor(
     project: Project,
@@ -87,7 +88,40 @@ class KotlinChangeSignatureProcessor(
                 }.ifEmpty { return@mapNotNullTo null }
 
                 javaUsages.addAll(uniqueJavaUsagesForKtChange)
-                KotlinWrapperForJavaUsageInfos(javaChangeInfo, uniqueJavaUsagesForKtChange.toTypedArray(), changeInfo.method)
+                KotlinWrapperForJavaUsageInfos(ktChangeInfo, javaChangeInfo, uniqueJavaUsagesForKtChange.toTypedArray(), changeInfo.method)
+            }
+        }
+
+        val primaryConstructor = ktChangeInfo.method as? KtPrimaryConstructor
+        if (primaryConstructor != null) {
+            for ((index, parameter) in primaryConstructor.valueParameters.withIndex()) {
+                if (!parameter.isOverridable) continue
+
+                val parameterInfo = ktChangeInfo.newParameters.find { it.originalIndex == index } ?: continue
+                val descriptor = parameter.resolveToDescriptorIfAny() as? PropertyDescriptor ?: continue
+                val methodDescriptor = KotlinChangeSignatureData(
+                    descriptor,
+                    parameter,
+                    listOf(descriptor),
+                )
+
+                val propertyChangeInfo = KotlinChangeInfo(
+                    methodDescriptor,
+                    name = parameterInfo.name,
+                    newReturnTypeInfo = parameterInfo.currentTypeInfo,
+                    context = parameter,
+                )
+
+                ktChangeInfo.registerInnerChangeInfo(propertyChangeInfo)
+                KotlinChangeSignatureProcessor(myProject, propertyChangeInfo, commandName).findUsages().mapNotNullTo(allUsages) {
+                    if (it is KotlinWrapperForJavaUsageInfos) return@mapNotNullTo it
+
+                    val element = it.element
+                    if (element != null && !(it is KotlinCallableDefinitionUsage<*> && it.element == parameter))
+                        KotlinWrapperForPropertyInheritorsUsage(propertyChangeInfo, it, element)
+                    else
+                        null
+                }
             }
         }
 

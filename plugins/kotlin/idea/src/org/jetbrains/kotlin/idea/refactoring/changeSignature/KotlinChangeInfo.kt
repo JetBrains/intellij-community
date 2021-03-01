@@ -67,6 +67,12 @@ open class KotlinChangeInfo(
     primaryPropagationTargets: Collection<PsiElement> = emptyList(),
     var checkUsedParameters: Boolean = false,
 ) : ChangeInfo, UserDataHolder by UserDataHolderBase() {
+    private val innerChangeInfo: MutableList<KotlinChangeInfo> = mutableListOf()
+
+    fun registerInnerChangeInfo(changeInfo: KotlinChangeInfo) {
+        innerChangeInfo += changeInfo
+    }
+
     private class JvmOverloadSignature(
         val method: PsiMethod,
         val mandatoryParams: Set<KtParameter>,
@@ -119,24 +125,25 @@ open class KotlinChangeInfo(
     var originalToCurrentMethods: Map<PsiMethod, PsiMethod> = emptyMap()
         private set
 
-    val parametersToRemove: BooleanArray get() {
-        val originalReceiver = methodDescriptor.receiver
-        val hasReceiver = methodDescriptor.receiver != null
-        val receiverShift = if (hasReceiver) 1 else 0
+    val parametersToRemove: BooleanArray
+        get() {
+            val originalReceiver = methodDescriptor.receiver
+            val hasReceiver = methodDescriptor.receiver != null
+            val receiverShift = if (hasReceiver) 1 else 0
 
-        val toRemove = BooleanArray(receiverShift + methodDescriptor.parametersCount) { true }
-        if (hasReceiver) {
-            toRemove[0] = receiverParameterInfo == null && hasReceiver && originalReceiver !in getNonReceiverParameters()
-        }
-
-        for (parameter in newParameters) {
-            parameter.oldIndex.takeIf { it >= 0 }?.let { oldIndex ->
-                toRemove[receiverShift + oldIndex] = false
+            val toRemove = BooleanArray(receiverShift + methodDescriptor.parametersCount) { true }
+            if (hasReceiver) {
+                toRemove[0] = receiverParameterInfo == null && hasReceiver && originalReceiver !in getNonReceiverParameters()
             }
-        }
 
-        return toRemove
-    }
+            for (parameter in newParameters) {
+                parameter.oldIndex.takeIf { it >= 0 }?.let { oldIndex ->
+                    toRemove[receiverShift + oldIndex] = false
+                }
+            }
+
+            return toRemove
+        }
 
     fun getOldParameterIndex(oldParameterName: String): Int? = oldNameToParameterIndex[oldParameterName]
 
@@ -336,6 +343,10 @@ open class KotlinChangeInfo(
     fun primaryMethodUpdated() {
         isPrimaryMethodUpdated = true
         javaChangeInfos = null
+
+        for (info in innerChangeInfo) {
+            info.primaryMethodUpdated()
+        }
     }
 
     private fun <Parameter> makeSignatures(

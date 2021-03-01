@@ -291,6 +291,18 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testChangeConstructorVisibility() = doTest { newVisibility = DescriptorVisibilities.PROTECTED }
 
+    fun testChangeConstructorPropertyWithChild() = doTest {
+        val parameterInfo = newParameters[0]
+        parameterInfo.name = "b"
+        parameterInfo.currentTypeInfo = KotlinTypeInfo(true, BUILT_INS.intType)
+    }
+
+    fun testChangeConstructorPropertyWithChild2() = doTest {
+        val parameterInfo = newParameters[0]
+        parameterInfo.name = "b"
+        parameterInfo.currentTypeInfo = KotlinTypeInfo(true, BUILT_INS.intType)
+    }
+
     fun testAddConstructorVisibility() = doTest {
         newVisibility = DescriptorVisibilities.PROTECTED
 

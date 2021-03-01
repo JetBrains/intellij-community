@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -409,6 +409,11 @@ fun KtClass.isInheritable(): Boolean {
         else -> false
     }
 }
+
+val KtParameter.isOverridable: Boolean
+    get() = hasValOrVar() &&
+            !hasModifier(KtTokens.FINAL_KEYWORD) &&
+            (hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD))
 
 fun KtDeclaration.isOverridable(): Boolean {
     val parent = parent
