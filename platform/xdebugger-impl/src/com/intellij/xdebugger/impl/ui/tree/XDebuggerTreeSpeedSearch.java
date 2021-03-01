@@ -131,7 +131,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       final TreePath element = (TreePath) it.next();
       if (myComponent.isVisible(element) && isMatchingElement(element, _s)) return element;
     }
-    if (selectedIndex > 0) {
+    if (selectedIndex > 0 || myCanExpand) {
       while (it.hasPrevious()) it.previous();
       while (it.hasNext() && it.nextIndex() != selectedIndex) {
         final TreePath element = (TreePath) it.next();
@@ -139,15 +139,17 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       }
     }
 
-    while (it.hasNext()) {
-      final TreePath element = (TreePath) it.next();
-      if (isMatchingElement(element, _s)) return element;
-    }
-    if (selectedIndex > 0) {
-      while (it.hasPrevious()) it.previous();
-      while (it.hasNext() && it.nextIndex() != selectedIndex) {
-        final TreePath element = (TreePath) it.next();
+    if (myCanExpand) {
+      while (it.hasNext()) {
+        final TreePath element = (TreePath)it.next();
         if (isMatchingElement(element, _s)) return element;
+      }
+      if (selectedIndex > 0) {
+        while (it.hasPrevious()) it.previous();
+        while (it.hasNext() && it.nextIndex() != selectedIndex) {
+          final TreePath element = (TreePath)it.next();
+          if (isMatchingElement(element, _s)) return element;
+        }
       }
     }
 
