@@ -3,11 +3,28 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
 import com.intellij.ui.*
+import java.awt.Component
 import javax.swing.JList
 
 class RuntimeChooserPresenter(
   private val model: RuntimeChooserModel
 ) : ColoredListCellRenderer<RuntimeChooserItem>() {
+
+
+  override fun getListCellRendererComponent(list: JList<out RuntimeChooserItem>?,
+                                            value: RuntimeChooserItem?,
+                                            index: Int,
+                                            selected: Boolean,
+                                            hasFocus: Boolean): Component {
+
+    if (value is RuntimeChooserSeparator) {
+      val sep = SeparatorWithText()
+      sep.caption = value.text
+      return sep
+    }
+
+    return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
+  }
 
   override fun customizeCellRenderer(list: JList<out RuntimeChooserItem>,
                                      value: RuntimeChooserItem?,
@@ -30,6 +47,11 @@ class RuntimeChooserPresenter(
 
     if (value is RuntimeChooserCustomItem) {
       append(LangBundle.message("dialog.item.choose.ide.runtime.custom", value.version), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true)
+      return
+    }
+
+    if (value is RuntimeChooserShowAdvancedItem) {
+      append(LangBundle.message("dialog.item.choose.ide.runtime.advanced"), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
       return
     }
   }
