@@ -38,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -88,7 +87,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static String shorten(String pathStr) {
-    Path path = Paths.get(pathStr).toAbsolutePath(), userHome = Paths.get(SystemProperties.getUserHome());
+    Path path = Path.of(pathStr).toAbsolutePath(), userHome = Path.of(SystemProperties.getUserHome());
     if (path.startsWith(userHome)) {
       Path relative = userHome.relativize(path);
       return SystemInfo.isWindows ? "%USERPROFILE%\\" + relative : "~/" + relative;
@@ -107,7 +106,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       if ((SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
         String appName = ApplicationNamesInfo.getInstance().getScriptName();
         String configName = appName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
-        Path configFile = Paths.get(PathManager.getConfigPath(), configName);
+        Path configFile = Path.of(PathManager.getConfigPath(), configName);
         if (Files.isRegularFile(configFile)) {
           switchAction = new NotificationAction(IdeBundle.message("action.SwitchToJBR.text")) {
             @Override
