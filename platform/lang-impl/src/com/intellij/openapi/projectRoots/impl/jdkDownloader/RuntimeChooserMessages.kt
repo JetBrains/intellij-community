@@ -17,11 +17,19 @@ class RuntimeChooserMessages {
     }
   }
 
+  fun notifyCustomJdkInvalid(parent: JComponent, jdkHome: String) {
+    showErrorMessage(parent, LangBundle.message("notification.content.choose.ide.runtime.set.unknown.error", jdkHome))
+  }
+
   fun notifyCustomJdkDoesNotStart(parent: JComponent, jdkHome: String) {
     showErrorMessage(parent, LangBundle.message("notification.content.choose.ide.runtime.set.cannot.start.error", jdkHome))
   }
 
   fun notifyCustomJdkVersionIsTooOld(parent: JComponent, jdkHome: String, version: String, expected: String) {
     showErrorMessage(parent, LangBundle.message("notification.content.choose.ide.runtime.set.version.error", jdkHome, expected, version))
+  }
+
+  fun notifyCustomJdkIsFromWsl(parent: JComponent, jdkHome: String) {
+    showErrorMessage(parent, LangBundle.message("notification.content.choose.ide.runtime.set.version.error.wsl", jdkHome))
   }
 }
