@@ -3,8 +3,11 @@ package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -121,10 +124,11 @@ public final class GuessManagerImpl extends GuessManager {
       scope = file;
     }
 
-    DataFlowRunner runner = createRunner(honorAssignments, scope);
+    GuessManagerRunner runner = createRunner(honorAssignments, scope);
 
-    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace);
-    if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
+    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(runner, forPlace);
+    RunnerResult result = runner.analyzeMethodWithInlining(scope, visitor);
+    if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
       return visitor.getResult();
     }
     return MultiMap.empty();
@@ -143,7 +147,7 @@ public final class GuessManagerImpl extends GuessManager {
       scope = file;
     }
 
-    DataFlowRunner runner = createRunner(honorAssignments, scope);
+    GuessManagerRunner runner = createRunner(honorAssignments, scope);
 
     class Visitor extends CastTrackingVisitor {
       TypeConstraint constraint = TypeConstraints.BOTTOM;
@@ -158,6 +162,7 @@ public final class GuessManagerImpl extends GuessManager {
             value = runner.getFactory().getVarFactory().createVariableValue(new ExpressionVariableDescriptor(expression));
           }
           constraint = constraint.join(TypeConstraint.fromDfType(state.getDfType(value)));
+          runner.placeVisited();
         }
         super.beforeExpressionPush(value, expression, range, state);
       }
@@ -169,21 +174,56 @@ public final class GuessManagerImpl extends GuessManager {
       }
     }
     final Visitor visitor = new Visitor();
-    if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
+    RunnerResult result = runner.analyzeMethodWithInlining(scope, visitor);
+    if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
       return visitor.constraint.meet(initial).getPsiType(scope.getProject());
     }
     return null;
   }
 
   @NotNull
-  private static DataFlowRunner createRunner(boolean honorAssignments, PsiElement scope) {
-    return honorAssignments ? new DataFlowRunner(scope.getProject()) : new DataFlowRunner(scope.getProject()) {
-      @NotNull
-      @Override
-      protected DfaMemoryState createMemoryState() {
-        return new AssignmentFilteringMemoryState(getFactory());
+  private static GuessManagerRunner createRunner(boolean honorAssignments, PsiElement scope) {
+    return new GuessManagerRunner(scope.getProject(), honorAssignments); 
+  }
+  
+  static class GuessManagerRunner extends DataFlowRunner {
+    private final boolean myAssignments;
+    private boolean myPlaceVisited;
+    private int[] myLoopNumbers;
+
+    GuessManagerRunner(@NotNull Project project, boolean honorAssignments) {
+      super(project);
+      myAssignments = honorAssignments;
+    }
+    
+    void placeVisited() {
+      myPlaceVisited = true;
+    }
+
+    @Override
+    protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                                @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                                @NotNull ControlFlow flow) {
+      myLoopNumbers = flow.getLoopNumbers();
+      return super.createInitialInstructionStates(psiBlock, memStates, flow);
+    }
+
+    @Override
+    protected void afterInstruction(Instruction instruction) {
+      super.afterInstruction(instruction);
+      if (myPlaceVisited && myLoopNumbers[instruction.getIndex()] == 0) {
+        // We cancel the analysis first time we exit all the loops 
+        // after the target expression is visited (in this case, 
+        // we can be sure we'll not reach it again)
+        cancel();
       }
-    };
+    }
+
+    @NotNull
+    @Override
+    protected DfaMemoryState createMemoryState() {
+      return myAssignments ? super.createMemoryState() : new AssignmentFilteringMemoryState(getFactory());
+    }
   }
 
   private static PsiElement getTopmostBlock(PsiElement scope) {
@@ -526,9 +566,12 @@ public final class GuessManagerImpl extends GuessManager {
 
   private static final class ExpressionTypeInstructionVisitor extends CastTrackingVisitor {
     private final Map<DfaVariableValue, TypeConstraint> myResult = new HashMap<>();
+    private final GuessManagerRunner myRunner;
     private final PsiElement myForPlace;
 
-    private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace) {
+    private ExpressionTypeInstructionVisitor(GuessManagerRunner runner,
+                                             @NotNull PsiElement forPlace) {
+      myRunner = runner;
       myForPlace = PsiUtil.skipParenthesizedExprUp(forPlace);
     }
 
@@ -560,6 +603,7 @@ public final class GuessManagerImpl extends GuessManager {
         ((DfaMemoryStateImpl)state).forRecordedVariableTypes((var, dfType) -> {
           myResult.merge(var, TypeConstraint.fromDfType(dfType), TypeConstraint::join);
         });
+        myRunner.placeVisited();
       }
       super.beforeExpressionPush(value, expression, range, state);
     }

@@ -104,7 +104,7 @@ public class DataFlowRunner {
         finally {
           myInlining = true;
         }
-        if (result == RunnerResult.OK) {
+        if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
           final Collection<DfaMemoryState> closureStates = myNestedClosures.get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
           if (allowInlining || !closureStates.isEmpty()) {
             return closureStates;
