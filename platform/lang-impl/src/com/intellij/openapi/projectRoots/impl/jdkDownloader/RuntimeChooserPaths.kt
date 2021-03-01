@@ -68,7 +68,7 @@ class RuntimeChooserPaths {
 
   private fun runWithProgress(action: () -> Unit) {
     val title = LangBundle.message("progress.title.choose.ide.runtime.set.jdk")
-    object : Task.Backgroundable(null, title, true, ALWAYS_BACKGROUND) {
+    object : Task.Backgroundable(null, title, true, DEAF) {
       override fun run(indicator: ProgressIndicator) {
           action()
       }
