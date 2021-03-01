@@ -46,7 +46,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String TAGS = "tags";
   private static final @NonNls String REMOTES = "remotes";
   private static final @NonNls String SQUASH_MSG = "SQUASH_MSG";
-  private static final @NonNls String HOOKS = "hooks";
+  private static final @NonNls String DEFAULT_HOOKS = "hooks";
   private static final @NonNls String PRE_COMMIT_HOOK = "pre-commit";
   private static final @NonNls String PRE_PUSH_HOOK = "pre-push";
   private static final @NonNls String COMMIT_MSG_HOOK = "commit-msg";
@@ -54,6 +54,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";
 
+  private final VirtualFile myRootDir;
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
 
@@ -75,11 +76,12 @@ public final class GitRepositoryFiles {
   private final @NonNls String myMergeSquashPath;
   private final @NonNls String myInfoDirPath;
   private final @NonNls String myExcludePath;
-  private final @NonNls String myHooksDirPath;
+  private @NonNls String myHooksDirPath;
   private final @NonNls String myShallow;
   private final @NonNls String myStashReflogPath;
 
-  private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
+  private GitRepositoryFiles(@NotNull VirtualFile rootDir, @NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
+    myRootDir = rootDir;
     myMainDir = mainDir;
     myWorktreeDir = worktreeDir;
 
@@ -92,7 +94,7 @@ public final class GitRepositoryFiles {
     myRefsRemotesDirPath = refsPath + slash(REMOTES);
     myInfoDirPath = mainPath + slash(INFO);
     myExcludePath = mainPath + slash(INFO_EXCLUDE);
-    myHooksDirPath = mainPath + slash(HOOKS);
+    myHooksDirPath = mainPath + slash(DEFAULT_HOOKS);
     myShallow = mainPath + slash(SHALLOW);
     myStashReflogPath = mainPath + slash(LOGS) + slash(REFS) + slash(STASH);
 
@@ -111,10 +113,11 @@ public final class GitRepositoryFiles {
   }
 
   @NotNull
-  public static GitRepositoryFiles getInstance(@NotNull VirtualFile gitDir) {
+  public static GitRepositoryFiles getInstance(@NotNull VirtualFile rootDir,
+                                               @NotNull VirtualFile gitDir) {
     VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
     VirtualFile mainDir = gitDirForWorktree == null ? gitDir : gitDirForWorktree;
-    return new GitRepositoryFiles(mainDir, gitDir);
+    return new GitRepositoryFiles(rootDir, mainDir, gitDir);
   }
 
   /**
@@ -221,18 +224,38 @@ public final class GitRepositoryFiles {
     return file(myMergeSquashPath);
   }
 
+  @Nullable
+  private String sanitizeHooksPath(@Nullable String hooksPath) {
+    if (hooksPath == null) return null;
+    if (hooksPath.endsWith("/")) {
+      return hooksPath.substring(0, hooksPath.length() - 1);
+    } else {
+      return hooksPath;
+    }
+  }
+
+  private void updateHooksPath(@Nullable String hooksPath) {
+    String cleanHooksPath = sanitizeHooksPath(hooksPath);
+    if (cleanHooksPath != null) {
+      myHooksDirPath = myRootDir.getPath() + slash(cleanHooksPath);
+    }
+  }
+
   @NotNull
-  public File getPreCommitHookFile() {
+  public File getPreCommitHookFile(@Nullable String hooksPath) {
+    updateHooksPath(hooksPath);
     return file(myHooksDirPath + slash(PRE_COMMIT_HOOK));
   }
 
   @NotNull
-  public File getPrePushHookFile() {
+  public File getPrePushHookFile(@Nullable String hooksPath) {
+    updateHooksPath(hooksPath);
     return file(myHooksDirPath + slash(PRE_PUSH_HOOK));
   }
 
   @NotNull
-  public File getCommitMsgHookFile() {
+  public File getCommitMsgHookFile(@Nullable String hooksPath) {
+    updateHooksPath(hooksPath);
     return file(myHooksDirPath + slash(COMMIT_MSG_HOOK));
   }
 

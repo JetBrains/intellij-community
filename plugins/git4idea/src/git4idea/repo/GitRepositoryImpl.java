@@ -58,7 +58,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
     super(project, rootDir, parentDisposable);
     myVcs = GitVcs.getInstance(project);
     myGitDir = gitDir;
-    myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
+    myRepositoryFiles = GitRepositoryFiles.getInstance(rootDir, gitDir);
     myReader = new GitRepositoryReader(myRepositoryFiles);
     myInfo = readRepoInfo();
 
@@ -264,7 +264,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
     boolean isShallow = myReader.hasShallowCommits();
     Collection<GitBranchTrackInfo> trackInfos =
       config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
-    GitHooksInfo hooksInfo = myReader.readHooksInfo();
+    GitHooksInfo hooksInfo = myReader.readHooksInfo(config.parseCore().getHooksPath());
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
     sw.report(LOG);
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),

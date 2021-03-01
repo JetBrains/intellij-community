@@ -38,10 +38,12 @@ class GitConfigTest : GitPlatformTest() {
     git("update-ref refs/remotes/origin/a#branch HEAD")
     git("branch --track a#branch origin/a#branch")
 
-    val gitDir = File(projectPath, ".git")
-    val config = GitConfig.read(File(gitDir, "config"))
-    val dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitDir)
-    val reader = GitRepositoryReader(GitRepositoryFiles.getInstance(dir!!))
+    val rootFile = File(projectPath)
+    val gitFile = File(projectPath, ".git")
+    val config = GitConfig.read(File(gitFile, "config"))
+    val rootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile)
+    val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitFile)
+    val reader = GitRepositoryReader(GitRepositoryFiles.getInstance(rootDir!!, gitDir!!))
     val state = reader.readState(config.parseRemotes())
     val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
     assertTrue("Couldn't find correct a#branch tracking information among: [$trackInfos]",
@@ -115,6 +117,14 @@ class GitConfigTest : GitPlatformTest() {
     val remote = getFirstItem(config.parseRemotes())
     assertNotNull(remote)
     assertEquals("Remote name is incorrect", expectedName, remote!!.name)
+  }
+
+  fun `test hooks is extracted from config`() {
+    createRepository()
+    git("config core.hooksPath .githooks")
+
+    val config = readConfig()
+    assertEquals("", ".githooks", config.parseCore().hooksPath)
   }
 
   private fun createRepository(): GitRepository {
