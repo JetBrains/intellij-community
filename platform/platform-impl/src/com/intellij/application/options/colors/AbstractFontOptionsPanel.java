@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
@@ -48,7 +49,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   @NotNull private final JTextField myEditorFontSizeField = new IntegerField(null,
                                                                              EditorFontsConstants.getMinEditorFontSize(),
                                                                              EditorFontsConstants.getMaxEditorFontSize());
-  @NotNull private final JTextField myLineSpacingField = new JTextField(4);
+  @NotNull private final JTextField myLineSpacingField = new JBTextField(4);
   private final AbstractFontCombo<?> myPrimaryCombo;
   private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
   private final AbstractFontCombo<?> mySecondaryCombo;
@@ -122,15 +123,19 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     fontPanel.add(mySizeLabel, c);
 
     c.gridx = 1;
-    fontPanel.add(myEditorFontSizeField, c);
 
-    c.gridx = 0;
-    c.gridy ++;
+    JPanel sizePanel = new JPanel();
+    FlowLayout sizeLayout = new FlowLayout(FlowLayout.LEFT);
+    sizeLayout.setHgap(0);
+    sizePanel.setLayout(sizeLayout);
+    sizePanel.setBorder(JBUI.Borders.empty());
+    sizePanel.add(myEditorFontSizeField);
     myLineSpacingLabel = new JLabel(ApplicationBundle.message("editbox.line.spacing"));
     myLineSpacingLabel.setLabelFor(myLineSpacingField);
-    fontPanel.add(myLineSpacingLabel, c);
-    c.gridx = 1;
-    fontPanel.add(myLineSpacingField,c);
+    sizePanel.add(Box.createHorizontalStrut(20));
+    sizePanel.add(myLineSpacingLabel);
+    sizePanel.add(myLineSpacingField);
+    fontPanel.add(sizePanel,c);
 
     c.gridy ++;
     c.gridx = 0;

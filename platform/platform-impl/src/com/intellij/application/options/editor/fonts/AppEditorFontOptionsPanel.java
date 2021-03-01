@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AbstractFontCombo;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
@@ -46,11 +45,17 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
+
+  private final static int FONT_WEIGHT_COMBO_WIDTH = 250;
+
   private final EditorColorsScheme myScheme;
   private JPanel myWarningPanel;
   private JLabel myEditorFontLabel;
@@ -112,13 +117,13 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     titlePanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.editor.font.typography.settings"), false, JBUI.emptyInsets()));
     expansionPanel.add(titlePanel, BorderLayout.CENTER);
     JLabel arrowLabel = new JLabel(AllIcons.General.ArrowRight);
-    arrowLabel.setBorder(JBUI.Borders.empty(0, 0, 10, 5));
+    arrowLabel.setBorder(JBUI.Borders.empty(0, 2, 10, 5));
     expansionPanel.add(arrowLabel, BorderLayout.WEST);
 
     typographyPanel.add(expansionPanel, BorderLayout.NORTH);
 
     JPanel internalPanel = new JPanel(new GridBagLayout());
-    internalPanel.setBorder(JBUI.Borders.emptyLeft(15));
+    internalPanel.setBorder(JBUI.Borders.empty());
     GridBagConstraints c = new GridBagConstraints();
     c.insets = getInsets(0, 0);
     c.gridx = 0;
@@ -129,8 +134,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
       c.gridx = 1;
       c.insets = JBUI.insets(0, BASE_INSET, 0, 0);
       myRegularWeightCombo = new MyRegularFontWeightCombo();
-      int comboWidth = myRegularWeightCombo.getFontMetrics(myRegularWeightCombo.getFont()).stringWidth(StringUtil.repeat("M", 20));
-      fixComboWidth(myRegularWeightCombo, comboWidth);
+      fixComboWidth(myRegularWeightCombo, JBUI.scale(FONT_WEIGHT_COMBO_WIDTH));
       myRegularWeightCombo.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -158,7 +162,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
             preferences -> preferences.setBoldSubFamily(myBoldWeightCombo.getSelectedSubFamily()));
         }
       });
-      fixComboWidth(myBoldWeightCombo, comboWidth);
+      fixComboWidth(myBoldWeightCombo, JBUI.scale(FONT_WEIGHT_COMBO_WIDTH));
       internalPanel.add(myBoldWeightCombo, c);
       c.gridy ++;
       JLabel boldHintLabel = new JLabel(ApplicationBundle.message("settings.editor.font.bold.weight.hint"));
