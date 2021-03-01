@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.envTest.config
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.envTest.upload.RECORDER_ID
 import com.intellij.internal.statistic.envTest.upload.TestEventLogApplicationInfo
+import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService.*
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
 import junit.framework.TestCase
 import java.util.concurrent.TimeUnit
@@ -35,6 +36,13 @@ internal class EventLogExternalSettingsServiceTest : StatisticsServiceBaseTest()
     TestCase.assertEquals(settings.getOptionValue("dataThreshold"), "16000")
     TestCase.assertEquals(settings.getOptionValue("groupDataThreshold"), "8000")
     TestCase.assertEquals(settings.getOptionValue("groupAlertThreshold"), "4000")
+  }
+
+  fun `test load salt and id revisions from external settings`() {
+    val settings = configureDynamicConfig(TimeUnit.HOURS.toMillis(1))
+
+    TestCase.assertEquals(settings.getOptionValue(MACHINE_ID_SALT), "test_salt")
+    TestCase.assertEquals(settings.getOptionValue(MACHINE_ID_SALT_REVISION), "1")
   }
 
   private fun configureDynamicConfig(configCacheTimeoutMs: Long): EventLogUploadSettingsService {
