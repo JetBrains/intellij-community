@@ -30,7 +30,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -426,40 +425,6 @@ public final class SVGLoader {
     return s;
   }
 
-  /**
-   * @deprecated use {@link #setColorPatcherProvider(SvgElementColorPatcherProvider)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static void setColorPatcher(@Nullable final SvgColorPatcher colorPatcher) {
-    if (colorPatcher == null) {
-      setColorPatcherProvider(null);
-      return;
-    }
-
-    setColorPatcherProvider(new SvgElementColorPatcherProvider() {
-      @Override
-      public SvgElementColorPatcher forPath(@Nullable String path) {
-        return new SvgElementColorPatcher() {
-          @Override
-          public void patchColors(@NotNull Element svg) {
-            try {
-              colorPatcher.patchColors(path == null ? null : new URL("jar", "icons", path), svg);
-            }
-            catch (MalformedURLException e) {
-              colorPatcher.patchColors(null, svg);
-            }
-          }
-
-          @Override
-          public byte @Nullable [] digest() {
-            return null;
-          }
-        };
-      }
-    });
-  }
-
   public static void setColorPatcherProvider(@Nullable SvgElementColorPatcherProvider colorPatcher) {
     ourColorPatcher = colorPatcher;
     IconLoader.clearCache();
@@ -507,17 +472,6 @@ public final class SVGLoader {
 
     default @Nullable SvgElementColorPatcher forPath(@Nullable String path) {
       return forURL(null);
-    }
-  }
-
-  /**
-   * @deprecated use {@link SvgElementColorPatcherProvider instead}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public interface SvgColorPatcher {
-
-    default void patchColors(@Nullable @SuppressWarnings("unused") URL url, @NotNull Element svg) {
     }
   }
 }
