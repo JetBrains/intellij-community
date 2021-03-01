@@ -139,7 +139,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
     val systemIds = projectsToReload.map { it.projectAware.projectId.systemId }.toSet().toTypedArray()
     val isFirstLoad = ThreeState.UNSURE == project.getTrustedState()
-    ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, { isFirstLoad }, *systemIds)
+    ExternalSystemUtil.confirmLoadingUntrustedProject(project, { isFirstLoad }, *systemIds)
 
     for (projectData in projectsToReload) {
       LOG.debug("${projectData.projectAware.projectId.readableName}: Project reload")
