@@ -116,7 +116,7 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
         val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
           JBPopupMenu.showBelow(sourceLink, ActionPlaces.CODE_INSPECTION, createProfileChooser())
         }
-        val configureFilterLink = LinkLabel(message("settings.filter.configure.link"), null, showFiltersPopup)
+        val configureFilterLink = LinkLabel(message("before.checkin.options.check.smells.choose.profile"), null, showFiltersPopup)
 
         return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
       }
