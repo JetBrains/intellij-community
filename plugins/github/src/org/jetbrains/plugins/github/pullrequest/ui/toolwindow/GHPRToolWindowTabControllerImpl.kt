@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
@@ -223,8 +224,9 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                           private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {
 
     private val listComponent by lazy { GHPRListComponent.create(project, dataContext, parentDisposable) }
-    private val createComponent by lazy {
-      GHPRCreateComponentFactory(ActionManager.getInstance(), project, projectSettings, repositoryManager, dataContext, this, parentDisposable)
+    private val createComponent = ClearableLazyValue.create {
+      GHPRCreateComponentFactory(ActionManager.getInstance(), project, projectSettings, repositoryManager, dataContext, this,
+                                 parentDisposable)
         .create()
     }
     private var currentDisposable: Disposable? = null
@@ -249,9 +251,13 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       tab.displayName = GithubBundle.message("tab.title.pull.requests.new")
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
-      wrapper.setContent(createComponent)
+      wrapper.setContent(createComponent.value)
       wrapper.repaint()
       if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
+    }
+
+    override fun resetNewPullRequestView() {
+      createComponent.drop()
     }
 
     override fun viewList(requestFocus: Boolean) {

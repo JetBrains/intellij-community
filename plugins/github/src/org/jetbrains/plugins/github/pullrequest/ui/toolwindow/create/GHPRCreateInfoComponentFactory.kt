@@ -40,6 +40,7 @@ import git4idea.repo.GitRepository
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
@@ -93,13 +94,16 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
         progressIndicator.cancel()
         viewController.viewList()
-        resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
+        viewController.resetNewPullRequestView()
         createLoadingModel.future = null
         existenceCheckLoadingModel.reset()
       }
     }
     InfoController(directionModel, existenceCheckLoadingModel, existenceCheckProgressIndicator, createAction, createDraftAction)
-    resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
+    directionModel.preFill()
+    descriptionDocument.loadContent(GithubBundle.message("pull.request.create.loading.template")) {
+      GHPRTemplateLoader.readTemplate(project)
+    }
 
     val directionSelector = GHPRCreateDirectionComponentFactory(repositoriesManager, directionModel).create().apply {
       border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
@@ -225,13 +229,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
   }
 
-  private fun GHPRCreateMetadataModel.reset() {
-    assignees = emptyList()
-    reviewers = emptyList()
-    labels = emptyList()
-  }
-
-  private fun GHPRCreateDirectionModel.reset() {
+  private fun GHPRCreateDirectionModel.preFill() {
     val repositoryDataService = dataContext.repositoryDataService
     val currentRemote = repositoryDataService.repositoryMapping.gitRemote
     val currentRepo = currentRemote.repository
@@ -247,6 +245,19 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     val headBranch = headRepo?.gitRemote?.repository?.currentBranch
     setHead(headRepo, headBranch)
     headSetByUser = false
+  }
+
+  private fun DisableableDocument.loadContent(@Nls loadingText: String, loader: () -> CompletableFuture<String?>) {
+    enabled = false
+    insertString(0, loadingText, null)
+    loader().successOnEdt {
+      if (!enabled) {
+        remove(0, length)
+        insertString(0, it, null)
+      }
+    }.completionOnEdt {
+      if (!enabled) enabled = true
+    }
   }
 
   private inner class CreateAction(private val directionModel: GHPRCreateDirectionModel,
@@ -285,7 +296,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
             if (!progressIndicator.isCanceled) {
               viewController.viewPullRequest(it)
               settings.recentNewPullRequestHead = headRepo.repository
-              resetForm(directionModel, titleDocument, descriptionDocument, metadataModel)
+              viewController.resetNewPullRequestView()
             }
             it
           }
@@ -381,26 +392,6 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       }
       else CompletableFuture.completedFuture(pullRequest)
     }
-  }
-
-  private fun resetForm(directionModel: GHPRCreateDirectionModel,
-                        titleDocument: Document,
-                        descriptionDocument: DisableableDocument,
-                        metadataModel: GHPRCreateMetadataModel) {
-    directionModel.reset()
-    titleDocument.remove(0, titleDocument.length)
-    descriptionDocument.remove(0, descriptionDocument.length)
-    descriptionDocument.enabled = false
-    descriptionDocument.insertString(0, GithubBundle.message("pull.request.create.loading.template"), null)
-    GHPRTemplateLoader.readTemplate(project).successOnEdt {
-      if (!descriptionDocument.enabled) {
-        descriptionDocument.remove(0, descriptionDocument.length)
-        descriptionDocument.insertString(0, it, null)
-      }
-    }.completionOnEdt {
-      if (!descriptionDocument.enabled) descriptionDocument.enabled = true
-    }
-    metadataModel.reset()
   }
 
   private fun createErrorAlreadyExistsLabel(loadingModel: GHSimpleLoadingModel<GHPRIdentifier?>): JComponent {
