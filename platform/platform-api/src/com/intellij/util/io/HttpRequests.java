@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
@@ -33,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * <p>Handy class for reading data from URL connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.</p>
@@ -367,13 +367,16 @@ public final class HttpRequests {
       return myInputStream;
     }
 
-    @Nullable
-    InputStream getErrorStream() throws IOException {
+    @Nullable InputStream getErrorStream() throws IOException {
       URLConnection connection = getConnection();
-      if (!(connection instanceof HttpURLConnection)) return null;
+      if (!(connection instanceof HttpURLConnection)) {
+        return null;
+      }
 
       InputStream errorStream = ((HttpURLConnection)connection).getErrorStream();
-      if (errorStream == null) return null;
+      if (errorStream == null) {
+        return null;
+      }
 
       return unzipStreamIfNeeded(connection, errorStream);
     }
@@ -547,7 +550,7 @@ public final class HttpRequests {
   }
 
   private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
-    if (builder.myForceHttps && StringUtil.startsWith(request.myUrl, "http:")) {
+    if (builder.myForceHttps && request.myUrl.startsWith("http:")) {
       request.myUrl = "https:" + request.myUrl.substring(5);
     }
 
@@ -614,7 +617,10 @@ public final class HttpRequests {
       LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
                      "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST");
 
-      if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("connecting to " + url);
+      }
+
       int responseCode;
       try {
         responseCode = httpURLConnection.getResponseCode();
@@ -622,7 +628,10 @@ public final class HttpRequests {
       catch (SSLHandshakeException e) {
         throw !NetUtils.isSniEnabled() ? new SSLException("SSL error probably caused by disabled SNI", e) : e;
       }
-      if (LOG.isDebugEnabled()) LOG.debug("response from " + url + ": " + responseCode);
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("response from " + url + ": " + responseCode);
+      }
 
       if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
         if (ArrayUtil.indexOf(REDIRECTS, responseCode) >= 0) {
@@ -635,7 +644,7 @@ public final class HttpRequests {
           }
         }
 
-        if(builder.myThrowStatusCodeException) {
+        if (builder.myThrowStatusCodeException) {
           throwHttpStatusError(httpURLConnection, request, builder, responseCode);
         }
       }
@@ -654,11 +663,11 @@ public final class HttpRequests {
         message = HttpUrlConnectionUtil.readString(errorStream, connection);
       }
     }
-    if (StringUtil.isEmpty(message)) {
+    if (Strings.isEmpty(message)) {
       message = "Request failed with status code " + responseCode;
     }
     connection.disconnect();
-    throw new HttpStatusException(message, responseCode, StringUtil.notNullize(request.myUrl, "Empty URL"));
+    throw new HttpStatusException(message, responseCode, Objects.requireNonNullElse(request.myUrl, "Empty URL"));
   }
 
   private static void configureSslConnection(@NotNull String url, @NotNull HttpsURLConnection connection) {

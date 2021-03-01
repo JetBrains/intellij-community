@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -30,13 +30,13 @@ object HttpUrlConnectionUtil {
   @Throws(IOException::class, ProcessCanceledException::class)
   fun readString(inputStream: InputStream, connection: URLConnection, progressIndicator: ProgressIndicator? = null): String {
     val byteStream = readBytes(inputStream, connection, progressIndicator)
-    return if (byteStream.size() == 0) "" else String(byteStream.internalBuffer, 0, byteStream.size(), connection.getCharset())
+    return if (byteStream.size() == 0) "" else String(byteStream.internalBuffer, 0, byteStream.size(), getCharset(connection))
   }
 
   @Throws(IOException::class)
   @JvmStatic
-  fun URLConnection.getCharset(): Charset {
-    val contentType = contentType
+  fun getCharset(urlConnection: URLConnection): Charset {
+    val contentType = urlConnection.contentType
     if (!contentType.isNullOrEmpty()) {
       val m = CHARSET_PATTERN.matcher(contentType)
       if (m.find()) {
