@@ -46,36 +46,33 @@ object RuntimeChooserCustom {
     return SdkPopupFactory
       .newBuilder()
       .withSdkType(sdkType ?: return null)
-      .withSdkFilter {
-        it != null && runCatching {
-          val s = it.versionString ?: return@withSdkFilter false
-          val homePath = it.homePath ?: return@withSdkFilter false
-          val javaVersion = JavaVersion.tryParse(s) ?: return@withSdkFilter false
-          javaVersion.feature >= minJdkFeatureVersion && !WslDistributionManager.isWslPath(homePath)
-        }.getOrDefault(false)
-      }
-      .withSuggestedSdkFilter {
-        it != null && runCatching {
-          val s = it.versionString
-          val homePath = it.homePath
-          val javaVersion = JavaVersion.tryParse(s) ?: return@withSuggestedSdkFilter false
-          javaVersion.feature >= minJdkFeatureVersion && !WslDistributionManager.isWslPath(homePath)
-        }.getOrDefault(false)
-      }
+      .withSdkFilter { it != null && isSupportedSdkItem({ it.versionString }, { it.homePath }) }
+      .withSuggestedSdkFilter { it != null && isSupportedSdkItem({ it.versionString }, { it.homePath }) }
       .onSdkSelected { sdk -> importNewItem(parent, sdk, model) }
       .buildPopup()
   }
+
+  private fun isSupportedSdkItem(versionString: () -> String?, homePath: () -> String?): Boolean = runCatching {
+    val version = versionString() ?: return false
+    val home = homePath() ?: return false
+    val javaVersion = JavaVersion.tryParse(version) ?: return false
+    javaVersion.feature >= minJdkFeatureVersion && !WslDistributionManager.isWslPath(home)
+  }.getOrDefault(false)
 
   private fun importNewItem(parent: JComponent, sdk: Sdk?, model: RuntimeChooserModel) {
     if (sdk == null) return
 
     object: Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk", false, ALWAYS_BACKGROUND)) {
       override fun run(indicator: ProgressIndicator) {
+        val homeDir = runCatching { sdk.homePath }.getOrNull() ?: return
+
         try {
-          val homeDir = sdk.homePath ?: return
-          val version = sdk.homePath ?: return
           val info = JdkVersionDetector.getInstance().detectJdkVersionInfo(homeDir) ?: return
-          val fullVersion = listOfNotNull(info.displayName, info.version?.toString() ?: version).joinToString(" ")
+          val version = listOfNotNull(info.displayName, info.version?.toString() ?: sdk.versionString ?: return).joinToString(" ")
+
+          if (WslDistributionManager.isWslPath(homeDir)) {
+            return service<RuntimeChooserMessages>().notifyCustomJdkIsFromWsl(parent, homeDir)
+          }
 
           if (info.version.feature < minJdkFeatureVersion) {
             return service<RuntimeChooserMessages>().notifyCustomJdkVersionIsTooOld(parent, homeDir, info.version.toString(), "11")
@@ -85,12 +82,17 @@ object RuntimeChooserCustom {
             return service<RuntimeChooserMessages>().notifyCustomJdkDoesNotStart(parent, homeDir)
           }
 
-          val newItem = RuntimeChooserCustomItem(fullVersion, homeDir)
+          if (!isSupportedSdkItem({ version }, { homeDir })) {
+            return service<RuntimeChooserMessages>().notifyCustomJdkInvalid(parent, homeDir)
+          }
+
+          val newItem = RuntimeChooserCustomItem(version, homeDir)
           invokeLater(ModalityState.stateForComponent(parent)) {
             model.addExistingSdkItem(newItem)
           }
         } catch (t: Throwable) {
           LOG.warn("Failed to scan JDK for boot runtime: $sdk, ${sdk.homeDirectory}. ${t.message}", t)
+          return service<RuntimeChooserMessages>().notifyCustomJdkInvalid(parent, homeDir)
         }
       }
     }.queue()
