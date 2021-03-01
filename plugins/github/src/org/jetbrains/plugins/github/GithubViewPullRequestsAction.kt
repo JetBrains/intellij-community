@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowInitialView
 import java.util.function.Supplier
 
 class GithubViewPullRequestsAction :
@@ -23,5 +24,10 @@ class GithubViewPullRequestsAction :
     return project.service<GHPRToolWindowController>().isAvailable()
   }
 
-  override fun actionPerformed(e: AnActionEvent) = e.project!!.service<GHPRToolWindowController>().show()
+  override fun actionPerformed(e: AnActionEvent) {
+    e.project!!.service<GHPRToolWindowController>().show {
+      it.initialView = GHPRToolWindowInitialView.LIST
+      it.componentController?.viewList()
+    }
+  }
 }
