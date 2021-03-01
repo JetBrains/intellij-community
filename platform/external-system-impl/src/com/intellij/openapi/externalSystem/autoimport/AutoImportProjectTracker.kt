@@ -128,26 +128,26 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     if (isDisabled.get() || Registry.`is`("external.system.auto.import.disabled")) return
     if (!projectChangeOperation.isOperationCompleted()) return
     if (smart && !projectRefreshOperation.isOperationCompleted()) return
-    val systemIds = projectDataMap.keys.map { it.systemId }.toSet().toTypedArray()
-    val isAllowedDialogs = !smart || project.getTrustedState() == ThreeState.UNSURE
-    val isPreviewMode = isAllowedDialogs && !ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, *systemIds)
-    var isSkippedProjectRefresh = true
-    for ((projectId, projectData) in projectDataMap) {
-      val isAllowAutoReload = !smart || projectData.isActivated
-      if (isAllowAutoReload && !projectData.isUpToDate()) {
-        isSkippedProjectRefresh = false
-        LOG.debug("${projectId.readableName}: Project refresh")
-        val hasUndefinedModifications = !projectData.status.isUpToDate()
-        val settingsContext = projectData.settingsTracker.getSettingsContext()
-        val context = ProjectReloadContext(!smart, isPreviewMode, hasUndefinedModifications, settingsContext)
-        projectData.projectAware.reloadProject(context)
-      }
-      else {
-        LOG.debug("${projectId.readableName}: Skip project refresh")
-      }
-    }
-    if (isSkippedProjectRefresh) {
+
+    val projectsToReload = projectDataMap.values
+      .filter { (!smart || it.isActivated) && !it.isUpToDate() }
+
+    if (projectsToReload.isEmpty()) {
+      LOG.debug("Skipped all projects reload")
       updateProjectNotification()
+      return
+    }
+
+    val systemIds = projectsToReload.map { it.projectAware.projectId.systemId }.toSet().toTypedArray()
+    val isFirstLoad = ThreeState.UNSURE == project.getTrustedState()
+    ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, { isFirstLoad }, *systemIds)
+
+    for (projectData in projectsToReload) {
+      LOG.debug("${projectData.projectAware.projectId.readableName}: Project reload")
+      val hasUndefinedModifications = !projectData.status.isUpToDate()
+      val settingsContext = projectData.settingsTracker.getSettingsContext()
+      val context = ProjectReloadContext(!smart, hasUndefinedModifications, settingsContext)
+      projectData.projectAware.reloadProject(context)
     }
   }
 
@@ -327,7 +327,6 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   private data class ProjectReloadContext(
     override val isExplicitReload: Boolean,
-    override val isPreviewMode: Boolean,
     override val hasUndefinedModifications: Boolean,
     override val settingsFilesContext: ExternalSystemSettingsFilesReloadContext
   ) : ExternalSystemProjectReloadContext
