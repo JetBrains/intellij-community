@@ -4,10 +4,10 @@
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser.PluginSet
+import com.intellij.ide.plugins.advertiser.KnownExtensions
+import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -275,22 +275,40 @@ internal class XmlSerializerMapTest {
     """, bean)
   }
 
-  @Suppress("SpellCheckingInspection")
   @Test
   fun `no nullize of empty data`() {
-    @Tag("exts")
-    class KnownExtensions {
-      @JvmField
-      @OptionTag
-      @XMap
-      val myExtensions: MutableMap<String, PluginSet> = HashMap()
-    }
-
-    val element = JDOMUtil.load("""<exts>
-      <option name="myExtensions" />
-    </exts>""")
+    val element = JDOMUtil.load("""
+        <extensions>
+          <option name="extensionsMap" />
+        </extensions>
+      """.trimIndent())
     val result = element.deserialize(KnownExtensions::class.java)
-    assertThat(result.myExtensions).isNotNull()
+    assertThat(result.extensionsMap).isNotNull()
+  }
+
+  @Test
+  fun `knownExtensions serialization`() {
+    val pluginData = PluginData("foo", "Foo")
+    val extensions = KnownExtensions(mapOf("foo" to setOf(pluginData)))
+
+    testSerializer(
+      """
+        <extensions>
+          <option name="extensionsMap">
+            <entry key="foo">
+              <plugins>
+                <option name="dataSet">
+                  <set>
+                    <plugin pluginId="foo" pluginName="Foo" bundled="false" fromCustomRepository="false" />
+                  </set>
+                </option>
+              </plugins>
+            </entry>
+          </option>
+        </extensions>
+      """.trimIndent(),
+      extensions,
+    )
   }
 
   @Test

@@ -5,7 +5,9 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Comparing
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XMap
 
 @Tag("plugin")
 class PluginData(
@@ -54,3 +56,32 @@ class FeaturePluginData(
   @Attribute("displayName") val displayName: String = "",
   @Attribute("pluginData") val pluginData: PluginData = PluginData(),
 )
+
+@Tag("plugins")
+class PluginDataSet(dataSet: Set<PluginData> = setOf()) {
+
+  @JvmField
+  @OptionTag
+  val dataSet = mutableSetOf<PluginData>()
+
+  init {
+    this.dataSet += dataSet
+  }
+}
+
+@Tag("extensions")
+class KnownExtensions(extensionsMap: Map<String, Set<PluginData>> = mapOf()) {
+
+  @JvmField
+  @OptionTag
+  @XMap
+  val extensionsMap = mutableMapOf<String, PluginDataSet>()
+
+  init {
+    extensionsMap.entries.forEach { entry ->
+      this.extensionsMap[entry.key] = PluginDataSet(entry.value)
+    }
+  }
+
+  fun find(extension: String): Set<PluginData> = extensionsMap[extension]?.dataSet ?: setOf()
+}
