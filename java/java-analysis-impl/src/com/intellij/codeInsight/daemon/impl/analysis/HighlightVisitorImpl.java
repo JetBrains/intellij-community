@@ -925,6 +925,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
+  public void visitErrorElement(@NotNull PsiErrorElement element) {
+    super.visitErrorElement(element);
+    myHolder.add(HighlightClassUtil.checkClassMemberDeclaredOutside(element));
+  }
+
+  @Override
   public void visitMethod(PsiMethod method) {
     super.visitMethod(method);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkUnreachableStatement(method.getBody()));

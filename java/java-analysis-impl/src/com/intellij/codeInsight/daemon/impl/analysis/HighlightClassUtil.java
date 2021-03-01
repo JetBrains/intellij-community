@@ -281,6 +281,17 @@ public final class HighlightClassUtil {
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createRenameElementFix(aClass));
     return errorResult;
   }
+  
+  static HighlightInfo checkClassMemberDeclaredOutside(@NotNull PsiErrorElement errorElement) { 
+    MemberModel model = MemberModel.create(errorElement);
+    if (model == null) return null;
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+      .range(model.textRange())
+      .description(JavaErrorBundle.message("class.member.declared.outside"))
+      .create();
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMoveMemberIntoClassFix(errorElement));
+    return info;
+  }
 
   /**
    * @return true if file correspond to the shebang script

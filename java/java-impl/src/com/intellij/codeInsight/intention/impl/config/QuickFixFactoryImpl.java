@@ -971,4 +971,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createUnimplementInterfaceAction(@NotNull PsiJavaCodeReferenceElement ref, boolean isDuplicates) {
     return new UnimplementInterfaceAction(ref, isDuplicates);
   }
+
+  @Override
+  public @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement) {
+    return new MoveMemberIntoClassFix(errorElement);
+  }
 }
