@@ -15,12 +15,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.*
 import java.nio.file.Paths
 
+@RunsInEdt
 class ShelveChangesManagerTest {
   companion object {
     @ClassRule
     @JvmField
     val appRule = ApplicationRule()
+
+    @ClassRule
+    @JvmField
+    val edtRule = EdtRule()
   }
+
   private lateinit var shelvedChangesManager: ShelveChangesManager
 
   private lateinit var project: Project
