@@ -10,14 +10,8 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.wsl.WslDistributionManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -219,10 +213,6 @@ public final class MavenRunConfigurationType implements ConfigurationType {
     MavenRunnerSettings runnerSettingsToRun =
       runnerSettings != null ? runnerSettings : MavenRunner.getInstance(project).getState();
     runConfiguration.setRunnerSettings(runnerSettingsToRun);
-    if (WslDistributionManager.isWslPath(params.getWorkingDirPath())) {
-      //todo: find appropriate WSL distribution
-      runConfiguration.setDefaultTargetName("WSL");
-    }
     return settings;
   }
 
