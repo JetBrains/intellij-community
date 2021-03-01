@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder.SuggestedSdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -41,6 +42,7 @@ private data class SdkPopupBuilderImpl(
   val sdkTypeFilter: Condition<SdkTypeId>? = null,
   val sdkTypeCreateFilter: Condition<SdkTypeId>? = null,
   val sdkFilter: Condition<Sdk>? = null,
+  val suggestedSdkFilter: Condition<SuggestedSdk>? = null,
 
   val registerNewSdk : Boolean = false,
   val updateProjectSdk : Boolean = false,
@@ -64,6 +66,7 @@ private data class SdkPopupBuilderImpl(
   override fun withSdkTypeFilter(filter: Condition<SdkTypeId>) = copy(sdkTypeFilter = filter)
   override fun withSdkTypeCreateFilter(filter: Condition<SdkTypeId>) = copy(sdkTypeCreateFilter = filter)
   override fun withSdkFilter(filter: Condition<Sdk>) = copy(sdkFilter = filter)
+  override fun withSuggestedSdkFilter(filter: Condition<SuggestedSdk>) = copy(suggestedSdkFilter = filter)
   override fun onItemSelected(onItemSelected: Consumer<SdkListItem>) = copy(onItemSelected = onItemSelected)
   override fun onPopupClosed(onClosed: Runnable) = copy(onPopupClosed = onClosed)
   override fun onSdkSelected(onSdkSelected: Consumer<Sdk>) = copy(onSdkSelected = onSdkSelected)
@@ -120,6 +123,7 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
       require(sdkTypeFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
       require(sdkTypeCreateFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
       require(sdkFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
+      require(suggestedSdkFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
       sdkListModelBuilder
     }
     else {
@@ -128,7 +132,16 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
         sdksModel,
         sdkTypeFilter,
         sdkTypeCreateFilter,
-        sdkFilter
+        sdkFilter,
+        Condition {
+          val box = object : SuggestedSdk {
+            override val type: SdkTypeId get() = it.sdkType
+            override val versionString: String get() = it.version
+            override val homePath: String get() = it.homePath
+            override fun toString() = "SuggestedSdk($it)"
+          }
+          it != null && (suggestedSdkFilter?.value(box) != false)
+        },
       )
     }
 
