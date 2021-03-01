@@ -44,7 +44,7 @@ class GradleSubprojectSymbol(
     }
   }
 
-  override val textSearchStrings: Collection<String> get() = listOf(qualifiedName)
+  override val textSearchRequests: Collection<SearchRequest> get() = listOf(SearchRequest.of(qualifiedName))
 
   override val targetName: String get() = projectName
 
