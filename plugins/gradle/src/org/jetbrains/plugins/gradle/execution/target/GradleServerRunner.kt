@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.BaseOutputReader
 import org.gradle.initialization.BuildEventConsumer
 import org.gradle.internal.remote.internal.RemoteConnection
@@ -39,7 +40,10 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val project: Project = connection.taskId?.findProject() ?: return
     val progressIndicator = MyTargetProgressIndicator(connection.taskId, connection.taskListener)
     val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project)
-    val commandLine = serverEnvironmentSetup.prepareEnvironment(connection.environmentConfiguration, connection.targetPathMapper,
+    val environmentConfigurationProvider = connection.environmentConfigurationProvider
+    val environmentConfiguration = environmentConfigurationProvider.environmentConfiguration
+    val targetPathMapper = environmentConfigurationProvider.pathMapper
+    val commandLine = serverEnvironmentSetup.prepareEnvironment(environmentConfiguration, targetPathMapper,
                                                                 targetBuildParametersBuilder, consumerOperationParameters,
                                                                 progressIndicator)
     runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler)
@@ -89,7 +93,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true) null
     else {
       connection.putUserData(targetPreparationKey, true)
-      val targetTypeId = connection.environmentConfiguration.typeId
+      val targetTypeId = serverEnvironmentSetup.environmentConfiguration.typeId
       val targetDisplayName = TargetEnvironmentType.EXTENSION_NAME.findFirstSafe { it.id == targetTypeId }?.displayName
       targetDisplayName?.run { GradleBundle.message("gradle.target.execution.running", this) + "\n" }
     }
@@ -107,7 +111,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     if (targetPlatform.platform == Platform.current()) this
     else replace(targetPlatform.platform.fileSeparator, Platform.current().fileSeparator)
 
-  private fun resolveFistPath(text: String,
+  @NlsSafe
+  private fun resolveFistPath(@NlsSafe text: String,
                               targetProjectBasePath: String,
                               localProjectBasePath: String,
                               targetPlatform: TargetPlatform): String {

@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.PerformanceTrace;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
@@ -467,7 +468,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private static void maybeConvertTargetPaths(GradleExecutionSettings executionSettings, ProjectImportAction.AllModels allModels) {
-    PathMapper targetPathMapper = ExternalSystemExecutionAware.Companion.getTargetPathMapper(executionSettings);
+    TargetEnvironmentConfigurationProvider environmentConfigurationProvider =
+      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(executionSettings);
+    if (environmentConfigurationProvider == null) return;
+    PathMapper targetPathMapper = environmentConfigurationProvider.getPathMapper();
     if (targetPathMapper == null) return;
     allModels.convertPaths(rootObject -> {
       ReflectionTraverser.traverse(rootObject, new ReflectionTraverser.Visitor() {

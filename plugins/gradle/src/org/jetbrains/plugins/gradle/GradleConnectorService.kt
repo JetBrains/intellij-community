@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle
 
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -9,11 +8,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getEnvironmentConfiguration
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getTargetPathMapper
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PathMapper
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
@@ -125,8 +123,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     val wrapperPropertyFile: String?,
     val verboseProcessing: Boolean?,
     val ttlMs: Int?,
-    val environmentConfiguration: TargetEnvironmentConfiguration?,
-    val targetPathMapper: PathMapper?
+    val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider?
   )
 
   companion object {
@@ -159,8 +156,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       cancellationToken: CancellationToken? = null,
       function: Function<ProjectConnection, R>
     ): R {
-      val targetEnvironmentConfiguration = executionSettings?.getEnvironmentConfiguration()
-      val targetPathMapper = executionSettings?.getTargetPathMapper()
+      val targetEnvironmentConfigurationProvider = executionSettings?.getEnvironmentConfigurationProvider()
       val connectionParams = ConnectorParams(
         projectPath,
         executionSettings?.serviceDirectory,
@@ -170,8 +166,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         executionSettings?.wrapperPropertyFile,
         executionSettings?.isVerboseProcessing,
         executionSettings?.remoteProcessIdleTtlInMs?.toInt(),
-        targetEnvironmentConfiguration,
-        targetPathMapper
+        targetEnvironmentConfigurationProvider
       )
       val connectionService = getInstance(projectPath, taskId)
       if (connectionService != null) {
@@ -194,8 +189,8 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
                                 taskId: ExternalSystemTaskId?,
                                 listener: ExternalSystemTaskNotificationListener?): GradleConnector {
       val connector: GradleConnector
-      if (connectorParams.environmentConfiguration != null) {
-        connector = TargetGradleConnector(connectorParams.environmentConfiguration, connectorParams.targetPathMapper, taskId, listener)
+      if (connectorParams.environmentConfigurationProvider != null) {
+        connector = TargetGradleConnector(connectorParams.environmentConfigurationProvider, taskId, listener)
       }
       else {
         connector = GradleConnector.newConnector()
