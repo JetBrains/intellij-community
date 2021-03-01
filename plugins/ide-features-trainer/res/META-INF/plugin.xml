@@ -23,7 +23,7 @@
   </projectListeners>
 
   <applicationListeners>
-    <listener class="training.statistic.NonLearningProjectOpenedListener"
+    <listener class="training.statistic.LearnProjectStateListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
 

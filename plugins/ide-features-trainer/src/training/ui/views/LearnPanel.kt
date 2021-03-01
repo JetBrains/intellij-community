@@ -16,6 +16,7 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
+import training.statistic.StatisticBase
 import training.ui.*
 import training.util.getNextLessonForCurrent
 import training.util.getPreviousLessonForCurrent
@@ -32,6 +33,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val lessonPanel = JPanel()
 
   private val moduleNameLabel: JLabel = LinkLabelWithBackArrow<Any> { _, _ ->
+    StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.OPEN_MODULES)
     LessonManager.instance.stopLesson()
     LearningUiManager.resetModulesView()
   }
@@ -253,6 +255,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     if (targetLesson != null) {
       button.action = object : AbstractAction() {
         override fun actionPerformed(actionEvent: ActionEvent) {
+          StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.OPEN_NEXT_OR_PREV_LESSON)
           CourseManager.instance.openLesson(learnToolWindow.project, targetLesson)
         }
       }
