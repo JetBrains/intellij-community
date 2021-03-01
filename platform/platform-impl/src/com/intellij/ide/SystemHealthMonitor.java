@@ -52,12 +52,28 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
+    checkInstallationIntegrity();
     checkIdeDirectories();
     checkRuntime();
     checkReservedCodeCacheSize();
     checkEnvironment();
     checkSignalBlocking();
     startDiskSpaceMonitoring();
+  }
+
+  private static void checkInstallationIntegrity() {
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+      try (Stream<Path> stream = Files.list(Path.of(PathManager.getLibPath()))) {
+        // see `LinuxDistributionBuilder#generateVersionMarker`
+        long markers = stream.filter(p -> p.getFileName().toString().startsWith("build-marker-")).count();
+        if (markers > 1) {
+          showNotification("mixed.bag.installation.no.hide", null, ApplicationNamesInfo.getInstance().getFullProductName());
+        }
+      }
+      catch (IOException e) {
+        LOG.warn(e.getClass().getName() + ": " + e.getMessage());
+      }
+    }
   }
 
   private static void checkIdeDirectories() {
@@ -181,21 +197,27 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
                                        @Nullable NotificationAction action,
                                        Object... params) {
-    boolean ignored = PropertiesComponent.getInstance().isValueSet("ignore." + key);
-    LOG.warn("issue detected: " + key + (ignored ? " (ignored)" : ""));
-    if (ignored) return;
+    boolean canHide = !key.endsWith(".no.hide");
+
+    if (canHide) {
+      boolean ignored = PropertiesComponent.getInstance().isValueSet("ignore." + key);
+      LOG.warn("issue detected: " + key + (ignored ? " (ignored)" : ""));
+      if (ignored) return;
+    }
 
     Notification notification = new MyNotification(IdeBundle.message(key, params));
     if (action != null) {
       notification.addAction(action);
     }
-    notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        PropertiesComponent.getInstance().setValue("ignore." + key, "true");
-      }
-    });
+    if (canHide) {
+      notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.expire();
+          PropertiesComponent.getInstance().setValue("ignore." + key, "true");
+        }
+      });
+    }
     notification.setImportant(true);
 
     Notifications.Bus.notify(notification);
