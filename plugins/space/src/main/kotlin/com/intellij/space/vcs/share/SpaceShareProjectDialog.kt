@@ -3,6 +3,7 @@ package com.intellij.space.vcs.share
 
 import circlet.client.api.*
 import circlet.client.repoService
+import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -12,9 +13,12 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.promo.sharePromoText
+import com.intellij.space.promo.spaceLinkLabel
 import com.intellij.space.settings.SpaceLoginState
-import com.intellij.space.settings.buildConnectingPanel
-import com.intellij.space.settings.buildLoginPanel
+import com.intellij.space.ui.LoginComponents.buildConnectingPanel
+import com.intellij.space.ui.LoginComponents.loginPanel
+import com.intellij.space.ui.resizeIcon
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTextField
@@ -23,10 +27,15 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.JBUI
+import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.usingSource
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import runtime.RpcException
 import runtime.Ui
 import runtime.message
@@ -34,7 +43,9 @@ import java.util.concurrent.CancellationException
 import javax.swing.*
 
 class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
-  private val contentWrapper: Wrapper = Wrapper()
+  private val contentWrapper: Wrapper = Wrapper().apply {
+    putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
+  }
 
   private val lifetime: LifetimeSource = LifetimeSource()
 
@@ -81,7 +92,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
     SpaceWorkspaceComponent.getInstance().loginState.forEach(lifetime) { state ->
       okAction.isEnabled = false
       val view = when (state) {
-        is SpaceLoginState.Disconnected -> buildLoginPanel(state) { serverName ->
+        is SpaceLoginState.Disconnected -> buildShareLoginPanel(state) { serverName ->
           SpaceWorkspaceComponent.getInstance().signInManually(serverName, lifetime, contentWrapper)
         }
         is SpaceLoginState.Connected -> {
@@ -91,10 +102,36 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
         is SpaceLoginState.Connecting -> buildConnectingPanel(state) {
           state.cancel()
         }
+      }.apply {
+        border = JBUI.Borders.empty(8, 12)
       }
       contentWrapper.setContent(view)
       contentWrapper.validate()
       contentWrapper.repaint()
+    }
+  }
+
+  private fun buildShareLoginPanel(state: SpaceLoginState.Disconnected, loginAction: (String) -> Unit): JComponent {
+    return panel {
+      loginPanel(state, isLoginActionDefault = true) {
+        loginAction(it)
+      }
+      fullRow { buildSharePromoPanel()() }
+    }
+  }
+
+  private fun buildSharePromoPanel(): JComponent {
+    return JPanel(null).apply {
+      layout = MigLayout(LC().gridGap("${JBUI.scale(8)}", "${JBUI.scale(2)}")
+                           .insets("0", "0", "0", "0")
+                           .fill()).apply {
+        columnConstraints = "[][]"
+      }
+
+      add(JLabel(resizeIcon(SpaceIcons.Main, 30)), CC().pushY().spanY(10).alignY("top"))
+
+      add(spaceLinkLabel(), CC().pushX().wrap())
+      add(sharePromoText(60), CC().pushX().wrap())
     }
   }
 
