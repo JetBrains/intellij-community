@@ -5,15 +5,13 @@ import com.intellij.find.usages.api.PsiUsage
 import com.intellij.find.usages.api.Usage
 import com.intellij.find.usages.api.UsageSearchParameters
 import com.intellij.find.usages.api.UsageSearcher
-import com.intellij.model.search.SearchService
 import com.intellij.util.Query
 
 class GradleProjectUsageSearcher : UsageSearcher {
 
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> {
     val projectSymbol = parameters.target as? GradleProjectSymbol ?: return emptyList()
-    val query = SearchService.getInstance()
-      .searchPsiSymbolReferences(parameters.project, projectSymbol, parameters.searchScope)
+    val query = searchGradleProjectReferences(parameters.project, projectSymbol, parameters.searchScope)
       .mapping {
         PsiUsage.textUsage(it.element, it.rangeInElement)
       }
