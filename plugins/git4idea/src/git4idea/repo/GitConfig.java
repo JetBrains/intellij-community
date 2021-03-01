@@ -41,7 +41,7 @@ public final class GitConfig {
   private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"", Pattern.CASE_INSENSITIVE);
   private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"", Pattern.CASE_INSENSITIVE);
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch", Pattern.CASE_INSENSITIVE);
-  private static final Pattern CORE_SECTION = Pattern.compile("core", Pattern.CASE_INSENSITIVE);
+  private static final String CORE_SECTION = "core";
 
   @NotNull private final Collection<? extends Remote> myRemotes;
   @NotNull private final Collection<? extends Url> myUrls;
@@ -366,25 +366,11 @@ public final class GitConfig {
 
   @NotNull
   private static Core parseCore(@NotNull Ini ini) {
-    Core core = new Core(null);
-    for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
-      String sectionName = stringSectionEntry.getKey();
-      Profile.Section section = stringSectionEntry.getValue();
-
-      Core c = parseCoreSection(sectionName, section);
-      if (c.myHooksPath != null && !c.myHooksPath.isEmpty()) {
-        core = c;
-      }
-    }
-    return core;
-  }
-
-  @NotNull
-  private static Core parseCoreSection(@NotNull String sectionName,
-                                       @NotNull Profile.Section section) {
     String hooksPath = null;
-    if (CORE_SECTION.matcher(sectionName).matches()) {
-       hooksPath = section.get("hookspath");
+
+    List<Profile.Section> sections = ContainerUtil.notNullize(ini.getAll(CORE_SECTION));
+    for (Profile.Section section : ContainerUtil.reverse(sections)) { // take entry from last section for duplicates
+      if (hooksPath == null) hooksPath = ContainerUtil.getLastItem(section.getAll("hookspath"));
     }
     return new Core(hooksPath);
   }

@@ -4,6 +4,8 @@ package git4idea.repo
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.containers.ContainerUtil.getFirstItem
@@ -12,10 +14,12 @@ import git4idea.GitStandardRemoteBranch
 import git4idea.test.GitPlatformTest
 import git4idea.test.createRepository
 import git4idea.test.git
+import git4idea.test.tac
 import java.io.File
 import java.util.*
 
 class GitConfigTest : GitPlatformTest() {
+  private val HOOK_FAILURE_MESSAGE = "IJ_TEST_GIT_HOOK_FAILED"
 
   fun testRemotes() {
     val objects = loadRemotes()
@@ -119,12 +123,122 @@ class GitConfigTest : GitPlatformTest() {
     assertEquals("Remote name is incorrect", expectedName, remote!!.name)
   }
 
-  fun `test hooks is extracted from config`() {
-    createRepository()
-    git("config core.hooksPath .githooks")
+  fun `test relative hook path is extracted from config`() {
+    val repo = createRepository()
 
-    val config = readConfig()
-    assertEquals("", ".githooks", config.parseCore().hooksPath)
+    createHook(".githooks/pre-commit")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    tac("file1.txt")
+
+    git("config core.hooksPath .githooks/")
+    repo.update()
+
+    assertTrue(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+
+    git("config core.hooksPath .githooks")
+    repo.update()
+
+    assertTrue(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    assertHookFailure {
+      tac("file3.txt")
+    }
+
+    git("config core.hooksPath .githooks2")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    tac("file4.txt")
+
+    createHook(".githooks2/pre-push")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertTrue(repo.info.hooksInfo.isPrePushHookAvailable)
+  }
+
+  fun `test absolute hook path is extracted from config`() {
+    val repo = createRepository()
+
+    val hookFile = createHook(".githooks/pre-commit")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    tac("file1.txt")
+
+    git("config core.hooksPath " + hookFile.parent)
+    repo.update()
+
+    assertTrue(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+  }
+
+  fun `test last hook path is extracted from config`() {
+    val repo = createRepository()
+
+    createHook(".githooks4/pre-commit")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    tac("file1.txt")
+
+    Executor.append(".git/config", """
+      [core]
+        hooksPath = .githooks1
+        hooksPath = .githooks2
+      [core]
+        hooksPath = .githooks3
+        hooksPath = .githooks4
+    """.trimIndent())
+    repo.update()
+
+    assertTrue(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+  }
+
+  private fun createHook(hookPath: String): File {
+    val hookFile = touch(hookPath,
+                         "#!/bin/sh\n" +
+                         "echo $HOOK_FAILURE_MESSAGE\n" +
+                         "exit 1")
+    hookFile.setExecutable(true)
+    return hookFile
+  }
+
+  private fun assertHookFailure(task: () -> Unit) {
+    try {
+      task()
+      throw AssertionError("Hook failure expected")
+    }
+    catch (e: IllegalStateException) {
+      if (!e.message.orEmpty().contains(HOOK_FAILURE_MESSAGE)) {
+        throw AssertionError("Hook failure expected", e)
+      }
+    }
   }
 
   private fun createRepository(): GitRepository {

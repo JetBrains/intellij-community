@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String TAGS = "tags";
   private static final @NonNls String REMOTES = "remotes";
   private static final @NonNls String SQUASH_MSG = "SQUASH_MSG";
-  private static final @NonNls String DEFAULT_HOOKS = "hooks";
+  private static final @NonNls String HOOKS = "hooks";
   private static final @NonNls String PRE_COMMIT_HOOK = "pre-commit";
   private static final @NonNls String PRE_PUSH_HOOK = "pre-push";
   private static final @NonNls String COMMIT_MSG_HOOK = "commit-msg";
@@ -76,9 +77,11 @@ public final class GitRepositoryFiles {
   private final @NonNls String myMergeSquashPath;
   private final @NonNls String myInfoDirPath;
   private final @NonNls String myExcludePath;
-  private @NonNls String myHooksDirPath;
+  private final @NonNls String myHooksDirPath;
   private final @NonNls String myShallow;
   private final @NonNls String myStashReflogPath;
+
+  private @Nullable @NonNls String myCustomHooksDirPath;
 
   private GitRepositoryFiles(@NotNull VirtualFile rootDir, @NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
     myRootDir = rootDir;
@@ -94,7 +97,7 @@ public final class GitRepositoryFiles {
     myRefsRemotesDirPath = refsPath + slash(REMOTES);
     myInfoDirPath = mainPath + slash(INFO);
     myExcludePath = mainPath + slash(INFO_EXCLUDE);
-    myHooksDirPath = mainPath + slash(DEFAULT_HOOKS);
+    myHooksDirPath = mainPath + slash(HOOKS);
     myShallow = mainPath + slash(SHALLOW);
     myStashReflogPath = mainPath + slash(LOGS) + slash(REFS) + slash(STASH);
 
@@ -224,39 +227,29 @@ public final class GitRepositoryFiles {
     return file(myMergeSquashPath);
   }
 
-  @Nullable
-  private String sanitizeHooksPath(@Nullable String hooksPath) {
-    if (hooksPath == null) return null;
-    if (hooksPath.endsWith("/")) {
-      return hooksPath.substring(0, hooksPath.length() - 1);
-    } else {
-      return hooksPath;
+  public void updateCustomPaths(@NotNull GitConfig.Core core) {
+    String hooksPath = core.getHooksPath();
+    if (hooksPath != null) {
+      myCustomHooksDirPath = myRootDir.toNioPath().resolve(hooksPath).toString();
     }
-  }
-
-  private void updateHooksPath(@Nullable String hooksPath) {
-    String cleanHooksPath = sanitizeHooksPath(hooksPath);
-    if (cleanHooksPath != null) {
-      myHooksDirPath = myRootDir.getPath() + slash(cleanHooksPath);
+    else {
+      myCustomHooksDirPath = null;
     }
   }
 
   @NotNull
-  public File getPreCommitHookFile(@Nullable String hooksPath) {
-    updateHooksPath(hooksPath);
-    return file(myHooksDirPath + slash(PRE_COMMIT_HOOK));
+  public File getPreCommitHookFile() {
+    return hook(PRE_COMMIT_HOOK);
   }
 
   @NotNull
-  public File getPrePushHookFile(@Nullable String hooksPath) {
-    updateHooksPath(hooksPath);
-    return file(myHooksDirPath + slash(PRE_PUSH_HOOK));
+  public File getPrePushHookFile() {
+    return hook(PRE_PUSH_HOOK);
   }
 
   @NotNull
-  public File getCommitMsgHookFile(@Nullable String hooksPath) {
-    updateHooksPath(hooksPath);
-    return file(myHooksDirPath + slash(COMMIT_MSG_HOOK));
+  public File getCommitMsgHookFile() {
+    return hook(COMMIT_MSG_HOOK);
   }
 
   @NotNull
@@ -272,6 +265,11 @@ public final class GitRepositoryFiles {
   @NotNull
   public File getStashReflogFile() {
     return file(myStashReflogPath);
+  }
+
+  @NotNull
+  private File hook(@NotNull String filePath) {
+    return file(ObjectUtils.chooseNotNull(myCustomHooksDirPath, myHooksDirPath) + slash(filePath));
   }
 
   @NotNull
