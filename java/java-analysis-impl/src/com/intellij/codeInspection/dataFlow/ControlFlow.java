@@ -57,7 +57,7 @@ public final class ControlFlow {
     myInstructions.add(instruction);
   }
 
-  int[] getLoopNumbers() {
+  public int[] getLoopNumbers() {
     return myLoopNumbers;
   }
 
