@@ -2,9 +2,7 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.ShortcutProvider;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -12,6 +10,9 @@ import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.NumericMnemonicItem;
@@ -29,6 +30,7 @@ import java.awt.*;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
+  public static final Key<@NlsSafe String> CUSTOM_KEY_STROKE_TEXT = new Key<>("CUSTOM_KEY_STROKE_TEXT");
   protected final ListPopupImpl myPopup;
   private JLabel myShortcutLabel;
   private @Nullable JLabel myValueLabel;
@@ -262,12 +264,20 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       myShortcutLabel.setText("");
       if (value instanceof ShortcutProvider) {
         ShortcutSet set = ((ShortcutProvider)value).getShortcut();
+        String shortcutText = null;
         if (set != null) {
           Shortcut shortcut = ArrayUtil.getFirstElement(set.getShortcuts());
           if (shortcut != null) {
-            myShortcutLabel.setText("     " + KeymapUtil.getShortcutText(shortcut));
+            shortcutText = KeymapUtil.getShortcutText(shortcut);
           }
         }
+        if (shortcutText == null && value instanceof AnActionHolder) {
+          AnAction action = ((AnActionHolder)value).getAction();
+          if (action instanceof UserDataHolder) {
+            shortcutText = ((UserDataHolder)action).getUserData(CUSTOM_KEY_STROKE_TEXT);
+          }
+        }
+        if (shortcutText != null) myShortcutLabel.setText("     " + shortcutText);
       }
       setSelected(myShortcutLabel, isSelected && isSelectable && !nextStepButtonSelected, isSelected);
       myShortcutLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected
