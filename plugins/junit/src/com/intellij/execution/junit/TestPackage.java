@@ -75,7 +75,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Module module = getConfiguration().getConfigurationModule().getModule();
     final TestClassFilter classFilter = computeFilter(data);
-    return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
+    return new SearchForTestsTask(getConfiguration().getProject(), getServerSocket()) {
       private boolean myShouldExecuteFinishMethod = true;
       private final Set<Location<?>> myClasses = new LinkedHashSet<>();
       @Override

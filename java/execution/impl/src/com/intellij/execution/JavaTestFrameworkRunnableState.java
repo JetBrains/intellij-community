@@ -62,6 +62,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -92,8 +93,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return parameters.getVMParametersList().getParamsGroup(JIGSAW_OPTIONS);
   }
 
-  protected ServerSocket myServerSocket;
-  protected AsyncPromise<String> myPortPromise;
+  private @Nullable TargetBoundServerSocket myTargetBoundServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
 
@@ -101,7 +101,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   private final List<ArgumentFileFilter> myArgumentFileFilters = new ArrayList<>();
 
   @Nullable private volatile TargetProgressIndicator myTargetProgressIndicator = null;
-  @Nullable private volatile TargetEnvironment.LocalPortBinding myPortBindingForSocket;
+
+  @Nullable
+  protected final ServerSocket getServerSocket() {
+    return myTargetBoundServerSocket != null ? myTargetBoundServerSocket.getServerSocket() : null;
+  }
 
   public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
     this.remoteConnectionCreator = remoteConnectionCreator;
@@ -180,11 +184,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return config == null ? null : new WslTargetEnvironmentFactory(config);
   }
 
-  public void resolveServerSocketPort(@NotNull TargetEnvironment remoteEnvironment) {
-    if (myServerSocket != null) {
-      boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
-      int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
-      myPortPromise.setResult(String.valueOf(port));
+  public void resolveServerSocketPort(@NotNull TargetEnvironment remoteEnvironment) throws ExecutionException {
+    if (myTargetBoundServerSocket != null) {
+      myTargetBoundServerSocket.bind(remoteEnvironment);
     }
   }
 
@@ -612,15 +614,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void createServerSocket(JavaParameters javaParameters) {
     try {
-      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
-      myPortPromise = new AsyncPromise<>();
+      myTargetBoundServerSocket = TargetBoundServerSocket.fromRequest(getTargetEnvironmentRequest());
+      int localPort = myTargetBoundServerSocket.getLocalPort();
+      AsyncPromise<String> hostPortPromise = myTargetBoundServerSocket.getHostPortPromise();
       javaParameters.getProgramParametersList()
-        .add(new CompositeParameterTargetedValue("-socket").addTargetPart(String.valueOf(myServerSocket.getLocalPort()), myPortPromise));
-      TargetEnvironmentRequest request = getTargetEnvironmentRequest();
-      if (request != null) {
-        myPortBindingForSocket = new TargetEnvironment.LocalPortBinding(myServerSocket.getLocalPort(), null);
-        request.getLocalPortBindings().add(myPortBindingForSocket);
-      }
+        .add(new CompositeParameterTargetedValue("-socket").addTargetPart(String.valueOf(localPort), hostPortPromise));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -764,5 +762,92 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected boolean useModulePath() {
     return true;
+  }
+
+  private final static class TargetBoundServerSocket {
+    private final int myLocalPort;
+    private final @Nullable TargetEnvironment.LocalPortBinding myLocalPortBinding;
+
+    /**
+     * Guards {@link #myServerSocket}.
+     */
+    private final @NotNull Object myLock = new Object();
+    private @Nullable ServerSocket myServerSocket;
+
+    private final @NotNull AsyncPromise<String> myHostPortPromise = new AsyncPromise<>();
+
+    private TargetBoundServerSocket(int localPort) {
+      myLocalPortBinding = null;
+      myLocalPort = localPort;
+    }
+
+    private TargetBoundServerSocket(@NotNull TargetEnvironment.LocalPortBinding localPortBinding) {
+      myLocalPortBinding = localPortBinding;
+      myLocalPort = localPortBinding.getLocal();
+    }
+
+    public int getLocalPort() {
+      return myLocalPort;
+    }
+
+    public @NotNull AsyncPromise<String> getHostPortPromise() {
+      return myHostPortPromise;
+    }
+
+    public void bind(@NotNull TargetEnvironment targetEnvironment) throws ExecutionException {
+      String hostPort;
+      try {
+        String serverHost;
+        boolean local = targetEnvironment instanceof LocalTargetEnvironment;
+        if (local) {
+          serverHost = "127.0.0.1";
+          hostPort = String.valueOf(myLocalPort);
+        }
+        else {
+          ResolvedPortBinding resolvedPortBinding = targetEnvironment.getLocalPortBindings().get(myLocalPortBinding);
+          serverHost = resolvedPortBinding.getLocalEndpoint().getHost();
+          HostPort targetHostPort = resolvedPortBinding.getTargetEndpoint();
+          hostPort = targetHostPort.getHost() + ":" + targetHostPort.getPort();
+        }
+        createServerSocketImpl(serverHost);
+      }
+      catch (IOException e) {
+        throw new ExecutionException(e);
+      }
+      myHostPortPromise.setResult(hostPort);
+    }
+
+    private @NotNull ServerSocket createServerSocketImpl(@NotNull String host) throws IOException {
+      synchronized (myLock) {
+        if (myServerSocket != null) {
+          throw new IllegalStateException("Server socket already created");
+        }
+        ServerSocket socket = new ServerSocket(myLocalPort, 0, InetAddress.getByName(host));
+        myServerSocket = socket;
+        return socket;
+      }
+    }
+
+    public @NotNull ServerSocket getServerSocket() {
+      synchronized (myLock) {
+        if (myServerSocket == null) {
+          throw new IllegalStateException("Server socket must be resolved");
+        }
+        return myServerSocket;
+      }
+    }
+
+    @NotNull
+    public static TargetBoundServerSocket fromRequest(@Nullable TargetEnvironmentRequest targetEnvironmentRequest) throws IOException {
+      int serverPort = NetUtils.findAvailableSocketPort();
+      if (targetEnvironmentRequest != null) {
+        TargetEnvironment.LocalPortBinding localPortBinding = new TargetEnvironment.LocalPortBinding(serverPort, null);
+        targetEnvironmentRequest.getLocalPortBindings().add(localPortBinding);
+        return new TargetBoundServerSocket(localPortBinding);
+      }
+      else {
+        return new TargetBoundServerSocket(serverPort);
+      }
+    }
   }
 }

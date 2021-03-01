@@ -4,11 +4,8 @@ package com.intellij.execution.wsl.target
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.target.HostPort
-import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.*
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
-import com.intellij.execution.target.TargetPlatform
-import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.diagnostic.logger
@@ -26,7 +23,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
   private val myUploadVolumes: MutableMap<UploadRoot, UploadableVolume> = HashMap()
   private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
   private val myTargetPortBindings: MutableMap<TargetPortBinding, Int> = HashMap()
-  private val myLocalPortBindings: MutableMap<LocalPortBinding, HostPort> = HashMap()
+  private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = HashMap()
   private val localPortBindingsSession : WslTargetLocalPortBindingsSession
 
   override val uploadVolumes: Map<UploadRoot, UploadableVolume>
@@ -35,7 +32,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     get() = Collections.unmodifiableMap(myDownloadVolumes)
   override val targetPortBindings: Map<TargetPortBinding, Int>
     get() = Collections.unmodifiableMap(myTargetPortBindings)
-  override val localPortBindings: Map<LocalPortBinding, HostPort>
+  override val localPortBindings: Map<LocalPortBinding, ResolvedPortBinding>
     get() = Collections.unmodifiableMap(myLocalPortBindings)
 
   override val targetPlatform: TargetPlatform
@@ -68,14 +65,15 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
 
     for (localPortBinding in wslRequest.localPortBindings) {
       val targetHostPortFuture = localPortBindingsSession.getTargetHostPortFuture(localPortBinding)
-      var targetHostPort = HostPort("localhost", localPortBinding.local)
+      val localHostPort = HostPort("localhost", localPortBinding.local)
+      var targetHostPort = localHostPort
       try {
         targetHostPort = targetHostPortFuture.get(10, TimeUnit.SECONDS)
       }
       catch (e: Exception) {
         LOG.info("Cannot get target host and port for $localPortBinding")
       }
-      myLocalPortBindings[localPortBinding] = targetHostPort
+      myLocalPortBindings[localPortBinding] = ResolvedPortBinding(localHostPort, targetHostPort)
     }
   }
 

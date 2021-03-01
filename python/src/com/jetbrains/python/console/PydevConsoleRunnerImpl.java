@@ -503,11 +503,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(ideServerPort, null);
     targetEnvironmentRequest.getLocalPortBindings().add(ideServerPortBinding);
     Function<TargetEnvironment, HostPort> ideServerHostPortOnTarget = targetEnvironment -> {
-      HostPort targetHostPort = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);
-      if (targetHostPort == null) {
+      ResolvedPortBinding resolvedPortBinding = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);
+      if (resolvedPortBinding == null) {
         throw new IllegalStateException(MessageFormat.format("Local port binding \"{0}\" must be registered", ideServerPortBinding));
       }
-      return targetHostPort;
+      return resolvedPortBinding.getTargetEndpoint();
     };
 
     VirtualFile projectDir = ProjectUtil.guessProjectDir(myProject);

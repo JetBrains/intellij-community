@@ -124,8 +124,7 @@ abstract class TargetEnvironment(
   open val targetPortBindings: Map<TargetPortBinding, Int>
     get() = throw UnsupportedOperationException()
 
-  /** Values are local ports. */
-  open val localPortBindings: Map<LocalPortBinding, HostPort>
+  open val localPortBindings: Map<LocalPortBinding, ResolvedPortBinding>
     get() = throw UnsupportedOperationException()
 
   // TODO There are planned further modifications related to this method:

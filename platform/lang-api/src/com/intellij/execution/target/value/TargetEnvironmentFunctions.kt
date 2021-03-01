@@ -96,8 +96,9 @@ fun TargetEnvironment.DownloadRoot.getTargetDownloadPath(): TargetEnvironmentFun
 fun TargetEnvironment.LocalPortBinding.getTargetEnvironmentValue(): TargetEnvironmentFunction<HostPort> =
   TargetEnvironmentFunction { targetEnvironment ->
     val localPortBinding = this@getTargetEnvironmentValue
-    return@TargetEnvironmentFunction targetEnvironment.localPortBindings[localPortBinding]
-                                     ?: throw IllegalStateException("Local port binding \"$localPortBinding\" cannot be found")
+    val resolvedPortBinding = (targetEnvironment.localPortBindings[localPortBinding]
+                               ?: throw IllegalStateException("Local port binding \"$localPortBinding\" cannot be found"))
+    return@TargetEnvironmentFunction resolvedPortBinding.targetEndpoint
   }
 
 @Throws(IOException::class)
