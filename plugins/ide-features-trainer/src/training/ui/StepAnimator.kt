@@ -46,7 +46,7 @@ internal class StepAnimator(val verticalScrollBar: JScrollBar, val messagePane: 
   }
 
   private fun rectangleAnimation() {
-    animator = object : Animator("Scroll animation", totalMessageAnimationCycles, 200, false) {
+    animator = object : Animator("Scroll animation", totalMessageAnimationCycles, 100, false) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
         messagePane.totalAnimation = totalFrames
         messagePane.currentAnimation = frame
