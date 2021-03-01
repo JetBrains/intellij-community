@@ -13,8 +13,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.settings.*
+import com.intellij.space.settings.SpaceLoginState
+import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.settings.SpaceSettingsPanel
 import com.intellij.space.ui.*
+import com.intellij.space.ui.LoginComponents.buildConnectingPanel
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.clone.SpaceCloneAction
@@ -22,7 +25,6 @@ import com.intellij.space.vcs.review.SpaceShowReviewsAction
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import libraries.coroutines.extra.Lifetime
 import runtime.reactive.view
@@ -69,12 +71,12 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
         .setFocusable(true)
         .createPopup()
       space.loginState.view(space.lifetime) { _: Lifetime, st: SpaceLoginState ->
-        val view = createView(st, component)
+        val view = createView(st, component) { popup.pack(true, true) }
         if (view == null) {
           popup.cancel()
           return@view
         }
-        view.border = JBUI.Borders.empty(8, 12)
+
         wrapper.setContent(view)
         wrapper.repaint()
         if (st is SpaceLoginState.Disconnected) {
@@ -85,15 +87,15 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
     }
   }
 
-  private fun createView(st: SpaceLoginState, component: Component): JComponent? {
+  private fun createView(st: SpaceLoginState, component: Component, packPopup: () -> Unit): JComponent? {
     return when (st) {
       is SpaceLoginState.Connected -> null
 
-      is SpaceLoginState.Connecting -> buildConnectingPanel(st) {
+      is SpaceLoginState.Connecting -> buildConnectingPanel(st, withBorder = true) {
         st.cancel()
       }
 
-      is SpaceLoginState.Disconnected -> buildLoginPanel(st, true) { serverName ->
+      is SpaceLoginState.Disconnected -> buildLoginPanelWithPromo(st, packPopup) { serverName ->
         val space = SpaceWorkspaceComponent.getInstance()
         space.signInManually(serverName, space.lifetime, component)
       }

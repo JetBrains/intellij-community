@@ -7,17 +7,21 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.promo.bigPromoBanner
+import com.intellij.space.promo.fullPromoText
+import com.intellij.space.promo.spaceLinkLabel
+import com.intellij.space.ui.LoginComponents.buildConnectingPanel
+import com.intellij.space.ui.LoginComponents.loginPanel
+import com.intellij.space.ui.LoginComponents.separatorRow
 import com.intellij.space.ui.cleanupUrl
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.utils.LifetimedDisposable
 import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.panels.VerticalLayout
@@ -25,6 +29,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import icons.SpaceIcons
 import libraries.klogging.logger
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -51,9 +56,7 @@ class SpaceSettingsPanel :
     row {
       cell(isFullWidth = true) { accountPanel(pushX, growX) }
     }
-    val separatorRow = row {
-      SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)()
-    }
+    val separatorRow = separatorRow()
     val cloneTypeRow = row {
       cell(isFullWidth = true) {
         label(SpaceBundle.message("settings.panel.clone.repositories.with.label"))
@@ -79,7 +82,7 @@ class SpaceSettingsPanel :
 
   private fun createView(wrapper: JComponent, st: SpaceLoginState): JComponent {
     when (st) {
-      is SpaceLoginState.Disconnected -> return buildLoginPanel(st) { server ->
+      is SpaceLoginState.Disconnected -> return buildSettingsLoginPanel(st) { server ->
         SpaceWorkspaceComponent.getInstance().signInManually(server, lifetime, wrapper)
       }
 
@@ -152,3 +155,32 @@ class SpaceSettingsPanel :
   }
 }
 
+internal fun buildSettingsLoginPanel(st: SpaceLoginState.Disconnected,
+                                     loginAction: (String) -> Unit
+): DialogPanel {
+  return panel {
+    loginPanel(st, isLoginActionDefault = false, withOrganizationsUrlLabel = true, loginAction)
+    row {
+      buildSettingsPromoPanel()()
+    }
+  }
+}
+
+private fun buildSettingsPromoPanel(): JComponent {
+  return JPanel(null).apply {
+    layout = MigLayout(LC().gridGap("${JBUI.scale(8)}", "${JBUI.scale(4)}")
+                         .insets("0", "0", "0", "0")
+                         .fill()).apply {
+      columnConstraints = "[][]"
+    }
+
+    add(JLabel(resizeIcon(SpaceIcons.Main, 30)), CC().pushY().spanY(10).alignY("top"))
+
+    val browserLink = spaceLinkLabel()
+    add(browserLink, CC().pushX().wrap())
+    add(fullPromoText(80), CC().pushX().wrap())
+    bigPromoBanner()?.let {
+      add(it, CC().pushX().wrap().gapTop("${JBUI.scale(8)}"))
+    }
+  }
+}

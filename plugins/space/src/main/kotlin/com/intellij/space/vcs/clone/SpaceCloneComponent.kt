@@ -12,6 +12,7 @@ import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.progress.ProgressIndicator
@@ -28,14 +29,24 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.settings.*
+import com.intellij.space.promo.DISCOVER_SPACE_PROMO_URL
+import com.intellij.space.promo.bigPromoBanner
+import com.intellij.space.promo.createSpaceByJetbrainsLabel
+import com.intellij.space.promo.fullPromoText
+import com.intellij.space.settings.CloneType
+import com.intellij.space.settings.SpaceLoginState
+import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.settings.SpaceSettingsPanel
 import com.intellij.space.ui.*
+import com.intellij.space.ui.LoginComponents.buildConnectingPanel
+import com.intellij.space.ui.LoginComponents.loginPanel
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceHttpPasswordState
 import com.intellij.space.vcs.SpaceKeysState
 import com.intellij.space.vcs.SpaceSetGitHttpPasswordDialog
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
@@ -72,7 +83,8 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
     SpaceWorkspaceComponent.getInstance().loginState.forEach(uiLifetime) { st ->
       val view = createView(uiLifetime, st)
       view.border = JBUI.Borders.empty(8, 12)
-      wrapper.setContent(view)
+      val scrollPane = ScrollPaneFactory.createScrollPane(view, true)
+      wrapper.setContent(scrollPane)
       wrapper.repaint()
     }
   }
@@ -91,8 +103,29 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
         st.cancel()
       }
 
-      is SpaceLoginState.Disconnected -> buildLoginPanel(st) { serverName ->
+      is SpaceLoginState.Disconnected -> buildCloneLoginPanel(st) { serverName ->
         SpaceWorkspaceComponent.getInstance().signInManually(serverName, lifetime, getView())
+      }
+    }
+  }
+
+  private fun buildCloneLoginPanel(st: SpaceLoginState.Disconnected, loginAction: (String) -> Unit): JComponent {
+    return panel {
+      loginPanel(st, isLoginActionDefault = true) {
+        loginAction(it)
+      }
+
+      fullRow { createSpaceByJetbrainsLabel()() }
+      fullRow { fullPromoText(80)() }
+
+      val discoverLink = BrowserLink(SpaceBundle.message("space.promo.discover.space.button"), DISCOVER_SPACE_PROMO_URL).apply {
+        font = JBUI.Fonts.smallFont()
+      }
+
+      fullRow { discoverLink() }
+
+      bigPromoBanner()?.let {
+        fullRow { it() }
       }
     }
   }
