@@ -50,6 +50,7 @@ class ComposeAndroidTemplate : Template() {
         +RepositoryIR(Repositories.JETBRAINS_COMPOSE_DEV)
         +RepositoryIR(DefaultRepository.JCENTER)
         +RepositoryIR(DefaultRepository.GOOGLE)
+        +Dependencies.ACTIVITY_COMPOSE
     }
 
     override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> = irs.filterNot {
