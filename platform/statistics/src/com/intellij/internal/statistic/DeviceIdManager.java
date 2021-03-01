@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic;
 
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +23,7 @@ import java.util.prefs.Preferences;
 public final class DeviceIdManager {
   private static final Logger LOG = Logger.getInstance(DeviceIdManager.class);
 
+  private static final String UNDEFINED = "UNDEFINED";
   private static final String DEVICE_ID_SHARED_FILE = "PermanentDeviceId";
   private static final String DEVICE_ID_PREFERENCE_KEY = "device_id";
 
@@ -29,10 +32,18 @@ public final class DeviceIdManager {
    */
   @Deprecated
   public static String getOrGenerateId() {
-    return getOrGenerateId("UNDEFINED");
+    try {
+      return getOrGenerateId(null, UNDEFINED);
+    }
+    catch (InvalidDeviceIdTokenException e) {
+      LOG.error(e);
+    }
+    return "";
   }
 
-  public static String getOrGenerateId(@NotNull String recorderId) {
+  public static String getOrGenerateId(@Nullable DeviceIdToken token, @NotNull String recorderId) throws InvalidDeviceIdTokenException {
+    assertAllowed(token, recorderId);
+
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     Preferences prefs = getPreferences(appInfo);
 
@@ -41,7 +52,7 @@ public final class DeviceIdManager {
     if (StringUtil.isEmptyOrSpaces(deviceId)) {
       deviceId = generateId(Calendar.getInstance(Locale.ENGLISH), getOSChar());
       prefs.put(preferenceKey, deviceId);
-      LOG.info("Generating new Device ID");
+      LOG.info("Generating new Device ID for '" + recorderId + "'");
     }
 
     if (appInfo.isVendorJetBrains() && SystemInfo.isWindows) {
@@ -55,6 +66,24 @@ public final class DeviceIdManager {
     return deviceId;
   }
 
+  private static void assertAllowed(@Nullable DeviceIdToken token, @NotNull String recorderId) throws InvalidDeviceIdTokenException {
+    LOG.info("Access device id for '" + recorderId + "' from " + (token == null ? "unknown" : token.getClass().getName()));
+
+    if (isBaseRecorder(recorderId)) {
+      if (token == null) {
+        throw new InvalidDeviceIdTokenException("Cannot access base device id from unknown class");
+      }
+      else if (!PluginInfoDetectorKt.getPluginInfo(token.getClass()).getType().isPlatformOrJetBrainsBundled()) {
+        throw new InvalidDeviceIdTokenException("Cannot access base device id from " + token.getClass().getName());
+      }
+    }
+    else if (!isUndefinedRecorder(recorderId)) {
+      if (token == null) {
+        throw new InvalidDeviceIdTokenException("Cannot access device id from unknown class");
+      }
+    }
+  }
+
   @NotNull
   private static String getPreferenceKey(@NotNull String recorderId) {
     return isBaseRecorder(recorderId) ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
@@ -62,6 +91,10 @@ public final class DeviceIdManager {
 
   private static boolean isBaseRecorder(@NotNull String recorderId) {
     return "FUS".equals(recorderId);
+  }
+
+  private static boolean isUndefinedRecorder(@NotNull String recorderId) {
+    return UNDEFINED.equals(recorderId);
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -154,5 +187,16 @@ public final class DeviceIdManager {
     else if (SystemInfo.isMac) return '2';
     else if (SystemInfo.isLinux) return '3';
     return '0';
+  }
+
+  /**
+   * Marker interface used to identify the client which retrieves device id
+   */
+  public interface DeviceIdToken {}
+
+  public static class InvalidDeviceIdTokenException extends Exception {
+    private InvalidDeviceIdTokenException(String message) {
+      super(message);
+    }
   }
 }
