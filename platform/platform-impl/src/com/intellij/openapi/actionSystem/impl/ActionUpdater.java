@@ -176,11 +176,11 @@ final class ActionUpdater {
       }
     };
     // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
-    boolean suppressAsync = operation == Op.beforeActionPerformedUpdate;
-    boolean forceAsync = !suppressAsync && Utils.isAsyncDataContext(myDataContext) && Registry.is("actionSystem.update.actions.async.unsafe");
+    boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
+    boolean forceAsync = canAsync && Registry.is("actionSystem.update.actions.async.unsafe");
     if (forceAsync ||
         EDT.isCurrentThreadEdt() ||
-        !suppressAsync && action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground()) {
+        canAsync && action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground()) {
       return adjustedCall.get();
     }
 
