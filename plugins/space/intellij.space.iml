@@ -75,17 +75,25 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
-      <library name="kotlin-scripting-intellij" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-intellij:1.4.0-release-329">
+      <library name="kotlin-scripting" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:scripting:212-1.4.21-release-IJ22">
           <exclude>
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-intellij/1.4.0-release-329/kotlin-scripting-intellij-1.4.0-release-329.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.4.0-release-329/kotlin-script-runtime-1.4.0-release-329.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.0-release-329/kotlin-scripting-common-1.4.0-release-329.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting/212-1.4.21-release-IJ22/scripting-212-1.4.21-release-IJ22.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/212-1.4.21-release-IJ22/kotlin-scripting-common-212-1.4.21-release-IJ22.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="kotlin-scripting-common" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-common:1.4.21" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.21/kotlin-scripting-common-1.4.21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -128,7 +136,7 @@
     <orderEntry type="library" name="intellij-markdown" level="project" />
     <orderEntry type="module-library">
       <library name="kotlin-scripting-dependencies" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:1.4.10">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:1.4.21">
           <exclude>
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
@@ -138,7 +146,7 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/1.4.10/kotlin-scripting-dependencies-1.4.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/1.4.21/kotlin-scripting-dependencies-1.4.21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -146,7 +154,7 @@
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="kotlin-scripting-jvm" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.4.10">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.4.21">
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
@@ -157,10 +165,12 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.4.10/kotlin-scripting-jvm-1.4.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.4.21/kotlin-scripting-jvm-1.4.21.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.4.21/kotlin-scripting-jvm-1.4.21-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
