@@ -168,11 +168,11 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     storageManager.setMacros(macros)
 
     val trustedProjectSettings = project.service<TrustedProjectSettings>()
-    if (project.getTrustedState() == ThreeState.UNSURE &&
+    if (trustedProjectSettings.trustedState == ThreeState.UNSURE &&
         !trustedProjectSettings.hasCheckedIfOldProject &&
         productWorkspaceFile.exists()) {
       LOG.info("Marked the project as trusted because there are settings in $productWorkspaceFile")
-      project.setTrusted(true)
+      trustedProjectSettings.trustedState = ThreeState.YES
     }
     trustedProjectSettings.hasCheckedIfOldProject = true
   }
