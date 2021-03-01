@@ -4,11 +4,8 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -42,10 +39,10 @@ public class NavBarModel {
   private final NavBarModelListener myNotificator;
   private final NavBarModelBuilder myBuilder;
   private final Project myProject;
-  
+
   private volatile int mySelectedIndex;
   private volatile List<Object> myModel;
-  
+
   private volatile boolean myChanged = true;
   private volatile boolean updated = false;
   private volatile boolean isFixedComponent = false;
@@ -91,17 +88,19 @@ public class NavBarModel {
     if (index >= myModel.size() && myModel.size() > 0) return index % myModel.size();
     return index;
   }
-  
-  public void updateModelAsync(DataContext dataContext, @Nullable Runnable callback) {
-    if (LaterInvocator.isInModalContext() || 
-        PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
-    
+
+  public void updateModelAsync(@NotNull DataContext dataContext, @Nullable Runnable callback) {
+    if (LaterInvocator.isInModalContext() ||
+        PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
+      return;
+    }
+
     //rider calls edt-only method getFocusOwner() in the updating
     if (PlatformUtils.isRider()) {
       updateModel(dataContext);
       return;
     }
-    DataContext wrappedDataContext = Utils.wrapDataContext(dataContext);
+    DataContext wrappedDataContext = wrapDataContext(dataContext);
     ReadAction.nonBlocking(() -> createModel(wrappedDataContext))
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.current(), model -> {
@@ -111,9 +110,24 @@ public class NavBarModel {
       .submit(ourExecutor);
   }
 
+  @NotNull
+  private static DataContext wrapDataContext(@NotNull DataContext context) {
+    var keys = new DataKey[]{
+      CommonDataKeys.PSI_FILE,
+      CommonDataKeys.PSI_ELEMENT,
+      CommonDataKeys.PROJECT,
+      CommonDataKeys.VIRTUAL_FILE,
+      LangDataKeys.MODULE,
+      CommonDataKeys.EDITOR,
+      PlatformDataKeys.SELECTED_ITEMS
+    };
+
+    return SimpleDataContext.builder().addAll(context, keys).build();
+  }
+
   private void setModelWithUpdate(@Nullable List<Object> model) {
     if (model != null) setModel(model);
-    
+
     setChanged(false);
     updated = true;
   }
@@ -121,11 +135,11 @@ public class NavBarModel {
   public void updateModel(DataContext dataContext) {
     setModelWithUpdate(createModel(dataContext));
   }
-  
+
   @Nullable
   private List<Object> createModel(@NotNull DataContext dataContext) {
     if (updated && !isFixedComponent) return null;
-    
+
     NavBarModelExtension ownerExtension = null;
     PsiElement psiElement = null;
     for (NavBarModelExtension extension : NavBarModelExtension.EP_NAME.getExtensionList()) {
@@ -165,7 +179,7 @@ public class NavBarModel {
         return Collections.singletonList(root);
       }
     }
-    
+
     return null;
   }
 
@@ -228,7 +242,8 @@ public class NavBarModel {
     for (Object o : myModel) {
       if (isValid(TreeAnchorizer.getService().retrieveElement(o))) {
         objects.add(o);
-      } else {
+      }
+      else {
         update = true;
         break;
       }
