@@ -85,7 +85,7 @@ class RuntimeChooserDialog(
 
         if (anObject is RuntimeChooserAddCustomItem) {
           RuntimeChooserCustom
-            .createSdkChooserPopup(this@RuntimeChooserDialog.model)
+            .createSdkChooserPopup(jdkCombobox, this@RuntimeChooserDialog.model)
             ?.showUnderneathOf(jdkCombobox)
           return
         }

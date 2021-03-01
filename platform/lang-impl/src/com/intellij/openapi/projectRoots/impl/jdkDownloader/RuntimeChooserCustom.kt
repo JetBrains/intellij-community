@@ -16,9 +16,11 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.roots.ui.configuration.SdkPopup
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.JComponent
 
 data class RuntimeChooserCustomItem(
   val version: String,
@@ -38,15 +40,21 @@ object RuntimeChooserCustom {
   val isActionAvailable
     get() = sdkType != null
 
-  fun createSdkChooserPopup(model: RuntimeChooserModel) : SdkPopup? {
+  fun createSdkChooserPopup(parent: JComponent, model: RuntimeChooserModel) : SdkPopup? {
     return SdkPopupFactory
       .newBuilder()
-      .withSdkType(sdkType?: return null)
-      .onSdkSelected { sdk -> importNewItem(sdk, model) }
+      .withSdkType(sdkType ?: return null)
+      .withSdkFilter {
+        it != null && runCatching {
+          val s = it.versionString
+          s != null && JavaVersion.parse(s).feature >= 11
+        }.getOrDefault(false)
+      }
+      .onSdkSelected { sdk -> importNewItem(parent, sdk, model) }
       .buildPopup()
   }
 
-  private fun importNewItem(sdk: Sdk?, model: RuntimeChooserModel) {
+  private fun importNewItem(parent: JComponent, sdk: Sdk?, model: RuntimeChooserModel) {
     if (sdk == null) return
 
     object: Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk", false, ALWAYS_BACKGROUND)) {
@@ -57,13 +65,16 @@ object RuntimeChooserCustom {
           val info = JdkVersionDetector.getInstance().detectJdkVersionInfo(homeDir) ?: return
           val fullVersion = listOfNotNull(info.displayName, info.version?.toString() ?: version).joinToString(" ")
 
+          if (info.version.feature < 11) {
+            return service<RuntimeChooserMessages>().notifyCustomJdkVersionIsTooOld(parent, homeDir, info.version.toString(), "11")
+          }
+
           if (!isJdkAlive(homeDir)) {
-            return service<RuntimeChooserNotifications>().notifyJdkDoesNotStart(homeDir)
+            return service<RuntimeChooserMessages>().notifyCustomJdkDoesNotStart(parent, homeDir)
           }
 
           val newItem = RuntimeChooserCustomItem(fullVersion, homeDir)
-
-          invokeLater(ModalityState.any()) {
+          invokeLater(ModalityState.stateForComponent(parent)) {
             model.addExistingSdkItem(newItem)
           }
         } catch (t: Throwable) {
