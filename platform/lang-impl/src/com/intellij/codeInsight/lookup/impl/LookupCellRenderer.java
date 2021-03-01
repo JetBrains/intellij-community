@@ -153,6 +153,9 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     for (ItemPresentationCustomizer customizer : myCustomizers) {
       presentation = customizer.customizePresentation(item, presentation);
     }
+    if (presentation.getIcon() != null) {
+      setIconInsets();
+    }
 
     myNameComponent.clear();
     myNameComponent.setBackground(background);
@@ -561,8 +564,12 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
       myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()),
                                      Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
-      myNameComponent.setIpad(JBUI.insetsLeft(6));
+      setIconInsets();
     }
+  }
+
+  private void setIconInsets() {
+    myNameComponent.setIpad(JBUI.insetsLeft(6));
   }
 
   private int updateMaximumWidth(LookupElementPresentation p, LookupElement item) {
