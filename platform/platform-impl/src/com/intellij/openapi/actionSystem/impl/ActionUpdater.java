@@ -272,7 +272,7 @@ final class ActionUpdater {
     if (myToolbarAction) {
       cancelAndRestartOnUserActivity(promise);
     }
-    else {
+    else if (myContextMenuAction) {
       cancelAllUpdates();
     }
     ourPromises.add(promise);
