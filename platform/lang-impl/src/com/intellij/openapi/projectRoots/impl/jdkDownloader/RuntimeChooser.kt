@@ -3,24 +3,10 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 
 
 class RuntimeChooserAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val model = RuntimeChooserModel()
-
-    model.fetchAvailableJbrs()
-    model.fetchCurrentRuntime()
-
-    val result = RuntimeChooserDialog(null, model).showDialogAndGetResult()
-
-    @Suppress("MoveVariableDeclarationIntoWhen")
-    return when(result) {
-      is RuntimeChooserDialogResult.Cancel -> Unit
-      is RuntimeChooserDialogResult.UseDefault -> service<RuntimeChooserPaths>().resetCustomJdk()
-      is RuntimeChooserDialogResult.UseCustomJdk -> service<RuntimeChooserPaths>().installCustomJdk(result.name, result.path)
-      is RuntimeChooserDialogResult.DownloadAndUse -> service<RuntimeChooserDownloader>().downloadAndUse(result.item, result.path)
-    }
+    RuntimeChooserUtil.showRuntimeChooserPopup()
   }
 }
