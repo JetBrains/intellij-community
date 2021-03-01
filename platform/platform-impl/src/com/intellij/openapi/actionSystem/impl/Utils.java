@@ -77,15 +77,13 @@ public final class Utils {
     return expandActionGroup(isInModalContext, group, presentationFactory, context, place, false, null);
   }
 
+  @ApiStatus.Internal
   public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
                                                                           @NotNull ActionGroup group,
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place,
                                                                           @Nullable Utils.ActionGroupVisitor visitor) {
-    if (!(context instanceof PreCachedDataContext)) {
-      context = new PreCachedDataContext(context);
-    }
     return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, visitor)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
