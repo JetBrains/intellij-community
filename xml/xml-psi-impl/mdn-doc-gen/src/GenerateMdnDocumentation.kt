@@ -60,6 +60,7 @@ val webApiBlockList = setOf("index")
 
 val jsRuntimesMap = MdnJavaScriptRuntime.values().associateBy { it.mdnId }
 
+val MDN_CONTENT_ROOT = PathManager.getCommunityHomePath() + "/xml/xml-psi-impl/mdn-doc-gen/work/mdn-content/files"
 val YARI_BUILD_PATH = PathManager.getCommunityHomePath() + "/xml/xml-psi-impl/mdn-doc-gen/work/yari/client/build"
 const val BUILT_LANG = "en-us"
 const val WEB_DOCS = "docs/web"
@@ -125,6 +126,12 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   fun testGenCss() {
     outputJson(MdnApiNamespace.Css.name, buildCssDocs())
+  }
+
+  fun testGenDomEvents() {
+    outputJson(MdnApiNamespace.DomEvents.name, mapOf(
+      "events" to extractDomEvents(),
+    ))
   }
 
   override fun setUp() {
@@ -246,6 +253,24 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                                          extractDescription(indexDataProseValues), null)
   }
 
+  private fun extractDomEvents(): Map<String, MdnDomEventDocumentation> {
+    val prefix = "/$BUILT_LANG/$WEB_DOCS/events/"
+    return redirects.asSequence().filter { it.key.startsWith(prefix) && !it.key.contains("_") && !it.value.contains("#") }
+      .mapNotNull {
+        Pair(it.key.substring(prefix.length),
+             extractDomEventDocumentation(Path.of(YARI_BUILD_PATH, it.value).toFile()) ?: return@mapNotNull null)
+      }
+      .toMap()
+  }
+
+  private fun extractDomEventDocumentation(dir: File): MdnDomEventDocumentation? {
+    val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
+    return MdnDomEventDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
+                                    extractCompatibilityInfo(compatData),
+                                 extractEventDescription(indexDataProseValues) ?: return null,
+                                    null)
+  }
+
   private fun extractJavascriptDocumentation(dir: File, name: String): List<Pair<String, MdnJsSymbolDocumentation>> {
     try {
       val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
@@ -338,6 +363,13 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun extractDescription(indexDataProseValues: List<JsonObject>): String =
     indexDataProseValues.first().getProseContent()
       .let { createHtmlFile(it).patchedText() }
+
+  private fun extractEventDescription(indexDataProseValues: List<JsonObject>): String? =
+    indexDataProseValues.first().getProseContent()
+      .let { createHtmlFile(it) }
+      .children[0].children.filter { it is XmlTag && it.name == "p" }
+      .takeIf { it.isNotEmpty() }
+      ?.joinToString("\n") { it.patchedText() }
 
   private fun filterProseById(sections: List<JsonObject>, vararg ids: String): Sequence<JsonObject> =
     sections.asSequence().filter { value ->
@@ -747,6 +779,17 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       }
       .toMap(TreeMap())
   }
+
+  private val redirects = FileUtil.loadFile(Path.of(MDN_CONTENT_ROOT, BUILT_LANG, "_redirects.txt").toFile())
+    .splitToSequence('\n')
+    .mapNotNull { line ->
+      line.splitToSequence('\t')
+        .map { StringUtil.toLowerCase(it.trim()) }
+        .toList()
+        .takeIf { it.size == 2 && !it[0].startsWith("#") }
+        ?.let { Pair(it[0], it[1]) }
+    }
+    .toMap()
 }
 
 private fun XmlTag.innerHtml(): String = this.children.asSequence()
@@ -763,7 +806,7 @@ private data class RawProse(val content: String) {
   fun patch(): String = content.patchProse()
 }
 
-private fun PsiFile.patchedText() =
+private fun PsiElement.patchedText() =
   text.patchProse()
 
 private fun JsonObject.getProseContent(): RawProse =

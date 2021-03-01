@@ -143,6 +143,14 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/script"));
   }
 
+
+  public void testQuickDocumentationHtml5MediaEvents() {
+    doTest("<video on<caret>stalled=''>",
+           "<div class='definition'><pre>onstalled</pre></div><div class='content'><p><span class=\"seoSummary\">" +
+           "The <code>stalled</code> event is fired when the user agent is trying to fetch media data",
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/api/htmlmediaelement/stalled_event"));
+  }
+
   private void doTest(String text, String doc, List<String> url) {
     configureFromFileText("test.html", text);
     PsiElement originalElement = getFile().findElementAt(getEditor().getCaretModel().getOffset());
