@@ -346,7 +346,6 @@ public final class ExternalSystemUtil {
     Project project = importSpec.getProject();
     ProjectSystemId externalSystemId = importSpec.getExternalSystemId();
     ExternalProjectRefreshCallback callback = importSpec.getCallback();
-    boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
     boolean reportRefreshError = importSpec.isReportRefreshError();
 
@@ -357,6 +356,18 @@ public final class ExternalSystemUtil {
     }
     else {
       projectName = projectFile.getName();
+    }
+
+    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
+
+    boolean isFirstLoad = ThreeState.UNSURE.equals(getTrustedState(project));
+    boolean isTrustedProject = confirmLoadingUntrustedProjectIfNeeded(project, () -> isFirstLoad, externalSystemId);
+    boolean isPreviewMode = isFirstLoad ? importSpec.isPreviewMode() || !isTrustedProject : importSpec.isPreviewMode();
+
+    if (!isPreviewMode && !isTrustedProject) {
+      LOG.debug("Skip " + externalSystemId + " load, because project is not trusted");
+      return;
     }
 
     AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
@@ -629,14 +640,6 @@ public final class ExternalSystemUtil {
       }
     };
 
-    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-    ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
-
-    boolean doImport = isPreviewMode || isProjectTrustedEnoughToImport(project, externalSystemId);
-    if (!doImport) {
-      return;
-    }
-
     final String title;
     switch (progressExecutionMode) {
       case NO_PROGRESS_SYNC:
@@ -669,13 +672,6 @@ public final class ExternalSystemUtil {
           }
         }.queue();
     }
-  }
-
-  private static boolean isProjectTrustedEnoughToImport(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId
-  ) {
-    return confirmLoadingUntrustedProjectIfNeeded(project, () -> ThreeState.UNSURE.equals(getTrustedState(project)), systemId);
   }
 
   public static boolean confirmFullLoadingUntrustedProjectIfNeeded(

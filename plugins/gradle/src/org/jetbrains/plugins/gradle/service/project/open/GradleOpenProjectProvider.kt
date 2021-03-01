@@ -63,10 +63,6 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
                                         .usePreviewMode()
                                         .use(MODAL_SYNC))
 
-    if (!project.isTrusted()) {
-      return
-    }
-
     ExternalSystemUtil.refreshProject(externalProjectPath,
                                       ImportSpecBuilder(project, SYSTEM_ID)
                                         .callback(createFinalImportCallback(project, externalProjectPath)))
