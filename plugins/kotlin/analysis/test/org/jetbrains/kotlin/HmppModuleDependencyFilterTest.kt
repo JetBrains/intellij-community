@@ -1,7 +1,7 @@
 package org.jetbrains.kotlin
 
-import org.jetbrains.kotlin.idea.caches.project.ModuleDependencyFilter
-import org.jetbrains.kotlin.idea.caches.project.ModuleDependencyFilter.KlibLibraryGist
+import org.jetbrains.kotlin.idea.caches.project.HmppModuleDependencyFilter
+import org.jetbrains.kotlin.idea.caches.project.HmppModuleDependencyFilter.KlibLibraryGist
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -11,18 +11,13 @@ import org.junit.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class ModuleDependencyFilterTest {
+class HmppModuleDependencyFilterTest {
     @Test
     fun `any native platform supports stdlib`() {
-        val filter = ModuleDependencyFilter(
-            platform(KonanTarget.LINUX_X64, KonanTarget.MACOS_X64),
-            isHmppEnabled = true
-        )
+        val filter = HmppModuleDependencyFilter(platform(KonanTarget.LINUX_X64, KonanTarget.MACOS_X64),)
 
         assertTrue(
-            filter.isSupportedDependency(
-                platform(KonanTarget.IOS_X64), KlibLibraryGist(isStdlib = true)
-            ),
+            filter.isSupportedDependency(platform(KonanTarget.IOS_X64), KlibLibraryGist(isStdlib = true)),
             "Expected stdlib being supported, even when native targets do not match"
         )
 
@@ -36,10 +31,7 @@ class ModuleDependencyFilterTest {
 
     @Test
     fun `native unspecified target supports stdlib`() {
-        val filter = ModuleDependencyFilter(
-            platform(NativePlatformUnspecifiedTarget),
-            isHmppEnabled = true
-        )
+        val filter = HmppModuleDependencyFilter(platform(NativePlatformUnspecifiedTarget))
 
         assertTrue(
             filter.isSupportedDependency(
@@ -58,10 +50,7 @@ class ModuleDependencyFilterTest {
 
     @Test
     fun `incompatible backends are not supported`() {
-        val filter = ModuleDependencyFilter(
-            JvmPlatforms.jvm18,
-            isHmppEnabled = true
-        )
+        val filter = HmppModuleDependencyFilter(JvmPlatforms.jvm18)
 
         assertFalse(
             filter.isSupportedDependency(JsPlatforms.defaultJsPlatform),
@@ -86,10 +75,7 @@ class ModuleDependencyFilterTest {
 
     @Test
     fun `jvm16 is supported for jvm18`() {
-        val filter = ModuleDependencyFilter(
-            JvmPlatforms.jvm18,
-            isHmppEnabled = true
-        )
+        val filter = HmppModuleDependencyFilter(JvmPlatforms.jvm18,)
 
         assertTrue(
             filter.isSupportedDependency(JvmPlatforms.jvm16),
@@ -107,10 +93,7 @@ class ModuleDependencyFilterTest {
      */
     @Test
     fun `jvm18 is supported for jvm16`() {
-        val filter = ModuleDependencyFilter(
-            JvmPlatforms.jvm16,
-            isHmppEnabled = true
-        )
+        val filter = HmppModuleDependencyFilter(JvmPlatforms.jvm16)
 
         assertTrue(
             filter.isSupportedDependency(JvmPlatforms.jvm18),
@@ -121,13 +104,13 @@ class ModuleDependencyFilterTest {
     @Test
     fun `same native targets are supported`() {
         assertTrue(
-            ModuleDependencyFilter(platform(KonanTarget.LINUX_X64, KonanTarget.MACOS_X64), isHmppEnabled = true)
+            HmppModuleDependencyFilter(platform(KonanTarget.LINUX_X64, KonanTarget.MACOS_X64))
                 .isSupportedDependency(platform(KonanTarget.LINUX_X64, KonanTarget.MACOS_X64)),
             "Expected same konan targets to be supported"
         )
 
         assertTrue(
-            ModuleDependencyFilter(platform(KonanTarget.LINUX_X64), isHmppEnabled = true)
+            HmppModuleDependencyFilter(platform(KonanTarget.LINUX_X64))
                 .isSupportedDependency(platform(KonanTarget.LINUX_X64)),
             "Expected same konan targets to be supported"
         )
@@ -136,7 +119,7 @@ class ModuleDependencyFilterTest {
     @Test
     fun `non same konan leaf targets are not supported`() {
         assertFalse(
-            ModuleDependencyFilter(platform(KonanTarget.LINUX_X64), isHmppEnabled = true)
+            HmppModuleDependencyFilter(platform(KonanTarget.LINUX_X64))
                 .isSupportedDependency(platform(KonanTarget.MACOS_X64)),
             "Expected linuxX64 -> macosX64 to be unsupported"
         )
@@ -145,7 +128,7 @@ class ModuleDependencyFilterTest {
     @Test
     fun `any shared native target is compatible with any other _KLIB_ shared native`() {
         assertTrue(
-            ModuleDependencyFilter(platform(KonanTarget.LINUX_X64, KonanTarget.MACOS_X64), isHmppEnabled = true)
+            HmppModuleDependencyFilter(platform(KonanTarget.LINUX_X64, KonanTarget.MACOS_X64))
                 .isSupportedDependency(platform(KonanTarget.LINUX_X64, KonanTarget.MINGW_X64), klibLibraryGist = KlibLibraryGist(false)),
             "Expected any shared native platform being supported by any other shared native klib"
         )
@@ -154,7 +137,7 @@ class ModuleDependencyFilterTest {
     @Test
     fun `any shared native target is _not_ compatible with other _non klib_ shared native`() {
         assertFalse(
-            ModuleDependencyFilter(platform(KonanTarget.LINUX_X64, KonanTarget.MACOS_X64), isHmppEnabled = true)
+            HmppModuleDependencyFilter(platform(KonanTarget.LINUX_X64, KonanTarget.MACOS_X64))
                 .isSupportedDependency(platform(KonanTarget.LINUX_X64, KonanTarget.MINGW_X64), klibLibraryGist = null),
             "Expected any shared native platform being not supported by non target matching non klib library"
         )

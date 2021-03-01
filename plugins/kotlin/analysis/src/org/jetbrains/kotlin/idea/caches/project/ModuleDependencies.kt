@@ -69,7 +69,7 @@ private fun Module.selectSupportedDependencies(
     dependencies: Set<IdeaModuleInfo>
 ): Set<IdeaModuleInfo> {
 
-    val dependencyFilter = ModuleDependencyFilter(platform, isHMPPEnabled)
+    val dependencyFilter = if (isHMPPEnabled) HmppModuleDependencyFilter(platform) else NonHmppModuleDependenciesFilter(platform)
     val supportedDependencies = dependencies.filter { dependency -> dependencyFilter.isSupportedDependency(dependency) }.toSet()
 
     debugString?.appendLine(
@@ -124,10 +124,13 @@ private fun orderEntryToModuleInfo(project: Project, orderEntry: OrderEntry, for
     }
 }
 
-internal class ModuleDependencyFilter(
+interface ModuleDependenciesFilter {
+    fun isSupportedDependency(dependency: IdeaModuleInfo): Boolean
+}
+
+internal class HmppModuleDependencyFilter(
     private val dependeePlatform: TargetPlatform,
-    private val isHmppEnabled: Boolean
-) {
+) : ModuleDependenciesFilter {
 
     data class KlibLibraryGist(val isStdlib: Boolean)
 
@@ -136,28 +139,16 @@ internal class ModuleDependencyFilter(
         else null
     }
 
-    fun isSupportedDependency(dependency: IdeaModuleInfo): Boolean {
+    override fun isSupportedDependency(dependency: IdeaModuleInfo): Boolean {
         /* Filter only acts on LibraryInfo */
         return if (dependency is LibraryInfo) {
             isSupportedDependency(dependency.platform, klibLibraryGistOrNull(dependency))
         } else true
     }
 
-    fun isSupportedDependency(dependencyPlatform: TargetPlatform, klibLibraryGist: KlibLibraryGist? = null): Boolean {
-        return if (isHmppEnabled) isSupportedDependencyHmpp(dependencyPlatform, klibLibraryGist)
-        else isSupportedDependencyNonHmpp(dependencyPlatform)
-    }
-
-    private fun isSupportedDependencyNonHmpp(dependencyPlatform: TargetPlatform): Boolean {
-        return dependeePlatform.isJvm() && dependencyPlatform.isJvm() ||
-                dependeePlatform.isJs() && dependencyPlatform.isJs() ||
-                dependeePlatform.isNative() && dependencyPlatform.isNative() ||
-                dependeePlatform.isCommon() && dependencyPlatform.isCommon()
-    }
-
-    private fun isSupportedDependencyHmpp(
+    fun isSupportedDependency(
         dependencyPlatform: TargetPlatform,
-        klibLibraryGist: KlibLibraryGist?
+        klibLibraryGist: KlibLibraryGist? = null,
     ): Boolean {
         // HACK: allow depending on stdlib even if platforms do not match
         if (dependeePlatform.isNative() && klibLibraryGist != null && klibLibraryGist.isStdlib) return true
@@ -188,5 +179,20 @@ internal class ModuleDependencyFilter(
     }
 }
 
+internal class NonHmppModuleDependenciesFilter(
+    private val dependeePlatform: TargetPlatform
+) : ModuleDependenciesFilter {
+    override fun isSupportedDependency(dependency: IdeaModuleInfo): Boolean {
+        /* Filter only acts on LibraryInfo */
+        return if (dependency is LibraryInfo) {
+            isSupportedDependency(dependency.platform)
+        } else true
+    }
 
-
+    private fun isSupportedDependency(dependencyPlatform: TargetPlatform): Boolean {
+        return dependeePlatform.isJvm() && dependencyPlatform.isJvm() ||
+                dependeePlatform.isJs() && dependencyPlatform.isJs() ||
+                dependeePlatform.isNative() && dependencyPlatform.isNative() ||
+                dependeePlatform.isCommon() && dependencyPlatform.isCommon()
+    }
+}
