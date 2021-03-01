@@ -44,7 +44,7 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
 
     // instantly close error description popup after GotoNextError action
     prepareRuntimeTask {
-      PerformActionUtil.performAction("EditorPopupMenu", editor, project) {}
+      PerformActionUtil.performAction("EditorPopupMenu", editor, project)
     }
 
     task("ShowErrorDescription") {
