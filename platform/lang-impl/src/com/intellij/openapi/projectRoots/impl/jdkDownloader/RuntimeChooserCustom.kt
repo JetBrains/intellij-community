@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -31,6 +32,7 @@ object RuntimeChooserAddCustomItem : RuntimeChooserItem()
 
 object RuntimeChooserCustom {
   private val LOG = logger<RuntimeChooserCustom>()
+  private const val minJdkFeatureVersion = 11
 
   val sdkType
     get() = SdkType
@@ -46,8 +48,18 @@ object RuntimeChooserCustom {
       .withSdkType(sdkType ?: return null)
       .withSdkFilter {
         it != null && runCatching {
+          val s = it.versionString ?: return@withSdkFilter false
+          val homePath = it.homePath ?: return@withSdkFilter false
+          val javaVersion = JavaVersion.tryParse(s) ?: return@withSdkFilter false
+          javaVersion.feature >= minJdkFeatureVersion && !WslDistributionManager.isWslPath(homePath)
+        }.getOrDefault(false)
+      }
+      .withSuggestedSdkFilter {
+        it != null && runCatching {
           val s = it.versionString
-          s != null && JavaVersion.parse(s).feature >= 11
+          val homePath = it.homePath
+          val javaVersion = JavaVersion.tryParse(s) ?: return@withSuggestedSdkFilter false
+          javaVersion.feature >= minJdkFeatureVersion && !WslDistributionManager.isWslPath(homePath)
         }.getOrDefault(false)
       }
       .onSdkSelected { sdk -> importNewItem(parent, sdk, model) }
@@ -65,7 +77,7 @@ object RuntimeChooserCustom {
           val info = JdkVersionDetector.getInstance().detectJdkVersionInfo(homeDir) ?: return
           val fullVersion = listOfNotNull(info.displayName, info.version?.toString() ?: version).joinToString(" ")
 
-          if (info.version.feature < 11) {
+          if (info.version.feature < minJdkFeatureVersion) {
             return service<RuntimeChooserMessages>().notifyCustomJdkVersionIsTooOld(parent, homeDir, info.version.toString(), "11")
           }
 
