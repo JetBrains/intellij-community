@@ -1,11 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.target
 
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.util.PathMapper
 import org.gradle.tooling.*
 import org.gradle.tooling.internal.consumer.ConnectionParameters
 import org.gradle.tooling.internal.consumer.PhasedBuildAction.BuildActionWrapper
@@ -14,8 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-internal class TargetProjectConnection(val environmentConfiguration: TargetEnvironmentConfiguration,
-                                       val targetPathMapper: PathMapper?,
+internal class TargetProjectConnection(val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider,
                                        val taskId: ExternalSystemTaskId?,
                                        val taskListener: ExternalSystemTaskNotificationListener?,
                                        val parameters: ConnectionParameters,
