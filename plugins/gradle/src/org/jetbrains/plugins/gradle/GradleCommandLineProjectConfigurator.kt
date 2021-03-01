@@ -59,15 +59,22 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
   }
 
   private fun importProjects(basePath: String, project: Project) {
-    if (runGradleHintImport(basePath, project)) return
+    if (runGradleHintImport(basePath, project)) {
+      LOG.info("Gradle hint import was used")
+      return
+    }
 
-    if (runAutoRefreshImport(project)) return
+    if (runAutoRefreshImport(project)) {
+      LOG.info("Gradle auto refresh import was used")
+      return
+    }
 
     val gradleGroovyDslFile = basePath + "/" + GradleConstants.DEFAULT_SCRIPT_NAME
     val kotlinDslGradleFile = basePath + "/" + GradleConstants.KOTLIN_DSL_SCRIPT_NAME
     if (FileUtil.findFirstThatExist(gradleGroovyDslFile, kotlinDslGradleFile) == null) return
 
     refreshProject(basePath, getImportSpecBuilder(project))
+    LOG.info("Gradle import by root project path was used")
   }
 
 
