@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.application.subscribe
 import com.intellij.internal.statistic.DeviceIdManager
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration.UNDEFINED_DEVICE_ID
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessDeviceIdProperty
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessSaltProperty
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getSaltPropertyKey
@@ -28,6 +29,8 @@ import java.util.prefs.Preferences
 @ApiStatus.Internal
 object EventLogConfiguration {
   internal val LOG = Logger.getInstance(EventLogConfiguration::class.java)
+  internal const val UNDEFINED_DEVICE_ID = "000000000000000-0000-0000-0000-000000000000"
+
   private const val FUS_RECORDER = "FUS"
   private const val SALT_PREFERENCE_KEY = "feature_usage_event_log_salt"
   private const val IDEA_HEADLESS_STATISTICS_DEVICE_ID = "idea.headless.statistics.device.id"
@@ -165,7 +168,14 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
         return it
       }
     }
-    return DeviceIdManager.getOrGenerateId(recorderId)
+
+    try {
+      return DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, recorderId)
+    }
+    catch (e: DeviceIdManager.InvalidDeviceIdTokenException) {
+      EventLogConfiguration.LOG.warn("Failed retrieving device id for $recorderId")
+      return UNDEFINED_DEVICE_ID
+    }
   }
 
   private fun getOrGenerateSalt(): ByteArray {
@@ -187,7 +197,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       salt = ByteArray(32)
       SecureRandom().nextBytes(salt)
       prefs.putByteArray(saltKey, salt)
-      EventLogConfiguration.LOG.info("Generating salt for the device")
+      EventLogConfiguration.LOG.info("Generating new salt for $recorderId")
     }
     return salt
   }
