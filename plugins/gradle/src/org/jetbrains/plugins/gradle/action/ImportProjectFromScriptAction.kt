@@ -27,7 +27,7 @@ class ImportProjectFromScriptAction: ExternalSystemAction() {
     val virtualFile = e.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE) ?: return
     val project = e.getData<Project>(CommonDataKeys.PROJECT) ?: return
     val externalProjectPath = getDefaultPath(virtualFile)
-    ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, GradleConstants.SYSTEM_ID)
+    ExternalSystemUtil.confirmLoadingUntrustedProject(project, GradleConstants.SYSTEM_ID)
     linkAndRefreshGradleProject(externalProjectPath, project)
   }
 

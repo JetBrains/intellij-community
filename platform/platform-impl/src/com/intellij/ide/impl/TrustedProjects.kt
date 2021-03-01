@@ -3,7 +3,6 @@
 
 package com.intellij.ide.impl
 
-import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.TrustedCheckResult.NotTrusted
 import com.intellij.ide.impl.TrustedCheckResult.Trusted
@@ -19,22 +18,20 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
-import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.nio.file.Paths
 
-fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String): OpenUntrustedProjectChoice {
+fun confirmOpeningUntrustedProject(
+  virtualFile: VirtualFile,
+  createDialog: () -> MessageDialogBuilder.YesNoCancel
+): OpenUntrustedProjectChoice {
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
   val trustedCheckResult = isProjectImplicitlyTrusted(projectDir.toNioPath())
   if (trustedCheckResult is Trusted) {
     return OpenUntrustedProjectChoice.IMPORT
   }
 
-  val choice = MessageDialogBuilder.yesNoCancel(title = IdeBundle.message("untrusted.project.warning.title", name),
-                                                message = IdeBundle.message("untrusted.project.open.warning.text", name))
-    .yesText(IdeBundle.message("untrusted.project.open.warning.button.import"))
-    .noText(IdeBundle.message("untrusted.project.open.warning.button.open.without.import"))
-    .cancelText(CommonBundle.getCancelButtonText())
+  val choice = createDialog()
     .doNotAsk(createDoNotAskOptionForHost(trustedCheckResult))
     .asWarning()
     .show(project = null)
@@ -50,28 +47,16 @@ fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String):
   }
 }
 
-fun confirmImportingUntrustedProject(project: Project,
-                                     @Nls buildSystemName: String,
-                                     @Nls yesButtonText: String,
-                                     @Nls noButtonText: String): Boolean {
-  return confirmImportingUntrustedProject(project) {
-    MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.import.warning.title", buildSystemName),
-                               message = IdeBundle.message("untrusted.project.import.warning.text", buildSystemName))
-      .yesText(yesButtonText)
-      .noText(noButtonText)
-      .asWarning()
-      .ask(project)
-  }
-}
-
-fun confirmImportingUntrustedProject(project: Project, confirm: () -> Boolean): Boolean {
+fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> MessageDialogBuilder.YesNo): Boolean {
   val trustedCheckResult = isProjectImplicitlyTrusted(project)
   if (trustedCheckResult is Trusted) {
     project.setTrusted(true)
     return true
   }
 
-  val answer = confirm()
+  val answer = createDialog()
+    .asWarning()
+    .ask(project)
   project.setTrusted(answer)
   return answer
 }
