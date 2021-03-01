@@ -67,7 +67,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
         // see `LinuxDistributionBuilder#generateVersionMarker`
         long markers = stream.filter(p -> p.getFileName().toString().startsWith("build-marker-")).count();
         if (markers > 1) {
-          showNotification("mixed.bag.installation.no.hide", null, ApplicationNamesInfo.getInstance().getFullProductName());
+          showNotification("mixed.bag.installation", false, null, ApplicationNamesInfo.getInstance().getFullProductName());
         }
       }
       catch (IOException e) {
@@ -197,9 +197,14 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
                                        @Nullable NotificationAction action,
                                        Object... params) {
-    boolean canHide = !key.endsWith(".no.hide");
+    showNotification(key, true, action, params);
+  }
 
-    if (canHide) {
+  private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
+                                       boolean suppressable,
+                                       @Nullable NotificationAction action,
+                                       Object... params) {
+    if (suppressable) {
       boolean ignored = PropertiesComponent.getInstance().isValueSet("ignore." + key);
       LOG.warn("issue detected: " + key + (ignored ? " (ignored)" : ""));
       if (ignored) return;
@@ -209,7 +214,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     if (action != null) {
       notification.addAction(action);
     }
-    if (canHide) {
+    if (suppressable) {
       notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
