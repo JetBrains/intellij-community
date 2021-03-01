@@ -17,7 +17,7 @@ class DocxToMarkdownConverterTest: BasePlatformTestCase() {
 
     val vFile = VfsUtil.findFileByIoFile(File("$testDataPath/$fileName.docx"), true)!!
     val newFilePath = "${project.basePath!!}/${vFile.name}"
-    ImpExpUtils.copyAndConvertToMd(project, vFile, newFilePath, project.basePath!!)
+    ImpExpUtils.copyAndConvertToMd(project, vFile, newFilePath)
     val actualMd = File("${project.basePath!!}/$fileName.md").readText()
 
     assertEquals(expectedMd.trim(), actualMd.trim())

@@ -16,7 +16,6 @@ class ImportDocxDialog(private val project: Project,
   }
 
   override fun doAction(selectedFileUrl: String) {
-    val selectedResDir = "${File(selectedFileUrl).parent}/import-resources" //todo: move to pandoc settings
-    ImpExpUtils.copyAndConvertToMd(project, vFileToImport, selectedFileUrl, selectedResDir)
+    ImpExpUtils.copyAndConvertToMd(project, vFileToImport, selectedFileUrl)
   }
 }
