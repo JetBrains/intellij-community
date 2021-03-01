@@ -9,19 +9,14 @@ import com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.layout.*
 import com.intellij.util.castSafelyTo
 import com.intellij.util.io.isDirectory
-import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
@@ -77,20 +72,6 @@ class RuntimeChooserDialog(
     return RuntimeChooserDialogResult.Cancel
   }
 
-  override fun createSouthAdditionalPanel(): JPanel {
-    val panel: JPanel = NonOpaquePanel(BorderLayout())
-    panel.border = JBUI.Borders.emptyLeft(10)
-
-    val link = ActionLink(LangBundle.message("dialog.label.choose.ide.runtime.more"))
-    link.addActionListener {
-      model.showAdvancedOptions()
-      link.isEnabled = false
-    }
-
-    panel.add(link)
-    return panel
-  }
-
   override fun createCenterPanel(): JComponent {
     jdkCombobox = object : ComboBox<RuntimeChooserItem>(model.mainComboBoxModel) {
       init {
@@ -106,6 +87,11 @@ class RuntimeChooserDialog(
           RuntimeChooserCustom
             .createSdkChooserPopup(this@RuntimeChooserDialog.model)
             ?.showUnderneathOf(jdkCombobox)
+          return
+        }
+
+        if (anObject is RuntimeChooserShowAdvancedItem) {
+          this@RuntimeChooserDialog.model.showAdvancedOptions()
           return
         }
 

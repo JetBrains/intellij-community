@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.NlsContexts.Separator
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Files
 import java.nio.file.Path
@@ -11,6 +13,9 @@ import javax.swing.DefaultComboBoxModel
 
 
 abstract class RuntimeChooserItem
+
+object RuntimeChooserShowAdvancedItem : RuntimeChooserItem()
+class RuntimeChooserSeparator(@Separator val text: String) : RuntimeChooserItem()
 
 class RuntimeChooserModel {
   private var showAdvancedOptions: Boolean = false
@@ -53,12 +58,25 @@ class RuntimeChooserModel {
     }
 
     newList += downloadableJbs
-      .filter { showAdvancedOptions || it.isDefaultItem }
+      .filter { it.isDefaultItem }
       .map { RuntimeChooserDownloadableItem(it) }
 
-    if (showAdvancedOptions && RuntimeChooserCustom.isActionAvailable) {
-      newList += RuntimeChooserAddCustomItem
-      newList += customJdks
+    if (showAdvancedOptions) {
+      if (RuntimeChooserCustom.isActionAvailable) {
+        if (customJdks.isNotEmpty()) {
+          newList += RuntimeChooserSeparator(LangBundle.message("dialog.separator.choose.ide.runtime.customSelected"))
+          newList += customJdks
+        }
+        newList += RuntimeChooserAddCustomItem
+      }
+
+      newList += RuntimeChooserSeparator(LangBundle.message("dialog.separator.choose.ide.runtime.advanced"))
+      newList += downloadableJbs
+        .filterNot { it.isDefaultItem }
+        .map { RuntimeChooserDownloadableItem(it) }
+
+    } else {
+      newList += RuntimeChooserShowAdvancedItem
     }
 
     myMainComboModel.addAll(newList)
