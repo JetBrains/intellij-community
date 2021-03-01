@@ -2,13 +2,17 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.HelpTooltip
+import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolwindowSwitcher
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
@@ -17,6 +21,14 @@ import java.util.function.Predicate
 
 class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar) :
   ActionButton(createAction(toolwindowSideBar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
+
+  override fun updateToolTipText() {
+    HelpTooltip().apply {
+      setTitle(UIBundle.message("title.tool.window.square.more"))
+      setLocation(HelpTooltip.Alignment.RIGHT)
+      installOn(this@MoreSquareStripeButton)
+    }
+  }
 
   companion object {
     val largeStripeToolwindowPredicate: Predicate<ToolWindow> = Predicate { !it.isVisibleOnLargeStripe }
