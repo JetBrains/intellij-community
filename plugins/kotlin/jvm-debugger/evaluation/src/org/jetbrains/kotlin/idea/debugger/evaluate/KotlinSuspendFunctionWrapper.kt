@@ -1,9 +1,9 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
-import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -58,7 +58,7 @@ internal class KotlinSuspendFunctionWrapper(
 
     private fun KtExpression.containsSuspendFunctionCall(bindingContext: BindingContext): Boolean {
         var result = false
-        runInEdtAndWait {
+        invokeAndWaitIfNeeded {
             accept(object : KtTreeVisitorVoid() {
                 override fun visitCallExpression(callExpression: KtCallExpression) {
                     val resolvedCall = callExpression.getResolvedCall(bindingContext)

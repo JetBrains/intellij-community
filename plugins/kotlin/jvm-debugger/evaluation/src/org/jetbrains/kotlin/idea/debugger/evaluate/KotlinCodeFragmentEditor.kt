@@ -1,7 +1,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
@@ -42,7 +42,7 @@ internal class KotlinCodeFragmentEditor(val codeFragment: KtCodeFragment) {
             KtPsiFactory(expression.project).createExpression(newExpressionText)
         }
 
-        runInEdtAndWait {
+        invokeAndWaitIfNeeded {
             expression.project.executeWriteCommand(
                 KotlinDebuggerEvaluationBundle.message("wrap.expression")
             ) {
