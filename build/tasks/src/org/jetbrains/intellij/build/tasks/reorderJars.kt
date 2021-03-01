@@ -39,7 +39,7 @@ fun reorderJars(homeDir: Path,
                 stageDir: Path,
                 platformPrefix: String,
                 antLibDir: Path?,
-                logger: Logger): Path {
+                logger: Logger) {
   val libDir = homeDir.resolve("lib")
   val ideaDirsParent = Files.createTempDirectory("idea-reorder-jars-")
 
@@ -68,15 +68,8 @@ fun reorderJars(homeDir: Path,
 
   logger.log(Logger.Level.INFO, "Reordering *.jar files in $homeDir")
   doReorderJars(sourceToNames = sourceToNames, sourceDir = homeDir, targetDir = targetDir, logger = logger)
-  return writeClassLoaderData(coreClassLoaderFiles, homeDir, stageDir)
-}
-
-private fun writeClassLoaderData(coreClassLoaderFiles: LinkedHashSet<Path>,
-                                 homeDir: Path,
-                                 stageDir: Path): Path {
-  val resultFile = stageDir.resolve("classpath.txt")
-  Files.writeString(resultFile, coreClassLoaderFiles.joinToString(separator = "\n") { homeDir.relativize(it).toString() })
-  return resultFile
+  val resultFile = libDir.resolve("classpath.txt")
+  Files.writeString(resultFile, coreClassLoaderFiles.joinToString(separator = "\n") { libDir.relativize(it).toString() })
 }
 
 private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: Path, antLibDir: Path?): LinkedHashSet<Path> {

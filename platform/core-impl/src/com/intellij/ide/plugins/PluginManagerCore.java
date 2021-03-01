@@ -18,7 +18,10 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.reference.SoftReference;
@@ -257,7 +260,7 @@ public final class PluginManagerCore {
     }
     else {
       Path distDir = Paths.get(PathManager.getHomePath());
-      brokenPluginsStorage = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve("brokenPlugins.db");
+      brokenPluginsStorage = distDir.resolve("bin/brokenPlugins.db");
     }
     try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(brokenPluginsStorage), 32_000))) {
       int version = stream.readUnsignedByte();

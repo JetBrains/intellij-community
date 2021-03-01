@@ -938,15 +938,19 @@ idea.fatal.error.notification=disabled
       }
     }
     else {
-      copyResourceFiles(buildContext, SystemInfoRt.isMac ? targetDirectory.resolve("Resources") : targetDirectory)
+      copyDistFiles(buildContext, targetDirectory)
       unpackPty4jNative(buildContext, targetDirectory, null)
     }
   }
 
-  static copyResourceFiles(@NotNull BuildContext buildContext, @NotNull Path newDir) {
+  static copyDistFiles(@NotNull BuildContext buildContext, @NotNull Path newDir) {
     Files.createDirectories(newDir)
-    for (Path file : buildContext.resourceFiles) {
-      Files.copy(file, newDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
+    for (Pair<Path, String> item : buildContext.distFiles) {
+      Path file = item.getFirst()
+
+      Path dir = newDir.resolve(item.getSecond())
+      Files.createDirectories(dir)
+      Files.copy(file, dir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
     }
   }
 

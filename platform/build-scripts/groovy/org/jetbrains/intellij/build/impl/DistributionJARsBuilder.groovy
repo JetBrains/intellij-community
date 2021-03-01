@@ -313,25 +313,24 @@ final class DistributionJARsBuilder {
       return
     }
 
-    Path result = (Path)BuildHelper.getInstance(buildContext).reorderJars
+    BuildHelper.getInstance(buildContext).reorderJars
       .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
                            buildContext.getBootClassPathJarNames(),
                            buildContext.paths.tempDir,
                            buildContext.productProperties.platformPrefix ?: "idea",
                            buildContext.productProperties.isAntRequired ? Paths.get(buildContext.paths.communityHome, "lib/ant/lib") : null,
                            buildContext.messages)
-    buildContext.addResourceFile(result)
   }
 
   private static BuildTaskRunnable<Void> createBuildBrokenPluginListTask() {
     return BuildTaskRunnable.task(BuildOptions.BROKEN_PLUGINS_LIST_STEP, "Build broken plugin list") { BuildContext buildContext ->
-      Path targetFile = Paths.get(buildContext.paths.temp, "brokenPlugins.db")
+      Path targetFile = buildContext.paths.tempDir.resolve("brokenPlugins.db")
       String currentBuildString = buildContext.buildNumber
       BuildHelper.getInstance(buildContext).brokenPluginsTask.invokeWithArguments(targetFile,
                                                                                   currentBuildString,
                                                                                   buildContext.options.isInDevelopmentMode,
                                                                                   buildContext.messages)
-      buildContext.addResourceFile(targetFile)
+      buildContext.addDistFile(new Pair<Path, String>(targetFile, "bin"))
     }
   }
 
