@@ -383,10 +383,6 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private void syncConfigurations() {
-    if (myProject.getServiceIfCreated(RunManager.class) == null) {
-      return;
-    }
-
     List<RunnerAndConfigurationSettings> settingsList = ContainerUtil
       .filter(RunManager.getInstance(myProject).getAllSettings(),
               settings -> isShowInDashboard(settings.getConfiguration()));
@@ -652,8 +648,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myTypes.addAll(enableByDefaultTypes);
     if (!myTypes.isEmpty()) {
       loadHiddenConfigurations();
-      initServiceContentListeners();
       syncConfigurations();
+      initServiceContentListeners();
     }
   }
 
@@ -678,8 +674,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myTypes.clear();
     myTypes.addAll(getEnableByDefaultTypes());
     if (!myTypes.isEmpty()) {
-      initServiceContentListeners();
       syncConfigurations();
+      initServiceContentListeners();
     }
   }
 
