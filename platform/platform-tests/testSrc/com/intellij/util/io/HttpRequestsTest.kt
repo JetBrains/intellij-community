@@ -204,4 +204,24 @@ class HttpRequestsTest {
       assertThat(e.message).contains("value contains NUL bytes")
     }
   }
+
+  @Test(timeout = 5000)
+  fun `empty response and error`() {
+    try {
+      server.createContext("/emptyNotFound") { exchange ->
+        val bytes = "1".toByteArray(StandardCharsets.UTF_8)
+        exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, bytes.size.toLong())
+        exchange.responseBody.write(bytes)
+        exchange.close()
+      }
+
+      HttpRequests.request(url)
+        .isReadResponseOnError(true)
+        .readString(null)
+      Assert.fail()
+    }
+    catch (e: HttpRequests.HttpStatusException) {
+      assertThat(e.statusCode).isEqualTo(HttpURLConnection.HTTP_NOT_FOUND)
+    }
+  }
 }

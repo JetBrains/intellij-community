@@ -655,10 +655,17 @@ public final class HttpRequests {
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
   }
 
-  private static void throwHttpStatusError(HttpURLConnection connection, RequestImpl request, RequestBuilderImpl builder, int responseCode) throws IOException {
+  private static void throwHttpStatusError(@NotNull HttpURLConnection connection,
+                                           RequestImpl request,
+                                           RequestBuilderImpl builder,
+                                           int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
-      InputStream errorStream = request.getErrorStream();
+      InputStream errorStream = connection.getErrorStream();
+      if (errorStream != null) {
+        errorStream = request.unzipStreamIfNeeded(connection, errorStream);
+      }
+
       if (errorStream != null) {
         message = HttpUrlConnectionUtil.readString(errorStream, connection);
       }
