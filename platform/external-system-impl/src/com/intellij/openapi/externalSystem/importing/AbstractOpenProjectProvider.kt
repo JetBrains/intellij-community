@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.importing
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.ProjectUtil.*
-import com.intellij.ide.impl.confirmOpeningUntrustedProject
 import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -13,6 +12,7 @@ import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationA
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmOpeningUntrustedProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -56,7 +56,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     val nioPath = projectDirectory.toNioPath()
     val isValidIdeaProject = isValidProjectPath(nioPath)
 
-    val untrustedProjectChoice = confirmOpeningUntrustedProject(projectFile, systemId.readableName)
+    val untrustedProjectChoice = confirmOpeningUntrustedProject(projectFile, systemId)
     if (untrustedProjectChoice == OpenUntrustedProjectChoice.CANCEL) return null
 
     val options = OpenProjectTask(

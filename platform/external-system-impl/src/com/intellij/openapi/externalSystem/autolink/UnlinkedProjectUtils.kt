@@ -14,7 +14,7 @@ fun ExternalSystemUnlinkedProjectAware.getProjectId(externalProjectPath: String)
 }
 
 fun ExternalSystemUnlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project: Project, externalProjectPath: String) {
-  ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, systemId)
+  ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemId)
   linkAndLoadProject(project, externalProjectPath)
 }
 
