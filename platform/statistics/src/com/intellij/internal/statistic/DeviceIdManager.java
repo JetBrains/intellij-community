@@ -48,6 +48,9 @@ public final class DeviceIdManager {
       if (isBaseRecorder(recorderId)) {
         deviceId = syncWithSharedFile(DEVICE_ID_SHARED_FILE, deviceId, prefs, preferenceKey);
       }
+      else {
+        deleteLegacySharedFile(recorderId + "_" + DEVICE_ID_SHARED_FILE);
+      }
     }
     return deviceId;
   }
@@ -91,6 +94,23 @@ public final class DeviceIdManager {
       }
     }
     return installationId;
+  }
+
+  private static void deleteLegacySharedFile(@NotNull String fileName) {
+    try {
+      String appdata = System.getenv("APPDATA");
+      if (appdata != null) {
+        File dir = new File(appdata, "JetBrains");
+        if (dir.exists()) {
+          File permanentIdFile = new File(dir, fileName);
+          if (permanentIdFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            permanentIdFile.delete();
+          }
+        }
+      }
+    }
+    catch (Exception ignored) { }
   }
 
   @NotNull
