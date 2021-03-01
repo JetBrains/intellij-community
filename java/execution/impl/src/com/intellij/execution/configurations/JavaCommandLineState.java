@@ -63,7 +63,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   public TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
     try {
       JavaParameters parameters = getJavaParameters();
-      return checkCreateWslFactory(parameters);
+      WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters);
+      return config == null ? null : new WslTargetEnvironmentFactory(config);
     }
     catch (ExecutionException e) {
       // ignore
@@ -71,8 +72,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return null;
   }
 
-  @Nullable
-  private static WslTargetEnvironmentFactory checkCreateWslFactory(JavaParameters parameters) {
+  protected static WslTargetEnvironmentConfiguration checkCreateWslConfiguration(JavaParameters parameters) {
     String path;
     try {
       path = parameters.getJdkPath();
@@ -91,7 +91,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
         javaConfig.setJavaVersionString(jdkVersionString);
       }
       config.addLanguageRuntime(javaConfig);
-      return new WslTargetEnvironmentFactory(config);
+      return config;
     }
     return null;
   }
