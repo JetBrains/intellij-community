@@ -27,8 +27,9 @@ import java.util.List;
 public class ReimportProjectAction extends MavenProjectsAction {
   @Override
   protected void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
-    MavenUtil.isProjectTrustedEnoughToImport(manager.getProject(), true);
-    FileDocumentManager.getInstance().saveAllDocuments();
-    manager.forceUpdateProjects(mavenProjects);
+    if (MavenUtil.isProjectTrustedEnoughToImport(manager.getProject(), true)) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      manager.forceUpdateProjects(mavenProjects);
+    }
   }
 }

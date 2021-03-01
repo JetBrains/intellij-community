@@ -6,8 +6,9 @@ import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLoadingUntrustedProject
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -23,19 +24,21 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
       return null
     }
     val providers = EP_NAME.extensions.filter { it.shouldShowEditorNotification(project) }
-    val systemIds = providers.map { it.systemId }.toTypedArray()
-    if (providers.isEmpty() || executesTrustedCodeOnly(*systemIds)) {
+    val systemIds = providers.map { it.systemId }
+    if (providers.isEmpty() || executesTrustedCodeOnly(systemIds)) {
       return null
     }
-    val systemsPresentation = systemIds.joinToString { it.readableName }
     return EditorNotificationPanel().apply {
       text = ExternalSystemBundle.message("untrusted.project.notification.description")
-      createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.trust.button", systemsPresentation, systemIds.size), {
-        if (confirmLoadingUntrustedProjectIfNeeded(project, *systemIds)) {
+      createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.trust.link"), {
+        if (confirmLoadingUntrustedProject(project, systemIds)) {
           for (provider in providers) {
             provider.loadAllLinkedProjects(project)
           }
         }
+      }, false)
+      createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.read.more.link"), {
+        HelpManager.getInstance().invokeHelp("Project_security")
       }, false)
     }
   }
