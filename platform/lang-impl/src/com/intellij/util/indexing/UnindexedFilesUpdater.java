@@ -68,6 +68,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private static final int MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING =
     SystemProperties.getIntProperty("intellij.indexing.minimum.number.of.files.to.run.concurrent.indexing", 100);
   private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
+  private static final @NotNull Key<Boolean> INDEX_UPDATE_IN_PROGRESS = Key.create("CONTENT_SCANNED");
   private static final @NotNull Key<UnindexedFilesUpdater> RUNNING_TASK = Key.create("RUNNING_INDEX_UPDATER_TASK");
   private static final Object ourLastRunningTaskLock = new Object();
 
@@ -287,6 +288,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     });
   }
 
+  public static boolean isIndexUpdateInProgress(@NotNull Project project) {
+    return project.getUserData(INDEX_UPDATE_IN_PROGRESS) == Boolean.TRUE;
+  }
+
   public static boolean isProjectContentFullyScanned(@NotNull Project project) {
     return Boolean.TRUE.equals(project.getUserData(CONTENT_SCANNED));
   }
@@ -438,6 +443,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+    myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
     ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject);
     myIndex.filesUpdateStarted(myProject);
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
@@ -452,6 +458,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       throw e;
     }
     finally {
+      myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
       projectIndexingHistory.getTimes().setTotalUpdatingTime(System.nanoTime() - projectIndexingHistory.getTimes().getTotalUpdatingTime());

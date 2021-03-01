@@ -100,11 +100,13 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
     int fileId = FileBasedIndex.getFileId(file);
     if (!(file instanceof DeletedVirtualFileStub)) {
-      if (!myManager.belongsToIndexableFiles(file)) {
+      Set<Project> projects = myManager.getContainingProjects(file);
+      if (projects.isEmpty()) {
         removeNonIndexableFileData(file, fileId);
         return;
       }
     }
+
     myFilesToUpdate.put(fileId, file);
   }
 

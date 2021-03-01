@@ -6,16 +6,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
-import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter;
 
 final class ProjectFilesCondition implements Condition<VirtualFile> {
   private static final int MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT = 2;
   private final VirtualFile myRestrictedTo;
   private final GlobalSearchScope myFilter;
   private int myFilesFromOtherProjects;
-  private final ProjectIndexableFilesFilter myIndexableFilesFilter;
+  private final IdFilter myIndexableFilesFilter;
 
-  ProjectFilesCondition(ProjectIndexableFilesFilter indexableFilesFilter,
+  ProjectFilesCondition(IdFilter indexableFilesFilter,
                         GlobalSearchScope filter,
                         VirtualFile restrictedTo,
                         boolean includeFilesFromOtherProjects) {

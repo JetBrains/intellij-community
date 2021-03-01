@@ -47,6 +47,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
@@ -59,8 +60,9 @@ import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
-import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter;
+import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolderImpl;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
@@ -72,6 +74,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,7 +211,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }, null);
 
-    myIndexableFilesFilterHolder = new ProjectIndexableFilesFilterHolder(this);
+    myIndexableFilesFilterHolder = Boolean.getBoolean("use.incremental.filter")
+                                   ? new ProjectIndexableFilesFilterHolderImpl(this)
+                                   : new IncrementalProjectIndexableFilesFilterHolder();
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -595,7 +600,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  public void removeDataFromIndicesForFile(int fileId, @Nullable VirtualFile file) {
+  public void removeDataFromIndicesForFile(int fileId, @NotNull VirtualFile file) {
     VirtualFile originalFile = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile() : file;
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
@@ -604,6 +609,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     if (file instanceof VirtualFileSystemEntry && file.isValid() ) {
       cleanProcessingFlag(file);
+    }
+    ProjectIndexableFilesFilterHolder holder = getIndexableFilesFilterHolder();
+    if (holder instanceof IncrementalProjectIndexableFilesFilterHolder) {
+      boolean isValid =
+        file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile().isValid() : file.isValid();
+      if (!isValid) {
+        ((IncrementalProjectIndexableFilesFilterHolder)holder).removeFile(fileId);
+      }
     }
   }
 
@@ -781,6 +794,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void filesUpdateStarted(Project project) {
     myUnindexedFilesUpdaterListener.updateStarted(project);
+    if (myIndexableFilesFilterHolder instanceof IncrementalProjectIndexableFilesFilterHolder) {
+      ((IncrementalProjectIndexableFilesFilterHolder)myIndexableFilesFilterHolder).dropMemorySnapshot(project);
+    }
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
     incrementFilesModCount();
@@ -810,8 +826,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   @Nullable
-  public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
-    return myIndexableFilesFilterHolder.projectIndexableFiles(project);
+  public IdFilter projectIndexableFiles(@Nullable Project project) {
+    if (project == null || project.isDefault() || getChangedFilesCollector().isUpdateInProgress()) return null;
+    return myIndexableFilesFilterHolder.getProjectIndexableFiles(project);
+  }
+
+  public @NotNull ProjectIndexableFilesFilterHolder getIndexableFilesFilterHolder() {
+    return myIndexableFilesFilterHolder;
   }
 
   @Nullable
@@ -1409,6 +1430,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
 
+    if (currentFC != null &&
+        file != null &&
+        myIndexableFilesFilterHolder instanceof IncrementalProjectIndexableFilesFilterHolder) {
+      ((IncrementalProjectIndexableFilesFilterHolder)myIndexableFilesFilterHolder).addFileId(inputId,
+                                                                                             new Function0<>() {
+                                                                                               @Override
+                                                                                               public Set<? extends Project> invoke() {
+                                                                                                 return getContainingProjects(file);
+                                                                                               }
+                                                                                             });
+    }
+
     if (currentFC instanceof FileContentImpl && FileBasedIndex.ourSnapshotMappingsEnabled) {
       // Optimization: initialize indexed file hash eagerly. The hash is calculated by raw content bytes.
       // If we pass the currentFC to an indexer that calls "FileContentImpl.getContentAsText",
@@ -1543,6 +1576,25 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public boolean needsFileContentLoading(@NotNull ID<?, ?> indexId) {
     return myRegisteredIndexes.isContentDependentIndex(indexId);
+  }
+
+  public @NotNull Set<Project> getContainingProjects(@NotNull VirtualFile file) {
+    Project project = ProjectCoreUtil.theOnlyOpenProject();
+    if (project != null) {
+      return belongsToIndexableFiles(file) ? Collections.singleton(project) : Collections.emptySet();
+    }
+    else {
+      Set<Project> projects = null;
+      for (Pair<IndexableFileSet, Project> set : myIndexableSets) {
+        if ((projects == null || !projects.contains(set.second)) && set.first.isInSet(file)) {
+          if (projects == null) {
+            projects = new SmartHashSet<>();
+          }
+          projects.add(set.second);
+        }
+      }
+      return ContainerUtil.notNullize(projects);
+    }
   }
 
   public boolean belongsToProjectIndexableFiles(@NotNull VirtualFile file, @NotNull Project project) {

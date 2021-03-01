@@ -27,7 +27,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
-import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
@@ -56,7 +55,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public abstract IntPredicate getAccessibleFileIdFilter(@Nullable Project project);
 
   @ApiStatus.Internal
-  public abstract ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project);
+  public abstract IdFilter projectIndexableFiles(@Nullable Project project);
 
   @NotNull
   @ApiStatus.Internal
@@ -351,7 +350,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                       @NotNull GlobalSearchScope filter,
                                                       @Nullable Condition<? super V> valueChecker,
                                                       @NotNull Processor<? super VirtualFile> processor) {
-    ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
+    IdFilter filesSet = projectIndexableFiles(filter.getProject());
     IntSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker, filesSet, null);
     return set != null && processVirtualFiles(set, filter, processor);
   }
@@ -362,7 +361,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                @NotNull GlobalSearchScope filter,
                                                @NotNull Processor<? super VirtualFile> processor) {
     Project project = filter.getProject();
-    ProjectIndexableFilesFilter filesSet = projectIndexableFiles(project);
+    IdFilter filesSet = projectIndexableFiles(project);
     IntSet set = null;
 
     if (filter instanceof GlobalSearchScope.FilesScope) {
@@ -483,7 +482,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                         @NotNull final Collection<? extends K> dataKeys,
                                                         @NotNull final GlobalSearchScope filter,
                                                         @Nullable final Condition<? super V> valueChecker,
-                                                        @Nullable final ProjectIndexableFilesFilter projectFilesFilter,
+                                                        @Nullable final IdFilter projectFilesFilter,
                                                         @Nullable IntSet restrictedIds) {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
     ValueContainer.IntPredicate idChecker = projectFilesFilter == null ? accessibleFileFilter::test : id ->

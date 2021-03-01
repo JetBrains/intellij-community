@@ -1,96 +1,148 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.indexing.projectFilter;
+package com.intellij.util.indexing.projectFilter
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.IndexUpToDateCheckIn;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
-import com.intellij.util.indexing.UnindexedFilesUpdaterListener;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.util.containers.ConcurrentFactoryMap
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.IndexUpToDateCheckIn.isUpToDateCheckEnabled
+import com.intellij.util.indexing.UnindexedFilesUpdater
+import com.intellij.util.indexing.UnindexedFilesUpdaterListener
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
+import java.io.File
+import java.io.IOException
+import java.lang.ref.SoftReference
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 
-import java.lang.ref.SoftReference;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+internal sealed class ProjectIndexableFilesFilterHolder {
+  abstract fun getProjectIndexableFiles(project: Project): IdFilter?
+}
 
-@ApiStatus.Internal
-public final class ProjectIndexableFilesFilterHolder {
-  private final static Logger LOG = Logger.getInstance(ProjectIndexableFilesFilterHolder.class);
-  private final @NotNull FileBasedIndexImpl myFileBasedIndex;
-  private final Lock myCalcIndexableFilesLock = new ReentrantLock();
-  private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
-  private static final Key<SoftReference<ProjectIndexableFilesFilter>> ourProjectFilesSetKey = Key.create("projectFiles");
-
-  public ProjectIndexableFilesFilterHolder(@NotNull FileBasedIndexImpl fileBasedIndex) {
-    myFileBasedIndex = fileBasedIndex;
-    UnindexedFilesUpdaterListener unindexedFilesUpdaterListener = new UnindexedFilesUpdaterListener() {
-      @Override
-      public void updateStarted(@NotNull Project project) {
-        myProjectsBeingUpdated.add(project);
-      }
-
-      @Override
-      public void updateFinished(@NotNull Project project) {
-        myProjectsBeingUpdated.remove(project);
-      }
-    };
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(UnindexedFilesUpdaterListener.TOPIC,
-                                                                            unindexedFilesUpdaterListener);
+internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder() {
+  private val myProjectFilters: ConcurrentMap<Project, PersistentProjectIndexableFilesFilter> = ConcurrentFactoryMap.createMap {
+    proj -> PersistentProjectIndexableFilesFilter(sessionDirectory.resolve(proj.hashCode().toString() + "-" + proj.locationHash), proj)
   }
 
-  @Nullable
-  public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
-    if (project == null || project.isDefault() || myFileBasedIndex.getChangedFilesCollector().isUpdateInProgress()) return null;
-    if (myProjectsBeingUpdated.contains(project) || !UnindexedFilesUpdater.isProjectContentFullyScanned(project)) return null;
-
-    SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
-    ProjectIndexableFilesFilter data = com.intellij.reference.SoftReference.dereference(reference);
-    int currentFileModCount = myFileBasedIndex.getFilesModCount();
-    if (data != null && data.getModificationCount() == currentFileModCount) return data;
-
-    if (myCalcIndexableFilesLock.tryLock()) { // make best effort for calculating filter
-      try {
-        reference = project.getUserData(ourProjectFilesSetKey);
-        data = com.intellij.reference.SoftReference.dereference(reference);
-        if (data != null) {
-          if (data.getModificationCount() == currentFileModCount) {
-            return data;
-          }
-        }
-        else if (!IndexUpToDateCheckIn.isUpToDateCheckEnabled()) {
-          return null;
-        }
-
-        long start = System.currentTimeMillis();
-
-        IntList fileSet = new IntArrayList();
-        myFileBasedIndex.iterateIndexableFiles(fileOrDir -> {
-          if (fileOrDir instanceof VirtualFileWithId) {
-            fileSet.add(((VirtualFileWithId)fileOrDir).getId());
-          }
-          return true;
-        }, project, null);
-        ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(fileSet, currentFileModCount);
-        project.putUserData(ourProjectFilesSetKey, new SoftReference<>(filter));
-
-        long finish = System.currentTimeMillis();
-        LOG.debug(fileSet.size() + " files iterated in " + (finish - start) + " ms");
-
-        return filter;
+  init {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectClosed(project: Project) {
+        myProjectFilters.remove(project)?.clear()
       }
-      finally {
-        myCalcIndexableFilesLock.unlock();
+    })
+  }
+
+  override fun getProjectIndexableFiles(project: Project): IdFilter? {
+    return myProjectFilters[project]
+  }
+
+  fun dropMemorySnapshot(project: Project) {
+    myProjectFilters[project]?.drop()
+  }
+
+  fun addFileId(fileId: Int, projects: () -> Set<Project>) {
+    val matchedProjects by lazy(LazyThreadSafetyMode.NONE) { projects() }
+    for ((p, filter) in myProjectFilters) {
+      filter.ensureFileIdPresent(fileId) {
+        matchedProjects.contains(p)
       }
     }
-    return null; // ok, no filtering
+  }
+
+  fun removeFile(fileId: Int) {
+    for (filter in myProjectFilters.values) {
+      filter.removeFileId(fileId)
+    }
+  }
+
+  private val sessionDirectory: Path by lazy {
+    try {
+      return@lazy FileUtil
+        .createTempDirectory(File(PathManager.getTempPath()),
+                             "project-index-filter",
+                             System.currentTimeMillis().toString(),
+                             true).toPath()
+    }
+    catch (ex: IOException) {
+      throw RuntimeException("Can not create temp directory", ex)
+    }
+  }
+
+}
+
+internal class ProjectIndexableFilesFilterHolderImpl(private val myFileBasedIndex: FileBasedIndexImpl): ProjectIndexableFilesFilterHolder() {
+  private val myCalcIndexableFilesLock: Lock = ReentrantLock()
+  private val myProjectsBeingUpdated: MutableSet<Project> = ContainerUtil.newConcurrentSet()
+
+  init {
+    val unindexedFilesUpdaterListener: UnindexedFilesUpdaterListener = object : UnindexedFilesUpdaterListener {
+      override fun updateStarted(project: Project) {
+        myProjectsBeingUpdated.add(project)
+      }
+
+      override fun updateFinished(project: Project) {
+        myProjectsBeingUpdated.remove(project)
+      }
+    }
+    ApplicationManager.getApplication().messageBus.connect().subscribe(UnindexedFilesUpdaterListener.TOPIC,
+                                                                       unindexedFilesUpdaterListener)
+  }
+
+  override fun getProjectIndexableFiles(project: Project): ProjectIndexableFilesFilter? {
+    if (myProjectsBeingUpdated.contains(project) || !UnindexedFilesUpdater.isProjectContentFullyScanned(project)) return null
+    var reference: SoftReference<ProjectIndexableFilesFilter>? = project.getUserData(ourProjectFilesSetKey)
+    var data = com.intellij.reference.SoftReference.dereference(reference)
+    val currentFileModCount = myFileBasedIndex.filesModCount
+    if (data != null && data.modificationCount == currentFileModCount) return data
+    return if (myCalcIndexableFilesLock.tryLock()) { // make best effort for calculating filter
+      try {
+        reference = project.getUserData(ourProjectFilesSetKey)
+        data = com.intellij.reference.SoftReference.dereference(reference)
+        if (data != null) {
+          if (data.modificationCount == currentFileModCount) {
+            return data
+          }
+        }
+        else if (!isUpToDateCheckEnabled()) {
+          return null
+        }
+        val start = System.currentTimeMillis()
+        val fileSet: IntList = IntArrayList()
+        myFileBasedIndex.iterateIndexableFiles({ fileOrDir: VirtualFile? ->
+                                                 if (fileOrDir is VirtualFileWithId) {
+                                                   fileSet.add((fileOrDir as VirtualFileWithId).id)
+                                                 }
+                                                 true
+                                               }, project, null)
+        val filter = ProjectIndexableFilesFilter(fileSet, currentFileModCount)
+        project.putUserData(ourProjectFilesSetKey, SoftReference(filter))
+        val finish = System.currentTimeMillis()
+        LOG.debug(fileSet.size.toString() + " files iterated in " + (finish - start) + " ms")
+        filter
+      }
+      finally {
+        myCalcIndexableFilesLock.unlock()
+      }
+    }
+    else null
+    // ok, no filtering
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHolder::class.java)
+    private val ourProjectFilesSetKey: Key<SoftReference<ProjectIndexableFilesFilter>> = Key.create("projectFiles")
   }
 }

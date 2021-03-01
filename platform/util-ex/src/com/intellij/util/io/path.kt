@@ -44,8 +44,12 @@ private fun doCreateDirectories(path: Path) {
 /**
  * Opposite to Java, parent directories will be created
  */
-fun Path.outputStream(): OutputStream {
+@JvmOverloads
+fun Path.outputStream(append: Boolean = false): OutputStream {
   parent?.createDirectories()
+  if (append) {
+    return Files.newOutputStream(this, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+  }
   return Files.newOutputStream(this)
 }
 
