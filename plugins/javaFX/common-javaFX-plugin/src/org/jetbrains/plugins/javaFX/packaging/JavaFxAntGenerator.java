@@ -269,7 +269,7 @@ public final class JavaFxAntGenerator {
     if (!StringUtil.isEmptyOrSpaces(paramFile)) {
       final Properties properties = new Properties();
       try {
-        final FileInputStream paramsInputStream = new FileInputStream(new File(paramFile));
+        final FileInputStream paramsInputStream = new FileInputStream(paramFile);
         try {
           properties.load(paramsInputStream);
           for (Object o : properties.keySet()) {
