@@ -114,7 +114,6 @@ public class NavBarModel {
   private static DataContext wrapDataContext(@NotNull DataContext context) {
     var keys = new DataKey[]{
       CommonDataKeys.PSI_FILE,
-      CommonDataKeys.PSI_ELEMENT,
       CommonDataKeys.PROJECT,
       CommonDataKeys.VIRTUAL_FILE,
       LangDataKeys.MODULE,
@@ -154,12 +153,9 @@ public class NavBarModel {
       psiElement = CommonDataKeys.PSI_FILE.getData(dataContext);
     }
     if (psiElement == null) {
-      psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (psiElement == null) {
-        psiElement = findFileSystemItem(
-          CommonDataKeys.PROJECT.getData(dataContext),
-          CommonDataKeys.VIRTUAL_FILE.getData(dataContext));
-      }
+      psiElement = findFileSystemItem(
+        CommonDataKeys.PROJECT.getData(dataContext),
+        CommonDataKeys.VIRTUAL_FILE.getData(dataContext));
     }
 
     if (ownerExtension == null) {
