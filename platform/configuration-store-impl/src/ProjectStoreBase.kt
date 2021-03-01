@@ -3,8 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
-import com.intellij.ide.impl.getTrustedState
-import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
@@ -19,7 +17,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
-import com.intellij.util.ThreeState
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.exists
@@ -162,15 +159,8 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       projectIdManager.state.id = projectId
     }
 
-    val productWorkspaceFile = productSpecificWorkspaceParentDir.resolve("$projectId.xml")
-    macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
+    macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productSpecificWorkspaceParentDir.resolve("$projectId.xml")))
     storageManager.setMacros(macros)
-
-    val state = project.getTrustedState()
-    if (state == ThreeState.UNSURE && productWorkspaceFile.exists()) {
-      LOG.info("Marked the project as trusted because there are settings in $productWorkspaceFile")
-      project.setTrusted(true)
-    }
   }
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
