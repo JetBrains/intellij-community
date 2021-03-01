@@ -5,10 +5,10 @@ package com.intellij.find.actions
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.codeInsight.navigation.targetPopupPresentation
+import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.find.FindBundle
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.navigation.TargetPresentation
 import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -59,21 +59,21 @@ internal fun findShowUsages(project: Project,
 }
 
 internal sealed class TargetVariant {
-  abstract val presentation: TargetPopupPresentation
+  abstract val presentation: TargetPresentation
   abstract fun handle(handler: UsageVariantHandler)
 }
 
 internal class SearchTargetVariant(private val target: SearchTarget) : TargetVariant() {
-  override val presentation: TargetPopupPresentation get() = target.presentation
+  override val presentation: TargetPresentation get() = target.presentation
   override fun handle(handler: UsageVariantHandler): Unit = handler.handleTarget(target)
 }
 
 internal class PsiTargetVariant(private val element: PsiElement) : TargetVariant() {
-  override val presentation: TargetPopupPresentation get() = targetPopupPresentation(element)
+  override val presentation: TargetPresentation get() = targetPresentation(element)
   override fun handle(handler: UsageVariantHandler): Unit = handler.handlePsi(element)
 }
 
 internal class CustomTargetVariant(private val target: UsageTarget) : TargetVariant() {
-  override val presentation: TargetPopupPresentation get() = targetPopupPresentation(target.presentation!!)
+  override val presentation: TargetPresentation get() = targetPresentation(target.presentation!!)
   override fun handle(handler: UsageVariantHandler): Unit = target.findUsages()
 }

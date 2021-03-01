@@ -6,7 +6,7 @@ import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
 import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
-import com.intellij.codeInsight.navigation.targetPopupPresentation
+import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -67,7 +67,7 @@ private class GTDProviderData(
       else -> {
         val targets = targetElements.mapTo(SmartList()) { targetElement ->
           val navigatable = psiNavigatable(targetElement)
-          GTDTarget(navigatable, targetPopupPresentation(targetElement), navigationProvider)
+          GTDTarget(navigatable, targetPresentation(targetElement), navigationProvider)
         }
         GTDActionResult.MultipleTargets(targets)
       }

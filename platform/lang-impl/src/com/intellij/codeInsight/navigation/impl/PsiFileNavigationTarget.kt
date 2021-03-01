@@ -4,7 +4,7 @@ package com.intellij.codeInsight.navigation.impl
 import com.intellij.codeInsight.navigation.fileLocation
 import com.intellij.codeInsight.navigation.fileStatusAttributes
 import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
@@ -17,10 +17,10 @@ internal class PsiFileNavigationTarget(
 
   override fun getNavigatable(): Navigatable = psiFile
 
-  override fun getTargetPresentation(): TargetPopupPresentation {
+  override fun getTargetPresentation(): TargetPresentation {
     val project = psiFile.project
 
-    var builder = TargetPopupPresentation
+    var builder = TargetPresentation
       .builder(psiFile.name)
       .icon(psiFile.getIcon(0))
       .containerText(psiFile.parent?.virtualFile?.presentableUrl)

@@ -16,12 +16,12 @@ import javax.swing.Icon
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-interface TargetPopupPresentation {
+interface TargetPresentation {
 
   companion object {
 
     @JvmStatic
-    fun builder(@Nls presentableText: String): TargetPopupPresentationBuilder {
+    fun builder(@Nls presentableText: String): TargetPresentationBuilder {
       return SymbolNavigationService.getInstance().presentationBuilder(presentableText)
     }
   }

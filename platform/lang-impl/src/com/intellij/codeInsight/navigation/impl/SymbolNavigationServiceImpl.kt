@@ -35,7 +35,7 @@ class SymbolNavigationServiceImpl : SymbolNavigationService {
     return PsiFileNavigationTarget(file)
   }
 
-  override fun presentationBuilder(presentableText: @Nls String): TargetPopupPresentationBuilder {
-    return TargetPopupPresentationBuilderImpl(presentableText = presentableText)
+  override fun presentationBuilder(presentableText: @Nls String): TargetPresentationBuilder {
+    return TargetPresentationBuilderImpl(presentableText = presentableText)
   }
 }

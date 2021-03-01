@@ -6,7 +6,7 @@ import com.intellij.ide.util.PsiElementModuleRenderer
 import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
-import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -33,8 +33,8 @@ import com.intellij.openapi.util.Pair as JBPair
 
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
-internal fun targetPopupPresentation(itemPresentation: ItemPresentation): TargetPopupPresentation {
-  return TargetPopupPresentation
+internal fun targetPresentation(itemPresentation: ItemPresentation): TargetPresentation {
+  return TargetPresentation
     .builder(itemPresentation.presentableText ?: "")
     .icon(itemPresentation.getIcon(false))
     .presentableTextAttributes(itemPresentation.getColoredAttributes())
@@ -56,7 +56,7 @@ private fun ItemPresentation.getContainerText(): String? {
 }
 
 @ApiStatus.Internal
-fun targetPopupPresentation(element: PsiElement): TargetPopupPresentation {
+fun targetPresentation(element: PsiElement): TargetPresentation {
   val project = element.project
   val file = element.containingFile?.virtualFile
   val itemPresentation = (element as? NavigationItem)?.presentation
@@ -66,7 +66,7 @@ fun targetPopupPresentation(element: PsiElement): TargetPopupPresentation {
   val moduleRendererComponent = PsiElementListCellRenderer.getModuleRenderer(element)
     ?.getListCellRendererComponent(JList<PsiElement>(), element, -1, false, false) as? JLabel
 
-  return TargetPopupPresentation
+  return TargetPresentation
     .builder(presentableText)
     .backgroundColor(file?.let { VfsPresentationUtil.getFileBackgroundColor(project, file) })
     .icon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS))

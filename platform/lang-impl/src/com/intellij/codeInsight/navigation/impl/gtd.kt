@@ -8,7 +8,7 @@ import com.intellij.model.psi.impl.TargetData
 import com.intellij.model.psi.impl.declaredReferencedData
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.SymbolNavigationService
-import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
@@ -40,7 +40,7 @@ sealed class GTDActionResult {
   /**
    * Single [Navigatable].
    *
-   * Might be obtained from direct navigation, in this case requiring [TargetPopupPresentation] doesn't make sense.
+   * Might be obtained from direct navigation, in this case requiring [TargetPresentation] doesn't make sense.
    */
   class SingleTarget(val navigatable: () -> Navigatable, val navigationProvider: Any?) : GTDActionResult() {
     constructor(
@@ -57,10 +57,10 @@ sealed class GTDActionResult {
 }
 
 @ApiStatus.Internal
-data class GTDTarget(val navigatable: () -> Navigatable, val presentation: TargetPopupPresentation, val navigationProvider: Any?) {
+data class GTDTarget(val navigatable: () -> Navigatable, val presentation: TargetPresentation, val navigationProvider: Any?) {
   constructor(
     navigatable: Navigatable,
-    presentation: TargetPopupPresentation,
+    presentation: TargetPresentation,
     navigationProvider: Any?
   ) : this({ navigatable }, presentation, navigationProvider)
 }

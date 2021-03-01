@@ -13,7 +13,7 @@ import com.intellij.model.presentation.PresentableSymbol
 import com.intellij.model.presentation.SymbolPresentation
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -57,7 +57,7 @@ private class UrlSymbol(
 
   override fun getNavigatable(): Navigatable = UrlNavigatable(url)
 
-  override fun getTargetPresentation(): TargetPopupPresentation = TODO(
+  override fun getTargetPresentation(): TargetPresentation = TODO(
     "In all known cases the symbol doesn't appear in the disambiguation popup, " +
     "because this symbol is usually alone, so no popup required. Implement this method when needed."
   )

@@ -33,7 +33,7 @@ public interface NavigationTarget {
    *
    * @return presentation to render this target in navigation popup
    */
-  @NotNull TargetPopupPresentation getTargetPresentation();
+  @NotNull TargetPresentation getTargetPresentation();
 
   /**
    * Two different symbols may have the same navigation target.

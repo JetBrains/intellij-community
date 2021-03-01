@@ -2,7 +2,7 @@
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.navigation.TargetPresentation
 import com.intellij.psi.search.SearchScope
 
 /**
@@ -37,11 +37,11 @@ interface RenameTarget {
   /**
    * @return presentation to be displayed in the disambiguation popup
    * when several [different][equals] targets exist to choose from,
-   * or in the Usage View (only [icon][TargetPopupPresentation.icon]
-   * and [presentable text][TargetPopupPresentation.presentableText] are used)
+   * or in the Usage View (only [icon][TargetPresentation.icon]
+   * and [presentable text][TargetPresentation.presentableText] are used)
    * @see com.intellij.find.usages.api.SearchTarget.presentation
    */
-  val presentation: TargetPopupPresentation
+  val presentation: TargetPresentation
 
   /**
    * The single [RenameTarget] might be referenced differently in different contexts,

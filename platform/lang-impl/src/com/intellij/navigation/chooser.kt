@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Experimental
 
 package com.intellij.navigation
@@ -13,14 +13,14 @@ import java.util.function.Consumer
 
 fun <T> chooseTargetPopup(@PopupTitle title: String,
                           targets: List<T>,
-                          presentation: (T) -> TargetPopupPresentation?,
+                          presentation: (T) -> TargetPresentation?,
                           consumer: Consumer<in T>): JBPopup {
   return chooseTargetPopup(title, targets, presentation, consumer::accept)
 }
 
 fun <T> chooseTargetPopup(@PopupTitle title: String,
                           targets: List<T>,
-                          presentation: (T) -> TargetPopupPresentation?,
+                          presentation: (T) -> TargetPresentation?,
                           consumer: (T) -> Unit): JBPopup {
   val renderer = createTargetPresentationRenderer(presentation)
   return JBPopupFactory.getInstance()

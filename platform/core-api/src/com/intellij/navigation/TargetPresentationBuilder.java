@@ -9,41 +9,41 @@ import java.awt.*;
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-public interface TargetPopupPresentationBuilder {
+public interface TargetPresentationBuilder {
 
   @Contract(value = "-> new", pure = true)
-  @NotNull TargetPopupPresentation presentation();
+  @NotNull TargetPresentation presentation();
 
   /**
    * @see com.intellij.openapi.vfs.newvfs.VfsPresentationUtil#getFileBackgroundColor
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull TargetPopupPresentationBuilder backgroundColor(@Nullable Color color);
+  @NotNull TargetPresentationBuilder backgroundColor(@Nullable Color color);
 
   @Contract(value = "_ -> new", pure = true)
-  @NotNull TargetPopupPresentationBuilder icon(@Nullable Icon icon);
+  @NotNull TargetPresentationBuilder icon(@Nullable Icon icon);
 
   @Contract(value = "_ -> new", pure = true)
-  @NotNull TargetPopupPresentationBuilder presentableTextAttributes(@Nullable TextAttributes attributes);
+  @NotNull TargetPresentationBuilder presentableTextAttributes(@Nullable TextAttributes attributes);
 
   @Contract(value = "_ -> new", pure = true)
-  @NotNull TargetPopupPresentationBuilder containerText(@Nls @Nullable String text);
+  @NotNull TargetPresentationBuilder containerText(@Nls @Nullable String text);
 
   @Contract(value = "_, _ -> new", pure = true)
-  @NotNull TargetPopupPresentationBuilder containerText(@Nls @Nullable String text, @Nullable TextAttributes attributes);
+  @NotNull TargetPresentationBuilder containerText(@Nls @Nullable String text, @Nullable TextAttributes attributes);
 
   /**
    * @see com.intellij.codeInsight.navigation.UtilKt#fileStatusAttributes
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull TargetPopupPresentationBuilder containerTextAttributes(@Nullable TextAttributes attributes);
+  @NotNull TargetPresentationBuilder containerTextAttributes(@Nullable TextAttributes attributes);
 
   @Contract(value = "_ -> new", pure = true)
-  @NotNull TargetPopupPresentationBuilder locationText(@Nls @Nullable String text);
+  @NotNull TargetPresentationBuilder locationText(@Nls @Nullable String text);
 
   /**
    * @see com.intellij.codeInsight.navigation.UtilKt#fileLocation
    */
   @Contract(value = "_, _ -> new", pure = true)
-  @NotNull TargetPopupPresentationBuilder locationText(@Nls @Nullable String text, @Nullable Icon icon);
+  @NotNull TargetPresentationBuilder locationText(@Nls @Nullable String text, @Nullable Icon icon);
 }
