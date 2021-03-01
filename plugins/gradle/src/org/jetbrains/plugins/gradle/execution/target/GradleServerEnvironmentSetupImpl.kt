@@ -9,11 +9,11 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
@@ -31,6 +31,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup.Companion.targetJavaExecutablePathMappingKey
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.toGroovyString
+import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.proxy.Main
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
@@ -44,7 +45,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-internal class GradleServerEnvironmentSetupImpl(private val project: Project) : GradleServerEnvironmentSetup, UserDataHolderBase() {
+internal class GradleServerEnvironmentSetupImpl(private val project: Project,
+                                                private val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider) : GradleServerEnvironmentSetup, UserDataHolderBase() {
   override val javaParameters = SimpleJavaParameters()
   override lateinit var environmentConfiguration: TargetEnvironmentConfiguration
   lateinit var targetEnvironment: TargetEnvironment
@@ -56,14 +58,13 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
   private val uploads = mutableListOf<Upload>()
   private val localPathsToMap = mutableListOf<String>()
 
-  fun prepareEnvironment(environmentConfiguration: TargetEnvironmentConfiguration,
-                         targetPathMapper: PathMapper?,
-                         targetBuildParametersBuilder: TargetBuildParameters.Builder,
+  fun prepareEnvironment(targetBuildParametersBuilder: TargetBuildParameters.Builder,
                          consumerOperationParameters: ConsumerOperationParameters,
                          progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator): TargetedCommandLine {
     initJavaParameters()
 
-    this.environmentConfiguration = environmentConfiguration
+    this.environmentConfiguration = environmentConfigurationProvider.environmentConfiguration
+    val targetPathMapper = environmentConfigurationProvider.pathMapper
 
     val factory = if (environmentConfiguration.typeId == "local") LocalTargetEnvironmentFactory()
     else environmentConfiguration.createEnvironmentFactory(project)
@@ -87,8 +88,9 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
     targetBuildParametersBuilder.withArguments(INIT_SCRIPT_CMD_OPTION, initScriptTargetValue.targetValue.blockingGet(0)!!)
     targetBuildParameters = targetBuildParametersBuilder.build(consumerOperationParameters, targetArguments)
 
-    (environmentConfiguration as? WslTargetEnvironmentConfiguration)?.distribution?.wslIp?.also {
-      targetedCommandLineBuilder.addEnvironmentVariable("targetHost", it)
+    (environmentConfigurationProvider as? GradleServerConfigurationProvider)?.getServerBindingAddress(environmentConfiguration)?.also {
+      targetedCommandLineBuilder.addEnvironmentVariable("serverBindingHost", it.host)
+      targetedCommandLineBuilder.addEnvironmentVariable("serverBindingPort", it.port.toString())
     }
     return targetedCommandLineBuilder.build()
   }
