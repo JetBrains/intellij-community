@@ -2,6 +2,7 @@
 package git4idea.push;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -208,8 +209,12 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     if (wasUpdatePerformed) {
       updatedFiles.getTopLevelGroups().get(0).add("file.txt", "Git", null);
     }
-    return GitPushResultNotification.create(myProject, new GitPushResult(map, updatedFiles, null, null, Collections.emptyMap()),
-                                            null, map.size() > 1, null);
+    Ref<GitPushResultNotification> ref = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ref.set(GitPushResultNotification.create(myProject, new GitPushResult(map, updatedFiles, null, null, Collections.emptyMap()),
+                                               null, map.size() > 1, null));
+    });
+    return ref.get();
   }
 
   private static void assertPushNotification(@NotNull NotificationType type,
