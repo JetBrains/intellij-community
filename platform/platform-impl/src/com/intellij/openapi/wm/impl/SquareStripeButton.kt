@@ -33,7 +33,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   override fun updateToolTipText() {
     HelpTooltip().apply {
       setTitle(button.toolWindow.stripeTitle)
-      setLocation(HelpTooltip.Alignment.RIGHT)
+      setLocation(getAlignment(button.toolWindow.largeStripeAnchor))
       setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.getActionIdForToolWindow(button.id)))
       installOn(this@SquareStripeButton)
     }
@@ -79,6 +79,15 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
           add(MoveToAction(toolWindowsPane, toolWindow, ToolWindowAnchor.BOTTOM))
         }
     }
+
+    private fun getAlignment(anchor: ToolWindowAnchor) =
+      when (anchor) {
+        ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
+        ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
+        ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
+        ToolWindowAnchor.BOTTOM -> HelpTooltip.Alignment.RIGHT
+        else -> HelpTooltip.Alignment.RIGHT
+      }
   }
 
   private class MoveToAction(val toolWindowsPane: ToolWindowsPane, val toolWindow: ToolWindow, val anchor: ToolWindowAnchor) :
