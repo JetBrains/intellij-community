@@ -16,10 +16,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -672,7 +669,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
                                                                              @NotNull List<AnActionEvent> wouldBeEnabledIfNotDumb,
                                                                              @NotNull UpdateSession session,
                                                                              @NotNull Function<Presentation, AnActionEvent> events) {
-    rearrangeByPromoters(actions, context);
+    ReadAction.run(() -> rearrangeByPromoters(actions, context));
     for (AnAction action : actions) {
       long startedAt = System.currentTimeMillis();
 
@@ -848,11 +845,16 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static void rearrangeByPromoters(List<AnAction> actions, DataContext context) {
     List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
     for (ActionPromoter promoter : ActionPromoter.EP_NAME.getExtensions()) {
-      List<AnAction> promoted = promoter.promote(readOnlyActions, context);
-      if (promoted == null || promoted.isEmpty()) continue;
+      try {
+        List<AnAction> promoted = promoter.promote(readOnlyActions, context);
+        if (promoted == null || promoted.isEmpty()) continue;
 
-      actions.removeAll(promoted);
-      actions.addAll(0, promoted);
+        actions.removeAll(promoted);
+        actions.addAll(0, promoted);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 
