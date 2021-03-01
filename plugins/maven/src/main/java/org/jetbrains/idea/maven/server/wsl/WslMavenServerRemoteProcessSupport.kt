@@ -8,16 +8,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport
 import org.jetbrains.idea.maven.server.MavenDistribution
+import org.jetbrains.idea.maven.server.WslMavenDistribution
 
 class WslMavenServerRemoteProcessSupport(private val myWslDistribution: WSLDistribution,
                                          jdk: Sdk,
                                          vmOptions: String?,
-                                         mavenDistribution: MavenDistribution,
+                                         mavenDistribution: WslMavenDistribution,
                                          project: Project,
                                          debugPort: Int?) : AbstractMavenServerRemoteProcessSupport(jdk, vmOptions, mavenDistribution,
                                                                                                     project, debugPort) {
   override fun getRunProfileState(target: Any, configuration: Any, executor: Executor): RunProfileState {
-    return WslMavenCmdState(myWslDistribution, myJdk, myOptions, myDistribution, myDebugPort, myProject, remoteHost)
+    return WslMavenCmdState(myWslDistribution, myJdk, myOptions, myDistribution as WslMavenDistribution, myDebugPort, myProject, remoteHost)
   }
 
   override fun getRemoteHost(): String = myWslDistribution.wslIp

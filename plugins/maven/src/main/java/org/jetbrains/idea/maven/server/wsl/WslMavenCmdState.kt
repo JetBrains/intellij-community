@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerCMDState
+import org.jetbrains.idea.maven.server.WslMavenDistribution
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getPropertiesFromMavenOpts
@@ -23,7 +24,7 @@ import org.jetbrains.idea.maven.utils.MavenWslUtil.getPropertiesFromMavenOpts
 class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
                        jdk: Sdk,
                        vmOptions: String?,
-                       mavenDistribution: MavenDistribution,
+                       mavenDistribution: WslMavenDistribution,
                        debugPort: Int?,
                        val myProject: Project,
                        val remoteHost: String

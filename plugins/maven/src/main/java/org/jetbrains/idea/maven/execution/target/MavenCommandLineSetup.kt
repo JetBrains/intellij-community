@@ -83,13 +83,7 @@ class MavenCommandLineSetup(private val project: Project,
       return
     }
 
-    val homePath: String
-    if (generalSettings.mavenHome == MavenServerManager.BUNDLED_MAVEN_3 || generalSettings.mavenHome == MavenServerManager.WRAPPED_MAVEN) {
-      homePath = defaultMavenRuntimeConfiguration.homePath
-    }
-    else {
-      homePath = generalSettings.mavenHome
-    }
+    val homePath = defaultMavenRuntimeConfiguration.homePath
 
     if (StringUtil.isEmptyOrSpaces(homePath)) {
       commandLine.setExePath("mvn")
@@ -97,6 +91,7 @@ class MavenCommandLineSetup(private val project: Project,
     }
 
     commandLine.addEnvironmentVariable("MAVEN_HOME", homePath)
+    commandLine.addEnvironmentVariable("M2_HOME", homePath)
     commandLine.setExePath(joinPath(arrayOf(homePath, "bin", "mvn")))
   }
 
