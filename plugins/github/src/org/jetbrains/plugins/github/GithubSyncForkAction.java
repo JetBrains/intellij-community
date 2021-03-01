@@ -103,16 +103,12 @@ public class GithubSyncForkAction extends DumbAwareAction {
 
     GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
     GithubServerPath serverPath = originMapping.getRepository().getServerPath();
+    GithubAccount githubAccount;
     List<GithubAccount> accounts = ContainerUtil.filter(authManager.getAccounts(), account -> serverPath.equals(account.getServer()));
     if (accounts.size() == 0) {
-      GithubNotifications.showError(project,
-                                    GithubNotificationIdsHolder.REBASE_ACCOUNT_NOT_FOUND,
-                                    GithubBundle.message("rebase.error"),
-                                    GithubBundle.message("rebase.error.no.suitable.account.found"));
-      return;
+      githubAccount = authManager.requestNewAccountForServer(serverPath, project);
     }
-    GithubAccount githubAccount;
-    if (accounts.size() == 1) {
+    else if (accounts.size() == 1) {
       githubAccount = accounts.get(0);
     }
     else {
