@@ -3,6 +3,7 @@ package com.intellij.documentation.mdn
 
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlElement
@@ -40,5 +41,8 @@ class XmlMdnDocumentationProvider : DocumentationProvider {
             else -> null
           }
         }
+      ?: (element as? HtmlSymbolDeclaration)?.let {
+        getHtmlMdnDocumentation(element, PsiTreeUtil.getNonStrictParentOfType(originalElement, XmlTag::class.java))
+      }
   }
 }

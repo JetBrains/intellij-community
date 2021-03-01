@@ -94,7 +94,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         XmlAttributeValue value = (XmlAttributeValue)originalElement.getParent();
         String toSearch = value.getValue();
         XmlTag enumerationTag;
-        
+
         if (XmlUtil.ENUMERATION_TAG_NAME.equals(tag.getLocalName())) {
           enumerationTag = tag;
           name = enumerationTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME);
@@ -318,6 +318,12 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         isAttrCompletion = true;
       } else if (element.getParent() instanceof XmlAttribute) {
         isAttrCompletion = true;
+      }
+    } else if (!isAttrCompletion && element instanceof PsiWhiteSpace) {
+      PsiElement prevSibling = element.getPrevSibling();
+      if (prevSibling instanceof XmlTag && prevSibling.getLastChild() instanceof PsiErrorElement) {
+        isAttrCompletion = true;
+        element = prevSibling;
       }
     }
 
