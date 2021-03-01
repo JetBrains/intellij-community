@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.search.runSearch
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.RefactoringBundle
@@ -354,4 +355,5 @@ fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
       }
     }
   }
+  PsiDocumentManager.getInstance(project).commitAllDocuments()
 }
