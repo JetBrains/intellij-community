@@ -81,5 +81,10 @@
       <option name="name" value="f105b40a-1d71-4e86-b39f-79d95d31e83b" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="e430702c-6d83-4011-ba02-ce5252b72388" />
+      <option name="name" value="e430702c-6d83-4011-ba02-ce5252b72388" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies" />
+    </remote-repository>
   </component>
 </project>
