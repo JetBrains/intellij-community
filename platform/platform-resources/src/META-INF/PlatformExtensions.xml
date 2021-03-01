@@ -52,9 +52,6 @@
                        descriptionKey="configurable.group.other.settings.description"/>
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
-    <applicationService
-      serviceImplementation="com.intellij.ide.plugins.certificates.PluginCertificateStore"
-    />
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter" serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.DebugLogManager" preload="true"/>

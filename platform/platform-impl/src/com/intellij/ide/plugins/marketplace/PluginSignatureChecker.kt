@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.certificates.PluginCertificateStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.zip.signer.verifier.InvalidSignatureResult
@@ -17,9 +17,8 @@ import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
 
 @ApiStatus.Internal
-object PluginSignatureChecker {
-
-  private val LOG = Logger.getInstance(PluginSignatureChecker::class.java)
+internal object PluginSignatureChecker {
+  private val LOG = logger<PluginSignatureChecker>()
 
   private val jetbrainsCertificate: Certificate? by lazy {
     val cert = PluginSignatureChecker.javaClass.classLoader.getResourceAsStream("ca.crt")
@@ -32,18 +31,16 @@ object PluginSignatureChecker {
     }
   }
 
-  private val certificateStore = PluginCertificateStore.instance
-
   @JvmStatic
   fun isSignedByAnyCertificates(pluginName: String, pluginFile: File): Boolean {
     val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("jetbrains.certificate.not.found"))
-    val certificates = certificateStore.customTrustManager.certificates.orEmpty() + jbCert
+    val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates.orEmpty() + jbCert
     return isSignedBy(pluginName, pluginFile, *certificates.toTypedArray())
   }
 
   @JvmStatic
   fun isSignedByCustomCertificates(pluginName: String, pluginFile: File): Boolean {
-    val certificates = certificateStore.customTrustManager.certificates
+    val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates
     if (certificates.isEmpty()) return true
     return isSignedBy(pluginName, pluginFile, *certificates.toTypedArray())
   }
