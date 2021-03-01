@@ -77,7 +77,7 @@ class RuntimeChooserDialog(
       init {
         isSwingPopup = false
         setMinimumAndPreferredWidth(400)
-        setRenderer(RuntimeChooserPresenter(this@RuntimeChooserDialog.model))
+        setRenderer(RuntimeChooserPresenter())
       }
 
       override fun setSelectedItem(anObject: Any?) {

@@ -15,7 +15,10 @@ import javax.swing.DefaultComboBoxModel
 abstract class RuntimeChooserItem
 
 object RuntimeChooserShowAdvancedItem : RuntimeChooserItem()
-class RuntimeChooserSeparator(@Separator val text: String) : RuntimeChooserItem()
+
+object RuntimeChooserAdvancedSectionSeparator : RuntimeChooserItem()
+object RuntimeChooserCustomSelectedSectionSeparator : RuntimeChooserItem()
+object RuntimeChooserAdvancedJbrSelectedSectionSeparator : RuntimeChooserItem()
 
 class RuntimeChooserModel {
   private var showAdvancedOptions: Boolean = false
@@ -61,22 +64,24 @@ class RuntimeChooserModel {
       .filter { it.isDefaultItem }
       .map { RuntimeChooserDownloadableItem(it) }
 
-    if (showAdvancedOptions) {
-      if (RuntimeChooserCustom.isActionAvailable) {
-        if (customJdks.isNotEmpty()) {
-          newList += RuntimeChooserSeparator(LangBundle.message("dialog.separator.choose.ide.runtime.customSelected"))
-          newList += customJdks
-        }
-        newList += RuntimeChooserAddCustomItem
-      }
+    newList += RuntimeChooserAdvancedSectionSeparator
+    if (!showAdvancedOptions)  {
+      newList += RuntimeChooserShowAdvancedItem
+    }
 
-      newList += RuntimeChooserSeparator(LangBundle.message("dialog.separator.choose.ide.runtime.advanced"))
+    if (RuntimeChooserCustom.isActionAvailable) {
+      if (customJdks.isNotEmpty()) {
+        newList += RuntimeChooserCustomSelectedSectionSeparator
+        newList += customJdks
+      }
+      newList += RuntimeChooserAddCustomItem
+    }
+
+    if (showAdvancedOptions) {
+      newList += RuntimeChooserAdvancedJbrSelectedSectionSeparator
       newList += downloadableJbs
         .filterNot { it.isDefaultItem }
         .map { RuntimeChooserDownloadableItem(it) }
-
-    } else {
-      newList += RuntimeChooserShowAdvancedItem
     }
 
     myMainComboModel.addAll(newList)

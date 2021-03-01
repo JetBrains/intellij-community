@@ -6,10 +6,7 @@ import com.intellij.ui.*
 import java.awt.Component
 import javax.swing.JList
 
-class RuntimeChooserPresenter(
-  private val model: RuntimeChooserModel
-) : ColoredListCellRenderer<RuntimeChooserItem>() {
-
+class RuntimeChooserPresenter: ColoredListCellRenderer<RuntimeChooserItem>() {
 
   override fun getListCellRendererComponent(list: JList<out RuntimeChooserItem>?,
                                             value: RuntimeChooserItem?,
@@ -17,13 +14,20 @@ class RuntimeChooserPresenter(
                                             selected: Boolean,
                                             hasFocus: Boolean): Component {
 
-    if (value is RuntimeChooserSeparator) {
-      val sep = SeparatorWithText()
-      sep.caption = value.text
-      return sep
+    val message = when (value) {
+      is RuntimeChooserAdvancedSectionSeparator -> LangBundle.message("dialog.separator.choose.ide.runtime.advanced")
+      is RuntimeChooserAdvancedJbrSelectedSectionSeparator -> LangBundle.message("dialog.separator.choose.ide.runtime.advancedJbrs")
+      is RuntimeChooserCustomSelectedSectionSeparator -> LangBundle.message("dialog.separator.choose.ide.runtime.customSelected")
+      else -> null
     }
 
-    return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
+    if (message == null) {
+      return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
+    }
+
+    val sep = SeparatorWithText()
+    sep.caption = message
+    return sep
   }
 
   override fun customizeCellRenderer(list: JList<out RuntimeChooserItem>,
