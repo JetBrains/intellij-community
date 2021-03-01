@@ -16,8 +16,9 @@ public class ReimportAction extends MavenProjectsManagerAction {
 
   @Override
   protected void perform(@NotNull MavenProjectsManager manager) {
-    MavenUtil.isProjectTrustedEnoughToImport(manager.getProject(), true);
-    FileDocumentManager.getInstance().saveAllDocuments();
-    manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    if (MavenUtil.isProjectTrustedEnoughToImport(manager.getProject(), true)) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    }
   }
 }

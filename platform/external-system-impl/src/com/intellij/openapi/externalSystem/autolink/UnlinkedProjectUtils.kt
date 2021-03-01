@@ -5,6 +5,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 
 fun ExternalSystemUnlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project: Project, externalProjectPath: String) {
-  ExternalSystemUtil.confirmFullLoadingUntrustedProjectIfNeeded(project, systemId)
+  ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemId)
   linkAndLoadProject(project, externalProjectPath)
 }

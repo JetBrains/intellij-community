@@ -2,8 +2,6 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.CommonBundle
-import com.intellij.ide.impl.confirmImportingUntrustedProject
-import com.intellij.ide.impl.isTrusted
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationDisplayType.STICKY_BALLOON
 import com.intellij.notification.NotificationGroup
