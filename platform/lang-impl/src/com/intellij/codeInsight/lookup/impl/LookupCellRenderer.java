@@ -154,7 +154,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       presentation = customizer.customizePresentation(item, presentation);
     }
     if (presentation.getIcon() != null) {
-      setIconInsets();
+      setIconInsets(myNameComponent);
     }
 
     myNameComponent.clear();
@@ -564,12 +564,12 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
       myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()),
                                      Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
-      setIconInsets();
+      setIconInsets(myNameComponent);
     }
   }
 
-  private void setIconInsets() {
-    myNameComponent.setIpad(JBUI.insetsLeft(6));
+  private static void setIconInsets(@NotNull SimpleColoredComponent component) {
+    component.setIpad(JBUI.insetsLeft(6));
   }
 
   private int updateMaximumWidth(LookupElementPresentation p, LookupElement item) {
