@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -46,26 +45,28 @@ public final class DeviceIdManager {
     }
 
     if (appInfo.isVendorJetBrains() && SystemInfo.isWindows) {
-      deviceId = syncWithSharedFile(getSharedFile(recorderId), deviceId, prefs, preferenceKey);
+      if (isBaseRecorder(recorderId)) {
+        deviceId = syncWithSharedFile(DEVICE_ID_SHARED_FILE, deviceId, prefs, preferenceKey);
+      }
     }
     return deviceId;
   }
 
   @NotNull
   private static String getPreferenceKey(@NotNull String recorderId) {
-    return "FUS".equals(recorderId) ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
+    return isBaseRecorder(recorderId) ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
   }
 
-  @NotNull
-  private static String getSharedFile(@NotNull String recorderId) {
-    return "FUS".equals(recorderId) ? DEVICE_ID_SHARED_FILE : recorderId + "_" + DEVICE_ID_SHARED_FILE;
+  private static boolean isBaseRecorder(@NotNull String recorderId) {
+    return "FUS".equals(recorderId);
   }
 
+  @SuppressWarnings("SameParameterValue")
   @NotNull
-  public static String syncWithSharedFile(@NotNull String fileName,
-                                          @NotNull String installationId,
-                                          @NotNull Preferences prefs,
-                                          @NotNull String prefsKey) {
+  private static String syncWithSharedFile(@NotNull String fileName,
+                                           @NotNull String installationId,
+                                           @NotNull Preferences prefs,
+                                           @NotNull String prefsKey) {
     final String appdata = System.getenv("APPDATA");
     if (appdata != null) {
       final File dir = new File(appdata, "JetBrains");
