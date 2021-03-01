@@ -63,7 +63,14 @@ private class MessageInfo(val title: String,
   val window: Window
   val visibleWindow: Window
   val nativeWindow: ID
+  var alertWindow: ID? = null
+
   var mainHandler = {}
+  var disposer = {}
+
+  lateinit var dialog: MyDialog
+  var result: Int? = null
+  var suppress = false
 
   init {
     var popupWindow: Window? = null
@@ -118,10 +125,8 @@ class MacMessageHelper {
 
 @Service
 private class NativeMacMessageManager : MacMessages() {
-  private var myInfo: MessageInfo? = null
-  private var myDialog: MyDialog? = null
-  private var myResult: Int? = null
-  private var mySuppress: Boolean = false
+  private val myInfos = ArrayList<MessageInfo?>()
+  private val myLock = Object()
 
   private fun getJBMessages() = service<JBMacMessages>()
 
@@ -198,31 +203,22 @@ private class NativeMacMessageManager : MacMessages() {
                                 fallback: () -> Int): Int {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val info = MessageInfo(title, message, buttons, errorStyle, window, defaultOptionIndex, doNotAskDialogOption)
-
-    if (myInfo != null) {
-      LOG.error("=== MacAlert: attempt to show new alert during showing another alert ===")
-      return fallback()
-    }
+    val index = addInfoWithId(info)
 
     info.mainHandler = {
       Foundation.invoke(Foundation.invoke(info.nativeWindow, "delegate"), "activateWindowMenuBar")
-      myDialog!!.orderAboveSiblings()
+      info.dialog.orderAboveSiblings()
 
       info.mainHandler = {
-        myDialog!!.orderAboveSiblings()
+        info.dialog.orderAboveSiblings()
       }
     }
 
-    myInfo = info
-    myResult = null
-
-    var disposer = {}
-
-    myDialog = MyDialog(info.window) {
+    info.dialog = MyDialog(info.window) {
       val delegate = Foundation.invoke(Foundation.invoke(Foundation.getObjcClass("NSJavaAlertDelegate"), "alloc"), "init")
-      Foundation.invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showAlert:"), ID.NIL,
-                        false)
-      disposer = {
+      Foundation.invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showAlert:"),
+                        Foundation.invoke("NSNumber", "numberWithInt:", index), false)
+      info.disposer = {
         Foundation.cfRelease(delegate)
         Foundation.executeOnMainThread(false, false) {
           Foundation.invoke(Foundation.invoke(info.nativeWindow, "delegate"), "activateWindowMenuBar")
@@ -233,22 +229,24 @@ private class NativeMacMessageManager : MacMessages() {
     try {
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false)
       StackingPopupDispatcher.getInstance().hidePersistentPopups()
-      myDialog!!.show()
+      info.dialog.show()
     }
     finally {
-      disposer()
+      info.disposer()
       StackingPopupDispatcher.getInstance().restorePersistentPopups()
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true)
-      myInfo = null
-      myDialog = null
+
+      synchronized(myLock) {
+        myInfos[index] = null
+      }
     }
 
-    if (myResult != null) {
-      val result = myResult!! - 1000
+    if (info.result != null) {
+      val result = info.result!! - 1000
 
       if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
         if (result == Messages.OK || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
-          doNotAskDialogOption.setToBeShown(!mySuppress, result)
+          doNotAskDialogOption.setToBeShown(!info.suppress, result)
         }
       }
 
@@ -259,23 +257,44 @@ private class NativeMacMessageManager : MacMessages() {
     return fallback()
   }
 
-  private fun ourParentIsTopLevelWindowWithoutChildren(): Boolean {
-    val window = myInfo!!.visibleWindow
-    return window.parent == null && window.ownedWindows.all { it == myDialog || !it.isVisible }
+  private fun addInfoWithId(newInfo: MessageInfo): Int {
+    synchronized(myLock) {
+      for ((index, info) in myInfos.withIndex()) {
+        if (info == null) {
+          myInfos[index] = newInfo
+          return index
+        }
+      }
+      myInfos.add(newInfo)
+      return myInfos.size - 1
+    }
+  }
+
+  private fun getInfo(index: Int): MessageInfo {
+    synchronized(myLock) {
+      return myInfos[index]!!
+    }
+  }
+
+  private fun ourParentIsTopLevelWindowWithoutChildren(info: MessageInfo): Boolean {
+    val window = info.visibleWindow
+    return window.parent == null && window.ownedWindows.all { it == info.dialog || !it.isVisible }
   }
 
   private val SHOW_ALERT = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String, params: ID) {
-      val info = myInfo!!
+      val index = Foundation.invoke(params, "intValue").toInt()
+      val info = getInfo(index)
       val ownerWindow = getActualWindow(info.nativeWindow)
-      val runModal = ownerWindow == null || !ourParentIsTopLevelWindowWithoutChildren()  /* prevent z-order issues with other children of our parent */
+      val runModal = ownerWindow == null || !ourParentIsTopLevelWindowWithoutChildren(info)  /* prevent z-order issues with other children of our parent */
 
       val alert = Foundation.invoke(Foundation.invoke("NSAlert", "alloc"), "init")
       val alertWindow = Foundation.invoke(alert, "window")
+      info.alertWindow = alertWindow
 
       if (!runModal) {
-        myDialog!!.setHandler(alertWindow.toLong())
+        info.dialog.setHandler(alertWindow.toLong())
       }
 
       Foundation.invoke(alert, "setMessageText:", Foundation.nsString(info.title))
@@ -317,11 +336,11 @@ private class NativeMacMessageManager : MacMessages() {
       }
 
       if (runModal) {
-        setResult(alert, Foundation.invoke(alert, "runModal"))
+        setResult(alert, Foundation.invoke(alert, "runModal"), index)
       }
       else {
         Foundation.invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", ownerWindow, self,
-                          Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), ID.NIL)
+                          Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), params)
       }
     }
   }
@@ -329,21 +348,27 @@ private class NativeMacMessageManager : MacMessages() {
   private val ALERT_DID_END = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String, alert: ID, returnCode: ID, contextInfo: ID) {
-      setResult(alert, returnCode)
+      setResult(alert, returnCode, Foundation.invoke(contextInfo, "intValue").toInt())
     }
   }
 
-  private fun setResult(alert: ID, returnCode: ID) {
-    myResult = returnCode.toInt()
-    mySuppress = Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "state").toInt() == 1
-    myDialog!!.close()
+  private fun setResult(alert: ID, returnCode: ID, index: Int) {
+    val info = getInfo(index)
+    info.result = returnCode.toInt()
+    info.suppress = Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "state").toInt() == 1
+    info.dialog.close()
     Foundation.cfRelease(alert)
   }
 
   private val ALERT_CHANGE_JUST_MAIN = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String) {
-      myInfo!!.mainHandler()
+      val info = synchronized(myLock) {
+        myInfos.find {
+          it != null && self == it.alertWindow
+        }
+      }
+      info?.mainHandler?.invoke()
     }
   }
 
