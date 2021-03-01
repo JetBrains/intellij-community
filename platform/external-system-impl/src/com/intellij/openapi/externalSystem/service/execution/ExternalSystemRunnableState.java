@@ -178,21 +178,20 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       .forEachExtensionSafe(extension -> extension.attachToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings()));
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-      final String greeting;
       final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings.toString());
-      if (mySettings.getTaskNames().size() > 1) {
-        greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", startDateTime, settingsDescription) + "\n";
-      }
-      else {
-        greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, settingsDescription) + "\n";
-      }
-      processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
       try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
           @Override
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             if (progressListener != null) {
+              final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+              final String greeting;
+              if (mySettings.getTaskNames().size() > 1) {
+                greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", startDateTime, settingsDescription) + "\n";
+              }
+              else {
+                greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, settingsDescription) + "\n";
+              }
               AnAction rerunTaskAction = new ExternalSystemRunConfiguration.MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
               BuildViewSettingsProvider viewSettingsProvider =
                 consoleView instanceof BuildViewSettingsProvider ?
@@ -209,6 +208,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
               progressListener.onEvent(id,
                                        new StartBuildEventImpl(buildDescriptor, BuildBundle.message("build.status.running"))
                                          .withBuildViewSettingsProvider(viewSettingsProvider));
+              processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
             }
           }
 
