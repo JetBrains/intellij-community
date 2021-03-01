@@ -242,7 +242,12 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     val repos = repositoriesManager.knownRepositories
     val baseIsFork = repositoryDataService.isFork
     val recentHead = settings.recentNewPullRequestHead
-    val headRepo = repos.find { it.repository == recentHead } ?: if (repos.size == 1) repos.single() else if (baseIsFork) baseRepo else null
+    val headRepo = repos.find { it.repository == recentHead } ?: when {
+      repos.size == 1 -> repos.single()
+      baseIsFork -> baseRepo
+      else -> repos.find { it.gitRemote.remote.name == "origin" }
+    }
+
     val headBranch = headRepo?.gitRemote?.repository?.currentBranch
     setHead(headRepo, headBranch)
     headSetByUser = false
