@@ -8,6 +8,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.plugins.PluginFeatureService;
 import com.intellij.ide.plugins.PluginManagerConfigurableService;
+import com.intellij.ide.plugins.advertiser.FeaturePluginData;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -31,8 +32,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   private final ConfigurationFactory myFactory;
   private Element myStoredElement;
   private String myName;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   private static final AtomicInteger myUniqueName = new AtomicInteger(1);
   private boolean myDoNotStore;
@@ -73,7 +73,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   }
 
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -114,14 +114,14 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   public void checkConfiguration() throws RuntimeConfigurationException {
     String typeId = getConfigurationTypeId();
     if (typeId != null) {
-      PluginFeatureService.FeaturePluginData plugin =
-        PluginFeatureService.getInstance().getPluginForFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID, typeId);
+      FeaturePluginData plugin = PluginFeatureService.getInstance().getPluginForFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID,
+                                                                                        typeId);
       if (plugin != null) {
         RuntimeConfigurationError err = new RuntimeConfigurationError(
           LangBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.getDisplayName()));
         err.setQuickFix(() -> {
           PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null,
-                                                                                         plugin.getPluginId());
+                                                                                         plugin.getPluginData().getPluginIdString());
         });
         throw err;
       }

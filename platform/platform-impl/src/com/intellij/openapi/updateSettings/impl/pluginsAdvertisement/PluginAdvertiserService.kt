@@ -6,43 +6,55 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.updateSettings.impl.UpdateChecker.mergePluginsFromRepositories
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.containers.MultiMap
-import kotlin.collections.set
 
 open class PluginAdvertiserService {
+
+  companion object {
+    @JvmStatic
+    val instance
+      get() = service<PluginAdvertiserService>()
+  }
 
   fun run(
     project: Project,
     customPlugins: List<IdeaPluginDescriptor>,
     unknownFeatures: Set<UnknownFeature>,
   ) {
-    val features = MultiMap<PluginId?, UnknownFeature>()
-    val disabledPlugins = HashMap<PluginsAdvertiser.Plugin, IdeaPluginDescriptor>()
+    val features = MultiMap.createSet<PluginId, UnknownFeature>()
+    val disabledPlugins = HashMap<PluginData, IdeaPluginDescriptor>()
 
-    val ids = mutableMapOf<PluginId, PluginsAdvertiser.Plugin>()
+    val ids = mutableMapOf<PluginId, PluginData>()
     val marketplaceRequests = MarketplaceRequests.Instance
     unknownFeatures.forEach { feature ->
       ProgressManager.checkCanceled()
       val featureType = feature.featureType
       val implementationName = feature.implementationName
-      val installedPlugin = PluginFeatureService.instance
+      val installedPluginData = PluginFeatureService.instance
         .getPluginForFeature(featureType, implementationName)
+        ?.pluginData
 
-      if (installedPlugin != null) {
-        val id = PluginId.getId(installedPlugin.pluginId)
-        ids[id] = PluginsAdvertiser.Plugin(installedPlugin.pluginId, installedPlugin.pluginName, installedPlugin.bundled)
+      fun putFeature(data: PluginData) {
+        val id = data.pluginId
+        ids[id] = data
         features.putValue(id, feature)
+      }
+
+      if (installedPluginData != null) {
+        putFeature(installedPluginData)
       }
       else {
         val params = mapOf(
@@ -53,12 +65,8 @@ open class PluginAdvertiserService {
 
         marketplaceRequests
           .getFeatures(params)
-          .mapNotNull { PluginsAdvertiser.Plugin.fromFeature(it) }
-          .forEach { plugin ->
-            val id = plugin.pluginId
-            ids[id] = plugin
-            features.putValue(id, feature)
-          }
+          .mapNotNull { it.toPluginData() }
+          .forEach { putFeature(it) }
       }
     }
 
@@ -77,7 +85,7 @@ open class PluginAdvertiserService {
     val plugins = mutableSetOf<PluginDownloader>()
 
     if (ids.isNotEmpty()) {
-      mergePluginsFromRepositories(
+      UpdateChecker.mergePluginsFromRepositories(
         marketplaceRequests.loadLastCompatiblePluginDescriptors(ids.keys.map { it.idString }),
         customPlugins,
         true,
@@ -135,7 +143,7 @@ open class PluginAdvertiserService {
 
         getAddressedMessagePresentation(
           plugins,
-          disabledPlugins,
+          disabledPlugins.values,
           features,
         ) to listOf(
           action,
@@ -182,22 +190,13 @@ open class PluginAdvertiserService {
 
   open fun getAddressedMessagePresentation(
     plugins: Set<PluginDownloader>,
-    disabledPlugins: Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor?>,
-    features: MultiMap<PluginId?, UnknownFeature>
+    disabledPlugins: Collection<IdeaPluginDescriptor>,
+    features: MultiMap<PluginId, UnknownFeature>,
   ): @NotificationContent String {
+    val ids = plugins.mapTo(LinkedHashSet()) { it.id } +
+              disabledPlugins.map { it.pluginId }
 
-    val ids = LinkedHashSet<PluginId>()
-    plugins.forEach { plugin -> ids.add(plugin.id) }
-    disabledPlugins.keys
-      .map { it.pluginId }
-      .forEach { ids += it }
-
-    val addressedFeatures = MultiMap.createSet<String, String>()
-    ids.forEach { id ->
-      features[id].forEach { feature ->
-        addressedFeatures.putValue(feature.featureDisplayName, feature.implementationDisplayName)
-      }
-    }
+    val addressedFeatures = collectFeaturesByName(ids, features)
 
     val pluginsNumber = ids.size
     val repoPluginsNumber = plugins.size
@@ -221,5 +220,14 @@ open class PluginAdvertiserService {
         repoPluginsNumber,
       )
     }
+  }
+
+  protected fun collectFeaturesByName(ids: Set<PluginId>,
+                                      features: MultiMap<PluginId, UnknownFeature>): MultiMap<String, String> {
+    val result = MultiMap.createSet<String, String>()
+    ids
+      .flatMap { features[it] }
+      .forEach { result.putValue(it.featureDisplayName, it.implementationDisplayName) }
+    return result
   }
 }

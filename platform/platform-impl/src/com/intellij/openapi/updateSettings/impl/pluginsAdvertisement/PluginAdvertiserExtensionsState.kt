@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit
 internal data class PluginAdvertiserExtensionsData(
   // Either extension or file name. Depends on which of the two properties has more priority for advertising plugins for this specific file.
   val extensionOrFileName: String,
-  val plugins: Set<PluginsAdvertiser.Plugin>,
+  val plugins: Set<PluginData>,
 )
 
 @State(name = "PluginAdvertiserExtensions", storages = [Storage(StoragePathMacros.CACHE_FILE)])
@@ -48,23 +49,23 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
 
     private fun requestCompatiblePlugins(
       extensionOrFileName: String,
-      allPlugins: Set<PluginsAdvertiser.Plugin>,
-    ): Set<PluginsAdvertiser.Plugin> {
-      if (allPlugins.isEmpty()) {
+      dataSet: Set<PluginData>,
+    ): Set<PluginData> {
+      if (dataSet.isEmpty()) {
         LOG.debug("No features for extension $extensionOrFileName")
         return emptySet()
       }
 
       val pluginIdsFromMarketplace = MarketplaceRequests.Instance
-        .getLastCompatiblePluginUpdate(allPlugins.map { it.pluginIdString })
+        .getLastCompatiblePluginUpdate(dataSet.map { it.pluginIdString })
         .map { it.pluginId }
         .toSet()
 
-      val plugins = allPlugins
+      val plugins = dataSet
         .asSequence()
         .filter {
-          it.myFromCustomRepository
-          || it.myBundled
+          it.isFromCustomRepository
+          || it.isBundled
           || pluginIdsFromMarketplace.contains(it.pluginIdString)
         }.toSet()
 
@@ -209,10 +210,10 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
 internal class PluginAdvertiserExtensionsState : BaseState() {
 
   @get:XCollection(style = XCollection.Style.v2)
-  val plugins by linkedMap<String, PluginsAdvertiser.Plugin>()
+  val plugins by linkedMap<String, PluginData>()
 
   operator fun set(fileNameOrExtension: String, descriptor: PluginDescriptor) {
-    plugins[fileNameOrExtension] = PluginsAdvertiser.Plugin(descriptor.pluginId.idString, descriptor.name, descriptor.isBundled)
+    plugins[fileNameOrExtension] = PluginData(descriptor)
 
     // no need to waste time to check that map is really changed - registerLocalPlugin is not called often after start-up,
     // so, mod count will be not incremented too often

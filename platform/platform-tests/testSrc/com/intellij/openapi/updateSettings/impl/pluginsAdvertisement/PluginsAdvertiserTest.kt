@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
+import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.testFramework.UsefulTestCase
 
 /**
@@ -8,7 +9,7 @@ import com.intellij.testFramework.UsefulTestCase
  */
 class PluginsAdvertiserTest : UsefulTestCase() {
   fun testSerializeKnownExtensions() {
-    val plugin = PluginsAdvertiser.Plugin("foo", "Foo", false)
+    val plugin = PluginData("foo", "Foo")
     PluginsAdvertiser.saveExtensions(mapOf("foo" to setOf(plugin)))
 
     val knownExtensions = PluginsAdvertiser.loadExtensions()

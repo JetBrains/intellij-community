@@ -41,6 +41,9 @@ import java.util.Map;
  * @author anna
  */
 public final class PluginDownloader {
+
+  public static final PluginDownloader[] EMPTY_ARRAY = {};
+
   private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
 
   private final PluginId myPluginId;
@@ -313,15 +316,13 @@ public final class PluginDownloader {
   }
 
   // creators-converters
-  public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor) throws IOException {
+  public static @NotNull PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor) throws IOException {
     return createDownloader(descriptor, null, null);
   }
 
-  public static @NotNull PluginDownloader createDownloader(
-    @NotNull IdeaPluginDescriptor descriptor,
-    @Nullable String host,
-    @Nullable BuildNumber buildNumber
-  ) throws IOException {
+  public static @NotNull PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
+                                                           @Nullable String host,
+                                                           @Nullable BuildNumber buildNumber) throws IOException {
     String url;
     try {
       if (host != null && descriptor instanceof PluginNode) {

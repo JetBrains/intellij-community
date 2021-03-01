@@ -5,8 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
+import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.text.StringUtil.unquoteString
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
@@ -114,8 +116,27 @@ data class FeatureImpl(
   val description: String? = null,
   val version: String? = null,
   val implementationName: String? = null,
-  val bundled: Boolean = false
-)
+  val bundled: Boolean = false,
+) {
+
+  fun toPluginData(isFromCustomRepository: Boolean = false): PluginData? {
+    return pluginId
+      ?.let { unquoteString(it) }
+      ?.let { id ->
+        PluginData(
+          id,
+          pluginName?.let { unquoteString(it) },
+          bundled,
+          isFromCustomRepository,
+        )
+      }
+  }
+
+  fun toPluginData(isFromCustomRepository: (String) -> Boolean): PluginData? {
+    return pluginId
+      ?.let { toPluginData(isFromCustomRepository.invoke(it)) }
+  }
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class MarketplaceBrokenPlugin(
