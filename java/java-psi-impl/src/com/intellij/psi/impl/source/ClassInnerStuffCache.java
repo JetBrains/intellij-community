@@ -233,11 +233,46 @@ public final class ClassInnerStuffCache {
   private static class EnumSyntheticMethod extends LightElement implements PsiMethod, SyntheticElement {
     private final PsiClass myClass;
     private final EnumMethodKind myKind;
+    private final PsiType myReturnType;
+    private final LightParameterListBuilder myParameterList;
+    private final LightModifierList myModifierList;
 
     EnumSyntheticMethod(@NotNull PsiClass enumClass, EnumMethodKind kind) {
       super(enumClass.getManager(), enumClass.getLanguage());
       myClass = enumClass;
       myKind = kind;
+      myReturnType = createReturnType();
+      myParameterList = createParameterList();
+      myModifierList = createModifierList();
+    }
+
+    private @NotNull PsiType createReturnType() {
+      PsiClassType type = JavaPsiFacade.getElementFactory(getProject()).createType(myClass);
+      if (myKind == EnumMethodKind.Values) {
+        return type.createArrayType();
+      }
+      return type;
+    }
+
+    @NotNull
+    private LightModifierList createModifierList() {
+      return new LightModifierList(myManager, getLanguage(), PsiModifier.PUBLIC, PsiModifier.STATIC) {
+        @Override
+        public PsiElement getParent() {
+          return EnumSyntheticMethod.this;
+        }
+      };
+    }
+
+    @NotNull
+    private LightParameterListBuilder createParameterList() {
+      LightParameterListBuilder parameters = new LightParameterListBuilder(myManager, getLanguage());
+      if (myKind == EnumMethodKind.ValueOf) {
+        PsiClassType string = PsiType.getJavaLangString(myManager, GlobalSearchScope.allScope(getProject()));
+        LightParameter parameter = new LightParameter("name", string, this, getLanguage(), false);
+        parameters.addParameter(parameter);
+      }
+      return parameters;
     }
 
     @Override
@@ -280,11 +315,7 @@ public final class ClassInnerStuffCache {
 
     @Override
     public @Nullable PsiType getReturnType() {
-      PsiClassType type = JavaPsiFacade.getElementFactory(getProject()).createType(myClass);
-      if (myKind == EnumMethodKind.Values) {
-        return type.createArrayType();
-      }
-      return type;
+      return myReturnType;
     }
 
     @Override
@@ -294,13 +325,7 @@ public final class ClassInnerStuffCache {
 
     @Override
     public @NotNull PsiParameterList getParameterList() {
-      LightParameterListBuilder parameters = new LightParameterListBuilder(myManager, getLanguage());
-      if (myKind == EnumMethodKind.ValueOf) {
-        PsiClassType string = PsiType.getJavaLangString(myManager, GlobalSearchScope.allScope(getProject()));
-        LightParameter parameter = new LightParameter("name", string, this, getLanguage(), false);
-        parameters.addParameter(parameter);
-      }
-      return parameters;
+      return myParameterList;
     }
 
     @Override
@@ -378,12 +403,7 @@ public final class ClassInnerStuffCache {
 
     @Override
     public @NotNull PsiModifierList getModifierList() {
-      return new LightModifierList(myManager, getLanguage(), PsiModifier.PUBLIC, PsiModifier.STATIC) {
-        @Override
-        public PsiElement getParent() {
-          return EnumSyntheticMethod.this;
-        }
-      };
+      return myModifierList;
     }
 
     @Override
