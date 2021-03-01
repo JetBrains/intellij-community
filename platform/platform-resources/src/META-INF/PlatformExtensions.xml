@@ -881,13 +881,15 @@
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" />
 
     <notificationGroup id="Runtime Chooser" displayType="BALLOON" bundle="messages.LangBundle" key="notification.title.choose.ide.runtime" />
+    <registryKey key="runtime.chooser.url" description="Custom URL to download the list of available JBRs for Runtime Chooser" defaultValue="" />
+    <registryKey key="runtime.chooser.pretend.major" description="Makes Runtime Chooser show JBRs from previous releases" defaultValue="" />
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup" />
 
     <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
     <registryKey key="jdk.updater" defaultValue="true" description="Check for JDK updates and suggest actions in notifications"/>
     <registryKey key="jdk.downloader" defaultValue="true" description="Suggest JDK downloads"/>
-    <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
+    <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs" defaultValue=""/>
     <registryKey key="jdk.downloader.reuse.installed" defaultValue="true" description="Allow to reuse locally installed with the JDK Downloader JDK instead of download it again"/>
     <registryKey key="jdk.downloader.reuse.downloading" defaultValue="true" description="Allow to reuse currently downloading with the JDK Downloader JDK instead of downloading it again"/>
     <registryKey key="jdk.downloader.assume.m1" defaultValue="false" description="Makes IntelliJ tryly believe it's running on Apple Silicon compatible hardware"/>
