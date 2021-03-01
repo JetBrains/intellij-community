@@ -162,13 +162,16 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       @Override
       protected JComponent getAdditionalActionSettings(Project project) {
         final JPanel panel = new JPanel(new GridBagLayout());
-        var constraints = new GridBagConstraints(0, 0, 1, 1, 0, 0,
+        var constraints = new GridBagConstraints(0, 0, 1, 1, 1, 1,
                                                  GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                                                  JBUI.emptyInsets(),
                                                  0, 0);
-        panel.add(fileFilterPanel.getPanel(), constraints);
 
-        if (toolWrapper.getTool().createOptionsPanel() != null) {
+        if (toolWrapper.getTool().createOptionsPanel() == null) {
+          panel.add(fileFilterPanel.getPanel(), constraints);
+        } else {
+          constraints.weighty = 0;
+          panel.add(fileFilterPanel.getPanel(), constraints);
           myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);
           final JComponent optionsPanel = myUpdatedSettingsToolWrapper.getTool().createOptionsPanel();
           LOGGER.assertTrue(optionsPanel != null);
@@ -180,7 +183,6 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
 
           optionsPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(optionsPanel));
           constraints.gridy++;
-          constraints.weightx = 1;
           constraints.weighty = 1;
           panel.add(InspectionUiUtilKt.addScrollPaneIfNecessary(optionsPanel), constraints);
         }
