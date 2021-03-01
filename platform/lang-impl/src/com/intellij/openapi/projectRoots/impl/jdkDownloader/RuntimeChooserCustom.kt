@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
@@ -13,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.roots.ui.configuration.SdkPopup
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
@@ -41,6 +43,21 @@ object RuntimeChooserCustom {
 
   val isActionAvailable
     get() = sdkType != null
+
+  val jdkDownloaderExtensionProvider = DataProvider { dataId ->
+    when {
+      JDK_DOWNLOADER_EXT.`is`(dataId) -> jdkDownloaderExtension
+      else -> null
+    }
+  }
+
+  private val jdkDownloaderExtension = object: JdkDownloaderDialogHostExtension {
+    override fun allowWsl(): Boolean = false
+
+    override fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem): Boolean {
+      return item.jdkMajorVersion >= minJdkFeatureVersion && item.os == JdkPredicate.currentOS && item.arch == JdkPredicate.currentArch
+    }
+  }
 
   fun createSdkChooserPopup(parent: JComponent, model: RuntimeChooserModel) : SdkPopup? {
     return SdkPopupFactory
