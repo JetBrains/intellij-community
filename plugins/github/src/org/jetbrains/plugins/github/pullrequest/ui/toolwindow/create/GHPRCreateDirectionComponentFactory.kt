@@ -49,7 +49,10 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
 
     val head = ActionLink("")
     head.addActionListener {
-      chooseHeadRepoAndBranch(head, model.headRepo, model.headBranch, model::setHead)
+      chooseHeadRepoAndBranch(head, model.headRepo, model.headBranch) { repo, branch ->
+        model.setHead(repo, branch)
+        model.headSetByUser = true
+      }
     }
 
     val changesWarningLabel = JLabel(AllIcons.General.Warning)
