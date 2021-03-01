@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class MavenRunnerSettings implements Cloneable {
+  public MavenRunnerSettings() {}
 
   @NonNls public static final String USE_INTERNAL_JAVA = ExternalSystemJdkUtil.USE_INTERNAL_JAVA;
   @NonNls public static final String USE_PROJECT_JDK = ExternalSystemJdkUtil.USE_PROJECT_JDK;

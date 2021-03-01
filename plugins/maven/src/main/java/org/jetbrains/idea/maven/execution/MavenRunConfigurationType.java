@@ -217,7 +217,7 @@ public final class MavenRunConfigurationType implements ConfigurationType {
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettingsToRun);
     MavenRunnerSettings runnerSettingsToRun =
-      runnerSettings != null ? runnerSettings : new MavenRunnerSettings();
+      runnerSettings != null ? runnerSettings : MavenRunner.getInstance(project).getState();
     runConfiguration.setRunnerSettings(runnerSettingsToRun);
     if (WslDistributionManager.isWslPath(params.getWorkingDirPath())) {
       //todo: find appropriate WSL distribution
