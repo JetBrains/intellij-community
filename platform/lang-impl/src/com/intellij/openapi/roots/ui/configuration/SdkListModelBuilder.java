@@ -40,6 +40,7 @@ public final class SdkListModelBuilder {
   @NotNull private final Condition<? super Sdk> mySdkFilter;
   @NotNull private final Condition<? super SdkTypeId> mySdkTypeFilter;
   @NotNull private final Condition<? super SdkTypeId> mySdkTypeCreationFilter;
+  @NotNull private final Condition<? super SuggestedItem> mySuggestedItemsFilter;
 
   @NotNull private final EventDispatcher<ModelListener> myModelListener = EventDispatcher.create(ModelListener.class);
 
@@ -60,6 +61,15 @@ public final class SdkListModelBuilder {
                              @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
                              @Nullable Condition<? super SdkTypeId> sdkTypeCreationFilter,
                              @Nullable Condition<? super Sdk> sdkFilter) {
+    this(project, sdkModel, sdkTypeFilter, sdkTypeCreationFilter, sdkFilter, null);
+  }
+
+  public SdkListModelBuilder(@Nullable Project project,
+                             @NotNull ProjectSdksModel sdkModel,
+                             @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
+                             @Nullable Condition<? super SdkTypeId> sdkTypeCreationFilter,
+                             @Nullable Condition<? super Sdk> sdkFilter,
+                             @Nullable Condition<? super SuggestedItem> suggestedSdkFilter) {
     myProject = project;
     mySdkModel = sdkModel;
 
@@ -76,6 +86,10 @@ public final class SdkListModelBuilder {
     mySdkFilter = sdk -> sdk != null
                          && mySdkTypeFilter.value(sdk.getSdkType())
                          && (sdkFilter == null || sdkFilter.value(sdk));
+
+    mySuggestedItemsFilter = item -> item != null
+                                     && mySdkTypeCreationFilter.value(item.sdkType)
+                                     && (suggestedSdkFilter == null || suggestedSdkFilter.value(item));
   }
 
   /**
@@ -342,6 +356,7 @@ public final class SdkListModelBuilder {
       public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home) {
         SuggestedItem item = new SuggestedItem(type, version, home);
 
+        if (!mySuggestedItemsFilter.value(item)) return;
         mySuggestions = ImmutableList.<SuggestedItem>builder()
           .addAll(mySuggestions)
           .add(item)

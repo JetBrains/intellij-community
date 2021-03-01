@@ -128,6 +128,15 @@ interface SdkPopupBuilder {
   @Contract(pure = true)
   fun withSdkFilter(filter: Condition<Sdk>): SdkPopupBuilder
 
+  interface SuggestedSdk {
+    val type: SdkTypeId
+    val versionString: String
+    val homePath: String
+  }
+
+  @Contract(pure = true)
+  fun withSuggestedSdkFilter(filter: Condition<SuggestedSdk>): SdkPopupBuilder
+
   /**
    * Executed when an item is selected in the popup (and popup is closing),
    * it is not executed if a popup was cancelled
