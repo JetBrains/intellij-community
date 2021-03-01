@@ -194,7 +194,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   private fun getRectangleToScroll(lessonMessage: LessonMessage): Rectangle? {
     val startRect = modelToView(lessonMessage.start + 1) ?: return null
     val endRect = modelToView(lessonMessage.end - 1) ?: return null
-    return Rectangle(startRect.x, startRect.y - + activeTaskInset, endRect.x + endRect.width - startRect.x,
+    return Rectangle(startRect.x, startRect.y - activeTaskInset, endRect.x + endRect.width - startRect.x,
                      endRect.y + endRect.height - startRect.y + activeTaskInset * 2)
   }
 
