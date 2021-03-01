@@ -28,13 +28,12 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
         showPopup(component, x, y)
       }
     })
-    updateHelpTooltip()
   }
 
-  private fun updateHelpTooltip() {
-    HelpTooltip.dispose(this)
+  override fun updateToolTipText() {
     HelpTooltip().apply {
       setTitle(button.toolWindow.stripeTitle)
+      setLocation(HelpTooltip.Alignment.RIGHT)
       setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.getActionIdForToolWindow(button.id)))
       installOn(this@SquareStripeButton)
     }
