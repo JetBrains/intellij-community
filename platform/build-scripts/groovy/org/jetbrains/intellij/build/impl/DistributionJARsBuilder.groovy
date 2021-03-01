@@ -868,14 +868,19 @@ final class DistributionJARsBuilder {
 
     Pair<String, String> sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, buildContext.buildNumber)
 
-    pluginXmlPatcher.patchPluginXml(
-      patchedPluginXmlFile,
-      plugin.mainModule,
-      pluginVersion,
-      sinceUntil,
-      pluginsToPublish.contains(plugin),
-      plugin.retainProductDescriptorForBundledPlugin,
-    )
+    try {
+      pluginXmlPatcher.patchPluginXml(
+        patchedPluginXmlFile,
+        plugin.mainModule,
+        pluginVersion,
+        sinceUntil,
+        pluginsToPublish.contains(plugin),
+        plugin.retainProductDescriptorForBundledPlugin,
+      )
+    }
+    catch (Throwable t) {
+      throw new RuntimeException("Could not patch $pluginXmlPath: ${t.message}", t)
+    }
 
     layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
   }
