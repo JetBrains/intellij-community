@@ -164,4 +164,8 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
   public void testBuilder$BuilderWithXArgsConstructor() {
     doTest(true);
   }
+
+  public void testBuilder$BuilderWithBuilderClassName() {
+    doTest(true);
+  }
 }
