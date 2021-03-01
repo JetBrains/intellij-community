@@ -82,6 +82,7 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
         runInEdt {
           checkLoadChanges(false)
           checkLoadSelectedCommitChanges(false)
+          checkUpdateHead()
         }
       }
     })
@@ -124,6 +125,11 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
       }
   }
 
+  private fun checkUpdateHead() {
+    val headRepo = directionModel.headRepo
+    if (headRepo != null && !directionModel.headSetByUser) directionModel.setHead(headRepo, headRepo.gitRemote.repository.currentBranch)
+  }
+
   private val changesLoadingErrorHandler = GHRetryLoadingErrorHandler {
     checkLoadChanges(false)
   }
@@ -149,7 +155,8 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
     val createLoadingModel = GHCompletableFutureLoadingModel<GHPullRequestShort>(uiDisposable)
 
     val infoComponent = GHPRCreateInfoComponentFactory(project, settings, repositoriesManager, dataContext, viewController)
-      .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel, createLoadingModel)
+      .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel,
+              createLoadingModel)
 
     return GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
       .create(infoComponent, diffController,

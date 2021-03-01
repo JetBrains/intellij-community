@@ -11,6 +11,8 @@ interface GHPRCreateDirectionModel {
   val headRepo: GHGitRepositoryMapping?
   val headBranch: GitBranch?
 
+  var headSetByUser: Boolean
+
   fun setHead(repo: GHGitRepositoryMapping?, branch: GitBranch?)
 
   fun addAndInvokeDirectionChangesListener(listener: () -> Unit)

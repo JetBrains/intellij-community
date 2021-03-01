@@ -246,6 +246,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     val headRepo = repos.find { it.repository == recentHead } ?: if (repos.size == 1) repos.single() else if (baseIsFork) baseRepo else null
     val headBranch = headRepo?.gitRemote?.repository?.currentBranch
     setHead(headRepo, headBranch)
+    headSetByUser = false
   }
 
   private inner class CreateAction(private val directionModel: GHPRCreateDirectionModel,

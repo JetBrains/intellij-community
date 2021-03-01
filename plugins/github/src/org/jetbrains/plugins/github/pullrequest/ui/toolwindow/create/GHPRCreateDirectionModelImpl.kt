@@ -17,6 +17,7 @@ class GHPRCreateDirectionModelImpl(override val baseRepo: GHGitRepositoryMapping
     private set
   override var headBranch: GitBranch? = null
     private set
+  override var headSetByUser: Boolean = false
 
   override fun setHead(repo: GHGitRepositoryMapping?, branch: GitBranch?) {
     headRepo = repo
