@@ -1125,8 +1125,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private CancellablePromise<List<AnAction>> myLastUpdate;
 
+  protected boolean canUpdateActions(@NotNull List<? extends AnAction> newVisibleActions) {
+    return !newVisibleActions.equals(myVisibleActions) || myPresentationFactory.isNeedRebuild();
+  }
+
   protected void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
-    if (forced || !newVisibleActions.equals(myVisibleActions) || myPresentationFactory.isNeedRebuild()) {
+    if (forced || canUpdateActions(newVisibleActions)) {
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
 
