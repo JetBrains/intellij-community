@@ -26,12 +26,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCaseKt;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,7 +65,10 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
@@ -90,41 +91,43 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   private String myJdkHome;
 
   private final List<Sdk> removedSdks = new SmartList<>();
+  private PathAssembler.LocalDistribution myDistribution;
 
   @Override
   public void setUp() throws Exception {
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
-    super.setUp();
-    removedSdks.clear();
-    WriteAction.runAndWait(() -> {
-      for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-        ProjectJdkTable.getInstance().removeJdk(sdk);
-        if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
-        removedSdks.add(sdk);
-      }
-      VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
-      JavaSdk javaSdk = JavaSdk.getInstance();
-      SdkType javaSdkType = javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
-      Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, javaSdkType, true, null, GRADLE_JDK_NAME);
-      assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-      ProjectJdkTable.getInstance().addJdk(jdk);
-    });
     myProjectSettings = new GradleProjectSettings().withQualifiedModuleNames();
+    super.setUp();
+    WriteAction.runAndWait(this::configureJDKTable);
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
-    PathAssembler.LocalDistribution distribution = WriteAction.computeAndWait(() -> configureWrapper());
-
-    List<String> allowedRoots = new ArrayList<>();
-    collectAllowedRoots(allowedRoots, distribution);
-    if (!allowedRoots.isEmpty()) {
-      VfsRootAccess.allowRootAccess(myTestFixture.getTestRootDisposable(), ArrayUtilRt.toStringArray(allowedRoots));
-    }
 
     ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestRootDisposable());
     UsefulTestCaseKt.setRegistryPropertyForTest(this, "unknown.sdk.auto", false);
-
     TestUnknownSdkResolver.INSTANCE.setUnknownSdkFixMode(TestUnknownSdkResolver.TestUnknownSdkFixMode.REAL_LOCAL_FIX);
 
     cleanScriptsCacheIfNeeded();
+  }
+
+  private void configureJDKTable() throws Exception {
+    removedSdks.clear();
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      ProjectJdkTable.getInstance().removeJdk(sdk);
+      if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
+      removedSdks.add(sdk);
+    }
+    VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    SdkType javaSdkType = javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
+    Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, javaSdkType, true, null, GRADLE_JDK_NAME);
+    assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
+    ProjectJdkTable.getInstance().addJdk(jdk);
+  }
+
+  @Override
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
+    myJdkHome = requireRealJdkHome();
+    myDistribution = configureWrapper();
   }
 
   /**
@@ -202,8 +205,6 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
-    String javaHome = Environment.getVariable("JAVA_HOME");
-    if (javaHome != null) roots.add(javaHome);
   }
 
   @Override
@@ -233,10 +234,14 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @Override
   protected void collectAllowedRoots(final List<String> roots) {
     super.collectAllowedRoots(roots);
-    myJdkHome = requireRealJdkHome();
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
+
+    String javaHome = Environment.getVariable("JAVA_HOME");
+    if (javaHome != null) roots.add(javaHome);
+
+    collectAllowedRoots(roots, myDistribution);
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
