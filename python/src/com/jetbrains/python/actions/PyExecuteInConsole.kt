@@ -48,7 +48,8 @@ object PyExecuteInConsole {
     if (existingConsole != null) {
       val console = existingConsole.executionConsole
       (console as PyCodeExecutor).executeCode(commandText, editor)
-      showConsoleAndRequestFocus(project, existingConsole, requestFocusToConsole, editor, isDebug)
+      val consoleView = showConsole(project, existingConsole, isDebug)
+      requestFocus(requestFocusToConsole, editor, consoleView)
     }
     else {
       startNewConsoleInstance(project, commandText, config, newConsoleListener)
@@ -72,7 +73,7 @@ object PyExecuteInConsole {
         }
       }
       else -> {
-        throw IllegalStateException("Custom descriptor for ${virtualFile} isn't supported")
+        throw IllegalStateException("Custom descriptor for ${virtualFile} is null")
       }
     }
   }
@@ -108,19 +109,9 @@ object PyExecuteInConsole {
     val toolWindow = PythonConsoleToolWindow.getInstance(project) ?: return null
     if (!toolWindow.isInitialized) return null
     val consoles = toolWindow.consoleContentDescriptors.filter { isAlive(it) }
-    if (consoles.size == 1) {
-      return consoles[0]
-    }
-    else if (consoles.size > 1) {
-      val selectedConsole = toolWindow.selectedContentDescriptor
-      return if (Iterables.contains(consoles, selectedConsole)) {
-        selectedConsole
-      }
-      else {
-        consoles[0]
-      }
-    }
-    return null
+    return consoles.singleOrNull()
+           ?: toolWindow.selectedContentDescriptor.takeIf { it in consoles }
+           ?: consoles.firstOrNull()
   }
 
   fun isAlive(dom: RunContentDescriptor): Boolean {
@@ -152,11 +143,9 @@ object PyExecuteInConsole {
     runner.run(false)
   }
 
-  private fun showConsoleAndRequestFocus(project: Project,
-                                         descriptor: RunContentDescriptor,
-                                         requestFocusToConsole: Boolean,
-                                         editor: Editor?,
-                                         isDebug: Boolean) {
+  private fun showConsole(project: Project,
+                          descriptor: RunContentDescriptor,
+                          isDebug: Boolean): PythonConsoleView? {
     if (isDebug) {
       val console = descriptor.executionConsole
       val currentSession = XDebuggerManager.getInstance(project).currentSession
@@ -171,15 +160,7 @@ object PyExecuteInConsole {
         contentManager.findContent("Console")?.let { content ->
           contentManager.setSelectedContent(content)
         }
-        // It's necessary to request focus again after tab selection
-        if (requestFocusToConsole) {
-          (console as PythonDebugLanguageConsoleView).pydevConsoleView.requestFocus()
-        }
-        else {
-          if (editor != null) {
-            IdeFocusManager.findInstance().requestFocus(editor.contentComponent, true)
-          }
-        }
+        return (console as PythonDebugLanguageConsoleView).pydevConsoleView
       }
     }
     else {
@@ -191,6 +172,19 @@ object PyExecuteInConsole {
         contentManager.findContent(PyExecuteConsoleCustomizer.instance.getDescriptorName(descriptor))?.let {
           contentManager.setSelectedContent(it)
         }
+      }
+      return descriptor.executionConsole as? PythonConsoleView
+    }
+    return null
+  }
+
+  private fun requestFocus(requestFocusToConsole: Boolean, editor: Editor?, consoleView: PythonConsoleView?) {
+    if (requestFocusToConsole) {
+      consoleView?.requestFocus()
+    }
+    else {
+      if (editor != null) {
+        IdeFocusManager.findInstance().requestFocus(editor.contentComponent, true)
       }
     }
   }
