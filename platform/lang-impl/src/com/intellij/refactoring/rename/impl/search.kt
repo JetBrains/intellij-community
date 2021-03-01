@@ -1,15 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.impl
 
-import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.model.search.SearchRequest
 import com.intellij.model.search.SearchService
-import com.intellij.model.search.TextOccurrence
-import com.intellij.model.search.impl.buildTextQuery
+import com.intellij.model.search.impl.buildTextUsageQuery
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
@@ -61,21 +58,11 @@ private fun buildTextResultsQueries(project: Project,
   val result = ArrayList<Query<out RenameUsage>>(replaceTextTargets.size)
   for ((searchRequest: SearchRequest, usageTextByName: UsageTextByName) in replaceTextTargets) {
     val effectiveSearchScope: SearchScope = searchRequest.searchScope?.let(searchScope::intersectWith) ?: searchScope
-    val searchString: String = searchRequest.searchString
-    result += buildTextQuery(project, searchString, effectiveSearchScope, context.searchContexts)
-      .mapToUsages(searchString, usageTextByName, context)
+    val fileUpdater = fileRangeUpdater(usageTextByName)
+    result += buildTextUsageQuery(project, searchRequest, effectiveSearchScope, context.searchContexts)
+      .mapping {
+        TextRenameUsage(it, fileUpdater, context)
+      }
   }
   return result
-}
-
-private fun Query<out TextOccurrence>.mapToUsages(
-  searchString: String,
-  usageTextByName: UsageTextByName,
-  context: ReplaceTextTargetContext,
-): Query<out RenameUsage> {
-  val fileUpdater = fileRangeUpdater(usageTextByName)
-  return mapping { occurrence: TextOccurrence ->
-    val rangeInElement = TextRange.from(occurrence.offsetInElement, searchString.length)
-    TextRenameUsage(PsiUsage.textUsage(occurrence.element, rangeInElement), fileUpdater, context)
-  }
 }

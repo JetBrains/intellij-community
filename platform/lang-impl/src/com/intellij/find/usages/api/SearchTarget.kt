@@ -2,6 +2,7 @@
 package com.intellij.find.usages.api
 
 import com.intellij.model.Pointer
+import com.intellij.model.search.SearchRequest
 import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -50,7 +51,7 @@ interface SearchTarget {
    * @return collection of strings to search for text occurrences
    */
   @JvmDefault
-  val textSearchStrings: Collection<String>
+  val textSearchRequests: Collection<SearchRequest>
     get() = emptyList()
 
   /**
