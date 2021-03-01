@@ -12,9 +12,7 @@ class GradleProjectUsageSearcher : UsageSearcher {
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> {
     val projectSymbol = parameters.target as? GradleProjectSymbol ?: return emptyList()
     val query = searchGradleProjectReferences(parameters.project, projectSymbol, parameters.searchScope)
-      .mapping {
-        PsiUsage.textUsage(it.element, it.rangeInElement)
-      }
+      .mapping(PsiUsage::textUsage)
     return listOf(query)
   }
 }
