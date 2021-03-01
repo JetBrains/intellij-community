@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
@@ -201,6 +202,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    */
   @Deprecated
   public void startBlocking(@NotNull Runnable init) {
+    DeprecatedMethodException.report("Use ProgressManager.run*() instead");
     CompletableFuture<Object> future = new CompletableFuture<>();
     Disposer.register(this, () -> future.complete(null));
     startBlocking(init, future);
@@ -290,8 +292,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  @Nullable
-  protected ProgressDialog getDialog() {
+  @Nullable ProgressDialog getDialog() {
     return myDialog;
   }
 
@@ -338,8 +339,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  public void setTitle(@ProgressTitle String title) {
-    if (!Objects.equals(title, myTitle)) {
+  public void setTitle(@NotNull @ProgressTitle String title) {
+    if (!title.equals(myTitle)) {
       myTitle = title;
       update();
     }
@@ -350,17 +351,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     return myTitle;
   }
 
-  public void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
+  void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     if (myDialog != null) {
       myDialog.changeCancelButtonText(text);
     }
     else {
       myCancelText = text;
     }
-  }
-
-  IdeFocusManager getFocusManager() {
-    return IdeFocusManager.getInstance(myProject);
   }
 
   @Override

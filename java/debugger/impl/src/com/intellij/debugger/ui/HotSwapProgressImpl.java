@@ -186,7 +186,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   @Override
-  public void setTitle(final @NlsContexts.ProgressTitle String text) {
+  public void setTitle(final @NlsContexts.ProgressTitle @NotNull String text) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
       myProgressWindow.setTitle(text);

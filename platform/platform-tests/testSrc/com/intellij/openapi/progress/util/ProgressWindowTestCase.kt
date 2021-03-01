@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.progress.impl
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.progress.util
 
 import com.intellij.testFramework.FileEditorManagerTestCase
 import com.intellij.testFramework.PlatformTestUtil
@@ -8,11 +8,8 @@ import kotlinx.coroutines.*
 import org.junit.Assert
 import java.awt.EventQueue
 
-abstract class ProgressWindowTestCase<Fixture : Any, Process : Any> : FileEditorManagerTestCase() { // necessary since setup may query ui
-  companion object {
-    @JvmStatic
-    protected val TIMEOUT_MS = 30_000L
-  }
+abstract class ProgressWindowTestCase<Process> : FileEditorManagerTestCase() { // necessary since setup may query ui
+  protected val TIMEOUT_MS = 30_000L
 
   abstract fun Process.use(block: () -> Unit)
   abstract fun createProcess(): Process

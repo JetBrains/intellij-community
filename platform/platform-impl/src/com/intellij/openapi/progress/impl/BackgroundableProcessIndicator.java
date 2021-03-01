@@ -19,12 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
-  protected StatusBarEx myStatusBar;
+  private StatusBarEx myStatusBar;
 
   private PerformInBackgroundOption myOption;
   private TaskInfo myInfo;
 
-  private boolean myDidInitializeOnEdt = false;
+  private boolean myDidInitializeOnEdt;
   private boolean myDisposed;
 
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {

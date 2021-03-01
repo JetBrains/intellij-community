@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
@@ -275,7 +276,8 @@ final class ProgressDialog implements Disposable {
     // (see IdeGlassPaneImp.addImpl), requesting focus to cancel button until that time has no effect, as it's not showing.
     SwingUtilities.invokeLater(() -> {
       if (myPopup != null && !myPopup.isDisposed()) {
-        myProgressWindow.getFocusManager().requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
+        IdeFocusManager.getInstance(myProgressWindow.myProject)
+          .requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
       }
     });
   }
