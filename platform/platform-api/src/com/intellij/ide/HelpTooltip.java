@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -144,6 +143,12 @@ public class HelpTooltip {
       @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
         Dimension size = owner.getSize();
         return new Point(size.width + JBUIScale.scale(5) - X_OFFSET.get(), JBUIScale.scale(1) + Y_OFFSET.get());
+      }
+    },
+
+    LEFT {
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
+        return new Point(- popupSize.width - JBUIScale.scale(5) + X_OFFSET.get(), JBUIScale.scale(1) + Y_OFFSET.get());
       }
     },
 
