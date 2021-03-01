@@ -6,6 +6,7 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageView
 import com.intellij.util.SmartList
@@ -27,7 +28,10 @@ class SearchTargetVariantsDataRule : GetDataRule {
         val offset = editor.caretModel.offset
         val reference = TargetElementUtil.findReference(editor, offset)
         if (reference != null) {
-          TargetElementUtil.getInstance().getTargetCandidates(reference).mapTo(allTargets, ::PsiTargetVariant)
+          try {
+            TargetElementUtil.getInstance().getTargetCandidates(reference).mapTo(allTargets, ::PsiTargetVariant)
+          }
+          catch (ignore: IndexNotReadyException) { }
         }
       }
     }
