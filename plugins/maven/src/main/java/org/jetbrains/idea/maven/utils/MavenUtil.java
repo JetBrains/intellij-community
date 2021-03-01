@@ -8,6 +8,8 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.notification.Notification;
@@ -710,13 +712,12 @@ public class MavenUtil {
   @Nullable
   public static String getMavenVersion(@Nullable File mavenHome) {
     if (mavenHome == null) return null;
-    String[] libs = new File(mavenHome, "lib").list();
+    File[] libs = new File(mavenHome, "lib").listFiles();
 
 
     if (libs != null) {
-      for (String lib : libs) {
-        File mavenLibFile = new File(mavenHome, "lib/" + lib);
-
+      for (File mavenLibFile : libs) {
+        String lib = mavenLibFile.getName();
         if (lib.equals("maven-core.jar")) {
           MavenLog.LOG.debug("Choosing version by maven-core.jar");
           return getMavenLibVersion(mavenLibFile);
@@ -736,8 +737,16 @@ public class MavenUtil {
     return null;
   }
 
-  private static String getMavenLibVersion(File file) {
-    Properties props = loadProperties(file, "META-INF/maven/org.apache.maven/maven-core/pom.properties");
+  private static String getMavenLibVersion(final File file) {
+    WSLDistribution distribution = WslPath.getDistributionByWindowsUncPath(file.getPath());
+    File fileToRead = Optional.ofNullable(distribution)
+      .map(it -> distribution.getWslPath(file.getPath()))
+      .map(it -> distribution.resolveSymlink(it))
+      .map(it -> distribution.getWindowsPath(it))
+      .map(it -> new File(it))
+      .orElse(file);
+
+    Properties props = loadProperties(fileToRead, "META-INF/maven/org.apache.maven/maven-core/pom.properties");
     return props != null
            ? nullize(props.getProperty("version"))
            : nullize(getJarAttribute(file, java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION));
