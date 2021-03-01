@@ -7,6 +7,7 @@ object FeatureUsageStatisticConsts {
   const val DURATION = "duration"
   const val START = "start"
   const val PASSED = "passed"
+  const val STOPPED = "stopped"
   const val START_MODULE_ACTION = "start_module_action"
   const val MODULE_NAME = "module_name"
   const val PROGRESS = "progress"
@@ -21,4 +22,5 @@ object FeatureUsageStatisticConsts {
   const val ACTION_ID = "action_id"
   const val TASK_ID = "task_id"
   const val KEYMAP_SCHEME = "keymap_scheme"
+  const val REASON = "reason"
 }

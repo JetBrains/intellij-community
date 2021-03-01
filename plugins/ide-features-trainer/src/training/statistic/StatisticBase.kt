@@ -30,10 +30,12 @@ import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
 import training.statistic.FeatureUsageStatisticConsts.NON_LEARNING_PROJECT_OPENED
 import training.statistic.FeatureUsageStatisticConsts.PASSED
 import training.statistic.FeatureUsageStatisticConsts.PROGRESS
+import training.statistic.FeatureUsageStatisticConsts.REASON
 import training.statistic.FeatureUsageStatisticConsts.RESTORE
 import training.statistic.FeatureUsageStatisticConsts.SHORTCUT_CLICKED
 import training.statistic.FeatureUsageStatisticConsts.START
 import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
+import training.statistic.FeatureUsageStatisticConsts.STOPPED
 import training.statistic.FeatureUsageStatisticConsts.TASK_ID
 import training.util.KeymapUtil
 import java.awt.event.KeyEvent
@@ -49,11 +51,17 @@ internal class StatisticBase : CounterUsagesCollector() {
     LEARN_IDE, ONBOARDING_PROMOTER
   }
 
+  enum class LessonStopReason {
+    CLOSE_PROJECT, RESTART, CLOSE_FILE, OPEN_MODULES, OPEN_NEXT_OR_PREV_LESSON
+  }
+
   companion object {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 8)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 9)
+
+    var isLearnProjectClosing = false
 
     // FIELDS
     private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, LESSON_ID)
@@ -67,11 +75,13 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val versionField = EventFields.Version
     private val inputEventField = EventFields.InputEvent
     private val learnProjectOpeningWayField = EventFields.Enum<LearnProjectOpeningWay>(LEARN_PROJECT_OPENING_WAY)
+    private val reasonField = EventFields.Enum<LessonStopReason>(REASON)
 
     // EVENTS
     private val lessonStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START, lessonIdField, languageField)
     private val lessonPassedEvent: EventId3<String?, String?, Long> = GROUP.registerEvent(PASSED, lessonIdField, languageField,
                                                                                           EventFields.Long(DURATION))
+    private val lessonStoppedEvent = GROUP.registerVarargEvent(STOPPED, lessonIdField, taskIdField, languageField, reasonField)
     private val progressUpdatedEvent = GROUP.registerVarargEvent(PROGRESS, lessonIdField, completedCountField, courseSizeField,
                                                                  languageField)
     private val moduleStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START_MODULE_ACTION, moduleNameField, languageField)
@@ -102,6 +112,19 @@ internal class StatisticBase : CounterUsagesCollector() {
                                completedCountField with completedCount(),
                                courseSizeField with CourseManager.instance.lessonsForModules.size,
                                languageField with courseLanguage())
+    }
+
+    fun logLessonStopped(reason: LessonStopReason) {
+      val lessonManager = LessonManager.instance
+      if (lessonManager.lessonIsRunning()) {
+        val lessonId = lessonManager.currentLesson!!.id
+        val taskId = lessonManager.currentLessonExecutor!!.currentTaskIndex
+        lessonStoppedEvent.log(lessonIdField with lessonId,
+          taskIdField with taskId.toString(),
+          languageField with courseLanguage(),
+          reasonField with reason
+        )
+      }
     }
 
     fun logModuleStarted(module: IftModule) {

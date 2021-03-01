@@ -11,7 +11,7 @@ import training.lang.LangManager
 import training.util.isLearningProject
 import training.util.trainerPluginConfigName
 
-internal class NonLearningProjectOpenedListener : ProjectManagerListener {
+internal class LearnProjectStateListener : ProjectManagerListener {
   override fun projectOpened(project: Project) {
     val learnProjectState = LearnProjectState.instance
     val way = learnProjectState.firstTimeOpenedWay
@@ -21,6 +21,21 @@ internal class NonLearningProjectOpenedListener : ProjectManagerListener {
         StatisticBase.logNonLearningProjectOpened(way)
         learnProjectState.firstTimeOpenedWay = null
       }
+    }
+  }
+
+  override fun projectClosingBeforeSave(project: Project) {
+    val langSupport = LangManager.getInstance().getLangSupport() ?: return
+    if (isLearningProject(project, langSupport)) {
+      StatisticBase.isLearnProjectClosing = true
+      StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.CLOSE_PROJECT)
+    }
+  }
+
+  override fun projectClosed(project: Project) {
+    val langSupport = LangManager.getInstance().getLangSupport() ?: return
+    if (isLearningProject(project, langSupport)) {
+      StatisticBase.isLearnProjectClosing = false
     }
   }
 }
