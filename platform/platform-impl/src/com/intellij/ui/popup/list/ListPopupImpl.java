@@ -15,6 +15,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -481,11 +482,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
     setIndexForShowingChild(myList.getSelectedIndex());
-    myList.setNextStepButtonSelected(true);
-    Disposer.register(myChild, () -> {
-      setIndexForShowingChild(-1);
-      myList.setNextStepButtonSelected(false);
-    });
+
+    if (Registry.is("ide.list.popup.separate.next.step.button")) {
+      myList.setNextStepButtonSelected(true);
+      Disposer.register(myChild, () -> {
+        setIndexForShowingChild(-1);
+        myList.setNextStepButtonSelected(false);
+      });
+    }
   }
 
   @Override
@@ -531,7 +535,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
           myExtendMode = calcExtendMode(index);
           if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
             myList.setSelectedIndex(index);
-            if (myExtendMode == ExtendMode.EXTEND_ON_HOVER && myShowSubmenuOnHover) {
+            if (myExtendMode == ExtendMode.EXTEND_ON_HOVER) {
               showSubMenu(index, true);
             }
             else if (getIndexForShowingChild() != -1) {
@@ -567,7 +571,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Object selectedValue = myListModel.getElementAt(index);
       if (selectedValue == null || !listStep.hasSubstep(selectedValue)) return ExtendMode.NO_EXTEND;
 
-      return listStep.isFinal(selectedValue) ? ExtendMode.EXTEND_ON_BUTTON : ExtendMode.EXTEND_ON_HOVER;
+      if (Registry.is("ide.list.popup.separate.next.step.button")) {
+        return listStep.isFinal(selectedValue)
+               ? ExtendMode.EXTEND_ON_BUTTON
+               : myShowSubmenuOnHover ? ExtendMode.EXTEND_ON_HOVER : ExtendMode.NO_EXTEND;
+      }
+
+      return myShowSubmenuOnHover ? ExtendMode.EXTEND_ON_HOVER : ExtendMode.NO_EXTEND;
     }
 
     private boolean isMovingToSubmenu(Point prevPoint, Point newPoint) {
