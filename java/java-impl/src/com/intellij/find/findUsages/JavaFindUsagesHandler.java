@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -100,7 +101,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }
     List<PsiElement> elementsToSearch = new ArrayList<>(overrides.length + 1);
     elementsToSearch.add(parameter);
-    int idx = method.getParameterList().getParameterIndex(parameter);
+    int idx = ReadAction.compute(() -> method.getParameterList().getParameterIndex(parameter));
     for (PsiMethod override : overrides) {
       final PsiParameter[] parameters = override.getParameterList().getParameters();
       if (idx < parameters.length) {
@@ -136,12 +137,12 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           final PsiClass aClass = method.getContainingClass();
           LOG.assertTrue(aClass != null); //Otherwise can not be overridden
 
-          boolean hasOverridden = OverridingMethodsSearch.search(method).findFirst() != null;
-          if (!hasOverridden) {
-            hasOverridden = FunctionalExpressionSearch.search(aClass).findFirst() != null;
-          }
-          if (hasOverridden && askWhetherShouldSearchForParameterInOverridingMethods(element, parameter)) {
-            return getParameterElementsToSearch(parameter, method);
+          Boolean hasOverridden = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+            return OverridingMethodsSearch.search(method).findFirst() != null ||
+                   FunctionalExpressionSearch.search(aClass).findFirst() != null;
+          }, JavaBundle.message("progress.title.detect.overridden.methods"), true, getProject());
+          if (hasOverridden != null && hasOverridden.booleanValue() && askWhetherShouldSearchForParameterInOverridingMethods(element, parameter)) {
+            return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> getParameterElementsToSearch(parameter, method), JavaBundle.message("progress.title.detect.overridden.methods"), true, getProject()) ;
           }
         }
       }
