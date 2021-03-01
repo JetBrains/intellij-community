@@ -53,6 +53,8 @@
                                  implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectReferenceProvider"/>
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectUsageSearcher"/>
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectRenameUsageSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
