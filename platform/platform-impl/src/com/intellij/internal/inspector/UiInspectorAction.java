@@ -94,7 +94,7 @@ import java.util.function.Supplier;
 import static com.intellij.internal.inspector.UiInspectorUtil.collectAnActionInfo;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
-public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible {
+public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible, ActionPromoter {
   private static final String CLICK_INFO = "CLICK_INFO";
   private static final String ACTION_ID = "UiInspector";
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
@@ -163,6 +163,15 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     assert component != null;
     new UiInspector(project).showInspector(project, component);
+  }
+
+  @Override
+  public List<AnAction> promote(@NotNull List<? extends AnAction> actions,
+                                @NotNull DataContext context) {
+    ArrayList<AnAction> sorted = new ArrayList<>(actions);
+    sorted.remove(this);
+    sorted.add(this);
+    return sorted;
   }
 
   private static void closeAllInspectorWindows() {
