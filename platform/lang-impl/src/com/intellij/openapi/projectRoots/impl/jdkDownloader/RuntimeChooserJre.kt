@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder
@@ -100,6 +101,7 @@ object RuntimeChooserJreValidator {
       }
     }
     catch (t: Throwable) {
+      if (t is ControlFlowException) throw t
       LOG.warn("Failed to run JDK for boot runtime: $homeDir. ${t.message}", t)
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
     }
