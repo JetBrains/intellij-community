@@ -185,8 +185,8 @@ public final class GuessManagerImpl extends GuessManager {
   private static GuessManagerRunner createRunner(boolean honorAssignments, PsiElement scope) {
     return new GuessManagerRunner(scope.getProject(), honorAssignments); 
   }
-  
-  static class GuessManagerRunner extends DataFlowRunner {
+
+  private static class GuessManagerRunner extends DataFlowRunner {
     private final boolean myAssignments;
     private boolean myPlaceVisited;
     private int[] myLoopNumbers;
