@@ -37,17 +37,11 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
-    val gradleSettings = GradleSettings.getInstance(project)
-    gradleSettings.setupGradleSettings()
-    val gradleProjectSettings = GradleProjectSettings()
-    gradleProjectSettings.setupGradleProjectSettings(projectDirectory)
-
-    val gradleVersion = gradleProjectSettings.resolveGradleVersion()
-    setupGradleJvm(project, gradleProjectSettings, gradleVersion)
+    val gradleProjectSettings = createLinkSettings(projectDirectory, project)
 
     attachGradleProjectAndRefresh(gradleProjectSettings, project)
 
-    validateJavaHome(project, projectDirectory, gradleVersion)
+    validateJavaHome(project, projectDirectory, gradleProjectSettings.resolveGradleVersion())
   }
 
   private fun attachGradleProjectAndRefresh(settings: ExternalProjectSettings, project: Project) {

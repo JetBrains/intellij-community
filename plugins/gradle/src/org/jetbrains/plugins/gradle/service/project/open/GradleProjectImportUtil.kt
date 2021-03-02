@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GradleProjectImportUtil")
 package org.jetbrains.plugins.gradle.service.project.open
 
@@ -21,6 +21,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import org.jetbrains.plugins.gradle.util.setupGradleJvm
 import java.nio.file.Path
 
 fun canOpenGradleProject(file: VirtualFile): Boolean =
@@ -45,6 +46,18 @@ fun canLinkAndRefreshGradleProject(projectFilePath: String, project: Project, sh
 
 fun linkAndRefreshGradleProject(projectFilePath: String, project: Project) {
   GradleOpenProjectProvider().linkToExistingProject(projectFilePath, project)
+}
+
+@ApiStatus.Internal
+fun createLinkSettings(projectDirectory: Path, project: Project): GradleProjectSettings {
+  val gradleSettings = GradleSettings.getInstance(project)
+  gradleSettings.setupGradleSettings()
+  val gradleProjectSettings = GradleProjectSettings()
+  gradleProjectSettings.setupGradleProjectSettings(projectDirectory)
+
+  val gradleVersion = gradleProjectSettings.resolveGradleVersion()
+  setupGradleJvm(project, gradleProjectSettings, gradleVersion)
+  return gradleProjectSettings
 }
 
 @ApiStatus.Internal
