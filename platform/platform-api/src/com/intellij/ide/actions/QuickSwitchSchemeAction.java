@@ -79,7 +79,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   }
 
   protected JBPopupFactory.ActionSelectionAid getAidMethod() {
-    return JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING;
+    return JBPopupFactory.ActionSelectionAid.NUMBERING;
   }
 
   @Nls(capitalization = Nls.Capitalization.Title)
