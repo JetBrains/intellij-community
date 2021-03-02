@@ -542,6 +542,7 @@ abstract class StreamEx<T> implements Stream<T> {
 
   void testStringBuilderMethods() {
     doTest("""
+@SuppressWarnings({"EqualsOnSuspiciousObject", "ConstantConditions"}) 
 class X {
   void x() {
     String abc = "abc";
