@@ -57,10 +57,9 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
     final List<NamedScope> predefinedScopes = new ArrayList<>();
     final List<NamedScope> customScopes = new ArrayList<>();
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
+      if (!myInspectionProfile.isProjectLevel() && holder instanceof NamedScopeManager) continue;
+      Collections.addAll(customScopes, holder.getEditableScopes());
       predefinedScopes.addAll(holder.getPredefinedScopes());
-      if (!myInspectionProfile.isProjectLevel() == holder instanceof NamedScopeManager) {
-        Collections.addAll(customScopes, holder.getEditableScopes());
-      }
     }
     predefinedScopes.remove(CustomScopesProviderEx.getAllScope());
     for (NamedScope predefinedScope : predefinedScopes) {
