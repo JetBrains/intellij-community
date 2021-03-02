@@ -151,6 +151,22 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     assertTrue("File name [${root.file.name} should contain '$expectedName'", root.file.name.contains(expectedName))
   }
 
+  @Test fun `test selection for snapshot`() {
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(version = "1-SNAPSHOT-an1")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
+
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1-SNAPSHOT")
+    val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
+                                                                                              listOf(myTestRepo), null)
+    val result: List<OrderRoot>? = getResultingRoots(promise)
+
+    assertEquals(1, result?.size)
+    val root = result?.get(0)!!
+    assertEquals(AnnotationOrderRootType.getInstance(), root.type)
+  }
+
 
 
   private fun getResultingRoots(promise: Promise<MutableList<OrderRoot>>): List<OrderRoot>? {
