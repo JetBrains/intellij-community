@@ -35,14 +35,14 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
   override fun getPromotionForInitialState(): JPanel? {
     val rPanel: JPanel = NonOpaquePanel()
     rPanel.layout = BoxLayout(rPanel, BoxLayout.PAGE_AXIS)
-    rPanel.border = JBUI.Borders.empty(10, 32)
+    rPanel.border = JBUI.Borders.empty(JBUI.scale(10), JBUI.scale(32))
 
     val vPanel: JPanel = NonOpaquePanel()
     vPanel.layout = BoxLayout(vPanel, BoxLayout.PAGE_AXIS)
     vPanel.alignmentY = Component.TOP_ALIGNMENT
 
     val header = JLabel(LearnBundle.message("welcome.promo.header"))
-    header.font = UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(UIUtil.getLabelFont().size2D + 4)
+    header.font = UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(UIUtil.getLabelFont().size2D + JBUI.scale(4))
     vPanel.add(header)
     vPanel.add(rigid(0, 4))
     val text = LearnBundle.message("welcome.promo.description", LessonUtil.productName)
