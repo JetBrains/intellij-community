@@ -51,7 +51,13 @@ public abstract class InspectionViewActionBase extends AnAction {
       if (project == null) return null;
       ToolWindowManager twManager = ToolWindowManager.getInstance(project);
       ToolWindow window = twManager.getToolWindow(ProblemsView.ID);
-      if (window == null) return null;
+      if (window == null) {
+        // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
+        // see RIDER-59000
+        //noinspection deprecation
+        window = twManager.getToolWindow(ToolWindowId.INSPECTION);
+        return null;
+      }
       Content selectedContent = window.getContentManager().getSelectedContent();
       if (selectedContent == null) return null;
       DataContext twContext = DataManager.getInstance().getDataContext(selectedContent.getComponent());
