@@ -6,7 +6,7 @@ import com.intellij.ide.IdeBundle.message
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil.naturalCompare
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -17,7 +17,6 @@ import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StartupUiUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.Icon
@@ -27,7 +26,7 @@ import javax.swing.ListCellRenderer
 private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyboardShortcut(actionId)?.let { getShortcutText(it) }
 
 internal interface SwitcherListItem {
-  val mnemonic: Char? get() = null
+  val mnemonic: String? get() = null
   val iconAtLeft: Icon? get() = null
   val textAtLeft: String
   val iconAtRight: Icon? get() = null
@@ -58,7 +57,7 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
 
 internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : SwitcherListItem {
   private val actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.id)
-  override var mnemonic: Char? = null
+  override var mnemonic: String? = null
   override val iconAtLeft = window.icon ?: AllIcons.FileTypes.UiForm
   override val textAtLeft = window.stripeTitle
   override val textAtRight = if (shortcut) shortcutText(actionId) else null
@@ -79,9 +78,9 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
 
 
 internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : ListCellRenderer<Any> {
-  private val MNEMONIC = SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null)
-  private val SHORTCUT = SimpleTextAttributes.GRAY_ATTRIBUTES
-  private val SEPARATOR = SHORTCUT.fgColor
+  private val MNEMONIC = JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND
+  private val MNEMONIC_WIN = SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, MNEMONIC)
+  private val MNEMONIC_MAC = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, MNEMONIC)
   private val left = SimpleColoredComponent().apply { isOpaque = false }
   private val right = SimpleColoredComponent().apply { isOpaque = false }
   private val panel = CellRendererPanel().apply {
@@ -90,41 +89,34 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     add(BorderLayout.EAST, right)
   }
 
-  private fun icon(icon: Icon?, selected: Boolean) = icon?.let {
-    val size = JBUI.scale(16)
-    IconUtil.toSize(when {
-                      !selected || StartupUiUtil.isUnderDarcula() -> it
-                      else -> IconLoader.getDarkIcon(it, true)
-                    }, size, size)
-  }
-
   override fun getListCellRendererComponent(list: JList<out Any>, value: Any?, index: Int,
                                             selected: Boolean, focused: Boolean): Component {
     left.clear()
     right.clear()
 
     panel.border = when (!selected && value is SwitcherRecentLocations) {
-      true -> JBUI.Borders.customLine(SEPARATOR, 1, 0, 0, 0)
+      true -> JBUI.Borders.customLine(MNEMONIC, 1, 0, 0, 0)
       else -> JBUI.Borders.empty()
     }
     val item = value as? SwitcherListItem ?: return panel
-    RenderingUtil.getForeground(list, selected).let{
+    RenderingUtil.getForeground(list, selected).let {
       left.foreground = it
       right.foreground = it
     }
 
-    left.icon = icon(item.iconAtLeft, selected)
-    right.icon = icon(item.iconAtRight, selected)
+    val size = JBUI.scale(16)
+    left.icon = IconUtil.toSize(RenderingUtil.getIcon(item.iconAtLeft, selected), size, size)
+    right.icon = IconUtil.toSize(RenderingUtil.getIcon(item.iconAtRight, selected), size, size)
 
     item.mnemonic?.let {
       if (!switcher.pinned) {
-        left.append(it.toString(), MNEMONIC)
-        left.append(": ")
+        left.append(it, if (SystemInfo.isWindows) MNEMONIC_WIN else MNEMONIC_MAC)
+        left.append("  ")
       }
     }
     left.append(item.textAtLeft)
     applySpeedSearchHighlighting(switcher, left, false, selected)
-    item.textAtRight?.let { right.append(it, SHORTCUT) }
+    item.textAtRight?.let { right.append(it, MNEMONIC_MAC) }
 
     return panel
   }
