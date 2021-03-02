@@ -25,7 +25,10 @@ import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
@@ -34,10 +37,7 @@ import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 interface KotlinChangeSignatureConfiguration {
@@ -93,6 +93,7 @@ class KotlinChangeSignature(
      * @param functionProcessor:
      * - top level
      * - member level
+     * - local level
      * - constructors
      *
      * @param javaProcessor:
@@ -104,11 +105,8 @@ class KotlinChangeSignature(
         functionProcessor: (KotlinMethodDescriptor) -> T?,
         javaProcessor: (KotlinMethodDescriptor, PsiMethod) -> T?,
     ): T? {
-        if (descriptor.baseDescriptor is PropertyDescriptor) {
-            return propertyProcessor(descriptor)
-        }
-
         return when (val baseDeclaration = descriptor.baseDeclaration) {
+            is KtProperty, is KtParameter -> propertyProcessor(descriptor)
             /**
              * functions:
              * - top level
