@@ -13,10 +13,10 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
     final List<NamedScope> customScopes = new ArrayList<>();
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
       predefinedScopes.addAll(holder.getPredefinedScopes());
-      if (myInspectionProfile.isProjectLevel() == holder instanceof DependencyValidationManagerImpl) {
+      if (!myInspectionProfile.isProjectLevel() == holder instanceof NamedScopeManager) {
         Collections.addAll(customScopes, holder.getEditableScopes());
       }
     }
