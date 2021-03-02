@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserJreVal
 import com.intellij.openapi.roots.ui.configuration.SdkPopup
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.SystemInfo
 import java.nio.file.Path
 import javax.swing.JComponent
 
@@ -48,7 +49,7 @@ object RuntimeChooserCustom {
     }
   }
 
-  fun createSdkChooserPopup(parent: JComponent, model: RuntimeChooserModel) : SdkPopup? {
+  fun createSdkChooserPopup(parent: JComponent, model: RuntimeChooserModel): SdkPopup? {
     return SdkPopupFactory
       .newBuilder()
       .withSdkType(sdkType ?: return null)
@@ -64,7 +65,12 @@ object RuntimeChooserCustom {
     object : Task.Modal(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk"), false) {
       override fun run(indicator: ProgressIndicator) {
         RuntimeChooserJreValidator.testNewJdkUnderProgress(
-          computeHomePath = { sdk.homePath },
+          computeHomePath = {
+            when {
+              SystemInfo.isMac -> sdk.homePath?.trimEnd('/')?.removeSuffix("/Contents/Home")?.trimEnd('/')
+              else -> sdk.homePath
+            }
+          },
           callback = object : RuntimeChooserJreValidatorCallback<Unit> {
             override fun onSdkResolved(versionString: String, sdkHome: Path) {
               val newItem = RuntimeChooserCustomItem(versionString, sdkHome.toString())
