@@ -578,6 +578,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, testDataFilePath);
             }
 
+            @TestMetadata("accessClassPropertyInSuspendFunction.kt")
+            public void testAccessClassPropertyInSuspendFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/accessClassPropertyInSuspendFunction.kt");
+            }
+
             @TestMetadata("anyUpdateInvokeStatic.kt")
             public void testAnyUpdateInvokeStatic() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/anyUpdateInvokeStatic.kt");
