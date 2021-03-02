@@ -129,7 +129,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       TimeoutUtil.run(
         () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
                              myPresentationFactory, myContext, myPlace, false, LaterInvocator.isInModalContext(), false),
-        1000, ms -> LOG.warn(ms + "ms to fill popup menu " + myPlace));
+        1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
       if (getComponentCount() == 0) {
         LOG.warn("no components in popup menu " + myPlace);
         return;

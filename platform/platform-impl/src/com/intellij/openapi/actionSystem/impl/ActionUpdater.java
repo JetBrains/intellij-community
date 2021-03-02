@@ -356,7 +356,7 @@ final class ActionUpdater {
       List<AnAction> children = getGroupChildren(group, strategy);
       List<AnAction> result = ContainerUtil.concat(children, child -> TimeoutUtil.compute(
         () -> expandGroupChild(child, hideDisabled, strategy),
-        1000, ms -> LOG.warn(ms + "ms to expand group child " + ActionManager.getInstance().getId(child))));
+        1000, ms -> LOG.warn(ms + " ms to expand group child " + ActionManager.getInstance().getId(child))));
       return group.afterExpandGroup(result, asUpdateSession(strategy));
     }
     finally {
@@ -370,7 +370,7 @@ final class ActionUpdater {
     return myGroupChildren.computeIfAbsent(group, __ -> {
       AnAction[] children = TimeoutUtil.compute(
         () -> strategy.getChildren.fun(group),
-        1000, ms -> LOG.warn(ms + "ms to expand group child " + ActionManager.getInstance().getId(group)));
+        1000, ms -> LOG.warn(ms + " ms to expand group child " + ActionManager.getInstance().getId(group)));
       int nullIndex = ArrayUtil.indexOf(children, null);
       if (nullIndex < 0) return Arrays.asList(children);
 
