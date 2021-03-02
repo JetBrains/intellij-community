@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.nio.file.Path;
 
 import static java.awt.GridBagConstraints.*;
+import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingConstants.RIGHT;
 
 @ApiStatus.NonExtendable
@@ -82,29 +83,33 @@ public class EditMemorySettingsDialog extends DialogWrapper {
       else {
         text = DiagnosticBundle.message("change.memory.message");
       }
-      panel.add(new JBLabel(text), new GridBagConstraints(0, 0, 4, 1, 1.0, 1.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+      panel.add(new JBLabel(text), new GridBagConstraints(0, 0, 5, 1, 1.0, 1.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
     }
 
     panel.add(new JBLabel(DiagnosticBundle.message("change.memory.act")),
-              new GridBagConstraints(0, 1, 4, 1, 1.0, 1.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+              new GridBagConstraints(0, 1, 5, 1, 1.0, 1.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
 
     JBLabel prompt = new JBLabel(myOption.label() + ':', RIGHT);
     prompt.setToolTipText('-' + myOption.optionName);
-    panel.add(prompt, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, EAST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(prompt, new GridBagConstraints(1, 2, 1, 1, 1.0, 1.0, EAST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
 
     myNewValueField = new JTextField(5);
     myNewValueField.setText(String.valueOf(suggested));
-    panel.add(myNewValueField, new GridBagConstraints(1, 2, 1, 1, 0.0, 1.0, CENTER, NONE, JBUI.insets(10, 10, 10, 2), 0, 0));
+    panel.add(myNewValueField, new GridBagConstraints(2, 2, 1, 1, 0.0, 1.0, CENTER, NONE, JBUI.insets(10, 10, 10, 2), 0, 0));
 
     panel.add(new JBLabel(DiagnosticBundle.message("change.memory.units")),
-              new GridBagConstraints(2, 2, 1, 1, 0.0, 1.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+              new GridBagConstraints(3, 2, 1, 1, 0.0, 1.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
 
     String formatted = current == -1 ? DiagnosticBundle.message("change.memory.unknown") : String.valueOf(current);
     panel.add(new JBLabel(DiagnosticBundle.message("change.memory.current", formatted), RIGHT).withFont(JBFont.label().asItalic()),
-              new GridBagConstraints(3, 2, 1, 1, 0.0, 1.0, WEST, NONE, JBUI.insetsLeft(10), 0, 0));
+              new GridBagConstraints(4, 2, 1, 1, 0.0, 1.0, WEST, NONE, JBUI.insetsLeft(10), 0, 0));
 
-    panel.add(new JBLabel(DiagnosticBundle.message("change.memory.file", file), AllIcons.General.Information, RIGHT),
-              new GridBagConstraints(0, 3, 4, 1, 1.0, 1.0, EAST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(new JBLabel(AllIcons.General.Information),
+              new GridBagConstraints(0, 3, 1, 1, 0.0, 1.0, WEST, NONE, JBUI.insetsRight(2), 0, 0));
+    panel.add(new JBLabel(DiagnosticBundle.message("change.memory.file"), LEFT).withFont(JBFont.label().asBold()),
+              new GridBagConstraints(1, 3, 4, 1, 1.0, 1.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(new JBLabel(file.toString(), LEFT),
+              new GridBagConstraints(1, 4, 4, 1, 1.0, 1.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
 
     return panel;
   }
