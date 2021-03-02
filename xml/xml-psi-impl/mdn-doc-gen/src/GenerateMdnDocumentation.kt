@@ -233,14 +233,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
     val status = extractStatus(compatData)
     val compatibility = extractCompatibilityInfo(compatData)
-    val doc = processElementDocumentation(elementDoc)
+    val doc = processElementDocumentation(elementDoc, getProseContentById(indexDataProseValues, "summary"))
 
     val documentation = doc.first
     val properties = doc.second.takeIf { it.isNotEmpty() }
                      ?: filterProseById(indexDataProseValues, "properties")
                        .firstOrNull()
                        ?.getProseContent()
-                       ?.let { processElementDocumentation(it) }
+                       ?.let { processElementDocumentation(it, null) }
                        ?.second
                        ?.takeIf { it.isNotEmpty() }
 
@@ -478,7 +478,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       .takeIf { it.isNotEmpty() }
   }
 
-  private fun processElementDocumentation(elementDoc: RawProse): Pair<String, Map<String, String>> {
+  private fun processElementDocumentation(elementDoc: RawProse, summaryDoc: RawProse?): Pair<String, Map<String, String>> {
     val sections = mutableMapOf<String, String>()
 
     fun processPropertiesTable(table: XmlTag) {
@@ -510,6 +510,9 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         else super.visitXmlTag(tag)
       }
     })
+    if (summaryDoc != null && htmlFile.firstChild.children.none { (it as? XmlTag)?.name == "p" }) {
+      return Pair(fixSpaces(htmlFile.patchedText() + createHtmlFile(summaryDoc).patchedText()), sections)
+    }
     return Pair(fixSpaces(htmlFile.patchedText()), sections)
   }
 
