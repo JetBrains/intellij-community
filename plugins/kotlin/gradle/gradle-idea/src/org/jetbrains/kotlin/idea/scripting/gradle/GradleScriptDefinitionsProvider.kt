@@ -37,7 +37,9 @@ import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.DependenciesResolver
 import kotlin.script.experimental.dependencies.DependenciesResolver.ResolveResult
+import kotlin.script.experimental.dependencies.ScriptDependencies
 import kotlin.script.experimental.dependencies.ScriptReport
+import kotlin.script.experimental.dependencies.asSuccess
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
@@ -398,8 +400,10 @@ private class ErrorScriptDependenciesResolver(
     private val message: String? = null
 ) : DependenciesResolver {
     override fun resolve(scriptContents: ScriptContents, environment: Environment): ResolveResult {
-        val importTasks = KotlinDslSyncListener.instance.tasks
-        val importInProgress = synchronized(importTasks) { importTasks.values.any { it.project == project } }
+        val importInProgress =
+            KotlinDslSyncListener.instance?.tasks?.let { importTasks ->
+                synchronized(importTasks) { importTasks.values.any { it.project == project } }
+            } ?: false
         val failureMessage = if (importInProgress) {
             KotlinIdeaGradleBundle.message("error.text.highlighting.is.impossible.during.gradle.import")
         } else {

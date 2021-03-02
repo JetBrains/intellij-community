@@ -24,9 +24,8 @@ import java.io.File
 
 fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
     val task = resolverCtx.externalSystemTaskId
-    val tasks = KotlinDslSyncListener.instance.tasks
-    val sync = synchronized(tasks) { tasks[task] }
-    if (sync != null) {
+    val tasks = KotlinDslSyncListener.instance?.tasks ?: return
+    synchronized(tasks) { tasks[task] }?.let { sync ->
         val gradleHome = resolverCtx.getExtraProject(BuildScriptClasspathModel::class.java)?.gradleHomeDir?.canonicalPath
             ?: resolverCtx.settings?.gradleHome
         synchronized(sync) {
@@ -59,8 +58,8 @@ fun processScriptModel(
         val project = task.findProject() ?: return false
         val models = model.toListOfScriptModels(project)
 
-        val tasks = KotlinDslSyncListener.instance.tasks
-        val sync = synchronized(tasks) { tasks[task] }
+        val tasks = KotlinDslSyncListener.instance?.tasks
+        val sync = tasks?.let { synchronized(tasks) { tasks[task] } }
         if (sync != null) {
             synchronized(sync) {
                 sync.models.addAll(models)

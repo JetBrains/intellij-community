@@ -26,9 +26,9 @@ import java.util.*
 
 class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     companion object {
-        val instance: KotlinDslSyncListener
+        val instance: KotlinDslSyncListener?
             get() =
-                ExternalSystemTaskNotificationListener.EP_NAME.findExtensionOrFail(KotlinDslSyncListener::class.java)
+                ExternalSystemTaskNotificationListener.EP_NAME.findExtension(KotlinDslSyncListener::class.java)
     }
 
     internal val tasks = WeakHashMap<ExternalSystemTaskId, KotlinDslGradleBuildSync>()
