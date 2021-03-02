@@ -285,7 +285,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   boolean isAutoScrollMode() {
     String activeToolWindowId = ToolWindowManager.getInstance(getProject()).getActiveToolWindowId();
     return myGlobalInspectionContext.getUIOptions().AUTOSCROLL_TO_SOURCE &&
-           (activeToolWindowId == null || activeToolWindowId.equals(ProblemsView.ID));
+           (activeToolWindowId == null
+            || activeToolWindowId.equals(ProblemsView.ID)
+            // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
+            // see RIDER-59000
+            //noinspection deprecation
+            || activeToolWindowId.equals(ToolWindowId.INSPECTION));
   }
 
   public void setApplyingFix(boolean applyingFix) {
