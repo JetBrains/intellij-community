@@ -26,8 +26,10 @@ private val CACHED_ITEM_ID: Key<String> = Key.create("CACHED_ITEM_ID")
 fun LookupElement.idString(): String {
     var itemId = getUserData(CACHED_ITEM_ID)
     if (itemId == null) {
-        val p = BaseCompletionLookupArranger.getDefaultPresentation(this) ?: LookupElementPresentation.renderElement(this)
-        itemId = "${p.itemText} ${p.tailText} ${p.typeText}"
+        itemId = LookupElementIdProvider.tryGetIdString(this) ?: run {
+          val p = BaseCompletionLookupArranger.getDefaultPresentation(this) ?: LookupElementPresentation.renderElement(this)
+          "${p.itemText} ${p.tailText} ${p.typeText}"
+        }
         putUserData(CACHED_ITEM_ID, itemId)
     }
     return itemId

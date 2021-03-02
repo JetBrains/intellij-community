@@ -28,6 +28,7 @@
     <extensionPoint qualifiedName="com.intellij.completion.ml.lookupFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.completion.ml.sorting.LookupFeatureProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.completion.ml.elementIdProvider" dynamic="true" interface="com.intellij.completion.ml.util.LookupElementIdProvider" />
   </extensionPoints>
 
   <resource-bundle>messages.MlCompletionBundle</resource-bundle>
