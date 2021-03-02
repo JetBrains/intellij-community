@@ -15,11 +15,13 @@ object RuntimeChooserUtil {
     val result = RuntimeChooserDialog(null, model).showDialogAndGetResult()
 
     @Suppress("MoveVariableDeclarationIntoWhen")
-    return when(result) {
+    return when (result) {
       is RuntimeChooserDialogResult.Cancel -> Unit
       is RuntimeChooserDialogResult.UseDefault -> service<RuntimeChooserPaths>().resetCustomJdk()
-      is RuntimeChooserDialogResult.UseCustomJdk -> service<RuntimeChooserPaths>().installCustomJdk(result.name, result.path)
-      is RuntimeChooserDialogResult.DownloadAndUse -> service<RuntimeChooserDownloader>().downloadAndUse(result.item, result.path)
+      is RuntimeChooserDialogResult.UseCustomJdk -> service<RuntimeChooserPaths>().installCustomJdk(result.name) { result.path }
+      is RuntimeChooserDialogResult.DownloadAndUse -> service<RuntimeChooserPaths>().installCustomJdk(result.item.fullPresentationText) { indicator ->
+        service<RuntimeChooserDownloader>().downloadAndUse(indicator, result.item, result.path)
+      }
     }
   }
 }
