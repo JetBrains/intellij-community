@@ -154,8 +154,7 @@ private fun mergeWithGlobal(tag: MdnHtmlAttributeDocumentation, global: MdnHtmlA
       tag.url,
       tag.status ?: global.status,
       tag.compatibility ?: global.compatibility,
-      tag.doc ?: global.doc,
-      tag.sections ?: global.sections
+      tag.doc ?: global.doc
     )
   } ?: tag
 
@@ -167,11 +166,9 @@ interface MdnSymbolDocumentation {
   val url: String
   val isDeprecated: Boolean
 
-  fun getDocumentation(withDefinition: Boolean,
-                       docOnHover: Boolean): String
+  fun getDocumentation(withDefinition: Boolean): String
 
   fun getDocumentation(withDefinition: Boolean,
-                       docOnHover: Boolean,
                        additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String
 }
 
@@ -184,13 +181,12 @@ class MdnSymbolDocumentationAdapter(private val name: String,
   override val isDeprecated: Boolean
     get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
 
-  override fun getDocumentation(withDefinition: Boolean, docOnHover: Boolean): String =
-    getDocumentation(withDefinition, docOnHover, null)
+  override fun getDocumentation(withDefinition: Boolean): String =
+    getDocumentation(withDefinition, null)
 
   override fun getDocumentation(withDefinition: Boolean,
-                                docOnHover: Boolean,
                                 additionalSectionsContent: Consumer<java.lang.StringBuilder>?) =
-    buildDoc(doc, name, source.lang, withDefinition, docOnHover, additionalSectionsContent)
+    buildDoc(doc, name, source.lang, withDefinition, additionalSectionsContent)
 
 }
 
@@ -199,7 +195,7 @@ interface MdnRawSymbolDocumentation {
   val status: Set<MdnApiStatus>?
   val compatibility: Map<MdnJavaScriptRuntime, String>?
   val doc: String?
-  val sections: Map<String, String>?
+  val sections: Map<String, String> get() = emptyMap()
 }
 
 interface MdnDocumentation {
@@ -229,20 +225,18 @@ data class MdnHtmlElementDocumentation(override val url: String,
                                        override val status: Set<MdnApiStatus>?,
                                        override val compatibility: Map<MdnJavaScriptRuntime, String>?,
                                        override val doc: String,
-                                       override val sections: Map<String, String>?,
+                                       val details: Map<String, String>?,
                                        val attrs: Map<String, MdnHtmlAttributeDocumentation>?) : MdnRawSymbolDocumentation
 
 data class MdnHtmlAttributeDocumentation(override val url: String,
                                          override val status: Set<MdnApiStatus>?,
                                          override val compatibility: Map<MdnJavaScriptRuntime, String>?,
-                                         override val doc: String?,
-                                         override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
+                                         override val doc: String?) : MdnRawSymbolDocumentation
 
 data class MdnDomEventDocumentation(override val url: String,
                                     override val status: Set<MdnApiStatus>?,
                                     override val compatibility: Map<MdnJavaScriptRuntime, String>?,
-                                    override val doc: String?,
-                                    override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
+                                    override val doc: String?) : MdnRawSymbolDocumentation
 
 data class MdnJsSymbolDocumentation(override val url: String,
                                     override val status: Set<MdnApiStatus>?,
@@ -251,7 +245,7 @@ data class MdnJsSymbolDocumentation(override val url: String,
                                     val parameters: Map<String, String>?,
                                     val returns: String?,
                                     val throws: Map<String, String>?) : MdnRawSymbolDocumentation {
-  override val sections: Map<String, String>?
+  override val sections: Map<String, String>
     get() {
       val result = mutableMapOf<String, String>()
       parameters?.takeIf { it.isNotEmpty() }?.let {
@@ -261,35 +255,37 @@ data class MdnJsSymbolDocumentation(override val url: String,
       throws?.takeIf { it.isNotEmpty() }?.let {
         result.put("Throws", buildSubSection(it))
       }
-      return result.takeIf { it.isNotEmpty() }
+      return result
     }
 }
 
 data class MdnCssBasicSymbolDocumentation(override val url: String,
                                           override val status: Set<MdnApiStatus>?,
                                           override val compatibility: Map<MdnJavaScriptRuntime, String>?,
-                                          override val doc: String?,
-                                          override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
+                                          override val doc: String?) : MdnRawSymbolDocumentation
 
 data class MdnCssAtRuleSymbolDocumentation(override val url: String,
                                            override val status: Set<MdnApiStatus>?,
                                            override val compatibility: Map<MdnJavaScriptRuntime, String>?,
                                            override val doc: String?,
-                                           override val sections: Map<String, String>?,
                                            val properties: Map<String, MdnCssPropertySymbolDocumentation>?) : MdnRawSymbolDocumentation
 
 data class MdnCssPropertySymbolDocumentation(override val url: String,
                                              override val status: Set<MdnApiStatus>?,
                                              override val compatibility: Map<MdnJavaScriptRuntime, String>?,
                                              override val doc: String?,
+                                             val formalSyntax: String?,
                                              val values: Map<String, String>?) : MdnRawSymbolDocumentation {
-  override val sections: Map<String, String>?
+  override val sections: Map<String, String>
     get() {
       val result = mutableMapOf<String, String>()
+      formalSyntax?.takeIf { it.isNotEmpty() }?.let {
+        result.put("Syntax", "<pre><code>$it</code></pre>")
+      }
       values?.takeIf { it.isNotEmpty() }?.let {
         result.put("Values", buildSubSection(values))
       }
-      return result.takeIf { it.isNotEmpty() }
+      return result
     }
 }
 
@@ -429,7 +425,6 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
                      name: String,
                      lang: String,
                      withDefinition: Boolean,
-                     docOnHover: Boolean,
                      additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String {
   val buf = StringBuilder()
   if (withDefinition)
@@ -451,7 +446,7 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
     ?.filter { it != MdnApiStatus.StandardTrack }
     ?.map { Pair(it.name, "") }
     ?.toMap(sections)
-  if (!sections.isNullOrEmpty() && !docOnHover) {
+  if (!sections.isNullOrEmpty() || additionalSectionsContent != null) {
     buf.append(DocumentationMarkup.SECTIONS_START)
     for (entry in sections) {
       buf.append(DocumentationMarkup.SECTION_HEADER_START)
@@ -467,11 +462,6 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
     additionalSectionsContent?.accept(buf)
     buf.append(DocumentationMarkup.SECTIONS_END)
   }
-  else if (additionalSectionsContent != null) {
-    buf.append(DocumentationMarkup.SECTIONS_START)
-    additionalSectionsContent.accept(buf)
-    buf.append(DocumentationMarkup.SECTIONS_END)
-  }
   buf.append(DocumentationMarkup.CONTENT_START)
     .append("By <a href='")
     .append(doc.url)
@@ -483,7 +473,7 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
     lang)
 }
 
-private fun buildSubSection(items: Map<String, String>): String {
+fun buildSubSection(items: Map<String, String>): String {
   val result = StringBuilder()
   items.forEach { (name, doc) ->
     result.append("<p><code>")
