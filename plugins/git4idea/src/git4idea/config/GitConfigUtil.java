@@ -124,15 +124,6 @@ public final class GitConfigUtil {
     return StringUtil.isEmpty(encoding) ? getCommitEncoding(project, root) : encoding;
   }
 
-  /**
-   * Get encoding that GIT uses for file names.
-   */
-  @NotNull
-  public static String getFileNameEncoding() {
-    // TODO the best guess is that the default encoding is used.
-    return Charset.defaultCharset().name();
-  }
-
   public static void setValue(@NotNull Project project,
                               @NotNull VirtualFile root,
                               @NotNull @NonNls String key,

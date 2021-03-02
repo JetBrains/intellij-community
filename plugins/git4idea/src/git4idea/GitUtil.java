@@ -518,7 +518,7 @@ public final class GitUtil {
   @NotNull
   public static String unescapePath(@NotNull @NonNls String path) throws VcsException {
     try {
-      return VcsFileUtil.unescapeGitPath(path, GitConfigUtil.getFileNameEncoding());
+      return VcsFileUtil.unescapeGitPath(path);
     }
     catch (IllegalStateException e) {
       throw new VcsException(e);
