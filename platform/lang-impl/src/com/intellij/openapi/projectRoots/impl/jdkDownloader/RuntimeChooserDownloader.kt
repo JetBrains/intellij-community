@@ -4,10 +4,9 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Path
@@ -23,6 +22,7 @@ class RuntimeChooserDownloader {
       return request.javaHome
     }
     catch (t: Throwable) {
+      if (t is ControlFlowException) throw t
       thisLogger().warn("Failed to download boot runtime from $jdk. ${t.message}")
       RuntimeChooserMessages.showErrorMessage(
         LangBundle.message("dialog.message.choose.ide.runtime.download.error", jdk.fullPresentationText, targetDir.toString())
