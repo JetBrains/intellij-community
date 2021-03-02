@@ -282,6 +282,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           composite.addEditor(editor, provider);
         }
       }
+      updateFileBackgroundColor(file);
     }
 
     // update for non-dumb-aware EditorTabTitleProviders
