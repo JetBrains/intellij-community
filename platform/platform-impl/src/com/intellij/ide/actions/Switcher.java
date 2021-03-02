@@ -36,8 +36,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.ToolWindowEventSource;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -46,6 +44,7 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -68,7 +67,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.List;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.RecentFiles;
@@ -124,18 +122,16 @@ public final class Switcher extends DumbAwareAction {
   public static class SwitcherPanel extends BorderLayoutPanel implements DataProvider, QuickSearchComponent, Disposable {
     static final int SWITCHER_ELEMENTS_LIMIT = 30;
 
-    static final Object RECENT_LOCATIONS = new Object();
     final JBPopup myPopup;
     final JBList<Object> toolWindows;
     final JBList<FileInfo> files;
-    final ToolWindowManager toolWindowManager;
     final JCheckBox cbShowOnlyEditedFiles;
     final JLabel pathLabel = new JLabel(" ");
     final Project project;
     final boolean pinned;
     final boolean wasAltDown;
     final boolean wasControlDown;
-    final Map<String, ToolWindow> twShortcuts;
+    final Map<String, SwitcherToolWindow> twShortcuts;
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
@@ -205,6 +201,8 @@ public final class Switcher extends DumbAwareAction {
       cbShowOnlyEditedFiles = !pinned || !Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together")
                                       ? null : new JCheckBox(IdeBundle.message("recent.files.checkbox.label"));
 
+      SwitcherListRenderer renderer = new SwitcherListRenderer(this);
+
       setBorder(JBUI.Borders.empty());
       setBackground(JBColor.background());
       pathLabel.setHorizontalAlignment(SwingConstants.LEFT);
@@ -245,24 +243,18 @@ public final class Switcher extends DumbAwareAction {
         }
       }
 
-      toolWindowManager = ToolWindowManager.getInstance(project);
       CollectionListModel<Object> twModel = new CollectionListModel<>();
-      List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
-      List<ToolWindow> windows = new ArrayList<>();
-      for (ActivateToolWindowAction action : actions) {
-        ToolWindow tw = toolWindowManager.getToolWindow(action.getToolWindowId());
-        if (tw != null && tw.isAvailable()) {
-          windows.add(tw);
-        }
-      }
+      List<SwitcherToolWindow> windows = renderer.getToolWindows();
       twShortcuts = createShortcuts(windows);
-      final Map<ToolWindow, String> map = ContainerUtil.reverseMap(twShortcuts);
-      windows.sort((o1, o2) -> StringUtil.compare(map.get(o1), map.get(o2), false));
-      for (ToolWindow window : windows) {
-        twModel.add(window);
-      }
+      windows.stream().sorted((o1, o2) -> {
+        Character m1 = o1.getMnemonic();
+        Character m2 = o2.getMnemonic();
+        return m1 == null
+               ? (m2 == null ? 0 : 1)
+               : (m2 == null ? -1 : m1.compareTo(m2));
+      }).forEach(twModel::add);
       if (pinned) {
-        twModel.add(RECENT_LOCATIONS);
+        twModel.add(new SwitcherRecentLocations(this));
       }
 
       toolWindows = new JBList<>(createModel(twModel, getNamer(), mySpeedSearch, pinned));
@@ -270,7 +262,8 @@ public final class Switcher extends DumbAwareAction {
 
       toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, pinned, this::isOnlyEditedFilesShown));
+      toolWindows.setCellRenderer(renderer);
+      toolWindows.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
       toolWindows.addKeyListener(onKeyRelease);
       ScrollingUtil.installActions(toolWindows);
       ListHoverListener.DEFAULT.addTo(toolWindows);
@@ -466,26 +459,23 @@ public final class Switcher extends DumbAwareAction {
       project.putUserData(SWITCHER_KEY, null);
     }
 
-    private boolean isOnlyEditedFilesShown() {
+    boolean isOnlyEditedFilesShown() {
       return cbShowOnlyEditedFiles != null && cbShowOnlyEditedFiles.isSelected();
+    }
+
+    boolean isSpeedSearchPopupActive() {
+      return mySpeedSearch != null && mySpeedSearch.isPopupActive();
     }
 
     @NotNull
     private Function<? super Object, String> getNamer() {
       return value -> {
-        if (value instanceof ToolWindow) {
-          return ((ToolWindow)value).getStripeTitle();
-        }
-        if (value == RECENT_LOCATIONS) {
-          return getRecentLocationsLabel(this::isOnlyEditedFilesShown);
+        if (value instanceof SwitcherListItem) {
+          return ((SwitcherListItem)value).getTextAtLeft();
         }
 
         throw new IllegalStateException();
       };
-    }
-
-    static @Nls String getRecentLocationsLabel(@NotNull Supplier<Boolean> showEdited) {
-      return showEdited.get() ? IdeBundle.message("recent.locations.changed.locations") : IdeBundle.message("recent.locations.popup.title");
     }
 
     @Override
@@ -636,11 +626,11 @@ public final class Switcher extends DumbAwareAction {
     }
 
     @NotNull
-    private static Map<String, ToolWindow> createShortcuts(@NotNull List<? extends ToolWindow> windows) {
-      final Map<String, ToolWindow> keymap = new HashMap<>(windows.size());
-      final List<ToolWindow> otherTW = new ArrayList<>();
-      for (ToolWindow window : windows) {
-        int index = ActivateToolWindowAction.getMnemonicForToolWindow(window.getId());
+    private static Map<String, SwitcherToolWindow> createShortcuts(@NotNull List<SwitcherToolWindow> windows) {
+      final Map<String, SwitcherToolWindow> keymap = new HashMap<>(windows.size());
+      final List<SwitcherToolWindow> otherTW = new ArrayList<>();
+      for (SwitcherToolWindow window : windows) {
+        int index = ActivateToolWindowAction.getMnemonicForToolWindow(window.getWindow().getId());
         if (index >= '0' && index <= '9') {
           keymap.put(getIndexShortcut(index - '0'), window);
         }
@@ -649,7 +639,7 @@ public final class Switcher extends DumbAwareAction {
         }
       }
       int i = 0;
-      for (ToolWindow window : otherTW) {
+      for (SwitcherToolWindow window : otherTW) {
         String bestShortcut = getSmartShortcut(window, keymap);
         if (bestShortcut != null) {
           keymap.put(bestShortcut, window);
@@ -662,12 +652,17 @@ public final class Switcher extends DumbAwareAction {
         keymap.put(getIndexShortcut(i), window);
         i++;
       }
+      keymap.forEach((string, window) -> {
+        if (!StringUtil.isEmpty(string)) {
+          window.setMnemonic(string.charAt(0));
+        }
+      });
       return keymap;
     }
 
     @Nullable
-    private static String getSmartShortcut(ToolWindow window, Map<String, ToolWindow> keymap) {
-      String title = window.getStripeTitle();
+    private static String getSmartShortcut(SwitcherToolWindow window, Map<String, SwitcherToolWindow> keymap) {
+      String title = window.getTextAtLeft();
       if (StringUtil.isEmpty(title))
         return null;
       for (int i = 0; i < title.length(); i++) {
@@ -740,14 +735,9 @@ public final class Switcher extends DumbAwareAction {
             EditorHistoryManager.getInstance(project).removeFile(virtualFile);
           }
         }
-        else if (value instanceof ToolWindow) {
-          final ToolWindow toolWindow = (ToolWindow)value;
-          if (toolWindowManager instanceof ToolWindowManagerImpl) {
-            ((ToolWindowManagerImpl)toolWindowManager).hideToolWindow(toolWindow.getId(), false, false, ToolWindowEventSource.CloseFromSwitcher);
-          }
-          else {
-            toolWindow.hide(null);
-          }
+        else if (value instanceof SwitcherListItem) {
+          SwitcherListItem item = (SwitcherListItem)value;
+          item.close(this);
         }
       }
       pack();
@@ -867,17 +857,9 @@ public final class Switcher extends DumbAwareAction {
       if (values.isEmpty()) {
         tryToOpenFileSearch(e, searchQuery);
       }
-      else if (values.get(0) == RECENT_LOCATIONS) {
-        RecentLocationsAction.showPopup(project, isOnlyEditedFilesShown());
-
-      } else if (values.get(0) instanceof ToolWindow) {
-        ToolWindow toolWindow = (ToolWindow)values.get(0);
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-          () -> {
-            ToolWindowEventSource source = mySpeedSearch != null && mySpeedSearch.isPopupActive() ? ToolWindowEventSource.SwitcherSearch : ToolWindowEventSource.Switcher;
-            ((ToolWindowManagerImpl) toolWindowManager).activateToolWindow(toolWindow.getId(), null, true, source);
-          },
-          ModalityState.current());
+      else if (values.get(0) instanceof SwitcherListItem) {
+        SwitcherListItem item = (SwitcherListItem)values.get(0);
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> item.navigate(this, mode), ModalityState.current());
       }
       else {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
@@ -968,10 +950,10 @@ public final class Switcher extends DumbAwareAction {
 
     private void registerToolWindowAction(@NonNls @NotNull String key) {
       registerAction(event -> {
-        ToolWindow window = twShortcuts.get(key);
+        SwitcherToolWindow window = twShortcuts.get(key);
         if (window != null) {
           cancel();
-          window.activate(null, true, true);
+          window.getWindow().activate(null, true, true);
         }
       }, key);
     }
@@ -1016,8 +998,8 @@ public final class Switcher extends DumbAwareAction {
 
       @Override
       protected String getElementText(Object element) {
-        if (element instanceof ToolWindow) {
-          return ((ToolWindow)element).getStripeTitle();
+        if (element instanceof SwitcherListItem) {
+          return ((SwitcherListItem)element).getTextAtLeft();
         }
         else if (element instanceof FileInfo) {
           return ((FileInfo)element).getNameForRendering();
