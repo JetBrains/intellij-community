@@ -301,4 +301,12 @@ public class MacWinTabsHandler {
 
     Foundation.invoke(tabGroup, "addObserver:forKeyPath:options:context:", myObserverDelegate, Foundation.nsString("windows"), 0, ID.NIL);
   }
+
+  public static void switchFrameIfPossible(@NotNull JFrame frame, boolean next) {
+    if (JdkEx.isTabbingModeAvailable()) {
+      Foundation.executeOnMainThread(true, false, () -> {
+        Foundation.invoke(MacUtil.getWindowFromJavaWindow(frame), next ? "selectNextTab:" : "selectPreviousTab:", ID.NIL);
+      });
+    }
+  }
 }
