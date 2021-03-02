@@ -31,8 +31,7 @@ fun RuntimeChooserCurrentItem.Companion.currentRuntime(): RuntimeChooserCurrentI
   val isBundled = runCatching { PathManager.isUnderHomeDirectory(javaHome) }.getOrElse { false }
   val info = runCatching { SdkVersionUtil.getJdkVersionInfo(javaHome) }.getOrNull()
 
-
-  val fullVersion = kotlin.runCatching {
+  val fullVersion = runCatching {
     val releaseFile = Paths.get(javaHome, "release")
     if (!Files.isRegularFile(releaseFile)) return@runCatching null
     val p = Properties()
