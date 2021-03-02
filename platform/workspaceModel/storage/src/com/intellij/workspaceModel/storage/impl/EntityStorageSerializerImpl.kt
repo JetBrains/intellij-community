@@ -38,7 +38,7 @@ private val LOG = logger<EntityStorageSerializerImpl>()
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
                                   private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v11"
+    const val SERIALIZER_VERSION = "v12"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024

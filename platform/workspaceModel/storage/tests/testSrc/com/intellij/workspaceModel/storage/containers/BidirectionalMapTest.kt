@@ -75,6 +75,7 @@ class BidirectionalMapTest {
     assertContainsElements(bidirectionalMap.getSlotsWithList(), 1)
     assertDoesntContain(bidirectionalMap.getSlotsWithList(), 3)
     val copy = bidirectionalMap.copy()
+    copy.assertConsistency()
     assertNotSame(copy.getSlotsWithList(), bidirectionalMap.getSlotsWithList())
     assertContainsElements(copy.getSlotsWithList(), 1)
   }

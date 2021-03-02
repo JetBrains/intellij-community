@@ -27,7 +27,7 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
       if (keys is MutableList<*>) {
         keys.remove(key)
         if (keys.size == 1) {
-          valueToKeysMap[value] = keys[0]
+          valueToKeysMap[oldValue] = keys[0]
           slotsWithList.remove(oldValue)
         } else if (keys.isEmpty()) {
           valueToKeysMap.remove(oldValue)
@@ -134,12 +134,33 @@ internal class BidirectionalMap<K, V> private constructor(private val slotsWithL
 
   fun copy(): BidirectionalMap<K, V> {
     val clonedValueToKeysMap = valueToKeysMap.clone()
-    slotsWithList.forEach { value -> clonedValueToKeysMap[value] = SmartList(valueToKeysMap[value]) }
+    slotsWithList.forEach { value -> clonedValueToKeysMap[value] = SmartList(valueToKeysMap[value] as MutableList<K>) }
     return BidirectionalMap(HashSet(slotsWithList), keyToValueMap.clone(), clonedValueToKeysMap)
   }
 
   @TestOnly
   fun getSlotsWithList() = slotsWithList
+
+  @TestOnly
+  fun assertConsistency() {
+    assert(keyToValueMap.keys == valueToKeysMap.values.map {
+      if (it is SmartList<*>) return@map it
+      else return@map SmartList(it)
+    }.flatten().toSet()) { "The count of keys in one map does not equal the amount on the second map" }
+    assert(keyToValueMap.values.toSet() == valueToKeysMap.keys) { "The count of values in one map does not equal the amount on the second map" }
+    valueToKeysMap.forEach { (value, keys) ->
+      if (keys is SmartList<*>) {
+        assert(slotsWithList.contains(value)) { "Not registered value: $value with list at slotsWithList collection" }
+        keys.forEach {
+          assert(keyToValueMap.containsKey(it)) { "Key: $it is not registered at keyToValueMap collection" }
+          assert(keyToValueMap[it] == value) { "Value by key: $it is different in collections. Expected: $value but actual ${keyToValueMap[it]}" }
+        }
+      } else {
+        assert(keyToValueMap.containsKey(keys)) { "Key: $keys is not registered at keyToValueMap collection" }
+        assert(keyToValueMap[keys] == value) { "Value by key: $keys is different in collections. Expected: $value but actual ${keyToValueMap[keys]}" }
+      }
+    }
+  }
 
   override fun toString(): String {
     return keyToValueMap.toString()
