@@ -2306,7 +2306,7 @@ public final class ContainerUtil {
    * @return read-only list consisting of the elements from all of the collections returned by the mapping function,
    * or a read-only view of the list returned by the mapping function, if it only returned a single list that was not empty
    */
-  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends List<V>> mapping) {
+  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, @NotNull ? extends List<V>> mapping) {
     // GC optimization for critical clients
     List<V> result = null;
     boolean isOriginal = true;
