@@ -54,9 +54,8 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
-import libraries.coroutines.extra.Lifetime
-import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.runBlocking
+import libraries.coroutines.extra.using
 import libraries.klogging.logger
 import runtime.Ui
 
@@ -66,6 +65,7 @@ private class SpaceShareProjectAction : DumbAwareAction() {
   }
 
   private val git: Git = Git.getInstance()
+
 
   override fun update(e: AnActionEvent) {
     SpaceActionUtils.showIconInActionSearch(e)
@@ -89,10 +89,11 @@ private class SpaceShareProjectAction : DumbAwareAction() {
     if (project == null || project.isDefault || project.isDisposed) {
       return
     }
+
     ApplicationManager.getApplication().invokeLater(
       {
         FileDocumentManager.getInstance().saveAllDocuments()
-        launch(Lifetime.Eternal, Ui) {
+        SpaceWorkspaceComponent.getInstance().lifetime.using { lt ->
           val details = createSpaceProject(project)
           shareProjectOnSpace(project, file, details!!)
         }
@@ -139,8 +140,10 @@ private class SpaceShareProjectAction : DumbAwareAction() {
           return
         }
 
-        val gitAccessExists = runBlocking(Lifetime.Eternal, Ui) {
-          checkPassword(project)
+        val gitAccessExists = SpaceWorkspaceComponent.getInstance().lifetime.using { lt ->
+          runBlocking(lt, Ui) {
+            checkPassword(project)
+          }
         }
 
         if (gitAccessExists) {
