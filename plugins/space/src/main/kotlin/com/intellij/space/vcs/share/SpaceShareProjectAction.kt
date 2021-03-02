@@ -94,15 +94,20 @@ private class SpaceShareProjectAction : DumbAwareAction() {
       {
         FileDocumentManager.getInstance().saveAllDocuments()
         SpaceWorkspaceComponent.getInstance().lifetime.using { lt ->
-          val details = createSpaceProject(project)
-          shareProjectOnSpace(project, file, details!!)
+          when (val creationResult = createSpaceProject(project)) {
+            is SpaceShareProjectDialog.Result.ProjectCreated -> shareProjectOnSpace(project, file, creationResult)
+
+            SpaceShareProjectDialog.Result.NotCreated -> {
+              notifyError(project, SpaceBundle.message("share.project.error.notification.repository.not.created"))
+            }
+          }
         }
       },
       ModalityState.NON_MODAL
     )
   }
 
-  private fun shareProjectOnSpace(project: Project, file: VirtualFile?, details: SpaceShareProjectDialog.Result) {
+  private fun shareProjectOnSpace(project: Project, file: VirtualFile?, details: SpaceShareProjectDialog.Result.ProjectCreated) {
     val (repoInfo, repoDetails, url) = details
 
     object : Task.Backgroundable(project, SpaceBundle.message("share.project.action.progress.title.sharing.title")) {
@@ -182,19 +187,19 @@ private class SpaceShareProjectAction : DumbAwareAction() {
     }.queue()
   }
 
-  private fun createSpaceProject(project: Project): SpaceShareProjectDialog.Result? {
+  private fun createSpaceProject(project: Project): SpaceShareProjectDialog.Result {
     LOG.info("Creating repository on Space")
     val shareProjectDialog = SpaceShareProjectDialog(project)
     if (shareProjectDialog.showAndGet()) {
       val result = shareProjectDialog.result
       if (result == null) {
         LOG.info("Repository not created")
-        return null
+        return SpaceShareProjectDialog.Result.NotCreated
       }
       LOG.info("Repository created successfully: $result")
       return result
     }
-    return null
+    return SpaceShareProjectDialog.Result.Canceled
   }
 
   private fun createEmptyGitRepository(project: Project, root: VirtualFile, indicator: ProgressIndicator): Boolean {
