@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -479,7 +479,7 @@ public final class FindUsagesManager {
   private static UsageViewPresentation createPresentation(@NotNull PsiElement psiElement,
                                                           @NotNull FindUsagesOptions options,
                                                           boolean toOpenInNewTab) {
-    String usagesString = generateUsagesString(options);
+    String usagesString = options.generateUsagesString();
     String longName = UsageViewUtil.getLongName(psiElement);
     UsageViewPresentation presentation = new UsageViewPresentation();
     String scopeString = options.searchScope.getDisplayName();
@@ -642,11 +642,6 @@ public final class FindUsagesManager {
       return new PsiElement2UsageTargetAdapter(elementToSearch, findUsagesOptions, false);
     }
     throw new IllegalArgumentException("Wrong usage target:" + elementToSearch + "; " + elementToSearch.getClass());
-  }
-
-  @NotNull
-  private static String generateUsagesString(@NotNull FindUsagesOptions selectedOptions) {
-    return selectedOptions.generateUsagesString();
   }
 
   private static void showEditorHint(@NotNull @NlsContexts.HintText String message, @NotNull Editor editor) {
