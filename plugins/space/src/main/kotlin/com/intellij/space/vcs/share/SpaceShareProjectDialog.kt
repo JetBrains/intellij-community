@@ -118,7 +118,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
 
           val url = SpaceUrls.repo(prKey, repository.name)
 
-          result = Result(repository, details, url)
+          result = Result.ProjectCreated(repository, details, url)
           close(OK_EXIT_CODE)
         }
         catch (e: CancellationException) {
@@ -203,10 +203,10 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
 
   override fun getDimensionServiceKey(): String = "com.intellij.space.vcs.share.CircletShareProjectDialog"
 
-  data class Result(
-    val project: PR_RepositoryInfo,
-    val repo: RepoDetails,
-    val url: String
-  )
+  open class Result() {
+    data class ProjectCreated(val project: PR_RepositoryInfo, val repo: RepoDetails,  val url: String) : Result()
+    object Canceled : Result()
+    object NotCreated : Result()
+  }
 }
 
