@@ -5,7 +5,6 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
@@ -110,7 +109,7 @@ class RuntimeChooserDialog(
       }
 
       //download row
-      row(ProjectBundle.message("dialog.row.jdk.location")) {
+      row(LangBundle.message("dialog.label.choose.ide.runtime.location")) {
         val locationLabel = JBTextField()
         locationLabel.isEditable = false
         locationLabel.invoke(growX)
@@ -125,7 +124,7 @@ class RuntimeChooserDialog(
       }.onlyVisibleWhenSelected { it is RuntimeChooserItemWithFixedLocation }
 
       //download row
-      row(ProjectBundle.message("dialog.row.jdk.location")) {
+      row(LangBundle.message("dialog.label.choose.ide.runtime.location")) {
         jdkInstallDirSelector = textFieldWithBrowseButton(
           project = project,
           browseDialogTitle = LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk"),
