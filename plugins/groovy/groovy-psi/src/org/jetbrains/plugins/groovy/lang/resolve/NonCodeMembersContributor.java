@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -39,7 +39,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContr
  *   <li>Ensure that the element name is right.
  *     <p>
  *       Ask processor for the name: {@code val nameHint = processor.getHint(NameHint.KEY)}. <br/>
- *       If the hint is {@code null} or the the name ({@code nameHint.getName(resolveState)}) is {@code null}
+ *       If the hint is {@code null} or the name ({@code nameHint.getName(resolveState)}) is {@code null}
  *       then processor doesn't care about the name, so the contributor is free to feed the processor with whatever elements.
  *       This usually happens when completion is in progress. <br/>
  *       If the name is not {@code null} then the contributor has to feed processor with properly named elements.

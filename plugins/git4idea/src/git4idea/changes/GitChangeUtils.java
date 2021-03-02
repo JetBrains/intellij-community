@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -192,9 +192,9 @@ public final class GitChangeUtils {
 
   /**
    * Get list of changes. Because native Git non-linear revision tree structure is not
-   * supported by the current IDEA interfaces some simplifications are made in the case
+   * supported by the current IDE interfaces some simplifications are made in the case
    * of the merge, so changes are reported as difference with the first revision
-   * listed on the the merge that has at least some changes.
+   * listed on the merge that has at least some changes.
    *
    * @param project           the project file
    * @param root              the git root

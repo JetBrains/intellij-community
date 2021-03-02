@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.codeWithMe.ClientId;
@@ -292,7 +292,7 @@ public final class ProgressIndicatorUtils {
   /**
    * Run the given computation with its execution time restricted to the given amount of time in milliseconds.<p></p>
    *
-   * Internally, it creates a new {@link ProgressIndicator}, runs the computation with that indicator and cancels it after the the timeout.
+   * Internally, it creates a new {@link ProgressIndicator}, runs the computation with that indicator and cancels it after the timeout.
    * The computation should call {@link ProgressManager#checkCanceled()} frequently enough, so that after the timeout has been exceeded
    * it can stop the execution by throwing {@link ProcessCanceledException}, which will be caught by this {@code withTimeout}.<p></p>
    *
