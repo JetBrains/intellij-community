@@ -24,7 +24,7 @@ fun Class<*>.getDeclaredMethodOrNull(name: String, vararg parameterTypes: Class<
 fun ClassLoader.loadClassOrNull(name: String): Class<*>? {
     return try {
         loadClass(name)
-    } catch (e: Exception) {
+    } catch (e: ClassNotFoundException) {
         return null
     }
 }
