@@ -11,13 +11,27 @@ fun KotlinSourceSetContainer.resolveDeclaredDependsOnSourceSets(sourceSet: Kotli
 }
 
 fun KotlinSourceSetContainer.resolveAllDependsOnSourceSets(sourceSet: KotlinSourceSet): Set<KotlinSourceSet> {
-    return mutableSetOf<KotlinSourceSet>().apply {
-        val declaredDependencySourceSets = resolveDeclaredDependsOnSourceSets(sourceSet)
-        addAll(declaredDependencySourceSets)
-        for (declaredDependencySourceSet in declaredDependencySourceSets) {
-            addAll(resolveAllDependsOnSourceSets(declaredDependencySourceSet))
+    /* Fast path */
+    if (sourceSet.declaredDependsOnSourceSets.isEmpty()) return emptySet()
+
+    /* Aggregating set containing all currently resolved source sets */
+    val resolvedSourceSets = mutableSetOf<KotlinSourceSet>()
+
+    /* Queue of source set names that shall be resolved */
+    val declaredDependsOnSourceSetsQueue = ArrayDeque<String>()
+
+    declaredDependsOnSourceSetsQueue.addAll(sourceSet.declaredDependsOnSourceSets)
+    while (declaredDependsOnSourceSetsQueue.isNotEmpty()) {
+        val sourceSetName = declaredDependsOnSourceSetsQueue.removeFirst()
+        val resolvedSourceSet = sourceSetsByName[sourceSetName]
+        if (resolvedSourceSet != null) {
+            if (resolvedSourceSets.add(resolvedSourceSet)) {
+                declaredDependsOnSourceSetsQueue.addAll(resolvedSourceSet.declaredDependsOnSourceSets)
+            }
         }
     }
+
+    return resolvedSourceSets
 }
 
 fun KotlinSourceSetContainer.isDependsOn(from: KotlinSourceSet, to: KotlinSourceSet): Boolean {

@@ -36,7 +36,7 @@ class KotlinMppGradleModelExtensionsTest {
     }
 
     @Test
-    fun `getAllDependsOnSourceSets is graceful for missing source sets`() {
+    fun `resolveDeclaredDependsOnSourceSets is graceful for missing source sets`() {
         val commonMain = createKotlinSourceSet("commonMain")
         val macosMain = createKotlinSourceSet("macosMain", declaredDependsOnSourceSets = setOf("commonMain", "missing"))
         val model = createKotlinMPPGradleModel(sourceSets = setOf(commonMain, macosMain))
@@ -82,6 +82,34 @@ class KotlinMppGradleModelExtensionsTest {
         assertEquals(
             emptySet(), model.resolveAllDependsOnSourceSets(commonMain).toSet(),
             "Expected empty set for 'commonMain'"
+        )
+    }
+
+    @Test
+    fun `resolving source sets with self references or loops`() {
+        val a = createKotlinSourceSet("a", declaredDependsOnSourceSets = setOf(""))
+        val b = createKotlinSourceSet("b", declaredDependsOnSourceSets = setOf("a", "c")) // loop d -> c -> b -> c
+        val c = createKotlinSourceSet("c", declaredDependsOnSourceSets = setOf("b", "c")) // self reference c -> c
+        val d = createKotlinSourceSet("d", declaredDependsOnSourceSets = setOf("c"))
+
+        val model = createKotlinMPPGradleModel(sourceSets = setOf(a, b, c, d))
+
+        assertEquals(
+            setOf(a, b, c).sortedBy { it.name },
+            model.resolveAllDependsOnSourceSets(d).sortedBy { it.name },
+            "Expected dependency loop to be handled gracefully"
+        )
+
+        assertEquals(
+            setOf(a, b, c).sortedBy { it.name },
+            model.resolveAllDependsOnSourceSets(c).sortedBy { it.name },
+            "Expected self dependency to be resolved for 'resolveAllDependsOnSourceSets'"
+        )
+
+        assertEquals(
+            setOf(b, c).sortedBy { it.name },
+            model.resolveDeclaredDependsOnSourceSets(c).sortedBy { it.name },
+            "Expected self dependency to be resolved by 'resolveDeclaredDependsOnSourceSets'"
         )
     }
 
