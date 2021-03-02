@@ -31,7 +31,9 @@ public class EditMemorySettingsDialog extends DialogWrapper {
 
   private final VMOptions.MemoryKind myOption;
   private final boolean myMemoryLow;
+  private final int myLowerBound;
   private JTextField myNewValueField;
+  private Action mySaveAndExitAction, mySaveAction;
 
   public EditMemorySettingsDialog() {
     this(VMOptions.MemoryKind.HEAP, false);
@@ -45,6 +47,7 @@ public class EditMemorySettingsDialog extends DialogWrapper {
     super(false);
     myOption = option;
     myMemoryLow = memoryLow;
+    myLowerBound = Math.max(option == VMOptions.MemoryKind.HEAP ? VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false) : 0, MIN_VALUE);
     setTitle(DiagnosticBundle.message("change.memory.title"));
     init();
     initValidation();
@@ -117,25 +120,23 @@ public class EditMemorySettingsDialog extends DialogWrapper {
   @Override
   protected Action @NotNull [] createActions() {
     boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
-    return new Action[]{
-      new DialogWrapperAction(DiagnosticBundle.message(canRestart ? "change.memory.apply" : "change.memory.exit")) {
-        @Override
-        protected void doAction(ActionEvent e) {
-          if (save()) {
-            ((ApplicationEx)ApplicationManager.getApplication()).restart(true);
-          }
+    mySaveAndExitAction = new DialogWrapperAction(DiagnosticBundle.message(canRestart ? "change.memory.apply" : "change.memory.exit")) {
+      @Override
+      protected void doAction(ActionEvent e) {
+        if (save()) {
+          ((ApplicationEx)ApplicationManager.getApplication()).restart(true);
         }
-      },
-      new DialogWrapperAction(IdeBundle.message("button.save")) {
-        @Override
-        protected void doAction(ActionEvent e) {
-          if (save()) {
-            close(OK_EXIT_CODE);
-          }
-        }
-      },
-      getCancelAction()
+      }
     };
+    mySaveAction = new DialogWrapperAction(IdeBundle.message("button.save")) {
+      @Override
+      protected void doAction(ActionEvent e) {
+        if (save()) {
+          close(OK_EXIT_CODE);
+        }
+      }
+    };
+    return new Action[]{mySaveAndExitAction, mySaveAction, getCancelAction()};
   }
 
   @Override
@@ -145,15 +146,18 @@ public class EditMemorySettingsDialog extends DialogWrapper {
 
   @Override
   protected @Nullable ValidationInfo doValidate() {
+    ValidationInfo info = null;
     try {
       int value = Integer.parseInt(myNewValueField.getText());
-      if (value < MIN_VALUE) return new ValidationInfo(DiagnosticBundle.message("change.memory.low", MIN_VALUE), myNewValueField);
-      if (value > 800 && CpuArch.isIntel32()) return new ValidationInfo(DiagnosticBundle.message("change.memory.large"), myNewValueField);
-      return null;
+      if (value <= myLowerBound) info = new ValidationInfo(DiagnosticBundle.message("change.memory.low", myLowerBound), myNewValueField);
+      if (value > 800 && CpuArch.isIntel32()) info = new ValidationInfo(DiagnosticBundle.message("change.memory.large"), myNewValueField);
     }
     catch (NumberFormatException e) {
-      return new ValidationInfo(DiagnosticBundle.message("change.memory.integer"), myNewValueField);
+      info = new ValidationInfo(DiagnosticBundle.message("change.memory.integer"), myNewValueField);
     }
+    mySaveAndExitAction.setEnabled(info == null);
+    mySaveAction.setEnabled(info == null);
+    return info;
   }
 
   private boolean save() {
