@@ -545,4 +545,16 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertTrue(vFile2.getParent().isCaseSensitive());
     assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, ((VirtualDirectoryImpl)vFile2.getParent()).getChildrenCaseSensitivity());
   }
+
+  @Test
+  public void pathEqualsWorksForWslPaths() throws IOException {
+    IoTestUtil.assumeWindows();
+    IoTestUtil.assumeWslPresence();
+    String wslName = IoTestUtil.enumerateWslDistributions().get(0);
+
+    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
+    assertTrue(VfsUtilCore.pathEqualsTo(file, "\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
+    assertTrue(VfsUtilCore.pathEqualsTo(file, "//wsl$/" + wslName + "/usr/bin"));
+    assertTrue(VfsUtilCore.pathEqualsTo(file, "//wsl$/" + wslName + "/usr/bin/"));
+  }
 }

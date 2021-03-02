@@ -731,10 +731,13 @@ public class VfsUtilCore {
     path = FileUtil.toCanonicalPath(path);
     int li = path.length();
     while (file != null && li != -1) {
-      int i = path.lastIndexOf('/', li-1);
+      int i = path.lastIndexOf('/', li - 1);
       CharSequence fileName = file.getNameSequence();
+      if (i == 6 && StringUtil.startsWith(fileName, "//wsl$")) {
+        i = -1;
+      }
       if (StringUtil.endsWithChar(fileName, '/')) {
-        fileName = fileName.subSequence(0, fileName.length()-1);
+        fileName = fileName.subSequence(0, fileName.length() - 1);
       }
       if (!StringUtilRt.equal(fileName, path.substring(i + 1, li), file.isCaseSensitive())) {
         return false;
