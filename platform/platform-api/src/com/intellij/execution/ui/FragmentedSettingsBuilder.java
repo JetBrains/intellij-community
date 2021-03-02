@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,19 +43,12 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   public static final int TAG_VGAP = JBUI.scale(6);
   public static final int TAG_HGAP = JBUI.scale(2);
 
-  private Disposable myDisposable;
+  private final Disposable myDisposable;
   private final JPanel myPanel = new JPanel(new GridBagLayout()) {
     @Override
     public void addNotify() {
       super.addNotify();
-      myDisposable = Disposer.newDisposable();
       registerShortcuts();
-    }
-
-    @Override
-    public void removeNotify() {
-      super.removeNotify();
-      Disposer.dispose(myDisposable);
     }
   };
   private final GridBagConstraints myConstraints =
@@ -65,9 +57,11 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   private final SettingsEditorFragment<Settings, ?> myMain;
   private DropDownLink<String> myLinkLabel;
 
-  FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
+  FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments,
+                            SettingsEditorFragment<Settings, ?> main, @NotNull Disposable disposable) {
     myFragments = fragments;
     myMain = main;
+    myDisposable = disposable;
   }
 
   @Override
@@ -273,7 +267,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
     if (list.isEmpty()) return;
     fragments.removeAll(list);
-    CommandLinePanel panel = new CommandLinePanel(list);
+    CommandLinePanel panel = new CommandLinePanel(list, myDisposable);
     addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);
   }
 
