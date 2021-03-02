@@ -652,6 +652,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             public void testSuspendFunctionsWithoutKotlinxCoroutines() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithoutKotlinxCoroutines.kt");
             }
+
+            @TestMetadata("uncapturedVariableInSuspendLambda.kt")
+            public void testUncapturedVariableInSuspendLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/uncapturedVariableInSuspendLambda.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

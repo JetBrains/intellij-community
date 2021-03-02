@@ -142,8 +142,7 @@ class VariableFinder(val context: ExecutionContext) {
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
 
         // Recursive search in captured this
-        val containingThis = thisObject() ?: return null
-        return findCapturedVariable(kind, containingThis)
+        return findCapturedVariableInContainingThis(kind)
     }
 
     private fun findFieldVariable(kind: VariableKind.FieldVar): Result? {
@@ -172,6 +171,15 @@ class VariableFinder(val context: ExecutionContext) {
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
 
         // Recursive search in captured this
+        return findCapturedVariableInContainingThis(kind)
+    }
+
+    private fun findCapturedVariableInContainingThis(kind: VariableKind): Result? {
+        if (frameProxy is CoroutineStackFrameProxyImpl && frameProxy.isCoroutineScopeAvailable()) {
+            findCapturedVariable(kind, frameProxy.thisObject())?.let { return it }
+            return findCapturedVariable(kind, frameProxy.continuation)
+        }
+
         val containingThis = thisObject() ?: return null
         return findCapturedVariable(kind, containingThis)
     }
@@ -187,10 +195,7 @@ class VariableFinder(val context: ExecutionContext) {
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
 
         // Recursive search in captured this
-        val containingThis = thisObject()
-        if (containingThis != null) {
-            findCapturedVariable(kind, containingThis)?.let { return it }
-        }
+        findCapturedVariableInContainingThis(kind)?.let { return it }
 
         @Suppress("ConstantConditionIf")
         if (USE_UNSAFE_FALLBACK) {
@@ -202,10 +207,7 @@ class VariableFinder(val context: ExecutionContext) {
     }
 
     private fun findDispatchThis(kind: VariableKind.OuterClassThis): Result? {
-        val containingThis = thisObject()
-        if (containingThis != null) {
-            findCapturedVariable(kind, containingThis)?.let { return it }
-        }
+        findCapturedVariableInContainingThis(kind)?.let { return it }
 
         if (isInsideDefaultImpls()) {
             val variables = frameProxy.safeVisibleVariables()
@@ -250,8 +252,7 @@ class VariableFinder(val context: ExecutionContext) {
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
 
-        val containingThis = thisObject() ?: return null
-        return findCapturedVariable(kind, containingThis)
+        return findCapturedVariableInContainingThis(kind)
     }
 
     private fun findLocalVariable(variables: List<LocalVariableProxyImpl>, kind: VariableKind, name: String): Result? {
