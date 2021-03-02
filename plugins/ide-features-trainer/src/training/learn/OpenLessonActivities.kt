@@ -167,8 +167,9 @@ internal object OpenLessonActivities {
     if (lesson.lessonType != LessonType.SCRATCH || LearningUiManager.learnProject == project) {
       // do not change view environment for scratch lessons in user project
       hideOtherViews(project)
-      ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.show()
     }
+    // We need to ensure that the learning panel is initialized
+    showLearnPanel(project)
 
     LOG.debug("${project.name}: Add listeners to lesson")
     addStatisticLessonListenerIfNeeded(project, lesson)
@@ -257,9 +258,13 @@ internal object OpenLessonActivities {
     initLearnProject(null) { project ->
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
-          hideOtherViews(project)
           if (onboarding.properties.canStartInDumbMode) {
             CourseManager.instance.openLesson(project, onboarding)
+          }
+          else {
+            DumbService.getInstance(project).runWhenSmart {
+              CourseManager.instance.openLesson(project, onboarding)
+            }
           }
         }
       }
@@ -273,13 +278,13 @@ internal object OpenLessonActivities {
         invokeLater {
           openReadme(project)
           hideOtherViews(project)
-          showModules(project)
+          showLearnPanel(project)
           CourseManager.instance.unfoldModuleOnInit = null
           // Try to fix PyCharm double startup indexing :(
           val openWhenSmart = {
-            showModules(project)
+            showLearnPanel(project)
             DumbService.getInstance(project).runWhenSmart {
-              showModules(project)
+              showLearnPanel(project)
             }
           }
           Alarm().addRequest(openWhenSmart, 500)
@@ -288,9 +293,8 @@ internal object OpenLessonActivities {
     }
   }
 
-  private fun showModules(project: Project) {
-    val toolWindowManager = ToolWindowManager.getInstance(project)
-    toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.show(null)
+  private fun showLearnPanel(project: Project) {
+    ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.show()
   }
 
   @RequiresEdt
@@ -304,7 +308,6 @@ internal object OpenLessonActivities {
       val learnToolWindow = toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
       if (learnToolWindow != null) {
         DumbService.getInstance(myLearnProject).runWhenSmart {
-          if (!lesson.properties.showLearnToolwindowAtStart) learnToolWindow.show()
           // Try to fix PyCharm double startup indexing :(
           val openWhenSmart = {
             DumbService.getInstance(myLearnProject).runWhenSmart {
