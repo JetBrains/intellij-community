@@ -14,7 +14,7 @@ import java.util.Collections;
 public final class FileTypeIndexImpl
         extends ScalarIndexExtension<FileType>
         implements CustomImplementationFileBasedIndexExtension<FileType, Void> {
-  private static final boolean USE_LOG_INDEX = SystemProperties.getBooleanProperty("use.log.file.type.index", false);
+  private static final boolean USE_LOG_INDEX = SystemProperties.getBooleanProperty("use.log.file.type.index", true);
   @NotNull
   @Override
   public ID<FileType, Void> getName() {
@@ -53,6 +53,6 @@ public final class FileTypeIndexImpl
   public @NotNull UpdatableIndex<FileType, Void, FileContent> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension,
                                                                                         @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout)
     throws StorageException, IOException {
-    return USE_LOG_INDEX ? new LogFileTypeMapReduceIndex(extension) : new FileTypeMapReduceIndex(extension, indexStorageLayout);
+    return USE_LOG_INDEX ? new LogFileTypeIndex(extension) : new FileTypeMapReduceIndex(extension, indexStorageLayout);
   }
 }
