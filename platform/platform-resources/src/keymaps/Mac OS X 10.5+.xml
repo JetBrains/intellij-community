@@ -153,6 +153,7 @@
     <keyboard-shortcut first-keystroke="control UP"/>
   </action>
   <action id="ShowContent">
+    <keyboard-shortcut first-keystroke="control shift DOWN"/>
   </action>
   <action id="NextEditorTab">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>
