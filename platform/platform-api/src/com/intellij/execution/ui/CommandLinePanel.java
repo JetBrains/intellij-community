@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
@@ -24,26 +23,19 @@ import java.util.List;
 public class CommandLinePanel extends JPanel {
   private final List<JComponent> myComponents;
   private final JLabel myHintLabel;
-  private final @NotNull Disposable myDisposable;
 
-  public CommandLinePanel(Collection<? extends SettingsEditorFragment<?,?>> fragments) {
+  public CommandLinePanel(Collection<? extends SettingsEditorFragment<?,?>> fragments, @NotNull Disposable disposable) {
     super();
     myComponents = ContainerUtil.map(fragments, fragment -> fragment.createEditor());
     myHintLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("");
-    myDisposable = Disposer.newDisposable();
     String keystrokeText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0));
     FragmentHintManager manager = new FragmentHintManager(s -> myHintLabel.setText(s),
-                                                          IdeBundle.message("dialog.message.press.for.field.hints", keystrokeText), myDisposable);
+                                                          IdeBundle.message("dialog.message.press.for.field.hints", keystrokeText),
+                                                          disposable);
     manager.registerFragments(fragments);
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     buildRows();
-  }
-
-  @Override
-  public void removeNotify() {
-    super.removeNotify();
-    Disposer.dispose(myDisposable);
   }
 
   @Override
