@@ -5,11 +5,13 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.createDirectories
@@ -31,7 +33,17 @@ class RuntimeChooserPaths {
     return Paths.get(PathManager.getConfigPath(), configName)
   }
 
-  fun installCustomJdk(@NlsSafe name: String, home: Path) = runWithProgress {
+  fun installCustomJdk(@NlsSafe name: String, suggestedHome: Path) = runWithProgress {
+    val home = RuntimeChooserJreValidator.testNewJdkUnderProgress(
+      computeHomePath = { suggestedHome.toAbsolutePath().toString() },
+      callback = object : RuntimeChooserJreValidatorCallback<Path?> {
+        override fun onSdkResolved(versionString: String, sdkHome: Path) = sdkHome
+        override fun onError(message: String): Path? {
+          invokeLater { Messages.showErrorDialog(message, LangBundle.message("dialog.title.choose.ide.runtime")) }
+          return null
+        }
+      }) ?: return@runWithProgress
+
     var jdkFileShadow : Path? = null
     try {
       val jdkFile = computeJdkFilePath()
@@ -66,11 +78,11 @@ class RuntimeChooserPaths {
     }
   }
 
-  private fun runWithProgress(action: () -> Unit) {
+  private fun runWithProgress(action: (indicator: ProgressIndicator) -> Unit) {
     val title = LangBundle.message("progress.title.choose.ide.runtime.set.jdk")
     object : Task.Backgroundable(null, title, true, DEAF) {
       override fun run(indicator: ProgressIndicator) {
-          action()
+          action(indicator)
       }
     }.queue()
   }

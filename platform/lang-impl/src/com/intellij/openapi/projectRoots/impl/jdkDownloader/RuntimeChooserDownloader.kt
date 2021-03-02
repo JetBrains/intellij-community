@@ -27,7 +27,7 @@ class RuntimeChooserDownloader {
           val request = installer.prepareJdkInstallation(jdk, targetDir)
           installer.installJdk(request, indicator, null)
 
-          service<RuntimeChooserPaths>().installCustomJdk(request.item.fullPresentationText, request.javaHome)
+          service<RuntimeChooserPaths>().installCustomJdk(request.item.fullPresentationText, request.installDir)
         } catch (t: Throwable) {
           LOG.warn("Failed to download boot runtime from $jdk. ${t.message}")
           service<RuntimeChooserNotifications>().notifyDownloadFailed(jdk, t.localizedMessage)
