@@ -1,6 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -95,7 +100,6 @@ public class GitSimpleHandler extends GitTextHandler {
   /**
    * {@inheritDoc}
    */
-  @Override
   protected void onTextAvailable(final String text, final Key outputType) {
     final StringBuilder entire;
     final StringBuilder lineRest;
@@ -223,6 +227,19 @@ public class GitSimpleHandler extends GitTextHandler {
       throw new VcsException(GitBundle.message("git.error.cant.process.output", printableCommandLine()));
     }
     return resultRef.get();
+  }
+
+  @Override
+  protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    OSProcessHandler process = super.createProcess(commandLine);
+    process.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event,
+                                  @NotNull Key outputType) {
+        GitSimpleHandler.this.onTextAvailable(event.getText(), outputType);
+      }
+    });
+    return process;
   }
 
   /**
