@@ -18,16 +18,17 @@ package com.intellij.openapi.externalSystem.service.project;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
@@ -56,6 +57,10 @@ public interface IdeModelsProvider {
 
   @Nullable
   OrderEntry findIdeModuleOrderEntry(@NotNull DependencyData data);
+
+  @NotNull
+  Map<LibraryOrderEntry, LibraryDependencyData> findIdeModuleLibraryOrderEntries(@NotNull ModuleData moduleData,
+                                                                                 @NotNull List<LibraryDependencyData> libraryDependencyDataList);
 
   VirtualFile @NotNull [] getContentRoots(Module module);
 

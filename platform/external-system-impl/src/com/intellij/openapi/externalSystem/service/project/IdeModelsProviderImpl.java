@@ -210,6 +210,36 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
+  @NotNull
+  @Override
+  public Map<LibraryOrderEntry, LibraryDependencyData> findIdeModuleLibraryOrderEntries(@NotNull ModuleData moduleData,
+                                                                                        @NotNull List<LibraryDependencyData> libraryDependencyDataList) {
+    if (libraryDependencyDataList.isEmpty()) return Collections.emptyMap();
+    Module ownerIdeModule = findIdeModule(moduleData);
+    if (ownerIdeModule == null) return Collections.emptyMap();
+    Map<Set<String>, LibraryDependencyData> libraryDependencyDataMap = libraryDependencyDataList.stream()
+      .collect(Collectors.toMap(libraryDependencyData -> ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
+                                                                               PathUtil::getLocalPath),
+                                libraryDependencyData -> libraryDependencyData));
+
+    Map<LibraryOrderEntry, LibraryDependencyData> result = new HashMap<>();
+    for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
+      if (entry instanceof LibraryOrderEntry) {
+        LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+        if (!libraryOrderEntry.isModuleLevel()) continue;
+        if (isEmpty(libraryOrderEntry.getLibraryName())) {
+          final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
+                                                               s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
+          LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
+          if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {
+            result.put(libraryOrderEntry, libraryDependencyData);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
   @Override
   public VirtualFile @NotNull [] getContentRoots(Module module) {
     return ModuleRootManager.getInstance(module).getContentRoots();

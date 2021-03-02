@@ -211,6 +211,11 @@ class IdeModifiableModelsProviderBridge(val project: Project,
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
+  override fun findIdeModuleLibraryOrderEntries(moduleData: ModuleData,
+                                                libraryDependencyDataList: MutableList<LibraryDependencyData>): Map<LibraryOrderEntry, LibraryDependencyData> {
+    TODO("Not yet implemented")
+  }
+
   override fun getLibraryUrls(library: Library, type: OrderRootType): Array<String> {
     return library.getUrls(type)
   }
