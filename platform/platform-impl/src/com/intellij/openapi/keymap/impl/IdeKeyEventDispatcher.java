@@ -844,7 +844,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static void rearrangeByPromoters(List<AnAction> actions, DataContext context) {
     List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
-    for (ActionPromoter promoter : ActionPromoter.EP_NAME.getExtensions()) {
+    for (ActionPromoter promoter : getPromoters(actions)) {
       try {
         List<AnAction> promoted = promoter.promote(readOnlyActions, context);
         if (promoted == null || promoted.isEmpty()) continue;
@@ -856,6 +856,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
         LOG.error(e);
       }
     }
+  }
+
+  @NotNull
+  private static List<ActionPromoter> getPromoters(List<AnAction> candidates) {
+    List<ActionPromoter> promoters = new ArrayList<>(Arrays.asList(ActionPromoter.EP_NAME.getExtensions()));
+    for (AnAction action : candidates) {
+      if (action instanceof ActionPromoter) {
+        promoters.add((ActionPromoter)action);
+      }
+    }
+    return promoters;
   }
 
   private void addActionsFromActiveKeymap(@NotNull Shortcut shortcut) {
