@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -545,11 +545,13 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         val parameterNames = hashSetOf<String>()
         val function = ktChangeInfo.method
         val bindingContext = (function as KtElement).analyze(BodyResolveMode.FULL)
-        val oldDescriptor = ktChangeInfo.originalBaseFunctionDescriptor
-        val containingDeclaration = oldDescriptor.containingDeclaration
+
+        // to avoid KT-35903
+        val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, function] ?: ktChangeInfo.originalBaseFunctionDescriptor
+        val containingDeclaration = descriptor.containingDeclaration
 
         val parametersScope = when {
-            oldDescriptor is ConstructorDescriptor && containingDeclaration is ClassDescriptorWithResolutionScopes -> {
+            descriptor is ConstructorDescriptor && containingDeclaration is ClassDescriptorWithResolutionScopes -> {
                 val classDescriptor = containingDeclaration.classId?.let {
                     function.findModuleDescriptor().findClassAcrossModuleDependencies(it) as? ClassDescriptorWithResolutionScopes
                 } ?: containingDeclaration
@@ -561,19 +563,19 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             else -> null
         }
 
-        val callableScope = oldDescriptor.getContainingScope()
+        val callableScope = descriptor.getContainingScope()
 
         val kind = ktChangeInfo.kind
         if (!kind.isConstructor && callableScope != null && ktChangeInfo.newName.isNotEmpty()) {
             val newName = Name.identifier(ktChangeInfo.newName)
-            val conflicts = if (oldDescriptor is FunctionDescriptor)
+            val conflicts = if (descriptor is FunctionDescriptor)
                 callableScope.getAllAccessibleFunctions(newName)
             else
                 callableScope.getAllAccessibleVariables(newName)
 
             val newTypes = ktChangeInfo.newParameters.map { it.currentTypeInfo.type }
             for (conflict in conflicts) {
-                if (conflict === oldDescriptor) continue
+                if (conflict === descriptor) continue
 
                 val conflictElement = DescriptorToSourceUtils.descriptorToDeclaration(conflict)
                 if (conflictElement === ktChangeInfo.method) continue

@@ -246,7 +246,7 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
                     val physicalFile = ktFile.isPhysical
 
                     if (inBlockElements.isEmpty()) {
-                        val physical = physicalFile && !isReplLine(ktFile.virtualFile) && ktFile !is KtTypeCodeFragment
+                        val physical = physicalFile && !isReplLine(ktFile.virtualFile)
 
                         if (physical) {
                             outOfCodeBlockModificationTrackerImpl.incModificationCount()
