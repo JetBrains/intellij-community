@@ -7,7 +7,8 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
@@ -20,8 +21,8 @@ import com.intellij.refactoring.ui.MethodSignatureComponent
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.SeparatorFactory
+import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
-import com.intellij.util.ui.FormBuilder
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -154,53 +155,53 @@ class KotlinChangePropertySignatureDialog(
 
     override fun getPreferredFocusedComponent() = nameField
 
-    override fun createCenterPanel(): JComponent? {
-        fun updateReceiverUI() {
-            val withReceiver = receiverTypeCheckBox!!.isSelected
+    override fun createCenterPanel(): JComponent {
+        fun updateReceiverUI(receiverComboBox: JCheckBox) {
+            val withReceiver = receiverComboBox.isSelected
             receiverTypeLabel.isEnabled = withReceiver
             receiverTypeField.isEnabled = withReceiver
             receiverDefaultValueLabel.isEnabled = withReceiver
             receiverDefaultValueField.isEnabled = withReceiver
         }
 
-        return with(FormBuilder.createFormBuilder()) {
+        return panel {
             if (methodDescriptor.canChangeVisibility()) {
-                visibilityCombo.selectedItem = methodDescriptor.visibility
-                visibilityCombo.addActionListener(signatureUpdater)
-                addLabeledComponent(KotlinBundle.message("label.text.visibility"), visibilityCombo)
+                row(KotlinBundle.message("label.text.visibility")) {
+                    visibilityCombo.selectedItem = methodDescriptor.visibility
+                    visibilityCombo.addActionListener(signatureUpdater)
+                    visibilityCombo()
+                }
             }
 
-            addLabeledComponent(KotlinBundle.message("label.text.name"), nameField)
-            addLabeledComponent(KotlinBundle.message("label.text.type"), returnTypeField)
+            row(KotlinBundle.message("label.text.name")) { nameField(growX) }
+            row(KotlinBundle.message("label.text.type")) { returnTypeField(growX) }
 
             if (methodDescriptor.baseDeclaration is KtProperty) {
-                addSeparator()
-
                 val receiverTypeCheckBox = JCheckBox(KotlinBundle.message("checkbox.text.extension.property")).apply {
-                    addActionListener { updateReceiverUI() }
+                    addActionListener { updateReceiverUI(this) }
                     addActionListener(signatureUpdater)
                     isSelected = methodDescriptor.receiver != null
                 }
 
-                addComponent(receiverTypeCheckBox)
+                row { receiverTypeCheckBox() }
+
                 this@KotlinChangePropertySignatureDialog.receiverTypeCheckBox = receiverTypeCheckBox
 
                 receiverTypeLabel = JLabel(KotlinBundle.message("label.text.receiver.type"))
-                addLabeledComponent(receiverTypeLabel, receiverTypeField)
+                row(receiverTypeLabel) { receiverTypeField(growX) }
 
                 if (methodDescriptor.receiver == null) {
                     receiverDefaultValueLabel = JLabel(KotlinBundle.message("label.text.default.receiver.value"))
-                    addLabeledComponent(receiverDefaultValueLabel, receiverDefaultValueField)
+                    row(receiverDefaultValueLabel) { receiverDefaultValueField(growX) }
                 }
 
-                updateReceiverUI()
+                updateReceiverUI(receiverTypeCheckBox)
             }
 
-            addComponent(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null))
-            addComponent(signatureComponent)
-            updateSignature()
+            row { SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null)(growX) }
+            row { signatureComponent(grow) }
 
-            panel
+            updateSignature()
         }
     }
 
