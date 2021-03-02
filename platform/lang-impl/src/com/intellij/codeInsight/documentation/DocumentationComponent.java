@@ -911,7 +911,26 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     TextUI ui = myEditorPane.getUI();
     View view = ui.getRootView(myEditorPane);
     View definition = findDefinition(view);
-    return definition != null ? (int)definition.getPreferredSpan(View.X_AXIS) : -1;
+
+    if (definition == null) {
+      return -1;
+    }
+    int defaultPreferredSize = (int)definition.getPreferredSpan(View.X_AXIS);
+
+    // Heuristics to calculate popup width based on the amount of the content.
+    // The proportions are set for 10 chars/3px in range between 200 and 1000 chars.
+    // 200 chars and less is 300px, 1000 chars and more is 500px.
+    // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
+    int textLength = definition.getDocument().getLength();
+    final int contentLengthPreferredSize;
+    if (textLength < 200) {
+      contentLengthPreferredSize = JBUIScale.scale(300);
+    } else if (textLength > 200 && textLength < 1000){
+      contentLengthPreferredSize = JBUIScale.scale(300) + JBUIScale.scale(1)*(textLength - 200)*3/10;
+    } else {
+      contentLengthPreferredSize = JBUIScale.scale(500);
+    }
+    return Math.max(contentLengthPreferredSize, defaultPreferredSize);
   }
 
   private static View findDefinition(View view) {
