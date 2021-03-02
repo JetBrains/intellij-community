@@ -4,7 +4,9 @@ package org.intellij.plugins.markdown.extensions.jcef.mermaid
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColorUtil
+import com.intellij.util.io.DigestUtil
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
@@ -66,10 +68,20 @@ internal class MermaidCodeGeneratingProviderExtension(
 
   override val downloadFilename: String = "mermaid.js"
 
+  private val actualFile
+    get() = Paths.get(directory.toString(), "mermaid", downloadFilename).toFile()
+
+  private fun isDistributionChecksumValid(): Boolean {
+    val got = StringUtil.toHexString(DigestUtil.md5().digest(actualFile.readBytes()))
+    return got == Registry.stringValue("markdown.mermaid.checksum")
+  }
+
+  override val isAvailable: Boolean
+    get() = actualFile.exists() && isDistributionChecksumValid()
+
   override fun afterDownload(): Boolean {
-    val targetFile = Paths.get(directory.toString(), "mermaid", downloadFilename).toFile()
     val sourceFile = File(directory, downloadFilename)
-    sourceFile.copyTo(targetFile)
+    sourceFile.copyTo(actualFile, overwrite = true)
     return sourceFile.delete()
   }
 

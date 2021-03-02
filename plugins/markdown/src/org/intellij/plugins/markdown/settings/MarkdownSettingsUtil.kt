@@ -16,6 +16,9 @@ internal object MarkdownSettingsUtil {
       extension.downloadLink ?: error("Could not download files with empty link!"),
       extension.downloadFilename
     )
+    if (extension.directory.exists()) {
+      extension.directory.delete()
+    }
     val result = downloader.createDownloader(listOf(description), extension.downloadFilename)
       .downloadFilesWithProgress(
         extension.directory.absolutePath,
