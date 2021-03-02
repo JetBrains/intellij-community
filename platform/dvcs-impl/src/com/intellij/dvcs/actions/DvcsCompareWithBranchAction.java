@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.actions;
 
-import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
@@ -15,8 +14,10 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -29,7 +30,9 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,14 +57,17 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
                                                    DvcsUtil.getShortHash(Objects.requireNonNull(repository.getCurrentRevision())));
     List<String> branchNames = getBranchNamesExceptCurrent(repository);
 
-    JBPopupFactory.getInstance()
+    JBPopup popup = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(branchNames)
       .setTitle(DvcsBundle.message("popup.title.select.branch.to.compare"))
       .setItemChosenCallback(selected -> showDiffWithBranchUnderModalProgress(project, file, presentableRevisionName, selected))
       .setAutoselectOnMouseMove(true)
       .setNamerForFiltering(o -> o)
-      .createPopup()
-      .showCenteredInCurrentWindow(project);
+      .createPopup();
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> popup.showCenteredInCurrentWindow(project));
+    });
   }
 
   @NotNull
