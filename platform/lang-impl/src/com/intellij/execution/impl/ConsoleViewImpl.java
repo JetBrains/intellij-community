@@ -49,7 +49,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -57,6 +56,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -889,11 +889,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       int offset = myEditor.getCaretModel().getOffset();
       HyperlinkInfo info = myHyperlinks.getHyperlinkAt(offset);
-      OpenFileDescriptor openFileDescriptor = info instanceof FileHyperlinkInfo ? ((FileHyperlinkInfo)info).getDescriptor() : null;
-      if (openFileDescriptor == null || !openFileDescriptor.getFile().isValid()) {
-        return null;
-      }
-      return openFileDescriptor;
+      return info == null ? null : new Navigatable() {
+        @Override public void navigate(boolean requestFocus) { info.navigate(myProject); }
+        @Override public boolean canNavigate() { return true; }
+        @Override public boolean canNavigateToSource() { return true; }
+      };
     }
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
