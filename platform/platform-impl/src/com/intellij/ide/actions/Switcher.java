@@ -247,8 +247,8 @@ public final class Switcher extends DumbAwareAction {
       List<SwitcherToolWindow> windows = renderer.getToolWindows();
       twShortcuts = createShortcuts(windows);
       windows.stream().sorted((o1, o2) -> {
-        Character m1 = o1.getMnemonic();
-        Character m2 = o2.getMnemonic();
+        String m1 = o1.getMnemonic();
+        String m2 = o2.getMnemonic();
         return m1 == null
                ? (m2 == null ? 0 : 1)
                : (m2 == null ? -1 : m1.compareTo(m2));
@@ -654,7 +654,7 @@ public final class Switcher extends DumbAwareAction {
       }
       keymap.forEach((string, window) -> {
         if (!StringUtil.isEmpty(string)) {
-          window.setMnemonic(string.charAt(0));
+          window.setMnemonic(string);
         }
       });
       return keymap;
