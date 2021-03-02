@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
@@ -250,8 +251,31 @@ class KotlinChangePropertySignatureDialog(
 
     override fun doAction() {
         val changeInfo = evaluateKotlinChangeInfo()
+        val typeInfo = changeInfo.newReturnTypeInfo
+        if (typeInfo.type == null && !showWarningMessage(
+                KotlinBundle.message(
+                    "message.text.property.type.cannot.be.resolved",
+                    typeInfo.render(),
+                )
+            )
+        ) return
+
+        val receiverTypeInfo = changeInfo.receiverParameterInfo?.currentTypeInfo
+        if (receiverTypeInfo != null && receiverTypeInfo.type == null && !showWarningMessage(
+                KotlinBundle.message(
+                    "message.text.property.receiver.type.cannot.be.resolved",
+                    receiverTypeInfo.render(),
+                )
+            )
+        ) return
+
         invokeRefactoring(KotlinChangeSignatureProcessor(myProject, changeInfo, commandName ?: title))
     }
+
+    private fun showWarningMessage(message: @NlsContexts.DialogMessage String): Boolean =
+        MessageDialogBuilder.okCancel(RefactoringBundle.message("changeSignature.refactoring.name"), message)
+            .asWarning()
+            .ask(myProject)
 
     override fun getHelpId(): String = "refactoring.changeSignature"
 
