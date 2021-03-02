@@ -3,6 +3,7 @@ package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
@@ -14,12 +15,17 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
 
 class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name")),
                                  SearchableConfigurable {
+
+  private val EP_NAME = ExtensionPointName.create<TrustedHostsConfigurablePanelProvider>("com.intellij.trustedHostsConfigurablePanelProvider")
+
   override fun createPanel(): DialogPanel {
     return panel {
       row {
@@ -44,6 +50,12 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
                                     getValuesFromSettings = { trustedPathsSettings.getTrustedPaths() },
                                     setValuesToSettings = { trustedPathsSettings.setTrustedPaths(it) },
                                     getNewValueFromUser = { getPathFromUser(it) })
+      }
+
+      for (additionalPanel in EP_NAME.extensionList) {
+        row {
+          component(additionalPanel.getPanel(this))
+        }
       }
     }
   }
@@ -93,4 +105,12 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
   override fun getId(): String {
     return "trusted.sources"
   }
+}
+
+/**
+ * Provides additional components to the "Trusted Hosts" configurable in the application settings.
+ */
+@ApiStatus.Internal
+interface TrustedHostsConfigurablePanelProvider {
+  fun getPanel(row: Row) : JComponent
 }
