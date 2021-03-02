@@ -20,6 +20,7 @@ import com.intellij.util.io.lastModified
 import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -80,12 +81,24 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
 
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
-      saveCache(storage)
+      val processedStorage = cachePreProcess(storage)
+      saveCache(processedStorage)
     }
 
     if (cachesInvalidated.get()) {
       FileUtil.delete(cacheFile)
     }
+  }
+
+  private fun cachePreProcess(storage: WorkspaceEntityStorage): WorkspaceEntityStorage {
+    val builder = WorkspaceEntityStorageBuilder.from(storage)
+    val nonPersistentModules = builder.entities(ModuleEntity::class.java)
+      .filter { it.entitySource == NonPersistentEntitySource }
+      .toList()
+    nonPersistentModules.forEach {
+      builder.removeEntity(it)
+    }
+    return builder.toStorage()
   }
 
   override fun dispose() = Unit
