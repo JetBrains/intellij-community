@@ -7,8 +7,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.refactoring.HelpID
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
@@ -70,7 +68,7 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
 
   private fun startRefactoring(editor: Editor): TemplateState {
     val selection = with(editor.selectionModel) { TextRange(selectionStart, selectionEnd) }
-    MethodExtractor().doExtract(file, selection, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
+    MethodExtractor().doExtract(file, selection)
     val templateState = getActiveTemplate()
     require(templateState != null) { "Failed to start refactoring" }
     return templateState
