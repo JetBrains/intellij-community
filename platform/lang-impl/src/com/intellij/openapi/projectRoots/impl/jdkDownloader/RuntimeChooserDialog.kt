@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -8,7 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.castSafelyTo
@@ -17,6 +21,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.Action
 import javax.swing.JComponent
+import javax.swing.SwingConstants
 
 sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
@@ -143,6 +148,12 @@ class RuntimeChooserDialog(
       row {
         comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
       }.onlyVisibleWhenSelected { it is RuntimeChooserDownloadableItem }
+
+      row {
+        comment(LangBundle.message("dialog.label.choose.ide.runtime.warn"), 90).component.also {
+          it.icon = Messages.getWarningIcon()
+        }
+      }
     }
   }
 
