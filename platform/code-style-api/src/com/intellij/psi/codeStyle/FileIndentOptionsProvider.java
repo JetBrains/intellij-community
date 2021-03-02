@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ public abstract class FileIndentOptionsProvider {
   }
 
   @Nullable
-  public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
+  public CodeStyleStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
     return null;
   }
 }
