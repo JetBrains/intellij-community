@@ -69,12 +69,11 @@ class MixedListFactory extends SEResultsListFactory {
           return component;
         }
 
-        SearchEverywhereContributor<Object> contributor = model.getContributorForIndex(index);
         Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
           list, value, index, isSelected, cellHasFocus);
         if (component == null) {
+          ListCellRenderer<? super Object> renderer = model.getRendererForIndex(index);
           //noinspection ConstantConditions
-          ListCellRenderer<? super Object> renderer = contributor.getElementsRenderer();
           component = SlowOperations.allowSlowOperations(
             () -> renderer.getListCellRendererComponent(list, value, index, isSelected, true)
           );

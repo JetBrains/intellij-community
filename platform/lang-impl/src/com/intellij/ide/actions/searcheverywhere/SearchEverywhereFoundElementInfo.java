@@ -1,6 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import java.util.Comparator;
 
 /**
@@ -10,6 +14,7 @@ public class SearchEverywhereFoundElementInfo {
   public final int priority;
   public final Object element;
   public final SearchEverywhereContributor<?> contributor;
+  private ListCellRenderer<?> renderer;
 
   public SearchEverywhereFoundElementInfo(Object element, int priority, SearchEverywhereContributor<?> contributor) {
     this.priority = priority;
@@ -27,6 +32,15 @@ public class SearchEverywhereFoundElementInfo {
 
   public SearchEverywhereContributor<?> getContributor() {
     return contributor;
+  }
+
+  @RequiresEdt
+  public @NotNull ListCellRenderer<?> getRenderer() {
+    var result = renderer;
+    if (result == null) {
+      result = renderer = contributor.getElementsRenderer();
+    }
+    return result;
   }
 
   public static final Comparator<SearchEverywhereFoundElementInfo> COMPARATOR = (o1, o2) -> {

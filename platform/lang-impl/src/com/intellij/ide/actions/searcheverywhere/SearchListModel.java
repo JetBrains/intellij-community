@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
@@ -95,6 +95,11 @@ abstract class SearchListModel extends AbstractListModel<Object> {
   public <Item> SearchEverywhereContributor<Item> getContributorForIndex(int index) {
     //noinspection unchecked
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
+  }
+
+  @SuppressWarnings("unchecked")
+  public @Nullable ListCellRenderer<? super Object> getRendererForIndex(int index) {
+    return (ListCellRenderer<? super Object>)listElements.get(index).getRenderer();
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
@@ -44,9 +44,9 @@ class GroupedListFactory extends SEResultsListFactory {
         Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
           list, value, index, isSelected, cellHasFocus);
         if (component == null) {
+          ListCellRenderer<? super Object> renderer = groupedModel.getRendererForIndex(index);
           //noinspection ConstantConditions
-          component = contributor.getElementsRenderer().getListCellRendererComponent(
-            list, value, index, isSelected, true);
+          component = renderer.getListCellRendererComponent(list, value, index, isSelected, true);
         }
 
         if (component instanceof JComponent) {
