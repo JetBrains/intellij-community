@@ -21,21 +21,17 @@ internal class StatisticsGroupHyperlinkInfo(private val groupId: String,
                                             private val eventData: String,
                                             private val file: VirtualFile,
                                             private val lineNumber: Int) : HyperlinkInfo {
-  override fun navigate(project: Project?) {
+  override fun navigate(project: Project) {
     val actions = StatisticsLogGroupActionsProvider.EP_NAME.extensionList
       .filter { getPluginInfo(it.javaClass).isDevelopedByJetBrains() }
       .flatMap { it.getActions(groupId, eventId, eventData) }
     if (actions.isEmpty()) {
-      if (project != null) {
-        OpenFileHyperlinkInfo(project, file, lineNumber).navigate(project)
-      }
+      OpenFileHyperlinkInfo(project, file, lineNumber).navigate(project)
     }
     else {
       val group = DefaultActionGroup()
       group.addAll(actions)
-      if (project != null) {
-        group.add(OpenGroupScheme(project, file, lineNumber))
-      }
+      group.add(OpenGroupScheme(project, file, lineNumber))
       showPopup(project, group)
     }
   }

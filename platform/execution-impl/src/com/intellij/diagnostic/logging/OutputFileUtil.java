@@ -99,7 +99,7 @@ public final class OutputFileUtil {
 
         return new Result(entireLength - filePath.length() - 1, entireLength, new HyperlinkInfo() {
           @Override
-          public void navigate(final Project project) {
+          public void navigate(@NotNull Project project) {
             final VirtualFile file =
               WriteAction
                 .compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath)));

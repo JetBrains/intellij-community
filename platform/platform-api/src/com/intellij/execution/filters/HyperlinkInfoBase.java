@@ -24,7 +24,7 @@ public abstract class HyperlinkInfoBase implements HyperlinkInfo {
   public abstract void navigate(@NotNull Project project, @Nullable RelativePoint hyperlinkLocationPoint);
 
   @Override
-  public void navigate(Project project) {
+  public void navigate(@NotNull Project project) {
     navigate(project, null);
   }
 }

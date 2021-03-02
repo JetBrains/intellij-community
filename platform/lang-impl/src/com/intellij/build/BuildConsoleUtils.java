@@ -103,7 +103,7 @@ public final class BuildConsoleUtils {
           String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
           consoleView.printHyperlink(linkText, new HyperlinkInfo() {
             @Override
-            public void navigate(Project project) {
+            public void navigate(@NotNull Project project) {
               if (notification != null && notification.getListener() != null) {
                 notification.getListener().hyperlinkUpdate(
                   notification, IJSwingUtilities.createHyperlinkEvent(href, consoleView.getComponent()));

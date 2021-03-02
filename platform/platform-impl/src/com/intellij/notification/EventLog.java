@@ -645,7 +645,7 @@ public final class EventLog {
     }
 
     @Override
-    public void navigate(Project project) {
+    public void navigate(@NotNull Project project) {
       NotificationListener listener = myNotification.getListener();
       if (listener != null) {
         EventLogConsole console = Objects.requireNonNull(getProjectService(project).getConsole(myNotification));
@@ -668,7 +668,7 @@ public final class EventLog {
     }
 
     @Override
-    public void navigate(Project project) {
+    public void navigate(@NotNull Project project) {
       hideBalloon(myNotification);
 
       for (Notification notification : getLogModel(project).getNotifications()) {

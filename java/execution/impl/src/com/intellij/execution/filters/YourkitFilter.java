@@ -90,7 +90,7 @@ public class YourkitFilter implements Filter{
     }
 
     @Override
-    public void navigate(final Project project) {
+    public void navigate(@NotNull Project project) {
       DefaultPsiElementListCellRenderer renderer = new DefaultPsiElementListCellRenderer();
       final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
       if (editor != null) {

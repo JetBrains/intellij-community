@@ -37,23 +37,21 @@ abstract class FileHyperlinkInfoBase(private val myProject: Project,
     }
   }
 
-  override fun navigate(project: Project?) {
-    project ?: return
-    descriptor?.let {
-      if (it.file.isDirectory) {
-        val psiManager = PsiManager.getInstance(project)
-        val psiDirectory = psiManager.findDirectory(it.file)
-        if (psiDirectory != null && psiManager.isInProject(psiDirectory)) {
-          psiDirectory.navigate(true)
-        }
-        else {
-          PsiNavigationSupport.getInstance().openDirectoryInSystemFileManager(File(it.file.path))
-        }
+  override fun navigate(project: Project) {
+    val descriptor = descriptor ?: return
+    if (descriptor.file.isDirectory) {
+      val psiManager = PsiManager.getInstance(project)
+      val psiDirectory = psiManager.findDirectory(descriptor.file)
+      if (psiDirectory != null && psiManager.isInProject(psiDirectory)) {
+        psiDirectory.navigate(true)
       }
       else {
-        if (null == FileEditorManager.getInstance(project).openTextEditor(it, true)) {
-          BrowserHyperlinkInfo(it.file.url).navigate(project)
-        }
+        PsiNavigationSupport.getInstance().openDirectoryInSystemFileManager(File(descriptor.file.path))
+      }
+    }
+    else {
+      if (null == FileEditorManager.getInstance(project).openTextEditor(descriptor, true)) {
+        BrowserHyperlinkInfo(descriptor.file.url).navigate(project)
       }
     }
   }
