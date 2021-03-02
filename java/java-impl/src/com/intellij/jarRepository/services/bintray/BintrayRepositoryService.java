@@ -19,7 +19,10 @@ import static java.util.Collections.singletonList;
 
 /**
  * @author ibessonov
+ * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
+@SuppressWarnings("DeprecatedIsStillUsed") // allow to use it in 2021.1
+@Deprecated(forRemoval = true)
 public class BintrayRepositoryService extends MavenRepositoryService {
 
   @NotNull
