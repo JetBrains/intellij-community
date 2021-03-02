@@ -7,12 +7,9 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
+import com.intellij.refactoring.HelpID
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
-import com.intellij.refactoring.extractMethod.newImpl.findExtractOptions
-import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
-import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractParameters
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import com.intellij.util.ui.UIUtil
@@ -71,16 +68,7 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
 
   private fun startRefactoring(editor: Editor): TemplateState {
     val selection = with(editor.selectionModel) { TextRange(selectionStart, selectionEnd) }
-    val elements = ExtractSelector().suggestElementsToExtract(file, selection)
-    require(elements.isNotEmpty())
-    val extractOptions = findExtractOptions(elements)
-    val extractor = MethodExtractor().getDefaultInplaceExtractor(extractOptions)
-    val popupProvider = ExtractMethodPopupProvider(null, null)
-    val containingClass = extractOptions.anchor.containingClass
-    require(containingClass != null)
-    val name = MethodExtractor().suggestSafeMethodNames(extractOptions).first()
-    val parameters = ExtractParameters(containingClass, selection, name, false, false)
-    InplaceMethodExtractor(editor, parameters, extractor, popupProvider).performInplaceRefactoring(LinkedHashSet())
+    MethodExtractor().doExtract(file, selection, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
     val templateState = getActiveTemplate()
     require(templateState != null) { "Failed to start refactoring" }
     return templateState
