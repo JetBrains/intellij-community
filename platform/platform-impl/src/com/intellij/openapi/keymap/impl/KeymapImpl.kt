@@ -24,7 +24,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
@@ -38,7 +38,6 @@ import org.jdom.Element
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.KeyStroke
-import kotlin.collections.HashSet
 
 private const val KEY_MAP = "keymap"
 private const val KEYBOARD_SHORTCUT = "keyboard-shortcut"
@@ -797,9 +796,10 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
                   }
                 })
 
-                  PluginsAdvertiser.installAndEnable(project, getPluginIdWithDependencies(pluginId), false) {
-
-                  }
+                installAndEnable(
+                  project,
+                  getPluginIdWithDependencies(pluginId),
+                ) {}
                 notification.expire()
               }
 

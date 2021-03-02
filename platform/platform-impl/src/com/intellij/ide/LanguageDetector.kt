@@ -14,7 +14,7 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import java.util.*
 
 class LanguageDetector : StartupActivity.Background {
@@ -42,10 +42,14 @@ class LanguageDetector : StartupActivity.Background {
 
     private fun installAction(project: Project, matchedVerifiedPlugin: PluginNode, notification: Notification) =
       NotificationAction.create(ApplicationBundle.message("notification.action.language.plugin.install.and.enable")) { _, _ ->
-        PluginsAdvertiser.installAndEnable(project, setOf(matchedVerifiedPlugin.pluginId), false, Runnable {
+        installAndEnable(
+          project,
+          setOf(matchedVerifiedPlugin.pluginId),
+          false,
+        ) {
           notification.expire()
           ApplicationManagerEx.getApplicationEx().restart(true)
-        })
+        }
       }
 
     private fun findPlugin() = verifiedLanguagePlugins()

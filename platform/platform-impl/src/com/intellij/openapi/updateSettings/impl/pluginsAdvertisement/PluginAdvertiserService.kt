@@ -81,7 +81,7 @@ open class PluginAdvertiserService {
       disabledPlugins[plugin] = pluginDescriptor
     }
 
-    val bundledPlugin = PluginsAdvertiser.hasBundledPluginToInstall(ids.values)
+    val bundledPlugin = getBundledPluginToInstall(ids.values)
     val plugins = mutableSetOf<PluginDownloader>()
 
     if (ids.isNotEmpty()) {
@@ -123,9 +123,8 @@ open class PluginAdvertiserService {
             IdeBundle.message("plugins.advertiser.action.enable.plugins")
 
           NotificationAction.createSimpleExpiring(title) {
-            PluginsAdvertiser.logEnablePlugins(
+            FUSEventSource.NOTIFICATION.logEnablePlugins(
               disabledDescriptors.map { it.pluginId.idString },
-              PluginsAdvertiser.Source.NOTIFICATION,
               project,
             )
 
@@ -137,7 +136,7 @@ open class PluginAdvertiserService {
         }
         else
           NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
-            PluginsAdvertiser.logConfigurePlugins(PluginsAdvertiser.Source.NOTIFICATION, project)
+            FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
             PluginsAdvertiserDialog(project, plugins.toTypedArray(), customPlugins).show()
           }
 
@@ -148,10 +147,7 @@ open class PluginAdvertiserService {
         ) to listOf(
           action,
           NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.unknown.features")) {
-            PluginsAdvertiser.logIgnoreUnknownFeatures(
-              PluginsAdvertiser.Source.NOTIFICATION,
-              project,
-            )
+            FUSEventSource.NOTIFICATION.logIgnoreUnknownFeatures(project)
 
             val collector = UnknownFeaturesCollector.getInstance(project)
             unknownFeatures.forEach { collector.ignoreFeature(it) }
@@ -159,16 +155,16 @@ open class PluginAdvertiserService {
         )
       }
       else if (bundledPlugin.isNotEmpty()
-               && !PluginsAdvertiser.isIgnoreUltimate()) {
+               && !isIgnoreUltimate) {
         IdeBundle.message(
           "plugins.advertiser.ultimate.features.detected",
           bundledPlugin.joinToString()
         ) to listOf(
           NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.try.ultimate")) {
-            PluginsAdvertiser.openDownloadPageAndLog(PluginsAdvertiser.Source.NOTIFICATION, project)
+            FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project)
           },
           NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
-            PluginsAdvertiser.doIgnoreUltimateAndLog(PluginsAdvertiser.Source.NOTIFICATION, project)
+            FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)
           },
         )
       }
@@ -176,7 +172,7 @@ open class PluginAdvertiserService {
         return@invokeLater
       }
 
-      val notification = PluginsAdvertiser.getNotificationGroup().createNotification(
+      val notification = notificationGroup.createNotification(
         "",
         notificationMessage,
         NotificationType.INFORMATION,

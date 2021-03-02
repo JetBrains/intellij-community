@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
@@ -95,7 +95,7 @@ internal class InstallPluginService : RestService() {
       val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       ApplicationManager.getApplication().invokeLater(Runnable {
         AppIcon.getInstance().requestAttention(effectiveProject, true)
-        PluginsAdvertiser.installAndEnable(plugins.toSet()) { }
+        installAndEnable(plugins.toSet()) { }
         isAvailable = true
       }, effectiveProject.disposed)
     }

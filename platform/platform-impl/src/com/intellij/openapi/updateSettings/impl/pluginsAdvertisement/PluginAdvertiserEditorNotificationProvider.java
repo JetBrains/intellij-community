@@ -84,16 +84,15 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
         pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
         updateAllNotifications(project);
 
-        PluginsAdvertiser.logEnablePlugins(List.of(disabledPlugin.getPluginId().getIdString()),
-                                           PluginsAdvertiser.Source.EDITOR,
-                                           project);
+        FUSEventSource.EDITOR.logEnablePlugins(List.of(disabledPlugin.getPluginId().getIdString()),
+                                               project);
         PluginManagerConfigurable.showPluginConfigurableAndEnable(project, Set.of(disabledPlugin));
       });
     }
     else if (!pluginsToInstall.myJbProduced.isEmpty()) {
       createInstallActionLabel(panel, pluginsToInstall.myJbProduced, onPluginsInstalled);
     }
-    else if (!PluginsAdvertiser.hasBundledPluginToInstall(dataSet).isEmpty()) {
+    else if (!PluginsAdvertiser.getBundledPluginToInstall(dataSet).isEmpty()) {
       if (PluginsAdvertiser.isIgnoreUltimate()) {
         return null;
       }
@@ -102,11 +101,11 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       //noinspection DialogTitleCapitalization
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate"), () -> {
         pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
-        PluginsAdvertiser.openDownloadPageAndLog(PluginsAdvertiser.Source.EDITOR, project);
+        FUSEventSource.EDITOR.openDownloadPageAndLog(project);
       });
 
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate"), () -> {
-        PluginsAdvertiser.doIgnoreUltimateAndLog(PluginsAdvertiser.Source.EDITOR, project);
+        FUSEventSource.EDITOR.doIgnoreUltimateAndLog(project);
         updateAllNotifications(project);
       });
     }
@@ -117,7 +116,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       return null;
     }
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.extension"), () -> {
-      PluginsAdvertiser.logIgnoreExtension(PluginsAdvertiser.Source.EDITOR, project);
+      FUSEventSource.EDITOR.logIgnoreExtension(project);
       pluginAdvertiserExtensionsState.ignoreExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
       updateAllNotifications(project);
     });
@@ -154,9 +153,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     Set<PluginId> pluginIds = ContainerUtil.map2Set(dataSet, PluginData::getPluginId);
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins"),
                             () -> {
-                              PluginsAdvertiser.logInstallPlugins(ContainerUtil.map(pluginIds, PluginId::getIdString),
-                                                                  PluginsAdvertiser.Source.EDITOR,
-                                                                  null);
+                              FUSEventSource.EDITOR.logInstallPlugins(ContainerUtil.map(pluginIds, PluginId::getIdString));
                               PluginsAdvertiser.installAndEnable(pluginIds, onSuccess);
                             });
   }
