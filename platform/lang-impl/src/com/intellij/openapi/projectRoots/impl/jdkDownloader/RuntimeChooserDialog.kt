@@ -104,7 +104,9 @@ class RuntimeChooserDialog(
           return
         }
 
-        super.setSelectedItem(anObject)
+        if (anObject is RuntimeChooserDownloadableItem || anObject is RuntimeChooserCustomItem || anObject is RuntimeChooserCurrentItem) {
+          super.setSelectedItem(anObject)
+        }
       }
     }
 
