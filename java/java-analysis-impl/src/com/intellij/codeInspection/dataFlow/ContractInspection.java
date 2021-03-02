@@ -15,6 +15,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -131,13 +132,13 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
           return ParseException
             .forClause(JavaAnalysisBundle.message("inspection.contract.checker.unreachable.contract.clause", contract), text, clauseIndex);
         }
-        if (StreamEx.of(possibleContracts).allMatch(c -> c.intersect(contract) == null)) {
+        if (ContainerUtil.and(possibleContracts, c -> c.intersect(contract) == null)) {
           return ParseException.forClause(
             JavaAnalysisBundle.message("inspection.contract.checker.contract.clause.never.satisfied", contract), text, clauseIndex);
         }
         possibleContracts = StreamEx.of(possibleContracts).flatMap(c -> c.excludeContract(contract))
-                                     .limit(DataFlowRunner.MAX_STATES_PER_BRANCH).toList();
-        if (possibleContracts.size() >= DataFlowRunner.MAX_STATES_PER_BRANCH) {
+                                     .limit(DataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH).toList();
+        if (possibleContracts.size() >= DataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH) {
           possibleContracts = null;
         }
       }

@@ -415,7 +415,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (callArguments.myArguments != null && !(defaultResult.getDfType() instanceof DfConstantType)) {
       for (MethodContract contract : instruction.getContracts()) {
         currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult, expression);
-        if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
+        if (currentStates.size() + finalStates.size() > runner.getComplexityLimit()) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
           }
