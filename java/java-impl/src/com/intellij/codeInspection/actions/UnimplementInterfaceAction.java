@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.actions;
 
-import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -11,23 +9,22 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class UnimplementInterfaceAction implements IntentionAction {
+public class UnimplementInterfaceAction extends BaseElementAtCaretIntentionAction {
   private String myName = "Interface";
-  private final PsiJavaCodeReferenceElement myRef;
   private final boolean myIsDuplicates;
 
   public UnimplementInterfaceAction() {
-    this(null, false);
+    this(false);
   }
 
-  public UnimplementInterfaceAction(PsiJavaCodeReferenceElement ref, boolean isDuplicates) {
-    myRef = ref;
+  public UnimplementInterfaceAction(boolean isDuplicates) {
     myIsDuplicates = isDuplicates;
   }
 
@@ -47,13 +44,8 @@ public class UnimplementInterfaceAction implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myIsDuplicates) return true;
-    if (!(file instanceof PsiJavaFile)) return false;
-    final PsiReference psiReference = TargetElementUtil.findReference(editor);
-    if (psiReference == null) return false;
-
-    final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
     if (referenceList == null) return false;
 
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(referenceList, PsiClass.class);
@@ -61,42 +53,35 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     if (psiClass.getExtendsList() != referenceList && psiClass.getImplementsList() != referenceList) return false;
 
-    PsiJavaCodeReferenceElement referenceElement = getTopLevelRef(psiReference, referenceList);
-    if (referenceElement == null) return false;
+    final PsiJavaCodeReferenceElement topLevelRef = getTopLevelRef(element, referenceList);
+    if (topLevelRef == null) return false;
 
-    final PsiElement target = referenceElement.resolve();
-    if (!(target instanceof PsiClass)) return false;
-    if (HighlightClassUtil.checkExtendsDuplicate(referenceElement, target, file) != null) return false;
+    final PsiClass targetClass = ObjectUtils.tryCast(topLevelRef.resolve(), PsiClass.class);
+    if (targetClass == null) return false;
 
-    PsiClass targetClass = (PsiClass)target;
-    if (targetClass.isInterface()) {
-      myName = "Interface";
+    if (myIsDuplicates) return true;
+
+    for (PsiJavaCodeReferenceElement refElement : referenceList.getReferenceElements()) {
+      if (isDuplicate(topLevelRef, refElement, targetClass)) return false;
     }
-    else {
-      myName = "Class";
-    }
+
+    myName = targetClass.isInterface() ? "Interface" : "Class";
 
     return true;
   }
 
   @Nullable
-  private static PsiJavaCodeReferenceElement getTopLevelRef(PsiReference psiReference, PsiReferenceList referenceList) {
-    PsiElement element = psiReference.getElement();
+  private static PsiJavaCodeReferenceElement getTopLevelRef(@NotNull PsiElement element, @NotNull PsiReferenceList referenceList) {
     while (element.getParent() != referenceList) {
       element = element.getParent();
       if (element == null) return null;
     }
-
-    if (!(element instanceof PsiJavaCodeReferenceElement)) return null;
-    return (PsiJavaCodeReferenceElement)element;
+    return ObjectUtils.tryCast(element, PsiJavaCodeReferenceElement.class);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiReference psiReference = myIsDuplicates ? myRef : TargetElementUtil.findReference(editor);
-    if (psiReference == null) return;
-
-    final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
     if (referenceList == null) return;
 
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(referenceList, PsiClass.class);
@@ -104,19 +89,16 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     if (psiClass.getExtendsList() != referenceList && psiClass.getImplementsList() != referenceList) return;
 
-    PsiJavaCodeReferenceElement element = getTopLevelRef(psiReference, referenceList);
-    if (element == null) return;
+    final PsiJavaCodeReferenceElement topLevelRef = getTopLevelRef(element, referenceList);
+    if (topLevelRef == null) return;
 
-    final PsiElement target = element.resolve();
-    if (!(target instanceof PsiClass)) return;
-
-    PsiClass targetClass = (PsiClass)target;
+    final PsiElement target = topLevelRef.resolve();
+    final PsiClass targetClass = ObjectUtils.tryCast(target, PsiClass.class);
+    if (targetClass == null) return;
 
     if (myIsDuplicates) {
-      final PsiManager manager = file.getManager();
       for (PsiJavaCodeReferenceElement refElement : referenceList.getReferenceElements()) {
-        final PsiElement resolvedElement = refElement.resolve();
-        if (!manager.areElementsEquivalent(refElement, element) && manager.areElementsEquivalent(resolvedElement, targetClass)) {
+        if (isDuplicate(topLevelRef, refElement, targetClass)) {
           refElement.delete();
         }
       }
@@ -130,7 +112,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
         implementations.put(psiMethod, implementingMethod);
       }
     }
-    element.delete();
+    topLevelRef.delete();
 
     if (target == psiClass) return;
 
@@ -152,6 +134,13 @@ public class UnimplementInterfaceAction implements IntentionAction {
       final PsiMethod impl = implementations.get(psiMethod);
       if (impl != null) impl.delete();
     }
+  }
+
+  private static boolean isDuplicate(PsiJavaCodeReferenceElement element,
+                                     PsiJavaCodeReferenceElement otherElement,
+                                     @NotNull PsiClass aClass) {
+    final PsiManager manager = aClass.getManager();
+    return !manager.areElementsEquivalent(otherElement, element) && manager.areElementsEquivalent(otherElement.resolve(), aClass);
   }
 
   @Override

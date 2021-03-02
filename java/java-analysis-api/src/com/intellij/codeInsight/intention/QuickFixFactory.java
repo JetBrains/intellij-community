@@ -500,7 +500,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList);
 
-  public abstract @NotNull IntentionAction createUnimplementInterfaceAction(PsiJavaCodeReferenceElement ref, boolean isDuplicates);
+  public abstract @NotNull IntentionAction createUnimplementInterfaceAction(boolean isDuplicates);
 
   public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
 }
