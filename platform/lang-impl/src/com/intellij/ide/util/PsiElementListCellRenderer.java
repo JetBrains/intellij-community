@@ -62,8 +62,13 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   private boolean myFocusBorderEnabled = Registry.is("psi.element.list.cell.renderer.focus.border.enabled");
   protected int myRightComponentWidth;
 
+  private final ListCellRenderer<PsiElement> myBackgroundRenderer;
+
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
+    myBackgroundRenderer = Registry.is("psi.element.list.cell.renderer.background")
+                           ? new PsiElementBackgroundListCellRenderer(this)
+                           : null;
   }
 
   private class MyAccessibleContext extends JPanel.AccessibleJPanel {
@@ -103,7 +108,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
   }
 
-  private class LeftRenderer extends ColoredListCellRenderer<Object> {
+  final class LeftRenderer extends ColoredListCellRenderer<Object> {
 
     private final ItemMatchers myMatchers;
 
@@ -208,6 +213,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    if (myBackgroundRenderer != null && value instanceof PsiElement) {
+      //noinspection unchecked
+      return myBackgroundRenderer.getListCellRendererComponent(list, (PsiElement)value, index, isSelected, cellHasFocus);
+    }
+
     removeAll();
     myRightComponentWidth = 0;
     DefaultListCellRenderer rightRenderer = getRightCellRenderer(value);
@@ -266,6 +276,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
                                                        boolean selected,
                                                        boolean hasFocus) {
     return false;
+  }
+
+  final @Nullable DefaultListCellRenderer rightRenderer(Object value) {
+    return getRightCellRenderer(value);
   }
 
   @Nullable
