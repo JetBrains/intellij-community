@@ -1,18 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
-import com.intellij.ui.components.JBLabel
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.castSafelyTo
@@ -21,7 +18,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.SwingConstants
 
 sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
@@ -123,7 +119,7 @@ class RuntimeChooserDialog(
 
         val updateLocation = {
           (jdkCombobox.selectedItem as? RuntimeChooserItemWithFixedLocation)?.let { item ->
-            locationLabel.text = SdkListPresenter.presentDetectedSdkPath(item.homeDir)
+            locationLabel.text = FileUtil.getLocationRelativeToUserHome(item.homeDir, false)
           }
         }
         updateLocation()
