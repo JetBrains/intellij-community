@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
@@ -19,6 +20,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,9 +31,9 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUti
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitAndWrapActions;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
 
-public class EmptyStateProjectsPanel extends JPanel {
+class EmptyStateProjectsPanel extends BorderLayoutPanel {
 
-  public EmptyStateProjectsPanel(@NotNull Disposable parentDisposable) {
+  EmptyStateProjectsPanel(@NotNull Disposable parentDisposable) {
     setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
     JPanel mainPanel = new NonOpaquePanel(new VerticalFlowLayout());
     mainPanel.setBorder(JBUI.Borders.emptyTop(103));
@@ -59,11 +61,12 @@ public class EmptyStateProjectsPanel extends JPanel {
       mainPanel.add(moreLinkPanel);
     }
 
-    add(mainPanel);
+    addToCenter(mainPanel);
+    addToBottom(createBottomPanelForEmptyState(parentDisposable));
   }
 
   @NotNull
-  static ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
+  private static ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
     ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     actionToolbar.setBorder(JBUI.Borders.emptyTop(27));
@@ -72,7 +75,7 @@ public class EmptyStateProjectsPanel extends JPanel {
   }
 
   @NotNull
-  static DropDownLink<String> createLinkWithPopup(@NotNull ActionGroup group) {
+  private static DropDownLink<String> createLinkWithPopup(@NotNull ActionGroup group) {
     return new DropDownLink<>(group.getTemplateText(), link
       -> JBPopupFactory.getInstance().createActionGroupPopup(
       null, group, DataManager.getInstance().getDataContext(link),
@@ -80,7 +83,7 @@ public class EmptyStateProjectsPanel extends JPanel {
   }
 
   @NotNull
-  static JBLabel createTitle() {
+  private static JBLabel createTitle() {
     JBLabel titleLabel = new JBLabel(getApplicationTitle(), SwingConstants.CENTER);
     titleLabel.setOpaque(false);
     Font componentFont = titleLabel.getFont();
@@ -95,5 +98,22 @@ public class EmptyStateProjectsPanel extends JPanel {
     commentFirstLabel.setOpaque(false);
     commentFirstLabel.setForeground(UIUtil.getContextHelpForeground());
     return commentFirstLabel;
+  }
+
+  private static JPanel createBottomPanelForEmptyState(@NotNull Disposable parentDisposable) {
+    JPanel vPanel = new NonOpaquePanel();
+    vPanel.setLayout(new BoxLayout(vPanel, BoxLayout.PAGE_AXIS));
+    StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
+    boolean hasPromotion = false;
+    for (StartPagePromoter x : extensions) {
+      JPanel promotion = x.getPromotionForInitialState();
+      if (promotion == null) continue;
+      vPanel.add(promotion);
+      hasPromotion = true;
+    }
+    JPanel notification = ProjectsTabFactory.createNotificationsPanel(parentDisposable);
+    if (!hasPromotion) return notification;
+    vPanel.add(notification);
+    return vPanel;
   }
 }
