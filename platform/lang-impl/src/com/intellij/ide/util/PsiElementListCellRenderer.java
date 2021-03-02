@@ -103,11 +103,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   private class LeftRenderer extends ColoredListCellRenderer<Object> {
-    private final String myModuleName;
+
     private final ItemMatchers myMatchers;
 
-    LeftRenderer(final String moduleName, @NotNull ItemMatchers matchers) {
-      myModuleName = moduleName;
+    LeftRenderer(@NotNull ItemMatchers matchers) {
       myMatchers = matchers;
     }
 
@@ -152,7 +151,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         FontMetrics fm = list.getFontMetrics(list.getFont());
         int maxWidth = list.getWidth() -
                        fm.stringWidth(name) -
-                       (myModuleName != null ? fm.stringWidth(myModuleName + "        ") : 0) -
                        16 - myRightComponentWidth - 20;
         String containerText = getContainerTextForLeftComponent(element, name, maxWidth, fm);
         if (containerText != null) {
@@ -226,7 +224,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       myRightComponentWidth += spacer.getPreferredSize().width;
     }
 
-    ListCellRenderer<Object> leftRenderer = new LeftRenderer(null, value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
+    ListCellRenderer<Object> leftRenderer = new LeftRenderer(value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
     final Component leftCellRendererComponent = SlowOperations.allowSlowOperations(
       () -> leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     );
