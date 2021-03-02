@@ -5,6 +5,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.SystemInfo
@@ -14,26 +15,20 @@ import java.nio.file.Paths
 
 @Service(Service.Level.APP)
 class RuntimeChooserDownloader {
-  companion object {
-    private val LOG = logger<RuntimeChooserDownloader>()
-  }
-
-  fun downloadAndUse(jdk: JdkItem, targetDir: Path) {
-    val title = LangBundle.message("progress.title.choose.ide.runtime.downloading.jdk", jdk.fullPresentationText)
-    object: Task.Backgroundable(null, title, true, ALWAYS_BACKGROUND) {
-      override fun run(indicator: ProgressIndicator) {
-        try {
-          val installer = service<RuntimeChooserJbrInstaller>()
-          val request = installer.prepareJdkInstallation(jdk, targetDir)
-          installer.installJdk(request, indicator, null)
-
-          service<RuntimeChooserPaths>().installCustomJdk(request.item.fullPresentationText, request.installDir)
-        } catch (t: Throwable) {
-          LOG.warn("Failed to download boot runtime from $jdk. ${t.message}")
-          service<RuntimeChooserNotifications>().notifyDownloadFailed(jdk, t.localizedMessage)
-        }
-      }
-    }.queue()
+  fun downloadAndUse(indicator: ProgressIndicator, jdk: JdkItem, targetDir: Path): Path? {
+    try {
+      val installer = service<RuntimeChooserJbrInstaller>()
+      val request = installer.prepareJdkInstallation(jdk, targetDir)
+      installer.installJdk(request, indicator, null)
+      return request.installDir
+    }
+    catch (t: Throwable) {
+      thisLogger().warn("Failed to download boot runtime from $jdk. ${t.message}")
+      RuntimeChooserMessages.showErrorMessage(
+        LangBundle.message("dialog.message.choose.ide.runtime.download.error", jdk.fullPresentationText, targetDir.toString())
+      )
+      return null
+    }
   }
 }
 

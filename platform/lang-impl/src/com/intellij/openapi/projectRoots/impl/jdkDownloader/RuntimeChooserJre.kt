@@ -50,17 +50,17 @@ object RuntimeChooserJreValidator {
   ): R {
     val homeDir = runCatching { Path.of(computeHomePath()).toAbsolutePath() }.getOrNull()
                   ?: return callback.onError(
-                    LangBundle.message("notification.content.choose.ide.runtime.set.unknown.error",
-                                       LangBundle.message(LangBundle.message("notification.content.choose.ide.runtime.no.file.part"))))
+                    LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error",
+                                       LangBundle.message(LangBundle.message("dialog.message.choose.ide.runtime.no.file.part"))))
 
     if (SystemInfo.isMac && !(homeDir / "Contents" / "Home").isDirectory()) {
       LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. macOS Bundle layout is expected")
-      return callback.onError(LangBundle.message("notification.content.choose.ide.runtime.set.error.mac.bundle", homeDir))
+      return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.error.mac.bundle", homeDir))
     }
 
     if (SystemInfo.isWindows && WslDistributionManager.isWslPath(homeDir.toString())) {
       LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. macOS Bundle layout is expected")
-      callback.onError(LangBundle.message("notification.content.choose.ide.runtime.set.version.error.wsl", homeDir))
+      callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.version.error.wsl", homeDir))
     }
 
     val binJava = when {
@@ -71,33 +71,33 @@ object RuntimeChooserJreValidator {
 
     if (!binJava.isFile() || ((SystemInfo.isMac || SystemInfo.isLinux) && !binJava.isExecutable())) {
       LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. Failed to find bin/java executable at $binJava")
-      return callback.onError(LangBundle.message("notification.content.choose.ide.runtime.set.cannot.start.error", homeDir))
+      return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
     }
 
-    val info = JdkVersionDetector.getInstance().detectJdkVersionInfo(homeDir)
+    val info = JdkVersionDetector.getInstance().detectJdkVersionInfo(homeDir.toString())
                ?: return callback.onError(LangBundle.message(
-                 "notification.content.choose.ide.runtime.set.unknown.error", homeDir))
+                 "dialog.message.choose.ide.runtime.set.unknown.error", homeDir))
 
     if (info.version.feature < minJdkFeatureVersion) {
       LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. The version $info is less than $minJdkFeatureVersion")
-      return callback.onError(LangBundle.message("notification.content.choose.ide.runtime.set.version.error", homeDir, "11",
+      return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.version.error", homeDir, "11",
                                                  info.version.toString()))
     }
 
     val jdkVersion = info.version?.toString()
-                     ?: return callback.onError(LangBundle.message("notification.content.choose.ide.runtime.set.unknown.error", homeDir))
+                     ?: return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error", homeDir))
 
     try {
       val cmd = GeneralCommandLine(binJava.toString(), "-version")
       val exitCode = CapturingProcessHandler(cmd).runProcess(15_000).exitCode
       if (exitCode != 0) {
         LOG.warn("Failed to run JDK for boot runtime: ${homeDir}. Exit code is ${exitCode} for $binJava.")
-        return callback.onError(LangBundle.message("notification.content.choose.ide.runtime.set.cannot.start.error", homeDir))
+        return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
       }
     }
     catch (t: Throwable) {
       LOG.warn("Failed to run JDK for boot runtime: $homeDir. ${t.message}", t)
-      return callback.onError(LangBundle.message("notification.content.choose.ide.runtime.set.cannot.start.error", homeDir))
+      return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
     }
 
     val versionString = listOfNotNull(info.displayName, jdkVersion).joinToString(" ")
