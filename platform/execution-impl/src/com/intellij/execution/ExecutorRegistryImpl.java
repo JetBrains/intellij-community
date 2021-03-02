@@ -13,11 +13,11 @@ import com.intellij.execution.impl.ExecutionManagerImplKt;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.segmentedRunDebugWidget.StateWidgetManager;
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess;
-import com.intellij.execution.stateWidget.*;
+import com.intellij.execution.stateWidget.StateWidget;
+import com.intellij.execution.stateWidget.StateWidgetAdditionActionsHolder;
+import com.intellij.execution.stateWidget.StateWidgetGroup;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
@@ -325,10 +325,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
       List<RunContentDescriptor> runningDescriptors =
         executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
-      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> {
-        RunContentDescriptor contentDescriptor = RunContentManager.getInstance(project).findContentDescriptor(myExecutor, descriptor.getProcessHandler());
-        return contentDescriptor != null && executionManager.getExecutors(contentDescriptor).contains(myExecutor);
-      });
+      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
 
       if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
         return AllIcons.Actions.Restart;
