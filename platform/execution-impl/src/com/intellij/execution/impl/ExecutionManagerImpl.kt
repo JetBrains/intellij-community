@@ -337,38 +337,38 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     val projectContext = context ?: SimpleDataContext.getProjectContext(project)
     val runBeforeRunExecutorMap = Collections.synchronizedMap(linkedMapOf<BeforeRunTask<*>, Executor>())
 
-    for (task in beforeRunTasks) {
-      val provider = BeforeRunTaskProvider.getProvider(project, task.providerId)
-      if (provider == null || task !is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
-        continue
-      }
-
-      val settings = task.settings
-      if (settings != null) {
-        // as side-effect here we setup runners list ( required for com.intellij.execution.impl.RunManagerImpl.canRunConfiguration() )
-        var executor = if (Registry.`is`("lock.run.executor.for.before.run.tasks", false)) {
-          DefaultRunExecutor.getRunExecutorInstance()
-        }
-        else {
-          environment.executor
-        }
-
-        val builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings)
-        if (builder == null || !RunManagerImpl.canRunConfiguration(settings, executor)) {
-          executor = DefaultRunExecutor.getRunExecutorInstance()
-          if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
-            // we should stop here as before run task cannot be executed at all (possibly it's invalid)
-            onCancelRunnable?.run()
-            ExecutionUtil.handleExecutionError(environment, ExecutionException(
-              ExecutionBundle.message("dialog.message.cannot.start.before.run.task", settings)))
-            return
-          }
-        }
-        runBeforeRunExecutorMap[task] = executor
-      }
-    }
-
     ApplicationManager.getApplication().executeOnPooledThread {
+      for (task in beforeRunTasks) {
+        val provider = BeforeRunTaskProvider.getProvider(project, task.providerId)
+        if (provider == null || task !is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
+          continue
+        }
+
+        val settings = task.settings
+        if (settings != null) {
+          // as side-effect here we setup runners list ( required for com.intellij.execution.impl.RunManagerImpl.canRunConfiguration() )
+          var executor = if (Registry.`is`("lock.run.executor.for.before.run.tasks", false)) {
+            DefaultRunExecutor.getRunExecutorInstance()
+          }
+          else {
+            environment.executor
+          }
+
+          val builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings)
+          if (builder == null || !RunManagerImpl.canRunConfiguration(settings, executor)) {
+            executor = DefaultRunExecutor.getRunExecutorInstance()
+            if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
+              // we should stop here as before run task cannot be executed at all (possibly it's invalid)
+              onCancelRunnable?.run()
+              ExecutionUtil.handleExecutionError(environment, ExecutionException(
+                ExecutionBundle.message("dialog.message.cannot.start.before.run.task", settings)))
+              return@executeOnPooledThread
+            }
+          }
+          runBeforeRunExecutorMap[task] = executor
+        }
+      }
+
       for (task in beforeRunTasks) {
         if (project.isDisposed) {
           return@executeOnPooledThread

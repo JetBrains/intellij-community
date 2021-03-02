@@ -87,6 +87,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     @JvmStatic
     fun canRunConfiguration(configuration: RunnerAndConfigurationSettings, executor: Executor): Boolean {
       try {
+        ApplicationManager.getApplication().assertIsNonDispatchThread()
         configuration.checkSettings(executor)
       }
       catch (ignored: IndexNotReadyException) {

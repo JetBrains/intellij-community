@@ -15,6 +15,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
@@ -41,6 +42,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.GridBag
@@ -55,6 +57,7 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.datatransfer.Transferable
 import java.awt.event.KeyEvent
+import java.util.concurrent.Callable
 import java.util.function.ToIntFunction
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -785,7 +788,13 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       buffer.append(" - ")
       buffer.append(configuration.nameText)
     }
-    runDialog.setOKActionEnabled(canRunConfiguration(configuration, executor))
+    ReadAction.nonBlocking(Callable { 
+      canRunConfiguration(configuration, executor) 
+    })
+      .finishOnUiThread(ModalityState.current()) {
+        runDialog.setOKActionEnabled(it)
+      }
+      .submit(AppExecutorUtil.getAppExecutorService())
     runDialog.setTitle(buffer.toString())
   }
 
