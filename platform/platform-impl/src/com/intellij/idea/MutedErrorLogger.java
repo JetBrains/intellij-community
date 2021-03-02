@@ -48,7 +48,7 @@ public class MutedErrorLogger extends MutedLogger {
 
   private static void reportToFus(@NotNull Throwable t) {
     Application application = ApplicationManager.getApplication();
-    if (application != null && !application.isUnitTestMode()) {
+    if (application != null && !application.isUnitTestMode() && !application.isDisposed()) {
       PluginId pluginId = PluginUtil.getInstance().findPluginId(t);
       VMOptions.MemoryKind kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
       LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
