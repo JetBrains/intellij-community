@@ -893,6 +893,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         return file == null ? null : file.findElementAt(offset);
       }
+
+      @Override
+      public TextResult getVariableValue(String variableName) {
+        return TemplateState.this.getVariableValue(variableName);
+      }
     };
   }
 

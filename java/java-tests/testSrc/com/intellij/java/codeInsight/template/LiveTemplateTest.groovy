@@ -772,8 +772,7 @@ class Foo {
 
     @Override
     Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
-      def state = TemplateManagerImpl.getTemplateState(context.editor)
-      return state != null ? state.getVariableValue(myVariableName) : null
+      return context.getVariableValue(myVariableName)
     }
 
     @Override
