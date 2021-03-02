@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.DocumentAdapter;
@@ -50,7 +49,6 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUti
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitAndWrapActions;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createErrorsLink;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createEventLink;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainAssociatedComponentBackground;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
 final class ProjectsTabFactory implements WelcomeTabFactory {
@@ -61,30 +59,11 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
     return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title"),
                                                            WelcomeScreenEventCollector.TabType.TabNavProject) {
 
-      private JPanel createBottomPanelForEmptyState() {
-        JPanel vPanel = new NonOpaquePanel();
-        vPanel.setLayout(new BoxLayout(vPanel, BoxLayout.PAGE_AXIS));
-        StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
-        boolean hasPromotion = false;
-        for (StartPagePromoter x : extensions) {
-          JPanel promotion = x.getPromotionForInitialState();
-          if (promotion == null) continue;
-          vPanel.add(promotion);
-          hasPromotion = true;
-        }
-        JPanel notification = createNotificationsPanel(parentDisposable);
-        if (!hasPromotion) return notification;
-        vPanel.add(notification);
-        return vPanel;
-      }
-
       @Override
       protected JComponent buildComponent() {
         JPanel mainPanel;
         if (RecentProjectListActionProvider.getInstance().getActions(false, true).isEmpty()) {
-          mainPanel = JBUI.Panels.simplePanel(new EmptyStateProjectsPanel(parentDisposable))
-            .addToBottom(createBottomPanelForEmptyState())
-            .withBackground(getMainAssociatedComponentBackground());
+          mainPanel = new EmptyStateProjectsPanel(parentDisposable);
         }
         else {
           mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12)).withBackground(getProjectsBackground());
@@ -237,15 +216,16 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
         return ToolbarTextButtonWrapper.wrapAsTextButton(action);
       }
 
-      private JPanel createNotificationsPanel(@NotNull Disposable parentDisposable) {
-        JPanel notificationsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
-        notificationsPanel.setBorder(JBUI.Borders.emptyTop(10));
-        Component eventLink = createEventLink("", parentDisposable);
-        notificationsPanel.add(createErrorsLink(parentDisposable));
-        notificationsPanel.add(eventLink);
-        return notificationsPanel;
-      }
     };
+  }
+
+  static JPanel createNotificationsPanel(@NotNull Disposable parentDisposable) {
+    JPanel notificationsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
+    notificationsPanel.setBorder(JBUI.Borders.emptyTop(10));
+    Component eventLink = createEventLink("", parentDisposable);
+    notificationsPanel.add(createErrorsLink(parentDisposable));
+    notificationsPanel.add(eventLink);
+    return notificationsPanel;
   }
 
   @Override
