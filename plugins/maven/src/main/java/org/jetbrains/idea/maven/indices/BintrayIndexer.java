@@ -19,7 +19,10 @@ import static com.intellij.openapi.util.text.StringUtil.split;
 
 /**
  * @author ibessonov
+ *
+ * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
+@Deprecated
 class BintrayIndexer implements NotNexusIndexer {
 
   private final String myUrlTemplate;
