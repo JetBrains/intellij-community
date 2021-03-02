@@ -48,6 +48,9 @@ class LegacyMethodExtractor: InplaceExtractMethodProvider {
     val methodCall = findSingleMethodCall(method) ?: return
     handler.extractedMethod = method
     handler.methodCall = methodCall
+    handler.methodName = method.name
+    handler.parametrizedDuplicates.setParametrizedMethod(method)
+    handler.parametrizedDuplicates.setParametrizedCall(methodCall)
     DuplicatesImpl.processDuplicates(handler, project, editor)
   }
 

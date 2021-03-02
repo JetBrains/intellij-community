@@ -52,6 +52,10 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testRenamedExactDuplicate(){
+    doTest(changedName = "renamed")
+  }
+
   private fun doTest(checkResults: Boolean = true, changedName: String? = null){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")

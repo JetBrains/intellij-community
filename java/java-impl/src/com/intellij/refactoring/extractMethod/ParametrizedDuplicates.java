@@ -410,8 +410,16 @@ public final class ParametrizedDuplicates {
     return myParametrizedMethod;
   }
 
+  public void setParametrizedMethod(PsiMethod parametrizedMethod) {
+    myParametrizedMethod = parametrizedMethod;
+  }
+
   PsiMethodCallExpression getParametrizedCall() {
     return myParametrizedCall;
+  }
+
+  public void setParametrizedCall(PsiMethodCallExpression parametrizedCall) {
+    myParametrizedCall = parametrizedCall;
   }
 
   VariableData[] getVariableDatum() {
