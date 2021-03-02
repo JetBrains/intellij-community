@@ -20,7 +20,7 @@ class RuntimeChooserDownloader {
       val installer = service<RuntimeChooserJbrInstaller>()
       val request = installer.prepareJdkInstallation(jdk, targetDir)
       installer.installJdk(request, indicator, null)
-      return request.installDir
+      return request.javaHome
     }
     catch (t: Throwable) {
       thisLogger().warn("Failed to download boot runtime from $jdk. ${t.message}")

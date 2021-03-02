@@ -65,12 +65,7 @@ object RuntimeChooserCustom {
     object : Task.Modal(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk"), false) {
       override fun run(indicator: ProgressIndicator) {
         RuntimeChooserJreValidator.testNewJdkUnderProgress(
-          computeHomePath = {
-            when {
-              SystemInfo.isMac -> sdk.homePath?.trimEnd('/')?.removeSuffix("/Contents/Home")?.trimEnd('/')
-              else -> sdk.homePath
-            }
-          },
+          computeHomePath = { sdk.homePath },
           callback = object : RuntimeChooserJreValidatorCallback<Unit> {
             override fun onSdkResolved(versionString: String, sdkHome: Path) {
               val newItem = RuntimeChooserCustomItem(versionString, sdkHome.toString())

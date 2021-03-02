@@ -53,6 +53,10 @@ object RuntimeChooserJreValidator {
                     LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error",
                                        LangBundle.message(LangBundle.message("dialog.message.choose.ide.runtime.no.file.part"))))
 
+    if (SystemInfo.isMac && homeDir.parent?.fileName?.toString() == "Contents" && homeDir.fileName?.toString() == "Home" ) {
+      return testNewJdkUnderProgress({ homeDir.parent?.parent?.toString() }, callback)
+    }
+
     if (SystemInfo.isMac && !(homeDir / "Contents" / "Home").isDirectory()) {
       LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. macOS Bundle layout is expected")
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.error.mac.bundle", homeDir))
