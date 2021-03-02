@@ -48,7 +48,7 @@ public final class WideSelectionListUI extends BasicListUI {
     if (paintBounds != null) {
       boolean focused = row == leadSelectionIndex && (!list.isFocusable() || list.hasFocus());
       Object value = model.getElementAt(row);
-      Color background = getBackground(list, value, row);
+      Color background = getBackground(list, value, row, selected);
       if (background != null) {
         g.setColor(background);
         g.fillRect(rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height);
@@ -97,7 +97,11 @@ public final class WideSelectionListUI extends BasicListUI {
   }
 
   @Nullable
-  private static Color getBackground(@NotNull JList<Object> list, @Nullable Object value, int row) {
+  private static Color getBackground(@NotNull JList<Object> list, @Nullable Object value, int row, boolean selected) {
+    // to be consistent with com.intellij.ui.tree.ui.DefaultTreeUI#getBackground
+    if (selected) {
+      return RenderingUtil.getSelectionBackground(list);
+    }
     if (row == ListHoverListener.getHoveredIndex(list)) {
       Color background = RenderingUtil.getHoverBackground(list);
       if (background != null) return background;
@@ -112,8 +116,8 @@ public final class WideSelectionListUI extends BasicListUI {
       if (background != null) return background;
     }
     if (list instanceof ListCellBackgroundSupplier) {
-      //noinspection unchecked
-      Color background = ((ListCellBackgroundSupplier<Object>)list).getCellBackground(value, row);
+      ListCellBackgroundSupplier<Object> supplier = (ListCellBackgroundSupplier<Object>)list;
+      Color background = supplier.getCellBackground(value, row);
       if (background != null) return background;
     }
     return null;
