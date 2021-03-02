@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class InspectionManagerEx extends InspectionManagerBase {
@@ -41,13 +42,16 @@ public class InspectionManagerEx extends InspectionManagerBase {
       });
     }
     else {
-      myContentManager = NotNullLazyValue.createValue(() -> {
-        ToolWindow toolWindow = ProblemsView.getToolWindow(project);
-        ContentManager contentManager = toolWindow.getContentManager();
-        ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
-        return contentManager;
-      });
+      myContentManager = NotNullLazyValue.createValue(() -> getProblemsViewContentManager(project));
     }
+  }
+
+  @NotNull
+  protected ContentManager getProblemsViewContentManager(@NotNull Project project) {
+    ToolWindow toolWindow = Objects.requireNonNull(ProblemsView.getToolWindow(project));
+    ContentManager contentManager = toolWindow.getContentManager();
+    ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
+    return contentManager;
   }
 
   @NotNull
