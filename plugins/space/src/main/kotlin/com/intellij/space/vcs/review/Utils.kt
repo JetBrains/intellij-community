@@ -44,7 +44,8 @@ internal fun openReviewInEditor(
   val chatFile = project.service<SpaceVirtualFilesManager>().findOrCreateChatFile(
     review.key ?: review.id,
     "space-review/${review.key}",
-    SpaceBundle.message("review.chat.editor.tab.name", review.key, review.title),
+    SpaceBundle.message("review.chat.editor.tab.name", review.key),
+    SpaceBundle.message("review.chat.editor.tab.tooltip", review.key, review.title),
     workspace.chatVm.channels,
     chatRef,
   ) { editorLifetime ->

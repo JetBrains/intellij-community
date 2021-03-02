@@ -34,11 +34,12 @@ internal class SpaceVirtualFilesManager(private val project: Project) : Disposab
     @NlsSafe id: String,
     @NlsSafe path: String,
     @NlsContexts.TabTitle displayName: String,
+    @NlsContexts.Tooltip tabTooltip: String,
     channelsVm: ChannelsVm,
     chatRecord: Ref<M2ChannelRecord>,
     headerDetailsBuilder: (Lifetime) -> SpaceChatHeaderDetails
   ): SpaceChatFile = chatFiles.getOrPut(id) {
-    SpaceChatFile(sessionId, project.locationHash, id, path, displayName, channelsVm, chatRecord, headerDetailsBuilder)
+    SpaceChatFile(sessionId, project.locationHash, id, path, displayName, tabTooltip, channelsVm, chatRecord, headerDetailsBuilder)
   }
 
   fun findOrCreateDiffFile(
