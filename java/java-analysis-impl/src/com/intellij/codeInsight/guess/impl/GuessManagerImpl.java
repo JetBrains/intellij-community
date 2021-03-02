@@ -195,7 +195,13 @@ public final class GuessManagerImpl extends GuessManager {
       super(project);
       myAssignments = honorAssignments;
     }
-    
+
+    @Override
+    protected int getComplexityLimit() {
+      // Limit analysis complexity for completion as it could be relaunched many times
+      return DEFAULT_MAX_STATES_PER_BRANCH / 3;
+    }
+
     void placeVisited() {
       myPlaceVisited = true;
     }
