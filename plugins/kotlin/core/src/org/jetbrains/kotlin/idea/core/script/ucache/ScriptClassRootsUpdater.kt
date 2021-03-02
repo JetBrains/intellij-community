@@ -148,11 +148,9 @@ abstract class ScriptClassRootsUpdater(
     private fun ensureUpdateScheduled() {
         scheduledUpdate?.cancel()
         val disposable = KotlinPluginDisposable.getInstance(project)
-        runReadAction {
-            if (!Disposer.isDisposed(disposable)) {
-                scheduledUpdate = BackgroundTaskUtil.executeOnPooledThread(disposable) {
-                    doUpdate()
-                }
+        if (!Disposer.isDisposed(disposable)) {
+            scheduledUpdate = BackgroundTaskUtil.executeOnPooledThread(disposable) {
+                doUpdate()
             }
         }
     }
