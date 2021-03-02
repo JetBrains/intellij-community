@@ -128,9 +128,10 @@ public class FragmentHintManager {
     if (keyEvent.getKeyCode() != KeyEvent.VK_ALT) return;
     if (keyEvent.getID() == KeyEvent.KEY_PRESSED) {
       for (SettingsEditorFragment<?, ?> fragment : myFragments) {
-        if (fragment.isSelected()) {
+        JComponent component = fragment.getComponent();
+        if (fragment.isSelected() && fragment.getName() != null && component.getRootPane() != null) {
           JComponent hintComponent = createHintComponent(fragment);
-          Point northEastOf = RelativePoint.getNorthEastOf(fragment.getComponent()).getScreenPoint();
+          Point northEastOf = RelativePoint.getNorthEastOf(component).getScreenPoint();
           northEastOf.translate(-hintComponent.getPreferredSize().width, -hintComponent.getPreferredSize().height + 5);
           HintManager.getInstance().showHint(hintComponent, RelativePoint.fromScreen(northEastOf), HintManager.HIDE_BY_ANY_KEY, -1);
         }
