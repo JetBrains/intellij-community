@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorEx
@@ -176,16 +177,12 @@ object LocalTrackerDiffUtil {
   private class MyTrackerListener(private val viewer: DiffViewerBase)
     : PartialLocalLineStatusTracker.ListenerAdapter() {
 
-    override fun onBecomingValid(tracker: PartialLocalLineStatusTracker) {
-      viewer.scheduleRediff()
-    }
+    override fun onBecomingValid(tracker: PartialLocalLineStatusTracker) = scheduleRediff()
+    override fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) = scheduleRediff()
+    override fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) = scheduleRediff()
 
-    override fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) {
-      viewer.scheduleRediff()
-    }
-
-    override fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) {
-      viewer.scheduleRediff()
+    private fun scheduleRediff() {
+      runInEdt { viewer.scheduleRediff() }
     }
   }
 
