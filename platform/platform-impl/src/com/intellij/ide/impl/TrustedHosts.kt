@@ -90,7 +90,7 @@ class TrustedHostsSettings : SimplePersistentStateComponent<TrustedHostsSettings
     return state.trustedHosts.map { it.toLowerCase() }.any { host ->
       if (host.contains(SCHEME_SEPARATOR)) { // host is defined manually, with a protocol => we compare protocol as well
         val hostWithTrailingSlash = if (host.endsWith("/")) host else "$host/"
-        url.startsWith(hostWithTrailingSlash, ignoreCase = true)
+        url.startsWith(hostWithTrailingSlash, ignoreCase = true) || url.startsWith(host, ignoreCase = true)
       }
       else {
         host.equals(origin.host, ignoreCase = true)

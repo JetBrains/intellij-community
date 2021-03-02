@@ -46,5 +46,12 @@ class TrustedProjectsTest {
     }
   }
 
+  @Test
+  fun `trusted host as explicit url`() {
+    val settings = TrustedHostsSettings()
+    settings.setHostTrusted("https://github.com/JetBrains/intellij.git", true)
+    assertTrue(settings.isUrlTrusted("https://github.com/JetBrains/intellij.git"))
+  }
+
   private data class HostTest(val trustedHost: String, val urlToTest: String, val isTrusted: Boolean)
 }
