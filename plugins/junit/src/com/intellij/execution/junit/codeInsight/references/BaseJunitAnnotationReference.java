@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -51,17 +52,24 @@ public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiL
     PsiMethod method = uMethod.getJavaPsi();
     String methodName = (String)myLiteral.evaluate();
     if (methodName == null) return false;
-    methodName = StringUtil.getShortName(methodName, '#');
-    if (!methodName.equals(method.getName())) return false;
+    String shortName = StringUtil.getShortName(methodName, '#');
+    if (!shortName.equals(method.getName())) return false;
+    PsiClass methodClass = method.getContainingClass();
+    if (methodClass == null) return false;
+    if (method.hasModifierProperty(PsiModifier.STATIC)) {
+      String className = StringUtil.getPackageName(methodName, '#');
+      if (!className.isEmpty()) {
+        return className.equals(ClassUtil.getJVMClassName(methodClass));
+      }
+    }
     PsiClass psiClazz = null;
     UClass literalClazz = UastUtils.getParentOfType(myLiteral, UClass.class);
     if (literalClazz != null) {
       psiClazz = literalClazz.getPsi();
     }
     if (psiClazz == null) return false;
-    PsiClass methodClass = method.getContainingClass();
-    if (methodClass == null) return false;
-    if (psiClazz.isInheritor(methodClass, false) || methodClass.isInheritor(psiClazz, false)) {
+    if (InheritanceUtil.isInheritorOrSelf(psiClazz, methodClass, true) ||
+        InheritanceUtil.isInheritorOrSelf(methodClass, psiClazz, true)) {
       return true;
     }
     return false;
