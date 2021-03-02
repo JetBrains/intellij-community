@@ -71,15 +71,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    String result = generateDocForHtml(element, originalElement, false);
-    if (result != null) return result;
-    return generateDocFromStyleOrScript(element, originalElement);
-  }
-
-  @Override
-  public @Nullable String generateHoverDoc(@NotNull PsiElement element,
-                                           @Nullable PsiElement originalElement) {
-    String result = generateDocForHtml(element, originalElement, true);
+    String result = generateDocForHtml(element, originalElement);
     if (result != null) return result;
     return generateDocFromStyleOrScript(element, originalElement);
   }
@@ -187,10 +179,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return attributeDescriptor;
   }
 
-  private String generateDocForHtml(PsiElement element, PsiElement originalElement, boolean docOnHover) {
+  private String generateDocForHtml(PsiElement element, PsiElement originalElement) {
     MdnSymbolDocumentation documentation = getDocumentation(element, originalElement);
     if (documentation != null) {
-      return documentation.getDocumentation(true, docOnHover, null);
+      return documentation.getDocumentation(true, null);
     }
 
     if (element instanceof XmlEntityDecl) {
