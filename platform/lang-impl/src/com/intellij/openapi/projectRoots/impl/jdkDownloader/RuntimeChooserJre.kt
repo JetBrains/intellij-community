@@ -79,9 +79,11 @@ object RuntimeChooserJreValidator {
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
     }
 
-    val info = JdkVersionDetector.getInstance().detectJdkVersionInfo(homeDir.toString())
-               ?: return callback.onError(LangBundle.message(
-                 "dialog.message.choose.ide.runtime.set.unknown.error", homeDir))
+    val info = runCatching {
+      //we compute the path to handle macOS bundle layout once again here
+      val inferredHome = binJava.parent?.parent?.toString() ?: return@runCatching null
+      JdkVersionDetector.getInstance().detectJdkVersionInfo(inferredHome)
+    }.getOrNull() ?: return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error", homeDir))
 
     if (info.version.feature < minJdkFeatureVersion) {
       LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. The version $info is less than $minJdkFeatureVersion")
