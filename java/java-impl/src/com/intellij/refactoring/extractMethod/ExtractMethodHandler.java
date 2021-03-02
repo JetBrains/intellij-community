@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -170,7 +169,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, PsiElement @NotNull [] elements) {
     TextRange selection = ExtractMethodHelper.findEditorSelection(editor);
     if (selection == null && elements.length == 1) selection = elements[0].getTextRange();
-    if (selection != null) new MethodExtractor().doExtract(file, selection, getRefactoringName(), HelpID.EXTRACT_METHOD);
+    if (selection != null) new MethodExtractor().doExtract(file, selection);
   }
 
   private static boolean invokeOnElements(@NotNull Project project, @NotNull Editor editor, @NotNull ExtractMethodProcessor processor, final boolean directTypes) {
