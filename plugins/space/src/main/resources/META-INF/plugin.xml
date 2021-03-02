@@ -114,6 +114,10 @@
       <reference id="com.intellij.space.actions.SpaceLogoutAction"/>
     </group>
 
+    <group id="SpaceVcsHistoryToolbar">
+      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar" anchor="last"/>
+    </group>
+
     <action id="com.intellij.space.vcs.SpaceVcsOpenInBrowserActionGroup"
             class="com.intellij.space.vcs.SpaceVcsOpenInBrowserActionGroup">
       <override-text place="EditorTabPopup"/>
@@ -123,7 +127,7 @@
       <add-to-group group-id="RevealGroup"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
-      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
+      <add-to-group group-id="SpaceVcsHistoryToolbar" anchor="last"/>
       <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
     </action>
 
@@ -133,7 +137,7 @@
       <add-to-group group-id="CopyExternalReferenceGroup" anchor="last"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
-      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
+      <add-to-group group-id="SpaceVcsHistoryToolbar" anchor="last"/>
       <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
     </action>
 
