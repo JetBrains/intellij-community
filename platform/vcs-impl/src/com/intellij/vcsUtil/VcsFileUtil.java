@@ -436,6 +436,7 @@ public final class VcsFileUtil {
     if (path.startsWith(QUOTE) && path.endsWith(QUOTE)) {
       path = path.substring(1, path.length() - 1);
     }
+    if (path.indexOf('\\') == -1) return path;
 
     Charset encoding = Charset.defaultCharset();
 
