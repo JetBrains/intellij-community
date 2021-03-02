@@ -136,8 +136,11 @@ Includes the following features:</p>
                  defaultValue="false"
                  description="Should Markdown use injected languages' formatters to format code-fences"/>
     <registryKey key="markdown.mermaid.download.link"
-                 defaultValue="https://unpkg.com/mermaid@8.6.0/dist/mermaid.js"
+                 defaultValue="https://unpkg.com/mermaid@8.9.1/dist/mermaid.js"
                  description="Link which Markdown plugin will use to download Mermaid.js library"/>
+    <registryKey key="markdown.mermaid.checksum"
+                 defaultValue="352791299c7f42ee02e774da58bead4a"
+                 description="MD5 checksum of downloaded Mermaid.js library"/>
     <registryKey key="markdown.mermaid.theme"
                  defaultValue="follow-ide"
                  description="Theme name to be used for Mermaid.js diagrams (set to 'follow-ide' to let the IDE decide)"/>
