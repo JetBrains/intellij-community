@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.createSmartPointer
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -46,13 +48,13 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
         fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextDescriptor: DeclarationDescriptor?): Boolean {
             if (referenceExpression.parent is KtInstanceExpressionWithLabel) return false
 
-            val prevElement = referenceExpression.prevElementWithoutSpacesAndComments() ?: return false
+            val prevElement = referenceExpression.prevElementWithoutSpacesAndComments()
             if (prevElement.elementType == KtTokens.DOT) return false
             val resultDescriptor = contextDescriptor ?: referenceExpression.findSingleDescriptor() ?: return false
             if (resultDescriptor.isExtension || resultDescriptor.isInRoot) return false
             if (prevElement.elementType == KtTokens.COLONCOLON) {
                 if (resultDescriptor.isTopLevelCallable) return false
-                val prevSibling = prevElement.getPrevSiblingIgnoringWhitespaceAndComments()
+                val prevSibling = prevElement?.getPrevSiblingIgnoringWhitespaceAndComments()
                 if (prevSibling is KtNameReferenceExpression || prevSibling is KtDotQualifiedExpression) return false
             }
 
@@ -70,6 +72,27 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
                     else -> replaceExpressionWithQualifier(psiFactory, referenceExpression, fqName)
                 }
             }
+        }
+
+        fun addQualifiersRecursively(root: KtElement): KtElement {
+            if (root is KtNameReferenceExpression) return applyIfApplicable(root) ?: root
+
+            root.descendantsOfType<KtNameReferenceExpression>()
+                .map { it.createSmartPointer() }
+                .toList()
+                .asReversed()
+                .forEach {
+                    applyIfApplicable(it.element ?: return@forEach)
+                }
+
+            return root
+        }
+
+        private fun applyIfApplicable(referenceExpression: KtNameReferenceExpression): KtElement? {
+            val descriptor = referenceExpression.findSingleDescriptor() ?: return null
+            val fqName = descriptor.importableFqName ?: return null
+            if (!isApplicableTo(referenceExpression, descriptor)) return null
+            return applyTo(referenceExpression, fqName)
         }
     }
 }
