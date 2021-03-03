@@ -32,14 +32,15 @@ interface ExternalSystemExecutionAware {
 
   @JvmDefault
   fun getEnvironmentConfigurationProvider(runConfiguration: ExternalSystemRunConfiguration,
-                                          taskNotificationListener: ExternalSystemTaskNotificationListener,
                                           project: Project): TargetEnvironmentConfigurationProvider? = null
 
   @JvmDefault
   fun getEnvironmentConfigurationProvider(projectPath: String,
                                           isPreviewMode: Boolean,
-                                          taskNotificationListener: ExternalSystemTaskNotificationListener,
                                           project: Project): TargetEnvironmentConfigurationProvider? = null
+
+  @JvmDefault
+  fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project) = false
 
   companion object {
     private val TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER: Key<TargetEnvironmentConfigurationProvider> =

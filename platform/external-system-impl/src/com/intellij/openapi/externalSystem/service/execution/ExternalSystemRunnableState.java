@@ -21,7 +21,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -50,9 +49,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
+import java.net.*;
 import java.util.Arrays;
+import java.util.Enumeration;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
@@ -61,6 +60,8 @@ import static com.intellij.openapi.util.text.StringUtil.nullize;
 public class ExternalSystemRunnableState extends UserDataHolderBase implements RunProfileState {
   @ApiStatus.Internal
   public static final Key<Integer> DEBUGGER_DISPATCH_PORT_KEY = Key.create("DEBUGGER_DISPATCH_PORT");
+  @ApiStatus.Internal
+  public static final Key<String> DEBUGGER_DISPATCH_ADDR_KEY = Key.create("DEBUGGER_DISPATCH_ADDR");
   @ApiStatus.Internal
   public static final Key<Integer> BUILD_PROCESS_DEBUGGER_PORT_KEY = Key.create("BUILD_PROCESS_DEBUGGER_PORT");
 
@@ -107,13 +108,39 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   public ServerSocket getForkSocket() {
     if (myForkSocket == null && !ExternalSystemRunConfiguration.DISABLE_FORK_DEBUGGER) {
       try {
-        myForkSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
+        boolean isRemoteRun = ExternalSystemExecutionAware.getExtensions(mySettings.getExternalSystemId()).stream()
+          .anyMatch(aware -> aware.isRemoteRun(myConfiguration, myProject));
+        myForkSocket = new ServerSocket(0, 0, findAddress(isRemoteRun));
       }
       catch (IOException e) {
         ExternalSystemRunConfiguration.LOG.error(e);
       }
     }
     return myForkSocket;
+  }
+
+  private static InetAddress findAddress(boolean remoteRun) throws UnknownHostException, SocketException {
+    if (remoteRun) {
+      Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+      while (interfaces.hasMoreElements()) {
+        NetworkInterface networkInterface = interfaces.nextElement();
+        try {
+          boolean isLoopbackInterface = networkInterface.isLoopback();
+          if (isLoopbackInterface) continue;
+          Enumeration<InetAddress> candidates = networkInterface.getInetAddresses();
+          while (candidates.hasMoreElements()) {
+            InetAddress candidate = candidates.nextElement();
+            if (candidate instanceof Inet4Address && !candidate.isLoopbackAddress()) {
+              return candidate;
+            }
+          }
+        }
+        catch (SocketException e) {
+          ExternalSystemRunConfiguration.LOG.debug("Error while querying interface " + networkInterface + " for IP addresses", e);
+        }
+      }
+    }
+    return InetAddress.getByName("127.0.0.1");
   }
 
   public boolean isReattachDebugProcess() {
@@ -300,8 +327,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   private void addDebugUserDataTo(UserDataHolderBase holder) {
     if (myDebugPort > 0) {
       holder.putUserData(BUILD_PROCESS_DEBUGGER_PORT_KEY, myDebugPort);
-      if (getForkSocket() != null) {
-        holder.putUserData(DEBUGGER_DISPATCH_PORT_KEY, getForkSocket().getLocalPort());
+      ServerSocket forkSocket = getForkSocket();
+      if (forkSocket != null) {
+        holder.putUserData(DEBUGGER_DISPATCH_ADDR_KEY, forkSocket.getInetAddress().getHostAddress());
+        holder.putUserData(DEBUGGER_DISPATCH_PORT_KEY, forkSocket.getLocalPort());
       }
     }
   }
