@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
+import java.io.PrintStream
 
 class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase() {
     @Test
@@ -57,4 +58,6 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
     override fun testDataDirName(): String {
         return "importAndCheckHighlighting"
     }
+
+    override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
 }
