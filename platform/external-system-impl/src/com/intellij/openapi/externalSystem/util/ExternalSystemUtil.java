@@ -368,7 +368,7 @@ public final class ExternalSystemUtil {
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
     boolean isFirstLoad = ThreeState.UNSURE.equals(TrustedProjects.getTrustedState(project));
-    boolean isTrustedProject = confirmLoadingUntrustedProject(project, () -> isFirstLoad, externalSystemId);
+    boolean isTrustedProject = confirmLoadingUntrustedProject(project, isFirstLoad, externalSystemId);
 
     if (!isPreviewMode && !isTrustedProject) {
       LOG.debug("Skip " + externalSystemId + " load, because project is not trusted");
@@ -679,36 +679,56 @@ public final class ExternalSystemUtil {
     }
   }
 
+  @Deprecated
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
+  public static boolean confirmLoadingUntrustedProject(
+    @NotNull Project project,
+    @NotNull Supplier<Boolean> confirmation,
+    ProjectSystemId... systemIds
+  ) {
+    return confirmLoadingUntrustedProject(project, confirmation.get(), Arrays.asList(systemIds));
+  }
+
+  @Deprecated
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
+  public static boolean confirmLoadingUntrustedProject(
+    @NotNull Project project,
+    @NotNull Supplier<Boolean> confirmation,
+    @NotNull Collection<ProjectSystemId> systemIds
+  ) {
+    return confirmLoadingUntrustedProject(project, confirmation.get(), systemIds);
+  }
+
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     ProjectSystemId... systemIds
   ) {
-    return confirmLoadingUntrustedProject(project, () -> true, systemIds);
+    return confirmLoadingUntrustedProject(project, true, systemIds);
   }
 
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
-    return confirmLoadingUntrustedProject(project, () -> true, systemIds);
+    return confirmLoadingUntrustedProject(project, true, systemIds);
   }
 
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
-    @NotNull Supplier<Boolean> confirmation,
+    boolean askConfirmation,
     ProjectSystemId... systemIds
   ) {
-    return confirmLoadingUntrustedProject(project, confirmation, Arrays.asList(systemIds));
+    return confirmLoadingUntrustedProject(project, askConfirmation, Arrays.asList(systemIds));
   }
 
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
-    @NotNull Supplier<Boolean> confirmation,
+    boolean askConfirmation,
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
     String systemsPresentation = StringUtil.join(systemIds, it -> it.getReadableName(), ", ");
     return TrustedProjects.isTrusted(project) || project.isDefault() || executesTrustedCodeOnly(systemIds) ||
-           confirmation.get() && TrustedProjects.confirmLoadingUntrustedProject(
+           askConfirmation && TrustedProjects.confirmLoadingUntrustedProject(
              project,
              ExternalSystemBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.size()),
              ExternalSystemBundle.message("untrusted.project.notification.text", systemsPresentation, systemIds.size()),

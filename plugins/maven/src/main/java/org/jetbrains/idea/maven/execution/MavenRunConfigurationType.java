@@ -163,7 +163,7 @@ public final class MavenRunConfigurationType implements ConfigurationType {
                                       @Nullable ProgramRunner.Callback callback,
                                       boolean isDelegateBuild) {
 
-    if (!ExternalSystemUtil.confirmLoadingUntrustedProject(project, Collections.singletonList(MavenUtil.SYSTEM_ID))) {
+    if (!ExternalSystemUtil.confirmLoadingUntrustedProject(project, MavenUtil.SYSTEM_ID)) {
       MavenUtil.showError(project,
                           RunnerBundle.message("notification.title.failed.to.execute.maven.goal"),
                           RunnerBundle.message("notification.project.is.untrusted"));

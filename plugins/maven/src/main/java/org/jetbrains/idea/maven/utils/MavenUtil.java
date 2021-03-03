@@ -1055,7 +1055,7 @@ public class MavenUtil {
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {
-    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, () -> askConfirmation, SYSTEM_ID);
+    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, askConfirmation, SYSTEM_ID);
   }
 
   public static void restartMavenConnectors(Project project) {
