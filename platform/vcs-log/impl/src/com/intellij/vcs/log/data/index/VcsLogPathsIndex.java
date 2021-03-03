@@ -206,9 +206,14 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                                                               int parentsCount) {
       List<ChangeKind> changeDataList = pathIdToChangeDataListsMap.get(pathId);
       if (changeDataList == null) {
-        changeDataList = new SmartList<>();
-        for (int i = 0; i < parentsCount; i++) {
-          changeDataList.add(ChangeKind.NOT_CHANGED);
+        if (parentsCount == 1) {
+          changeDataList = new SmartList<>(ChangeKind.NOT_CHANGED);
+        }
+        else {
+          changeDataList = new ArrayList<>(parentsCount);
+          for (int i = 0; i < parentsCount; i++) {
+            changeDataList.add(ChangeKind.NOT_CHANGED);
+          }
         }
         pathIdToChangeDataListsMap.put(pathId, changeDataList);
       }
