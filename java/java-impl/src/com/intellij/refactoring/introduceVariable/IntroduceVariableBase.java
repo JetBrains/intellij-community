@@ -58,6 +58,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.NotInSuperCallOccurrenceFilter;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -806,6 +807,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
     else {
       final boolean cantChangeFinalModifier = hasWriteAccess || inFinalContext;
+      if (selectedOccurrences.length > 0 && !ArrayUtil.contains(expr, selectedOccurrences)) {
+        expr = selectedOccurrences[0];
+      }
       myInplaceIntroducer = new JavaVariableInplaceIntroducer(project,
                                                               settings,
                                                               chosenAnchor,

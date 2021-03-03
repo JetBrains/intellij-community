@@ -209,6 +209,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
                         List.of("Replace this occurrence only", "Replace all 2 occurrences (will change semantics!)"));
   }
   
+  public void testSelectLValueThenFilterIt() {
+    doTestReplaceChoice("Replace all occurrences but write");
+  }
+  
   public void testHeavilyBrokenFile() {
     doTest(null);
   }
