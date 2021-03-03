@@ -61,7 +61,7 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
  * Returns the path to Python interpreter executable. The path is the path on
  * the target environment.
  */
-private fun getInterpreterPath(sdk: Sdk?): String? {
+fun getInterpreterPath(sdk: Sdk?): String? {
   if (sdk == null) return null
   // `RemoteSdkPropertiesPaths` suits both `PyRemoteSdkAdditionalDataBase` and `PyTargetAwareAdditionalData`
   return sdk.sdkAdditionalData?.let { (it as? RemoteSdkPropertiesPaths)?.interpreterPath } ?: sdk.homePath
