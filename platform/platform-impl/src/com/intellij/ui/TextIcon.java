@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import javax.swing.*;
@@ -8,6 +8,7 @@ import java.awt.font.TextLayout;
 import java.util.Objects;
 
 import static com.intellij.ui.paint.RectanglePainter.FILL;
+import static com.intellij.util.ui.UIUtil.getLcdContrastValue;
 
 public final class TextIcon implements Icon {
   @SuppressWarnings("UseDPIAwareInsets")
@@ -92,8 +93,10 @@ public final class TextIcon implements Icon {
     if (myForeground != null && bounds != null) {
       Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x, myInsets.top + y, bounds.width, bounds.height);
       try {
+        Object textLcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+        if (textLcdContrast == null) textLcdContrast = getLcdContrastValue(); // L&F is not properly updated
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, myContext.getAntiAliasingHint());
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, textLcdContrast);
         g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myContext.getFractionalMetricsHint());
         g2d.setColor(myForeground);
         g2d.setFont(myFont);
