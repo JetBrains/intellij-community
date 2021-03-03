@@ -58,6 +58,7 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
   companion object {
     private fun getVirtualFile(e: AnActionEvent): VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
 
+    @JvmOverloads
     fun openInRightSplit(project: @Nullable Project, file: VirtualFile, element: Navigatable? = null, requestFocus: Boolean = true): EditorWindow? {
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
       val splitters = fileEditorManager.splitters
