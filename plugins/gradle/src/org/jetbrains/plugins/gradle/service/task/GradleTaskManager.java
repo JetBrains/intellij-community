@@ -52,9 +52,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_ADDR_SYS_PROP;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP;
-import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.BUILD_PROCESS_DEBUGGER_PORT_KEY;
-import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.DEBUGGER_DISPATCH_PORT_KEY;
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
 import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
@@ -216,6 +216,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         String debugOptions = effectiveSettings.getUserData(GradleRunConfiguration.DEBUGGER_PARAMETERS_KEY);
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_OPTIONS_KEY, debugOptions);
       }
+      String debugDispatchAddr = effectiveSettings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
+      if (debugDispatchAddr != null) {
+        enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_ADDR_KEY, debugDispatchAddr);
+      }
 
       enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY,
                                 String.valueOf(testLauncherIsApplicable(taskNames, effectiveSettings)));
@@ -275,6 +279,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     Integer dispatchPort = effectiveSettings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
     if (dispatchPort != null) {
       effectiveSettings.withVmOption(String.format("-D%s=%d", DISPATCH_PORT_SYS_PROP, dispatchPort));
+    }
+    String dispatchAddr = effectiveSettings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
+    if (dispatchAddr != null) {
+      effectiveSettings.withVmOption(String.format("-D%s=%s", DISPATCH_ADDR_SYS_PROP, dispatchAddr));
     }
   }
 

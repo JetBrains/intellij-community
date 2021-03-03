@@ -214,6 +214,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   // port for callbacks which Gradle tasks communicate to IDE
   String DEBUG_DISPATCH_PORT_KEY = "DEBUG_DISPATCH_PORT";
 
+  // address for callbacks which Gradle tasks communicate to IDE
+  String DEBUG_DISPATCH_ADDR_KEY = "DEBUG_DISPATCH_ADDR";
+
   // options passed from project to Gradle
   String DEBUG_OPTIONS_KEY = "DEBUG_OPTIONS";
 

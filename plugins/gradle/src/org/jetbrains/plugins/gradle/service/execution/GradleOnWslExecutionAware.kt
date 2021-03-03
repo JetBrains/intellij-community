@@ -28,7 +28,6 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
   }
 
   override fun getEnvironmentConfigurationProvider(runConfiguration: ExternalSystemRunConfiguration,
-                                                   taskNotificationListener: ExternalSystemTaskNotificationListener,
                                                    project: Project): TargetEnvironmentConfigurationProvider? {
     val projectPath = runConfiguration.settings.externalProjectPath
     return getWslEnvironmentProvider(projectPath)
@@ -36,7 +35,6 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
 
   override fun getEnvironmentConfigurationProvider(projectPath: String,
                                                    isPreviewMode: Boolean,
-                                                   taskNotificationListener: ExternalSystemTaskNotificationListener,
                                                    project: Project): TargetEnvironmentConfigurationProvider? {
     return getWslEnvironmentProvider(projectPath)
   }
