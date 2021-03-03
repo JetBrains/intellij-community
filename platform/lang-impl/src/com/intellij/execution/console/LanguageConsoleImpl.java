@@ -75,7 +75,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   private final ConsoleExecutionEditor myConsoleExecutionEditor;
   private final EditorEx myHistoryViewer;
-  private final JPanel myPanel = new JPanel();
+  private final JPanel myPanel = new ConsoleEditorsPanel(this);
   private final JScrollBar myScrollBar = new JBScrollBar(Adjustable.HORIZONTAL);
   private final MergedHorizontalScrollBarModel myMergedScrollBarModel;
   private final DocumentListener myDocumentAdapter = new DocumentListener() {
@@ -527,6 +527,19 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
         return FileEditorManagerEx.getInstanceEx(project).getData(dataId, editor, caret);
       }
       return null;
+    }
+  }
+
+  public static class ConsoleEditorsPanel extends JPanel {
+    private final LanguageConsoleImpl myConsole;
+
+    public ConsoleEditorsPanel(@NotNull LanguageConsoleImpl console) {
+      myConsole = console;
+    }
+
+    @NotNull
+    public LanguageConsoleImpl getConsole() {
+      return myConsole;
     }
   }
 }
