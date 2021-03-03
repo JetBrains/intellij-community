@@ -556,5 +556,6 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertTrue(VfsUtilCore.pathEqualsTo(file, "\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
     assertTrue(VfsUtilCore.pathEqualsTo(file, "//wsl$/" + wslName + "/usr/bin"));
     assertTrue(VfsUtilCore.pathEqualsTo(file, "//wsl$/" + wslName + "/usr/bin/"));
+    assertFalse(VfsUtilCore.pathEqualsTo(file, "//xxx$/" + wslName + "/usr/bin/"));
   }
 }
