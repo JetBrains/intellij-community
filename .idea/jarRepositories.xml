@@ -59,7 +59,7 @@
     <remote-repository>
       <option name="id" value="caeb020e-2153-45d1-b752-f56d66968d08" />
       <option name="name" value="caeb020e-2153-45d1-b752-f56d66968d08" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/kotlin.bintray.com/kotlin-ide-plugin-dependencies" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="KotlinIdeMavenArtifacts" />
