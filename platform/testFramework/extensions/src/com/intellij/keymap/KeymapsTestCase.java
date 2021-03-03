@@ -237,7 +237,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl L",                   "$Cut", "Terminal.ClearBuffer"},
     { "alt O",                    "SwitchHeaderSource", "ExportToTextFile"},
     { "ctrl H",                   "Replace", "Vcs.ShowMessageHistory"},
-    { "shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorCompleteStatement", "SplitChooser", "Terminal.SmartCommandExecution.Debug", "org.jetbrains.r.actions.RRunAction"},
+    { "shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorCompleteStatement", "Terminal.SmartCommandExecution.Debug", "org.jetbrains.r.actions.RRunAction"},
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
