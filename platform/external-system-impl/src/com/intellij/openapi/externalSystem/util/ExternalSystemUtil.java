@@ -351,6 +351,7 @@ public final class ExternalSystemUtil {
     Project project = importSpec.getProject();
     ProjectSystemId externalSystemId = importSpec.getExternalSystemId();
     ExternalProjectRefreshCallback callback = importSpec.getCallback();
+    boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
     boolean reportRefreshError = importSpec.isReportRefreshError();
 
@@ -368,7 +369,6 @@ public final class ExternalSystemUtil {
 
     boolean isFirstLoad = ThreeState.UNSURE.equals(TrustedProjects.getTrustedState(project));
     boolean isTrustedProject = confirmLoadingUntrustedProject(project, () -> isFirstLoad, externalSystemId);
-    boolean isPreviewMode = isFirstLoad ? importSpec.isPreviewMode() || !isTrustedProject : importSpec.isPreviewMode();
 
     if (!isPreviewMode && !isTrustedProject) {
       LOG.debug("Skip " + externalSystemId + " load, because project is not trusted");
