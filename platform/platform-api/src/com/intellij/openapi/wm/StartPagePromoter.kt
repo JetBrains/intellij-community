@@ -11,4 +11,6 @@ interface StartPagePromoter {
   }
 
   fun getPromotionForInitialState(): JPanel?
+
+  fun needToHideSingleProject(path: String): Boolean = false
 }

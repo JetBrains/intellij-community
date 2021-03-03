@@ -11,6 +11,7 @@ import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
 import org.jetbrains.annotations.NonNls
 import training.dsl.LessonUtil
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
@@ -26,6 +27,11 @@ import javax.swing.*
 import javax.swing.border.MatteBorder
 
 open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : StartPagePromoter {
+  override fun needToHideSingleProject(path: String): Boolean {
+    val langSupport = LangManager.getInstance().getLangSupport() ?: return false
+    return LangManager.getInstance().getLearningProjectPath(langSupport) == path
+  }
+
   override fun getPromotionForInitialState(): JPanel? {
     val rPanel: JPanel = NonOpaquePanel()
     rPanel.layout = BoxLayout(rPanel, BoxLayout.PAGE_AXIS)
