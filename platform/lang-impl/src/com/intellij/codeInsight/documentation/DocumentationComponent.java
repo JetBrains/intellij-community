@@ -918,16 +918,18 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     int defaultPreferredSize = (int)definition.getPreferredSpan(View.X_AXIS);
 
     // Heuristics to calculate popup width based on the amount of the content.
-    // The proportions are set for 10 chars/3px in range between 200 and 1000 chars.
+    // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
     // 200 chars and less is 300px, 1000 chars and more is 500px.
     // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
     int textLength = definition.getDocument().getLength();
     final int contentLengthPreferredSize;
     if (textLength < 200) {
       contentLengthPreferredSize = JBUIScale.scale(300);
-    } else if (textLength > 200 && textLength < 1000){
-      contentLengthPreferredSize = JBUIScale.scale(300) + JBUIScale.scale(1)*(textLength - 200)*3/10;
-    } else {
+    }
+    else if (textLength > 200 && textLength < 1000) {
+      contentLengthPreferredSize = JBUIScale.scale(300) + JBUIScale.scale(1) * (textLength - 200) * (500 - 300) / (1000 - 200);
+    }
+    else {
       contentLengthPreferredSize = JBUIScale.scale(500);
     }
     return Math.max(contentLengthPreferredSize, defaultPreferredSize);
