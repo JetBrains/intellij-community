@@ -64,7 +64,7 @@ internal class MermaidCodeGeneratingProviderExtension(
 
   override val description: String = MarkdownBundle.message("markdown.extensions.mermaid.description")
 
-  override val downloadLink: String = Registry.stringValue("markdown.mermaid.download.link")
+  override val downloadLink: String = DOWNLOAD_URL
 
   override val downloadFilename: String = "mermaid.js"
 
@@ -73,7 +73,7 @@ internal class MermaidCodeGeneratingProviderExtension(
 
   private fun isDistributionChecksumValid(): Boolean {
     val got = StringUtil.toHexString(DigestUtil.md5().digest(actualFile.readBytes()))
-    return got == Registry.stringValue("markdown.mermaid.checksum")
+    return got == CHECKSUM
   }
 
   override val isAvailable: Boolean
@@ -128,5 +128,7 @@ internal class MermaidCodeGeneratingProviderExtension(
   companion object {
     private const val MAIN_SCRIPT_FILENAME = "mermaid/mermaid.js"
     private const val THEME_DEFINITION_FILENAME = "mermaid/themeDefinition.js"
+    private const val DOWNLOAD_URL = "https://unpkg.com/mermaid@8.9.1/dist/mermaid.js"
+    private const val CHECKSUM = "352791299c7f42ee02e774da58bead4a"
   }
 }
