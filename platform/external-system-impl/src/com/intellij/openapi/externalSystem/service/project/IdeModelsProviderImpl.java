@@ -220,7 +220,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     Map<Set<String>, LibraryDependencyData> libraryDependencyDataMap = libraryDependencyDataList.stream()
       .collect(Collectors.toMap(libraryDependencyData -> ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
                                                                                PathUtil::getLocalPath),
-                                libraryDependencyData -> libraryDependencyData));
+                                libraryDependencyData -> libraryDependencyData,
+                                (originalLibraryDependencyData, duplicate) -> originalLibraryDependencyData));
 
     Map<LibraryOrderEntry, LibraryDependencyData> result = new HashMap<>();
     for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
