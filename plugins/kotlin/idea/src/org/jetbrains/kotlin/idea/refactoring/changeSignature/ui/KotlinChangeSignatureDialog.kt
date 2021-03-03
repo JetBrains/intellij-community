@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor.Kind
 import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
@@ -468,6 +469,8 @@ class KotlinChangeSignatureDialog(
                 parameterInfo.currentTypeInfo = parameter.typeCodeFragment.getTypeInfo(false, forPreview)
 
                 val codeFragment = parameter.defaultValueCodeFragment as KtExpressionCodeFragment
+                if (!forPreview) AddFullQualifierIntention.addQualifiersRecursively(codeFragment)
+
                 val oldDefaultValue = parameterInfo.defaultValueForCall
                 if (codeFragment.text != (if (oldDefaultValue != null) oldDefaultValue.text else "")) {
                     parameterInfo.defaultValueForCall = codeFragment.getContentElement()

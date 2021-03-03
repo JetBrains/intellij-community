@@ -27,11 +27,13 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.showWarningMessage
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent
 import org.jetbrains.kotlin.idea.refactoring.validateElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
@@ -256,13 +258,15 @@ class KotlinChangePropertySignatureDialog(
             )
         ) return
 
-        val receiverTypeInfo = changeInfo.receiverParameterInfo?.currentTypeInfo
+        val receiverParameterInfo = changeInfo.receiverParameterInfo
+        val receiverTypeInfo = receiverParameterInfo?.currentTypeInfo
         if (receiverTypeInfo != null && receiverTypeInfo.type == null && !showWarningMessage(
                 myProject,
                 KotlinBundle.message("message.text.property.receiver.type.cannot.be.resolved", receiverTypeInfo.render()),
             )
         ) return
 
+        receiverParameterInfo?.let { normalizeReceiver(it, withCopy = false) }
         invokeRefactoring(KotlinChangeSignatureProcessor(myProject, changeInfo, commandName ?: title))
     }
 
@@ -277,8 +281,20 @@ class KotlinChangePropertySignatureDialog(
             val originalDescriptor = descriptor.original
             val changeInfo = KotlinChangeInfo(methodDescriptor = originalDescriptor, context = originalDescriptor.method)
             changeInfo.newName = descriptor.name
-            changeInfo.receiverParameterInfo = descriptor.receiver
+            changeInfo.receiverParameterInfo = descriptor.receiver?.also { normalizeReceiver(it, withCopy = true) }
             return KotlinChangeSignatureProcessor(project, changeInfo, commandName)
+        }
+
+        private fun normalizeReceiver(receiver: KotlinParameterInfo, withCopy: Boolean) {
+            val defaultValue = receiver.defaultValueForCall ?: return
+            val newElement = if (withCopy) {
+                val fragment = KtPsiFactory(defaultValue.project).createExpressionCodeFragment(defaultValue.text, defaultValue)
+                fragment.getContentElement() ?: return
+            } else {
+                defaultValue
+            }
+
+            receiver.defaultValueForCall = AddFullQualifierIntention.addQualifiersRecursively(newElement) as? KtExpression
         }
     }
 }

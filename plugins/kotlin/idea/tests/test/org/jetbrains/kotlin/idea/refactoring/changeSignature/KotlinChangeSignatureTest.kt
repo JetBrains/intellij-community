@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
+import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinCallableParameterTableModel
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinMethodNode
@@ -319,6 +320,16 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         compareEditorsWithExpectedData()
     }
 
+    private fun createExpressionWithImports(context: PsiElement, expression: String, imports: List<String>): KtExpression? {
+        val fragment = KtPsiFactory(project).createExpressionCodeFragment(expression, context)
+        project.executeWriteCommand("add imports and qualifiers") {
+            fragment.addImportsFromString(imports.joinToString(separator = KtCodeFragment.IMPORT_SEPARATOR) { "import $it" })
+            AddFullQualifierIntention.addQualifiersRecursively(fragment)
+        }
+
+        return fragment.getContentElement()
+    }
+
     // --------------------------------- Tests ---------------------------------
 
     fun testBadSelection() {
@@ -376,6 +387,51 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
             valOrVar = KotlinValVar.Val
         )
         addParameter(newParameter)
+    }
+
+    fun testAddFunctionParameterWithDefaultValue() = doTestWithDescriptorModification {
+        val expression = createExpressionWithImports(
+            method,
+            "Dep.MY_CONSTANT_FROM_DEP",
+            listOf("a.b.c.Dep"),
+        )
+
+        addParameter(createNewParameter(defaultValueForCall = expression))
+    }
+
+    fun testAddFunctionParameterWithDefaultValue2() = doTestWithDescriptorModification {
+        val expression = createExpressionWithImports(method, "MY_CONSTANT_FROM_DEP", listOf("a.b.c.Dep.Companion.MY_CONSTANT_FROM_DEP"))
+        addParameter(createNewParameter(defaultValueForCall = expression))
+    }
+
+    fun testAddFunctionReceiverWithDefaultValue() = doTestWithDescriptorModification {
+        val expression = createExpressionWithImports(method, "Dep.MY_CONSTANT_FROM_DEP", listOf("a.b.c.Dep"))
+        receiver = createNewParameter(defaultValueForCall = expression)
+    }
+
+    fun testAddPropertyReceiverWithDefaultValue() = doTestWithDescriptorModification {
+        val expression = createExpressionWithImports(method, "Dep.MY_CONSTANT_FROM_DEP", listOf("a.b.c.Dep"))
+        receiver = createNewParameter(defaultValueForCall = expression)
+    }
+
+    fun testAddPropertyReceiverWithDefaultValue2() = doTestWithDescriptorModification {
+        val expression = createExpressionWithImports(
+            method,
+            "MY_CONSTANT_FROM_DEP",
+            listOf("a.b.c.Dep.Companion.MY_CONSTANT_FROM_DEP"),
+        )
+
+        receiver = createNewParameter(defaultValueForCall = expression)
+    }
+
+    fun testAddPropertyReceiverWithComplexDefaultValue() = doTestWithDescriptorModification {
+        val expression = createExpressionWithImports(
+            context = method,
+            expression = "Dep2().eval(MY_CONSTANT_FROM_DEP + NUMBER)",
+            imports = listOf("a.b.c.Dep.Companion.MY_CONSTANT_FROM_DEP", "a.b.Dep2.Companion.NUMBER", "a.b.Dep2"),
+        )
+
+        receiver = createNewParameter(defaultValueForCall = expression)
     }
 
     fun testConstructor() = doTest {
