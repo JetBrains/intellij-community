@@ -32,7 +32,8 @@ class DebuggerConnection(
     val project: Project,
     val configuration: RunConfigurationBase<*>,
     val params: JavaParameters?,
-    modifyArgs: Boolean = true
+    modifyArgs: Boolean = true,
+    val alwaysShowPanel: Boolean = false
 ) : XDebuggerManagerListener, Disposable {
     private var connection: MessageBusConnection? = null
     private val coroutineAgentAttached: Boolean
@@ -87,7 +88,7 @@ class DebuggerConnection(
         return xCoroutineThreadView
     }
 
-    private fun coroutinesPanelShouldBeShown() = configuration is ExternalSystemRunConfiguration || coroutineAgentAttached
+    private fun coroutinesPanelShouldBeShown() = alwaysShowPanel || configuration is ExternalSystemRunConfiguration || coroutineAgentAttached
 
     private fun createContent(ui: RunnerLayoutUi, createContentParamProvider: CreateContentParamsProvider): Content {
         val param = createContentParamProvider.createContentParams()
