@@ -18,8 +18,6 @@ import git4idea.index.isTracked
 import git4idea.index.repositoryPath
 import org.jetbrains.annotations.NonNls
 
-private val LOG = Logger.getInstance("#git4idea.light.LightGitEditorHighlighterManager")
-
 class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposable {
   private val singleTaskController = MySingleTaskController()
   private var lst: SimpleLocalLineStatusTracker? = null
@@ -119,5 +117,9 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     override fun toString(): @NonNls String {
       return "BaseVersion(file=$file, text=${text?.take(10) ?: "null"}"
     }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance("#git4idea.light.LightGitEditorHighlighterManager")
   }
 }
