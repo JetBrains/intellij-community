@@ -15,15 +15,14 @@
  */
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.project.LibraryLevel
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -38,8 +37,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
+import com.intellij.util.containers.ContainerUtil
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside
@@ -103,6 +101,46 @@ class ExternalProjectServiceTest extends ExternalProjectServiceTestCase {
       }
     }
     ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1, 'Test_external_system_id: lib2': 1], dependencies)
+  }
+
+  void 'test optimized method for getting modules libraries order entries'() {
+    def libBinPath = new File(projectDir, "bin_path")
+    def libSrcPath = new File(projectDir, "source_path")
+
+    FileUtil.createDirectory(libBinPath)
+    FileUtil.createDirectory(libSrcPath)
+
+    DataNode<ProjectData> projectNode = buildExternalProjectInfo {
+      project {
+        module('module') {
+          lib('', level: 'module', bin: [libBinPath.absolutePath])
+          lib('', level: 'module', bin: [libSrcPath.absolutePath])
+        }
+      }
+    }
+
+    applyProjectState([projectNode, projectNode])
+
+    def modelsProvider = new IdeModelsProviderImpl(project)
+    def moduleNodeList = ExternalSystemApiUtil.findAll(projectNode, ProjectKeys.MODULE)
+    assertEquals(1, moduleNodeList.size())
+    def moduleNode = moduleNodeList[0]
+    assertEquals('module', moduleNode.getData().moduleName)
+
+    def libraryDependencyDataList = ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.LIBRARY_DEPENDENCY).stream()
+      .filter { it.data.level == LibraryLevel.MODULE }
+      .map { it.data }
+      .collect()
+    def libraryOrderEntries = modelsProvider.findIdeModuleLibraryOrderEntries(moduleNode.getData(), libraryDependencyDataList)
+    assertEquals(2, libraryOrderEntries.size())
+    libraryOrderEntries.each { libraryEntry, libraryData ->
+        assertEquals(
+          ContainerUtil.map2Set(libraryData.getTarget().getPaths(LibraryPathType.BINARY),
+                                PathUtil.&getLocalPath),
+          ContainerUtil.map2Set(libraryEntry.getUrls(OrderRootType.CLASSES),
+                                { PathUtil.getLocalPath(VfsUtilCore.urlToPath(it)) })
+        )
+      }
   }
 
   void 'test changes in a project layout (content roots) could be detected on Refresh'() {

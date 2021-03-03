@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.module.Module;
@@ -47,6 +48,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
  * @author Vladislav.Soroka
  */
 public class IdeModelsProviderImpl implements IdeModelsProvider {
+  private static final Logger LOG = Logger.getInstance(IdeModelsProviderImpl.class);
 
   @NotNull
   protected final Project myProject;
@@ -217,11 +219,19 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     if (libraryDependencyDataList.isEmpty()) return Collections.emptyMap();
     Module ownerIdeModule = findIdeModule(moduleData);
     if (ownerIdeModule == null) return Collections.emptyMap();
-    Map<Set<String>, LibraryDependencyData> libraryDependencyDataMap = libraryDependencyDataList.stream()
-      .collect(Collectors.toMap(libraryDependencyData -> ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
-                                                                               PathUtil::getLocalPath),
-                                libraryDependencyData -> libraryDependencyData,
-                                (originalLibraryDependencyData, duplicate) -> originalLibraryDependencyData));
+    Map<Set<String>, LibraryDependencyData> libraryDependencyDataMap = new HashMap<>();
+    for (LibraryDependencyData libraryDependencyData : libraryDependencyDataList) {
+      if (libraryDependencyData.getLevel() == LibraryLevel.PROJECT) {
+        LOG.warn("Library data \"" + libraryDependencyData.getInternalName() + "\" not a module level dependency");
+        continue;
+      }
+      if (libraryDependencyData.getOwnerModule() != moduleData) {
+        LOG.warn("Library data \"" + libraryDependencyData.getInternalName() + "\" not belong to the module: " + ownerIdeModule.getName());
+        continue;
+      }
+      libraryDependencyDataMap.put(ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
+                                                         PathUtil::getLocalPath), libraryDependencyData);
+    }
 
     Map<LibraryOrderEntry, LibraryDependencyData> result = new HashMap<>();
     for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
