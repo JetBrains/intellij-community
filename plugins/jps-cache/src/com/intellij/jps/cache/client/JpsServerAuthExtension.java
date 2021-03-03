@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
-import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATION_GROUP;
+import static com.intellij.jps.cache.ui.JpsLoaderNotifications.ATTENTION;
 
 /**
  * Extension point which provides authentication data for requests to the JPS cache server
@@ -64,7 +64,7 @@ public interface JpsServerAuthExtension {
         ApplicationManager.getApplication().invokeLater(() -> {
           String message =
             JpsCacheBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin");
-          Notification notification = STICKY_NOTIFICATION_GROUP.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), message,
+          Notification notification = ATTENTION.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), message,
             NotificationType.WARNING,
             NotificationListener.URL_OPENING_LISTENER);
           Notifications.Bus.notify(notification, project);

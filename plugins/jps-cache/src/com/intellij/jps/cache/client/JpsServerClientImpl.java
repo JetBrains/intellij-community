@@ -181,7 +181,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     }
     catch (IOException e) {
       LOG.warn("Failed request to cache server", e);
-      Notification notification = JpsLoaderNotifications.NONE_NOTIFICATION_GROUP
+      Notification notification = JpsLoaderNotifications.ATTENTION
         .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"),
                             JpsCacheBundle.message("notification.content.failed.request.to.cache.server", e.getMessage()), NotificationType.ERROR, null);
       Notifications.Bus.notify(notification, project);
