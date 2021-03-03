@@ -976,4 +976,20 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement) {
     return new MoveMemberIntoClassFix(errorElement);
   }
+
+  @Override
+  public @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
+                                                                 @NotNull PsiType enclosingClassType) {
+    return new VariableTypeFix(receiverParameter, enclosingClassType) {
+      @Override
+      public @NotNull String getText() {
+        return QuickFixBundle.message("fix.receiver.parameter.type.text");
+      }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return QuickFixBundle.message("fix.receiver.parameter.type.family");
+      }
+    };
+  }
 }

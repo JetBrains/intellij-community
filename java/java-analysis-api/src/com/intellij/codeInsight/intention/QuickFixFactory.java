@@ -503,4 +503,7 @@ public abstract class QuickFixFactory {
   public abstract @NotNull IntentionAction createUnimplementInterfaceAction(boolean isDuplicates);
 
   public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
+
+  public abstract @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
+                                                                          @NotNull PsiType enclosingClassType);
 }

@@ -744,7 +744,9 @@ public final class AnnotationsHighlightUtil {
       if (!type.equals(parameter.getType())) {
         PsiElement range = ObjectUtils.notNull(parameter.getTypeElement(), parameter);
         String text = JavaErrorBundle.message("receiver.type.mismatch");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(text).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(text).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createReceiverParameterTypeFix(parameter, type));
+        return info;
       }
 
       PsiThisExpression identifier = parameter.getIdentifier();
