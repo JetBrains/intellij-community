@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -314,7 +314,7 @@ trait C {
     testHighlighting('''
 trait T {}
 
-new <error descr="Anonymous classes cannot be created from traits">T</error>(){}
+new <error descr="Anonymous classes from traits are available since Groovy 2.5.2">T</error>(){}
 ''')
   }
 
