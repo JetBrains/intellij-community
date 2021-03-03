@@ -2,6 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.diagnostic.DefaultIdeaErrorLogger;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginUtil;
@@ -70,7 +71,7 @@ public class MutedErrorLogger extends MutedLogger {
   public void error(Object message) {
     if (message instanceof IdeaLoggingEvent) {
       Throwable t = ((IdeaLoggingEvent)message).getThrowable();
-      if (isAlreadyReported(t)) {
+      if (!shouldBeReported(t)) {
         return;
       }
     }
@@ -79,29 +80,33 @@ public class MutedErrorLogger extends MutedLogger {
 
   @Override
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    if (!isAlreadyReported(t)) {
+    if (shouldBeReported(t)) {
       myDelegate.error(message, t, attachments);
     }
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    if (!isAlreadyReported(t)) {
+    if (shouldBeReported(t)) {
       myDelegate.error(message, t, details);
     }
   }
 
   @Override
   public void error(String message, @Nullable Throwable t) {
-    if (!isAlreadyReported(t)) {
+    if (shouldBeReported(t)) {
       myDelegate.error(message, t);
     }
   }
 
   @Override
   public void error(@NotNull Throwable t) {
-    if (!isAlreadyReported(t)) {
+    if (shouldBeReported(t)) {
       myDelegate.error(t);
     }
+  }
+
+  private boolean shouldBeReported(@Nullable Throwable t) {
+    return !LoadingState.COMPONENTS_LOADED.isOccurred() || !isAlreadyReported(t);
   }
 }
