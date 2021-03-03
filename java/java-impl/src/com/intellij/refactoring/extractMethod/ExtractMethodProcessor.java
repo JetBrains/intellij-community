@@ -1305,6 +1305,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myDuplicates;
   }
 
+  @Nullable
   public ParametrizedDuplicates getParametrizedDuplicates() {
     return myParametrizedDuplicates;
   }
