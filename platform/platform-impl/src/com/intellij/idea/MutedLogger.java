@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MutedLogger extends Logger {
 
-  private static final Cache<String, LoggerWithCounter> myCache = Caffeine.newBuilder()
+  private static final Cache<String, LoggerWithCounter> ourCache = Caffeine.newBuilder()
     .maximumSize(1000)
     .expireAfterAccess(1, TimeUnit.MINUTES)
     .removalListener((RemovalListener<String, LoggerWithCounter>)(key, value, cause) -> {
@@ -29,8 +29,8 @@ public abstract class MutedLogger extends Logger {
     .build();
 
   public static void dropCaches() {
-    myCache.invalidateAll();
-    myCache.cleanUp();
+    ourCache.invalidateAll();
+    ourCache.cleanUp();
   }
 
   @SuppressWarnings("NonConstantLogger") protected final Logger myDelegate;
@@ -46,7 +46,7 @@ public abstract class MutedLogger extends Logger {
 
     int hash = ThrowableInterner.computeTraceHashCode(throwable);
     String key = hash + ":" + throwable;
-    LoggerWithCounter holder = Objects.requireNonNull(myCache.get(key, __ -> new LoggerWithCounter(this, new AtomicInteger())));
+    LoggerWithCounter holder = Objects.requireNonNull(ourCache.get(key, __ -> new LoggerWithCounter(this, new AtomicInteger())));
     if (holder.counter.compareAndSet(0, 1)) {
       logAdded(hash, throwable);
       return false;
