@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleI
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
-
 class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase() {
     @Test
     @PluginTargetVersions(pluginVersion = "1.3.40+")
@@ -29,6 +28,12 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
         importAndCheckHighlighting()
     }
 
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.4.0+")
+    fun testHmppStdlibUsageInAllBackends() {
+        importAndCheckHighlighting()
+    }
+
     private fun importAndCheckHighlighting(testLineMarkers: Boolean = true, checkWarnings: Boolean = true) {
         val files = configureByFiles()
         importProject()
@@ -41,7 +46,11 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
                 checkWarnings = checkWarnings,
                 checkInfos = false,
                 rootDisposable = testRootDisposable
-            ) {}
+            ) {
+                init {
+                  allowTreeAccessForAllFiles()
+                }
+            }
         )
     }
 
