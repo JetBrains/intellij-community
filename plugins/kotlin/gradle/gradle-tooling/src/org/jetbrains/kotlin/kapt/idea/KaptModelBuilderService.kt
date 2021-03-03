@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.gradle.AndroidAwareGradleModelProvider
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModelBuilder.Companion.getTargets
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
 import java.io.Serializable
 import java.lang.Exception
@@ -51,7 +49,7 @@ class KaptGradleModelImpl(
 ) : KaptGradleModel
 
 
-class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilderService.Ex  {
+class KaptModelBuilderService : AbstractKotlinGradleModelBuilder() {
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
         return ErrorMessageBuilder.create(project, e, "Gradle import errors")
             .withDescription("Unable to build kotlin-kapt plugin configuration")
@@ -115,7 +113,6 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
             } else {
                 project.getAllTasks(false)[project]?.forEach { compileTask ->
                     val sourceSetName = compileTask.getSourceSetName()
-                    if (androidVariantRequest.shouldSkipSourceSet(sourceSetName)) return@forEach
                     handleCompileTask(sourceSetName, compileTask)
                 }
             }
