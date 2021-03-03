@@ -68,10 +68,7 @@ public final class PythonMockSdk {
 
     ContainerUtil.addIfNotNull(result, PyUserSkeletonsUtil.getUserSkeletonsDirectory());
 
-    final var typeShedDir = PyTypeShed.INSTANCE.getDirectory();
-    for (String path : PyTypeShed.INSTANCE.findRootsForLanguageLevel(level)) {
-      ContainerUtil.addIfNotNull(result, typeShedDir.findFileByRelativePath(path));
-    }
+    result.addAll(PyTypeShed.INSTANCE.findRootsForLanguageLevel(level));
 
     return result;
   }

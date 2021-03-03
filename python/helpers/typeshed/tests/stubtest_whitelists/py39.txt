@@ -118,6 +118,8 @@ typing.SupportsInt.__init__
 typing.SupportsRound.__init__
 typing._SpecialForm.__init__
 typing._TypedDict.__delitem__
+typing._TypedDict.__ior__
+typing._TypedDict.__or__
 typing._TypedDict.copy
 typing._TypedDict.items
 typing._TypedDict.keys

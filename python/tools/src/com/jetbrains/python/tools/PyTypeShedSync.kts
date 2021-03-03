@@ -97,7 +97,7 @@ val blacklist = sequenceOf(
   "getopt",
   "getpass",
   "glob",
-  "google",
+  "protobuf",
   "grp",
   "gzip",
   "html",
@@ -121,12 +121,12 @@ val blacklist = sequenceOf(
   "mimetools",
   "msvcrt",
   "mutex",
-  "mypy_extensions",
+  "mypy-extensions",
   "netrc",
   "nis",
   "nntplib",
   "nturl2path",
-  "openssl",
+  "openssl-python",
   "optparse", // deprecated
   "pickletools",
   "platform", // leads to broken tests but could be enabled
@@ -139,8 +139,6 @@ val blacklist = sequenceOf(
   "pycurl",
   "pymssql",
   "pymysql",
-  "pynamodb",
-  "pyre_extensions",
   "pytz",
   "pyvmomi",
   "quopri",
@@ -203,7 +201,8 @@ val blacklist = sequenceOf(
   "whichdb",
   "xdrlib",
   "xmlrpclib",
-  "yaml"
+  "xxlimited", // not available in runtime
+  "PyYAML"
 ).mapTo(hashSetOf()) { it.toLowerCase() }
 
 println("Cleaning")
@@ -220,14 +219,15 @@ fun sync(repo: Path, bundled: Path) {
   val whiteList = setOf(".github",
                         "scripts",
                         "stdlib",
+                        "stubs",
                         "tests",
-                        "third_party",
                         ".flake8",
                         ".gitignore",
                         "CONTRIBUTING.md",
                         "LICENSE",
                         "pre-commit",
                         "pyproject.toml",
+                        "pyrightconfig.json",
                         "README.md",
                         "requirements-tests-py3.txt")
 
@@ -250,8 +250,7 @@ fun cleanTopLevelPackages(typeshed: Path, blackList: Set<String>) {
   val whiteList = hashSetOf<String>()
 
   sequenceOf(typeshed)
-    .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("third_party")) }
-    .flatMap { Files.newDirectoryStream(it).asSequence() }
+    .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("stdlib/@python2"), it.resolve("stubs")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .filter {
       val name = it.nameWithoutExtension().toLowerCase()
