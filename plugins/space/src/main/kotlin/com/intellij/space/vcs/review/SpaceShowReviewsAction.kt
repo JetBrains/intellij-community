@@ -3,6 +3,7 @@ package com.intellij.space.vcs.review
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.SpaceProjectContext
@@ -15,15 +16,21 @@ class SpaceShowReviewsAction : DumbAwareAction(SpaceBundle.messagePointer("actio
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    ToolWindowManager
-      .getInstance(project)
-      .getToolWindow(SpaceReviewToolWindowFactory.ID)
-      ?.show()
+    showCodeReviews(project)
   }
 
   private fun isAssociatedWithSpaceRepository(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
     return SpaceProjectContext.getInstance(project).currentContext.isAssociatedWithSpaceRepository
+  }
+
+  companion object {
+    internal fun showCodeReviews(project: Project) {
+      ToolWindowManager
+        .getInstance(project)
+        .getToolWindow(SpaceReviewToolWindowFactory.ID)
+        ?.show()
+    }
   }
 }
 

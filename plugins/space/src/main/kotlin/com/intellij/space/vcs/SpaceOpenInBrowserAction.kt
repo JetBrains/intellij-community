@@ -97,12 +97,6 @@ abstract class SpaceOpenInBrowserAction(@NlsActions.ActionText groupName: String
   }
 }
 
-class OpenReviews : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser.group.code.reviews")) {
-  override fun getData(dataContext: DataContext): List<Pair<SpaceProjectInfo, String>>? {
-    return getProjectAwareUrls(dataContext, SpaceUrls::reviews)
-  }
-}
-
 class OpenChecklists : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser.group.checklists")) {
   override fun getData(dataContext: DataContext): List<Pair<SpaceProjectInfo, String>>? {
     return getProjectAwareUrls(dataContext, SpaceUrls::checklists)

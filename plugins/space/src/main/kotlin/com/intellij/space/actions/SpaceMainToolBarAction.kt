@@ -18,6 +18,7 @@ import com.intellij.space.ui.*
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.clone.SpaceCloneAction
+import com.intellij.space.vcs.review.SpaceShowReviewsAction
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.Wrapper
@@ -115,12 +116,10 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
     val context = projectContext.currentContext
     if (context.isAssociatedWithSpaceRepository) {
       val descriptions = context.reposInProject.keys
+      menuItems += AccountMenuItem.Action(SpaceBundle.message("action.show.code.reviews.text"), {
+        SpaceShowReviewsAction.showCodeReviews(project)
+      })
       if (descriptions.size > 1) {
-        menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.code.reviews"), descriptions.map {
-          val reviewsUrl = SpaceUrls.reviews(it.key)
-          browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), reviewsUrl)
-        }.toList())
-
         menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.checklists"), descriptions.map {
           val checklistsUrl = SpaceUrls.checklists(it.key)
           browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), checklistsUrl)
@@ -133,7 +132,6 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
       }
       else if (descriptions.isNotEmpty()) {
         val projectKey = descriptions.first().key
-        menuItems += browseAction(SpaceBundle.message("main.toolbar.code.reviews.action"), SpaceUrls.reviews(projectKey))
         menuItems += browseAction(SpaceBundle.message("main.toolbar.checklists.action"), SpaceUrls.checklists(projectKey))
         menuItems += browseAction(SpaceBundle.message("main.toolbar.issues.action"), SpaceUrls.issues(projectKey))
       }
