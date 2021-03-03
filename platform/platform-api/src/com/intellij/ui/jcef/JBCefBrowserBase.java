@@ -138,7 +138,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
           String lastRequestedUrl = getLastRequestedUrl();
           if (errorPage != null && lastRequestedUrl.equals(failedUrl)) {
             String html = errorPage.create(errorCode, errorText, failedUrl);
-            UIUtil.invokeLaterIfNeeded(() -> compareLastRequestedUrlAndPerform(failedUrl, () -> loadHTML(html)));
+            if (html != null) UIUtil.invokeLaterIfNeeded(() -> compareLastRequestedUrlAndPerform(failedUrl, () -> loadHTML(html)));
           }
         }
       }, getCefBrowser());
@@ -386,8 +386,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     /**
      * Returns an error page html.
+     * <p></p>
+     * To prevent showing the error page (e.g. filter out {@link CefLoadHandler.ErrorCode#ERR_ABORTED}) just return {@code null}.
+     * To fallback to default error page return {@link ErrorPage#DEFAULT#create(CefLoadHandler.ErrorCode, String, String)}.
      */
-    @NotNull
+    @Nullable
     String create(@NotNull @SuppressWarnings("unused") CefLoadHandler.ErrorCode errorCode, @NotNull String errorText, @NotNull String failedUrl);
   }
 
