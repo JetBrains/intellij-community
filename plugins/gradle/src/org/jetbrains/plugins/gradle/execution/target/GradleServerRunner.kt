@@ -215,7 +215,9 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
     fun waitForResult(handler: () -> Boolean) {
       val startTime = System.currentTimeMillis()
-      while (!handler.invoke() || ::listenerTask.isInitialized && listenerTask.isDone && (System.currentTimeMillis() - startTime) < 10000) {
+      while (!handler.invoke() &&
+             (::listenerTask.isInitialized.not() || !listenerTask.isDone) &&
+             System.currentTimeMillis() - startTime < 10000) {
         val lock = Object()
         synchronized(lock) {
           try {
@@ -256,9 +258,11 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
     override fun processTerminated(event: ProcessEvent) {
       if (!resultReceived) {
-        gradleServerEventsListener.waitForResult { resultReceived }
+        gradleServerEventsListener.waitForResult { resultReceived || targetProgressIndicator.isCanceled }
       }
       if (!resultReceived) {
+        val outputType = if (event.exitCode == 0) ProcessOutputType.STDOUT else ProcessOutputType.STDERR
+        event.text?.also { targetProgressIndicator.addText(it, outputType) }
         resultHandler.onFailure(GradleConnectionException("Operation result has not been received."))
       }
       gradleServerEventsListener.stop()
@@ -267,6 +271,9 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
       log.trace { event.text }
       if (connectionAddressReceived) return
+      if (outputType === ProcessOutputTypes.STDERR) {
+        targetProgressIndicator.addText(event.text, outputType)
+      }
       if (event.text.startsWith(connectionConfLinePrefix)) {
         connectionAddressReceived = true
         val hostName = event.text.substringAfter(connectionConfLinePrefix).substringBefore(" port: ")
