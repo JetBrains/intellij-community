@@ -3,6 +3,7 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -14,6 +15,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -23,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -890,7 +893,14 @@ public class SingleInspectionProfilePanel extends JPanel {
             final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
             final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
             return rowCount - 1 != selectedRow;
-          });
+          })
+            .setEditAction(new AnActionButtonRunnable() {
+              @Override
+              public void run(AnActionButton button) {
+                ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
+              }
+            })
+            .setEditActionName(CodeInsightBundle.message("action.AnActionButton.text.edit.scopes"));
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
         severityPanel.add(new JBLabel(InspectionsBundle.message("inspection.scopes.and.severities")),
