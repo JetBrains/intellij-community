@@ -23,10 +23,8 @@ println("Syncing")
 sync(repo, bundled)
 
 val blacklist = sequenceOf(
-  "_ast", // leads to broken tests but could be enabled
   "_collections",
   "_decimal",
-  "_dummy_thread",
   "_functools",
   "_hotshot",
   "_markupbase",
@@ -74,13 +72,10 @@ val blacklist = sequenceOf(
   "cstringio",
   "dataclasses",
   "dateparser",
-  "datetimerange", // leads to broken tests but could be enabled
   "decorator",
   "dircache",
   "dis",
   "docutils",
-  "dummy_thread",
-  "dummy_threading",
   "emoji",
   "encodings",
   "ensurepip",
@@ -91,7 +86,6 @@ val blacklist = sequenceOf(
   "first",
   "flask",
   "fnmatch",
-  "formatter", // leads to broken tests but could be enabled
   "future_builtins",
   "geoip2",
   "getopt",
@@ -107,7 +101,6 @@ val blacklist = sequenceOf(
   "imp",
   "itsdangerous",
   "jinja2",
-  "jwt",
   "kazoo",
   "lib2to3",
   "linecache",
@@ -129,7 +122,6 @@ val blacklist = sequenceOf(
   "openssl-python",
   "optparse", // deprecated
   "pickletools",
-  "platform", // leads to broken tests but could be enabled
   "popen2",
   "poplib",
   "profile",
@@ -168,7 +160,6 @@ val blacklist = sequenceOf(
   "spwd",
   "sre_compile",
   "stat",
-  "string", // leads to broken tests but could be enabled
   "stringio",
   "stringold",
   "stringprep",
@@ -181,7 +172,6 @@ val blacklist = sequenceOf(
   "tabulate",
   "telnetlib",
   "termcolor",
-  "thread",
   "timeit",
   "tkinter",
   "toaiff",
