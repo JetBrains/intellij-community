@@ -40,8 +40,8 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
     override fun setUpTestProject() {
         val rootDir = IDEA_TEST_DATA_DIR.resolve("script/definition/loading/gradle/")
 
-        val settings: KtFile = copyFromTestdataToProject(File(rootDir, GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME))
-        val prop: PsiFile = copyFromTestdataToProject(File(rootDir, "gradle.properties"))
+        val settings: KtFile = copyFromTestdataToProject(File(rootDir, GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME).path)
+        val prop: PsiFile = copyFromTestdataToProject(File(rootDir, "gradle.properties").path)
 
         val gradleCoreJar = createFileInProject("gradle/lib/gradle-core-1.0.0.jar")
         val gradleWrapperProperties = createFileInProject("gradle/wrapper/gradle-wrapper.properties")
