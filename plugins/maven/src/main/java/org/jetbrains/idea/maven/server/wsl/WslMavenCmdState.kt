@@ -59,7 +59,7 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     wslParams.charset = parameters.charset
     wslParams.vmParametersList.add("-classpath")
     wslParams.vmParametersList.add(parameters.classPath.pathList
-                                     .mapNotNull(myWslDistribution::getWslPath).joinToString(":") { CommandLineUtil.posixQuote(it) })
+                                     .mapNotNull(myWslDistribution::getWslPath).joinToString(":"))
     return wslParams
   }
 
