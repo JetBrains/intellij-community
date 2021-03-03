@@ -57,14 +57,8 @@ open class PluginAdvertiserService {
         putFeature(installedPluginData)
       }
       else {
-        val params = mapOf(
-          "featureType" to featureType,
-          "implementationName" to implementationName,
-          "build" to marketplaceRequests.getBuildForPluginRepositoryRequests(),
-        )
-
         marketplaceRequests
-          .getFeatures(params)
+          .getFeatures(featureType, implementationName)
           .mapNotNull { it.toPluginData() }
           .forEach { putFeature(it) }
       }

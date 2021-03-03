@@ -120,8 +120,21 @@ open class MarketplaceRequests {
     }
   }
 
+  internal fun getFeatures(
+    featureType: String,
+    implementationName: String,
+  ): List<FeatureImpl> {
+    val param = mapOf(
+      "featureType" to featureType,
+      "implementationName" to implementationName,
+      "build" to getBuildForPluginRepositoryRequests(),
+    )
+    return getFeatures(param)
+  }
+
+  @JvmOverloads
   @Throws(IOException::class)
-  fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
+  fun getMarketplacePlugins(indicator: ProgressIndicator? = null): List<String> {
     val pluginXmlIdsFile = Paths.get(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     return readOrUpdateFile(
       pluginXmlIdsFile,
