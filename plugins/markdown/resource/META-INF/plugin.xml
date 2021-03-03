@@ -110,9 +110,24 @@ Includes the following features:</p>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MarkdownAnchorPathReferenceProvider"/>
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer" />
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" />
-    <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
+    <enterHandlerDelegate id="MarkdownEnterHandler"
+                          implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
     <highlightErrorFilter implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
     <extendWordSelectionHandler implementation="org.intellij.plugins.markdown.editor.MarkdownCodeSpanExtendWordSelectionHandler"/>
+
+    <typedHandler implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
+
+    <lineIndentProvider implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentProvider"/>
+    <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListEnterHandlerDelegate"
+                          order="before MarkdownEnterHandler"/> <!-- to be able to handle Enter inside indent -->
+
+    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListMarkerBackspaceHandlerDelegate"/>
+    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentBackspaceHandlerDelegate"
+                              order="before SmartIndentingBackspaceHandler"/>
+
+    <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
+    <editorActionHandler action="EditorIndentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
+    <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
     <!--Formatting-->
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
