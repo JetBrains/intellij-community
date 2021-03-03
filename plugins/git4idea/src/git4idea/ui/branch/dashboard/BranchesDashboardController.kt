@@ -3,6 +3,7 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
+import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
@@ -57,6 +58,10 @@ internal class BranchesDashboardController(private val project: Project,
 
   fun navigateLogToSelectedBranch() {
     ui.navigateToSelectedBranch(true)
+  }
+
+  fun toggleGrouping(key: GroupingKey, state: Boolean) {
+    ui.toggleGrouping(key, state)
   }
 
   fun checkForBranchesUpdate(): Boolean {

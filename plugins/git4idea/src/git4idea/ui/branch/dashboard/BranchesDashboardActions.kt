@@ -422,10 +422,9 @@ internal object BranchesDashboardActions {
     override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY
   }
 
-  class GroupBranchByDirectoryAction(private val tree: FilteringBranchesTree) : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY,
-                                                                                                     AllIcons.Actions.GroupByPackage) {
-    override fun setSelected(key: GroupingKey, state: Boolean) {
-      tree.toggleDirectoryGrouping(state)
+  class GroupBranchByDirectoryAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY) {
+    override fun setSelected(e: AnActionEvent, key: GroupingKey, state: Boolean) {
+      e.getData(BRANCHES_UI_CONTROLLER)?.toggleGrouping(key, state)
     }
   }
 
