@@ -9,10 +9,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -140,7 +137,22 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         Trigger.LOG.debug("Starting SDK refresh for '" + mySdkKey + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        updateLocalSdkVersionAndPaths(sdk, myProject);
+        if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations")) {
+          PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(sdk);
+          String version = targetsFacade.getInterpreterVersion(indicator);
+          commitSdkVersionIfChanged(sdk, version);
+          if (targetsFacade.isLocalTarget()) {
+            List<String> paths = targetsFacade.getInterpreterPaths(indicator);
+            updateSdkPaths(sdk, paths, myProject);
+          }
+          else {
+            targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
+          }
+        }
+        else {
+          updateLocalSdkVersionAndPaths(sdk, myProject);
+        }
+        // This step also includes setting mapped interpreter paths
         generateSkeletons(sdk, indicator);
         refreshPackages(sdk, indicator);
       }
@@ -388,12 +400,16 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     if (!PythonSdkUtil.isRemote(sdk)) {
       ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.version"));
       final String versionString = sdk.getSdkType().getVersionString(sdk);
-      if (!StringUtil.equals(versionString, sdk.getVersionString())) {
-        changeSdkModificator(sdk, modificatorToWrite -> {
-          modificatorToWrite.setVersionString(versionString);
-          return true;
-        });
-      }
+      commitSdkVersionIfChanged(sdk, versionString);
+    }
+  }
+
+  private static void commitSdkVersionIfChanged(@NotNull Sdk sdk, @Nullable String versionString) {
+    if (!StringUtil.equals(versionString, sdk.getVersionString())) {
+      changeSdkModificator(sdk, modificatorToWrite -> {
+        modificatorToWrite.setVersionString(versionString);
+        return true;
+      });
     }
   }
 
