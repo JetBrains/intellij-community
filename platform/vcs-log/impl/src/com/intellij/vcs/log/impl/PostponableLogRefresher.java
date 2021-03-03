@@ -43,7 +43,7 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
     myLogWindows.add(window);
     refresherActivated(window.getRefresher(), true);
     return () -> {
-      LOG.debug("Removing disposed log window " + window.toString());
+      LOG.debug("Removing disposed log window " + window);
       myLogWindows.remove(window);
     };
   }

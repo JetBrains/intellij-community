@@ -523,7 +523,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
-          sb.append(getModel().getValueAt(selectedRows[i], Commit.INSTANCE).toString());
+          sb.append(getModel().getValueAt(selectedRows[i], Commit.INSTANCE));
           if (i != selectedRows.length - 1) sb.append("\n");
         }
         return sb.toString();
