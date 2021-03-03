@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -47,10 +48,10 @@ class KotlinPropertyCallUsage(element: KtSimpleNameExpression) : KotlinUsageInfo
 
         val replacingElement = newReceiver?.let {
             val psiFactory = KtPsiFactory(project)
-            val receiver = it.defaultValueForCall ?: psiFactory.createExpression("_")
+            val receiver = it.defaultValueForCall?.asMarkedForShortening() ?: psiFactory.createExpression("_")
             psiFactory.createExpressionByPattern("$0.$1", receiver, element)
         } ?: element
 
-        elementToReplace.replace(replacingElement)
+        elementToReplace.replaced(replacingElement).flushElementsForShorteningToWaitList()
     }
 }
