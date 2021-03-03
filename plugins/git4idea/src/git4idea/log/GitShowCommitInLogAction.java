@@ -80,7 +80,6 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     Project project = e.getProject();
     e.getPresentation().setEnabled(project != null &&
                                    VcsProjectLog.getInstance(project) != null &&

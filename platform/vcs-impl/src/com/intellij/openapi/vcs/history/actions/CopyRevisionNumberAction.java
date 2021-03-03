@@ -52,7 +52,6 @@ public class CopyRevisionNumberAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     e.getPresentation().setEnabled(!getRevisionNumbersFromContext(e).isEmpty());
   }
 }
