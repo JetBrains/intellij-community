@@ -59,7 +59,7 @@ class GitLogIndexer(private val project: Project,
 class GitCompressedDetails(private val metadata: VcsCommitMetadata,
                            private val changes: List<Int2ObjectMap<Change.Type>>,
                            private val renames: List<Int2IntMap>) : VcsCommitMetadata by metadata, VcsLogIndexer.CompressedDetails {
-  override fun getModifiedPaths(parent: Int) = changes.get(parent)
+  override fun getModifiedPaths(parent: Int) = changes[parent]
 
-  override fun getRenamedPaths(parent: Int) = renames.get(parent)
+  override fun getRenamedPaths(parent: Int) = renames[parent]
 }
