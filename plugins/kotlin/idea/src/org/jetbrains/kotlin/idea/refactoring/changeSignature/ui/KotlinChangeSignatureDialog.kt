@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
@@ -312,46 +312,26 @@ class KotlinChangeSignatureDialog(
 
     override fun validateAndCommitData(): String? {
         if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite &&
-            myReturnTypeCodeFragment.getTypeInfo(isCovariant = true, forPreview = false).type == null
-        ) {
-            if (Messages.showOkCancelDialog(
-                    myProject,
-                    KotlinBundle.message(
-                        "message.text.return.type.cannot.be.resolved",
-                        myReturnTypeCodeFragment?.text.toString()
-                    ),
-                    RefactoringBundle.message("changeSignature.refactoring.name"),
-                    Messages.getOkButton(),
-                    Messages.getCancelButton(),
-                    Messages.getWarningIcon()
-                ) != Messages.OK
-            ) {
-                return EXIT_SILENTLY
-            }
-        }
+            myReturnTypeCodeFragment.getTypeInfo(isCovariant = true, forPreview = false).type == null &&
+            !showWarningMessage(
+                myProject,
+                KotlinBundle.message("message.text.return.type.cannot.be.resolved", myReturnTypeCodeFragment?.text.toString()),
+            )
+        ) return EXIT_SILENTLY
 
         for (item in parametersTableModel.items) {
-            if (item.typeCodeFragment.getTypeInfo(isCovariant = true, forPreview = false).type == null) {
-                val paramText = if (item.parameter != parametersTableModel.receiver)
-                    KotlinBundle.message("text.parameter.0", item.parameter.name)
-                else
-                    KotlinBundle.message("text.receiver")
-                if (Messages.showOkCancelDialog(
-                        myProject,
-                        KotlinBundle.message(
-                            "message.type.for.cannot.be.resolved",
-                            item.typeCodeFragment.text,
-                            paramText
-                        ),
-                        RefactoringBundle.message("changeSignature.refactoring.name"),
-                        Messages.getOkButton(),
-                        Messages.getCancelButton(),
-                        Messages.getWarningIcon()
-                    ) != Messages.OK
-                ) {
-                    return EXIT_SILENTLY
-                }
-            }
+            if (item.typeCodeFragment.getTypeInfo(isCovariant = true, forPreview = false).type == null && !showWarningMessage(
+                    myProject,
+                    KotlinBundle.message(
+                        "message.type.for.cannot.be.resolved",
+                        item.typeCodeFragment.text,
+                        if (item.parameter != parametersTableModel.receiver)
+                            KotlinBundle.message("text.parameter.0", item.parameter.name)
+                        else
+                            KotlinBundle.message("text.receiver"),
+                    ),
+                )
+            ) return EXIT_SILENTLY
         }
 
         return null
@@ -415,6 +395,14 @@ class KotlinChangeSignatureDialog(
         ?: super.getSelectedIdx()
 
     companion object {
+        /**
+         * @return OK -> true, Cancel -> false
+         */
+        fun showWarningMessage(project: Project, message: @NlsContexts.DialogMessage String): Boolean =
+            MessageDialogBuilder.okCancel(RefactoringBundle.message("changeSignature.refactoring.name"), message)
+                .asWarning()
+                .ask(project)
+
         private fun createParametersInfoModel(
             descriptor: KotlinMethodDescriptor,
             defaultValueContext: PsiElement

@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.showWarningMessage
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent
 import org.jetbrains.kotlin.idea.refactoring.validateElement
 import org.jetbrains.kotlin.psi.KtProperty
@@ -253,29 +253,20 @@ class KotlinChangePropertySignatureDialog(
         val changeInfo = evaluateKotlinChangeInfo()
         val typeInfo = changeInfo.newReturnTypeInfo
         if (typeInfo.type == null && !showWarningMessage(
-                KotlinBundle.message(
-                    "message.text.property.type.cannot.be.resolved",
-                    typeInfo.render(),
-                )
+                myProject,
+                KotlinBundle.message("message.text.property.type.cannot.be.resolved", typeInfo.render()),
             )
         ) return
 
         val receiverTypeInfo = changeInfo.receiverParameterInfo?.currentTypeInfo
         if (receiverTypeInfo != null && receiverTypeInfo.type == null && !showWarningMessage(
-                KotlinBundle.message(
-                    "message.text.property.receiver.type.cannot.be.resolved",
-                    receiverTypeInfo.render(),
-                )
+                myProject,
+                KotlinBundle.message("message.text.property.receiver.type.cannot.be.resolved", receiverTypeInfo.render()),
             )
         ) return
 
         invokeRefactoring(KotlinChangeSignatureProcessor(myProject, changeInfo, commandName ?: title))
     }
-
-    private fun showWarningMessage(message: @NlsContexts.DialogMessage String): Boolean =
-        MessageDialogBuilder.okCancel(RefactoringBundle.message("changeSignature.refactoring.name"), message)
-            .asWarning()
-            .ask(myProject)
 
     override fun getHelpId(): String = "refactoring.changeSignature"
 
