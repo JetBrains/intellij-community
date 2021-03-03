@@ -595,14 +595,19 @@ public final class AnnotationsHighlightUtil {
         if (parent instanceof PsiClass) {
           final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent, JavaErrorBundle.message("not.a.functional.interface", ((PsiClass)parent).getName()));
           if (errorMessage != null) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
+            HighlightInfo info =
+              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
+            QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(annotation));
+            return info;
           }
 
           if (((PsiClass)parent).hasModifierProperty(PsiModifier.SEALED)) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(annotation)
               .descriptionAndTooltip(JavaErrorBundle.message("functional.interface.must.not.be.sealed.error.description", PsiModifier.SEALED))
               .create();
+            QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(annotation));
+            return info;
           }
         }
       }
