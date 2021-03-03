@@ -12,6 +12,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-api" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
