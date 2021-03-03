@@ -41,6 +41,10 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
             KtFirDiagnostic.PrivateSetterForAbstractProperty::class,
             RemoveModifierFix.removePrivateModifier
         )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.NestedClassNotAllowed::class,
+            AddModifierFix.addInnerModifier
+        )
     }
 
     private val overrides = KtQuickFixesListBuilder.registerPsiQuickFix {
