@@ -106,11 +106,15 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
     mySchemeSupplier = schemeSupplier;
     if (mySchemeSupplier != GLOBAL_SCHEME_SUPPLIER) {
-      myLabel.setForeground(new JBColor(() -> mySchemeSupplier.get().getDefaultForeground()));
+      myLabel.setForeground(new JBColor(() -> getScheme().getDefaultForeground()));
     }
 
     setBackground(new JBColor(() -> ObjectUtils.notNull(myBackgroundColor,
-                                        ObjectUtils.notNull(mySchemeSupplier.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()))));
+                                        ObjectUtils.notNull(getScheme().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()))));
+  }
+
+  protected EditorColorsScheme getScheme() {
+    return  mySchemeSupplier.get();
   }
 
   public void setProject(Project project) {
@@ -194,7 +198,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
                                                final ActionHandler handler,
                                                boolean showInIntentionMenu) {
     Color foreground = mySchemeSupplier != GLOBAL_SCHEME_SUPPLIER ?
-                       new JBColor(() -> mySchemeSupplier.get().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).getForegroundColor()) :
+                       new JBColor(() -> getScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).getForegroundColor()) :
                        JBUI.CurrentTheme.Link.Foreground.ENABLED;
     ActionHyperlinkLabel label = new ActionHyperlinkLabel(this, text, getBackground(), foreground, showInIntentionMenu, handler);
     myLinksPanel.add(label);
