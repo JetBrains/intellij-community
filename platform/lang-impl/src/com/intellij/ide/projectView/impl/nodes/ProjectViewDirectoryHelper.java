@@ -200,6 +200,7 @@ public class ProjectViewDirectoryHelper {
                                                                  boolean withSubDirectories,
                                                                  @Nullable PsiFileSystemItemFilter filter) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
+    if (!psiDirectory.isValid()) return children;
     Project project = psiDirectory.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
