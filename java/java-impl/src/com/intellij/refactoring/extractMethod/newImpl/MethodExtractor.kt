@@ -60,7 +60,7 @@ class MethodExtractor {
       selectTargetClass(extractOptions) { options ->
         val targetClass = options.anchor.containingClass ?: throw IllegalStateException("Failed to find target class")
         val annotate = PropertiesComponent.getInstance(options.project).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)
-        val parameters = ExtractParameters(targetClass, range, "", annotate, false)
+        val parameters = ExtractParameters(targetClass, range, "", annotate, options.isStatic)
         val extractor = getDefaultInplaceExtractor(options)
         if (Registry.`is`("java.refactoring.extractMethod.inplace") && EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
           val popupSettings = createInplaceSettingsPopup(options)

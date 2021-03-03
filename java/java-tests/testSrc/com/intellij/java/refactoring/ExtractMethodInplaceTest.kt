@@ -56,6 +56,10 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
     doTest(changedName = "renamed")
   }
 
+  fun testStaticMustBePlaced(){
+    doTest()
+  }
+
   private fun doTest(checkResults: Boolean = true, changedName: String? = null){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
