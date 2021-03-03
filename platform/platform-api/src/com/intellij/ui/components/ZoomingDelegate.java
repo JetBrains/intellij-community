@@ -69,10 +69,10 @@ public class ZoomingDelegate {
 
   protected void scrollTo(int vOffset, int hOffset) {
     JScrollPane pane = ComponentUtil.getScrollPane(myViewportComponent);
-    JScrollBar vsb = pane.getVerticalScrollBar();
-    vsb.setValue(vOffset);
-    JScrollBar hsb = pane.getHorizontalScrollBar();
-    hsb.setValue(hOffset);
+    JScrollBar vsb = pane == null ? null : pane.getVerticalScrollBar();
+    if (vsb != null) vsb.setValue(vOffset);
+    JScrollBar hsb = pane == null ? null : pane.getHorizontalScrollBar();
+    if (hsb != null) hsb.setValue(hOffset);
   }
 
   protected Point convertToContentCoordinates(Point point) {
