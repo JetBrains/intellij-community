@@ -110,7 +110,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Nullable
   @Override
   public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-    return remoteConnectionCreator == null ? super.createRemoteConnection(environment) : remoteConnectionCreator.createRemoteConnection(environment);
+    return remoteConnectionCreator == null
+           ? super.createRemoteConnection(environment)
+           : remoteConnectionCreator.createRemoteConnection(environment);
   }
 
   @Override
@@ -122,17 +124,22 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     super(environment);
   }
 
-  @NotNull protected abstract String getFrameworkName();
+  @NotNull
+  protected abstract String getFrameworkName();
 
-  @NotNull protected abstract String getFrameworkId();
+  @NotNull
+  protected abstract String getFrameworkId();
 
   protected abstract void passTempFile(ParametersList parametersList, String tempFilePath);
 
-  @NotNull protected abstract T getConfiguration();
+  @NotNull
+  protected abstract T getConfiguration();
 
-  @Nullable protected abstract TestSearchScope getScope();
+  @Nullable
+  protected abstract TestSearchScope getScope();
 
-  @NotNull protected abstract String getForkMode();
+  @NotNull
+  protected abstract String getForkMode();
 
   @NotNull
   private OSProcessHandler createHandler(Executor executor, SMTestRunnerResultsForm viewer) throws ExecutionException {
@@ -178,7 +185,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
       int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
       myPortPromise.setResult(String.valueOf(port));
-   }
+    }
   }
 
   /**
@@ -251,7 +258,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
-    final BaseTestsOutputConsoleView consoleView = UIUtil.invokeAndWaitIfNeeded(() -> SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties));
+    final BaseTestsOutputConsoleView consoleView =
+      UIUtil.invokeAndWaitIfNeeded(() -> SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties));
     final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
     Disposer.register(getConfiguration().getProject(), consoleView);
 
@@ -384,14 +392,18 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       if (forkPerModule()) {
         if (isExecutorDisabledInForkedMode()) {
           final String actionName = executor.getActionName();
-          throw new CantRunException(JavaCompilerBundle.message("action.disabled.when.per.module.working.directory.configured", actionName));
+          throw new CantRunException(JavaCompilerBundle.message("action.disabled.when.per.module.working.directory.configured",
+                                                                actionName));
         }
-      } else {
+      }
+      else {
         return;
       }
-    } else if (isExecutorDisabledInForkedMode()) {
+    }
+    else if (isExecutorDisabledInForkedMode()) {
       final String actionName = executor.getActionName();
-      throw new CantRunException(JavaCompilerBundle.message("action.disabled.in.fork.mode", actionName, StringUtil.toLowerCase(actionName)));
+      throw new CantRunException(JavaCompilerBundle.message("action.disabled.in.fork.mode", actionName,
+                                                            StringUtil.toLowerCase(actionName)));
     }
 
     final JavaParameters javaParameters = getJavaParameters();
@@ -454,7 +466,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
     RunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
-    final String jreHome = getTargetEnvironmentRequest() == null && getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
+    final String jreHome = getTargetEnvironmentRequest() == null && getConfiguration().isAlternativeJrePathEnabled()
+                           ? getConfiguration().getAlternativeJrePath()
+                           : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
     Module module = configurationModule.getModule();
     if (configureByModule(module)) {
@@ -600,7 +614,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     try {
       myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
       myPortPromise = new AsyncPromise<>();
-      javaParameters.getProgramParametersList().add(new CompositeParameterTargetedValue("-socket").addTargetPart(String.valueOf(myServerSocket.getLocalPort()), myPortPromise));
+      javaParameters.getProgramParametersList()
+        .add(new CompositeParameterTargetedValue("-socket").addTargetPart(String.valueOf(myServerSocket.getLocalPort()), myPortPromise));
       TargetEnvironmentRequest request = getTargetEnvironmentRequest();
       if (request != null) {
         myPortBindingForSocket = new TargetEnvironment.LocalPortBinding(myServerSocket.getLocalPort(), null);
