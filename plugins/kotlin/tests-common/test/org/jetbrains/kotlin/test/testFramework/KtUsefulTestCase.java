@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.test.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -96,9 +95,9 @@ public abstract class KtUsefulTestCase extends TestCase {
     private Application application;
 
     static {
-        IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
         Logger.setFactory(TestLoggerFactory.class);
     }
+
     protected static final Logger LOG = Logger.getInstance(KtUsefulTestCase.class);
 
     @NotNull
