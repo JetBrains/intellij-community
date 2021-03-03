@@ -26,19 +26,19 @@ import com.intellij.util.AlarmFactory
 import com.intellij.util.ui.UIUtil
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
-import org.cef.handler.CefDisplayHandlerAdapter
-import org.cef.handler.CefLifeSpanHandlerAdapter
-import org.cef.handler.CefLoadHandlerAdapter
-import org.cef.handler.CefRequestHandlerAdapter
+import org.cef.handler.*
 import org.cef.network.CefRequest
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 
 internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, url: String) : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(null)
   private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
+  private val initial = AtomicBoolean(true)
+  private val navigating = AtomicBoolean(false)
 
   private val multiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent = when (key) {
@@ -61,17 +61,20 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
 
     contentPanel.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
       override fun onLoadingStateChange(browser: CefBrowser, isLoading: Boolean, canGoBack: Boolean, canGoForward: Boolean) {
-        if (isLoading) {
-          invokeLater {
-            loadingPanel.startLoading()
-            multiPanel.select(LOADING_KEY, true)
+        if (initial.get()) {
+          if (isLoading) {
+            invokeLater {
+              loadingPanel.startLoading()
+              multiPanel.select(LOADING_KEY, true)
+            }
           }
-        }
-        else {
-          alarm.cancelAllRequests()
-          invokeLater {
-            loadingPanel.stopLoading()
-            multiPanel.select(CONTENT_KEY, true)
+          else {
+            alarm.cancelAllRequests()
+            initial.set(false)
+            invokeLater {
+              loadingPanel.stopLoading()
+              multiPanel.select(CONTENT_KEY, true)
+            }
           }
         }
       }
@@ -79,7 +82,7 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
 
     contentPanel.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
       override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean =
-        if (userGesture) { BrowserUtil.browse(request.url); true }
+        if (userGesture) { navigating.set(true); BrowserUtil.browse(request.url); true }
         else false
     }, contentPanel.cefBrowser)
 
@@ -95,7 +98,10 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
         StatusBar.Info.set(text, project)
     }, contentPanel.cefBrowser)
 
-    contentPanel.setErrorPage(ErrorPage.DEFAULT)
+    contentPanel.setErrorPage { errorCode, errorText, failedUrl ->
+      if (errorCode == CefLoadHandler.ErrorCode.ERR_ABORTED && navigating.getAndSet(false)) null
+      else ErrorPage.DEFAULT.create(errorCode, errorText, failedUrl)
+    }
 
     multiPanel.select(CONTENT_KEY, true)
 
