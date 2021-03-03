@@ -397,10 +397,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
         }
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(myDocument);
       }
-      // try some cleaning of potentially leaking references
-      myDocumentListeners.clear();
-      myFocusListeners.clear();
-      myMouseListeners.clear();
     });
     if (myEditor != null) {
       releaseEditorLater();
