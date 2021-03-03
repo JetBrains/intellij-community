@@ -106,6 +106,7 @@ internal fun sharePromoText(maxLineLength: Int = 0): JLabel = promoText(SpaceBun
 private fun promoText(@NlsContexts.DetailedDescription text: String, maxLineLength: Int): JLabel =
   ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength).apply {
     foreground = JBUI.CurrentTheme.Label.foreground()
+    font = JBUI.Fonts.label()
   }
 
 private fun watchPromoVideo() {

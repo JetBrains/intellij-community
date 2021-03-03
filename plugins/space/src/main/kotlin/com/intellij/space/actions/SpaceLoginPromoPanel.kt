@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.ui.fullRow
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.promo.*
 import com.intellij.space.settings.SpaceLoginState
@@ -49,7 +50,7 @@ fun buildLoginPanelWithPromo(state: SpaceLoginState.Disconnected,
 
 private fun promoPanel(loginAction: () -> Unit) = panel {
   fullRow { createSpaceByJetbrainsLabel()() }
-  fullRow { fullPromoText(52)() }
+  fullRow { fullPromoText(if (SystemInfo.isMac) 60 else 52)() }
   fullRow {
     JButton(SpaceBundle.message("space.promo.discover.space.button")).apply {
       addActionListener {
