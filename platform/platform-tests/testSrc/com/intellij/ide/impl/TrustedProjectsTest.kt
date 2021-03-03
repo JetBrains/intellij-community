@@ -30,6 +30,7 @@ class TrustedProjectsTest {
       HostTest("ssh://git@github.com:JetBrains/", "ssh://git@github.com:JetBrains/intellij.git", true),
       HostTest("github.com/JetBrains", "https://github.com/JetBrains/intellij.git", true),
       HostTest("github.com/JetBrains", "ssh://git@github.com:JetBrains/intellij.git", true),
+      HostTest("https://domain/my", "https://domain/my-dir.git", false),
       HostTest("192.168.1.1", "https://192.168.1.1/project.git", true)
     )
 
