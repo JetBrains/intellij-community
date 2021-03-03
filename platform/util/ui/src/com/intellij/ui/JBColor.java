@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -63,8 +64,11 @@ public class JBColor extends Color {
   @NotNull
   public static JBColor namedColor(@NonNls @NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
-      return notNull(UIManager.getColor(propertyName),
-                     () -> notNull(findPatternMatch(propertyName), defaultColor));
+      Color color = notNull(UIManager.getColor(propertyName), () -> notNull(findPatternMatch(propertyName), defaultColor));
+      if (UIManager.get(propertyName) == null) {
+        saveMissingColorInUIDefaults(propertyName, color);
+      }
+      return color;
     });
   }
 
@@ -320,5 +324,14 @@ public class JBColor extends Color {
       defaultThemeColors.put(colorId, defaultColor);
       return defaultColor;
     });
+  }
+
+  private static void saveMissingColorInUIDefaults(String propertyName, Color color) {
+    if (Registry.is("ide.save.missing.jb.colors", false)) {
+      String key = propertyName + "!!!";
+      if (UIManager.get(key) == null) {
+        UIManager.put(key, color);
+      }
+    }
   }
 }
