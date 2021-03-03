@@ -5,7 +5,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -45,7 +45,7 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
     Project project = editor.getProject();
     if (project != null) {
       if (!isCharAtSpace(editor)) {
-        EditorModificationUtil.insertStringAtCaret(editor, " ");
+        EditorModificationUtilEx.insertStringAtCaret(editor, " ");
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       }
       else if (shouldOverwriteExistingSpace(editor)) {
