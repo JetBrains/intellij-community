@@ -69,6 +69,7 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -503,7 +504,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           LOG.error(e);
         }
         else {
-          LOG.warn(e);
+          String message = "Attempt #" + attemptCount + " to initialize index has failed for " + extension.getName();
+          //noinspection InstanceofCatchParameter
+          if (e instanceof PersistentEnumeratorBase.CorruptedException) {
+            LOG.warn(message + " because storage corrupted");
+          }
+          else {
+            LOG.warn(message, e);
+          }
         }
       }
     }
