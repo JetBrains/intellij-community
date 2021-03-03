@@ -37,8 +37,6 @@ import java.io.File
  * @author vlan
  */
 object PyTypeShed {
-  private const val ONLY_SUPPORTED_PY2_MINOR = 7
-  private val SUPPORTED_PY3_MINORS = LanguageLevel.SUPPORTED_LEVELS.filter { it.isPy3K }.map { it.minorVersion }
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
@@ -68,34 +66,21 @@ object PyTypeShed {
    */
   fun findRootsForSdk(sdk: Sdk): List<VirtualFile> {
     val level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)
-    val dir = directory ?: return emptyList()
     return findRootsForLanguageLevel(level)
-        .asSequence()
-        .map { dir.findFileByRelativePath(it) }
-        .filterNotNull()
-        .toList()
   }
 
   /**
    * Returns the list of roots in typeshed for the specified Python language [level].
    */
-  fun findRootsForLanguageLevel(level: LanguageLevel): List<String> {
-    val majorVersion = level.majorVersion
-    val minorVersion = level.minorVersion
+  fun findRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
+    val dir = directory ?: return emptyList()
 
-    val minors = when (majorVersion) {
-      2 -> listOf(ONLY_SUPPORTED_PY2_MINOR)
-      3 -> SUPPORTED_PY3_MINORS.reversed().filter { it <= minorVersion }
-      else -> return emptyList()
-    }
+    val common = sequenceOf(dir.findChild("stdlib"))
+      .plus(dir.findFileByRelativePath("stubs")?.children ?: VirtualFile.EMPTY_ARRAY)
+      .filterNotNull()
+      .toList()
 
-    return minors.map { "stdlib/$majorVersion.$it" } +
-      listOf(
-        "stdlib/$majorVersion",
-        "stdlib/2and3",
-        "third_party/$majorVersion",
-        "third_party/2and3"
-      )
+    return if (level.isPython2) common.flatMap { listOfNotNull(it.findChild("@python2"), it) } else common
   }
 
   /**
@@ -114,7 +99,7 @@ object PyTypeShed {
     StandardFileSystems.local().findFileByPath(path)
   }
 
-  val directoryPath: String?
+  private val directoryPath: String?
     get() {
       val paths = listOf("${PathManager.getConfigPath()}/typeshed",
                          "${PathManager.getConfigPath()}/../typeshed",
@@ -127,7 +112,7 @@ object PyTypeShed {
   /**
    * A shallow check for a [file] being located inside the typeshed third-party stubs.
    */
-  fun isInThirdPartyLibraries(file: VirtualFile): Boolean = "third_party" in file.path
+  fun isInThirdPartyLibraries(file: VirtualFile): Boolean = "stubs" in file.path
 
   fun isInStandardLibrary(file: VirtualFile): Boolean = "stdlib" in file.path
 }
