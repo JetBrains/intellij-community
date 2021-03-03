@@ -9,6 +9,8 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.TargetElementUtil.ELEMENT_NAME_ACCEPTED
 import com.intellij.codeInsight.TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
@@ -26,8 +28,11 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinCallableParameterTableModel
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinMethodNode
@@ -38,6 +43,7 @@ import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -105,7 +111,12 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private fun findTargetElement(): PsiElement? = KotlinChangeSignatureHandler().findTargetMember(file, editor)
 
-    private fun createChangeInfo(): KotlinChangeInfo {
+    private class ChangeSignatureContext(
+        val callableDescriptor: CallableDescriptor,
+        val context: KtElement,
+    )
+
+    private fun createChangeSignatureContext(): ChangeSignatureContext {
         configureFiles()
 
         val element = findTargetElement()?.safeAs<KtElement>().sure { "Target element is null" }
@@ -119,7 +130,18 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
             .findDescriptor(element, project, editor, bindingContext)
             .sure { "Target descriptor is null" }
 
-        return createChangeInfo(project, editor, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, context)!!
+        return ChangeSignatureContext(callableDescriptor, context)
+    }
+
+    private fun createChangeInfo(): KotlinChangeInfo {
+        val configuration = createChangeSignatureContext()
+        return createChangeInfo(
+            project,
+            editor,
+            configuration.callableDescriptor,
+            KotlinChangeSignatureConfiguration.Empty,
+            configuration.context,
+        )!!
     }
 
     private fun doTest(configure: KotlinChangeInfo.() -> Unit = {}) {
@@ -255,6 +277,46 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByText("dummy.kt", code)
         val element = findTargetElement()!!
         TestCase.assertEquals(T::class, element::class)
+    }
+
+    private fun KotlinMutableMethodDescriptor.createNewParameter(
+        name: String = "i",
+        type: KotlinTypeInfo = KotlinTypeInfo(false, BUILT_INS.intType),
+        callableDescriptor: CallableDescriptor = baseDescriptor,
+        defaultValueForCall: KtExpression? = null,
+    ): KotlinParameterInfo = KotlinParameterInfo(
+        callableDescriptor = callableDescriptor,
+        name = name,
+        originalTypeInfo = type,
+        defaultValueForCall = defaultValueForCall,
+    )
+
+    private fun doTestWithDescriptorModification(modificator: KotlinMutableMethodDescriptor.() -> Unit) {
+        val context = createChangeSignatureContext()
+        val callableDescriptor = context.callableDescriptor
+        val kotlinChangeSignature = KotlinChangeSignature(
+            project,
+            editor,
+            callableDescriptor,
+            object : KotlinChangeSignatureConfiguration {
+                override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
+                    return originalDescriptor.modify(modificator)
+                }
+            },
+            context.context,
+            null,
+        )
+
+        val declarations = callableDescriptor.safeAs<CallableMemberDescriptor>()
+            ?.getDeepestSuperDeclarations()
+            ?: listOf(callableDescriptor)
+
+        val adjustedDescriptor = kotlinChangeSignature.adjustDescriptor(declarations)!!
+        val processor = kotlinChangeSignature.createSilentRefactoringProcessor(adjustedDescriptor) as KotlinChangeSignatureProcessor
+        processor.ktChangeInfo.also { it.checkUsedParameters = true }
+        processor.run()
+
+        compareEditorsWithExpectedData()
     }
 
     // --------------------------------- Tests ---------------------------------
@@ -1493,4 +1555,18 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testMoveLambdaParameterToLast() = doTest { swapParameters(0, 1) }
+}
+
+fun createChangeInfo(
+    project: Project,
+    editor: Editor?,
+    callableDescriptor: CallableDescriptor,
+    configuration: KotlinChangeSignatureConfiguration,
+    defaultValueContext: PsiElement
+): KotlinChangeInfo? {
+    val kotlinChangeSignature = KotlinChangeSignature(project, editor, callableDescriptor, configuration, defaultValueContext, null)
+    val declarations = callableDescriptor.safeAs<CallableMemberDescriptor>()?.getDeepestSuperDeclarations() ?: listOf(callableDescriptor)
+    val adjustedDescriptor = kotlinChangeSignature.adjustDescriptor(declarations) ?: return null
+    val processor = kotlinChangeSignature.createSilentRefactoringProcessor(adjustedDescriptor) as KotlinChangeSignatureProcessor
+    return processor.ktChangeInfo.also { it.checkUsedParameters = true }
 }

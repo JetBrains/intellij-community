@@ -23,15 +23,12 @@ import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.util.VisibilityUtil
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.refactoring.CallableRefactoring
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
@@ -136,22 +133,22 @@ class KotlinChangeSignature(
         }
     }
 
-    private fun runSilentRefactoring(methodDescriptor: KotlinMethodDescriptor) {
-        val processor = selectRefactoringProcessor(
-            methodDescriptor,
-            propertyProcessor = { KotlinChangePropertySignatureDialog.createProcessorForSilentRefactoring(project, commandName, it) },
-            functionProcessor = {
-                KotlinChangeSignatureDialog.createRefactoringProcessorForSilentChangeSignature(
-                    project,
-                    commandName,
-                    it,
-                    defaultValueContext
-                )
-            },
-            javaProcessor = { descriptor, _ -> ChangeSignatureProcessor(project, getPreviewInfoForJavaMethod(descriptor).second) }
-        ) ?: return
+    internal fun createSilentRefactoringProcessor(methodDescriptor: KotlinMethodDescriptor): BaseRefactoringProcessor? = selectRefactoringProcessor(
+        methodDescriptor,
+        propertyProcessor = { KotlinChangePropertySignatureDialog.createProcessorForSilentRefactoring(project, commandName, it) },
+        functionProcessor = {
+            KotlinChangeSignatureDialog.createRefactoringProcessorForSilentChangeSignature(
+                project,
+                commandName,
+                it,
+                defaultValueContext
+            )
+        },
+        javaProcessor = { descriptor, _ -> ChangeSignatureProcessor(project, getPreviewInfoForJavaMethod(descriptor).second) }
+    )
 
-        processor.run()
+    private fun runSilentRefactoring(methodDescriptor: KotlinMethodDescriptor) {
+        createSilentRefactoringProcessor(methodDescriptor)?.run()
     }
 
     private fun runInteractiveRefactoring(methodDescriptor: KotlinMethodDescriptor) {
@@ -292,27 +289,4 @@ class KotlinChangeSignature(
     companion object {
         private val LOG = logger<KotlinChangeSignature>()
     }
-}
-
-@TestOnly
-fun createChangeInfo(
-    project: Project,
-    editor: Editor?,
-    callableDescriptor: CallableDescriptor,
-    configuration: KotlinChangeSignatureConfiguration,
-    defaultValueContext: PsiElement
-): KotlinChangeInfo? {
-    val jetChangeSignature = KotlinChangeSignature(project, editor, callableDescriptor, configuration, defaultValueContext, null)
-    val declarations =
-        (callableDescriptor as? CallableMemberDescriptor)?.getDeepestSuperDeclarations() ?: listOf(callableDescriptor)
-
-    val adjustedDescriptor = jetChangeSignature.adjustDescriptor(declarations) ?: return null
-
-    val processor = KotlinChangeSignatureDialog.createRefactoringProcessorForSilentChangeSignature(
-        project,
-        RefactoringBundle.message("changeSignature.refactoring.name"),
-        adjustedDescriptor,
-        defaultValueContext
-    ) as KotlinChangeSignatureProcessor
-    return processor.ktChangeInfo.also { it.checkUsedParameters = true }
 }
