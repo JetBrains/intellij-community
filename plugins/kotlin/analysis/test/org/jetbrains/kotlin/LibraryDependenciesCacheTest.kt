@@ -223,4 +223,4 @@ class LibraryDependenciesCacheTest {
 }
 
 private fun candidate(platform: TargetPlatform, uniqueName: String = "arbitrary"): DependencyCandidate =
-    DependencyCandidate(containingLibraryId = uniqueName, platform = platform, libraries = emptyList())
+    DependencyCandidate(containingLibraryId = uniqueName, platform = platform, libraries = emptyList(), isInteropLibrary = true /* TODO NOW */)
