@@ -32,6 +32,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
      * Note: Implemented approach is super heuristics.
      * Please, override [systemId] to avoid discrepancy with real id.
      */
+    LOG.warn("Please, override AbstractOpenProjectProvider.systemId property for class: ${javaClass.name}.", Throwable())
     val readableName = StringUtils.splitByCharacterTypeCamelCase(javaClass.simpleName).first()
     val manager = ExternalSystemManager.EP_NAME.findFirstSafe {
       StringUtils.equalsIgnoreCase(StringUtils.splitByCharacterTypeCamelCase(it.javaClass.simpleName).first(), readableName)
