@@ -2,7 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.util.findDescendantOfType
+import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
@@ -25,7 +25,7 @@ class KotlinLanguageSupport : LanguageSupport {
     }
 
     override fun getCodeBlock(element: PsiElement): PsiElement? {
-        return element.findDescendantOfType<KtBlockExpression>()
+        return element.descendantsOfType<KtBlockExpression>().first()
     }
 
     override fun getContainingCodeBlock(element: PsiElement): PsiElement? {

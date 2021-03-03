@@ -4,7 +4,7 @@ import com.intellij.lang.ecmascript6.psi.ES6Class
 import com.intellij.lang.javascript.psi.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.util.findDescendantOfType
+import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class JavaScriptLanguageSupport : LanguageSupport {
@@ -26,7 +26,7 @@ class JavaScriptLanguageSupport : LanguageSupport {
     }
 
     override fun getCodeBlock(element: PsiElement): PsiElement? {
-        return element.findDescendantOfType<JSBlockStatement>()
+        return element.descendantsOfType<JSBlockStatement>().first()
     }
 
     override fun getContainingCodeBlock(element: PsiElement): PsiElement? {

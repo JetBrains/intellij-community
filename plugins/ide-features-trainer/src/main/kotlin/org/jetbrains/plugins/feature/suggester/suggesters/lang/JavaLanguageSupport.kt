@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
 import com.intellij.psi.*
-import com.intellij.psi.util.findDescendantOfType
+import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class JavaLanguageSupport : LanguageSupport {
@@ -23,7 +23,7 @@ class JavaLanguageSupport : LanguageSupport {
     }
 
     override fun getCodeBlock(element: PsiElement): PsiElement? {
-        return element.findDescendantOfType<PsiCodeBlock>()
+        return element.descendantsOfType<PsiCodeBlock>().first()
     }
 
     override fun getContainingCodeBlock(element: PsiElement): PsiElement? {
