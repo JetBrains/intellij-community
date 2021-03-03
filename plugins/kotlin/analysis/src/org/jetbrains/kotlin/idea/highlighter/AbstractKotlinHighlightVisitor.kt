@@ -85,10 +85,17 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             file.analyzeWithAllCompilerChecks(/*{
                                                       val element = it.psiElement
                                                       if (element in elements &&
-                                                          it !in annotationByDiagnostic &&
+                                                          it !in highlightInfoByDiagnostic &&
                                                           !RenderingContext.parameters(it).any(::checkIfDescriptor)
                                                       ) {
-                                                          annotateDiagnostic(element, holder, it, annotationByDiagnostic, annotationByTextRange)
+                                                          annotateDiagnostic(
+                                                              file,
+                                                              element,
+                                                              holder,
+                                                              it,
+                                                              highlightInfoByDiagnostic,
+                                                              highlightInfoByTextRange
+                                                          )
                                                       }
                                                   }*/
             ).also { it.throwIfError() }
@@ -109,7 +116,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             //  see [PsiCheckerTestGenerated$Checker.testRedeclaration]
             if (diagnostic in highlightInfoByDiagnostic) continue
 
-            // annotate diagnostics those were not possible to report (and therefore render) on fly
+            // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
             annotateDiagnostic(file, psiElement, holder, diagnostic, highlightInfoByDiagnostic, calculatingInProgress = false)
         }
 
