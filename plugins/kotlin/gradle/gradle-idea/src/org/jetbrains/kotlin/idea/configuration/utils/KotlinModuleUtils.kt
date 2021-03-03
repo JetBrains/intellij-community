@@ -12,6 +12,6 @@ internal fun KotlinModule.fullName(simpleName: String = name) = when (this) {
     else -> simpleName
 }
 
-internal fun KotlinMPPGradleProjectResolver.Companion.getKotlinModuleId(
+fun KotlinMPPGradleProjectResolver.Companion.getKotlinModuleId(
     gradleModule: IdeaModule, kotlinModule: KotlinModule, resolverCtx: ProjectResolverContext
 ) = getGradleModuleQualifiedName(resolverCtx, gradleModule, kotlinModule.fullName())
