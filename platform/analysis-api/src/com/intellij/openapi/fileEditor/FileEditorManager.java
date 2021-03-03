@@ -96,6 +96,17 @@ public abstract class FileEditorManager {
    */
   public abstract VirtualFile @NotNull [] getOpenFiles();
 
+  /**
+   * @return all opened files including ones which were opened by guests during a collaborative development session.
+   * Order of files in the array corresponds to the order of host's editor tabs, order for guests isn't determined.
+   * There're cases when only editors for of a particular user is needed (e.g. a search scope 'open files'),
+   * but at the same time editor notifications should be shown to all users
+   */
+  @ApiStatus.Experimental
+  public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
+    return getOpenFiles();
+  }
+
   public boolean hasOpenFiles() {
     return getOpenFiles().length > 0;
   }
