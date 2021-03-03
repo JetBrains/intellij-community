@@ -98,21 +98,8 @@
     <action id="com.intellij.space.actions.SpaceLogoutAction"
             class="com.intellij.space.actions.SpaceLogoutAction"/>
 
-    <group id="com.intellij.space.vcs.OpenReviews" class="com.intellij.space.vcs.OpenReviews"/>
     <group id="com.intellij.space.vcs.OpenChecklists" class="com.intellij.space.vcs.OpenChecklists"/>
     <group id="com.intellij.space.vcs.OpenIssues" class="com.intellij.space.vcs.OpenIssues"/>
-
-    <group id="SpaceGroup" popup="true" icon="SpaceIcons.Main">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-      <reference id="com.intellij.space.vcs.clone.SpaceCloneAction"/>
-      <separator/>
-      <reference id="com.intellij.space.vcs.OpenReviews"/>
-      <reference id="com.intellij.space.vcs.OpenChecklists"/>
-      <reference id="com.intellij.space.vcs.OpenIssues"/>
-      <separator/>
-      <reference id="com.intellij.space.actions.SpaceLoginAction"/>
-      <reference id="com.intellij.space.actions.SpaceLogoutAction"/>
-    </group>
 
     <group id="SpaceVcsHistoryToolbar">
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar" anchor="last"/>
@@ -141,11 +128,6 @@
       <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
     </action>
 
-    <action id="com.intellij.space.vcs.share.SpaceShareProjectAction"
-            class="com.intellij.space.vcs.share.SpaceShareProjectAction">
-      <add-to-group group-id="SpaceGroup" anchor="first"/>
-      <add-to-group group-id="Vcs.Import" anchor="last"/>
-    </action>
     <!--code review-->
     <action id="com.intellij.space.vcs.review.SpaceShowReviewsAction"
             class="com.intellij.space.vcs.review.SpaceShowReviewsAction"/>
@@ -176,6 +158,23 @@
       <reference id="EditSource"/>
     </group>
 
+    <group id="SpaceGroup" popup="true" icon="SpaceIcons.Main">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+      <reference id="com.intellij.space.vcs.clone.SpaceCloneAction"/>
+      <separator/>
+      <reference id="com.intellij.space.vcs.review.SpaceShowReviewsAction"/>
+      <reference id="com.intellij.space.vcs.OpenChecklists"/>
+      <reference id="com.intellij.space.vcs.OpenIssues"/>
+      <separator/>
+      <reference id="com.intellij.space.actions.SpaceLoginAction"/>
+      <reference id="com.intellij.space.actions.SpaceLogoutAction"/>
+    </group>
+
+    <action id="com.intellij.space.vcs.share.SpaceShareProjectAction"
+            class="com.intellij.space.vcs.share.SpaceShareProjectAction">
+      <add-to-group group-id="SpaceGroup" anchor="first"/>
+      <add-to-group group-id="Vcs.Import" anchor="last"/>
+    </action>
   </actions>
 
   <resource-bundle>messages.SpaceBundle</resource-bundle>
