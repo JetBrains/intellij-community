@@ -66,7 +66,9 @@ public class JBColor extends Color {
     return new JBColor(() -> {
       Color color = notNull(UIManager.getColor(propertyName), () -> notNull(findPatternMatch(propertyName), defaultColor));
       if (UIManager.get(propertyName) == null) {
-        saveMissingColorInUIDefaults(propertyName, color);
+        if (Registry.is("ide.save.missing.jb.colors", false)) {
+          return _saveAndReturnColor(propertyName, color);
+        }
       }
       return color;
     });
@@ -333,5 +335,17 @@ public class JBColor extends Color {
         UIManager.put(key, color);
       }
     }
+  }
+
+  @ApiStatus.Internal
+  private static Color _saveAndReturnColor(@NonNls @NotNull String propertyName, Color color) {
+    String key = propertyName + "!!!";
+    Object saved = UIManager.get(key);
+    if (saved instanceof Color) {
+      //in case a designer changed the key
+      return (Color)saved;
+    }
+    UIManager.put(key, color);
+    return color;
   }
 }
