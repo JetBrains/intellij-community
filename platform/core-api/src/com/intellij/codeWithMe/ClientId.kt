@@ -128,7 +128,7 @@ data class ClientId(val value: String) {
                     val beforeActionTime = System.currentTimeMillis()
                     val result = action()
                     val delta = System.currentTimeMillis() - beforeActionTime
-                    if (delta > 300) {
+                    if (delta > 1000) {
                         Logger.getInstance(ClientId::class.java).warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
                     }
                     return result
