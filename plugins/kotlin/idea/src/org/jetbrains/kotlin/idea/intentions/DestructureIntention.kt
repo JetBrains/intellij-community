@@ -93,7 +93,8 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
             is KtParameter -> {
                 val loopRange = (element.parent as? KtForExpression)?.loopRange
                 runWriteAction {
-                    element.replace(factory.createDestructuringParameter("($joinedNames)"))
+                    val type = element.typeReference?.let { ": ${it.text}" } ?: ""
+                    element.replace(factory.createDestructuringParameter("($joinedNames)$type"))
                     if (removeSelectorInLoopRange && loopRange is KtDotQualifiedExpression) {
                         loopRange.replace(loopRange.receiverExpression)
                     }

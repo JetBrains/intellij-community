@@ -8797,6 +8797,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/destructuringInLambda/hasShadowedVariable2.kt");
         }
 
+        @TestMetadata("hasType.kt")
+        public void testHasType() throws Exception {
+            runTest("testData/intentions/destructuringInLambda/hasType.kt");
+        }
+
         @TestMetadata("invisible.kt")
         public void testInvisible() throws Exception {
             runTest("testData/intentions/destructuringInLambda/invisible.kt");
