@@ -77,7 +77,6 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -709,13 +708,12 @@ public final class ExternalSystemUtil {
   ) {
     String systemsPresentation = StringUtil.join(systemIds, it -> it.getReadableName(), ", ");
     return TrustedProjects.isTrusted(project) || project.isDefault() || executesTrustedCodeOnly(systemIds) ||
-           confirmation.get() && TrustedProjects.confirmLoadingUntrustedProject(project, () ->
-             MessageDialogBuilder.yesNo(
-               ExternalSystemBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.size()),
-               ExternalSystemBundle.message("untrusted.project.notification.text", systemsPresentation, systemIds.size())
-             )
-               .yesText(ExternalSystemBundle.message("untrusted.project.notification.trust.button"))
-               .noText(ExternalSystemBundle.message("untrusted.project.notification.distrust.button"))
+           confirmation.get() && TrustedProjects.confirmLoadingUntrustedProject(
+             project,
+             ExternalSystemBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.size()),
+             ExternalSystemBundle.message("untrusted.project.notification.text", systemsPresentation, systemIds.size()),
+             ExternalSystemBundle.message("untrusted.project.notification.trust.button"),
+             ExternalSystemBundle.message("untrusted.project.notification.distrust.button")
            );
   }
 
@@ -734,14 +732,13 @@ public final class ExternalSystemUtil {
     if (executesTrustedCodeOnly(systemIds)) {
       return OpenUntrustedProjectChoice.IMPORT;
     }
-    return TrustedProjects.confirmOpeningUntrustedProject(virtualFile, () ->
-      MessageDialogBuilder.yesNoCancel(
-        ExternalSystemBundle.message("untrusted.project.notification.open.title", systemsPresentation, systemIds.size()),
-        ExternalSystemBundle.message("untrusted.project.notification.open.text", systemsPresentation, systemIds.size())
-      )
-        .yesText(ExternalSystemBundle.message("untrusted.project.notification.open.trust.button"))
-        .noText(ExternalSystemBundle.message("untrusted.project.notification.open.distrust.button"))
-        .cancelText(ExternalSystemBundle.message("untrusted.project.notification.open.cancel.button"))
+    return TrustedProjects.confirmOpeningUntrustedProject(
+      virtualFile,
+      ExternalSystemBundle.message("untrusted.project.notification.open.title", systemsPresentation, systemIds.size()),
+      ExternalSystemBundle.message("untrusted.project.notification.open.text", systemsPresentation, systemIds.size()),
+      ExternalSystemBundle.message("untrusted.project.notification.open.trust.button"),
+      ExternalSystemBundle.message("untrusted.project.notification.open.distrust.button"),
+      ExternalSystemBundle.message("untrusted.project.notification.open.cancel.button")
     );
   }
 

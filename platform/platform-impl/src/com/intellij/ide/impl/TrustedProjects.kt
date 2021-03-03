@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
@@ -20,6 +21,21 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
 import java.nio.file.Path
 import java.nio.file.Paths
+
+
+fun confirmOpeningUntrustedProject(
+  virtualFile: VirtualFile,
+  @NlsContexts.DialogTitle title: String,
+  @NlsContexts.DialogMessage message: String,
+  @NlsContexts.Button trustButtonText: String,
+  @NlsContexts.Button distrustButtonText: String,
+  @NlsContexts.Button cancelButtonText: String,
+) = confirmOpeningUntrustedProject(virtualFile) {
+  MessageDialogBuilder.yesNoCancel(title, message)
+    .yesText(trustButtonText)
+    .noText(distrustButtonText)
+    .cancelText(cancelButtonText)
+}
 
 fun confirmOpeningUntrustedProject(
   virtualFile: VirtualFile,
@@ -45,6 +61,18 @@ fun confirmOpeningUntrustedProject(
       return OpenUntrustedProjectChoice.CANCEL
     }
   }
+}
+
+fun confirmLoadingUntrustedProject(
+  project: Project,
+  @NlsContexts.DialogTitle title: String,
+  @NlsContexts.DialogMessage message: String,
+  @NlsContexts.Button trustButtonText: String,
+  @NlsContexts.Button distrustButtonText: String
+) = confirmLoadingUntrustedProject(project) {
+  MessageDialogBuilder.yesNo(title, message)
+    .yesText(trustButtonText)
+    .noText(distrustButtonText)
 }
 
 fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> MessageDialogBuilder.YesNo): Boolean {
