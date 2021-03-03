@@ -20,6 +20,7 @@ public final class ForkedDebuggerHelper {
 
   public static final String FINISH_PARAMS = "FINISH_PARAMS";
   public static final String DISPATCH_PORT_SYS_PROP = "idea.debugger.dispatch.port";
+  public static final String DISPATCH_ADDR_SYS_PROP = "idea.debugger.dispatch.addr";
 
   // returns port at which debugger is supposed to communicate with debuggee process
   public static int setupDebugger(String debuggerId, String processName, String processParameters, String moduleDir) {
@@ -56,7 +57,8 @@ public final class ForkedDebuggerHelper {
   }
 
   private static void send(String debuggerId, String processName, String processParameters, int dispatchPort) throws IOException {
-    Socket socket = new Socket("127.0.0.1", dispatchPort);
+    String dispatchAddr = getAddrFromProperty();
+    Socket socket = new Socket(dispatchAddr, dispatchPort);
     try {
       DataOutputStream stream = new DataOutputStream(socket.getOutputStream());
       try {
@@ -102,6 +104,10 @@ public final class ForkedDebuggerHelper {
     finally {
       serverSocket.close();
     }
+  }
+
+  public static String getAddrFromProperty() {
+    return System.getProperty(DISPATCH_ADDR_SYS_PROP, "127.0.0.1");
   }
 
   private static int getPortFromProperty() {

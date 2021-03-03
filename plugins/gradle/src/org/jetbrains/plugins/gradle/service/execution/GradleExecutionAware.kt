@@ -54,7 +54,6 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
   }
 
   override fun getEnvironmentConfigurationProvider(runConfiguration: ExternalSystemRunConfiguration,
-                                                   taskNotificationListener: ExternalSystemTaskNotificationListener,
                                                    project: Project): TargetEnvironmentConfigurationProvider? {
     val targetEnvironmentConfiguration = getEnvironmentConfiguration(runConfiguration, project) ?: return null
     return GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration)
@@ -62,7 +61,6 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
 
   override fun getEnvironmentConfigurationProvider(projectPath: String,
                                                    isPreviewMode: Boolean,
-                                                   taskNotificationListener: ExternalSystemTaskNotificationListener,
                                                    project: Project): TargetEnvironmentConfigurationProvider? {
     val targetEnvironmentConfiguration = localEnvironment() ?: return null
     return GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration)

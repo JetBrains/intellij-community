@@ -87,8 +87,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
         executionAware.prepareExecution(this, myProjectPath, myIsPreviewMode, progressNotificationListener, ideProject);
 
         if (!isRunOnTargetsEnabled || environmentConfigurationProvider != null) continue;
-        environmentConfigurationProvider =
-          executionAware.getEnvironmentConfigurationProvider(myProjectPath, myIsPreviewMode, progressNotificationListener, ideProject);
+        environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(myProjectPath, myIsPreviewMode, ideProject);
       }
 
       final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
