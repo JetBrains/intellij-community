@@ -135,12 +135,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-    Instant pushPropertiesStart = Instant.now();
-    try {
-      myPusher.pushAllPropertiesNow();
-    } finally {
-      projectIndexingHistory.getTimes().setPushPropertiesDuration(Duration.between(pushPropertiesStart, Instant.now()));
-    }
 
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Pushing properties"));
 
@@ -158,6 +152,14 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     } finally {
       projectIndexingHistory.getTimes().setScanFilesDuration(Duration.between(scanFilesStart, Instant.now()));
     }
+
+    Instant pushPropertiesStart = Instant.now();
+    try {
+      myPusher.pushAllPropertiesNow();
+    } finally {
+      projectIndexingHistory.getTimes().setPushPropertiesDuration(Duration.between(pushPropertiesStart, Instant.now()));
+    }
+
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
 
