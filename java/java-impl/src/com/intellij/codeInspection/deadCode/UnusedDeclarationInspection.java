@@ -188,7 +188,10 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
         if (extension.showUI()) {
           final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
           extCheckbox.setSelected(extension.isSelected());
-          extCheckbox.addActionListener(e -> extension.setSelected(extCheckbox.isSelected()));
+          extCheckbox.addActionListener(e -> {
+            extension.setSelected(extCheckbox.isSelected());
+            saveEntryPointElement(extension);
+          });
           add(extCheckbox, gc);
           gc.gridy++;
         }
