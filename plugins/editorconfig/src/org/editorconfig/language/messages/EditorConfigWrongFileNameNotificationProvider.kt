@@ -34,7 +34,7 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotifications.Provid
   }
 
   private fun buildPanel(editor: Editor, file: VirtualFile, project: Project): EditorNotificationPanel {
-    val result = EditorNotificationPanel()
+    val result = EditorNotificationPanel{ editor.colorsScheme }
 
     if (findEditorConfig(file) == null) {
       val rename = EditorConfigBundle["notification.action.rename"]

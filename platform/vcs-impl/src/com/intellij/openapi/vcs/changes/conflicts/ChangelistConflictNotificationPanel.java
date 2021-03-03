@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -12,6 +13,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.InplaceButton;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
@@ -28,16 +30,18 @@ public final class ChangelistConflictNotificationPanel extends EditorNotificatio
   private final ChangelistConflictTracker myTracker;
 
   @Nullable
-  public static ChangelistConflictNotificationPanel create(ChangelistConflictTracker tracker, VirtualFile file) {
+  public static ChangelistConflictNotificationPanel create(ChangelistConflictTracker tracker, @NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
     final ChangeListManager manager = tracker.getChangeListManager();
     final Change change = manager.getChange(file);
     if (change == null) return null;
     final LocalChangeList changeList = manager.getChangeList(change);
     if (changeList == null) return null;
-    return new ChangelistConflictNotificationPanel(tracker, file, changeList);
+    return new ChangelistConflictNotificationPanel(tracker, file, fileEditor, changeList);
   }
 
-  private ChangelistConflictNotificationPanel(ChangelistConflictTracker tracker, VirtualFile file, LocalChangeList changeList) {
+  private ChangelistConflictNotificationPanel(ChangelistConflictTracker tracker, @NotNull VirtualFile file, @NotNull FileEditor fileEditor, LocalChangeList changeList) {
+    super(fileEditor);
+
     myTracker = tracker;
     myFile = file;
     final ChangeListManager manager = tracker.getChangeListManager();

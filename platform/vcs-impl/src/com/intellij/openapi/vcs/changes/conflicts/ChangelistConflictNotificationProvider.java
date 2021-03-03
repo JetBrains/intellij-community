@@ -24,6 +24,6 @@ public final class ChangelistConflictNotificationProvider extends EditorNotifica
   @Override
   public ChangelistConflictNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(project);
-    return conflictTracker.hasConflict(file) ? ChangelistConflictNotificationPanel.create(conflictTracker, file) : null;
+    return conflictTracker.hasConflict(file) ? ChangelistConflictNotificationPanel.create(conflictTracker, file, fileEditor) : null;
   }
 }

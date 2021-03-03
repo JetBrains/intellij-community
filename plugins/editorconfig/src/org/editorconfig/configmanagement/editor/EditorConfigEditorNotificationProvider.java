@@ -40,14 +40,15 @@ public class EditorConfigEditorNotificationProvider extends EditorNotifications.
                                         @NotNull Project project) {
     if (file.getFileType().equals(EditorConfigFileType.INSTANCE)) {
       if (!CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class).ENABLED) {
-        return new MyPanel();
+        return new MyPanel(fileEditor);
       }
     }
     return null;
   }
 
   private final class MyPanel extends EditorNotificationPanel {
-    private MyPanel() {
+    private MyPanel(@NotNull FileEditor fileEditor) {
+      super(fileEditor);
       setText(EditorConfigBundle.message("editor.notification.disabled"));
 
       createActionLabel(EditorConfigBundle.message("editor.notification.enable"), () -> {

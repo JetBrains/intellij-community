@@ -609,7 +609,7 @@ class RetypeEditorNotificationProvider : EditorNotifications.Provider<EditorNoti
     val panel: EditorNotificationPanel
 
     if (retypeSession.retypePaused) {
-      panel = EditorNotificationPanel()
+      panel = EditorNotificationPanel(fileEditor)
       panel.setText("Pause retyping. Click on editor to resume")
     }
     else {

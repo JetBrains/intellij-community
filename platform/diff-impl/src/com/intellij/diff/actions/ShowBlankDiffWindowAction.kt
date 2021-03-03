@@ -463,7 +463,7 @@ private fun createBlankNotificationProvider(viewer: DiffViewer?, content: Docume
   }
   if (editor.document.textLength != 0) return null
 
-  val panel = EditorNotificationPanel()
+  val panel = EditorNotificationPanel{ editor.colorsScheme }
   panel.createActionLabel(DiffBundle.message("notification.action.text.blank.diff.select.file")) {
     SwitchToFileEditorAction().perform(editor, viewer, helper)
   }

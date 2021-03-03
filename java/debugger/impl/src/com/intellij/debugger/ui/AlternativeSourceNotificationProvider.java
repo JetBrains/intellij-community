@@ -114,7 +114,7 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
         }
       }
 
-      return new AlternativeSourceNotificationPanel(elems, baseClass, project, file, locationDeclName);
+      return new AlternativeSourceNotificationPanel(elems, baseClass, project, file, fileEditor, locationDeclName);
     }
     return null;
   }
@@ -152,9 +152,12 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
   private static class AlternativeSourceNotificationPanel extends EditorNotificationPanel {
     AlternativeSourceNotificationPanel(ComboBoxClassElement[] alternatives,
                                               final PsiClass aClass,
-                                              final Project project,
-                                              final VirtualFile file,
+                                              @NotNull Project project,
+                                              @NotNull VirtualFile file,
+                                              @NotNull FileEditor fileEditor,
                                               String locationDeclName) {
+      super(fileEditor);
+
       setText(JavaDebuggerBundle.message("editor.notification.alternative.source", aClass.getQualifiedName()));
       final ComboBox<ComboBoxClassElement> switcher = new ComboBox<>(alternatives);
       switcher.addActionListener(new ActionListener() {

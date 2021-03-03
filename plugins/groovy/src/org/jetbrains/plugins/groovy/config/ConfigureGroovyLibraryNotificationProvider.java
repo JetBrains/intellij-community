@@ -49,7 +49,7 @@ public final class ConfigureGroovyLibraryNotificationProvider extends EditorNoti
       for (GroovyFrameworkConfigNotification configNotification : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
         if (configNotification.hasFrameworkStructure(module)) {
           if (!configNotification.hasFrameworkLibrary(module)) {
-            return (EditorNotificationPanel)configNotification.createConfigureNotificationPanel(module);
+            return (EditorNotificationPanel)configNotification.createConfigureNotificationPanel(module, fileEditor);
           }
           return null;
         }

@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.Key;
@@ -22,7 +23,8 @@ public final class UnknownSdkEditorPanel extends EditorNotificationPanel {
   private final @NotNull UnknownSdkFix myFix;
   private final @Nullable UnknownSdkFixAction myAction;
 
-  public UnknownSdkEditorPanel(@NotNull Project project, @NotNull UnknownSdkFix fix) {
+  public UnknownSdkEditorPanel(@NotNull Project project, @NotNull FileEditor fileEditor, @NotNull UnknownSdkFix fix) {
+    super(fileEditor);
     myFix = fix;
     myAction = myFix.getSuggestedFixAction();
 

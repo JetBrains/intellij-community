@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,5 +21,5 @@ public abstract class GroovyFrameworkConfigNotification {
   public abstract boolean hasFrameworkLibrary(@NotNull Module module);
 
   @Nullable
-  public abstract JPanel createConfigureNotificationPanel(@NotNull Module module);
+  public abstract JPanel createConfigureNotificationPanel(@NotNull Module module, @NotNull FileEditor fileEditor);
 }

@@ -229,7 +229,7 @@ class IgnoredToExcludeNotificationProvider : EditorNotifications.Provider<Editor
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     if (!canCreateNotification(project, file)) return null
 
-    return EditorNotificationPanel().apply {
+    return EditorNotificationPanel(fileEditor).apply {
       icon(AllIcons.General.Information)
       text = message("ignore.to.exclude.notification.message")
       createActionLabel(message("ignore.to.exclude.notification.action.view")) { showIgnoredAction(project) }

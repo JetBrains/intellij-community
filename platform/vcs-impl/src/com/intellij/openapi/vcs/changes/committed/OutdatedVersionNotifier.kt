@@ -26,7 +26,7 @@ class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationP
     val (incomingChangeList, incomingChange) = cache.getIncomingChangeList(file) ?: return null
     if (!isIncomingChangesAvailable(incomingChangeList.vcs)) return null
 
-    return createOutdatedVersionPanel(incomingChangeList, incomingChange)
+    return createOutdatedVersionPanel(incomingChangeList, incomingChange, fileEditor)
   }
 
   class IncomingChangesListener(private val project: Project) : CommittedChangesListener {
@@ -50,11 +50,11 @@ class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationP
   }
 }
 
-private fun createOutdatedVersionPanel(changeList: CommittedChangeList, change: Change): EditorNotificationPanel =
-  EditorNotificationPanel().apply {
+private fun createOutdatedVersionPanel(changeList: CommittedChangeList, change: Change, fileEditor: FileEditor): EditorNotificationPanel =
+  EditorNotificationPanel(fileEditor).apply {
     createActionLabel(message("outdated.version.show.diff.action"), "Compare.LastVersion")
     createActionLabel(message("outdated.version.update.project.action"), "Vcs.UpdateProject")
-    setText(getOutdatedVersionText(changeList, change))
+    text = getOutdatedVersionText(changeList, change)
   }
 
 private fun getOutdatedVersionText(changeList: CommittedChangeList, change: Change): @Nls String {

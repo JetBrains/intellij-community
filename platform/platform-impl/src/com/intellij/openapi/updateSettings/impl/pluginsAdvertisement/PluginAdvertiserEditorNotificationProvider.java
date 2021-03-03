@@ -67,7 +67,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     String extensionOrFileName = extensionsData.getExtensionOrFileName();
     Set<PluginsAdvertiser.Plugin> plugins = extensionsData.getPlugins();
 
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.setText(IdeBundle.message("plugins.advertiser.plugins.found", extensionOrFileName));
 
     Runnable onPluginsInstalled = () -> {

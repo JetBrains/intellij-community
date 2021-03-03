@@ -28,7 +28,7 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
     if (providers.isEmpty() || executesTrustedCodeOnly(systemIds)) {
       return null
     }
-    return EditorNotificationPanel().apply {
+    return EditorNotificationPanel(fileEditor).apply {
       text = ExternalSystemBundle.message("untrusted.project.notification.description")
       createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.trust.link"), {
         if (confirmLoadingUntrustedProject(project, systemIds)) {

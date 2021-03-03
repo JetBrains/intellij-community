@@ -47,8 +47,8 @@ public final class GroovyStubNotificationProvider extends EditorNotifications.Pr
     return JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.moduleScope(module));
   }
 
-  private static EditorNotificationPanel decorateStubFile(final VirtualFile file, final Project project) {
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
+  private static EditorNotificationPanel decorateStubFile(final VirtualFile file, final Project project, @NotNull FileEditor fileEditor) {
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.setText(GroovyBundle.message("generated.stub.message"));
     panel.createActionLabel(GroovyBundle.message("generated.stub.navigate.link.label"), () -> DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
       final PsiClass original = findClassByStub(project, file);
@@ -77,7 +77,7 @@ public final class GroovyStubNotificationProvider extends EditorNotifications.Pr
     if (file.getName().endsWith(".java") && file.getPath().contains(GROOVY_STUBS)) {
       final PsiClass psiClass = findClassByStub(project, file);
       if (psiClass != null) {
-        return decorateStubFile(file, project);
+        return decorateStubFile(file, project, fileEditor);
       }
     }
 

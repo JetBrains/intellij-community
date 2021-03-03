@@ -88,7 +88,7 @@ public final class UnknownSdkEditorNotification {
     for (UnknownSdkFix info : myNotifications.get()) {
       VirtualFile file = editor.getFile();
       if (file == null || !info.isRelevantFor(myProject, file)) continue;
-      EditorNotificationPanel notification = new UnknownSdkEditorPanel(myProject, info);
+      EditorNotificationPanel notification = new UnknownSdkEditorPanel(myProject, editor, info);
       notifications.add(notification);
       myFileEditorManager.addTopComponent(editor, notification);
     }

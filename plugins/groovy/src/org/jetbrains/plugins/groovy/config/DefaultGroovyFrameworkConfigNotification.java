@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
 import com.intellij.psi.JavaPsiFacade;
@@ -42,8 +43,8 @@ public class DefaultGroovyFrameworkConfigNotification extends GroovyFrameworkCon
   }
 
   @Override
-  public EditorNotificationPanel createConfigureNotificationPanel(@NotNull final Module module) {
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
+  public EditorNotificationPanel createConfigureNotificationPanel(@NotNull final Module module, @NotNull FileEditor fileEditor) {
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.setText(GroovyBundle.message("groovy.library.is.not.configured.for.module", module.getName()));
     panel.createActionLabel(GroovyBundle.message("configure.groovy.library"), () -> AddCustomLibraryDialog.createDialog(new GroovyLibraryDescription(), module, null).show());
     return panel;
