@@ -506,6 +506,7 @@ public final class EventLog {
         appService.myModel.setStatusMessage(null, 0);
       }
       StatusBar.Info.set("", null, LOG_REQUESTOR);
+      myProjectModel.projectDispose(appService == null ? null : appService.myModel);
     }
 
     void initDefaultContent() {

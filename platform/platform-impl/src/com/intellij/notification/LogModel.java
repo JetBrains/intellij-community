@@ -88,6 +88,24 @@ public final class LogModel  {
     setStatusToImportant();
   }
 
+  public void projectDispose(@Nullable LogModel applicationModel) {
+    if (applicationModel != null) {
+      synchronized (applicationModel.myNotifications) {
+        applicationModel.myNotifications.removeAll(myNotifications);
+        for (Notification notification : myNotifications) {
+          applicationModel.myStatuses.remove(notification);
+          applicationModel.removeHandlers.remove(notification);
+        }
+      }
+    }
+    synchronized (myNotifications) {
+      myNotifications.clear();
+      myStatuses.clear();
+      removeHandlers.clear();
+      myStatusMessage = null;
+    }
+  }
+
   public @NotNull ArrayList<Notification> getNotifications() {
     synchronized (myNotifications) {
       return new ArrayList<>(myNotifications);
