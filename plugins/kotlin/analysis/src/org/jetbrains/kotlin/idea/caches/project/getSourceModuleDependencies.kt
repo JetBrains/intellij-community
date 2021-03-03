@@ -5,19 +5,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
-import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.idea.project.isHMPPEnabled
-import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.js.isJs
-import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.platform.konan.NativePlatform
-import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
-import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.kotlin.platform.konan.isNative
 
-internal fun Module.getIdeaModelDependencies(
+internal fun Module.getSourceModuleDependencies(
     forProduction: Boolean,
     platform: TargetPlatform
 ): List<IdeaModuleInfo> {
@@ -28,7 +19,7 @@ internal fun Module.getIdeaModelDependencies(
     debugString?.appendLine("Building idea model dependencies for module ${this}, platform=${platform}, forProduction=$forProduction")
 
     val allIdeaModuleInfoDependencies = resolveDependenciesFromOrderEntries(debugString, forProduction)
-    val supportedModuleInfoDependencies = selectSupportedDependencies(debugString, platform, allIdeaModuleInfoDependencies)
+    val supportedModuleInfoDependencies = filterSourceModuleDependencies(debugString, platform, allIdeaModuleInfoDependencies)
 
     LOG.debug(debugString?.toString())
 
@@ -63,13 +54,13 @@ private fun Module.resolveDependenciesFromOrderEntries(
     return result.toSet()
 }
 
-private fun Module.selectSupportedDependencies(
+private fun Module.filterSourceModuleDependencies(
     debugString: StringBuilder?,
     platform: TargetPlatform,
     dependencies: Set<IdeaModuleInfo>
 ): Set<IdeaModuleInfo> {
 
-    val dependencyFilter = if (isHMPPEnabled) HmppModuleDependencyFilter(platform) else NonHmppModuleDependenciesFilter(platform)
+    val dependencyFilter = if (isHMPPEnabled) HmppSourceModuleDependencyFilter(platform) else NonHmppSourceModuleDependenciesFilter(platform)
     val supportedDependencies = dependencies.filter { dependency -> dependencyFilter.isSupportedDependency(dependency) }.toSet()
 
     debugString?.appendLine(
@@ -121,78 +112,5 @@ private fun orderEntryToModuleInfo(project: Project, orderEntry: OrderEntry, for
         else -> {
             throw IllegalStateException("Unexpected order entry $orderEntry")
         }
-    }
-}
-
-interface ModuleDependenciesFilter {
-    fun isSupportedDependency(dependency: IdeaModuleInfo): Boolean
-}
-
-internal class HmppModuleDependencyFilter(
-    private val dependeePlatform: TargetPlatform,
-) : ModuleDependenciesFilter {
-
-    data class KlibLibraryGist(val isStdlib: Boolean)
-
-    private fun klibLibraryGistOrNull(info: IdeaModuleInfo): KlibLibraryGist? {
-        return if (info is AbstractKlibLibraryInfo) KlibLibraryGist(isStdlib = info.libraryRoot.endsWith(KONAN_STDLIB_NAME))
-        else null
-    }
-
-    override fun isSupportedDependency(dependency: IdeaModuleInfo): Boolean {
-        /* Filter only acts on LibraryInfo */
-        return if (dependency is LibraryInfo) {
-            isSupportedDependency(dependency.platform, klibLibraryGistOrNull(dependency))
-        } else true
-    }
-
-    fun isSupportedDependency(
-        dependencyPlatform: TargetPlatform,
-        klibLibraryGist: KlibLibraryGist? = null,
-    ): Boolean {
-        // HACK: allow depending on stdlib even if platforms do not match
-        if (dependeePlatform.isNative() && klibLibraryGist != null && klibLibraryGist.isStdlib) return true
-
-        val platformsWhichAreNotContainedInOther = dependeePlatform.componentPlatforms - dependencyPlatform.componentPlatforms
-        if (platformsWhichAreNotContainedInOther.isEmpty()) return true
-
-        // unspecifiedNativePlatform is effectively a wildcard for NativePlatform
-        if (platformsWhichAreNotContainedInOther.all { it is NativePlatform } &&
-            NativePlatforms.unspecifiedNativePlatform.componentPlatforms.single() in dependencyPlatform.componentPlatforms
-        ) return true
-
-        // Allow dependencies from any shared native to any other shared native platform.
-        //  This will also include dependencies built by the commonizer with one or more missing targets
-        //  The Kotlin Gradle Plugin will decide if the dependency is still used in that case.
-        //  Since compiling metadata will be possible with this KLIB, the IDE also analyzes the code with it.
-        if (dependeePlatform.isSharedNative() && klibLibraryGist != null && dependencyPlatform.isSharedNative()) return true
-
-        return false
-    }
-
-    private fun TargetPlatform.isSharedNative(): Boolean {
-        if (this.componentPlatforms.all { it is NativePlatform }) {
-            if (this.contains(NativePlatformUnspecifiedTarget)) return true
-            return this.componentPlatforms.size > 1
-        }
-        return false
-    }
-}
-
-internal class NonHmppModuleDependenciesFilter(
-    private val dependeePlatform: TargetPlatform
-) : ModuleDependenciesFilter {
-    override fun isSupportedDependency(dependency: IdeaModuleInfo): Boolean {
-        /* Filter only acts on LibraryInfo */
-        return if (dependency is LibraryInfo) {
-            isSupportedDependency(dependency.platform)
-        } else true
-    }
-
-    private fun isSupportedDependency(dependencyPlatform: TargetPlatform): Boolean {
-        return dependeePlatform.isJvm() && dependencyPlatform.isJvm() ||
-                dependeePlatform.isJs() && dependencyPlatform.isJs() ||
-                dependeePlatform.isNative() && dependencyPlatform.isNative() ||
-                dependeePlatform.isCommon() && dependencyPlatform.isCommon()
     }
 }

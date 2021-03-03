@@ -126,7 +126,7 @@ sealed class ModuleSourceInfoWithExpectedBy(private val forProduction: Boolean) 
         }
 
     override fun dependencies(): List<IdeaModuleInfo> = module.cacheByClassInvalidatingOnRootModifications(this::class.java) {
-        module.getIdeaModelDependencies(forProduction, platform)
+        module.getSourceModuleDependencies(forProduction, platform)
     }
 }
 
