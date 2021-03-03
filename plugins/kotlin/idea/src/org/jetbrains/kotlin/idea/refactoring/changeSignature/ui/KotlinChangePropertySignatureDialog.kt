@@ -156,54 +156,52 @@ class KotlinChangePropertySignatureDialog(
 
     override fun getPreferredFocusedComponent() = nameField
 
-    override fun createCenterPanel(): JComponent {
-        fun updateReceiverUI(receiverComboBox: JCheckBox) {
-            val withReceiver = receiverComboBox.isSelected
-            receiverTypeLabel.isEnabled = withReceiver
-            receiverTypeField.isEnabled = withReceiver
-            receiverDefaultValueLabel.isEnabled = withReceiver
-            receiverDefaultValueField.isEnabled = withReceiver
+    override fun createCenterPanel(): JComponent = panel {
+        if (methodDescriptor.canChangeVisibility()) {
+            row(KotlinBundle.message("label.text.visibility")) {
+                visibilityCombo.selectedItem = methodDescriptor.visibility
+                visibilityCombo.addActionListener(signatureUpdater)
+                visibilityCombo()
+            }
         }
 
-        return panel {
-            if (methodDescriptor.canChangeVisibility()) {
-                row(KotlinBundle.message("label.text.visibility")) {
-                    visibilityCombo.selectedItem = methodDescriptor.visibility
-                    visibilityCombo.addActionListener(signatureUpdater)
-                    visibilityCombo()
-                }
+        row(KotlinBundle.message("label.text.name")) { nameField(growX) }
+        row(KotlinBundle.message("label.text.type")) { returnTypeField(growX) }
+
+        if (methodDescriptor.baseDeclaration is KtProperty) {
+            fun updateReceiverUI(receiverComboBox: JCheckBox) {
+                val withReceiver = receiverComboBox.isSelected
+                receiverTypeLabel.isEnabled = withReceiver
+                receiverTypeField.isEnabled = withReceiver
+                receiverDefaultValueLabel.isEnabled = withReceiver
+                receiverDefaultValueField.isEnabled = withReceiver
             }
 
-            row(KotlinBundle.message("label.text.name")) { nameField(growX) }
-            row(KotlinBundle.message("label.text.type")) { returnTypeField(growX) }
-
-            if (methodDescriptor.baseDeclaration is KtProperty) {
-                val receiverTypeCheckBox = JCheckBox(KotlinBundle.message("checkbox.text.extension.property")).apply {
-                    addActionListener { updateReceiverUI(this) }
-                    addActionListener(signatureUpdater)
-                    isSelected = methodDescriptor.receiver != null
-                }
-
-                row { receiverTypeCheckBox() }
-
-                this@KotlinChangePropertySignatureDialog.receiverTypeCheckBox = receiverTypeCheckBox
-
-                receiverTypeLabel = JLabel(KotlinBundle.message("label.text.receiver.type"))
-                row(receiverTypeLabel) { receiverTypeField(growX) }
-
-                if (methodDescriptor.receiver == null) {
-                    receiverDefaultValueLabel = JLabel(KotlinBundle.message("label.text.default.receiver.value"))
-                    row(receiverDefaultValueLabel) { receiverDefaultValueField(growX) }
-                }
-
-                updateReceiverUI(receiverTypeCheckBox)
+            val receiverTypeCheckBox = JCheckBox(KotlinBundle.message("checkbox.text.extension.property")).apply {
+                addActionListener { updateReceiverUI(this) }
+                addActionListener(signatureUpdater)
+                isSelected = methodDescriptor.receiver != null
             }
 
-            row { SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null)(growX) }
-            row { signatureComponent(grow) }
+            row { receiverTypeCheckBox() }
 
-            updateSignature()
+            this@KotlinChangePropertySignatureDialog.receiverTypeCheckBox = receiverTypeCheckBox
+
+            receiverTypeLabel = JLabel(KotlinBundle.message("label.text.receiver.type"))
+            row(receiverTypeLabel) { receiverTypeField(growX) }
+
+            receiverDefaultValueLabel = JLabel(KotlinBundle.message("label.text.default.receiver.value"))
+            if (methodDescriptor.receiver == null) {
+                row(receiverDefaultValueLabel) { receiverDefaultValueField(growX) }
+            }
+
+            updateReceiverUI(receiverTypeCheckBox)
         }
+
+        row { SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null)(growX) }
+        row { signatureComponent(grow) }
+
+        updateSignature()
     }
 
     private fun createKotlinEditorTextField(file: PsiFile, withListener: Boolean): EditorTextField = EditorTextField(
