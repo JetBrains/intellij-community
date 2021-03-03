@@ -2,6 +2,7 @@
 
 import android.content.Context
 import io.ktor.client.*
+import io.ktor.utils.io.core.*
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -14,7 +15,7 @@ class AndroidMain : JvmAndAndroidMain {
         }
     }
 
-    override fun <lineMarker descr="Overrides function in 'JvmAndAndroidMain'">useKtorApisCloseable</lineMarker>(): <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: Closeable" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">Closeable</error> {
+    override fun <lineMarker descr="Overrides function in 'JvmAndAndroidMain'">useKtorApisCloseable</lineMarker>(): Closeable {
         return Closeable { }
     }
 
