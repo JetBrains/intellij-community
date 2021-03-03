@@ -83,12 +83,12 @@ abstract class AbstractKotlinHighlightWolfPassTest: KotlinLightCodeInsightFixtur
 
         val hasWolfErrors = hasWolfErrors(myFixture)
         assertEquals(hasWolfErrors, wolf.isProblemFile(virtualFile) || wolf.hasSyntaxErrors(virtualFile))
-        if (hasWolfErrors) {
+        if (hasWolfErrors && !initialWolfErrors) {
             TestCase.assertTrue(problemsAppeared > 0)
         } else {
             assertEquals(0, problemsAppeared)
         }
-        assertEquals(if (initialWolfErrors) 1 else 0, problemsDisappeared)
+        assertEquals(0, problemsDisappeared)
     }
 
     companion object {

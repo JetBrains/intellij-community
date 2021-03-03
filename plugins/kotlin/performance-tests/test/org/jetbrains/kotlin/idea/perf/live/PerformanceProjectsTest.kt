@@ -7,15 +7,14 @@ package org.jetbrains.kotlin.idea.perf.live
 
 import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingPass
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightVisitor
 import org.jetbrains.kotlin.idea.perf.*
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.TEST_KEY
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
@@ -380,8 +379,8 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
     private fun replaceWithCustomHighlighter() {
         org.jetbrains.kotlin.idea.testFramework.replaceWithCustomHighlighter(
             testRootDisposable,
-            KotlinHighlightingPass.Registrar::class.java.name,
-            TestKotlinHighlightingPass.Registrar::class.java.name
+            KotlinHighlightVisitor::class.java.name,
+            TestKotlinHighlightVisitor::class.java.name
         )
     }
 
@@ -435,38 +434,21 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
     }
 
 
-    class TestKotlinHighlightingPass(file: KtFile, document: Document) : KotlinHighlightingPass(file, document) {
-        override fun doCollectInformation(progress: ProgressIndicator) {
-            annotationCallback {
-                val nowNs = System.nanoTime()
-                diagnosticTimer.addAndGet(nowNs)
-                resetAnnotationCallback()
-            }
+    class TestKotlinHighlightVisitor : KotlinHighlightVisitor() {
+        override fun analyze(psiFile: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
+            // TODO:
+            //annotationCallback {
+            //    val nowNs = System.nanoTime()
+            //    diagnosticTimer.addAndGet(nowNs)
+            //    resetAnnotationCallback()
+            //}
             try {
-                super.doCollectInformation(progress)
+                return super.analyze(psiFile, updateWholeFile, holder, action)
             } finally {
-                resetAnnotationCallback()
+                //resetAnnotationCallback()
                 markTimestamp()
             }
         }
 
-        class Factory : TextEditorHighlightingPassFactory {
-            override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-                if (file !is KtFile) return null
-                return TestKotlinHighlightingPass(file, editor.document)
-            }
-        }
-
-        class Registrar : TextEditorHighlightingPassFactoryRegistrar {
-            override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
-                registrar.registerTextEditorHighlightingPass(
-                    Factory(),
-                    null,
-                    intArrayOf(Pass.UPDATE_ALL),
-                    false,
-                    -1
-                )
-            }
-        }
     }
 }
