@@ -8,9 +8,11 @@ import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.*
 
 class RecentPlacesFeatures : ElementFeatureProvider {
@@ -45,8 +47,15 @@ class RecentPlacesFeatures : ElementFeatureProvider {
           }
         })
 
-      fun isInRecentPlaces(value: String) = recentPlaces.contains(value)
-      fun isInChildrenRecentPlaces(value: String) = childrenRecentPlaces.contains(value)
+      fun isInRecentPlaces(value: String) =
+        synchronized(recentPlaces) {
+          recentPlaces.contains(value)
+        }
+
+      fun isInChildrenRecentPlaces(value: String) =
+        synchronized(recentPlaces) {
+          childrenRecentPlaces.contains(value)
+        }
     }
 
     override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {
@@ -54,13 +63,24 @@ class RecentPlacesFeatures : ElementFeatureProvider {
       val provider = PsiManager.getInstance(project).findViewProvider(changePlace.file) ?: return
       val namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(provider.baseLanguage)
       val offset = changePlace.caretPosition?.startOffset ?: return
-      val element = provider.findElementAt(offset)
-      if (element != null && namesValidator.isIdentifier(element.text, project)) {
-        recentPlaces.addToTop(element.text)
-        val declaration = findDeclaration(element) ?: return
-        for (childName in declaration.getChildrenNames().take(MAX_CHILDREN_PER_PLACE))
-          childrenRecentPlaces.addToTop(childName)
-      }
+
+      @Suppress("IncorrectParentDisposable")
+      ReadAction
+        .nonBlocking(Runnable {
+            val element = provider.findElementAt(offset)
+            if (element != null && namesValidator.isIdentifier(element.text, project)) synchronized(recentPlaces) {
+              recentPlaces.addToTop(element.text)
+              val declaration = findDeclaration(element)
+              if (declaration != null) {
+                for (childName in declaration.getChildrenNames().take(MAX_CHILDREN_PER_PLACE)) {
+                  childrenRecentPlaces.addToTop(childName)
+                }
+              }
+            }
+        })
+        .coalesceBy(changePlace)
+        .expireWith(project)
+        .submit(AppExecutorUtil.getAppExecutorService())
     }
 
     override fun recentPlaceRemoved(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) = Unit
