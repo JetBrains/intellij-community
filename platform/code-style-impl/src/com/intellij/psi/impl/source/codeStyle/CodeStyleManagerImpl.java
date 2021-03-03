@@ -226,13 +226,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       removeEndingWhiteSpaceFromEachRange(file, ranges);
     }
 
-    formatRanges(file, ranges,
-                 ExternalFormatProcessor.useExternalFormatter(file)
-                 ? null  // do nothing, delegate the external formatting activity to post-processor
-                 : () -> {
-                   final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
-                   codeFormatter.processText(file, ranges, true);
-                 });
+    formatRanges(file, ranges);
 
     if (caretKeeper != null) {
       caretKeeper.restoreCaretPosition();
@@ -247,9 +241,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     }
   }
 
-  public static void formatRanges(@NotNull PsiFile file,
-                                  @NotNull FormatTextRanges ranges,
-                                  @Nullable Runnable formatAction) {
+  public static void formatRanges(@NotNull PsiFile file, @NotNull FormatTextRanges ranges) {
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(file.getProject());
 
     List<RangeFormatInfo> infos = new ArrayList<>();
@@ -272,16 +264,23 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       ));
     }
 
-    if (formatAction != null) {
-      formatAction.run();
+    if (!ExternalFormatProcessor.useExternalFormatter(file)) {
+      final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
+      codeFormatter.processText(file, ranges, true);
     }
 
     for (RangeFormatInfo info : infos) {
       final PsiElement startElement = info.startPointer == null ? null : info.startPointer.getElement();
       final PsiElement endElement = info.endPointer == null ? null : info.endPointer.getElement();
       if ((startElement != null || info.fromStart) && (endElement != null || info.toEnd)) {
-        postProcessText(file, new TextRange(info.fromStart ? 0 : startElement.getTextRange().getStartOffset(),
-                                            info.toEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
+        TextRange currRange = new TextRange(info.fromStart ? 0 : startElement.getTextRange().getStartOffset(),
+                      info.toEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset());
+        if (ExternalFormatProcessor.useExternalFormatter(file)) {
+          ExternalFormatProcessor.formatRangeInFile(file, currRange, false, false);
+        }
+        else {
+          postProcessText(file, currRange);
+        }
       }
       if (info.startPointer != null) smartPointerManager.removePointer(info.startPointer);
       if (info.endPointer != null) smartPointerManager.removePointer(info.endPointer);
