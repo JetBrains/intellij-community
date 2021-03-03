@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
   private static final Logger LOG = Logger.getInstance(ModifierFix.class);
 
   @PsiModifier.ModifierConstant private final String myModifier;
@@ -101,10 +102,18 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return myName;
   }
 
+  @Override
+  public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
+    return action instanceof ModifierFix &&
+           ((ModifierFix)action).myModifier.equals(myModifier) &&
+           ((ModifierFix)action).myShouldHave == myShouldHave;
+  }
+
   @NotNull
   @Override
   public String getFamilyName() {
-    return QuickFixBundle.message("fix.modifiers.family");
+    return myShouldHave ? QuickFixBundle.message("add.modifier.fix.family", myModifier)
+                        : QuickFixBundle.message("remove.modifier.fix.family", myModifier);
   }
 
   @Override

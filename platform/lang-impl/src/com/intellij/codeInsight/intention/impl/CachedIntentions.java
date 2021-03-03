@@ -345,7 +345,7 @@ public final class CachedIntentions {
   private int getWeight(@NotNull IntentionActionWithTextCaching action) {
     IntentionAction a = action.getAction();
     int group = getGroup(action).getPriority();
-    while (a instanceof IntentionActionDelegate) {
+    while (a instanceof IntentionActionDelegate && !(a instanceof PriorityAction)) {
       a = ((IntentionActionDelegate)a).getDelegate();
     }
     if (a instanceof PriorityAction) {

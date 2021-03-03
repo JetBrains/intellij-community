@@ -16,8 +16,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public final class DeleteMethodBodyFix implements IntentionAction {
+public final class DeleteMethodBodyFix implements IntentionActionWithFixAllOption {
   private final PsiMethod myMethod;
 
   public DeleteMethodBodyFix(@NotNull PsiMethod method) {
