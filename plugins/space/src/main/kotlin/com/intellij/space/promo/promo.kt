@@ -75,19 +75,17 @@ internal fun wrapWithWatchSpaceOverviewLabelOverlay(component: JComponent, alway
   return JComponentOverlay.createCentered(component, watchVideoButton).apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
-    if (!alwaysDisplayLabel) {
-      addMouseListener(object : MouseAdapter() {
-        override fun mouseEntered(e: MouseEvent?) {
-          watchVideoButton.isVisible = true
-        }
+    addMouseListener(object : MouseAdapter() {
+      override fun mouseEntered(e: MouseEvent?) {
+        if (!alwaysDisplayLabel) watchVideoButton.isVisible = true
+      }
 
-        override fun mouseExited(e: MouseEvent?) {
-          watchVideoButton.isVisible = false
-        }
+      override fun mouseExited(e: MouseEvent?) {
+        if (!alwaysDisplayLabel) watchVideoButton.isVisible = false
+      }
 
-        override fun mouseClicked(e: MouseEvent?) = watchPromoVideo()
-      })
-    }
+      override fun mouseClicked(e: MouseEvent?) = watchPromoVideo()
+    })
   }
 }
 
