@@ -82,10 +82,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.TextAttribute;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.List;
 import java.util.Vector;
 import java.util.*;
@@ -147,7 +144,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     InputEvent event = e.getInputEvent();
-    event.consume();
+    if (event != null) event.consume();
     Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
     Project project = e.getProject();
@@ -625,7 +622,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
             return Pair.create(entry.getValue(), field.getName());
           }
         }
-        catch (IllegalAccessException e) {
+        catch (IllegalAccessException | InaccessibleObjectException e) {
           //skip
         }
       }
