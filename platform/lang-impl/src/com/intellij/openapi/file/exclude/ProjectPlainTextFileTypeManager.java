@@ -19,7 +19,7 @@ public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   }
 
   @Override
-  protected void onFileSettingsChanged(@NotNull Collection<VirtualFile> files) {
+  protected void onFileSettingsChanged(@NotNull Collection<? extends VirtualFile> files) {
     FileContentUtilCore.reparseFiles(files);
   }
 }

@@ -3,11 +3,7 @@ package com.intellij.openapi.file.exclude;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -20,11 +16,11 @@ import java.util.*;
  */
 class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private static final String FILE_ELEMENT = "file";
-  private static final String PATH_ATTR = "url";
+  private static final String URL_ATTR = "url";
 
   private final Set<VirtualFile> myFiles = new HashSet<>();
 
-  protected boolean addFile(@NotNull VirtualFile file) {
+  boolean addFile(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
     if (myFiles.add(file)) {
       onFileSettingsChanged(Collections.singleton(file));
@@ -32,11 +28,11 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
     return true;
   }
 
-  protected boolean containsFile(@NotNull VirtualFile file) {
+  boolean containsFile(@NotNull VirtualFile file) {
     return myFiles.contains(file);
   }
 
-  protected boolean removeFile(@NotNull VirtualFile file) {
+  boolean removeFile(@NotNull VirtualFile file) {
     boolean isRemoved = myFiles.remove(file);
     if (isRemoved) {
       onFileSettingsChanged(Collections.singleton(file));
@@ -44,28 +40,23 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
     return isRemoved;
   }
 
-  protected void onFileSettingsChanged(@NotNull Collection<VirtualFile> files) {
+  protected void onFileSettingsChanged(@NotNull Collection<? extends VirtualFile> files) {
 
   }
 
   @NotNull
-  public Collection<VirtualFile> getFiles() {
+  Collection<VirtualFile> getFiles() {
     return myFiles;
-  }
-
-  @NotNull
-  private Collection<VirtualFile> getSortedFiles() {
-    List<VirtualFile> sortedFiles = new ArrayList<>(myFiles);
-    sortedFiles.sort(Comparator.comparing(file -> StringUtil.toLowerCase(file.getPath())));
-    return sortedFiles;
   }
 
   @Override
   public Element getState() {
     final Element root = new Element("root");
-    for (VirtualFile vf : getSortedFiles()) {
+    List<VirtualFile> sortedFiles = new ArrayList<>(myFiles);
+    sortedFiles.sort(Comparator.comparing(file -> file.getPath()));
+    for (VirtualFile vf : sortedFiles) {
       final Element vfElement = new Element(FILE_ELEMENT);
-      final Attribute filePathAttr = new Attribute(PATH_ATTR, VfsUtilCore.pathToUrl(vf.getPath()));
+      final Attribute filePathAttr = new Attribute(URL_ATTR, VfsUtilCore.pathToUrl(vf.getPath()));
       vfElement.setAttribute(filePathAttr);
       root.addContent(vfElement);
     }
@@ -78,7 +69,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
     myFiles.clear();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (Element fileElement : state.getChildren(FILE_ELEMENT)) {
-      final Attribute filePathAttr = fileElement.getAttribute(PATH_ATTR);
+      final Attribute filePathAttr = fileElement.getAttribute(URL_ATTR);
       if (filePathAttr != null) {
         final String filePath = filePathAttr.getValue();
         VirtualFile vf = vfManager.findFileByUrl(filePath);
