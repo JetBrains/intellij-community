@@ -78,6 +78,11 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
         runTest("../completion/tests/testData/handlers/basic/ExtensionFunctionTypeVariable2.kt");
     }
 
+    @TestMetadata("ExtensionPropertyFromSameFile.kt")
+    public void testExtensionPropertyFromSameFile() throws Exception {
+        runTest("idea/idea-completion/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
+    }
+
     @TestMetadata("ExtensionReceiverTypeArg.kt")
     public void testExtensionReceiverTypeArg() throws Exception {
         runTest("../completion/tests/testData/handlers/basic/ExtensionReceiverTypeArg.kt");
