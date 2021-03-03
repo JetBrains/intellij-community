@@ -7,10 +7,81 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
-import com.intellij.util.indexing.diagnostic.dto.JsonPercentages
-import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingHistory
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.dto.*
 import org.jetbrains.annotations.Nls
+
+fun createAggregateHtml(
+  projectName: String,
+  diagnostics: List<IndexDiagnosticDumper.ExistingDiagnostic>
+): String {
+  val appInfo = JsonIndexDiagnosticAppInfo.create()
+  val runtimeInfo = JsonRuntimeInfo.create()
+  return html {
+    body {
+      h1("Project name")
+      text(projectName)
+
+      printAppInfo(appInfo)
+      printRuntimeInfo(runtimeInfo)
+
+      h1("Indexing history")
+      table {
+        thead {
+          tr { th("Started"); th("Total duration"); th("Scanning duration"); th("Indexing duration"); th("Details") }
+        }
+        tbody {
+          for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
+            tr {
+              td(diagnostic.indexingTimes.updatingStart.presentableDateTime())
+              td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
+              td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
+              td(diagnostic.indexingTimes.indexingTime.presentableDuration())
+              td {
+                link(diagnostic.htmlFile.fileName.toString(), "details")
+              }
+            }
+          }
+        }
+      }
+    }
+  }.toString()
+}
+
+private fun HtmlBuilder.printRuntimeInfo(runtimeInfo: JsonRuntimeInfo) {
+  h1("Runtime")
+  table {
+    thead {
+      tr { th("Name"); th("Value") }
+    }
+    tbody {
+      tr { td("Max memory"); td(StringUtil.formatFileSize(runtimeInfo.maxMemory)) }
+      tr { td("Number of processors"); td(runtimeInfo.numberOfProcessors.toString()) }
+      tr { td("Max number of indexing threads"); td(runtimeInfo.maxNumberOfIndexingThreads.toString()) }
+      tr { td("Max size of file for analysis"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForIntelliSense.toLong())) }
+      tr {
+        td("Max size of file for content loading"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForContentLoading.toLong()))
+      }
+    }
+  }
+}
+
+private fun HtmlBuilder.printAppInfo(appInfo: JsonIndexDiagnosticAppInfo) {
+  h1("Application info")
+  table {
+    thead {
+      tr { th("Name"); th("Value") }
+    }
+    tbody {
+      tr { td("Build"); td(appInfo.build) }
+      tr { td("Build date"); td(appInfo.buildDate.presentableDateTime()) }
+      tr { td("Product code"); td(appInfo.productCode) }
+      tr { td("Generated"); td(appInfo.generated.presentableDateTime()) }
+      tr { td("OS"); td(appInfo.os) }
+      tr { td("Runtime"); td(appInfo.runtime) }
+    }
+  }
+}
 
 fun JsonIndexDiagnostic.generateHtml(): String {
   return html {
@@ -18,36 +89,8 @@ fun JsonIndexDiagnostic.generateHtml(): String {
       h1("Project name")
       text(projectIndexingHistory.projectName)
 
-      h1("Application info")
-      table {
-        thead {
-          tr { th("Name"); th("Value") }
-        }
-        tbody {
-          tr { td("Build"); td(appInfo.build) }
-          tr { td("Build date"); td(appInfo.buildDate.presentableDateTime()) }
-          tr { td("Product code"); td(appInfo.productCode) }
-          tr { td("Generated"); td(appInfo.generated.presentableDateTime()) }
-          tr { td("OS"); td(appInfo.os) }
-          tr { td("Runtime"); td(appInfo.runtime) }
-        }
-      }
-
-      h1("Runtime")
-      table {
-        thead {
-          tr { th("Name"); th("Value") }
-        }
-        tbody {
-          tr { td("Max memory"); td(StringUtil.formatFileSize(runtimeInfo.maxMemory)) }
-          tr { td("Number of processors"); td(runtimeInfo.numberOfProcessors.toString()) }
-          tr { td("Max number of indexing threads"); td(runtimeInfo.maxNumberOfIndexingThreads.toString()) }
-          tr { td("Max size of file for analysis"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForIntelliSense.toLong())) }
-          tr {
-            td("Max size of file for content loading"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForContentLoading.toLong()))
-          }
-        }
-      }
+      printAppInfo(appInfo)
+      printRuntimeInfo(runtimeInfo)
 
       h1("Indexing info")
       table {
@@ -281,7 +324,8 @@ private fun HtmlBuilder.textarea(
 
 private fun HtmlBuilder.textarea(@Nls text: String) = textarea { rawText(text) }
 
+private fun HtmlBuilder.link(target: String, text: String) = append(HtmlBuilder().appendLink(target, text))
 private fun HtmlBuilder.div(body: HtmlBuilder.() -> Unit) = append(createTag(body, div()))
 private fun HtmlBuilder.body(body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
-private fun HtmlBuilder.html(body: HtmlBuilder.() -> Unit) = createTag(body, HtmlChunk.html())
+private fun HtmlBuilder.html(body: HtmlBuilder.() -> Unit) = createTag(body, html())
 private fun html(body: HtmlBuilder.() -> Unit) = HtmlBuilder().html(body)
