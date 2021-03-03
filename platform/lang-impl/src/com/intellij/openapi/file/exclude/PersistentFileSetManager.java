@@ -28,10 +28,6 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
     return true;
   }
 
-  boolean containsFile(@NotNull VirtualFile file) {
-    return myFiles.contains(file);
-  }
-
   boolean removeFile(@NotNull VirtualFile file) {
     boolean isRemoved = myFiles.remove(file);
     if (isRemoved) {

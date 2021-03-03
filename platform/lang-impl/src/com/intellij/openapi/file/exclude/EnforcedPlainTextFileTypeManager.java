@@ -29,7 +29,7 @@ import java.util.Collection;
 @Service
 public final class EnforcedPlainTextFileTypeManager {
   // optimization: manual arrays to optimize iteration
-  private Collection/*<VirtualFile>*/[] explicitlyMarkedSets = new Collection[0];
+  private Collection<VirtualFile>[] explicitlyMarkedSets = new Collection[0];
   private Project[] explicitlyMarkedProjects = new Project[0];
 
   public EnforcedPlainTextFileTypeManager() {
@@ -61,7 +61,7 @@ public final class EnforcedPlainTextFileTypeManager {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) {
       return false;
     }
-    for (Collection explicitlyMarked : explicitlyMarkedSets) {
+    for (Collection<VirtualFile> explicitlyMarked : explicitlyMarkedSets) {
       if (explicitlyMarked.contains(file)) {
         return true;
       }

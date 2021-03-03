@@ -2107,7 +2107,10 @@ public final class ContainerUtil {
 
   @Contract(pure=true)
   public static <T> boolean exists(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
-    return or(iterable, condition);
+    for (final T t : iterable) {
+      if (condition.value(t)) return true;
+    }
+    return false;
   }
 
   @Contract(pure=true)
@@ -2117,10 +2120,7 @@ public final class ContainerUtil {
 
   @Contract(pure=true)
   public static <T> boolean or(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
-    for (final T t : iterable) {
-      if (condition.value(t)) return true;
-    }
-    return false;
+    return exists(iterable, condition);
   }
 
   @Contract(pure=true)
@@ -2934,7 +2934,7 @@ public final class ContainerUtil {
   }
 
   @Contract(value = "_, _, _ -> new", pure = true)
-  public static @NotNull <K,V> Map<K,V> createWeakMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
+  public static @NotNull <K,V> Map<K,V>  createWeakMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
     //noinspection deprecation
     return new WeakHashMap<>(initialCapacity, loadFactor, strategy);
   }

@@ -57,7 +57,7 @@ public final class ProgressRunner<R> {
   }
 
   @NotNull
-  private final Function<? super ProgressIndicator, ? extends R> myComputation;
+  private final Function<@NotNull ? super ProgressIndicator, ? extends R> myComputation;
 
   private final boolean isSync;
 
@@ -106,11 +106,11 @@ public final class ProgressRunner<R> {
    *
    * @param computation runnable to be executed under progress
    */
-  public ProgressRunner(@NotNull Function<? super ProgressIndicator, ? extends R> computation) {
+  public ProgressRunner(@NotNull Function<@NotNull ? super ProgressIndicator, ? extends R> computation) {
     this(computation, false, false, ThreadToUse.POOLED, CompletableFuture.completedFuture(new EmptyProgressIndicator()));
   }
 
-  private ProgressRunner(@NotNull Function<? super ProgressIndicator, ? extends R> computation,
+  private ProgressRunner(@NotNull Function<@NotNull ? super ProgressIndicator, ? extends R> computation,
                          boolean sync,
                          boolean modal,
                          @NotNull ThreadToUse use,
@@ -225,6 +225,7 @@ public final class ProgressRunner<R> {
       catch (Throwable e) {
         throw new RuntimeException("Can't get progress", e);
       }
+      //noinspection ConstantConditions
       if (progressIndicator == null) {
         throw new IllegalStateException("Expected not-null progress indicator but got null from "+myProgressIndicatorFuture);
       }
