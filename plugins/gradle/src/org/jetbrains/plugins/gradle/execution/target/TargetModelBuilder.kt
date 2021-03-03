@@ -15,10 +15,17 @@ internal class TargetModelBuilder<T>(private val connection: TargetProjectConnec
 
   override fun get(): T? = when (modelType) {
     BuildEnvironment::class.java -> {
-      val buildEnvironment = connection.getUserData(BUILD_ENVIRONMENT_KEY) ?: runAndGetResult()
-      connection.putUserData(BUILD_ENVIRONMENT_KEY, buildEnvironment as BuildEnvironment?)
-      @Suppress("UNCHECKED_CAST")
-      buildEnvironment as T?
+      val gradleConnectionException = connection.getUserData(BUILD_ENVIRONMENT_REQUEST_FAILURE_KEY)
+      if (gradleConnectionException != null) throw gradleConnectionException
+      try {
+        val buildEnvironment = connection.getUserData(BUILD_ENVIRONMENT_KEY) ?: runAndGetResult()
+        connection.putUserData(BUILD_ENVIRONMENT_KEY, buildEnvironment as BuildEnvironment?)
+        @Suppress("UNCHECKED_CAST")
+        buildEnvironment as T?
+      } catch (e: GradleConnectionException) {
+        connection.putUserData(BUILD_ENVIRONMENT_REQUEST_FAILURE_KEY, e)
+        throw e
+      }
     }
     else -> {
       runAndGetResult()
@@ -33,16 +40,23 @@ internal class TargetModelBuilder<T>(private val connection: TargetProjectConnec
         handler.onComplete(buildEnvironment as T)
       }
       else {
-        runWithHandler(object : ResultHandler<Any?> {
-          override fun onComplete(result: Any?) {
-            connection.putUserData(BUILD_ENVIRONMENT_KEY, result as BuildEnvironment?)
-            handler.onComplete(result as T?)
-          }
+        val gradleConnectionException = connection.getUserData(BUILD_ENVIRONMENT_REQUEST_FAILURE_KEY)
+        if (gradleConnectionException != null) {
+          handler.onFailure(gradleConnectionException)
+        }
+        else {
+          runWithHandler(object : ResultHandler<Any?> {
+            override fun onComplete(result: Any?) {
+              connection.putUserData(BUILD_ENVIRONMENT_KEY, result as BuildEnvironment?)
+              handler.onComplete(result as T?)
+            }
 
-          override fun onFailure(e: GradleConnectionException?) {
-            handler.onFailure(e)
-          }
-        })
+            override fun onFailure(e: GradleConnectionException?) {
+              connection.putUserData(BUILD_ENVIRONMENT_REQUEST_FAILURE_KEY, e)
+              handler.onFailure(e)
+            }
+          })
+        }
       }
     }
     else -> runWithHandler(handler as ResultHandler<Any?>)
@@ -58,5 +72,6 @@ internal class TargetModelBuilder<T>(private val connection: TargetProjectConnec
 
   companion object {
     private val BUILD_ENVIRONMENT_KEY = Key.create<BuildEnvironment>("build environment model")
+    private val BUILD_ENVIRONMENT_REQUEST_FAILURE_KEY = Key.create<GradleConnectionException>("build environment model request failure")
   }
 }
