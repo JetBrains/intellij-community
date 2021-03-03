@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
-import kotlinx.parcelize.Parcelize
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.parcelize.diagnostic.ErrorsParcelize
@@ -21,6 +20,6 @@ class AnnotateWithParcelizeQuickFix(clazz: KtClassOrObject) : AbstractParcelizeQ
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.annotate.containing.class.with.parcelize")
 
     override fun invoke(ktPsiFactory: KtPsiFactory, element: KtClassOrObject) {
-        element.addAnnotation(FqName(Parcelize::class.java.name))
+        element.addAnnotation(FqName("kotlinx.parcelize.Parcelize"))
     }
 }
