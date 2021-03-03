@@ -67,8 +67,6 @@ public final class DeviceIdManager {
   }
 
   private static void assertAllowed(@Nullable DeviceIdToken token, @NotNull String recorderId) throws InvalidDeviceIdTokenException {
-    LOG.info("Access device id for '" + recorderId + "' from " + (token == null ? "unknown" : token.getClass().getName()));
-
     if (isBaseRecorder(recorderId)) {
       if (token == null) {
         throw new InvalidDeviceIdTokenException("Cannot access base device id from unknown class");
