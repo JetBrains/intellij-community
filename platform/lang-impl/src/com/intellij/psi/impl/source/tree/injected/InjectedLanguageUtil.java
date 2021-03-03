@@ -248,33 +248,6 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return unescaped - shreds.get(shreds.size() - 1).getSuffix().length();
   }
 
-  public static String getUnescapedText(@NotNull PsiFile file, @Nullable final PsiElement startElement, @Nullable final PsiElement endElement) {
-    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
-    if (manager.getInjectionHost(file) == null) {
-      return file.getText().substring(startElement == null ? 0 : startElement.getTextRange().getStartOffset(),
-                                      endElement == null ? file.getTextLength() : endElement.getTextRange().getStartOffset());
-    }
-    final StringBuilder sb = new StringBuilder();
-    file.accept(new PsiRecursiveElementWalkingVisitor() {
-
-      Boolean myState = startElement == null ? Boolean.TRUE : null;
-
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (element == startElement) myState = Boolean.TRUE;
-        if (element == endElement) myState = Boolean.FALSE;
-        if (Boolean.FALSE == myState) return;
-        if (Boolean.TRUE == myState && element.getFirstChild() == null) {
-          sb.append(getUnescapedLeafText(element, false));
-        }
-        else {
-          super.visitElement(element);
-        }
-      }
-    });
-    return sb.toString();
-  }
-
   @Nullable
   public static DocumentWindow getDocumentWindow(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
