@@ -11,7 +11,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
@@ -125,7 +124,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   public LanguageFileType detectFileType(@NotNull PsiElement context) {
     final PsiFile file = context instanceof PsiFile ? (PsiFile)context : context.getContainingFile();
     final Language contextLanguage = context instanceof PsiFile ? null : context.getLanguage();
-    if (file.getLanguage() == HTMLLanguage.INSTANCE || (file.getFileType() == StdFileTypes.JSP && contextLanguage == HTMLLanguage.INSTANCE)) {
+    if (file.getLanguage() == HTMLLanguage.INSTANCE ||
+        (file.getFileType().getName().equals("JSP") && contextLanguage == HTMLLanguage.INSTANCE)) {
       return HtmlFileType.INSTANCE;
     }
     return XmlFileType.INSTANCE;
