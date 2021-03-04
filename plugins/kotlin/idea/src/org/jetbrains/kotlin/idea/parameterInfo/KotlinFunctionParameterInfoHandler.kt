@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.parameterInfo.*
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
@@ -193,7 +192,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
             val bindingContext = argumentList.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
             val call = findCall(argumentList, bindingContext) ?: return@runReadAction
 
-            context.objectsToView.forEach { resolveCallInfo(it as CallInfo, call, bindingContext, resolutionFacade) }
+            context.objectsToView.forEach { resolveCallInfo(it as CallInfo, call, bindingContext, resolutionFacade, parameterIndex) }
         }
     }
 
@@ -399,6 +398,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
         var call: Call? = null,
         var resolvedCall: ResolvedCall<FunctionDescriptor>? = null,
         var arguments: List<ValueArgument> = emptyList(),
+        var parameterIndex: Int? = null,
         var dummyArgument: ValueArgument? = null,
         var dummyResolvedCall: ResolvedCall<FunctionDescriptor>? = null,
         var isResolvedToDescriptor: Boolean = false,
@@ -406,14 +406,15 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
         var isDeprecatedAtCallSite: Boolean = false
     ) {
         override fun toString(): String =
-            "CallInfo(overload=$overload, call=$call, resolvedCall=${resolvedCall?.resultingDescriptor}($resolvedCall), arguments=$arguments, dummyArgument=$dummyArgument, dummyResolvedCall=$dummyResolvedCall, isResolvedToDescriptor=$isResolvedToDescriptor, isGreyArgumentIndex=$isGreyArgumentIndex, isDeprecatedAtCallSite=$isDeprecatedAtCallSite)"
+            "CallInfo(overload=$overload, call=$call, resolvedCall=${resolvedCall?.resultingDescriptor}($resolvedCall), arguments=$arguments, parameterIndex=$parameterIndex, dummyArgument=$dummyArgument, dummyResolvedCall=$dummyResolvedCall, isResolvedToDescriptor=$isResolvedToDescriptor, isGreyArgumentIndex=$isGreyArgumentIndex, isDeprecatedAtCallSite=$isDeprecatedAtCallSite)"
     }
 
     private fun resolveCallInfo(
         info: CallInfo,
         call: Call,
         bindingContext: BindingContext,
-        resolutionFacade: ResolutionFacade
+        resolutionFacade: ResolutionFacade,
+        parameterIndex: Int
     ) {
         val overload = info.overload ?: return
         val isArraySetMethod = call.callType == Call.CallType.ARRAY_SET_METHOD
@@ -457,6 +458,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
             this.call = call
             this.resolvedCall = resolvedCall
             this.arguments = arguments
+            this.parameterIndex = parameterIndex
             this.dummyArgument = dummyArgument
             this.dummyResolvedCall = dummyResolvedCall
             this.isResolvedToDescriptor = resolvedToDescriptor
@@ -519,7 +521,8 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
 
         checkWithAttachment(
             arguments.size >= currentArgumentIndex,
-            lazyMessage = { "currentArgumentIndex: $currentArgumentIndex has to be not more than number of arguments ${arguments.size}" },
+            lazyMessage = { "currentArgumentIndex: $currentArgumentIndex has to be not more than number of arguments ${arguments.size} " +
+                    " (parameterIndex: ${info.parameterIndex}) :call.valueArguments: ${call.valueArguments} call.callType: ${call.callType}" },
             attachments = {
                 info.call?.let { c ->
                     it.withAttachment("file.kt", c.callElement.containingFile.text)
