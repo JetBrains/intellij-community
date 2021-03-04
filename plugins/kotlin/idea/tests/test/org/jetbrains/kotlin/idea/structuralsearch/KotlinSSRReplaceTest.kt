@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 abstract class KotlinSSRReplaceTest : BasePlatformTestCase() {
     private val searchConfiguration = SearchConfiguration().apply {
         name = "SSR"
-        matchOptions.fileType = KotlinFileType.INSTANCE
+        matchOptions.setFileType(KotlinFileType.INSTANCE)
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinLightProjectDescriptor()
@@ -41,7 +41,7 @@ abstract class KotlinSSRReplaceTest : BasePlatformTestCase() {
         val matchOptions = searchConfiguration.matchOptions.apply {
             fillSearchCriteria(searchPattern)
             patternContext = context
-            fileType = KotlinFileType.INSTANCE
+            setFileType(KotlinFileType.INSTANCE)
             scope = GlobalSearchScopes.openFilesScope(project)
         }
         val matcher = Matcher(project, matchOptions)

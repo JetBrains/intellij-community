@@ -15,7 +15,7 @@ class KotlinOptimizedSearchScanTest : LightQuickFixTestCase() {
     private fun getSearchPlan(query: String): String {
         val matchOptions = MatchOptions()
         matchOptions.fillSearchCriteria(query)
-        matchOptions.fileType = KotlinFileType.INSTANCE
+        matchOptions.setFileType(KotlinFileType.INSTANCE)
         PatternCompiler.compilePattern(project, matchOptions, true, true)
         return PatternCompiler.getLastSearchPlan()
     }

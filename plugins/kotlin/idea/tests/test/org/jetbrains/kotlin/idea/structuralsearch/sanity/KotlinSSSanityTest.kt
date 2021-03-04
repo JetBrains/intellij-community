@@ -19,7 +19,7 @@ import kotlin.random.Random
 class KotlinSSSanityTest : BasePlatformTestCase() {
     private val myConfiguration = SearchConfiguration().apply {
         name = "SSR"
-        matchOptions.fileType = KotlinFileType.INSTANCE
+        matchOptions.setFileType(KotlinFileType.INSTANCE)
     }
     private var random = Random(System.currentTimeMillis())
 
@@ -52,7 +52,7 @@ class KotlinSSSanityTest : BasePlatformTestCase() {
 
         val matchOptions = myConfiguration.matchOptions.apply {
             fillSearchCriteria(subtree.text)
-            fileType = KotlinFileType.INSTANCE
+            setFileType(KotlinFileType.INSTANCE)
             scope = GlobalSearchScopes.openFilesScope(project)
         }
         val matcher = Matcher(project, matchOptions)
