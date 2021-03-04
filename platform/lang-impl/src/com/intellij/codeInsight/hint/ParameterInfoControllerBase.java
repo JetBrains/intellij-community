@@ -39,6 +39,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
@@ -69,18 +70,13 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     Key.create("ParameterInfoControllerBase.ALL_CONTROLLERS_KEY");
 
   public static ParameterInfoControllerBase findControllerAtOffset(Editor editor, int offset) {
-    List<ParameterInfoControllerBase> allControllers = getAllControllers(editor);
-    for (int i = 0; i < allControllers.size(); ++i) {
-      ParameterInfoControllerBase controller = allControllers.get(i);
-
+    for (ParameterInfoControllerBase controller : new ArrayList<>(getAllControllers(editor))) {
       int lbraceOffset = controller.myLbraceMarker.getStartOffset();
       if (lbraceOffset == offset) {
         if (!controller.canBeDisposed()) {
           return controller;
         }
         Disposer.dispose(controller);
-        //noinspection AssignmentToForLoopParameter
-        --i;
       }
     }
 
@@ -90,8 +86,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   static List<ParameterInfoControllerBase> getAllControllers(@NotNull Editor editor) {
     List<ParameterInfoControllerBase> array = editor.getUserData(ALL_CONTROLLERS_KEY);
     if (array == null) {
-      array = new ArrayList<>();
-      editor.putUserData(ALL_CONTROLLERS_KEY, array);
+      array = ((UserDataHolderEx)editor).putUserDataIfAbsent(ALL_CONTROLLERS_KEY, new CopyOnWriteArrayList<>());
     }
     return array;
   }
