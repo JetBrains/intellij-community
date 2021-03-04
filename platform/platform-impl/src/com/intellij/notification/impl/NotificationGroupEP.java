@@ -91,7 +91,7 @@ public final class NotificationGroupEP implements PluginAware {
       List<String> result = new ArrayList<>(values.length);
       for (String item : values) {
         if (!item.isEmpty()) {
-          result.add(value.trim());
+          result.add(item.trim());
         }
       }
       return result;
