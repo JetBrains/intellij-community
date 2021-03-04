@@ -50,11 +50,11 @@ fun buildLoginPanelWithPromo(state: SpaceLoginState.Disconnected,
 
 private fun promoPanel(loginAction: () -> Unit) = panel {
   fullRow { createSpaceByJetbrainsLabel()() }
-  fullRow { fullPromoText(if (SystemInfo.isMac) 60 else 52)() }
+  fullRow { promoText(if (SystemInfo.isMac) 60 else 52)() }
   fullRow {
-    JButton(SpaceBundle.message("space.promo.discover.space.button")).apply {
+    JButton(SpaceBundle.message("space.promo.explore.space.button")).apply {
       addActionListener {
-        BrowserUtil.browse(DISCOVER_SPACE_PROMO_URL)
+        BrowserUtil.browse(EXPLORE_SPACE_PROMO_URL)
       }
     }.apply {
       ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)

@@ -29,10 +29,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.promo.DISCOVER_SPACE_PROMO_URL
+import com.intellij.space.promo.*
 import com.intellij.space.promo.bigPromoBanner
-import com.intellij.space.promo.createSpaceByJetbrainsLabel
-import com.intellij.space.promo.fullPromoText
 import com.intellij.space.settings.CloneType
 import com.intellij.space.settings.SpaceLoginState
 import com.intellij.space.settings.SpaceSettings
@@ -46,7 +44,6 @@ import com.intellij.space.vcs.SpaceKeysState
 import com.intellij.space.vcs.SpaceSetGitHttpPasswordDialog
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
@@ -115,14 +112,7 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
         loginAction(it)
       }
 
-      fullRow { createSpaceByJetbrainsLabel()() }
-      fullRow { fullPromoText(80)() }
-
-      val discoverLink = BrowserLink(SpaceBundle.message("space.promo.discover.space.button"), DISCOVER_SPACE_PROMO_URL).apply {
-        font = JBUI.Fonts.smallFont()
-      }
-
-      fullRow { discoverLink() }
+      promoPanel()
 
       bigPromoBanner()?.let {
         fullRow { it() }

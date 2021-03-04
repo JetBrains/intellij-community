@@ -2,11 +2,12 @@
 package com.intellij.space.promo
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.components.BrowserLink
+import com.intellij.ui.layout.*
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.FontUtil
@@ -27,7 +28,7 @@ import javax.swing.JLabel
 import javax.swing.JLayeredPane
 
 internal const val SPACE_PROMO_VIDEO_URL: String = "https://www.youtube.com/watch?v=7-UNfbEjcNM"
-internal const val DISCOVER_SPACE_PROMO_URL: String = "https://jetbrains.space"
+internal const val EXPLORE_SPACE_PROMO_URL: String = "https://jetbrains.space"
 internal const val SIGN_UP_SPACE_URL: String = "https://www.jetbrains.com/space/#sign-up"
 
 internal const val SPACE_TOOLBAR_PROMO_BANNER_PATH = "/images/spacePromo.png"
@@ -38,6 +39,12 @@ internal const val SPACE_BIG_PROMO_BANNER_PATH_RETINA = "/images/spaceBigPromoBa
 
 internal const val JETBRAINS_SPACE_LOGO = "/images/jetbrainsSpace.svg"
 internal const val JETBRAINS_SPACE_LOGO_DARK = "/images/jetbrainsSpaceDark.svg"
+
+internal fun LayoutBuilder.promoPanel() {
+  fullRow { createSpaceByJetbrainsLabel()() }
+  fullRow { promoText(76)() }
+  fullRow { exploreSpaceLink()() }.largeGapAfter()
+}
 
 internal fun toolbarPromoBanner(): JComponent? {
   val imagePath = if (StartupUiUtil.isJreHiDPI()) SPACE_TOOLBAR_PROMO_BANNER_PATH_RETINA else SPACE_TOOLBAR_PROMO_BANNER_PATH
@@ -55,7 +62,7 @@ internal fun bigPromoBanner(width: Int, height: Int): JComponent? {
   return wrapWithWatchSpaceOverviewLabelOverlay(JLabel(JBImageIcon(image)), alwaysDisplayLabel = true)
 }
 
-internal fun spaceLinkLabel(): BrowserLink = BrowserLink(SpaceBundle.message("product.name"), DISCOVER_SPACE_PROMO_URL).apply {
+internal fun exploreSpaceLink(): BrowserLink = BrowserLink(SpaceBundle.message("space.promo.explore.space.button"), EXPLORE_SPACE_PROMO_URL).apply {
   isFocusPainted = false
 }
 
@@ -99,15 +106,11 @@ internal fun createSpaceByJetbrainsLabel(): JComponent = JLabel().apply {
   }
 }
 
-internal fun fullPromoText(maxLineLength: Int = 0): JLabel = promoText(SpaceBundle.message("space.promo.text.full"), maxLineLength)
-
-internal fun sharePromoText(maxLineLength: Int = 0): JLabel = promoText(SpaceBundle.message("space.promo.text.share"), maxLineLength)
-
-private fun promoText(@NlsContexts.DetailedDescription text: String, maxLineLength: Int): JLabel =
-  ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength).apply {
-    foreground = JBUI.CurrentTheme.Label.foreground()
-    font = JBUI.Fonts.label()
-  }
+internal fun promoText(maxLineLength: Int = 0): JLabel = ComponentPanelBuilder.createCommentComponent(
+  SpaceBundle.message("space.promo.text.full"), true, maxLineLength).apply {
+  foreground = JBUI.CurrentTheme.Label.foreground()
+  font = JBUI.Fonts.label()
+}
 
 private fun watchPromoVideo() {
   BrowserUtil.browse(SPACE_PROMO_VIDEO_URL)
