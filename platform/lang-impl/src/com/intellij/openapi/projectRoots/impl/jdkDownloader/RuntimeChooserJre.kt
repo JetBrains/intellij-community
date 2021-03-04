@@ -32,8 +32,14 @@ object RuntimeChooserJreValidator {
   private val minJdkFeatureVersion
     get() = 11
 
-  fun isSupportedSdkItem(item: JdkItem): Boolean =
-    item.jdkMajorVersion >= minJdkFeatureVersion && item.os == JdkPredicate.currentOS && item.arch == JdkPredicate.currentArch
+  fun isSupportedSdkItem(item: JdkItem): Boolean {
+    //we do only support mac bundle layout
+    if (SystemInfo.isMac && !item.packageToBinJavaPrefix.endsWith("Contents/Home")) {
+      return false
+    }
+
+    return item.jdkMajorVersion >= minJdkFeatureVersion && item.os == JdkPredicate.currentOS && item.arch == JdkPredicate.currentArch
+  }
 
   fun isSupportedSdkItem(sdk: Sdk) = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
   fun isSupportedSdkItem(sdk: SdkPopupBuilder.SuggestedSdk) = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
@@ -41,6 +47,12 @@ object RuntimeChooserJreValidator {
   private inline fun isSupportedSdkItem(versionString: () -> String?, homePath: () -> String?): Boolean = runCatching {
     val version = versionString() ?: return false
     val home = homePath() ?: return false
+
+    //we do only support mac bundle layout
+    if (SystemInfo.isMac && !home.endsWith("/Contents/Home")) {
+      return false
+    }
+
     val javaVersion = JavaVersion.tryParse(version) ?: return false
     javaVersion.feature >= minJdkFeatureVersion && !WslDistributionManager.isWslPath(home)
   }.getOrDefault(false)
