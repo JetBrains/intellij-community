@@ -19,7 +19,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
 
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("notifications", 61)
+    val GROUP = EventLogGroup("notifications", 62)
 
     @JvmField
     val DISPLAY_TYPE: EnumEventField<NotificationDisplayType> = Enum("display_type", NotificationDisplayType::class.java)
