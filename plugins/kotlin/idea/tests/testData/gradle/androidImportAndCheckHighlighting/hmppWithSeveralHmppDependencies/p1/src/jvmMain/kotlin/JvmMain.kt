@@ -31,7 +31,7 @@ class JvmMain: JvmAndAndroidMain {
             .also { atomicInt -> atomicInt.update { value -> value + 1 } }
     }
 
-    override fun <lineMarker descr="Overrides function in 'JvmAndAndroidMain'">androidSdkIsNotVisible</lineMarker>(context: android.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: content" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">content</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">Context</error>) {
+    override fun <lineMarker descr="Overrides function in 'JvmAndAndroidMain'">androidSdkIsNotVisible</lineMarker>(context: android.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: content" textAttributesKey="null">content</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">Context</error>) {
 
     }
 
