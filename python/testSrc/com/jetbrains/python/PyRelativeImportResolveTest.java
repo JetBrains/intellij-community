@@ -18,7 +18,6 @@ package com.jetbrains.python;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
@@ -46,11 +45,6 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
   @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/resolve/multiFile/relativeAndSameDirectoryImports/";
-  }
-
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
   }
 
   @Override

@@ -17,7 +17,6 @@ package com.jetbrains.python;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -29,10 +28,6 @@ import com.jetbrains.python.pyi.PyiUtil;
  * @author yole
  */
 public class Py3ResolveTest extends PyResolveTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
 
   @Override
   protected PsiElement doResolve() {

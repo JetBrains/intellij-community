@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
@@ -11,11 +12,17 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class PythonInspectionsTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testReturnValueFromInit() {
     LocalInspectionTool inspection = new PyReturnFromInitInspection();

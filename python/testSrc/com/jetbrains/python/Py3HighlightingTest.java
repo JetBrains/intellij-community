@@ -15,21 +15,13 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class Py3HighlightingTest extends PyTestCase {
 
   @NotNull
   private static final String TEST_PATH = "/highlighting/";
-
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
 
   // PY-20770
   public void testNonEmptyReturnInsideAsyncDef() {

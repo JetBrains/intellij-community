@@ -261,7 +261,7 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   }
 
   public void testSelectionBreaksBinaryOperator() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   private void doTestCannotPerform() {
@@ -315,7 +315,7 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
 
   // PY-31991
   public void testNoExtraSpacesAroundFStringFragmentExpression() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-32827 EA-90746

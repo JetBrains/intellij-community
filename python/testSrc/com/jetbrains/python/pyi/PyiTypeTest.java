@@ -24,13 +24,11 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
@@ -53,12 +51,6 @@ public class PyiTypeTest extends PyTestCase {
         }
       }
     });
-  }
-
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
   }
 
   @Override

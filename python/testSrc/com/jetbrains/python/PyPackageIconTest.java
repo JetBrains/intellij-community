@@ -5,24 +5,17 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.PsiIconUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
 public class PyPackageIconTest extends PyTestCase {
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
 
   @Override
   public void setUp() throws Exception {

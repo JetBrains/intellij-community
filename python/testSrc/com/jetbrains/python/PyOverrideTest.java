@@ -6,6 +6,7 @@ package com.jetbrains.python;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
@@ -15,6 +16,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,6 +27,12 @@ import java.util.stream.Collectors;
  * @author yole
  */
 public class PyOverrideTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
+
   private void doTest() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
     PyFunction toOverride = getTopLevelClass(0).getMethods() [0];

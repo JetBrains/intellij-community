@@ -16,7 +16,6 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author yole
@@ -55,7 +54,7 @@ public class PyMissingConstructorTest extends PyTestCase {
 
   // PY-20038
   public void testImplicitDunderClass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   // PY-7176
@@ -69,7 +68,7 @@ public class PyMissingConstructorTest extends PyTestCase {
   }
 
   public void testPy3k() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   private void doTest() {

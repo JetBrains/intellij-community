@@ -6,11 +6,13 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -20,6 +22,11 @@ import java.awt.*;
  * @author yole
  */
 public class PythonHighlightingTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testBuiltins() {
     EditorColorsScheme scheme = createTemporaryColorScheme();

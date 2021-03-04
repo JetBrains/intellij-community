@@ -19,7 +19,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -38,11 +37,6 @@ import java.util.List;
  */
 public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   private static final String TEST_DIRECTORY = "inspections/PyUnresolvedReferencesInspection3K/";
-
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
 
   @NotNull
   @Override

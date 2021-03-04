@@ -14,13 +14,8 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
   }
 
   public void testCaretOnImportedInvocation() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        doIntentionTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"), getTestName(true) + ".py", "foo_decl.py");
-        myFixture.checkResultByFile("foo_decl.py", "foo_decl_after.py", false);
-      }
-    );
+    doIntentionTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"), getTestName(true) + ".py", "foo_decl.py");
+    myFixture.checkResultByFile("foo_decl.py", "foo_decl_after.py", false);
   }
 
   public void testTypeComment() {
@@ -43,7 +38,7 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
 
   // PY-30825
   public void testMethodAfterConstructorCall() {
-    doIntentionTest(PyPsiBundle.message("INTN.add.type.hints.for.function", "method"));
+    doTest(PyPsiBundle.message("INTN.add.type.hints.for.function", "method"), LanguageLevel.PYTHON27);
   }
 
   // PY-31369
@@ -73,7 +68,7 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
 
   // PY-31369
   public void testFunctionAllTypeAnnotationsNoIntention() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doNegativeTest());
+    doNegativeTest();
   }
 
   // PY-31369
@@ -111,6 +106,6 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
   }
 
   private void doTest() {
-    doTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"), LanguageLevel.PYTHON34);
+    doIntentionTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"));
   }
 }

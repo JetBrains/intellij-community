@@ -233,7 +233,7 @@ public class PyRegexpTest extends PyTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return getName().endsWith("Py3") ? ourPyLatestDescriptor : super.getProjectDescriptor();
+    return getName().endsWith("Py3") ? super.getProjectDescriptor() : ourPy2Descriptor;
   }
 
   @NotNull

@@ -40,25 +40,25 @@ public class PySpellCheckerTest extends PyTestCase {
   }
 
   public void testIgnoreEscapeSequence() {  // PY-6794
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   // PY-20824
   public void testFStringPrefix() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   public void testFStringExpression() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   public void testRawFString() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-34873
   public void testFStringsWithApostrophe() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-20987

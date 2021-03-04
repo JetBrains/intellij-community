@@ -3,7 +3,6 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -14,11 +13,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
-
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
 
   // PY-6702
   public void testYieldFromType() {

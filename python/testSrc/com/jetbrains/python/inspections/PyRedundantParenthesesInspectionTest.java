@@ -67,7 +67,7 @@ public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
   }
 
   public void testYieldFrom() {       //PY-7410
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   public void testYieldExpression() {       //PY-10420
@@ -108,32 +108,34 @@ public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
 
   // PY-20324
   public void testParenthesizedTupleWithUnpackingInReturnBefore38() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
   }
 
   // PY-35961
   public void testParenthesizedTupleWithUnpackingInReturn() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+    doTest();
   }
 
   // PY-20324
   public void testParenthesizedTupleWithUnpackingInYieldBefore38() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
   }
 
   // PY-35961
   public void testParenthesizedTupleWithUnpackingInYield() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+    doTest();
   }
 
   // PY-35961
   public void testParenthesizedTupleWithUnpackingInYieldFrom() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+    doTest();
   }
 
   // PY-34262
   public void testReturnOneElementTuple() {
-    doTestByText("def foo():\n" +
-                 "  return (1, )");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doTestByText("def foo():\n" +
+                   "  return (1, )");
+    });
   }
 }

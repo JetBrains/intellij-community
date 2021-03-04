@@ -3,6 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -11,8 +12,14 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.Nullable;
 
 public class PyControlFlowBuilderTest extends LightMarkedTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   @Override
   public String getTestDataPath() {

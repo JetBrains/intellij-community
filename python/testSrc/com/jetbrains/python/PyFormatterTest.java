@@ -78,11 +78,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testStarExpression() {  // PY-1523
-    doTestPy3();
-  }
-
-  private void doTestPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   public void testWrapTuple() {  // PY-1792
@@ -308,7 +304,7 @@ public class PyFormatterTest extends PyTestCase {
       "   desired_impulse_response = {'dirac, 'gaussian', logistic_derivative'}\n" +
       "return desired,                o";
 
-    final PsiFile file = PyElementGenerator.getInstance(myFixture.getProject()).createDummyFile(LanguageLevel.PYTHON34, initial);
+    final PsiFile file = PyElementGenerator.getInstance(myFixture.getProject()).createDummyFile(LanguageLevel.getLatest(), initial);
     final PsiElement reformatted = CodeStyleManager.getInstance(myFixture.getProject()).reformat(file);
 
     String expected =
@@ -391,17 +387,17 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testLongWith() {  // PY-8743
-    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
+    doTest();
   }
 
   // PY-8961, PY-16050
   public void testSpaceInAnnotations() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-15791
   public void testForceSpacesAroundEqualSignInAnnotatedParameter() {
-    doTestPy3();
+    doTest();
   }
 
   public void testWrapInBinaryExpression() {  // PY-9032
@@ -903,7 +899,7 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-20970
   public void testSpacesAfterNonlocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   // PY-21515
@@ -912,7 +908,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpacesAfterFromInYieldFrom() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   // PY-24220
@@ -1019,7 +1015,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testVariableAnnotations() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-27266
@@ -1033,7 +1029,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testMultilineFStringExpressions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-33656
@@ -1045,24 +1041,24 @@ public class PyFormatterTest extends PyTestCase {
   public void testFStringFragmentWrappingSplitInsideExpression() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
     getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-27615
   public void testFStringFragmentWrappingSplitInsideNestedExpression() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
     getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-40778
   public void testFStringSpacesBetweenFragmentAndExpressionBracesPreserved() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-31991
   public void testSpacesAroundFStringFragmentExpressionStripped() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-36009
@@ -1072,7 +1068,7 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-35975
   public void testSpacesAroundColonEqInAssignmentExpression() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+    doTest();
   }
 
   // PY-23475

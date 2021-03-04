@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
@@ -16,11 +17,17 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testSelfReference() {
     doTest();

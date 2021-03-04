@@ -15,22 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
  */
 public class Py3StringFormatInspectionTest extends PyInspectionTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyStringFormatInspection/";
-
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
 
   // PY-16938
   public void testByteString() {

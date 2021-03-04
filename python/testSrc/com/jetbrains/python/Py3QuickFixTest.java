@@ -16,7 +16,6 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -32,10 +31,6 @@ import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class Py3QuickFixTest extends PyTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
 
   // PY-13685
   public void testReplacePrintEnd() {

@@ -18,7 +18,6 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyMethodOverridingInspection;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -107,12 +106,17 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
 
   // PY-28506
   public void testDunderPostInitInDataclassHierarchy() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   // PY-35512
   public void testPositionalOnlyParameters() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+    doTest();
+  }
+
+  // PY-17828
+  public void testDunderPrepare() {
+    doTest();
   }
 
   @NotNull

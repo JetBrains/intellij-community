@@ -72,7 +72,7 @@ import java.util.function.Consumer;
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
 
-  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON27);
+  protected static final PyLightProjectDescriptor ourPy2Descriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON27);
   protected static final PyLightProjectDescriptor ourPyLatestDescriptor = new PyLightProjectDescriptor(LanguageLevel.getLatest());
 
   protected CodeInsightTestFixture myFixture;
@@ -282,7 +282,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Nullable
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyDescriptor;
+    return ourPyLatestDescriptor;
   }
 
   @Nullable

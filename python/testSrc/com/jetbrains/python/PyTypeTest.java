@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -19,6 +20,12 @@ import java.util.List;
  * @author yole
  */
 public class PyTypeTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
+
   /**
    * Call of union returns union of all callable types in this union
    */

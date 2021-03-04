@@ -9,20 +9,13 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
     doTestReturnType();
   }
 
-
-
   public void testCaretOnInvocation() {
     doTestReturnType();
   }
 
   public void testCaretOnImportedInvocation() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        doIntentionTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), getTestName(true) + ".py", "foo_decl.py");
-        myFixture.checkResultByFile("foo_decl.py", "foo_decl_after.py", false);
-      }
-    );
+    doIntentionTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), getTestName(true) + ".py", "foo_decl.py");
+    myFixture.checkResultByFile("foo_decl.py", "foo_decl_after.py", false);
   }
 
   public void testCaretOnParamUsage() {
@@ -41,7 +34,7 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
 
   // PY-31369
   public void testTypeCommentedParameterNoIntention() {
-    doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation"));
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation")));
   }
 
   // PY-31369
@@ -49,13 +42,11 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
     doNegativeTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"));
   }
 
-
   private void doTestReturnType() {
-    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doIntentionTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"));
   }
 
-
   private void doTestParam() {
-    doTest(PyPsiBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON34);
+    doIntentionTest(PyPsiBundle.message("INTN.specify.type.in.annotation"));
   }
 }

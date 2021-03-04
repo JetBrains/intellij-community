@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.runInEdtAndWait
@@ -18,11 +19,12 @@ import com.intellij.util.ThrowableRunnable
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixture.PythonCommonCodeInsightTestFixture
+import com.jetbrains.python.psi.LanguageLevel
 import junit.framework.TestCase.assertNotNull
 import java.io.File
 
-class PythonPlatformCodeInsightTestFixture : PythonCommonCodeInsightTestFixture {
-  private val myDelegateTestCase = PyDelegateTestCase()
+class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : PythonCommonCodeInsightTestFixture {
+  private val myDelegateTestCase = PyDelegateTestCase(languageLevel)
   private val myDelegateFixture: CodeInsightTestFixture
     get() = myDelegateTestCase.myFixture
 
@@ -136,7 +138,11 @@ class PythonPlatformCodeInsightTestFixture : PythonCommonCodeInsightTestFixture 
   }
 }
 
-class PyDelegateTestCase : PyTestCase() {
+class PyDelegateTestCase(private val languageLevel: LanguageLevel = LanguageLevel.getLatest()) : PyTestCase() {
+
+  override fun getProjectDescriptor(): LightProjectDescriptor? {
+    return if (languageLevel.isPython2) ourPy2Descriptor else super.getProjectDescriptor()
+  }
 
   public override fun addSuppressedException(e: Throwable) {
     super.addSuppressedException(e)

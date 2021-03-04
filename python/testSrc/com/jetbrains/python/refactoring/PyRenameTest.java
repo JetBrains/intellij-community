@@ -64,7 +64,7 @@ public class PyRenameTest extends PyTestCase {
   }
 
   public void testRenameLocalWithComprehension() {  // PY-1618
-    doTest("bar");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest("bar"));
   }
 
   public void testRenameLocalWithComprehension2() {  // PY-1618
@@ -124,7 +124,7 @@ public class PyRenameTest extends PyTestCase {
   }
 
   public void testRenameProperty() {  // PY-5948
-    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest("bar"));
+    doTest("bar");
   }
 
   public void testClassNameConflict() {  // PY-2390
@@ -278,42 +278,42 @@ public class PyRenameTest extends PyTestCase {
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementationRenameOverload() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+    doTest("bar");
   }
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementationRenameImplementation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+    doTest("bar");
   }
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementationRenameCall() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+    doTest("bar");
   }
 
   // PY-22971
   public void testOverloadsAndImplementationInClassRenameOverload() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+    doTest("bar");
   }
 
   // PY-22971
   public void testOverloadsAndImplementationInClassRenameImplementation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+    doTest("bar");
   }
 
   // PY-22971
   public void testOverloadsAndImplementationInClassRenameCall() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("bar"));
+    doTest("bar");
   }
 
   // PY-22971
   public void testOverloadsAndImplementationInImportedModuleRenameCall() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("bar"));
+    doMultiFileTest("bar");
   }
 
   // PY-22971
   public void testOverloadsAndImplementationInImportedClassRenameCall() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("bar"));
+    doMultiFileTest("bar");
   }
 
   // PY-28199

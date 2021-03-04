@@ -15,14 +15,21 @@
  */
 package com.jetbrains.python.quickFixes;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyMissingConstructorInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyAddCallSuperQuickFixTest/")
 public class PyAddCallSuperQuickFixTest extends PyQuickFixTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testOldStyle() {
     doQuickFixTest(PyMissingConstructorInspection.class, PyPsiBundle.message("QFIX.add.super"));

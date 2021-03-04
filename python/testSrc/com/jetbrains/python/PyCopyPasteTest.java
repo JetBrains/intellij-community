@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author yole
@@ -451,7 +450,7 @@ public class PyCopyPasteTest extends PyTestCase {
 
   // PY-19100
   public void testAsyncFunctionWithBadSelection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-20138

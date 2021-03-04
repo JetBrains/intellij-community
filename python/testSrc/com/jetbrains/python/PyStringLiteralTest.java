@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -139,9 +140,11 @@ public class PyStringLiteralTest extends PyTestCase {
   }
 
   public void testEscapedUnicodeInLiterals() {
-    assertEquals("\\u0041", createLiteralFromText("'\\u0041'").getStringValue());
-    assertEquals("A", createLiteralFromText("u'\\u0041'").getStringValue());
-    assertEquals("\\u0041", createLiteralFromText("b'\\u0041'").getStringValue());
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      assertEquals("\\u0041", createLiteralFromText("'\\u0041'").getStringValue());
+      assertEquals("A", createLiteralFromText("u'\\u0041'").getStringValue());
+      assertEquals("\\u0041", createLiteralFromText("b'\\u0041'").getStringValue());
+    });
   }
 
   public void testNonUnicodeCodePointValue() {

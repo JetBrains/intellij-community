@@ -45,11 +45,15 @@ public class PyMoveAttributeToInitQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testAddSuperCall() {
-    doQuickFixTest(PyAttributeOutsideInitInspection.class, PyPsiBundle.message("QFIX.move.attribute"));
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doQuickFixTest(PyAttributeOutsideInitInspection.class, PyPsiBundle.message("QFIX.move.attribute"));
+    });
   }
 
   public void testAddSuperCallOldStyle() {
-    doQuickFixTest(PyAttributeOutsideInitInspection.class, PyPsiBundle.message("QFIX.move.attribute"));
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doQuickFixTest(PyAttributeOutsideInitInspection.class, PyPsiBundle.message("QFIX.move.attribute"));
+    });
   }
 
   public void testPropertyNegative() {
@@ -57,7 +61,7 @@ public class PyMoveAttributeToInitQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testPy3K() {
-    doQuickFixTest(PyAttributeOutsideInitInspection.class, PyPsiBundle.message("QFIX.move.attribute"), LanguageLevel.PYTHON34);
+    doQuickFixTest(PyAttributeOutsideInitInspection.class, PyPsiBundle.message("QFIX.move.attribute"));
   }
 
 }

@@ -36,7 +36,7 @@ public class PyExtractSuperclassPresenterTest
    * Also checks that static method could NOT be made abstract in Py2K
    */
   public void testStaticNoObjectPy2() {
-    ensureStaticNoObject(false);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> ensureStaticNoObject(false));
   }
 
   /**
@@ -44,7 +44,7 @@ public class PyExtractSuperclassPresenterTest
    * Also checks that static method COULD be made abstract in Py3K
    */
   public void testStaticNoObjectPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> ensureStaticNoObject(true));
+    ensureStaticNoObject(true);
   }
 
   /**
@@ -166,5 +166,4 @@ public class PyExtractSuperclassPresenterTest
     final PyMemberInfoStorage storage = new PyMemberInfoStorage(childClass);
     return new PyExtractSuperclassPresenterImpl(myView, childClass, storage);
   }
-
 }

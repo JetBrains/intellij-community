@@ -1,5 +1,5 @@
 def m():
-    print 1
+    print(1)
 
 
 class A:

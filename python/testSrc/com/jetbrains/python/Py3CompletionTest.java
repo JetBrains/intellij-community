@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.module.Module;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
@@ -26,10 +25,6 @@ import java.util.List;
  */
 @TestDataPath("$CONTENT_ROOT/../testData/completion")
 public class Py3CompletionTest extends PyTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
 
   public void testPropertyDecorator() {
     doTest();

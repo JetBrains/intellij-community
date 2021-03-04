@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.types.*;
 
 import java.util.ArrayList;
@@ -94,15 +95,9 @@ public class PyTypeParserTest extends PyTestCase {
   }
 
   public void testStringType() {
-    // Python 2
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "string");
-    assertNotNull(type);
-    assertInstanceOf(type, PyUnionType.class);
-    final PyUnionType unionType = (PyUnionType)type;
-    final ArrayList<PyType> types = new ArrayList<>(unionType.getMembers());
-    assertClassType(types.get(0), "str");
-    assertClassType(types.get(1), "unicode");
+    assertClassType(type, "str");
   }
 
   public void testBooleanType() {
@@ -184,13 +179,15 @@ public class PyTypeParserTest extends PyTestCase {
   }
 
   public void testBoundedGeneric() {
-    myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T <= str or unicode");
-    assertNotNull(type);
-    assertInstanceOf(type, PyGenericType.class);
-    final PyGenericType genericType = (PyGenericType)type;
-    final PyType bound = genericType.getBound();
-    assertInstanceOf(bound, PyUnionType.class);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      myFixture.configureByFile("typeParser/typeParser.py");
+      final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T <= str or unicode");
+      assertNotNull(type);
+      assertInstanceOf(type, PyGenericType.class);
+      final PyGenericType genericType = (PyGenericType)type;
+      final PyType bound = genericType.getBound();
+      assertInstanceOf(bound, PyUnionType.class);
+    });
   }
 
   public void testBracketSingleParam() {
@@ -222,14 +219,14 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testUnionOrOperator() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject | str | unicode");
+    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject | str | bytes");
     assertNotNull(type);
     final Collection<PyType> members = type.getMembers();
     assertEquals(3, members.size());
     final List<PyType> list = new ArrayList<>(members);
     assertClassType(list.get(0), "MyObject");
     assertClassType(list.get(1), "str");
-    assertClassType(list.get(2), "unicode");
+    assertClassType(list.get(2), "bytes");
   }
 
   public void testCallableType() {
