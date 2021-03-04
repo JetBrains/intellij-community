@@ -1,5 +1,7 @@
 package org.jetbrains.kotlin
 
+import org.jetbrains.kotlin.idea.caches.project.DefaultLibraryDependencyCandidate
+import org.jetbrains.kotlin.idea.caches.project.KlibLibraryDependencyCandidate
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -12,7 +14,14 @@ data class TestPlatform(val name: String) : SimplePlatform(name) {
     }
 }
 
+fun platform(vararg name: String) = TargetPlatform(name.map(::TestPlatform).toSet())
+
 fun platform(vararg simplePlatform: SimplePlatform) = TargetPlatform(setOf(*simplePlatform))
 
 fun platform(vararg konanTarget: KonanTarget) = TargetPlatform(konanTarget.map(::NativePlatformWithTarget).toSet())
 
+internal fun libraryDependencyCandidate(platform: TargetPlatform): DefaultLibraryDependencyCandidate =
+    DefaultLibraryDependencyCandidate(platform, emptyList())
+
+internal fun klibLibraryDependencyCandidate(platform: TargetPlatform, uniqueName: String, isInterop: Boolean):
+        KlibLibraryDependencyCandidate = KlibLibraryDependencyCandidate(platform, emptyList(), uniqueName, isInterop)

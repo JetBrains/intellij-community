@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.konan.NativePlatform
+import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 
 val Module.isNewMPPModule: Boolean
     get() = facetSettings?.mppVersion.isNewMPP ||
@@ -197,4 +199,12 @@ fun PsiElement.getPlatformModuleInfo(desiredPlatform: TargetPlatform): PlatformM
         }
         else -> null
     }
+}
+
+internal fun TargetPlatform.isSharedNative(): Boolean {
+    if (this.componentPlatforms.all { it is NativePlatform }) {
+        if (this.contains(NativePlatformUnspecifiedTarget)) return true
+        return this.componentPlatforms.size > 1
+    }
+    return false
 }

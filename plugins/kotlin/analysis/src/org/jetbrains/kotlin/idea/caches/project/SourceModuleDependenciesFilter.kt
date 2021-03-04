@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
-import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
 
@@ -61,14 +60,6 @@ internal class HmppSourceModuleDependencyFilter(
         //  Since compiling metadata will be possible with this KLIB, the IDE also analyzes the code with it.
         if (dependeePlatform.isSharedNative() && klibLibraryGist != null && dependencyPlatform.isSharedNative()) return true
 
-        return false
-    }
-
-    private fun TargetPlatform.isSharedNative(): Boolean {
-        if (this.componentPlatforms.all { it is NativePlatform }) {
-            if (this.contains(NativePlatformUnspecifiedTarget)) return true
-            return this.componentPlatforms.size > 1
-        }
         return false
     }
 }
