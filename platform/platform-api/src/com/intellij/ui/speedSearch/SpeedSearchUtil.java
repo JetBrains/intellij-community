@@ -167,10 +167,10 @@ public final class SpeedSearchUtil {
     }
   }
 
-  public static void applySpeedSearchHighlightingFiltered(JTree tree, Object value, ColoredTreeCellRenderer coloredTreeCellRenderer, boolean b, boolean selected) {
+  public static void applySpeedSearchHighlightingFiltered(JTree tree, Object value, ColoredTreeCellRenderer coloredTreeCellRenderer, boolean mainTextOnly, boolean selected) {
     SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(tree);
     if (speedSearch != null && !speedSearch.isObjectFilteredOut(value)){
-      applySpeedSearchHighlighting(tree, coloredTreeCellRenderer, b, selected);
+      applySpeedSearchHighlighting(tree, coloredTreeCellRenderer, mainTextOnly, selected);
     }
   }
 }
