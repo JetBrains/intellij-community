@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class AddNewArrayExpressionFix implements IntentionAction {
+public class AddNewArrayExpressionFix implements IntentionActionWithFixAllOption {
   private final PsiArrayInitializerExpression myInitializer;
   private final PsiType myType;
 

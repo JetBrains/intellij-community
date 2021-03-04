@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
+public class SurroundWithArrayFix extends PsiElementBaseIntentionAction implements IntentionActionWithFixAllOption {
   private final PsiCall myMethodCall;
   @Nullable private final PsiExpression myExpression;
 
