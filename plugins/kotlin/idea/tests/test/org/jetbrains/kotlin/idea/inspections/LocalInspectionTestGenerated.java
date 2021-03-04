@@ -5243,9 +5243,24 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/incompleteDestructuringInspection/basic.kt");
         }
 
+        @TestMetadata("empty.kt")
+        public void testEmpty() throws Exception {
+            runTest("testData/inspectionsLocal/incompleteDestructuringInspection/empty.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("testData/inspectionsLocal/incompleteDestructuringInspection/hasComment.kt");
+        }
+
         @TestMetadata("hasSameName.kt")
         public void testHasSameName() throws Exception {
             runTest("testData/inspectionsLocal/incompleteDestructuringInspection/hasSameName.kt");
+        }
+
+        @TestMetadata("hasTrailingComma.kt")
+        public void testHasTrailingComma() throws Exception {
+            runTest("testData/inspectionsLocal/incompleteDestructuringInspection/hasTrailingComma.kt");
         }
 
         @TestMetadata("hasType.kt")

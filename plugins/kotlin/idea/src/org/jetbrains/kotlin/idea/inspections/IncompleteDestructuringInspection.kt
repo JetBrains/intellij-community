@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createDestructuringDeclarationByPattern
 import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -53,7 +52,6 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement
         val destructuringDeclaration = element.parent as? KtDestructuringDeclaration ?: return
-        val initializer = destructuringDeclaration.initializer ?: return
         val primaryParameters = destructuringDeclaration.primaryParameters() ?: return
 
         val nameValidator = CollectingNameValidator(
@@ -63,24 +61,30 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
                 NewDeclarationNameValidator.Target.VARIABLES
             )
         )
+        val psiFactory = KtPsiFactory(destructuringDeclaration)
         val currentEntries = destructuringDeclaration.entries
         val hasType = currentEntries.any { it.typeReference != null }
-        val additionalEntries = primaryParameters.drop(destructuringDeclaration.entries.size).map {
-            val name = KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
-            if (hasType) {
-                val type = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(it.type)
-                "$name: $type"
-            } else {
-                name
+        val additionalEntries = primaryParameters
+            .drop(currentEntries.size)
+            .map {
+                val name = KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
+                if (hasType) {
+                    val type = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(it.type)
+                    "$name: $type"
+                } else {
+                    name
+                }
             }
-        }
-        val newEntries = (currentEntries.map { it.text } + additionalEntries).joinToString()
+            .let { psiFactory.createDestructuringDeclaration("val (${it.joinToString()}) = TODO()").entries }
 
-        val factory = KtPsiFactory(destructuringDeclaration)
-        val newDestructuringDeclaration = factory.createDestructuringDeclarationByPattern(
-            if (destructuringDeclaration.isVar) "var ($0) = $1" else "val ($0) = $1",
-            newEntries, initializer
-        )
-        destructuringDeclaration.replace(newDestructuringDeclaration)
+        val rPar = destructuringDeclaration.rPar
+        val hasTrailingComma = destructuringDeclaration.trailingComma != null
+        val currentEntriesIsEmpty = currentEntries.isEmpty()
+        additionalEntries.forEachIndexed { index, entry ->
+            if (index != 0 || (!hasTrailingComma && !currentEntriesIsEmpty)) {
+                destructuringDeclaration.addBefore(psiFactory.createComma(), rPar)
+            }
+            destructuringDeclaration.addBefore(entry, rPar)
+        }
     }
 }
