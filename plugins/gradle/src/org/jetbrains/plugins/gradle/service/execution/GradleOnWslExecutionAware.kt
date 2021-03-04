@@ -39,6 +39,11 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
     return getWslEnvironmentProvider(projectPath)
   }
 
+  override fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project): Boolean {
+    val projectPath = runConfiguration.settings.externalProjectPath
+    return resolveWslDistribution(projectPath) != null
+  }
+
   private fun getTargetPathMapper(projectPath: String): PathMapper? {
     val wslDistribution = resolveWslDistribution(projectPath) ?: return null
     return object : PathMapper {
