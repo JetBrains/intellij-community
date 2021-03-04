@@ -203,7 +203,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
   @Override
   protected void processKeyEvent(KeyEvent e) {
-    if (mySearchOption.isShowing()) {
+    if (mySearchOption.isShowing() && myOptionShortcutSet != null) {
       KeyStroke eventKeyStroke = KeyStroke.getKeyStrokeForEvent(e);
       boolean match = Arrays.stream(myOptionShortcutSet.getShortcuts())
         .filter(s -> s.isKeyboard())
@@ -256,7 +256,10 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       getTemplatePresentation().setIcon(AllIcons.General.Tree);
       getTemplatePresentation().setHoveredIcon(AllIcons.General.TreeHovered);
       getTemplatePresentation().setSelectedIcon(AllIcons.General.TreeSelected);
-      setShortcutSet(getMnemonicAsShortcut(this));
+      ShortcutSet shortcut = getMnemonicAsShortcut(this);
+      if (shortcut != null) {
+        setShortcutSet(shortcut);
+      }
     }
 
     @Override
