@@ -642,8 +642,8 @@
       <reference ref="$Delete"/>
       <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs">
-        <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.ui.MarkAsPlainTextAction"/>
-        <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.ui.MarkAsOriginalTypeAction"/>
+        <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.MarkAsPlainTextAction"/>
+        <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.MarkAsOriginalTypeAction"/>
       </group>
     </group>
 

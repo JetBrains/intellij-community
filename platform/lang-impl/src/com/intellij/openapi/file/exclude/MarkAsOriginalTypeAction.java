@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.file.exclude.ui;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.file.exclude;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -17,12 +16,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager.isApplicableFor;
-
 /**
  * @author Rustam Vishnyakov
  */
-public class MarkAsOriginalTypeAction extends DumbAwareAction {
+class MarkAsOriginalTypeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -30,7 +27,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-        .filter(file -> isApplicableFor(file, true) && typeManager.isMarkedAsPlainText(file));
+        .filter(file -> EnforcedPlainTextFileTypeManager.isApplicableFor(file, true) && typeManager.isMarkedAsPlainText(file));
     typeManager.resetOriginalFileType(project, VfsUtilCore.toVirtualFileArray(selectedFiles.toList()));
   }
 
@@ -39,7 +36,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-        .filter(file -> isApplicableFor(file, true) && typeManager.isMarkedAsPlainText(file));
+        .filter(file -> EnforcedPlainTextFileTypeManager.isApplicableFor(file, true) && typeManager.isMarkedAsPlainText(file));
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     Set<FileType> fileTypes = selectedFiles.map(file -> fileTypeManager.getFileTypeByFileName(file.getNameSequence())).toSet();
     if (fileTypes.size() == 1) {
