@@ -2,9 +2,11 @@
 package com.intellij.space.chat.ui
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.project.Project
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.util.ui.codereview.SingleValueModel
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
@@ -18,6 +20,7 @@ import runtime.reactive.awaitLoaded
 import javax.swing.JComponent
 
 internal class SpaceChatEditableComponent(
+  project: Project,
   lifetime: Lifetime,
   content: JComponent,
   message: SpaceChatItem
@@ -35,9 +38,11 @@ internal class SpaceChatEditableComponent(
           launch(lifetime, Ui) {
             val chat = editingVm.channel.awaitLoaded(lifetime)
             if (newText.isBlank()) {
+              SpaceStatsCounterCollector.SEND_EDIT_MESSAGE.log(project, true)
               chat?.deleteMessage(id)
             }
             else {
+              SpaceStatsCounterCollector.SEND_EDIT_MESSAGE.log(project, false)
               chat?.alterMessage(id, newText)
             }
           }
@@ -56,10 +61,14 @@ internal class SpaceChatEditableComponent(
         submittableModel.document.setText(workspace.completion.editable(editingVm.message.text))
       }
       editingModel.value = true
+      SpaceStatsCounterCollector.START_EDIT_MESSAGE.log(project)
     }
     addToCenter(
       ToggleableContainer.create(editingModel, { content }, {
-        SubmittableTextField(SpaceBundle.message("chat.message.edit.action.text"), submittableModel, onCancel = { message.stopEditing() })
+        SubmittableTextField(SpaceBundle.message("chat.message.edit.action.text"), submittableModel, onCancel = {
+          SpaceStatsCounterCollector.DISCARD_EDIT_MESSAGE.log(project)
+          message.stopEditing()
+        })
       })
     )
   }

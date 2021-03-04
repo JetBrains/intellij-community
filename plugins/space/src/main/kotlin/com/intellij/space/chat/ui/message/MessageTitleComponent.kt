@@ -7,12 +7,14 @@ import circlet.client.api.CUserPrincipalDetails
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.api.SpaceChatItemAdditionalFeature
 import com.intellij.space.chat.ui.link
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.SpaceAutoUpdatableComponentService
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.utils.formatPrettyDateTime
@@ -32,6 +34,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class MessageTitleComponent(
+  private val project: Project,
   private val lifetime: Lifetime,
   message: SpaceChatItem
 ) : JPanel(HorizontalLayout(JBUI.scale(5))) {
@@ -105,6 +108,7 @@ internal class MessageTitleComponent(
             SpaceBundle.message("chat.message.delete.dialog.message")
           ).ask(this)
         ) {
+          SpaceStatsCounterCollector.DELETE_MESSAGE.log(project)
           launch(lifetime, Ui) {
             message.delete()
           }

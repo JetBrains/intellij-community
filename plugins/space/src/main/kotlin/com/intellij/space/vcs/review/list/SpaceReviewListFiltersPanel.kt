@@ -3,6 +3,7 @@ package com.intellij.space.vcs.review.list
 
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLabel
@@ -34,15 +35,18 @@ internal class SpaceReviewListFiltersPanel(private val listVm: SpaceReviewsListV
     }
 
     private fun onTextChanged() {
-      listVm.textToSearch.value = text.trim()
+      val newText = text.trim()
+      listVm.textToSearch.value = newText
+      SpaceStatsCounterCollector.CHANGE_TEXT_FILTER.log(newText.isBlank())
     }
   }
 
   private val quickFiltersComboBox = ComboBox(EnumComboBoxModel(ReviewListQuickFilter::class.java)).apply {
     addActionListener {
       val stateFilter = this.selectedItem as ReviewListQuickFilter
-      listVm.spaceReviewsQuickFilter.value = listVm.quickFiltersMap.value[stateFilter] ?: error(
-        "Unable to resolve quick filter settings for ${stateFilter}")
+      val newFilter = listVm.quickFiltersMap.value[stateFilter]
+      listVm.spaceReviewsQuickFilter.value = newFilter ?: error("Unable to resolve quick filter settings for ${stateFilter}")
+      SpaceStatsCounterCollector.CHANGE_QUICK_FILTER.log(stateFilter)
     }
 
     selectedItem = DEFAULT_QUICK_FILTER

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.SpaceSettingsPanel
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
@@ -36,6 +37,7 @@ internal class SpaceReviewToolwindowEmptyComponent(project: Project, lifetime: L
                          .insets("0", "0", "0", "0")
                          .fill())
     val loginLabel = ActionLink(SpaceBundle.message("action.com.intellij.space.actions.SpaceLoginAction.text")) {
+      SpaceStatsCounterCollector.REVIEWS_LOG_IN_LINK.log(project)
       SpaceSettingsPanel.openSettings(null)
     }
     val connectingToReposLabel = JBLabel(SpaceBundle.message("review.toolwindow.empty.connecting.to.repositories.label")).apply {

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
@@ -77,13 +78,21 @@ internal object SpaceReviewInfoPanelFactory {
         text = projectName,
         tooltip = null,
         url = SpaceUrls.project(detailsVm.projectKey)
-      )
+      ).apply {
+        addActionListener {
+          SpaceStatsCounterCollector.OPEN_PROJECT_IN_SPACE.log(detailsVm.ideaProject)
+        }
+      }
       val reviewLink = BrowserLink(
         icon = null,
         text = detailsVm.reviewKey ?: "",
         tooltip = null,
         url = detailsVm.reviewUrl
-      )
+      ).apply {
+        addActionListener {
+          SpaceStatsCounterCollector.OPEN_REVIEW_IN_SPACE.log(detailsVm.ideaProject)
+        }
+      }
 
       add(projectLink)
       add(JLabel("${FontUtil.spaceAndThinSpace()}/${FontUtil.spaceAndThinSpace()}"))
@@ -125,6 +134,7 @@ internal object SpaceReviewInfoPanelFactory {
     }
 
     val openTimelineActionLink = ActionLink(SpaceBundle.message("review.details.view.chat.link.action")) {
+      SpaceStatsCounterCollector.SHOW_TIMELINE.log(detailsVm.ideaProject)
       openReviewInEditor(detailsVm.ideaProject,
                          detailsVm.workspace,
                          detailsVm.spaceProjectInfo,

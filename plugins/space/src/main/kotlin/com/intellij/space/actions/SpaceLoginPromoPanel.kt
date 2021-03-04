@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.promo.*
 import com.intellij.space.settings.SpaceLoginState
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.LoginComponents.errorText
 import com.intellij.space.ui.LoginComponents.loginButton
 import com.intellij.space.ui.LoginComponents.organizationUrlTextField
@@ -26,14 +27,19 @@ import javax.swing.JComponent
 
 internal fun prettyBorder() = JBUI.Borders.empty(16, 20, 4, 20)
 
-internal fun buildLoginPanelWithPromo(state: SpaceLoginState.Disconnected,
-                                      packParent: () -> Unit,
-                                      loginAction: (String) -> Unit): JComponent {
+internal fun buildLoginPanelWithPromo(
+  state: SpaceLoginState.Disconnected,
+  statsExplorePlace: SpaceStatsCounterCollector.ExplorePlace,
+  statsLoginPlace: SpaceStatsCounterCollector.LoginPlace,
+  packParent: () -> Unit,
+  loginAction: (String) -> Unit
+): JComponent {
   val wrapper = Wrapper().apply {
-    val loginPanel = loginPanel(state, loginAction).apply {
+    val loginPanel = loginPanel(statsLoginPlace, state, loginAction).apply {
       border = prettyBorder()
     }
-    val promoPanel = promoPanel {
+    val promoPanel = promoPanel(statsExplorePlace) {
+      SpaceStatsCounterCollector.ADV_LOG_IN_LINK.log()
       setContent(loginPanel)
       packParent()
       repaint()
@@ -50,12 +56,13 @@ internal fun buildLoginPanelWithPromo(state: SpaceLoginState.Disconnected,
   return borderLayoutPanel
 }
 
-private fun promoPanel(loginAction: () -> Unit) = panel {
+private fun promoPanel(statsExplorePlace: SpaceStatsCounterCollector.ExplorePlace, loginAction: () -> Unit) = panel {
   fullRow { createSpaceByJetbrainsLabel()() }
   fullRow { promoText(if (SystemInfo.isMac) 60 else 52)() }
   fullRow {
     JButton(SpaceBundle.message("space.promo.explore.space.button")).apply {
       addActionListener {
+        SpaceStatsCounterCollector.EXPLORE_SPACE.log(statsExplorePlace)
         BrowserUtil.browse(EXPLORE_SPACE_PROMO_URL)
       }
     }.apply {
@@ -68,9 +75,13 @@ private fun promoPanel(loginAction: () -> Unit) = panel {
   }
 }
 
-private fun loginPanel(state: SpaceLoginState.Disconnected, loginAction: (String) -> Unit) = panel {
+private fun loginPanel(
+  statsLoginPlace: SpaceStatsCounterCollector.LoginPlace,
+  state: SpaceLoginState.Disconnected,
+  loginAction: (String) -> Unit
+) = panel {
   val serverField = organizationUrlTextField(state.server)
-  val loginButton = loginButton(default = true) {
+  val loginButton = loginButton(statsLoginPlace, default = true) {
     it.isEnabled = false
     loginAction(serverField.text.trim())
   }
@@ -98,4 +109,8 @@ private fun loginLabel(loginAction: () -> Unit) = ActionLink(SpaceBundle.message
   loginAction()
 }
 
-private fun singUpLabel(): BrowserLink = BrowserLink(SpaceBundle.message("login.sign.up"), SIGN_UP_SPACE_URL)
+private fun singUpLabel(): BrowserLink = BrowserLink(SpaceBundle.message("login.sign.up"), SIGN_UP_SPACE_URL).apply {
+  addActionListener {
+    SpaceStatsCounterCollector.SIGN_UP_LINK.log()
+  }
+}

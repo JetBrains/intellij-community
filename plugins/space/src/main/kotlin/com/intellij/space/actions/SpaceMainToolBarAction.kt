@@ -16,6 +16,7 @@ import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.SpaceLoginState
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.settings.SpaceSettingsPanel
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.*
 import com.intellij.space.ui.LoginComponents.buildConnectingPanel
 import com.intellij.space.utils.SpaceUrls
@@ -60,6 +61,7 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
     val component = e.inputEvent.component
     val space = SpaceWorkspaceComponent.getInstance()
     val workspace = space.workspace.value
+    SpaceStatsCounterCollector.OPEN_MAIN_TOOLBAR_POPUP.log(SpaceStatsCounterCollector.LoginState.convert(space.loginState.value))
     if (workspace != null) {
       buildMenu(workspace, SpaceUserAvatarProvider.getInstance().avatars.value.circle, e.project!!)
         .showUnderneathOf(component)
@@ -91,11 +93,16 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
     return when (st) {
       is SpaceLoginState.Connected -> null
 
-      is SpaceLoginState.Connecting -> buildConnectingPanel(st, prettyBorder()) {
+      is SpaceLoginState.Connecting -> buildConnectingPanel(st, SpaceStatsCounterCollector.LoginPlace.MAIN_TOOLBAR, prettyBorder()) {
         st.cancel()
       }
 
-      is SpaceLoginState.Disconnected -> buildLoginPanelWithPromo(st, packPopup) { serverName ->
+      is SpaceLoginState.Disconnected -> buildLoginPanelWithPromo(
+        st,
+        SpaceStatsCounterCollector.ExplorePlace.MAIN_TOOLBAR,
+        SpaceStatsCounterCollector.LoginPlace.MAIN_TOOLBAR,
+        packPopup
+      ) { serverName ->
         val space = SpaceWorkspaceComponent.getInstance()
         space.signInManually(serverName, space.lifetime, component)
       }
@@ -141,7 +148,9 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
     menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.settings.action"),
                                         { SpaceSettingsPanel.openSettings(project) },
                                         showSeparatorAbove = true)
-    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.log.out.action"), { SpaceWorkspaceComponent.getInstance().signOut() })
+    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.log.out.action"), {
+      SpaceWorkspaceComponent.getInstance().signOut(SpaceStatsCounterCollector.LogoutPlace.MAIN_TOOLBAR)
+    })
 
     return AccountsMenuListPopup(project, AccountMenuPopupStep(menuItems))
   }

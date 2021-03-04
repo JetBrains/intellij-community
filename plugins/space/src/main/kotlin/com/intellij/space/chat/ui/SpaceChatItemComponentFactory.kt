@@ -18,6 +18,7 @@ import com.intellij.space.chat.ui.message.SpaceMCMessageComponent
 import com.intellij.space.chat.ui.message.SpaceStyledMessageComponent
 import com.intellij.space.chat.ui.thread.createCollapsedThreadComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
 import com.intellij.ui.components.JBLabel
@@ -54,7 +55,7 @@ internal class SpaceChatItemComponentFactory(
       when (val type = item.type) {
         is CodeDiscussion ->
           codeDiscussionComponentFactory.createComponent(item, type.discussion) ?: createUnsupportedMessageTypePanel(item.link)
-        is SimpleText -> SpaceChatEditableComponent(lifetime, createSimpleMessageComponent(item), item)
+        is SimpleText -> SpaceChatEditableComponent(project, lifetime, createSimpleMessageComponent(item), item)
         is ReviewCompletionStateChanged -> SpaceStyledMessageComponent(createSimpleMessageComponent(item))
         is ReviewerChanged -> {
           val user = type.uid.resolve().link()
@@ -112,7 +113,7 @@ internal class SpaceChatItemComponentFactory(
     if (item.type == Deleted) {
       return null
     }
-    return MessageTitleComponent(lifetime, item)
+    return MessageTitleComponent(project, lifetime, item)
   }
 
   private fun createAvatarIcon(item: SpaceChatItem): Icon {
@@ -163,10 +164,12 @@ internal class SpaceChatItemComponentFactory(
       isOpaque = false
       border = JBUI.Borders.empty()
     }
+    val statsPlace = SpaceStatsCounterCollector.SendMessagePlace.NEW_THREAD
     val firstThreadMessageField = ToggleableContainer.create(isWritingFirstMessageModel, { emptyPanel }, {
       val submittableModel = object : SubmittableTextFieldModelBase("") {
         override fun submit() {
           isBusy = true
+          SpaceStatsCounterCollector.SEND_MESSAGE.log(statsPlace, false)
           launch(lifetime, Ui) {
             startThreadVm.startThread(document.text)
             isBusy = false
@@ -177,6 +180,7 @@ internal class SpaceChatItemComponentFactory(
         lifetime,
         SpaceChatAvatarType.THREAD,
         submittableModel,
+        statsPlace,
         onCancel = { startThreadVm.stopWritingFirstMessage() }
       )
       BorderLayoutPanel().apply {

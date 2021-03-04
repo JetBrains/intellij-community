@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.LoadableListVmImpl
 import com.intellij.space.ui.bindScroll
 import com.intellij.space.ui.toLoadable
@@ -74,6 +75,7 @@ internal object SpaceReviewListFactory {
           .clear()
           .appendText(SpaceBundle.message("review.list.empty"))
           .appendSecondaryText(SpaceBundle.message("action.refresh.text"), SimpleTextAttributes.LINK_ATTRIBUTES, ActionListener {
+            SpaceStatsCounterCollector.REFRESH_REVIEWS_ACTION.log(SpaceStatsCounterCollector.RefreshReviewsPlace.EMPTY_LIST)
             listVm.refresh()
           })
       }

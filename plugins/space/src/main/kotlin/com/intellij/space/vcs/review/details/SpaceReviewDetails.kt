@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.SpaceReviewDataKeys
@@ -53,12 +54,14 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
       val detailsTabInfo = TabInfo(SpaceReviewInfoTabPanel(parentDisposable, detailsVm)).apply {
         text = SpaceBundle.message("review.tab.name.details")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
+          SpaceStatsCounterCollector.BACK_TO_LIST.log(SpaceStatsCounterCollector.DetailsTabType.DETAILS)
           currentReview.value = null
         }
       }
       val commitsTabInfo = TabInfo(SpaceReviewCommitListPanel(parentDisposable, detailsVm)).apply {
         text = SpaceBundle.message("review.tab.name.commits")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
+          SpaceStatsCounterCollector.BACK_TO_LIST.log(SpaceStatsCounterCollector.DetailsTabType.COMMITS)
           currentReview.value = null
         }
       }
@@ -93,8 +96,14 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
         addListener(object : TabsListener {
           override fun selectionChanged(oldSelection: TabInfo, newSelection: TabInfo) {
             detailsVm.selectedTab.value = when (newSelection.component) {
-              is SpaceReviewCommitListPanel -> SelectedTab.COMMITS
-              else -> SelectedTab.INFO
+              is SpaceReviewCommitListPanel -> {
+                SpaceStatsCounterCollector.SELECT_DETAILS_TAB.log(SpaceStatsCounterCollector.DetailsTabType.COMMITS)
+                SelectedTab.COMMITS
+              }
+              else -> {
+                SpaceStatsCounterCollector.SELECT_DETAILS_TAB.log(SpaceStatsCounterCollector.DetailsTabType.DETAILS)
+                SelectedTab.INFO
+              }
             }
           }
         })
