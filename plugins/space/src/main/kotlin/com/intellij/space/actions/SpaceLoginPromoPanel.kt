@@ -24,19 +24,21 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JButton
 import javax.swing.JComponent
 
-fun buildLoginPanelWithPromo(state: SpaceLoginState.Disconnected,
-                             packParent: () -> Unit,
-                             loginAction: (String) -> Unit): JComponent {
+internal fun prettyBorder() = JBUI.Borders.empty(16, 20, 4, 20)
+
+internal fun buildLoginPanelWithPromo(state: SpaceLoginState.Disconnected,
+                                      packParent: () -> Unit,
+                                      loginAction: (String) -> Unit): JComponent {
   val wrapper = Wrapper().apply {
     val loginPanel = loginPanel(state, loginAction).apply {
-      border = JBUI.Borders.empty(16, 20, 0, 20)
+      border = prettyBorder()
     }
     val promoPanel = promoPanel {
       setContent(loginPanel)
       packParent()
       repaint()
     }.apply {
-      border = JBUI.Borders.empty(16, 20, 0, 20)
+      border = prettyBorder()
     }
 
     val content = if (state.error?.isNotBlank() == true) loginPanel else promoPanel
