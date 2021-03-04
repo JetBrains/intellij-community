@@ -37,6 +37,6 @@ class LibraryIndexableFilesIterator(val library: Library) : IndexableFilesIterat
       }
     }
 
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, visitedFileSet)
+    return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, visitedFileSet)
   }
 }

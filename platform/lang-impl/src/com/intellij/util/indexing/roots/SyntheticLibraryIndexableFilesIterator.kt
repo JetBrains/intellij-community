@@ -37,6 +37,6 @@ internal class SyntheticLibraryIndexableFilesIterator(
 
   override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
     val roots = runReadAction { syntheticLibrary.allRoots }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, visitedFileSet)
+    return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, visitedFileSet)
   }
 }
