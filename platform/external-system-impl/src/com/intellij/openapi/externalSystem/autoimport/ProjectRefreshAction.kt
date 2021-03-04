@@ -38,22 +38,13 @@ class ProjectRefreshAction : DumbAwareAction() {
 
   @NlsActions.ActionText
   private fun getNotificationText(systemIds: Set<ProjectSystemId>): String {
-    val systemsPresentation = systemIds.joinToString { it.readableName }
+    val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
     return ExternalSystemBundle.message("external.system.reload.notification.action.reload.text", systemsPresentation)
-  }
-
-  private fun List<String>.naturalJoin(): String {
-    if (size == 0) return ""
-    if (size == 1) return first()
-    val leading = dropLast(1).joinToString(", ")
-    return ExternalSystemBundle.message("external.system.reload.notification.action.reload.and.conjunction", leading, last())
   }
 
   @NlsActions.ActionDescription
   private fun getNotificationDescription(systemIds: Set<ProjectSystemId>): String {
-    val systemsPresentation = systemIds.map { it.readableName }
-      .sortedWith(NaturalComparator.INSTANCE)
-      .naturalJoin()
+    val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
     val productName = ApplicationNamesInfo.getInstance().fullProductName
     return ExternalSystemBundle.message("external.system.reload.notification.action.reload.description", systemsPresentation, productName)
   }
