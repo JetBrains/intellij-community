@@ -9,12 +9,33 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * This component wraps 'left' and 'right' components (for example two toolbars in wide header):<ul>
+ * <li>left one is aligned to the left, right one is aligned to the right</li>
+ * <li>left and right parts get widths according to their preferred sizes</li>
+ * <li>if there is enough space wrapper provides a gap between components</li>
+ * <li>in case of lack of width left part has a priority so it starts decreasing only when right part is already shrunk to its minimum size</li>
+ * </ul>
+ */
 public final class TwoSideComponent extends NonOpaquePanel {
-  public TwoSideComponent(JComponent left, JComponent right) {
-    setLayout(new CommonToolbarLayout(left, right));
-    add(left);
-    add(right);
+  private final boolean myIsLocked;
+
+  public TwoSideComponent(@NotNull JComponent left, @NotNull JComponent right) {
+    try {
+      add(left);
+      add(right);
+      setLayout(new CommonToolbarLayout(left, right));
+    } finally {
+      myIsLocked = true;
+    }
   }
+
+  @Override
+  protected void addImpl(Component comp, Object constraints, int index) {
+    if (myIsLocked) throw new UnsupportedOperationException();
+    super.addImpl(comp, constraints, index);
+  }
+
   private static class CommonToolbarLayout extends AbstractLayoutManager {
     private final JComponent myLeft;
     private final JComponent myRight;
