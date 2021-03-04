@@ -121,7 +121,7 @@ public final class Switcher extends DumbAwareAction {
     static final int SWITCHER_ELEMENTS_LIMIT = 30;
 
     final JBPopup myPopup;
-    final JBList<Object> toolWindows;
+    final JBList<SwitcherListItem> toolWindows;
     final JBList<FileInfo> files;
     final JCheckBox cbShowOnlyEditedFiles;
     final JLabel pathLabel = new JLabel(" ");
@@ -244,7 +244,7 @@ public final class Switcher extends DumbAwareAction {
         }
       }
 
-      CollectionListModel<Object> twModel = new CollectionListModel<>();
+      CollectionListModel<SwitcherListItem> twModel = new CollectionListModel<>();
       windows.stream().sorted((o1, o2) -> {
         String m1 = o1.getMnemonic();
         String m2 = o2.getMnemonic();
@@ -254,9 +254,10 @@ public final class Switcher extends DumbAwareAction {
       }).forEach(twModel::add);
       if (pinned) {
         twModel.add(new SwitcherRecentLocations(this));
+        windows.forEach(window -> window.setMnemonic(null));
       }
 
-      toolWindows = new JBList<>(createModel(twModel, getNamer(), mySpeedSearch, pinned));
+      toolWindows = new JBList<>(createModel(twModel, SwitcherListItem::getTextAtLeft, mySpeedSearch, pinned));
       toolWindows.setPreferredSize(new Dimension(JBUI.scale(200), toolWindows.getPreferredSize().height));
 
       toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
@@ -448,17 +449,6 @@ public final class Switcher extends DumbAwareAction {
 
     boolean isSpeedSearchPopupActive() {
       return mySpeedSearch != null && mySpeedSearch.isPopupActive();
-    }
-
-    @NotNull
-    private Function<? super Object, String> getNamer() {
-      return value -> {
-        if (value instanceof SwitcherListItem) {
-          return ((SwitcherListItem)value).getTextAtLeft();
-        }
-
-        throw new IllegalStateException();
-      };
     }
 
     @Override
@@ -957,7 +947,7 @@ public final class Switcher extends DumbAwareAction {
       @Override
       protected Object getElementAt(int viewIndex) {
         ListModel<FileInfo> filesModel = myComponent.files.getModel();
-        ListModel<Object> twModel = myComponent.toolWindows.getModel();
+        ListModel<SwitcherListItem> twModel = myComponent.toolWindows.getModel();
         if (viewIndex < filesModel.getSize()) return filesModel.getElementAt(viewIndex);
         return twModel.getElementAt(viewIndex - filesModel.getSize());
       }
