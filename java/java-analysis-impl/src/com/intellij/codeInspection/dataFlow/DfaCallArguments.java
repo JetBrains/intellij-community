@@ -56,7 +56,7 @@ import java.util.Set;
   public void flush(@NotNull DfaMemoryState state, @NotNull DfaValueFactory factory, @Nullable PsiMethod method) {
     SideEffectHandlers.SideEffectHandler handler = SideEffectHandlers.getHandler(method);
     if (handler != null) {
-      handler.handleSideEffect(factory, state, this, method);
+      handler.handleSideEffect(factory, state, this);
       return;
     }
     if (myMutation.isPure()) {

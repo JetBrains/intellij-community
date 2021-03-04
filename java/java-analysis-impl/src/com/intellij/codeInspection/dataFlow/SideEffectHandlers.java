@@ -34,31 +34,32 @@ class SideEffectHandlers {
     // While list.set() produces a side effect (changes element), we don't track anything except size, 
     // so we don't need to flush anything
     .register(anyOf(instanceCall(JAVA_UTIL_LIST, "set").parameterTypes("int", "E")),
-              (factory, state, arguments, method) -> { })
+              (factory, state, arguments) -> { })
     .register(anyOf(instanceCall(JAVA_UTIL_COLLECTION, "clear").parameterCount(0),
-                    instanceCall(JAVA_UTIL_MAP, "clear").parameterCount(0)), SideEffectHandlers::collectionClear)
+                    instanceCall(JAVA_UTIL_MAP, "clear").parameterCount(0)),
+              (factory, state, arguments) -> collectionClear(factory, state, arguments))
     .register(anyOf(instanceCall(JAVA_UTIL_LIST, "add").parameterTypes("E"),
                     instanceCall(JAVA_UTIL_LIST, "add").parameterTypes("int", "E")),
-              (factory, state, arguments, method) -> collectionAdd(factory, state, arguments, true))
+              (factory, state, arguments) -> collectionAdd(factory, state, arguments, true))
     .register(anyOf(instanceCall(JAVA_UTIL_SET, "add").parameterTypes("E"),
                     instanceCall(JAVA_UTIL_MAP, "put").parameterTypes("K", "V")),
-              (factory, state, arguments, method) -> collectionAdd(factory, state, arguments, false))
+              (factory, state, arguments) -> collectionAdd(factory, state, arguments, false))
     .register(anyOf(instanceCall(JAVA_UTIL_LIST, "addAll").parameterTypes(JAVA_UTIL_COLLECTION),
                     instanceCall(JAVA_UTIL_LIST, "addAll").parameterTypes("int", JAVA_UTIL_COLLECTION)),
-              (factory, state, arguments, method) -> collectionAddAll(factory, state, arguments, true))
+              (factory, state, arguments) -> collectionAddAll(factory, state, arguments, true))
     .register(anyOf(instanceCall(JAVA_UTIL_SET, "addAll").parameterTypes(JAVA_UTIL_COLLECTION),
                     instanceCall(JAVA_UTIL_MAP, "putAll").parameterTypes(JAVA_UTIL_MAP)),
-              (factory, state, arguments, method) -> collectionAddAll(factory, state, arguments, false))
+              (factory, state, arguments) -> collectionAddAll(factory, state, arguments, false))
     .register(anyOf(instanceCall(JAVA_UTIL_COLLECTION, "removeAll", "retainAll").parameterTypes(JAVA_UTIL_COLLECTION),
                     instanceCall(JAVA_UTIL_MAP, "removeAll").parameterTypes(JAVA_UTIL_MAP)),
-              (factory, state, arguments, method) -> collectionReduce(factory, state, arguments))
+              (factory, state, arguments) -> collectionReduce(factory, state, arguments))
     .register(anyOf(instanceCall(JAVA_UTIL_LIST, "remove").parameterTypes(JAVA_LANG_OBJECT),
                     instanceCall(JAVA_UTIL_SET, "remove").parameterTypes(JAVA_LANG_OBJECT),
                     instanceCall(JAVA_UTIL_MAP, "remove").parameterTypes(JAVA_LANG_OBJECT),
                     instanceCall(JAVA_UTIL_MAP, "remove").parameterTypes(JAVA_LANG_OBJECT, JAVA_LANG_OBJECT)),
-              (factory, state, arguments, method) -> collectionRemove(factory, state, arguments, false))
+              (factory, state, arguments) -> collectionRemove(factory, state, arguments, false))
     .register(instanceCall(JAVA_UTIL_LIST, "remove").parameterTypes("int"),
-              (factory, state, arguments, method) -> collectionRemove(factory, state, arguments, true));
+              (factory, state, arguments) -> collectionRemove(factory, state, arguments, true));
 
   private static void collectionAdd(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments, boolean list) {
     DfaVariableValue size = tryCast(SpecialField.COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
@@ -133,7 +134,7 @@ class SideEffectHandlers {
     }
   }
 
-  private static void collectionClear(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments, PsiMethod method) {
+  private static void collectionClear(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments) {
     DfaVariableValue size = tryCast(SpecialField.COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
     if (size != null) {
       updateSize(state, size, DfTypes.intValue(0));
@@ -156,9 +157,8 @@ class SideEffectHandlers {
      * @param factory value factory to use if necessary
      * @param state memory state to update
      * @param arguments call arguments
-     * @param method called method
      */
-    void handleSideEffect(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments, PsiMethod method);
+    void handleSideEffect(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments);
   }
   
   private static void updateSize(DfaMemoryState state, DfaVariableValue var, DfType type) {
