@@ -21,6 +21,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -410,7 +411,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     Set<DfaMemoryState> finalStates = new LinkedHashSet<>();
 
     Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
-    DfaValue defaultResult = getMethodResultValue(instruction, callArguments, memState, factory);
+    PsiType qualifierType = memState.getPsiType(callArguments.myQualifier);
+    PsiMethod realMethod = findSpecificMethod(instruction.getContext(), instruction.getTargetMethod(), qualifierType);
+    DfaValue defaultResult = getMethodResultValue(instruction, callArguments, memState, factory, realMethod);
     PsiExpression expression = instruction.getExpression();
     if (callArguments.myArguments != null && !(defaultResult.getDfType() instanceof DfConstantType)) {
       for (MethodContract contract : instruction.getContracts()) {
@@ -436,7 +439,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (expression != null) {
         onMethodCall(state.peek(), expression, callArguments, state);
       }
-      callArguments.flush(state, factory, instruction.getTargetMethod());
+      callArguments.flush(state, factory, realMethod);
       pushExpressionResult(state.pop(), instruction, state);
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
     }
@@ -636,21 +639,24 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfType dfType = memState.getDfType(value);
       if (dfType == NULL) {
         memState.setDfType(value, NOT_NULL_OBJECT);
-      } else {
+      }
+      else {
         memState.meetDfType(value, NOT_NULL_OBJECT);
       }
     }
     return value;
   }
 
-  private static @NotNull PsiMethod findSpecificMethod(PsiElement context,
-                                                       @NotNull PsiMethod method,
-                                                       @Nullable PsiType qualifierType) {
-    if (qualifierType == null || !PsiUtil.canBeOverridden(method)) return method;
+  @Contract("_, null, _ -> null; _, !null, _ -> !null")
+  private static PsiMethod findSpecificMethod(PsiElement context,
+                                              @Nullable PsiMethod method,
+                                              @Nullable PsiType qualifierType) {
+    if (method == null || qualifierType == null || !PsiUtil.canBeOverridden(method)) return method;
     PsiExpression qualifierExpression = null;
     if (context instanceof PsiMethodCallExpression) {
       qualifierExpression = ((PsiMethodCallExpression)context).getMethodExpression().getQualifierExpression();
-    } else if (context instanceof PsiMethodReferenceExpression) {
+    }
+    else if (context instanceof PsiMethodReferenceExpression) {
       qualifierExpression = ((PsiMethodReferenceExpression)context).getQualifierExpression();
     }
     if (qualifierExpression instanceof PsiSuperExpression) return method; // non-virtual call
@@ -659,7 +665,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   private static @NotNull DfaValue getMethodResultValue(MethodCallInstruction instruction,
                                                         @NotNull DfaCallArguments callArguments,
-                                                        DfaMemoryState state, DfaValueFactory factory) {
+                                                        DfaMemoryState state, DfaValueFactory factory, PsiMethod realMethod) {
     if (callArguments.myArguments != null) {
       PsiMethod method = instruction.getTargetMethod();
       if (method != null) {
@@ -697,13 +703,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       PsiMethod targetMethod = instruction.getTargetMethod();
       Mutability mutable = Mutability.UNKNOWN;
       if (targetMethod != null) {
-        mutable = Mutability.getMutability(targetMethod);
-        PsiType qualifierType = state.getPsiType(qualifierValue);
-        PsiMethod realMethod = findSpecificMethod(instruction.getContext(), targetMethod, qualifierType);
         if (realMethod != targetMethod) {
           nullability = DfaPsiUtil.getElementNullability(type, realMethod);
           mutable = Mutability.getMutability(realMethod);
+        } else {
+          mutable = Mutability.getMutability(targetMethod);
         }
+        PsiType qualifierType = state.getPsiType(qualifierValue);
         type = narrowReturnType(type, qualifierType, realMethod);
       }
       DfType dfType = instruction.getContext() instanceof PsiNewExpression ?

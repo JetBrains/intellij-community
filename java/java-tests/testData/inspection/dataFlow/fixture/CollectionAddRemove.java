@@ -105,4 +105,14 @@ public class CollectionAddRemove {
     }
     System.out.println(bestStr.length());
   }
+
+  void collectionDeclaredType() {
+    final Collection<String> list = new ArrayList<>();
+    list.add("foo");
+    list.add("bar");
+    list.add("baz");
+
+    if (<warning descr="Condition 'list.size() == 2' is always 'false'">list.size() == 2</warning>) { // no warning is here 
+    }
+  }
 }
