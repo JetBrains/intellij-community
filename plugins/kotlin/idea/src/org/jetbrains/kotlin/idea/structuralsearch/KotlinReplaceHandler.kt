@@ -36,7 +36,7 @@ class KotlinReplaceHandler(private val project: Project) : StructuralReplaceHand
             PatternCompiler.compilePattern(project, options.matchOptions, true, true).let { it.targetNode ?: it.nodes.current() }
         )
         val replaceTemplates = MatcherImplUtil.createTreeFromText(
-            info.replacement.fixPattern(), PatternTreeContext.Block, options.matchOptions.fileType, project
+            info.replacement.fixPattern(), PatternTreeContext.Block, options.matchOptions.fileType!!, project
         )
         for (i in 0 until info.matchesCount) {
             val match = StructuralSearchUtil.getPresentableElement(info.getMatch(i)) ?: break

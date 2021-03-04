@@ -177,8 +177,8 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
 
     override fun checkReplacementPattern(project: Project, options: ReplaceOptions) {
         val matchOptions = options.matchOptions
-        val fileType = matchOptions.fileType
-        val dialect = matchOptions.dialect
+        val fileType = matchOptions.fileType!!
+        val dialect = matchOptions.dialect!!
         val searchIsDeclaration = isProbableExpression(matchOptions.searchPattern, fileType, dialect, project)
         val replacementIsDeclaration = isProbableExpression(options.replacement, fileType, dialect, project)
         if (searchIsDeclaration != replacementIsDeclaration) {

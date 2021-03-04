@@ -44,7 +44,7 @@ abstract class OneStateFilter(@Nls val name: Supplier<String>, @Nls val label: S
 
     override fun isApplicable(nodes: MutableList<out PsiElement>, completePattern: Boolean, target: Boolean): Boolean =
         myTable.variable is MatchVariableConstraint
-                && myTable.profile.isApplicableConstraint(constraintName, nodes, completePattern, target)
+                && myTable.profile!!.isApplicableConstraint(constraintName, nodes, completePattern, target)
 
     override fun getEditor(): FilterEditor<out NamedScriptableDefinition> =
         object : FilterEditor<MatchVariableConstraint>(myTable.matchVariable, myTable.constraintChangedCallback) {

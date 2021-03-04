@@ -28,7 +28,7 @@ abstract class KotlinSSResourceInspectionTest : BasePlatformTestCase() {
     private var myInspection: SSBasedInspection? = null
     private val myConfiguration = SearchConfiguration().apply {
         name = "SSR"
-        matchOptions.fileType = KotlinFileType.INSTANCE
+        matchOptions.setFileType(KotlinFileType.INSTANCE)
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
