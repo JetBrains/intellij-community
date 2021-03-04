@@ -38,12 +38,22 @@ import java.io.File
  */
 object PyTypeShed {
 
+  private val stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels = mapOf(
+    // name to python version when this name was introduced
+    "_py_abc" to LanguageLevel.PYTHON37,
+    "contextvars" to LanguageLevel.PYTHON37,
+    "graphlib" to LanguageLevel.PYTHON39,
+    "zoneinfo" to LanguageLevel.PYTHON39
+  )
+
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
    */
-  fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk : Sdk): Boolean {
+  fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk: Sdk): Boolean {
     if (isInStandardLibrary(root)) {
-        return true
+      val head = name.firstComponent ?: return true
+      val lowestLanguageLevel = stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels[head] ?: return true
+      return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk).isAtLeast(lowestLanguageLevel)
     }
     if (isInThirdPartyLibraries(root)) {
       if (ApplicationManager.getApplication().isUnitTestMode) {

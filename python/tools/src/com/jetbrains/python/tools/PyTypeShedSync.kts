@@ -2,6 +2,7 @@
 package com.jetbrains.python.tools
 
 import com.intellij.util.io.delete
+import com.jetbrains.python.psi.LanguageLevel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -198,6 +199,9 @@ val blacklist = sequenceOf(
 println("Cleaning")
 cleanTopLevelPackages(bundled, blacklist)
 
+println("Processing stdlib/VERSIONS")
+printStdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels(bundled, blacklist)
+
 fun sync(repo: Path, bundled: Path) {
   if (!Files.exists(repo)) throw IllegalArgumentException("Not found: ${repo.abs()}")
 
@@ -257,6 +261,22 @@ fun cleanTopLevelPackages(typeshed: Path, blackList: Set<String>) {
 
   println("White list size: ${whiteList.size}")
   println("Black list size: ${blackList.size}")
+}
+
+fun printStdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels(repo: Path, blackList: Set<String>) {
+  val lowestPython2 = LanguageLevel.PYTHON27.toPythonVersion()
+  val lowestPython3 = LanguageLevel.PYTHON36.toPythonVersion()
+
+  val lines = Files
+    .readAllLines(repo.resolve("stdlib/VERSIONS"))
+    .map { it.split(": ", limit = 2) }
+
+  lines.filter { it.size == 2 }
+    .filter { it.first() !in blackList }
+    .filter { it.last().let { pythonVersion -> pythonVersion != lowestPython2 && pythonVersion != lowestPython3 } }
+    .forEach { println("${it.first()}, ${it.last()}") }
+
+  lines.filter { it.size != 2 }.forEach { println("WARN: malformed line: ${it.first()}") }
 }
 
 fun Path.abs() = toAbsolutePath()
