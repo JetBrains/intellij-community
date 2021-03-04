@@ -66,7 +66,7 @@ object RuntimeChooserJreValidator {
                     LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error",
                                        LangBundle.message(LangBundle.message("dialog.message.choose.ide.runtime.no.file.part"))))
 
-    if (SystemInfo.isMac && homeDir.parent?.fileName?.toString() == "Contents" && homeDir.fileName?.toString() == "Home" ) {
+    if (SystemInfo.isMac && homeDir.endsWith("Contents/Home")) {
       return testNewJdkUnderProgress({ homeDir.parent?.parent?.toString() }, callback)
     }
 
@@ -86,7 +86,7 @@ object RuntimeChooserJreValidator {
       else -> homeDir / "bin" / "java"
     }
 
-    if (!binJava.isFile() || ((SystemInfo.isMac || SystemInfo.isLinux) && !binJava.isExecutable())) {
+    if (!binJava.isFile() || (SystemInfo.isUnix && !binJava.isExecutable())) {
       LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. Failed to find bin/java executable at $binJava")
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
     }
@@ -108,7 +108,7 @@ object RuntimeChooserJreValidator {
 
     try {
       val cmd = GeneralCommandLine(binJava.toString(), "-version")
-      val exitCode = CapturingProcessHandler(cmd).runProcess(15_000).exitCode
+      val exitCode = CapturingProcessHandler(cmd).runProcess(30_000).exitCode
       if (exitCode != 0) {
         LOG.warn("Failed to run JDK for boot runtime: ${homeDir}. Exit code is ${exitCode} for $binJava.")
         return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
