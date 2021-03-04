@@ -205,14 +205,6 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     return controller != null && controller.getPrevOrNextParameterOffset(isNext) != -1;
   }
 
-  static void prevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
-    ParameterInfoControllerBase controller = findControllerAtOffset(editor, lbraceOffset);
-    int newOffset = controller != null ? controller.getPrevOrNextParameterOffset(isNext) : -1;
-    if (newOffset != -1) {
-      controller.moveToParameterAtOffset(newOffset);
-    }
-  }
-
   protected int getCurrentOffset() {
     int caretOffset = myEditor.getCaretModel().getOffset();
     CharSequence chars = myEditor.getDocument().getCharsSequence();

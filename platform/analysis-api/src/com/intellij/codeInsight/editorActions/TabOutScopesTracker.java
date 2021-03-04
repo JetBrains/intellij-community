@@ -68,6 +68,8 @@ public interface TabOutScopesTracker {
    */
   boolean hasScopeEndingAt(@NotNull Editor editor, int offset);
 
+  int getScopeEndingAt(@NotNull Editor editor, int offset);
+
   /**
    * Removes a tracked scope (if any) ending at the given offset.
    *

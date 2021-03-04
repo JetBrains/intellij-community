@@ -58,6 +58,12 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
   }
 
   @Override
+  public int getScopeEndingAt(@NotNull Editor editor, int offset) {
+    int caretShift = checkOrRemoveScopeEndingAt(editor, offset, false);
+    return caretShift > 0 ? offset + caretShift : -1;
+  }
+
+  @Override
   public int removeScopeEndingAt(@NotNull Editor editor, int offset) {
     int caretShift = checkOrRemoveScopeEndingAt(editor, offset, true);
     return caretShift > 0 ? offset + caretShift : -1;
