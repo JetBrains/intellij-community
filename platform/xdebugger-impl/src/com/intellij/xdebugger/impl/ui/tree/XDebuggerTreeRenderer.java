@@ -7,6 +7,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -35,6 +36,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   XDebuggerTreeRenderer() {
     getIpad().right = 0;
     myLink.getIpad().left = 0;
+    myUsedCustomSpeedSearchHighlighting = true;
   }
 
   @Override
@@ -79,6 +81,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
+    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, false, selected);
   }
 
   private void updateIcon(XDebuggerTreeNode node) {
@@ -156,6 +159,11 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+
+    MyColoredTreeCellRenderer() {
+      myUsedCustomSpeedSearchHighlighting = true;
+    }
+
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
