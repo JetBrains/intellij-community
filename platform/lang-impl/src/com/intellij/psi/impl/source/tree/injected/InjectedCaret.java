@@ -186,11 +186,6 @@ public class InjectedCaret implements Caret {
   }
 
   @Override
-  public void extendLineSelection() {
-    myDelegate.extendLineSelection();
-  }
-
-  @Override
   public void selectWordAtCaret(boolean honorCamelWordsSettings) {
     myDelegate.selectWordAtCaret(honorCamelWordsSettings);
   }

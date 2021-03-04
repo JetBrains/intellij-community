@@ -16,7 +16,7 @@ public class ExtendLineSelectionAction extends TextComponentEditorAction {
   private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
     public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      caret.extendLineSelection();
+      EditorActionUtil.selectEntireLines(caret);
       final int end = caret.getSelectionEnd();
       caret.moveToOffset(end);
     }

@@ -264,14 +264,6 @@ public interface Caret extends UserDataHolderEx, Disposable {
   void selectLineAtCaret();
 
   /**
-   * Selects the entire lines covering the current selection, if any.
-   * If there's no selection, does the same as {@link #selectLineAtCaret()}.
-   * Because the resulting selection includes the line ending character,
-   * a repeated invocation of this method extends the selection to include the next line.
-   */
-  void extendLineSelection();
-
-  /**
    * Selects the entire word at the caret position, optionally using camel-case rules to
    * determine word boundaries.
    *
