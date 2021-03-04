@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
@@ -277,7 +278,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
         if (toolWindow.isDisposed()) return;
-        boolean visible = toolWindow.isVisible();
+        boolean visible = ((ToolWindowManagerEx)toolWindowManager).shouldUpdateToolWindowContent(toolWindow);
         if (!visible || wasVisible) {
           return;
         }
