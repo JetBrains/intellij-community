@@ -266,8 +266,15 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
     Integer gradleScriptDebugPort = effectiveSettings.getUserData(BUILD_PROCESS_DEBUGGER_PORT_KEY);
     if (isGradleScriptDebug(effectiveSettings) && gradleScriptDebugPort != null && gradleScriptDebugPort > 0) {
-      boolean isJdk9orLater = ExternalSystemJdkUtil.isJdk9orLater(effectiveSettings.getJavaHome());
-      String jvmOpt = ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + (isJdk9orLater ? "127.0.0.1:" : "") + gradleScriptDebugPort;
+      String debugAddress;
+      String dispatchAddr = effectiveSettings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
+      if (dispatchAddr != null) {
+        debugAddress = dispatchAddr + ":" + gradleScriptDebugPort;
+      } else {
+        boolean isJdk9orLater = ExternalSystemJdkUtil.isJdk9orLater(effectiveSettings.getJavaHome());
+        debugAddress = (isJdk9orLater ? "127.0.0.1:" : "") + gradleScriptDebugPort;
+      }
+      String jvmOpt = ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + debugAddress;
       effectiveSettings.withVmOption(jvmOpt);
     }
     if (isDebugAllTasks(effectiveSettings)) {
