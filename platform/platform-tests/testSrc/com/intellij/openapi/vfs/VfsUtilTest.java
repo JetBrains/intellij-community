@@ -58,6 +58,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
@@ -550,12 +551,16 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   public void pathEqualsWorksForWslPaths() throws IOException {
     IoTestUtil.assumeWindows();
     IoTestUtil.assumeWslPresence();
-    String wslName = IoTestUtil.enumerateWslDistributions().get(0);
+    List<@NotNull String> distributions = IoTestUtil.enumerateWslDistributions();
+    assumeTrue("No WSL distributions found", !distributions.isEmpty());
+
+    String wslName = distributions.get(0);
 
     VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
     assertTrue(VfsUtilCore.pathEqualsTo(file, "\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
     assertTrue(VfsUtilCore.pathEqualsTo(file, "//wsl$/" + wslName + "/usr/bin"));
     assertTrue(VfsUtilCore.pathEqualsTo(file, "//wsl$/" + wslName + "/usr/bin/"));
     assertFalse(VfsUtilCore.pathEqualsTo(file, "//xxx$/" + wslName + "/usr/bin/"));
+    assertFalse(VfsUtilCore.pathEqualsTo(file, "//wsl$/xxx/usr/bin/"));
   }
 }
