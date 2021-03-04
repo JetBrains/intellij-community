@@ -91,7 +91,7 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
     return when (st) {
       is SpaceLoginState.Connected -> null
 
-      is SpaceLoginState.Connecting -> buildConnectingPanel(st, withBorder = true) {
+      is SpaceLoginState.Connecting -> buildConnectingPanel(st, prettyBorder()) {
         st.cancel()
       }
 

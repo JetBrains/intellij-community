@@ -19,10 +19,10 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import javax.swing.JButton
 import javax.swing.JLabel
+import javax.swing.border.Border
 
 internal object LoginComponents {
   fun LayoutBuilder.loginPanel(
@@ -103,7 +103,7 @@ internal object LoginComponents {
     SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)()
   }
 
-  internal fun buildConnectingPanel(st: SpaceLoginState.Connecting, withBorder: Boolean = false, cancelAction: () -> Unit): DialogPanel {
+  internal fun buildConnectingPanel(st: SpaceLoginState.Connecting, customBorder: Border? = null, cancelAction: () -> Unit): DialogPanel {
     return panel {
       val cancelButton = JButton(IdeBundle.message("button.cancel")).apply {
         addActionListener { cancelAction() }
@@ -112,9 +112,7 @@ internal object LoginComponents {
         cancelButton()
       }
     }.apply {
-      if (withBorder) {
-        border = JBUI.Borders.empty(8, 12)
-      }
+      customBorder?.let { border = it }
     }
   }
 }
