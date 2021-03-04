@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.core.script
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootModificationTracker
@@ -22,7 +21,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.kotlin.resolve.jvm.KotlinSafeClassFinder
-
 
 class KotlinScriptDependenciesClassFinder(
     private val project: Project
@@ -57,8 +55,6 @@ class KotlinScriptDependenciesClassFinder(
         // Following code is needed because NonClasspathClassFinder cannot find inner classes
         // JavaFullClassNameIndex cannot be used directly, because it filter only classes in source roots
 
-        // findInnerClassInCaches(qualifiedName, scope)?.let { return it }
-
         val classes = StubIndex.getElements(
             JavaFullClassNameIndex.getInstance().key,
             qualifiedName.hashCode(),
@@ -76,25 +72,6 @@ class KotlinScriptDependenciesClassFinder(
         }
 
         return found?.isInScope(scope)
-    }
-
-    private fun findInnerClassInCaches(qualifiedName: String, scope: GlobalSearchScope): PsiClass? {
-        // TODO: entire method could be dropped as soon as [com.intellij.util.indexing.roots.IndexableFilesIterationMethods#iterateNonExcludedRoots]
-        //   via [com.intellij.util.indexing.roots.IndexableFilesIterationMethods#shouldIndexFile] drops `projectFileIndex.isExcluded(file)`
-
-        val packageNameCandidate = StringUtil.getPackageName(StringUtil.getPackageName(qualifiedName))
-        if (packageNameCandidate.isNotEmpty() && getCache(scope).getDirectoriesByPackageName(packageNameCandidate).isNotEmpty()) {
-            val endIndex = qualifiedName.indexOf('.', packageNameCandidate.length + 1)
-            if (endIndex > 0) {
-                val outerCandidateClassName = qualifiedName.substring(0, endIndex)
-                super.findClass(outerCandidateClassName, scope)?.let { outerClass ->
-                    outerClass.findInnerClassByName(StringUtil.getShortName(qualifiedName), false)?.let {
-                        return it.isInScope(scope)
-                    }
-                }
-            }
-        }
-        return null
     }
 
     private fun PsiClass.isInScope(scope: GlobalSearchScope): PsiClass? {
