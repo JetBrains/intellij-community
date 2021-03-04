@@ -229,7 +229,7 @@ public class MatchOptions implements JDOMExternalizable {
     caseSensitiveMatch = MatchVariableConstraint.getBooleanValue(element, CASESENSITIVE_ATTRIBUTE_NAME, false);
 
     myUnknownFileType = element.getAttributeValue(FILE_TYPE_ATTR_NAME);
-    myFileType = getFileTypeByName(myUnknownFileType);
+    myFileType = (myUnknownFileType == null) ? null : StructuralSearchUtil.getSuitableFileTypeByName(myUnknownFileType);
     if (myFileType != null) {
       myUnknownFileType = null;
     }
@@ -246,18 +246,6 @@ public class MatchOptions implements JDOMExternalizable {
       constraint.readExternal(element1);
       addVariableConstraint(constraint);
     }
-  }
-
-  private static LanguageFileType getFileTypeByName(String value) {
-    if (value != null) {
-      for (LanguageFileType type : StructuralSearchUtil.getSuitableFileTypes()) {
-        if (value.equals(type.getName())) {
-          return type;
-        }
-      }
-    }
-
-    return null;
   }
 
   public boolean equals(Object o) {
