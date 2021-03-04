@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
@@ -121,6 +122,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
   private static InetAddress findAddress(boolean remoteRun) throws UnknownHostException, SocketException {
     if (remoteRun) {
+      String host = Registry.stringValue("external.system.remote.debugger.dispatch.host");
+      if (!StringUtil.isEmpty(host) && !"0".equals(host)) {
+        return InetAddress.getByName(host);
+      }
       Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
       while (interfaces.hasMoreElements()) {
         NetworkInterface networkInterface = interfaces.nextElement();
