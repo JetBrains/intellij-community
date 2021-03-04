@@ -466,6 +466,11 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
   }
 
+  @Override
+  public String toString() {
+    return "UnindexedFilesUpdater[" + myProject.getName() + "]";
+  }
+
   /**
    * Returns the best number of threads to be used for indexing at this moment.
    * It may change during execution of the IDE depending on other activities' load.
