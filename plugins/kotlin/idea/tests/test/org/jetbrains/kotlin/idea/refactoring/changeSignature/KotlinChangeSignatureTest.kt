@@ -56,6 +56,7 @@ import org.jetbrains.kotlin.utils.sure
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import kotlin.reflect.full.declaredMemberFunctions
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -331,6 +332,26 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     // --------------------------------- Tests ---------------------------------
+
+    fun testAllTestsPresented() {
+        val functionNames = this::class.declaredMemberFunctions
+            .asSequence()
+            .map { it.name }
+            .filter { it.startsWith("test") }
+            .map { it.removePrefix("test") }
+            .map { it + "Before" }
+            .toSet()
+
+        for (file in testDataDirectory.listFiles()!!) {
+            val fileName = file.name.substringBefore(".")
+            if (fileName.endsWith("Messages") || fileName.endsWith("After")) continue
+
+            TestCase.assertTrue(
+                "test function for ${file.name} not found",
+                fileName in functionNames,
+            )
+        }
+    }
 
     fun testBadSelection() {
         myFixture.configureByFile(getTestName(false) + "Before.kt")
