@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -29,16 +29,30 @@ class RemoveEmptyParenthesesFromLambdaCallInspection : IntentionBasedInspection<
 class RemoveEmptyParenthesesFromLambdaCallIntention : SelfTargetingRangeIntention<KtValueArgumentList>(
     KtValueArgumentList::class.java, KotlinBundle.lazyMessage("remove.unnecessary.parentheses.from.function.call.with.lambda")
 ) {
-    override fun applicabilityRange(element: KtValueArgumentList): TextRange? {
-        if (element.arguments.isNotEmpty()) return null
-        val parent = element.parent as? KtCallExpression ?: return null
-        if (parent.calleeExpression?.text == KtTokens.SUSPEND_KEYWORD.value) return null
-        val singleLambdaArgument = parent.lambdaArguments.singleOrNull() ?: return null
-        if (element.getLineNumber(start = false) != singleLambdaArgument.getLineNumber(start = true)) return null
-        val prev = element.getPrevSiblingIgnoringWhitespaceAndComments()
-        if (prev is KtCallExpression || (prev as? KtQualifiedExpression)?.callExpression != null) return null
-        return element.range
-    }
+    override fun applicabilityRange(element: KtValueArgumentList): TextRange? = Companion.applicabilityRange(element)
 
-    override fun applyTo(element: KtValueArgumentList, editor: Editor?) = element.delete()
+    override fun applyTo(element: KtValueArgumentList, editor: Editor?) = Companion.applyTo(element)
+
+    companion object {
+        fun isApplicable(list: KtValueArgumentList): Boolean = applicabilityRange(list) != null
+
+        fun applyTo(list: KtValueArgumentList) = list.delete()
+
+        fun applyToIfApplicable(list: KtValueArgumentList) {
+            if (isApplicable(list)) {
+                applyTo(list)
+            }
+        }
+
+        private fun applicabilityRange(list: KtValueArgumentList): TextRange? {
+            if (list.arguments.isNotEmpty()) return null
+            val parent = list.parent as? KtCallExpression ?: return null
+            if (parent.calleeExpression?.text == KtTokens.SUSPEND_KEYWORD.value) return null
+            val singleLambdaArgument = parent.lambdaArguments.singleOrNull() ?: return null
+            if (list.getLineNumber(start = false) != singleLambdaArgument.getLineNumber(start = true)) return null
+            val prev = list.getPrevSiblingIgnoringWhitespaceAndComments()
+            if (prev is KtCallExpression || (prev as? KtQualifiedExpression)?.callExpression != null) return null
+            return list.range
+        }
+    }
 }
