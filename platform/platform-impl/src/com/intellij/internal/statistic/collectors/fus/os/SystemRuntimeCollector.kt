@@ -18,6 +18,7 @@ import com.intellij.util.system.CpuArch
 import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
 import java.util.*
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class SystemRuntimeCollector : ApplicationUsagesCollector() {
@@ -33,6 +34,10 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     val totalPhysicalMemory = StatisticsUtil.getUpperBound((osMxBean.totalPhysicalMemorySize.toDouble() / (1 shl 30)).roundToInt(),
                                                            intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
     result.add(MEMORY_SIZE.metric(totalPhysicalMemory))
+
+    var totalSwapSize = (osMxBean.totalSwapSpaceSize.toDouble() / (1 shl 30)).roundToInt()
+    totalSwapSize = min(totalSwapSize, totalPhysicalMemory)
+    result.add(SWAP_SIZE.metric(if (totalSwapSize > 0) StatisticsUtil.getNextPowerOfTwo(totalSwapSize) else 0))
 
     for (gc in ManagementFactory.getGarbageCollectorMXBeans()) {
       result.add(GC.metric(gc.name))
@@ -77,10 +82,11 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       "-Xms", "-Xmx", "-XX:SoftRefLRUPolicyMSPerMB", "-XX:ReservedCodeCacheSize"
     )
 
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 8)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 9)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
     private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("gigabytes"))
+    private val SWAP_SIZE: EventId1<Int> = GROUP.registerEvent("swap.size", EventFields.Int("gigabytes"))
     private val GC: EventId1<String?> = GROUP.registerEvent("garbage.collector",
       EventFields.String(
         "name",
