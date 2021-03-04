@@ -18,13 +18,15 @@ import java.util.*;
 
 public class UnimplementInterfaceAction extends BaseElementAtCaretIntentionAction {
   private String myName = "Interface";
+  private final String myClassName;
   private final boolean myIsDuplicates;
 
   public UnimplementInterfaceAction() {
-    this(false);
+    this(null, false);
   }
 
-  public UnimplementInterfaceAction(boolean isDuplicates) {
+  public UnimplementInterfaceAction(String className, boolean isDuplicates) {
+    myClassName = className;
     myIsDuplicates = isDuplicates;
   }
 
@@ -32,7 +34,7 @@ public class UnimplementInterfaceAction extends BaseElementAtCaretIntentionActio
   @NotNull
   public String getText() {
     if (myIsDuplicates) {
-      return JavaBundle.message("intention.text.remove.duplicates");
+      return JavaBundle.message("intention.text.implements.list.remove.others", myClassName);
     }
     return JavaBundle.message("intention.text.unimplement.0", myName);
   }

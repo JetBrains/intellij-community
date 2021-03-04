@@ -975,8 +975,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createUnimplementInterfaceAction(boolean isDuplicates) {
-    return new UnimplementInterfaceAction(isDuplicates);
+  public @NotNull IntentionAction createUnimplementInterfaceAction(@NotNull String className, boolean isDuplicates) {
+    return new UnimplementInterfaceAction(className, isDuplicates);
   }
 
   @Override

@@ -703,10 +703,11 @@ public final class HighlightClassUtil {
       }
     }
     if (dupCount > 1) {
-      String description = JavaErrorBundle.message("duplicate.class", HighlightUtil.formatClass(aClass));
+      final String name = HighlightUtil.formatClass(aClass);
+      String description = JavaErrorBundle.message("duplicate.class", name);
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createUnimplementInterfaceAction(true));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createUnimplementInterfaceAction(name, true));
       return info;
     }
     return null;
