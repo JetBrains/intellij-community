@@ -34,8 +34,9 @@ internal const val SIGN_UP_SPACE_URL: String = "https://www.jetbrains.com/space/
 internal const val SPACE_TOOLBAR_PROMO_BANNER_PATH = "/images/spacePromo.png"
 internal const val SPACE_TOOLBAR_PROMO_BANNER_PATH_RETINA = "/images/spacePromo@2x.png"
 
-internal const val SPACE_BIG_PROMO_BANNER_PATH = "/images/spaceBigPromoBanner.png"
-internal const val SPACE_BIG_PROMO_BANNER_PATH_RETINA = "/images/spaceBigPromoBanner@2x.png"
+internal const val SPACE_BIG_PROMO_BANNER_NAME = "/images/spaceVideoPreview"
+internal const val DARK_POSTFIX = "_dark"
+internal const val HIDPI_POSTFIX = "@2x"
 
 internal const val JETBRAINS_SPACE_LOGO = "/images/jetbrainsSpace.svg"
 internal const val JETBRAINS_SPACE_LOGO_DARK = "/images/jetbrainsSpaceDark.svg"
@@ -53,29 +54,37 @@ internal fun toolbarPromoBanner(): JComponent? {
   return wrapWithWatchSpaceOverviewLabelOverlay(JLabel(JBImageIcon(image)))
 }
 
-internal fun bigPromoBanner(): JComponent? = bigPromoBanner(400, 260)
+internal fun bigPromoBanner(): JComponent? = bigPromoBanner(500, 285)
 
 internal fun bigPromoBanner(width: Int, height: Int): JComponent? {
-  val imagePath = if (StartupUiUtil.isJreHiDPI()) SPACE_BIG_PROMO_BANNER_PATH_RETINA else SPACE_BIG_PROMO_BANNER_PATH
+  val isDarcula = StartupUiUtil.isUnderDarcula()
+  val themePart = if (isDarcula) DARK_POSTFIX else ""
+  val retinaPart = if (StartupUiUtil.isJreHiDPI()) HIDPI_POSTFIX else ""
+  val imagePath = "${SPACE_BIG_PROMO_BANNER_NAME}${themePart}${retinaPart}.png"
+
   val image = ImageLoader.loadImage(imagePath, width, height) ?: return null
 
-  return wrapWithWatchSpaceOverviewLabelOverlay(JLabel(JBImageIcon(image)), alwaysDisplayLabel = true)
+  return wrapWithWatchSpaceOverviewLabelOverlay(JLabel(JBImageIcon(image)), alwaysDisplayLabel = true, useDarkLabel = isDarcula)
 }
 
 internal fun exploreSpaceLink(): BrowserLink = BrowserLink(SpaceBundle.message("space.promo.explore.space.button"), EXPLORE_SPACE_PROMO_URL).apply {
   isFocusPainted = false
 }
 
-internal fun wrapWithWatchSpaceOverviewLabelOverlay(component: JComponent, alwaysDisplayLabel: Boolean = false): JComponent {
+private fun wrapWithWatchSpaceOverviewLabelOverlay(component: JComponent,
+                                                            alwaysDisplayLabel: Boolean = false,
+                                                            useDarkLabel: Boolean = true
+): JComponent {
   @NlsSafe val text = "\u25B6${FontUtil.spaceAndThinSpace()}${SpaceBundle.message("space.promo.watch.space.overview.label")}"
+  val labelBackground = if (useDarkLabel) Color(0, 0, 0, 180) else Color(255, 255, 255, 180)
+  val labelForeground = if (useDarkLabel) Color.WHITE else Color.BLACK
 
   val watchVideoButton = JLabel(text).apply {
-    val labelColor = Color(0, 0, 0, 180)
     isFocusable = false
     isOpaque = true
     isVisible = alwaysDisplayLabel
-    background = labelColor
-    foreground = Color.WHITE
+    background = labelBackground
+    foreground = labelForeground
     border = JBUI.Borders.empty(8)
   }
 
