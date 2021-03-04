@@ -15,8 +15,7 @@
  */
 package com.intellij.codeInspection.nullable;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -29,6 +28,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +39,11 @@ import java.util.function.Consumer;
 
 public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   private final String myAnnotation;
-  private final String[] myAnnosToRemove;
+  private final Nullability myTargetNullability;
 
-  AnnotateOverriddenMethodParameterFix(@NotNull String annotationFQN, String @NotNull ... annosToRemove) {
-    myAnnotation = annotationFQN;
-    myAnnosToRemove = annosToRemove;
+  AnnotateOverriddenMethodParameterFix(@NotNull Nullability targetNullability, String annotation) {
+    myAnnotation = annotation;
+    myTargetNullability = targetNullability;
   }
 
   @Override
@@ -72,11 +72,16 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
 
     FileModificationService.getInstance().preparePsiElementsForWrite(toAnnotate);
     RuntimeException exception = null;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    String[] annotationsToRemove =
+      ArrayUtil.toStringArray(myTargetNullability == Nullability.NOT_NULL ? manager.getNullables() : manager.getNotNulls());
     for (PsiParameter psiParam : toAnnotate) {
       assert psiParam != null : toAnnotate;
       try {
         if (AnnotationUtil.isAnnotatingApplicable(psiParam, myAnnotation)) {
-          AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiParam, myAnnosToRemove);
+          NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(psiParam);
+          if (info != null && info.getNullability() == myTargetNullability) continue;
+          AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiParam, annotationsToRemove);
           PsiFile containingFile = psiParam.getContainingFile();
           if (psiParam.isValid() && fix.isAvailable(project, containingFile, psiParam, psiParam)) {
             fix.invoke(project, containingFile, psiParam, psiParam);

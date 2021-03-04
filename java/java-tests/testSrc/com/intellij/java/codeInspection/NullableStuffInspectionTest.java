@@ -339,4 +339,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
+
+  public void testOverridersHaveNonDefaultAnnotation() {
+    myFixture.addClass("package org.eclipse.jdt.annotation;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.PARAMETER) public @interface NonNull { }");
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Annotate overridden method parameters"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
 }
