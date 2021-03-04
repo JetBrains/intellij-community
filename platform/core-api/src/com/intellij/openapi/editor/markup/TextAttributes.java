@@ -197,6 +197,7 @@ public class TextAttributes implements Cloneable {
     effectsBuilder.applyTo(this);
   }
 
+  @Nullable
   public EffectType getEffectType() {
     return myAttrs.getEffectType();
   }
