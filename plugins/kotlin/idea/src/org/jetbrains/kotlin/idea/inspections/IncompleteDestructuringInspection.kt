@@ -11,59 +11,76 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createDestructuringDeclarationByPattern
 import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
+import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class IncompleteDestructuringInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return destructuringDeclarationVisitor(fun(destructuringDeclaration) {
-            val initializer = destructuringDeclaration.initializer ?: return
-            val type = initializer.analyze().getType(initializer) ?: return
-
-            val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor ?: return
-
-            val primaryParameterNames = classDescriptor.constructors
-                .firstOrNull { it.isPrimary }
-                ?.valueParameters
-                ?.map { it.name.asString() } ?: return
-
-            if (destructuringDeclaration.entries.size < primaryParameterNames.size) {
+            val primaryParameters = destructuringDeclaration.primaryParameters() ?: return
+            if (destructuringDeclaration.entries.size < primaryParameters.size) {
                 val rPar = destructuringDeclaration.rPar ?: return
                 holder.registerProblem(
                     rPar,
                     KotlinBundle.message("incomplete.destructuring.declaration.text"),
-                    IncompleteDestructuringQuickfix(primaryParameterNames)
+                    IncompleteDestructuringQuickfix()
                 )
             }
         })
     }
 }
 
-class IncompleteDestructuringQuickfix(private val primaryParameterNames: List<String>) : LocalQuickFix {
+private fun KtDestructuringDeclaration.primaryParameters(): List<ValueParameterDescriptor>? {
+    val type = initializer?.getType(analyze(BodyResolveMode.PARTIAL)) ?: return null
+    val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor ?: return null
+    return classDescriptor.constructors.firstOrNull { it.isPrimary }?.valueParameters
+}
+
+class IncompleteDestructuringQuickfix : LocalQuickFix {
     override fun getFamilyName() = KotlinBundle.message("incomplete.destructuring.fix.family.name")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement
         val destructuringDeclaration = element.parent as? KtDestructuringDeclaration ?: return
-        if (destructuringDeclaration.entries.size >= primaryParameterNames.size) return
-
-        val namesToAdd =
-            primaryParameterNames.subList(destructuringDeclaration.entries.size, primaryParameterNames.size)
-        val names = destructuringDeclaration.entries.mapNotNull { it.name }.toMutableList() + namesToAdd
-        val joinedNames = names.joinToString()
-
         val initializer = destructuringDeclaration.initializer ?: return
-        val factory = KtPsiFactory(destructuringDeclaration)
+        val primaryParameters = destructuringDeclaration.primaryParameters() ?: return
 
+        val nameValidator = CollectingNameValidator(
+            filter = NewDeclarationNameValidator(
+                destructuringDeclaration.parent,
+                null,
+                NewDeclarationNameValidator.Target.VARIABLES
+            )
+        )
+        val currentEntries = destructuringDeclaration.entries
+        val hasType = currentEntries.any { it.typeReference != null }
+        val additionalEntries = primaryParameters.drop(destructuringDeclaration.entries.size).map {
+            val name = KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
+            if (hasType) {
+                val type = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(it.type)
+                "$name: $type"
+            } else {
+                name
+            }
+        }
+        val newEntries = (currentEntries.map { it.text } + additionalEntries).joinToString()
+
+        val factory = KtPsiFactory(destructuringDeclaration)
         val newDestructuringDeclaration = factory.createDestructuringDeclarationByPattern(
             if (destructuringDeclaration.isVar) "var ($0) = $1" else "val ($0) = $1",
-            joinedNames, initializer
+            newEntries, initializer
         )
-
-        element.parent.replace(newDestructuringDeclaration)
+        destructuringDeclaration.replace(newDestructuringDeclaration)
     }
 }

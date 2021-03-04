@@ -5243,6 +5243,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/incompleteDestructuringInspection/basic.kt");
         }
 
+        @TestMetadata("hasSameName.kt")
+        public void testHasSameName() throws Exception {
+            runTest("testData/inspectionsLocal/incompleteDestructuringInspection/hasSameName.kt");
+        }
+
+        @TestMetadata("hasType.kt")
+        public void testHasType() throws Exception {
+            runTest("testData/inspectionsLocal/incompleteDestructuringInspection/hasType.kt");
+        }
+
         @TestMetadata("negative.kt")
         public void testNegative() throws Exception {
             runTest("testData/inspectionsLocal/incompleteDestructuringInspection/negative.kt");
