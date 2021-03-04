@@ -14,8 +14,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +53,7 @@ public class FixAllHighlightingProblems implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     // IntentionAction, offset
-    List<Pair<IntentionAction, Integer>> actions = new ArrayList<>();
+    List<Pair<IntentionAction, SmartPsiFileRange>> actions = new ArrayList<>();
     Document document = editor.getDocument();
     ProgressManager.getInstance().runProcess(() -> {
       DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(),
@@ -57,7 +61,10 @@ public class FixAllHighlightingProblems implements IntentionAction {
                                                ProgressManager.checkCanceled();
                                                IntentionAction fix = info.getSameFamilyFix(myAction);
                                                if (fix != null) {
-                                                 actions.add(Pair.create(fix, info.getActualStartOffset()));
+                                                 TextRange range = TextRange.create(info.getActualStartOffset(), info.getActualEndOffset());
+                                                 SmartPsiFileRange pointer = SmartPointerManager.getInstance(project)
+                                                   .createSmartPsiFileRangePointer(file, range);
+                                                 actions.add(Pair.create(fix, pointer));
                                                }
                                                return true;
                                              });
@@ -70,14 +77,17 @@ public class FixAllHighlightingProblems implements IntentionAction {
       ApplicationManagerEx.getApplicationEx()
         .runWriteActionWithCancellableProgressInDispatchThread(message, project, null, indicator -> {
           PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-          for (Pair<IntentionAction, Integer> pair : actions) {
+          for (Pair<IntentionAction, SmartPsiFileRange> pair : actions) {
             IntentionAction action = pair.getFirst();
             // Some actions rely on the caret position
-            editor.getCaretModel().moveToOffset(pair.getSecond());
-            if (action.isAvailable(project, editor, file)) {
-              action.invoke(project, editor, file);
-              psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
-              psiDocumentManager.commitDocument(document);
+            Segment range = pair.getSecond().getRange();
+            if (range != null) {
+              editor.getCaretModel().moveToOffset(range.getStartOffset());
+              if (action.isAvailable(project, editor, file)) {
+                action.invoke(project, editor, file);
+                psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
+                psiDocumentManager.commitDocument(document);
+              }
             }
           }
         });
