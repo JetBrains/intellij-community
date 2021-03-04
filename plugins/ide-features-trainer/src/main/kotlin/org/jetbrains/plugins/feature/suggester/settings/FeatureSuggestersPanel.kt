@@ -40,7 +40,7 @@ class FeatureSuggestersPanel(
         }
         val instructionLabel = JLabel(
             "Configure suggestions for actions. " +
-                    "It will suggest the following actions in cases where their application can be effective."
+                "It will suggest the following actions in cases where their application can be effective."
         )
         panel.apply {
             add(instructionLabel)

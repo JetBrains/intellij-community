@@ -18,7 +18,7 @@ class EditBreakpointSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE =
             "You may edit breakpoint and make it conditional instead of waiting needed iteration. " +
-                    "Use right click on breakpoint gutter."
+                "Use right click on breakpoint gutter."
         const val SUGGESTING_ACTION_ID = "com.intellij.xdebugger.impl.actions.EditBreakpointAction\$ContextAction"
         const val SUGGESTING_TIP_FILENAME = "neue-BreakpointSpeedmenu.html"
         const val NUM_OF_PAUSES_TO_GET_SUGGESTION = 8

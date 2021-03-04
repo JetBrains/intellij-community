@@ -51,7 +51,7 @@ class SurroundWithSuggester : FeatureSuggester {
 
         fun isOutOfDate(newChangeTimeMillis: Long): Boolean {
             return lastChangeTimeMillis != 0L &&
-                    newChangeTimeMillis - lastChangeTimeMillis > MAX_TIME_MILLIS_BETWEEN_ACTIONS
+                newChangeTimeMillis - lastChangeTimeMillis > MAX_TIME_MILLIS_BETWEEN_ACTIONS
         }
 
         fun reset() {
@@ -168,7 +168,7 @@ class SurroundWithSuggester : FeatureSuggester {
         }
         val statements = surroundingStatement!!.getStatements()
         return statements.isNotEmpty() &&
-                statements.first().text == firstStatementInBlockText
+            statements.first().text == firstStatementInBlockText
     }
 
     private fun PsiElement.getStatements(): List<PsiElement> {
@@ -182,8 +182,8 @@ class SurroundWithSuggester : FeatureSuggester {
 
     private fun PsiElement.isSurroundingStatement(): Boolean {
         return langSupport.isIfStatement(this) ||
-                langSupport.isForStatement(this) ||
-                langSupport.isWhileStatement(this)
+            langSupport.isForStatement(this) ||
+            langSupport.isWhileStatement(this)
     }
 
     override val id: String = "Surround with"
