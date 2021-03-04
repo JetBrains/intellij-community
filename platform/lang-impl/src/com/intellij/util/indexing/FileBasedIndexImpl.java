@@ -498,6 +498,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         boolean lastAttempt = attempt == attemptCount - 1;
         if (lastAttempt) {
           state.registerIndexInitializationProblem(name, e);
+          if (extension instanceof CustomImplementationFileBasedIndexExtension) {
+            ((CustomImplementationFileBasedIndexExtension<?, ?>)extension).handleInitializationError(e);
+          }
           throw e;
         }
         else if (ApplicationManager.getApplication().isUnitTestMode()) {

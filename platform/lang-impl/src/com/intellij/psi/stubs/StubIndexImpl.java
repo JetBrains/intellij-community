@@ -527,17 +527,22 @@ public final class StubIndexImpl extends StubIndexEx {
 
   void initializeStubIndexes() {
     assert !myInitialized;
-    // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
-    FileBasedIndex.getInstance();
-    myStateFuture = new CompletableFuture<>();
-    Future<AsyncState> future = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
 
-    if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
-      try {
-        future.get();
-      }
-      catch (Throwable t) {
-        LOG.error(t);
+    // might be called on the same thread twice if initialization has been failed
+    if (myStateFuture == null) {
+      // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
+      FileBasedIndex.getInstance();
+
+      myStateFuture = new CompletableFuture<>();
+      Future<AsyncState> future = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
+
+      if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
+        try {
+          future.get();
+        }
+        catch (Throwable t) {
+          LOG.error(t);
+        }
       }
     }
   }
