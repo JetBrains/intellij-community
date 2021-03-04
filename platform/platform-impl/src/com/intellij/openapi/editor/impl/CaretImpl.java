@@ -1248,17 +1248,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   @Override
   public void selectLineAtCaret() {
-    doSelectLines(false);
-  }
-
-  @Override
-  public void extendLineSelection() {
-    doSelectLines(true);
-  }
-
-  private void doSelectLines(boolean extendCurrentSelection) {
     validateContext(true);
-    myCaretModel.doWithCaretMerging(() -> SelectionModelImpl.doSelectLineAtCaret(this, extendCurrentSelection));
+    myCaretModel.doWithCaretMerging(() -> EditorActionUtil.selectEntireLines(this, true));
   }
 
   @Override

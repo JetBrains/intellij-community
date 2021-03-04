@@ -178,11 +178,6 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
   }
 
   @Override
-  public void extendLineSelection() {
-    throw notImplemented();
-  }
-
-  @Override
   public void selectWordAtCaret(boolean honorCamelWordsSettings) {
     throw notImplemented();
   }

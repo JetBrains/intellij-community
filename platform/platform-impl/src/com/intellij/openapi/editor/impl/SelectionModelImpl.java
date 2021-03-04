@@ -121,6 +121,10 @@ public class SelectionModelImpl implements SelectionModel {
     LOG.assertTrue(success);
   }
 
+  /**
+   * @deprecated Use {@link EditorActionUtil#selectEntireLines} instead.
+   */
+  @Deprecated
   public static void doSelectLineAtCaret(@NotNull Caret caret) {
     EditorActionUtil.selectEntireLines(caret, true);
   }
