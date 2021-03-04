@@ -49,7 +49,7 @@ class JavaScriptLanguageSupport : LanguageSupport {
 
     override fun getStatements(element: PsiElement): List<PsiElement> {
         return if (element is JSBlockStatement) {
-            element.statements.toList()
+            element.statementListItems.toList()
         } else {
             emptyList()
         }

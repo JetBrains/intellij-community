@@ -3,8 +3,8 @@ package org.jetbrains.plugins.feature.suggester.ui
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.TipAndTrickBean
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -26,8 +26,8 @@ interface SuggestionPresenter {
 @Suppress("UnstableApiUsage")
 class NotificationSuggestionPresenter :
     SuggestionPresenter {
-    private val notificationGroup: NotificationGroup = NotificationGroup.findRegisteredGroup("IDE Feature Suggester")
-        ?: NotificationGroup("IDE Feature Suggester", NotificationDisplayType.STICKY_BALLOON, false)
+    private val notificationGroup: NotificationGroup = NotificationGroupManager.getInstance()
+        .getNotificationGroup("IDE Feature Suggester")
     private val statisticsCollector = FeatureSuggestersStatisticsCollector()
 
     override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {

@@ -2,8 +2,9 @@
 
 package org.jetbrains.plugins.feature.suggester.statistics
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.log.statistics.CustomStringsValidationRule
@@ -36,14 +37,18 @@ class FeatureSuggestersStatisticsCollector {
         const val SUGGESTION_FOUND = "suggestion_found"
     }
 
+    private val group = EventLogGroup(GROUP_ID, 1)
+    private val events = mutableMapOf<String, EventId1<String?>>()
+
     fun sendStatistics(eventId: String, suggesterId: String) {
         val sendStatistics = Registry.get("feature.suggester.send.statistics").asBoolean()
         if (sendStatistics) {
-            FUCounterUsageLogger.getInstance().logEvent(
-                GROUP_ID,
-                eventId,
-                FeatureUsageData().addData("suggester_id", suggesterId)
-            )
+            events.getOrPut(eventId) {
+                group.registerEvent(
+                    eventId,
+                    EventFields.StringValidatedByCustomRule("suggester_id", "feature_suggester_id")
+                )
+            }.log(suggesterId)
         }
     }
 }
