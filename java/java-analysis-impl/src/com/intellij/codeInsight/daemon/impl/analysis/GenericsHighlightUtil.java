@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,7 +98,11 @@ public final class GenericsHighlightUtil {
       if (referenceElements.length == 1 && referenceElements[0].getType() instanceof PsiDiamondType) {
         if (!typeParameterListOwner.hasTypeParameters()) {
           final String description = JavaErrorBundle.message("generics.diamond.not.applicable");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(description).create();
+          HighlightInfo info =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(description)
+              .create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(referenceParameterList));
+          return info;
         }
         inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
         final String errorMessage = inferenceResult.getErrorMessage();
@@ -162,7 +167,8 @@ public final class GenericsHighlightUtil {
             PsiElement variable = grandParent.getParent();
             if (variable instanceof PsiVariable) {
               if (targetParametersNum == 0) {
-                QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createRemoveTypeArgumentsFix(variable));
+                QuickFixAction.registerQuickFixAction(highlightInfo, PriorityIntentionActionWrapper
+                  .highPriority(QUICK_FIX_FACTORY.createDeleteFix(referenceParameterList)));
               }
               registerVariableParameterizedTypeFixes(highlightInfo, (PsiVariable)variable, referenceParameterList, javaSdkVersion);
             }

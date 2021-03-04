@@ -572,7 +572,14 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createRemoveTypeArgumentsFix(@NotNull PsiElement variable) {
-    return new RemoveTypeArgumentsFix(variable);
+    final PsiVariable psiVariable = (PsiVariable)variable;
+    final PsiTypeElement typeElement = psiVariable.getTypeElement();
+    assert typeElement != null;
+    final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
+    assert referenceElement != null;
+    final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+    assert parameterList != null;
+    return PriorityIntentionActionWrapper.highPriority(createDeleteFix(parameterList));
   }
 
   @NotNull
