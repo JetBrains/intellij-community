@@ -62,11 +62,13 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
@@ -350,6 +352,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @Override
   protected ExtendableTextField createSearchField() {
     SearchField res = new SearchField() {
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new TextFieldWithListAccessibleContext(this, myResultsList.getAccessibleContext());
+        }
+        return accessibleContext;
+      }
+
       @NotNull
       @Override
       protected Extension getLeftExtension() {
