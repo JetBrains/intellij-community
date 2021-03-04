@@ -25,34 +25,40 @@ import org.jetbrains.kotlin.resolve.jvm.KotlinSafeClassFinder
 class KotlinScriptDependenciesClassFinder(
     private val project: Project
 ) : NonClasspathClassFinder(project), KotlinSafeClassFinder {
-    override fun calcClassRoots(): List<VirtualFile> = ScriptConfigurationManager.getInstance(project)
-        .getAllScriptsDependenciesClassFiles().filter { it.isValid }.toList()
+    override fun calcClassRoots(): List<VirtualFile> {
+        return ScriptConfigurationManager.getInstance(project)
+            .getAllScriptsDependenciesClassFiles()
+            .filter { it.isValid }
+    }
 
     private val everywhereCache = CachedValuesManager.getManager(project).createCachedValue {
         CachedValueProvider.Result.create(
             ConcurrentFactoryMap.createMap { qualifiedName: String ->
                 findClassInternal(qualifiedName, GlobalSearchScope.everythingScope(project))
             },
-            PsiModificationTracker.MODIFICATION_COUNT, ProjectRootModificationTracker.getInstance(project), VirtualFileManager.getInstance()
+            PsiModificationTracker.MODIFICATION_COUNT,
+            ProjectRootModificationTracker.getInstance(project),
+            VirtualFileManager.getInstance()
         )
     }
 
     override fun findClass(qualifiedName: String, scope: GlobalSearchScope): PsiClass? {
-        val foundAnywhere = everywhereCache.value[qualifiedName]
-        if (foundAnywhere == null) {
-            return null // the most important thing for performance
+        // The most important part for performance
+        val cachedClass = everywhereCache.value[qualifiedName] ?: return null
+        if (isInScope(cachedClass, scope)) {
+            return cachedClass
         }
-        foundAnywhere.isInScope(scope)?.let { return it }
 
         return findClassInternal(qualifiedName, scope)
     }
 
     private fun findClassInternal(qualifiedName: String, scope: GlobalSearchScope): PsiClass? {
-        super.findClass(qualifiedName, scope)?.let { classByFileName ->
-            return classByFileName.isInScope(scope)
+        val topLevelClass = super.findClass(qualifiedName, scope)
+        if (topLevelClass != null && isInScope(topLevelClass, scope)) {
+            return topLevelClass
         }
 
-        // Following code is needed because NonClasspathClassFinder cannot find inner classes
+        // The following code is needed because NonClasspathClassFinder cannot find inner classes
         // JavaFullClassNameIndex cannot be used directly, because it filter only classes in source roots
 
         val classes = StubIndex.getElements(
@@ -65,20 +71,20 @@ class KotlinScriptDependenciesClassFinder(
             it.qualifiedName == qualifiedName
         }
 
-        val found = when (classes.size) {
+        return when (classes.size) {
             0 -> null
             1 -> classes.single()
             else -> classes.first()  // todo: check when this happens
-        }
-
-        return found?.isInScope(scope)
+        }?.takeIf { isInScope(it, scope) }
     }
 
-    private fun PsiClass.isInScope(scope: GlobalSearchScope): PsiClass? {
-        if (scope is EverythingGlobalScope) return this
+    private fun isInScope(clazz: PsiClass, scope: GlobalSearchScope): Boolean {
+        if (scope is EverythingGlobalScope) {
+            return true
+        }
 
-        val file = this.containingFile?.virtualFile ?: return null
+        val file = clazz.containingFile?.virtualFile ?: return false
         val index = ProjectFileIndex.SERVICE.getInstance(myProject)
-        return this.takeUnless { index.isInContent(file) || index.isInLibrary(file) || !scope.contains(file) }
+        return !index.isInContent(file) && !index.isInLibrary(file) && scope.contains(file)
     }
 }
