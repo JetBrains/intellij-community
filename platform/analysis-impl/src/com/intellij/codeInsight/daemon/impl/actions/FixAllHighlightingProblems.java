@@ -4,11 +4,10 @@ package com.intellij.codeInsight.daemon.impl.actions;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,9 +20,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FixAllHighlightingProblems implements IntentionAction {
@@ -55,43 +56,48 @@ public class FixAllHighlightingProblems implements IntentionAction {
     // IntentionAction, offset
     List<Pair<IntentionAction, SmartPsiFileRange>> actions = new ArrayList<>();
     Document document = editor.getDocument();
-    ProgressManager.getInstance().runProcess(() -> {
-      DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(),
-                                             info -> {
-                                               ProgressManager.checkCanceled();
-                                               IntentionAction fix = info.getSameFamilyFix(myAction);
-                                               if (fix != null) {
-                                                 TextRange range = TextRange.create(info.getActualStartOffset(), info.getActualEndOffset());
-                                                 SmartPsiFileRange pointer = SmartPointerManager.getInstance(project)
-                                                   .createSmartPsiFileRangePointer(file, range);
-                                                 actions.add(Pair.create(fix, pointer));
-                                               }
-                                               return true;
-                                             });
-    }, new DaemonProgressIndicator());
+    Processor<HighlightInfo> processor = info -> {
+      ProgressManager.checkCanceled();
+      IntentionAction fix = info.getSameFamilyFix(myAction);
+      if (fix != null) {
+        TextRange range = TextRange.create(info.getActualStartOffset(), info.getActualEndOffset());
+        SmartPsiFileRange pointer = SmartPointerManager.getInstance(project)
+          .createSmartPsiFileRangePointer(file, range);
+        actions.add(Pair.create(fix, pointer));
+      }
+      return true;
+    };
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ReadAction.run(() -> {
+        DaemonCodeAnalyzerEx.processHighlights(
+          document, project, null, 0, document.getTextLength(), processor);
+      });
+    }, AnalysisBundle.message("command.name.gather.fixes"), true, project)) return;
 
     if (actions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
+    // Applying in reverse order looks safer
+    Collections.reverse(actions);
 
-    String message = AnalysisBundle.message("command.name.apply.fixes");
-    CommandProcessor.getInstance().executeCommand(project, () -> {
-      ApplicationManagerEx.getApplicationEx()
-        .runWriteActionWithCancellableProgressInDispatchThread(message, project, null, indicator -> {
-          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-          for (Pair<IntentionAction, SmartPsiFileRange> pair : actions) {
-            IntentionAction action = pair.getFirst();
-            // Some actions rely on the caret position
-            Segment range = pair.getSecond().getRange();
-            if (range != null) {
-              editor.getCaretModel().moveToOffset(range.getStartOffset());
-              if (action.isAvailable(project, editor, file)) {
-                action.invoke(project, editor, file);
-                psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
-                psiDocumentManager.commitDocument(document);
-              }
+    ApplicationManagerEx.getApplicationEx()
+      .runWriteActionWithCancellableProgressInDispatchThread(myAction.getFamilyName(), project, null, indicator -> {
+        indicator.setIndeterminate(false);
+        PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+        for (int i = 0; i < actions.size(); i++) {
+          indicator.setFraction((double) i / actions.size());
+          Pair<IntentionAction, SmartPsiFileRange> pair = actions.get(i);
+          IntentionAction action = pair.getFirst();
+          // Some actions rely on the caret position
+          Segment range = pair.getSecond().getRange();
+          if (range != null) {
+            editor.getCaretModel().moveToOffset(range.getStartOffset());
+            if (action.isAvailable(project, editor, file)) {
+              action.invoke(project, editor, file);
+              psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
+              psiDocumentManager.commitDocument(document);
             }
           }
-        });
-    }, message, null);
+        }
+      });
   }
 
   @Override
