@@ -14,7 +14,6 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserJreVal
 import com.intellij.openapi.roots.ui.configuration.SdkPopup
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.SystemInfo
 import java.nio.file.Path
 import javax.swing.JComponent
 
@@ -55,6 +54,7 @@ object RuntimeChooserCustom {
       .withSdkType(sdkType ?: return null)
       .withSdkFilter { it != null && isSupportedSdkItem(it) }
       .withSuggestedSdkFilter { it != null && isSupportedSdkItem(it) }
+      .withNoDownlaodActions()
       .onSdkSelected { sdk -> importNewItem(parent, sdk, model) }
       .buildPopup()
   }
