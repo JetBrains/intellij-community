@@ -14,9 +14,9 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
 
   @Override
   public void registerScopeRange(@NotNull Editor editor, int rangeStart, int rangeEnd, int tabOutOffset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (editor.isDisposed()) throw new IllegalArgumentException("Editor is already disposed");
     if (rangeStart > rangeEnd) {
@@ -70,7 +70,7 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
   }
 
   private static int checkOrRemoveScopeEndingAt(@NotNull Editor editor, int offset, boolean removeScope) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (!CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES) return 0;
 
@@ -111,7 +111,7 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
       Caret currentCaret = myEditor.getCaretModel().getCurrentCaret();
       List<RangeMarker> result = currentCaret.getUserData(TRACKED_SCOPES);
       if (result == null && create) {
-        currentCaret.putUserData(TRACKED_SCOPES, result = new ArrayList<>());
+        result = currentCaret.putUserDataIfAbsent(TRACKED_SCOPES, ContainerUtil.createLockFreeCopyOnWriteList());
       }
       return result;
     }
