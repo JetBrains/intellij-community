@@ -9,7 +9,7 @@ class RenameUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("rename.refactoring", 4)
+    private val GROUP = EventLogGroup("rename.refactoring", 5)
 
     @JvmField val scopeType = EventFields.Enum("scope_type", RenameScopeType::class.java) { it.fusName }
     @JvmField val searchInComments = EventFields.Boolean("search_in_comments")
@@ -21,6 +21,9 @@ class RenameUsagesCollector : CounterUsagesCollector() {
     
     private val referenceClass = EventFields.Class("reference_class")
     @JvmField val referenceProcessed = GROUP.registerEvent("reference.processed", referenceClass)
+
+    private val localSearchInComments = EventFields.Boolean("local_include_comments")
+    @JvmField val localSearchInCommentsEvent = GROUP.registerEvent("local_search_in_comments", localSearchInComments)
 
     private fun registerRenameProcessorEvent(eventId: String) =
       GROUP.registerVarargEvent(eventId, scopeType, searchInComments, searchInTextOccurrences, renameProcessor, EventFields.Language)

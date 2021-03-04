@@ -17,6 +17,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenameUsagesCollector;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,7 +78,10 @@ public abstract class RenameChooser {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChosenCallback((selectedValue) -> runRenameTemplate(ALL_OCCURRENCES.equals(selectedValue) ? stringUsages : new ArrayList<>()))
+      .setItemChosenCallback((selectedValue) -> {
+        RenameUsagesCollector.localSearchInCommentsEvent.log(ALL_OCCURRENCES.equals(selectedValue));
+        runRenameTemplate(ALL_OCCURRENCES.equals(selectedValue) ? stringUsages : new ArrayList<>());
+      })
       .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
