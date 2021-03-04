@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -20,13 +21,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PathUtil;
@@ -45,9 +44,10 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
 public final class ExportTestResultsAction extends DumbAwareAction {
   private static final String ID = "ExportTestResults";
@@ -113,7 +113,14 @@ public final class ExportTestResultsAction extends DumbAwareAction {
       ) != Messages.OK;
     }
 
-    final String filename_ = filename;
+    final File outputFile = getOutputFile(config, project, filename);
+    outputFile.getParentFile().mkdirs();
+    final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(outputFile.getParentFile());
+    if (parent == null || !parent.isValid()) {
+      showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", 
+                                                                      ExecutionBundle.message("failed.to.create.output.file", outputFile.getPath())), null);
+      return;
+    }
     ProgressManager.getInstance().run(
       new Task.Backgroundable(project, ExecutionBundle.message("export.test.results.task.name"), false, new PerformInBackgroundOption() {
         @Override
@@ -124,14 +131,8 @@ public final class ExportTestResultsAction extends DumbAwareAction {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
-
-          final File outputFile = getOutputFile(config, project, filename_);
-          final String outputText;
           try {
-            outputText = getOutputText(config);
-            if (outputText == null) {
-              return;
-            }
+            if (!writeOutputFile(config, outputFile)) return;
           }
           catch (IOException | SAXException | TransformerException ex) {
             LOG.warn(ex);
@@ -139,55 +140,52 @@ public final class ExportTestResultsAction extends DumbAwareAction {
             return;
           }
           catch (RuntimeException ex) {
-            String xml = null;
+            
+            File tempFile;
+            try {
+              tempFile = FileUtil.createTempFile("", "_xml");
+            }
+            catch (IOException exception) {
+              LOG.error("Failed to create temp file", exception);
+              LOG.error("Failed to export test results", ex);
+              return;
+            }
+
             try {
               ExportTestResultsConfiguration c = new ExportTestResultsConfiguration();
               c.setExportFormat(ExportTestResultsConfiguration.ExportFormat.Xml);
               c.setOpenResults(false);
-              xml = getOutputText(c);
+              writeOutputFile(c, tempFile);
             }
             catch (Throwable ignored) { }
-            if (xml != null) {
-              LOG.error("Failed to export test results", ex, new Attachment("dump.xml", xml));
+
+            try {
+              String content = FileUtil.loadFile(tempFile);
+              LOG.error("Failed to export test results", ex, new Attachment("dump.xml", content));
             }
-            else {
+            catch (IOException exception) {
               LOG.error("Failed to export test results", ex);
             }
+            FileUtil.delete(tempFile);
             return;
           }
 
           final Ref<VirtualFile> result = new Ref<>();
           final Ref<String> error = new Ref<>();
-          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              result.set(ApplicationManager.getApplication().runWriteAction(new Computable<>() {
-                @Override
-                public VirtualFile compute() {
-                  outputFile.getParentFile().mkdirs();
-                  final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(outputFile.getParentFile());
-                  if (parent == null || !parent.isValid()) {
-                    error.set(ExecutionBundle.message("failed.to.create.output.file", outputFile.getPath()));
-                    return null;
-                  }
-
-                  try {
-                    VirtualFile result = parent.findChild(outputFile.getName());
-                    if (result == null) {
-                      result = parent.createChildData(this, outputFile.getName());
-                    }
-                    VfsUtil.saveText(result, outputText);
-                    return result;
-                  }
-                  catch (IOException e) {
-                    LOG.warn(e);
-                    error.set(e.getMessage());
-                    return null;
-                  }
-                }
-              }));
-            }
+          ApplicationManager.getApplication().invokeAndWait(() -> {
+            result.set(WriteAction.compute(() -> {
+              try {
+                VirtualFile child = parent.findChild(outputFile.getName());
+                return child == null ? parent.createChildData(this, outputFile.getName()) : child;
+              }
+              catch (IOException e) {
+                LOG.warn(e);
+                error.set(e.getMessage());
+                return null;
+              }
+            }));
           });
+            
 
           if (!result.isNull()) {
             if (config.isOpenResults()) {
@@ -247,8 +245,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
     });
   }
 
-  @Nullable
-  private String getOutputText(ExportTestResultsConfiguration config) throws IOException, TransformerException, SAXException {
+  private boolean writeOutputFile(ExportTestResultsConfiguration config, File outputFile) throws IOException, TransformerException, SAXException {
     ExportTestResultsConfiguration.ExportFormat exportFormat = config.getExportFormat();
 
     SAXTransformerFactory transformerFactory = (SAXTransformerFactory)SAXTransformerFactory.newInstance();
@@ -270,7 +267,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
         if (!xslFile.isFile()) {
           showBalloon(myRunConfiguration.getProject(), MessageType.ERROR,
                       ExecutionBundle.message("export.test.results.custom.template.not.found", xslFile.getPath()), null);
-          return null;
+          return false;
         }
         xslSource = new StreamSource(xslFile);
       }
@@ -279,15 +276,14 @@ public final class ExportTestResultsAction extends DumbAwareAction {
                                                                              myRunConfiguration.getType().getDisplayName()));
     }
 
-    StringWriter w = new StringWriter();
-    handler.setResult(new StreamResult(w));
-    try {
+    try (FileWriter w = new FileWriter(outputFile, StandardCharsets.UTF_8)) {
+      handler.setResult(new StreamResult(w));
       TestResultsXmlFormatter.execute(myModel.getRoot(), myRunConfiguration, myModel.getProperties(), handler);
+      return true;
     }
     catch (ProcessCanceledException e) {
-      return null;
+      return false;
     }
-    return w.toString();
   }
 
   private void showBalloon(final Project project,
