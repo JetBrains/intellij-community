@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.scripting.gradle
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.startup.StartupActivity
@@ -28,12 +29,17 @@ fun GradleProjectSettings.validateGradleSdk(project: Project, jdkHomePath: Strin
 
     var jdkName: String? = null
 
+    var message: String? = null
+
     val homePath = if (jdkHomePath != null) {
         jdkHomePath
     } else {
         // gradleJvm could be #USE_PROJECT_JDK etc, see ExternalSystemJdkUtil
         val jdk = try {
             ExternalSystemJdkUtil.getJdk(project, gradleJvm)
+        } catch (e: InvalidSdkException) {
+            message = e.message
+            null
         } catch (e: Exception) {
             null
         }
@@ -42,23 +48,23 @@ fun GradleProjectSettings.validateGradleSdk(project: Project, jdkHomePath: Strin
         jdk?.homePath
     }
 
-    var message: String? = null
-    var title: String? = null
-
-    if (homePath == null) {
-        title = KotlinIdeaGradleBundle.message("notification.invalid.gradle.jvm.configuration.title")
-        message = KotlinIdeaGradleBundle.message("notification.gradle.jvm.undefined")
-    } else if (!JdkUtil.checkForJdk(homePath)) {
-        title = KotlinIdeaGradleBundle.message("notification.invalid.gradle.jvm.configuration.title")
-
-        message = if (jdkName != null) {
-            KotlinIdeaGradleBundle.message("notification.jdk.0.points.to.invalid.jdk", jdkName)
-        } else {
-            KotlinIdeaGradleBundle.message("notification.gradle.jvm.0.incorrect", homePath)
+    if (message == null) {
+        message = when {
+            homePath == null -> {
+                KotlinIdeaGradleBundle.message("notification.gradle.jvm.undefined")
+            }
+            !JdkUtil.checkForJdk(homePath) -> {
+                jdkName?.let { KotlinIdeaGradleBundle.message("notification.jdk.0.points.to.invalid.jdk", it) }
+                    ?: KotlinIdeaGradleBundle.message("notification.gradle.jvm.0.incorrect", homePath)
+            }
+            else -> null
         }
     }
 
-    if (message != null && title != null) {
+    message?.let {
+        val title = KotlinIdeaGradleBundle.message("notification.invalid.gradle.jvm.configuration.title")
+
         GradleNotification.getInstance(project).showBalloon(title, message, NotificationType.ERROR, null)
     }
+
 }
