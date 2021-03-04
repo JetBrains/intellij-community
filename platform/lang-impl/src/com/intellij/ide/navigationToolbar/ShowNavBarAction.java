@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -28,6 +29,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
       } else {
         final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
         if (!isInsideNavBar(component)) {
+          IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
           final Editor editor = CommonDataKeys.EDITOR.getData(context);
           final NavBarPanel toolbarPanel = new NavBarPanel(project, false);
           toolbarPanel.showHint(editor, context);
