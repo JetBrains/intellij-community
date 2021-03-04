@@ -4,6 +4,8 @@ package git4idea.ui.branch.dashboard
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.branch.isGroupingEnabled
+import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getColorManager
+import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getRepositoryIcon
 import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
@@ -60,6 +62,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
   private inner class BranchTreeCellRenderer(project: Project) : ColoredTreeCellRenderer() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
+    private val colorManager = getColorManager(project)
 
     override fun customizeCellRenderer(tree: JTree,
                                        value: Any?,
@@ -74,23 +77,15 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       val branchInfo = descriptor.branchInfo
       val isBranchNode = descriptor.type == NodeType.BRANCH
       val isGroupNode = descriptor.type == NodeType.GROUP_NODE
+      val isRepositoryNode = descriptor.type == NodeType.GROUP_REPOSITORY_NODE
 
       icon = when {
-        isBranchNode && branchInfo != null && branchInfo.isCurrent && branchInfo.isFavorite -> {
-          DvcsImplIcons.CurrentBranchFavoriteLabel
-        }
-        isBranchNode && branchInfo != null && branchInfo.isCurrent -> {
-          DvcsImplIcons.CurrentBranchLabel
-        }
-        isBranchNode && branchInfo != null && branchInfo.isFavorite -> {
-          AllIcons.Nodes.Favorite
-        }
-        isBranchNode -> {
-          AllIcons.Vcs.BranchNode
-        }
-        isGroupNode -> {
-          PlatformIcons.FOLDER_ICON
-        }
+        isBranchNode && branchInfo != null && branchInfo.isCurrent && branchInfo.isFavorite -> DvcsImplIcons.CurrentBranchFavoriteLabel
+        isBranchNode && branchInfo != null && branchInfo.isCurrent -> DvcsImplIcons.CurrentBranchLabel
+        isBranchNode && branchInfo != null && branchInfo.isFavorite -> AllIcons.Nodes.Favorite
+        isBranchNode -> AllIcons.Vcs.BranchNode
+        isGroupNode -> PlatformIcons.FOLDER_ICON
+        isRepositoryNode -> getRepositoryIcon(descriptor.repository!!, colorManager)
         else -> null
       }
 
@@ -170,10 +165,16 @@ internal class FilteringBranchesTree(project: Project,
   private var localNodeExist = false
   private var remoteNodeExist = false
 
-  private var useDirectoryGrouping = GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY)
+  private val groupingConfig: MutableMap<GroupingKey, Boolean> =
+    with(GitVcsSettings.getInstance(project).branchSettings) {
+      hashMapOf(
+        GroupingKey.GROUPING_BY_DIRECTORY to isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
+        GroupingKey.GROUPING_BY_REPOSITORY to isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+      )
+    }
 
   fun toggleGrouping(key: GroupingKey, state: Boolean) {
-    useDirectoryGrouping = state
+    groupingConfig[key] = state
     refreshTree()
   }
 
@@ -304,6 +305,7 @@ internal class FilteringBranchesTree(project: Project,
       NodeType.LOCAL_ROOT -> localBranchesNode.getNodeDescriptor().getDirectChildren()
       NodeType.REMOTE_ROOT -> remoteBranchesNode.getNodeDescriptor().getDirectChildren()
       NodeType.GROUP_NODE -> nodeDescriptor.getDirectChildren()
+      NodeType.GROUP_REPOSITORY_NODE -> nodeDescriptor.getDirectChildren()
       else -> emptyList() //leaf branch node
     }
 
@@ -360,7 +362,7 @@ internal class FilteringBranchesTree(project: Project,
       localNodeExist = localBranches.isNotEmpty()
       remoteNodeExist = remoteBranches.isNotEmpty()
 
-      nodeDescriptorsModel.populateFrom((localBranches.asSequence() + remoteBranches.asSequence()).filter(branchFilter), useDirectoryGrouping)
+      nodeDescriptorsModel.populateFrom((localBranches.asSequence() + remoteBranches.asSequence()).filter(branchFilter), groupingConfig)
     }
   }
 
