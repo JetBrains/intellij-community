@@ -67,12 +67,10 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.RecentFiles;
 import static com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode.*;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static java.awt.event.KeyEvent.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -129,9 +127,7 @@ public final class Switcher extends DumbAwareAction {
     final JLabel pathLabel = new JLabel(" ");
     final Project project;
     final boolean pinned;
-    final boolean wasAltDown;
-    final boolean wasControlDown;
-    final Map<String, SwitcherToolWindow> twShortcuts;
+    final SwitcherKeyReleaseListener onKeyRelease;
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
@@ -183,18 +179,8 @@ public final class Switcher extends DumbAwareAction {
 
     SwitcherPanel(@NotNull Project project, @NotNull @Nls String title, @Nullable Boolean onlyEditedFiles, @Nullable InputEvent event) {
       this.project = project;
-      wasAltDown = onlyEditedFiles == null && event != null && event.isAltDown();
-      wasControlDown = onlyEditedFiles == null && event != null && event.isControlDown();
-      pinned = !wasAltDown && !wasControlDown;
-      KeyAdapter onKeyRelease = new KeyAdapter() {
-        @Override
-        public void keyReleased(@NotNull KeyEvent event) {
-          int code = event.getKeyCode();
-          if (wasAltDown && code == VK_ALT || wasControlDown && code == VK_CONTROL) {
-            navigate(event);
-          }
-        }
-      };
+      onKeyRelease = new SwitcherKeyReleaseListener(onlyEditedFiles != null ? null : event, this::navigate);
+      pinned = !onKeyRelease.isEnabled();
       boolean onlyEdited = Boolean.TRUE.equals(onlyEditedFiles);
       myTitle = title;
       mySpeedSearch = pinned ? new SwitcherSpeedSearch(this) : null;
@@ -245,7 +231,7 @@ public final class Switcher extends DumbAwareAction {
 
       CollectionListModel<Object> twModel = new CollectionListModel<>();
       List<SwitcherToolWindow> windows = renderer.getToolWindows();
-      twShortcuts = createShortcuts(windows);
+      updateMnemonics(windows);
       windows.stream().sorted((o1, o2) -> {
         String m1 = o1.getMnemonic();
         String m2 = o2.getMnemonic();
@@ -428,10 +414,8 @@ public final class Switcher extends DumbAwareAction {
         registerSwingAction(ListActions.Right.ID, "KP_RIGHT", "RIGHT");
         registerSwingAction(ListActions.PageUp.ID, "PAGE_UP");
         registerSwingAction(ListActions.PageDown.ID, "PAGE_DOWN");
-        //noinspection SpellCheckingInspection
-        String mnemonics = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        for (int i = 0; i < mnemonics.length(); i++) {
-          registerToolWindowAction(mnemonics.substring(i, i + 1));
+        for (SwitcherToolWindow window : windows) {
+          registerToolWindowAction(window);
         }
       }
       setFocusCycleRoot(true);
@@ -625,55 +609,47 @@ public final class Switcher extends DumbAwareAction {
       return result;
     }
 
-    @NotNull
-    private static Map<String, SwitcherToolWindow> createShortcuts(@NotNull List<SwitcherToolWindow> windows) {
+    private void updateMnemonics(@NotNull List<SwitcherToolWindow> windows) {
       final Map<String, SwitcherToolWindow> keymap = new HashMap<>(windows.size());
+      keymap.put(onKeyRelease.getForbiddenMnemonic(), null);
       final List<SwitcherToolWindow> otherTW = new ArrayList<>();
       for (SwitcherToolWindow window : windows) {
         int index = ActivateToolWindowAction.getMnemonicForToolWindow(window.getWindow().getId());
-        if (index >= '0' && index <= '9') {
-          keymap.put(getIndexShortcut(index - '0'), window);
-        }
-        else {
+        if (index < '0' || index > '9' || !addShortcut(keymap, window, getIndexShortcut(index - '0'))) {
           otherTW.add(window);
         }
       }
       int i = 0;
       for (SwitcherToolWindow window : otherTW) {
-        String bestShortcut = getSmartShortcut(window, keymap);
-        if (bestShortcut != null) {
-          keymap.put(bestShortcut, window);
+        if (addSmartShortcut(window, keymap)) {
           continue;
         }
 
-        while (keymap.get(getIndexShortcut(i)) != null) {
+        while (!addShortcut(keymap, window, getIndexShortcut(i))) {
           i++;
         }
-        keymap.put(getIndexShortcut(i), window);
         i++;
       }
-      keymap.forEach((string, window) -> {
-        if (!StringUtil.isEmpty(string)) {
-          window.setMnemonic(string);
-        }
-      });
-      return keymap;
     }
 
-    @Nullable
-    private static String getSmartShortcut(SwitcherToolWindow window, Map<String, SwitcherToolWindow> keymap) {
+    private static boolean addShortcut(Map<String, SwitcherToolWindow> keymap, SwitcherToolWindow window, String shortcut) {
+      if (keymap.containsKey(shortcut)) return false;
+      keymap.put(shortcut, window);
+      window.setMnemonic(shortcut);
+      return true;
+    }
+
+    private static boolean addSmartShortcut(SwitcherToolWindow window, Map<String, SwitcherToolWindow> keymap) {
       String title = window.getTextAtLeft();
       if (StringUtil.isEmpty(title))
-        return null;
+        return false;
       for (int i = 0; i < title.length(); i++) {
         char c = title.charAt(i);
-        if (Character.isUpperCase(c)) {
-          String shortcut = String.valueOf(c);
-          if (keymap.get(shortcut) == null)
-            return shortcut;
+        if (Character.isUpperCase(c) && addShortcut(keymap, window, String.valueOf(c))) {
+          return true;
         }
       }
-      return null;
+      return false;
     }
 
     private static String getIndexShortcut(int index) {
@@ -926,36 +902,27 @@ public final class Switcher extends DumbAwareAction {
       }
     }
 
-    private @NotNull CustomShortcutSet getShortcuts(@NonNls String @NotNull ... keys) {
-      return CustomShortcutSet.fromString(pinned ? keys : Stream.of(keys).map(key -> {
-        StringBuilder sb = new StringBuilder();
-        if (wasControlDown) sb.append("control ");
-        if (wasAltDown) sb.append("alt ");
-        return sb.append(key).toString();
-      }).toArray(String[]::new));
-    }
-
     private void registerAction(@NotNull Consumer<InputEvent> action, @NonNls String @NotNull ... keys) {
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent event) {
           action.consume(event.getInputEvent());
         }
-      }.registerCustomShortcutSet(getShortcuts(keys), this, myPopup);
+      }.registerCustomShortcutSet(onKeyRelease.getShortcuts(keys), this, myPopup);
     }
 
     private void registerSwingAction(@NonNls @NotNull String id, @NonNls String @NotNull ... keys) {
       registerAction(event -> SwingActionDelegate.performAction(id, getSelectedList(null)), keys);
     }
 
-    private void registerToolWindowAction(@NonNls @NotNull String key) {
-      registerAction(event -> {
-        SwitcherToolWindow window = twShortcuts.get(key);
-        if (window != null) {
+    private void registerToolWindowAction(@NotNull SwitcherToolWindow window) {
+      String mnemonic = window.getMnemonic();
+      if (!StringUtil.isEmpty(mnemonic)) {
+        registerAction(event -> {
           cancel();
           window.getWindow().activate(null, true, true);
-        }
-      }, key);
+        }, mnemonic);
+      }
     }
 
     @Nullable
