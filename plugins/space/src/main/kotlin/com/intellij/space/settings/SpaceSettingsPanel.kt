@@ -2,6 +2,7 @@
 package com.intellij.space.settings
 
 import circlet.client.api.englishFullName
+import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -11,8 +12,7 @@ import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.promo.bigPromoBanner
-import com.intellij.space.promo.fullPromoText
-import com.intellij.space.promo.spaceLinkLabel
+import com.intellij.space.promo.promoPanel
 import com.intellij.space.ui.LoginComponents.buildConnectingPanel
 import com.intellij.space.ui.LoginComponents.loginPanel
 import com.intellij.space.ui.LoginComponents.separatorRow
@@ -29,7 +29,6 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import icons.SpaceIcons
 import libraries.klogging.logger
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -160,27 +159,9 @@ internal fun buildSettingsLoginPanel(st: SpaceLoginState.Disconnected,
 ): DialogPanel {
   return panel {
     loginPanel(st, isLoginActionDefault = false, withOrganizationsUrlLabel = true, loginAction)
-    row {
-      buildSettingsPromoPanel()()
-    }
-  }
-}
-
-private fun buildSettingsPromoPanel(): JComponent {
-  return JPanel(null).apply {
-    layout = MigLayout(LC().gridGap("${JBUI.scale(8)}", "${JBUI.scale(4)}")
-                         .insets("0", "0", "0", "0")
-                         .fill()).apply {
-      columnConstraints = "[][]"
-    }
-
-    add(JLabel(resizeIcon(SpaceIcons.Main, 30)), CC().pushY().spanY(10).alignY("top"))
-
-    val browserLink = spaceLinkLabel()
-    add(browserLink, CC().pushX().wrap())
-    add(fullPromoText(80), CC().pushX().wrap())
+    promoPanel()
     bigPromoBanner()?.let {
-      add(it, CC().pushX().wrap().gapTop("${JBUI.scale(8)}"))
+      fullRow { it() }
     }
   }
 }
