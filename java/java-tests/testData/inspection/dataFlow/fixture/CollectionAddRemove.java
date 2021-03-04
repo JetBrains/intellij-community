@@ -43,12 +43,11 @@ public class CollectionAddRemove {
     l2.addAll(l1);
     l2.addAll(l1);
     if (<warning descr="Condition 'l2.size() == 4' is always 'true'">l2.size() == 4</warning>) {}
-    // TODO: do not drop argument locality on addAll call
     l1.addAll(l2);
     l2.addAll(l1);
     l1.addAll(l2);
     l1.addAll(l1);
-    if (l1.size() == 20) {}
+    if (<warning descr="Condition 'l1.size() == 20' is always 'false'">l1.size() == 20</warning>) {}
     Set<String> s = new HashSet<>();
     s.addAll(l1);
     if (s.size() > 19) {}
@@ -112,7 +111,22 @@ public class CollectionAddRemove {
     list.add("bar");
     list.add("baz");
 
-    if (<warning descr="Condition 'list.size() == 2' is always 'false'">list.size() == 2</warning>) { // no warning is here 
+    if (<warning descr="Condition 'list.size() == 2' is always 'false'">list.size() == 2</warning>) { 
     }
   }
+
+  void arrayListCtorKeepsLocality() {
+    ArrayList<String> strings = new ArrayList<>();
+    strings.add("foo");
+    strings.add("bar");
+    strings.add("baz");
+
+    someSideEffect(new ArrayList<>(strings)); 
+
+    if (<warning descr="Condition '!strings.isEmpty()' is always 'true'">!<warning descr="Result of 'strings.isEmpty()' is always 'false'">strings.isEmpty()</warning></warning>) { 
+      System.out.println("ok");
+    }
+  }
+  
+  native void someSideEffect(Object obj);
 }

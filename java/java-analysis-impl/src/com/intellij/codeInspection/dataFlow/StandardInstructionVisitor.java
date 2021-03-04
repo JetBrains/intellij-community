@@ -478,9 +478,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue arg = memState.pop();
       int paramIndex = argCount - i - 1;
 
-      if (!(instruction.getMutationSignature().isPure() ||
-            instruction.getMutationSignature().equals(MutationSignature.pure().alsoMutatesArg(paramIndex))) ||
-          mayLeakFromType(instruction.getResultType())) {
+      boolean parameterMayNotLeak =
+        HardcodedContracts.isKnownNoParameterLeak(instruction.getTargetMethod()) ||
+        (instruction.getMutationSignature().isPure() ||
+         instruction.getMutationSignature().equals(MutationSignature.pure().alsoMutatesArg(paramIndex))) &&
+        !mayLeakFromType(instruction.getResultType());
+      if (!parameterMayNotLeak) {
         // If we write to local object only, it should not leak
         arg = dropLocality(arg, memState);
       }
