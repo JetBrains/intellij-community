@@ -1,4 +1,4 @@
- // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -45,7 +46,7 @@ public class ContextFilter extends FilterAction {
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     return myTable.getVariable() instanceof MatchVariableConstraint && completePattern &&
-           myTable.getProfile().isApplicableConstraint(UIUtil.CONTEXT, nodes, true, target);
+           isApplicableConstraint(UIUtil.CONTEXT, nodes, true, target);
   }
 
   @Override
@@ -71,11 +72,13 @@ public class ContextFilter extends FilterAction {
       @Override
       protected void layoutComponents() {
         final ConfigurationManager configManager = ConfigurationManager.getInstance(myTable.getProject());
+        final StructuralSearchProfile profile = myTable.getProfile();
+        assert profile != null;
         final List<String> configurationNames = JBIterable
           .from(configManager.getAllConfigurationNames())
           .filter(name -> {
             final Configuration config = configManager.findConfigurationByName(name);
-            return config != null && myTable.getProfile().isApplicableContextConfiguration(config);
+            return config != null && profile.isApplicableContextConfiguration(config);
           })
           .toList();
         textField.setVariants(configurationNames);

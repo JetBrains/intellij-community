@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -191,9 +191,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         doReplaceInContext(info, elementToReplace, replacementToMake, elementParent);
       }
       else {
+        final LanguageFileType fileType = myReplaceOptions.getMatchOptions().getFileType();
+        assert fileType != null;
         final PsiElement[] replacements = MatcherImplUtil.createTreeFromText(replacementToMake,
                                                                              PatternTreeContext.Block,
-                                                                             myReplaceOptions.getMatchOptions().getFileType(),
+                                                                             fileType,
                                                                              myProject);
         if (replacements.length > 0) {
           final PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, replacements, replacementToMake, elementParent);
@@ -209,9 +211,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     }
 
     private void doReplaceInContext(ReplacementInfo info, PsiElement elementToReplace, String replacementToMake, PsiElement elementParent) {
+      final LanguageFileType fileType = myReplaceOptions.getMatchOptions().getFileType();
+      assert fileType != null;
       PsiElement[] replacements = MatcherImplUtil.createTreeFromText(replacementToMake,
                                                                      PatternTreeContext.Block,
-                                                                     myReplaceOptions.getMatchOptions().getFileType(),
+                                                                     fileType,
                                                                      myProject);
       if (replacements.length > 0 && !(replacements[0] instanceof XmlAttribute) && !(replacements[0] instanceof XmlTagChild)) {
         replacements = new PsiElement[] { replacements[0].getParent() };

@@ -69,8 +69,9 @@ public class Replacer {
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions options, Project project, boolean sourceIsFile) {
-    final LanguageFileType type = options.getMatchOptions().getFileType();
-    return testReplace(in, what, by, options, project, sourceIsFile, false, type, type.getLanguage());
+    final LanguageFileType fileType = options.getMatchOptions().getFileType();
+    assert fileType != null;
+    return testReplace(in, what, by, options, project, sourceIsFile, false, fileType, fileType.getLanguage());
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions replaceOptions, Project project, boolean sourceIsFile,
@@ -318,7 +319,9 @@ public class Replacer {
   @NotNull
   public ReplacementInfo buildReplacement(@NotNull MatchResult result) {
     final ReplacementInfoImpl replacementInfo = new ReplacementInfoImpl(result, project);
-    replacementInfo.setReplacement(replacementBuilder.process(result, replacementInfo, options.getMatchOptions().getFileType()));
+    final LanguageFileType fileType = options.getMatchOptions().getFileType();
+    assert fileType != null;
+    replacementInfo.setReplacement(replacementBuilder.process(result, replacementInfo, fileType));
 
     return replacementInfo;
   }

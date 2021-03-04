@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -88,14 +89,11 @@ public final class ReplacementBuilder {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
     if (profile != null) {
       try {
-        final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
-          options.getReplacement(),
-          new PatternContextInfo(PatternTreeContext.Block, options.getMatchOptions().getPatternContext()),
-          fileType,
-          options.getMatchOptions().getDialect(),
-          project,
-          false
-        );
+        final Language dialect = options.getMatchOptions().getDialect();
+        assert dialect != null;
+        final PatternContextInfo context = new PatternContextInfo(PatternTreeContext.Block, options.getMatchOptions().getPatternContext());
+        final PsiElement[] elements =
+          MatcherImplUtil.createTreeFromText(options.getReplacement(), context, fileType, dialect, project, false);
         if (elements.length > 0) {
           final PsiElement patternNode = elements[0].getParent();
           patternNode.accept(new PsiRecursiveElementWalkingVisitor() {

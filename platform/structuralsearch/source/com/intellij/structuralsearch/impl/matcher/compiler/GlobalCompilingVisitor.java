@@ -119,8 +119,7 @@ public class GlobalCompilingVisitor {
     }
     myCodeBlockLevel = 0;
     this.context = context;
-    final StructuralSearchProfile profile =
-      StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());
     assert profile != null;
     profile.compile(elements, this);
 
@@ -137,7 +136,8 @@ public class GlobalCompilingVisitor {
   }
 
   @Nullable
-  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind, @NotNull Pattern substitutionPattern) {
+  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind,
+                                                           @NotNull Pattern substitutionPattern) {
     String content;
 
     if (kind == OccurenceKind.LITERAL) {

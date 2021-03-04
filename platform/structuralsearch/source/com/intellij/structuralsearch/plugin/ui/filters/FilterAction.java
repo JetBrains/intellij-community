@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.ui.SimpleColoredComponent;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -68,6 +70,14 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
   }
 
   protected abstract boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target);
+
+  protected boolean isApplicableConstraint(@NonNls String constraintName,
+                                           List<? extends PsiElement> nodes,
+                                           boolean completePattern,
+                                           boolean target) {
+    final StructuralSearchProfile profile = myTable.getProfile();
+    return profile != null && profile.isApplicableConstraint(constraintName, nodes, completePattern, target);
+  }
 
   public boolean isAvailable() {
     return myApplicable && !hasFilter();
