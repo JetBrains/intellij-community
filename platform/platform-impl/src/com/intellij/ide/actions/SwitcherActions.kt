@@ -6,11 +6,11 @@ import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
-import java.awt.event.ActionEvent
-import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
+import java.awt.event.*
+import java.util.function.Consumer
 import javax.swing.AbstractAction
 import javax.swing.JList
 
@@ -86,5 +86,45 @@ internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList
   init {
     listActionIds.forEach { fromList.actionMap.put(it, this) }
     toList.addFocusListener(this)
+  }
+}
+
+
+internal class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<InputEvent>) : KeyAdapter() {
+  private val wasAltDown = true == event?.isAltDown
+  private val wasAltGraphDown = true == event?.isAltGraphDown
+  private val wasControlDown = true == event?.isControlDown
+  private val wasMetaDown = true == event?.isMetaDown
+  val isEnabled = wasAltDown || wasAltGraphDown || wasControlDown || wasMetaDown
+  val isBackwardMove = isEnabled && true == event?.isShiftDown
+
+  val initialModifiers = if (!isEnabled) null
+  else StringBuilder().apply {
+    if (wasAltDown) append("alt ")
+    if (wasAltGraphDown) append("altGraph ")
+    if (wasControlDown) append("control ")
+    if (wasMetaDown) append("meta ")
+  }.toString()
+
+  val forbiddenMnemonic = (event as? KeyEvent)?.keyCode?.let {
+    when (it) {
+      in KeyEvent.VK_0..KeyEvent.VK_9 -> it.toChar().toString()
+      in KeyEvent.VK_A..KeyEvent.VK_Z -> it.toChar().toString()
+      else -> null
+    }
+  }
+
+  fun getShortcuts(vararg keys: String): CustomShortcutSet {
+    val modifiers = initialModifiers ?: return CustomShortcutSet.fromString(*keys)
+    return CustomShortcutSet.fromStrings(keys.map { modifiers + it })
+  }
+
+  override fun keyReleased(keyEvent: KeyEvent) {
+    when (keyEvent.keyCode) {
+      KeyEvent.VK_ALT -> if (wasAltDown) consumer.accept(keyEvent)
+      KeyEvent.VK_ALT_GRAPH -> if (wasAltGraphDown) consumer.accept(keyEvent)
+      KeyEvent.VK_CONTROL -> if (wasControlDown) consumer.accept(keyEvent)
+      KeyEvent.VK_META -> if (wasMetaDown) consumer.accept(keyEvent)
+    }
   }
 }
