@@ -10,6 +10,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.options.Configurable;
@@ -95,31 +96,37 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
           new OSAssociateFileTypesUtil.Callback() {
             @Override
             public void beforeStart() {
-              myFileTypePanel.myAssociateButton.setEnabled(false);
-              updateAssociateMessageLabel(
-                FileTypesBundle.message("filetype.associate.message.updating"), null);
+              ApplicationManager.getApplication().invokeLater(()-> {
+                myFileTypePanel.myAssociateButton.setEnabled(false);
+                updateAssociateMessageLabel(
+                  FileTypesBundle.message("filetype.associate.message.updating"), null);
+              }, ModalityState.any());
             }
 
             @Override
             public void onSuccess(boolean isOsRestartRequired) {
-              myFileTypePanel.myAssociateButton.setEnabled(true);
-              if (isOsRestartRequired) {
-                updateAssociateMessageLabel(
-                  FileTypesBundle.message("filetype.associate.message.os.restart"), AllIcons.General.Warning);
-              }
-              else {
-                updateAssociateMessageLabel("", null);
-              }
-              showAssociationBalloon(
-                FileTypesBundle.message("filetype.associate.success.message", ApplicationInfo.getInstance().getFullApplicationName()),
-                HintUtil.getInformationColor());
+              ApplicationManager.getApplication().invokeLater(()-> {
+                myFileTypePanel.myAssociateButton.setEnabled(true);
+                if (isOsRestartRequired) {
+                  updateAssociateMessageLabel(
+                    FileTypesBundle.message("filetype.associate.message.os.restart"), AllIcons.General.Warning);
+                }
+                else {
+                  updateAssociateMessageLabel("", null);
+                }
+                showAssociationBalloon(
+                  FileTypesBundle.message("filetype.associate.success.message", ApplicationInfo.getInstance().getFullApplicationName()),
+                  HintUtil.getInformationColor());
+              }, ModalityState.any());
             }
 
             @Override
             public void onFailure(@NotNull @Nls String errorMessage) {
-              myFileTypePanel.myAssociateButton.setEnabled(true);
-              updateAssociateMessageLabel("", null);
-              showAssociationBalloon(errorMessage, HintUtil.getErrorColor());
+              ApplicationManager.getApplication().invokeLater(()-> {
+                myFileTypePanel.myAssociateButton.setEnabled(true);
+                updateAssociateMessageLabel("", null);
+                showAssociationBalloon(errorMessage, HintUtil.getErrorColor());
+              }, ModalityState.any());
             }
           }
         );

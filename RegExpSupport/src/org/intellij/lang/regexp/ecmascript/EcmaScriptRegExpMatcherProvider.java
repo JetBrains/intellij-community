@@ -47,13 +47,15 @@ public class EcmaScriptRegExpMatcherProvider implements RegExpMatcherProvider {
       @Language("Nashorn JS")
       final String script =
         "var regexp = RegExp(\"" + StringUtil.escapeStringCharacters(regExp) + "\",'g" + modifiers + "');\n" +
-        "var str = '" + StringUtil.escapeStringCharacters(sampleText) + "';\n" +
+        "var str = \"" + StringUtil.escapeStringCharacters(sampleText) + "\";\n" +
         "var match;\n" +
         "\n" +
         "var RegExpMatch = Java.type(\"org.intellij.lang.regexp.RegExpMatch\");\n" +
+        "var prev = null;\n" +
         "while ((match = regexp.exec(str)) !== null) {\n" +
-        "  var r = new RegExpMatch();\n" +
-        "  r.add(match.index, regexp.lastIndex);\n" +
+        "  var r = new RegExpMatch(match.index, regexp.lastIndex);\n" +
+        "  if (r.equals(prev)) break;\n" +
+        "  prev = r;\n" +
         "  result.add(r);\n" +
         "}\n" +
         "result";
@@ -61,7 +63,7 @@ public class EcmaScriptRegExpMatcherProvider implements RegExpMatcherProvider {
       bindings.put("result", new SmartList<>());
       @SuppressWarnings("unchecked") final List<RegExpMatch> result = (List<RegExpMatch>)engine.eval(script, bindings);
       CheckRegExpForm.setMatches(regExpFile, result);
-      return RegExpMatchResult.FOUND;
+      return result.isEmpty() ? RegExpMatchResult.NO_MATCH : RegExpMatchResult.FOUND;
     }
     catch (Exception e) {
       return RegExpMatchResult.BAD_REGEXP;

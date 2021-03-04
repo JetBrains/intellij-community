@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?> 
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <htmlControls namespace="System.Web.UI.HtmlControls">
   <control name="A" type="HtmlAnchor" startTag="required" endTag="Required" emptyAllowed="false">
     <attribute name="href" type="%URL" />
@@ -25,14 +25,14 @@
   <control name="body" type="HtmlGenericControl" startTag="optional" endTag="optional" emptyAllowed="false" onlyOnce="true" />
   <control name="br" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
   <control name="button" type="HtmlButton" startTag="required" endTag="required" emptyAllowed="false"/>
-  
+
   <control name="Caption" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="center" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="cite" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="code" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="col" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
   <control name="colGroup" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="colGroup,thead,tbody,tfoot"/>
-  
+
   <control name="DD" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="dt, dd"/>
   <control name="del" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
     <attribute name="cite" type="%URL" />
@@ -42,7 +42,7 @@
   <control name="div" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="dl" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="dt" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="dt, dd"/>
-  
+
   <control name="EM" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="embed" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true" />
   <control name="FieldSet" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
@@ -54,19 +54,19 @@
     <attribute name="src" type="%URL" />
   </control>
   <control name="frameSet" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  
+
   <control name="H1" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="H2" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="H3" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="H4" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="H5" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  <control name="H6" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>  
+  <control name="H6" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="head" type="HtmlHead" startTag="optional" endTag="optional" emptyAllowed="false" onlyOnce="true" autoClosedBy="body">
     <attribute name="profile" type="%URL" />
   </control>
   <control name="hr" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
   <control name="html" type="HtmlGenericControl" startTag="optional" endTag="optional" emptyAllowed="false" onlyOnce="true" />
-  
+
   <control name="I" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="IFrame" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
     <attribute name="src" type="%URL" />
@@ -88,9 +88,9 @@
     <attribute name="cite" type="%URL" />
   </control>
   <control name="isIndex" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
-  
+
   <control name="KBD" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  
+
   <control name="Label" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="legend" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="li" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="li"/>
@@ -106,7 +106,7 @@
   <control name="NoFrames" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="noScript" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="nobr" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  
+
   <control name="Object" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
     <attribute name="classid" type="%URL" />
     <attribute name="codebase" type="%URL" />
@@ -116,11 +116,12 @@
   </control>
   <control name="ol" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="option" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="option,optgroup"/>
-  
-  <control name="P" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="p"/>
+
+  <control name="P" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false"
+           autoClosedBy="address,article,aside,blockquote,details,div,dl,fieldset,figcaption,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hgroup,hr,main,menu,nav,ol,p,pre,section,table,ul"/>
   <control name="param" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
   <control name="pre" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  
+
   <control name="Q" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">
     <attribute name="cite" type="%URL" />
   </control>
@@ -139,7 +140,7 @@
   <control name="style" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="sub" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="sup" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  
+
   <control name="Table" type="HtmlTable" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="tbody" type="HtmlGenericControl" startTag="optional" endTag="optional" emptyAllowed="false" autoClosedBy="tfoot, thead, tbody"/>
   <control name="td" type="HtmlTableCell" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="td, th"/>
@@ -151,10 +152,10 @@
   <control name="tr" type="HtmlTableRow" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="tr"/>
   <control name="track" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true" />
   <control name="tt" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  
+
   <control name="U" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="UL" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
-  
+
   <control name="VAR" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="wbr" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
 </htmlControls>

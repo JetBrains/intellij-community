@@ -1,27 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
-import com.intellij.execution.ExecutionException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
@@ -75,26 +70,9 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
                   validateSdkComboBox(baseSdkField, this))
 
   override fun getOrCreateSdk(): Sdk? {
-    val root = pathField.text
-    val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, module, existingSdks, context)
-    if (baseSdk == null) return null
-
-    val task = object : Task.WithResult<String, ExecutionException>(project, PySdkBundle.message("python.creating.venv.title"), false) {
-      override fun compute(indicator: ProgressIndicator): String {
-        indicator.isIndeterminate = true
-        val packageManager = PyPackageManager.getInstance(baseSdk)
-        return packageManager.createVirtualEnv(root, inheritSitePackagesField.isSelected)
-      }
-    }
-    val shared = makeSharedField.isSelected
-    val associatedPath = if (!shared) projectBasePath else null
-    val sdk = createSdkByGenerateTask(task, existingSdks, baseSdk, associatedPath, null) ?: return null
-    if (!shared) {
-      sdk.associateWithModule(module, newProjectPath)
-    }
-    moduleToExcludeSdkFrom(root, project)?.excludeInnerVirtualEnv(sdk)
-    PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
-    return sdk
+    return PyProjectVirtualEnvConfiguration.createVirtualEnvSynchronously(baseSdkField.selectedSdk, existingSdks, pathField.text,
+                                                                          newProjectPath, project, module, context,
+                                                                          inheritSitePackagesField.isSelected, makeSharedField.isSelected)
   }
 
   override fun addChangeListener(listener: Runnable) {
@@ -104,16 +82,6 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       }
     })
     baseSdkField.childComponent.addItemListener { listener.run() }
-  }
-
-  private fun moduleToExcludeSdkFrom(path: String, project: Project?): Module? {
-    val possibleProjects = if (project != null) listOf(project) else ProjectManager.getInstance().openProjects.asList()
-    val rootFile = StandardFileSystems.local().refreshAndFindFileByPath(path) ?: return null
-    return possibleProjects
-      .asSequence()
-      .map { ModuleUtil.findModuleForFile(rootFile, it) }
-      .filterNotNull()
-      .firstOrNull()
   }
 
   private val projectBasePath: @SystemIndependent String?

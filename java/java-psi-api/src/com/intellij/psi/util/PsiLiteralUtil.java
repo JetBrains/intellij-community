@@ -179,7 +179,8 @@ public final class PsiLiteralUtil {
     PsiElement literal = expression.getFirstChild();
     assert literal instanceof PsiJavaToken : literal;
     IElementType type = ((PsiJavaToken)literal).getTokenType();
-    return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL) && expression.getValue() == null;
+    return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) && 
+           expression.getValue() == null;
   }
 
   /**

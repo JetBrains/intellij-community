@@ -48,6 +48,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @NonNls public static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
   @NonNls public static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
   @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
+  @NonNls public static final String JCP_NS = "http://xmlns.jcp.org/xml/ns/javaee/";
   @NonNls public static final String JAKARTA_NS = "https://jakarta.ee/xml/ns/jakartaee/";
 
   private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";

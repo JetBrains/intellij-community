@@ -35,7 +35,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- groupId should be same to StatisticBase.GROUP_ID and version to StatisticBase.VERSION -->
-    <statistics.counterUsagesCollector groupId="ideFeaturesTrainer" version="4"/>
+    <statistics.counterUsagesCollector groupId="ideFeaturesTrainer" version="5"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
     <statistics.validation.customValidationRule
@@ -86,16 +86,20 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="ide.features.trainer.new.ui"
-                 description="Turn on it to look at new developing UI for IFT"
-                 defaultValue="TRUE"
-                 restartRequired="false"/>
     <registryKey key="ift.help.links"
                  description="Turn on IFT Help and Resources section"
                  defaultValue="FALSE"
                  restartRequired="false"/>
     <registryKey key="ift.experimental.lessons"
                  description="Turn on it to preview incomplete lessons"
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
+    <registryKey key="ift.default.restore.delay"
+                 description="Specified default delay in milliseconds before previous task will be restored if something went wrong."
+                 defaultValue="500"
+                 restartRequired="false"/>
+    <registryKey key="ift.show.feedback.link"
+                 description="Whether IFT show feedback link in the modules panel."
                  defaultValue="FALSE"
                  restartRequired="false"/>
   </extensions>

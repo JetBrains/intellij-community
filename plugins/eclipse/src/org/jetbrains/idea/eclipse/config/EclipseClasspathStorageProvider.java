@@ -116,10 +116,10 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   @Override
-  public void attach(@NotNull Module module) {
-    updateEntitySource(module, source -> {
-      VirtualFileUrlManager virtualFileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, module.getProject());
-      String contentRoot = getContentRoot(ModuleRootManager.getInstance(module));
+  public void attach(@NotNull ModuleRootModel model) {
+    updateEntitySource(model.getModule(), source -> {
+      VirtualFileUrlManager virtualFileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, model.getModule().getProject());
+      String contentRoot = getContentRoot(model);
       String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
       return new EclipseProjectFile(virtualFileUrlManager.fromUrl(classpathFileUrl), (JpsFileEntitySource)source);
     });

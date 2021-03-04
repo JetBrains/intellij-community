@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Proxy;
@@ -78,10 +79,10 @@ public class InlineModuleDependencyAction extends AnAction {
       if (dependencyEntryFilter.test(depEntry)) {
         LOG.assertTrue(depEntry instanceof ClonableOrderEntry, depEntry);
         ExportableOrderEntry entryToCopy = (ExportableOrderEntry)depEntry;
-        ExportableOrderEntry cloned = (ExportableOrderEntry)((ClonableOrderEntry)depEntry).cloneEntry(modelImpl, rootManager, virtualFilePointerManager);
+        model.addOrderEntry(((ClonableOrderEntry)depEntry).cloneEntry(modelImpl, rootManager, virtualFilePointerManager));
+        ExportableOrderEntry cloned = (ExportableOrderEntry)ArrayUtil.getLastElement(model.getOrderEntries());
         cloned.setExported(entryToInline.isExported() && entryToCopy.isExported());
         cloned.setScope(OrderEntryUtil.intersectScopes(entryToInline.getScope(), entryToCopy.getScope()));
-        model.addOrderEntry(cloned);
         addedCount++;
       }
     }

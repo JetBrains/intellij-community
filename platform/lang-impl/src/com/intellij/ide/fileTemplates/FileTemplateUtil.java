@@ -31,6 +31,7 @@ import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.Token;
 import org.apache.velocity.runtime.parser.node.*;
 import org.apache.velocity.util.StringUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,7 +218,7 @@ public final class FileTemplateUtil {
       else {
         project = null;
       }
-      VelocityTemplateContext.withContext(project, ()->VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
+      VelocityTemplateContext.withContext(project, () -> VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
     }
     catch (final VelocityException e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -334,9 +335,9 @@ public final class FileTemplateUtil {
     }
 
     return WriteCommandAction
-        .writeCommandAction(project)
-        .withName(handler.commandName(template))
-        .compute(()->handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
+      .writeCommandAction(project)
+      .withName(handler.commandName(template))
+      .compute(() -> handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
   }
 
   @Nullable
@@ -387,10 +388,12 @@ public final class FileTemplateUtil {
     return getFileType(fileTemplate).getIcon();
   }
 
-  public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p) {
+  public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p){
     for (Enumeration<?> e = p.propertyNames(); e.hasMoreElements(); ) {
       String s = (String)e.nextElement();
-      props.putIfAbsent(s, p.getProperty(s));
+
+      //noinspection UseOfPropertiesAsHashtable
+      props.putIfAbsent(s, p.containsKey(s) ? p.get(s) : p.getProperty(s)); // pass object for explicit values or string for defaults
     }
   }
 

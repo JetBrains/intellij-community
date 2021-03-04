@@ -8,8 +8,7 @@ import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertNull
+import junit.framework.Assert.*
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -64,6 +63,24 @@ class EntityStorageSerializationTest {
 
     val stream = ByteArrayOutputStream()
     serializer.serializeCache(stream, builder.toStorage())
+  }
+
+  @Test
+  fun `serialize disposed point`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+
+    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
+
+    // Disposed file pointers return empty string
+    val pointer = virtualFileManager.fromUrl("")
+
+    builder.addSampleEntity("myString", fileProperty = pointer)
+
+    val stream = ByteArrayOutputStream()
+    val result = serializer.serializeCache(stream, builder.toStorage())
+
+    assertTrue(result is SerializationResult.Fail<*>)
   }
 }
 

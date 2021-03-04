@@ -20,6 +20,18 @@ public class PluginPlatformInfoTest extends JavaCodeInsightFixtureTestCase {
     doTestResolved("something:2016.2", "162");
   }
 
+  public void testGradle193_6911_18() {
+    doTestResolved("something:193.6911.18", "193.6911.18");
+  }
+
+  public void testGradle202_6397_EAP_CANDIDATE_SNAPSHOT	() {
+    doTestResolved("something:202.6397-EAP-CANDIDATE-SNAPSHOT", "202.6397");
+  }
+
+  public void testGradle201_EAP_SNAPSHOT() {
+    doTestResolved("something:201-EAP-SNAPSHOT", "201");
+  }
+
   private void doTestResolved(String libraryName, String expectedBuildNumber) {
     setupPlatformLibrary(libraryName);
 
@@ -44,10 +56,6 @@ public class PluginPlatformInfoTest extends JavaCodeInsightFixtureTestCase {
 
   public void testGradleUnresolvedLibraryBadVersion() {
     doTestUnresolved("something:20.");
-  }
-
-  public void testGradleUnresolvedLibraryBadVersionPrefix() {
-    doTestUnresolved("something:123.45");
   }
 
   public void testGradleUnresolvedLibraryMissingBranchVersion() {

@@ -8,7 +8,7 @@ import com.intellij.util.PlatformUtils
 
 class PreloadCatBoostModel : PreloadingActivity() {
   override fun preload(indicator: ProgressIndicator) {
-    if (!PlatformUtils.isIntelliJ()) return
+    if (!PlatformUtils.isIntelliJ() && !PlatformUtils.isPyCharm()) return
 
     val providers = ExperimentModelProvider.availableProviders().filterIsInstance<CatBoostJarCompletionModelProvider>()
     for (provider in providers) {

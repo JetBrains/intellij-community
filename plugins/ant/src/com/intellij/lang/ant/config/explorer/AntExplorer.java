@@ -198,13 +198,13 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private void setupEmptyText() {
     StatusText emptyText = myTree.getEmptyText();
     emptyText.appendLine(AntBundle.message("ant.empty.text.1"));
-    emptyText.appendLine(AntBundle.message("ant.empty.text.2"), SimpleTextAttributes.LINK_ATTRIBUTES,
+    emptyText.appendLine(AntBundle.message("ant.empty.text.2"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                          e -> addBuildFile());
     emptyText.appendLine("");
     emptyText.appendLine(
       AllIcons.General.ContextHelp,
       AntBundle.message("ant.empty.text.help"),
-      SimpleTextAttributes.LINK_ATTRIBUTES,
+      SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
       e -> HelpManager.getInstance().invokeHelp("procedures.building.ant.add"));
   }
 

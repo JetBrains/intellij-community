@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.util.PlatformIcons
+import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 
 class PyMarkAsNamespacePackageAction : AnAction() {
@@ -26,14 +27,30 @@ class PyMarkAsNamespacePackageAction : AnAction() {
     when {
       virtualFiles.all { service.canBeMarked(it) } -> {
         presentation.isEnabled = true
-        presentation.text = PyBundle.message("python.namespace.package.folder")
+        presentation.text = if (PlatformUtils.isPyCharm()) {
+          PyBundle.message("python.namespace.package.folder")
+        }
+        else {
+          PyBundle.message("python.python.namespace.package.folder")
+        }
       }
       virtualFiles.all { service.isMarked(it) } -> {
         presentation.isEnabled = true
-        presentation.text = PyBundle.message("python.unmark.as.namespace.package")
+        presentation.text = if (PlatformUtils.isPyCharm()) {
+          PyBundle.message("python.unmark.as.namespace.package")
+        }
+        else {
+          PyBundle.message("python.unmark.as.python.namespace.package")
+        }
       }
       else -> {
         presentation.isEnabled = false
+        presentation.text = if (PlatformUtils.isPyCharm()) {
+          PyBundle.message("python.namespace.package.folder")
+        }
+        else {
+          PyBundle.message("python.python.namespace.package.folder")
+        }
       }
     }
   }

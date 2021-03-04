@@ -61,6 +61,7 @@ public abstract class StatusText {
   private boolean myHasActiveClickListeners; // calculated field for performance optimization
   private boolean myShowAboveCenter = true;
   private Font myFont = null;
+  private boolean myCenterAlignText = true;
 
   protected StatusText(JComponent owner) {
     this();
@@ -114,6 +115,14 @@ public abstract class StatusText {
     myPrimaryColumn.fragments.forEach(fragment -> fragment.myComponent.setFont(font));
     mySecondaryColumn.fragments.forEach(fragment -> fragment.myComponent.setFont(font));
     myFont = font;
+  }
+
+  public boolean isCenterAlignText() {
+    return myCenterAlignText;
+  }
+
+  public void setCenterAlignText(boolean centerAlignText) {
+    myCenterAlignText = centerAlignText;
   }
 
   public void attachTo(@Nullable Component owner) {
@@ -260,7 +269,7 @@ public abstract class StatusText {
     updateBounds(mySecondaryColumn);
   }
 
-  private static void updateBounds(Column column) {
+  private void updateBounds(Column column) {
     Dimension size = new Dimension();
     for (int i = 0; i < column.fragments.size(); i++) {
       Fragment fragment = column.fragments.get(i);
@@ -270,9 +279,11 @@ public abstract class StatusText {
       if (i > 0) size.height += JBUIScale.scale(Y_GAP);
       size.width = Math.max(size.width, d.width);
     }
-    for (int i = 0; i < column.fragments.size(); i++) {
-      Fragment fragment = column.fragments.get(i);
-      fragment.boundsInColumn.x += (size.width - fragment.boundsInColumn.width)/2;
+    if (myCenterAlignText) {
+      for (int i = 0; i < column.fragments.size(); i++) {
+        Fragment fragment = column.fragments.get(i);
+        fragment.boundsInColumn.x += (size.width - fragment.boundsInColumn.width)/2;
+      }
     }
     column.preferredSize.setSize(size);
   }

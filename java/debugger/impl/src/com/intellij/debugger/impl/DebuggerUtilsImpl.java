@@ -267,6 +267,10 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     if (superType.equals(type) || CommonClassNames.JAVA_LANG_OBJECT.equals(superType.name())) {
       return true;
     }
+    if (type instanceof ArrayType) {
+      String superName = superType.name();
+      return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) || CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName);
+    }
     return supertypes(type).anyMatch(t -> instanceOf(t, superType));
   }
 

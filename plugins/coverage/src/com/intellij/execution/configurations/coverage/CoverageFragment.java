@@ -78,7 +78,7 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
     return new SettingsEditorFragment<>(id, optionName, null, filterEditor,
                                         (p, editor) -> editor.setFilters(CoverageConfigurable.getCoveragePatterns(configuration, included)),
                                         (p, editor) -> setCoveragePatterns(configuration, isSelected() && filterEditor.isVisible() ? editor.getFilters() : ClassFilter.EMPTY_ARRAY, included),
-                                        p -> false);
+                                        p -> CoverageConfigurable.getCoveragePatterns(configuration, included).length > 0);
   }
 
   @NotNull

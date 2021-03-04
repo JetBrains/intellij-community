@@ -304,13 +304,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String getAlternativeJrePath() {
-    return ALTERNATIVE_JRE_PATH;
+    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH) 
+                                        : null;
   }
 
   @Override
   public void setAlternativeJrePath(String path) {
-    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
-    ALTERNATIVE_JRE_PATH = path;
+    String collapsedPath = path != null ? new AlternativeJrePathConverter().toString(path) : null;
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, collapsedPath);
+    ALTERNATIVE_JRE_PATH = collapsedPath;
     ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 

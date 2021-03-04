@@ -8,6 +8,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
@@ -35,7 +37,8 @@ public final class CommonJavaFragments {
     return exists(s.getManager().getBeforeRunTasks(s.getConfiguration()), t -> CompileStepBeforeRun.ID == t.getProviderId());
   }
 
-  public static <S extends RunConfigurationBase<?>> SettingsEditorFragment<S, JLabel> createBuildBeforeRun(BeforeRunComponent beforeRunComponent) {
+  public static <S extends RunConfigurationBase<?>> SettingsEditorFragment<S, JLabel> createBuildBeforeRun(BeforeRunComponent beforeRunComponent,
+                                                                                                           SettingsEditor<S> settingsEditor) {
     String buildAndRun = ExecutionBundle.message("application.configuration.title.build.and.run");
     String run = ExecutionBundle.message("application.configuration.title.run");
     JLabel jLabel = new JLabel(buildAndRun);
@@ -84,11 +87,7 @@ public final class CommonJavaFragments {
         return myComponent;
       }
     };
-    beforeRunComponent.setTagListener((key, added) -> {
-      if (CompileStepBeforeRun.ID == key) {
-        jLabel.setText(added ? buildAndRun : run);
-      }
-    });
+    settingsEditor.addSettingsEditorListener(editor -> jLabel.setText(beforeRunComponent.hasEnabledTask(CompileStepBeforeRun.ID) ? buildAndRun : run));
     fragment.setActionHint(ExecutionBundle.message("run.the.application.without.launching.the.build.process"));
     return fragment;
   }
@@ -123,7 +122,9 @@ public final class CommonJavaFragments {
                                      }
                                    },
                                    s -> s.getDefaultModule() != s.getConfigurationModule().getModule() &&
-                                        s.getConfigurationModule().getModule() != null);
+                                        s.getConfigurationModule().getModule() != null ||
+                                        ModuleManager.getInstance(s.getProject()).getModules().length > 1 ||
+                                        option != null && getter.test(s));
     fragment.setHint(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.hint"));
     fragment.setActionHint(
       ExecutionBundle.message("the.module.whose.classpath.will.be.used.the.classpath.specified.in.the.vm.options.takes.precedence.over.this.one"));

@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.java.ift.JavaLessonsBundle
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.BaseLabel
@@ -16,11 +17,8 @@ import com.intellij.ui.UIBundle
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.closeAllFindTabs
 
 class JavaInheritanceHierarchyLesson(module: Module)
   : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name"), module, "JAVA") {
@@ -41,7 +39,9 @@ class JavaInheritanceHierarchyLesson(module: Module)
         (virtualFile.name == "DerivedClass1.java" || virtualFile.name == "DerivedClass2.java") && atDeclarationPosition()
       }
 
-      restoreIfModifiedOrMoved()
+      restoreAfterStateBecomeFalse {
+        focusOwner is EditorComponentImpl
+      }
 
       test {
         Thread.sleep(1000)
@@ -75,12 +75,15 @@ class JavaInheritanceHierarchyLesson(module: Module)
         closeAllFindTabs()
       }
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.open.in.find.tool.window", findToolWindow(),
-                                 icon(ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab))))
+                                     icon(ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND,
+                                                                                                 AllIcons.General.Pin_tab))))
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: BaseLabel ->
         ui.text == (CodeInsightBundle.message("goto.implementation.findUsages.title", "foo")) ||
         ui.text == (JavaAnalysisBundle.message("navigate.to.overridden.methods.title", "foo"))
       }
-      restoreIfModifiedOrMoved()
+      restoreState(delayMillis = defaultRestoreDelay) {
+        focusOwner is EditorComponentImpl
+      }
 
       test {
         ideFrame {

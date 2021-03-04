@@ -1,6 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.stream.JsonReader;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,13 +14,16 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.templates.github.DownloadUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Supplier;
@@ -117,33 +125,38 @@ public class MdnDocumentationUtil {
       }
     }
     if (url == null || url.contains(HtmlDocumentationProvider.ATTR_PREFIX)) return null;
-    
+
     File targetDir = PathManager.getConfigDir().resolve("mdn").toFile();
+    url += "/index.json";
     File targetFile = new File(targetDir, makeUniqueFileName(url));
     try {
       String text = defaultDocProducer.get();
       if (text == null || !text.contains(DocumentationMarkup.CONTENT_START)) {
-        if (!targetFile.exists()) {
+        // Refresh contents after 30 days
+        if (!targetFile.exists() || targetFile.lastModified() < System.currentTimeMillis() + 30L * 24 * 60 * 60 * 1000) {
           try {
-            DownloadUtil.downloadAtomically(ProgressManager.getInstance().getProgressIndicator(), url + "?raw&summary", targetFile);
-          } catch (IOException e) {
-            Throwable cause = e.getCause();
-            if (!(cause instanceof HttpRequests.HttpStatusException)) {
-              throw e;
-            }
-            if (((HttpRequests.HttpStatusException)cause).getStatusCode() != 404) {
-              throw e;
-            }
-            LOG.warn("Mdn broken url: " + url);
+            DownloadUtil.downloadAtomically(ProgressManager.getInstance().getProgressIndicator(), url, targetFile);
+          }
+          catch (IOException e) {
+            if (!targetFile.exists()) {
+              Throwable cause = e.getCause();
+              if (!(cause instanceof HttpRequests.HttpStatusException)) {
+                throw e;
+              }
+              if (((HttpRequests.HttpStatusException)cause).getStatusCode() != 404) {
+                throw e;
+              }
+              LOG.warn("Mdn broken url: " + url);
 
-            //create empty file if the server has returned 404
-            if (!targetFile.createNewFile()) throw e;
+              //create empty file if the server has returned 404
+              if (!targetFile.createNewFile()) throw e;
+            }
           }
         }
-        String content = FileUtil.loadFile(targetFile, StandardCharsets.UTF_8);
-        if (content.isEmpty()) return null;
-        
-        String mdnDecorated = decorate(fixLinks(content), url);
+        String jsonContent = FileUtil.loadFile(targetFile, StandardCharsets.UTF_8);
+        if (jsonContent.isEmpty()) return null;
+
+        String mdnDecorated = extractAndDecorateSummary(jsonContent, url);
         if (text == null) {
           return mdnDecorated;
         }
@@ -161,6 +174,36 @@ public class MdnDocumentationUtil {
       LOG.debug(e);
     }
     return null;
+  }
+
+  private static @Nullable String extractAndDecorateSummary(@NotNull String jsonContent, String url) {
+    JsonReader reader = new JsonReader(new StringReader(jsonContent));
+    reader.setLenient(true);
+    return StreamEx.of(JsonParser.parseReader(reader)).select(JsonObject.class)
+      .map(obj -> obj.get("doc")).select(JsonObject.class)
+      .map(obj -> obj.get("body")).select(JsonArray.class)
+      .flatMap(arr -> StreamEx.of(arr.spliterator())).select(JsonObject.class)
+      .filter(entry -> {
+        JsonPrimitive type = ObjectUtils.tryCast(entry.get("type"), JsonPrimitive.class);
+        return type != null && type.isString() && type.getAsString().equals("prose");
+      })
+      .map(entry -> entry.get("value")).select(JsonObject.class)
+      .map(entry -> entry.get("content")).select(JsonPrimitive.class)
+      .filter(JsonPrimitive::isString)
+      .map(JsonPrimitive::getAsString)
+      .map(MdnDocumentationUtil::fixSummary)
+      .map(MdnDocumentationUtil::fixLinks)
+      .map(summary -> decorate(summary, url))
+      .findFirst()
+      .orElse(null);
+  }
+
+  private static @NotNull String fixSummary(@NotNull String summary) {
+    return summary.replaceAll("<iframe.*</iframe>|<p[^<>]*class=['\"]hidden['\"].*</p>|<div[^<>]*class=['\"]hidden['\"].*</div>", "")
+      .replaceAll("<table[^<>]*class=['\"]properties['\"]>","<table class=\"sections\">")
+      .replaceAll("<td>(.*)</td>", "<td valign='top'>$1</td>")
+      .replaceAll("<th scope=['\"]row['\"]>(.*)</th>", "<td valign='top' class='section'><p>$1</td>")
+      .replaceAll("&apos;", "'");
   }
 
   private static String decorate(String mdnDoc, String url) {

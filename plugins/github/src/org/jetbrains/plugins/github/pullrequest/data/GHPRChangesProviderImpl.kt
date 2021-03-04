@@ -141,23 +141,10 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
       changes.add(change)
 
       if (patch is TextFilePatch) {
-        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.oid, patch.filePath, patch, LookupOnlyFileHistory(commitsBySha))
+        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.oid, patch.filePath, patch,
+                                                                 GHPRGraphFileHistory(commitsBySha, lastCommit, patch.filePath))
       }
     }
-  }
-
-  private class LookupOnlyFileHistory(private val commitsBySha: Map<String, GHCommitWithPatches>) : GHPRFileHistory {
-    override fun contains(commitSha: String, filePath: String): Boolean {
-      return commitsBySha[commitSha]?.cumulativePatches?.any { it.filePath == filePath } ?: false
-    }
-
-    override fun compare(commitSha1: String, commitSha2: String): Int = TODO("Not yet implemented")
-
-    override fun getPatches(parent: String,
-                            child: String,
-                            includeFirstKnownPatch: Boolean,
-                            includeLastPatch: Boolean): List<TextFilePatch> = TODO("Not yet implemented")
-
   }
 
   private fun createChangeFromPatch(beforeRef: String, afterRef: String, patch: FilePatch): Change {

@@ -3,6 +3,7 @@ package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -20,6 +21,7 @@ import java.util.function.Predicate;
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
 import static com.jetbrains.env.debug.PyBaseDebuggerTask.findCompletionVariantByName;
 import static com.jetbrains.env.debug.PyBaseDebuggerTask.findDebugValueByName;
+import static com.jetbrains.python.PyParameterInfoTest.checkParameters;
 import static org.junit.Assert.*;
 
 public class PythonConsoleTest extends PyEnvTestCase {
@@ -281,6 +283,22 @@ public class PythonConsoleTest extends PyEnvTestCase {
         assertEquals(3, compVariant.getType());
         String currentOutput = output();
         assertFalse("Property was called for completion", currentOutput.contains("239"));
+      }
+    });
+  }
+
+  @Test
+  public void testParameterInfo() {
+    runPythonTest(new PyConsoleTask("/debug") {
+      @Override
+      public void testing() throws Exception {
+        exec("from os import getenv");
+        exec("print(\"Hi\")");
+        waitForOutput("Hi");
+        addTextToEditor("getenv()");
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          checkParameters(7, getConsoleFile(), "key, default=None", new String[]{"key, "});
+        });
       }
     });
   }

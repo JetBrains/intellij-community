@@ -26,5 +26,12 @@ public abstract class FrameworkAvailabilityCondition {
     }
   };
 
+  public static final FrameworkAvailabilityCondition ALWAYS_FALSE = new FrameworkAvailabilityCondition() {
+    @Override
+    public boolean isAvailableFor(@NotNull FrameworkSupportModel model) {
+      return false;
+    }
+  };
+
   public abstract boolean isAvailableFor(@NotNull FrameworkSupportModel model);
 }

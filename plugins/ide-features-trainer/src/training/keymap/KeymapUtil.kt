@@ -19,21 +19,34 @@ object KeymapUtil {
    * @return null if actionId is null
    */
   fun getShortcutByActionId(actionId: String?): KeyStroke? {
-
     actionId ?: return null
 
+    fun KeyboardShortcut.isConflicting(): Boolean {
+      return KeymapManager.getInstance().activeKeymap.getConflicts(actionId, this).isNotEmpty()
+    }
+
     val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts(actionId)
-    var keyStroke: KeyStroke? = null
-    for (shortcut in shortcuts) {
-      if (shortcut is KeyboardShortcut) {
-        val noConflicts = KeymapManager.getInstance().activeKeymap.getConflicts(actionId, shortcut).isEmpty()
-        if (noConflicts || keyStroke == null) keyStroke = shortcut.firstKeyStroke
-        if (noConflicts) break
+    var bestShortcut: KeyboardShortcut? = null
+    for (curShortcut in shortcuts) {
+      if (curShortcut is KeyboardShortcut) {
+        val isConflicting = curShortcut.isConflicting()
+        val isNumpadKey = curShortcut.isNumpadKey
+        if (bestShortcut == null || !isConflicting && !isNumpadKey
+            || !isNumpadKey && bestShortcut.isNumpadKey // Prefer not numpad shortcut then not conflicting shortcut
+            || !isConflicting && bestShortcut.isConflicting() && bestShortcut.isNumpadKey
+        ) {
+          bestShortcut = curShortcut
+        }
+        if (!isConflicting && !isNumpadKey) break
       }
     }
-    return keyStroke
+    return bestShortcut?.firstKeyStroke
   }
 
+  private val KeyboardShortcut.isNumpadKey: Boolean
+    get() = firstKeyStroke.keyCode in KeyEvent.VK_NUMPAD0..KeyEvent.VK_DIVIDE || firstKeyStroke.keyCode == KeyEvent.VK_NUM_LOCK
+
+  @NlsSafe
   fun getKeyStrokeText(keyStroke: KeyStroke?): String {
     if (keyStroke == null) return ""
     val modifiers = getModifiersText(keyStroke.modifiers)
@@ -91,7 +104,7 @@ object KeymapUtil {
     if (shortcut.contains('→')) {
       val split = shortcut.split('→')
       if (split.size != 2) return shortcut
-      return decryptMacShortcut(split[0]) + '→' + split[1]
+      return decryptMacShortcut(split[0].trim()) + " →" + split[1]
     }
     val buffer = StringBuffer()
     var shouldInsertPlus = false
@@ -110,6 +123,7 @@ object KeymapUtil {
         }
         else {
           buffer.append(c)
+          shouldInsertPlus = false
         }
       }
     }

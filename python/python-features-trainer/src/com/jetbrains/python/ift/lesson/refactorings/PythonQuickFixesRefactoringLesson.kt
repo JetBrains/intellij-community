@@ -19,6 +19,7 @@ import training.commands.kotlin.TaskTestContext
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import java.util.regex.Pattern
 import javax.swing.JDialog
 import javax.swing.JTable
 
@@ -37,25 +38,21 @@ class PythonQuickFixesRefactoringLesson(module: Module)
     prepareSample(sample)
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.type.new.argument", code("foo"), code("y"), code(", y")))
-      stateCheck {
-        editor.document.text == StringBuilder(sample.text).insert(sample.startOffset, ", y").toString()
+      triggerByListItemAndHighlight(highlightBorder = false, highlightInside = false) { item ->
+        item.toString().contains("string=y")
       }
       proposeMyRestore()
       test { type(", y") }
     }
 
-    task {
-      text(PythonLessonsBundle.message("python.quick.fix.refactoring.wait.completion.showed"))
-      triggerByListItemAndHighlight(highlightBorder = false, highlightInside = false) { item ->
-        item.toString().contains("string=y")
-      }
-      proposeMyRestore()
-    }
-
-    task {
+    task("foo(10, y)") {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.close.completion.list", action("EditorEscape")))
-      stateCheck { previous.ui?.isShowing != true }
-      proposeMyRestore()
+      stateCheck {
+        previous.ui?.isShowing != true && editor.document.text.contains(it)
+      }
+      restoreState {
+        !editor.document.text.contains(it)
+      }
       test { GuiTestUtil.shortcut(Key.ESCAPE) }
     }
 
@@ -63,10 +60,13 @@ class PythonQuickFixesRefactoringLesson(module: Module)
       setSample(previous.sample)
     }
 
+    val quickFixItemText = PyBundle.message("QFIX.change.signature.of", "")
+    lateinit var showQuickFixesTaskId: TaskContext.TaskId
     task("ShowIntentionActions") {
+      showQuickFixesTaskId = taskId
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.invoke.intentions", action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains("Change signature of")
+        item.toString().contains(quickFixItemText)
       }
       proposeRestore {
         checkExpectedStateOfEditor(previous.sample)
@@ -87,10 +87,11 @@ class PythonQuickFixesRefactoringLesson(module: Module)
         }
         else null
       }
-      restoreByUi(500)
+      restoreByUi(delayMillis = defaultRestoreDelay)
       test {
-        GuiTestUtil.shortcut(Key.DOWN)
-        GuiTestUtil.shortcut(Key.ENTER)
+        ideFrame {
+          jListContains(quickFixItemText).clickItem(Pattern.compile(".*$quickFixItemText.*"))
+        }
       }
     }
     task {
@@ -126,9 +127,6 @@ class PythonQuickFixesRefactoringLesson(module: Module)
         }
         GuiTestUtil.shortcut(Key.BACK_SPACE)
         type("0")
-        //ideFrame {
-        //  previous.ui?.let { usagesTab -> jComponent(usagesTab).click() }
-        //}
       }
     }
 
@@ -144,7 +142,7 @@ class PythonQuickFixesRefactoringLesson(module: Module)
         val b = editor.document.text != beforeRefactoring
         b && stackInsideDialogRefactoring()
       }
-      restoreState(delayMillis = 500) {
+      restoreAfterStateBecomeFalse(restoreId = showQuickFixesTaskId) {
         !stackInsideDialogRefactoring()
       }
 

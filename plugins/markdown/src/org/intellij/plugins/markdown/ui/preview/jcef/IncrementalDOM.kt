@@ -6,6 +6,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Comment
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
+import java.net.URLEncoder
 
 internal object IncrementalDOM {
   private fun ensureCorrectTag(name: String): String {
@@ -15,8 +16,12 @@ internal object IncrementalDOM {
     else name
   }
 
+  private fun encodeArgument(argument: String): String {
+    return URLEncoder.encode(argument, Charsets.UTF_8).replace("+", "%20")
+  }
+
   private fun openTag(node: Node, builder: StringBuilder) {
-    with (builder) {
+    with(builder) {
       append("o('")
       append(ensureCorrectTag(node.nodeName()))
       append("'")
@@ -32,7 +37,7 @@ internal object IncrementalDOM {
   }
 
   private fun closeTag(node: Node, builder: StringBuilder) {
-    with (builder) {
+    with(builder) {
       append("c('")
       append(ensureCorrectTag(node.nodeName()))
       append("');")
@@ -40,9 +45,14 @@ internal object IncrementalDOM {
   }
 
   private fun textElement(node: TextNode, builder: StringBuilder) {
-    with (builder) {
+    with(builder) {
+      // It seems like CefBrowser::executeJavaScript() is not supporting a lot of unicode
+      // symbols (like emojis) in the code string (probably a limitation of CefString).
+      // To preserve this symbols we are encoding our strings before sending them to JCEF,
+      // and decoding them before executing the code. For our use case it's enough to encode
+      // just the actual text content that will be displayed (only IncrementalDOM.text() calls).
       append("t(`")
-      append(escapeTagContent(node.wholeText))
+      append(encodeArgument(escapeTagContent(node.wholeText)))
       append("`);")
     }
   }
@@ -67,7 +77,7 @@ internal object IncrementalDOM {
     return """
       () => {
         const o = (tag, ...attrs) => IncrementalDOM.elementOpen(tag, null, null, ...attrs);
-        const t = IncrementalDOM.text;
+        const t = content => IncrementalDOM.text(decodeURIComponent(content));
         const c = IncrementalDOM.elementClose;
         ${generateDomBuildCalls(html)}
       }

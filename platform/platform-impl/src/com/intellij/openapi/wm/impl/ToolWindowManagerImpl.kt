@@ -79,8 +79,6 @@ import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
 private val LOG = logger<ToolWindowManagerImpl>()
 

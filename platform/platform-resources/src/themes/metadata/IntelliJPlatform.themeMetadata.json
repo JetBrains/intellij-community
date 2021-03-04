@@ -129,7 +129,8 @@
     },
     {
       "key": "DefaultTabs.borderColor",
-      "since": "2019.2"
+      "since": "2019.2",
+      "description": "Default tabs are applied to all tabs except TabbedPane and unless particular tab keys, e.g. EditorTabs, are set. This key is the border color for all tabs."
     },
     {
       "key": "DefaultTabs.hoverColor",
@@ -153,10 +154,12 @@
     },
     {
       "key": "DefaultTabs.underlineColor",
+      "description": "The line under the selected tab",
       "since": "2019.2"
     },
     {
       "key": "DefaultTabs.underlineHeight",
+      "description": "The line under the selected tab",
       "since": "2019.2"
     },
     {
@@ -181,11 +184,13 @@
     },
     {
       "key": "EditorTabs.background",
-      "description": "Background under all tabs in the editor"
+      "description": "Background under all tabs in the editor. If value isn't specified the value of DefaultTabs.background will be used",
+      "since": "2019.2"
     },
     {
       "key": "EditorTabs.borderColor",
-      "description": "The JBEditorTabs component"
+      "description": "The editor tabs border color. If value isn't specified the value of DefaultTabs.borderColor will be used",
+      "since": "2019.2"
     },
     {
       "key": "EditorTabs.hoverColor",
@@ -194,7 +199,7 @@
     {
       "key": "EditorTabs.hoverBackground",
       "since": "2019.2",
-      "description": "Transparent overlay on hover"
+      "description": "Transparent overlay on editor tab hover. If value isn't specified the value of DefaultTabs.hoverBackground will be used"
     },
     {
       "key": "EditorTabs.inactiveColoredFileBackground",
@@ -203,7 +208,8 @@
     },
     {
       "key": "EditorTabs.inactiveUnderlineColor",
-      "since": "2019.2"
+      "since": "2019.2",
+      "description": "Selected tab underline color when the tab is not in focus. If value isn't specified the value of DefaultTabs.inactiveUnderlineColor will be used"
     },
 
     {
@@ -213,18 +219,23 @@
     },
     {
       "key": "EditorTabs.underlinedTabForeground",
+      "since": "2019.2",
       "description": "Foreground of the selected tab when a file status color is not used. Inactive tabs use Label.foreground."
     },
     {
       "key": "EditorTabs.underlineColor",
-      "description": "The line under the selected tab"
+      "since": "2019.2",
+      "description": "The line under the selected tab. If value isn't specified the value of DefaultTabs.underlineColor will be used"
     },
     {
-      "key": "EditorTabs.underlineHeight"
+      "key": "EditorTabs.underlineHeight",
+      "since": "2019.2",
+      "description": "The line under the selected tab. If value isn't specified the value of DefaultTabs.underlineHeight will be used"
     },
     {
       "key": "EditorTabs.underlinedTabBackground",
-      "description": "Background for the selected tab"
+      "description": "Background for the selected tab. If value isn't specified the value of DefaultTabs.underlinedTabBackground will be used",
+      "since": "2019.2"
     },
     {
       "key": "EditorTabs.tabInsets",
@@ -698,16 +709,25 @@
       "description": "Left-side tree background in the Settings and Project Structure dialogs"
     },
     {
-      "key": "Slider.buttonColor"
+      "key": "Slider.buttonColor",
+      "description": "Slider thumb button color",
+      "since": "2019.3"
     },
     {
-      "key": "Slider.buttonBorderColor"
+      "key": "Slider.buttonBorderColor",
+      "description": "Slider thumb border color",
+      "since": "2019.3"
     },
     {
-      "key": "Slider.trackColor"
+      "key": "Slider.trackColor",
+      "description": "Slider track color",
+      "since": "2019.3"
+
     },
     {
-      "key": "Slider.tickColor"
+      "key": "Slider.tickColor",
+      "description": "Slider tick color",
+      "since": "2019.3"
     },
     {
       "key": "SpeedSearch.background",
@@ -778,22 +798,28 @@
       "description": "Insets between a header label and borders. Format: \"top, left, bottom, right\" in pixels, e.g. \"3,0,3,0\""
     },
     {
-      "key": "TitlePane.background"
+      "key": "TitlePane.background",
+      "description": "Borderless mode. Window header background",
+      "since": "2019.3"
     },
     {
       "key": "TitlePane.Button.hoverBackground",
+      "description": "Borderless mode. Window buttons (close, minimize, maximize, restore) hover color",
       "since": "2019.3"
     },
     {
       "key": "TitlePane.inactiveBackground",
+      "description": "Borderless mode. Header background when the window is not in focus",
       "since": "2019.3"
     },
     {
       "key": "TitlePane.infoForeground",
+      "description": "Borderless mode. Header title foreground",
       "since": "2019.2"
     },
     {
       "key": "TitlePane.inactiveInfoForeground",
+      "description": "Borderless mode. Header title foreground when the window is not in focus",
       "since": "2019.2"
     },
     {
@@ -868,7 +894,8 @@
     },
     {
       "key": "ToolWindow.HeaderTab.inactiveUnderlineColor",
-      "since": "2019.2"
+      "since": "2019.2",
+      "description": "Selected tab underline color when the tab is not in focus. If value isn't specified the value of DefaultTabs.inactiveUnderlineColor will be used"
     },
     {
       "key": "ToolWindow.HeaderTab.selectedBackground",
@@ -885,13 +912,18 @@
       "key": "ToolWindow.HeaderTab.hoverInactiveBackground"
     },
     {
-      "key": "ToolWindow.HeaderTab.underlineColor"
+      "key": "ToolWindow.HeaderTab.underlineColor",
+      "description": "The line under the selected tab. If value isn't specified the value of DefaultTabs.underlineColor will be used",
+      "since": "2019.2"
     },
     {
-      "key": "ToolWindow.HeaderTab.underlineHeight"
+      "key": "ToolWindow.HeaderTab.underlineHeight",
+      "description": "The line under the selected tab. If value isn't specified the value of DefaultTabs.underlineHeight will be used",
+      "since": "2019.2"
     },
     {
       "key": "ToolWindow.HeaderTab.underlinedTabBackground",
+      "description": "Background for the selected tab. If value isn't specified the value of DefaultTabs.underlinedTabBackground will be used",
       "since": "2019.2"
     },
     {

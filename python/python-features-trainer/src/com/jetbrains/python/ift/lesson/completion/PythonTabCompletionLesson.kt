@@ -43,7 +43,7 @@ class PythonTabCompletionLesson(module: Module)
         }
         task {
           text(PythonLessonsBundle.message("python.tab.completion.select.item", code("total")))
-          restoreState {
+          restoreState(delayMillis = defaultRestoreDelay) {
             (previous.ui as? JList<*>)?.let { ui ->
               !ui.isShowing || LessonUtil.findItem(ui, isTotalItem) == null
             } ?: true
@@ -66,7 +66,7 @@ class PythonTabCompletionLesson(module: Module)
           trigger("EditorChooseLookupItemReplace") {
             editor.document.text == result
           }
-          restoreState {
+          restoreAfterStateBecomeFalse {
             selectNeededItem()?.not() ?: true
           }
           test { GuiTestUtil.shortcut(Key.TAB) }

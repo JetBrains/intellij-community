@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
@@ -38,7 +39,6 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil
-import training.util.useNewLearningUi
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
@@ -199,12 +199,7 @@ object LessonUtil {
 }
 
 fun LessonContext.firstLessonCompletedMessage() {
-  if (useNewLearningUi) {
-    text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
-  }
-  else {
-    text(LessonsBundle.message("goto.action.propose.to.go.next"))
-  }
+  text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
 fun TaskContext.toolWindowShowed(toolWindowId: String) {
@@ -232,11 +227,15 @@ fun TaskRuntimeContext.lineWithBreakpoints(): Set<Int> {
   }.toSet()
 }
 
+val defaultRestoreDelay: Int
+  get() = Registry.intValue("ift.default.restore.delay")
+
 /**
  * @param [restoreId] where to restore, `null` means the previous task
  * @param [restoreRequired] returns true iff restore is needed
  */
-fun TaskContext.restoreAfterStateBecomeFalse(restoreId: TaskContext.TaskId? = null, restoreRequired: TaskRuntimeContext.() -> Boolean) {
+fun TaskContext.restoreAfterStateBecomeFalse(restoreId: TaskContext.TaskId? = null,
+                                             restoreRequired: TaskRuntimeContext.() -> Boolean) {
   var restoreIsPossible = false
   restoreState(restoreId) {
     val required = restoreRequired()

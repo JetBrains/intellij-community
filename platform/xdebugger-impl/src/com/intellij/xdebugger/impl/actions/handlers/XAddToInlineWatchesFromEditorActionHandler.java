@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.actions.handlers;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -20,7 +21,7 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionH
   @Override
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    return editor != null;
+    return editor != null && Registry.is("debugger.watches.inline.enabled");
   }
 
   @Override

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.icons.AllIcons
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -29,6 +30,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     offset: Int
   ) {
     val project = hostFile.project
+    if (LightEdit.owns(project)) return
     val refactoringProvider = SuggestedRefactoringProviderImpl.getInstance(project)
     var state = refactoringProvider.state
     if (state == null) return

@@ -177,6 +177,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                            @NotNull K dataKey,
                                                            @NotNull GlobalSearchScope filter) {
+    if (LightEdit.owns(filter.getProject())) return Collections.emptyList();
     Set<VirtualFile> files = new HashSet<>();
     processValuesInScope(indexId, dataKey, false, filter, null, (file, value) -> {
       files.add(file);

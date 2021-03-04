@@ -224,7 +224,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   @Nullable
   static LocalAttachInfo getProcessAttachInfo(@NotNull BaseProcessHandler processHandler) {
-    return getAttachInfo(null, OSProcessUtil.getProcessID(processHandler.getProcess()), processHandler.getCommandLine(), null);
+    return getAttachInfo(null, (int)processHandler.getProcess().pid(), processHandler.getCommandLine(), null);
   }
 
   @Nullable

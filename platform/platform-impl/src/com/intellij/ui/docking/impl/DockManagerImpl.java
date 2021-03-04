@@ -252,7 +252,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
       windowManager.setAlphaModeEnabled(myWindow, true);
       windowManager.setAlphaModeRatio(myWindow, 0.1f);
-      myWindow.getRootPane().putClientProperty("Window.shadow", Boolean.FALSE);
     }
 
     private void setLocationFrom(MouseEvent me) {

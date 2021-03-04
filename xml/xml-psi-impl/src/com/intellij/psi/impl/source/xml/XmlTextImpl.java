@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -355,6 +356,13 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       LOG.error(e);
     }
     return this;
+  }
+
+  @Override
+  public @NotNull Language getLanguage() {
+    PsiElement parent = getParent();
+    return parent != null ? parent.getLanguage()
+                          : super.getLanguage();
   }
 
   @Nullable

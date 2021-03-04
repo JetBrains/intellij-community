@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 public abstract class RunConfigurationEditorFragment<Settings, C extends JComponent> extends SettingsEditorFragment<Settings, C> {
 
   private RunnerAndConfigurationSettingsImpl mySettings;
-  private Predicate<RunnerAndConfigurationSettingsImpl> myInitialVisibility;
+  private final Predicate<RunnerAndConfigurationSettingsImpl> myInitialVisibility;
 
   public RunConfigurationEditorFragment(String id,
                                         @Nls(capitalization = Nls.Capitalization.Sentence) String name,
@@ -45,7 +45,10 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
                                                                                  @NotNull BiConsumer<RunnerAndConfigurationSettingsImpl, Boolean> setter,
                                                                                  int menuPosition) {
     Ref<SettingsEditorFragment<?, ?>> ref = new Ref<>();
-    TagButton button = new TagButton(name, () -> ref.get().setSelected(false));
+    TagButton button = new TagButton(name, (e) -> {
+      ref.get().setSelected(false);
+      ref.get().logChange(false, e);
+    });
     RunConfigurationEditorFragment<Settings, ?> fragment = new RunConfigurationEditorFragment<>(id, name, group, button, 0, getter) {
       @Override
       protected void disposeEditor() {

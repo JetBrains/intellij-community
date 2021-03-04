@@ -13,8 +13,10 @@ import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -321,7 +323,7 @@ public class SMTestProxy extends AbstractTestProxy {
       }
     }
 
-    return location.getOpenFileDescriptor();
+    return location.getNavigatable();
   }
 
   public boolean isSuite() {
@@ -1002,8 +1004,18 @@ public class SMTestProxy extends AbstractTestProxy {
     public long getExecutionId() {
       long result = myExecutionId;
       if (result == -1) {
-        ExecutionEnvironment executionEnvironment = myConsole != null ? LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(myConsole))
-                                                                      : null;
+        ExecutionEnvironment executionEnvironment = null;
+        if (myConsole != null) {
+          DataContext consoleContext = DataManager.getInstance().getDataContext(myConsole);
+          executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(consoleContext);
+          if (executionEnvironment == null) {
+            ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(consoleContext);
+            if (viewContext != null) {
+              JComponent tabsComponent = viewContext.getContentManager().getComponent();
+              executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(tabsComponent));
+            }
+          }
+        }
         myExecutionId = result = executionEnvironment != null ? executionEnvironment.getExecutionId() : 0;
       }
       return result;

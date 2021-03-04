@@ -4,6 +4,7 @@ package com.jetbrains.builtInHelp.search
 import com.google.gson.Gson
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
+import org.apache.commons.compress.utils.FileNameUtils
 import org.apache.commons.compress.utils.IOUtils
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.DirectoryReader
@@ -15,8 +16,8 @@ import org.apache.lucene.search.highlight.Highlighter
 import org.apache.lucene.search.highlight.QueryScorer
 import org.apache.lucene.search.highlight.Scorer
 import org.apache.lucene.store.FSDirectory
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.NotNull
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -27,9 +28,10 @@ class HelpSearch {
 
   companion object {
     val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
+
     @NonNls
     val PREFIX = "/search/"
-    val NOT_FOUND = "[]"
+    const val NOT_FOUND = "[]"
 
     private val analyzer: StandardAnalyzer = StandardAnalyzer()
 
@@ -63,24 +65,36 @@ class HelpSearch {
           searcher.search(q, collector)
           val hits = collector.topDocs().scoreDocs
 
-
           val scorer: Scorer = QueryScorer(q)
           val highlighter = Highlighter(scorer)
 
-          val results = ArrayList<HelpSearchResult>()
+          val results = ArrayList<SearchResultHit>()
+
           for (i in hits.indices) {
             val doc = searcher.doc(hits[i].doc)
             results.add(
-              HelpSearchResult(i, doc.get("filename"), highlighter.getBestFragment(
-                analyzer, "contents", doc.get("contents")) + "...",
-                               doc.get("title"), listOf("webhelp")))
+              SearchResultHit(doc.get("title"),
+                              highlighter.getBestFragment(
+                                analyzer, "title", doc.get("title")),
+                              highlighter.getBestFragment(
+                                analyzer, "contents", doc.get("contents")),
+                              null,
+                              doc.get("filename"),
+                              doc.get("title"),
+                              FileNameUtils.getBaseName(doc.get("filename")),
+                              doc.get("title"),
+                              doc.get("filename"),
+                              "$i-${doc.get("filename")}"))
           }
 
-          val searchResults = HelpSearchResults(results)
-          return if (searchResults.results.isEmpty()) NOT_FOUND else Gson().toJson(searchResults)
+          if (results.isNotEmpty()) {
+            val searchResults = SearchResult(results.size, results)
+            return Gson().toJson(searchResults)
+          }
+
         }
         catch (e: Exception) {
-          Logger.getInstance(HelpSearch::class.java).error("Error searching help for $query", e)
+          Logger.getInstance(HelpSearch::class.java).error("Error searching help for \"$query\"", e)
         }
         finally {
           indexDirectory?.close()
@@ -92,4 +106,21 @@ class HelpSearch {
       return NOT_FOUND
     }
   }
+
+  data class SearchResult(
+    val totalHits: Int,
+    val hits: List<SearchResultHit>
+  )
+
+  data class SearchResultHit(
+    val title: String,
+    val highlightedTitle: String,
+    val snippet: String,
+    val chapters: List<SearchResultHit>? = null,
+    val relativeUrl: String,
+    val breadcrumb: String,
+    val pageId: String,
+    val mainTitle: String,
+    val absoluteUrl: String,
+    val hitId: String)
 }

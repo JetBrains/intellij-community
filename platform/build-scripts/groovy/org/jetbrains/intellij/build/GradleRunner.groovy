@@ -12,25 +12,16 @@ class GradleRunner {
   private final String projectDir
   private final BuildMessages messages
   private final String javaHome
-  private final List<String> additionalParams
-
   @Lazy
   private volatile GradleRunner modularGradleRunner = {
     createModularRunner()
   }()
 
-  GradleRunner(
-    File gradleProjectDir,
-    String projectDir,
-    BuildMessages messages,
-    String javaHome,
-    List<String> additionalParams = getDefaultAdditionalParams()
-  ) {
+  GradleRunner(File gradleProjectDir, String projectDir, BuildMessages messages, String javaHome) {
     this.messages = messages
     this.projectDir = projectDir
     this.gradleProjectDir = gradleProjectDir
     this.javaHome = javaHome
-    this.additionalParams = additionalParams
   }
 
   /**
@@ -67,19 +58,6 @@ class GradleRunner {
     return runInner(title, null, true, tasks)
   }
 
-  GradleRunner withParams(List<String> additionalParams) {
-    return new GradleRunner(gradleProjectDir, projectDir, messages, javaHome, this.additionalParams + additionalParams)
-  }
-
-  private static List<String> getDefaultAdditionalParams() {
-    def rawParams = System.getProperty("intellij.gradle.jdk.build.parameters", "")
-    if (rawParams.isEmpty()) {
-      return Collections.emptyList()
-    }
-
-    return Arrays.asList(rawParams.split(" "))
-  }
-
   private boolean runInner(String title, File buildFile, boolean force, String... tasks) {
     def result = false
     messages.block("Gradle $tasks") {
@@ -114,7 +92,10 @@ class GradleRunner {
       command.add('-b')
       command.add(buildFile.absolutePath)
     }
-    command.addAll(additionalParams)
+    def additionalParams = System.getProperty('intellij.gradle.jdk.build.parameters')
+    if (additionalParams != null && !additionalParams.isEmpty()) {
+      command.addAll(additionalParams.split(" "))
+    }
     command.addAll(tasks)
     def processBuilder = new ProcessBuilder(command).directory(gradleProjectDir)
     processBuilder.environment().put("JAVA_HOME", javaHome)

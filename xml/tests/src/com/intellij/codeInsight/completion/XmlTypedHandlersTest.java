@@ -260,6 +260,18 @@ public class XmlTypedHandlersTest extends BasePlatformTestCase {
     }
   }
 
+  public void testTagClosing() {
+    myFixture.configureByText("test.html", "<div><caret></div>");
+    myFixture.type("</");
+    myFixture.checkResult("<div></></div>");
+  }
+
+  public void testTagClosing2() {
+    myFixture.configureByText("test.html", "<div><caret></div>");
+    myFixture.type("<>aa</");
+    myFixture.checkResult("<div><>aa</></div>");
+  }
+
   private void doTest(String text, char c, String result) {
     myFixture.configureByText(XmlFileType.INSTANCE, text);
     myFixture.type(c);

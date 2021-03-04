@@ -49,14 +49,17 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
                              @NotNull Map<? extends PsiElement, String> allRenames,
                              @NotNull List<UsageInfo> result) {
     allRenames.forEach((key, value) -> {
-      for (IProperty property : ((PropertiesFile)key.getContainingFile()).getProperties()) {
-        if (Comparing.strEqual(value, property.getKey())) {
-          result.add(new UnresolvableCollisionUsageInfo(property.getPsiElement(), key) {
-            @Override
-            public String getDescription() {
-              return PropertiesBundle.message("rename.hides.existing.property.conflict", value);
-            }
-          });
+      PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(key.getContainingFile());
+      if (propertiesFile != null) {
+        for (IProperty property : propertiesFile.getProperties()) {
+          if (Comparing.strEqual(value, property.getKey())) {
+            result.add(new UnresolvableCollisionUsageInfo(property.getPsiElement(), key) {
+              @Override
+              public String getDescription() {
+                return PropertiesBundle.message("rename.hides.existing.property.conflict", value);
+              }
+            });
+          }
         }
       }
     });

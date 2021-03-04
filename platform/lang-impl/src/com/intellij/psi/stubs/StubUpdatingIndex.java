@@ -394,7 +394,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       ? snapshotInputMappings.getForwardIndexAccessor()
       : stubForwardIndexAccessor;
 
-    return new MyIndex(extension, storage, forwardIndex, accessor, snapshotInputMappings);
+    return new MyIndex(extension, storage, forwardIndex, accessor, snapshotInputMappings, mySerializationManager);
   }
 
   private void checkNameStorage() throws StorageException {
@@ -409,13 +409,16 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     private StubIndexImpl myStubIndex;
     @Nullable
     private final CompositeBinaryBuilderMap myCompositeBinaryBuilderMap = FileBasedIndex.USE_IN_MEMORY_INDEX ? null : new CompositeBinaryBuilderMap();
+    private final @NotNull SerializationManagerEx mySerializationManager;
 
     MyIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
             @NotNull IndexStorage<Integer, SerializedStubTree> storage,
             @Nullable ForwardIndex forwardIndex,
             @Nullable ForwardIndexAccessor<Integer, SerializedStubTree> forwardIndexAccessor,
-            @Nullable SnapshotInputMappings<Integer, SerializedStubTree> snapshotInputMappings) throws IOException {
+            @Nullable SnapshotInputMappings<Integer, SerializedStubTree> snapshotInputMappings,
+            @NotNull SerializationManagerEx serializationManager) throws IOException {
       super(extension, storage, forwardIndex, forwardIndexAccessor, snapshotInputMappings, null);
+      mySerializationManager = serializationManager;
     }
 
     @Override
@@ -423,6 +426,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       final StubIndexImpl stubIndex = getStubIndex();
       try {
         stubIndex.flush();
+        mySerializationManager.flushNameStorage();
       }
       finally {
         super.doFlush();

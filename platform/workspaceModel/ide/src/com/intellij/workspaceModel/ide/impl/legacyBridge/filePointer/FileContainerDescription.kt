@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
@@ -21,7 +22,7 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
   @Volatile
   private var timestampOfCachedFiles = -1L
   @Volatile
-  private var cachedFilesList = arrayOf<VirtualFile>()
+  private var cachedFilesList = Pair(arrayOf<String>(), arrayOf<VirtualFile>())
 
    init {
      urls.forEach { virtualFilePointersList.addIfAbsent(it as VirtualFilePointer) }
@@ -31,18 +32,22 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
   fun isJarDirectory(url: String): Boolean = jarDirectories.any { it.directoryUrl.url == url }
   fun findByUrl(url: String): VirtualFilePointer? = virtualFilePointersList.find { it.url == url }
   fun getList(): List<VirtualFilePointer> = Collections.unmodifiableList(virtualFilePointersList)
-  fun getUrls(): Array<String> = virtualFilePointersList.map { it.url }.toTypedArray()
-  fun getFiles(): Array<VirtualFile> {
+  fun getUrls(): Array<String> = getCachedData().first
+  fun getFiles(): Array<VirtualFile> = getCachedData().second
+
+  private fun getCachedData(): Pair<Array<String>, Array<VirtualFile>> {
     val timestamp = timestampOfCachedFiles
     val cachedResults = cachedFilesList
-    return if (timestamp == virtualFilePointerManager.modificationCount) cachedResults else  cacheFiles()
+    return if (timestamp == virtualFilePointerManager.modificationCount) cachedResults else  cacheVirtualFilePointersData()
   }
 
-  private fun cacheFiles(): Array<VirtualFile> {
+  private fun cacheVirtualFilePointersData(): Pair<Array<String>, Array<VirtualFile>> {
+    val cachedUrls: MutableList<String> = ArrayList(virtualFilePointersList.size)
     val cachedFiles: MutableList<VirtualFile> = ArrayList(virtualFilePointersList.size)
     val cachedDirectories: MutableList<VirtualFile> = ArrayList(virtualFilePointersList.size / 3)
     var allFilesAreDirs = true
     for (pointer in virtualFilePointersList) {
+      cachedUrls.add(pointer.url)
       if (!pointer.isValid) continue
       val file = pointer.file
       if (file != null) {
@@ -78,6 +83,7 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
             }
           })
         } else {
+          if (!directoryFile.isValid) continue
           val children = directoryFile.children
           for (file in children) {
             if (!file.isDirectory && FileTypeRegistry.getInstance().getFileTypeByFileName(file.nameSequence) === ArchiveFileType.INSTANCE) {
@@ -91,8 +97,9 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
         }
       }
     }
-    val directories = VfsUtilCore.toVirtualFileArray(cachedDirectories)
-    val result = if (allFilesAreDirs) directories else VfsUtilCore.toVirtualFileArray(cachedFiles)
+    val urlsArray = ArrayUtilRt.toStringArray(cachedUrls)
+    val files = if (allFilesAreDirs) VfsUtilCore.toVirtualFileArray(cachedDirectories) else VfsUtilCore.toVirtualFileArray(cachedFiles)
+    val result = Pair(urlsArray, files)
     cachedFilesList = result
     timestampOfCachedFiles = virtualFilePointerManager.modificationCount
     return result

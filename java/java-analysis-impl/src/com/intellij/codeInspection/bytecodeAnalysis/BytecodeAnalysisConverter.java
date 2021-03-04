@@ -3,7 +3,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,35 +91,8 @@ public final class BytecodeAnalysisConverter {
 
   @Nullable
   private static String getJvmClassName(@NotNull PsiClass psiClass) {
-    PsiFile containingFile = psiClass.getContainingFile();
-    if (!(containingFile instanceof PsiClassOwner)) {
-      LOG.debug("containingFile was not resolved for " + psiClass.getQualifiedName());
-      return null;
-    }
-    PsiClassOwner psiFile = (PsiClassOwner)containingFile;
-    String packageName = psiFile.getPackageName();
-    String qname = psiClass.getQualifiedName();
-    if (qname == null) {
-      return null;
-    }
-    if (packageName.isEmpty()) {
-      return qname.replace('.', '$');
-    }
-    if (qname.length() < packageName.length() + 1 || !qname.startsWith(packageName)) {
-      LOG.error("Invalid qname/packageName; qname = " + qname +
-                "; packageName = " + packageName +
-                "; getClass = " + psiClass.getClass().getName() +
-                "; fileName = " + psiFile.getName() +
-                "; file getClass = " + psiFile.getClass().getName() +
-                (psiClass instanceof ClsClassImpl ?
-                 "; stub getClass = " + ((ClsClassImpl)psiClass).getStub().getClass().getName() +
-                 "; stub source = " + ((ClsClassImpl)psiClass).getStub().getSourceFileName() :
-                 "") +
-                "; top-level: " + (psiClass.getContainingClass() == null));
-      return null;
-    }
-    String className = qname.substring(packageName.length() + 1).replace('.', '$');
-    return packageName.replace('.', '/') + '/' + className;
+    String name = ClassUtil.getJVMClassName(psiClass);
+    return name == null ? null : name.replace('.', '/');
   }
 
   @Nullable

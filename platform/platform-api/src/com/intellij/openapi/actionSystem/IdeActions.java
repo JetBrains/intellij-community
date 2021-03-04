@@ -289,6 +289,7 @@ public interface IdeActions {
   @NonNls String GROUP_WELCOME_SCREEN_DOC = "WelcomeScreen.Documentation";
   @NonNls String GROUP_WELCOME_SCREEN_CONFIGURE = "WelcomeScreen.Configure";
   @NonNls String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";
+  @NonNls String GROUP_WELCOME_SCREEN_OPTIONS = "WelcomeScreen.Options";
   @NonNls String GROUP_WELCOME_SCREEN_LEARN_IDE = "WelcomeScreen.LearnIdeHelp";
   @NonNls String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";
   @NonNls String ACTION_MOVE = "Move";

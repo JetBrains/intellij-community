@@ -9,7 +9,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
@@ -83,7 +82,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   private var gotItBalloon: Balloon? = null
 
-  private lateinit var preview: EditorCodePreview
+  private val disposable = Disposer.newDisposable()
 
   fun prepareCodeForTemplate() {
     val project = extractOptions.project
@@ -106,26 +105,36 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val importRange = document.createGreedyRangeMarker(javaFile.importList?.textRange ?: TextRange(0, 0))
     val replacedImport = FragmentState(importRange, document.getText(importRange.range))
     fragmentsToRevert.add(replacedImport)
+    fragmentsToRevert.forEach { Disposer.register(disposable, it) }
 
-    val (callElements, method) = MethodExtractor().extractMethod(extractOptions)
-    val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
-    editor.caretModel.moveToOffset(callExpression.textOffset)
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+    val (method, callExpression) = extractMethod(document, extractOptions)
+    methodCallExpressionRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
+    Disposer.register(disposable, { methodCallExpressionRange.dispose() })
+    methodNameRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
+    Disposer.register(disposable, { methodNameRange.dispose() })
+    editor.caretModel.moveToOffset(methodCallExpressionRange.range.startOffset)
     setElementToRename(method)
 
-    methodNameRange = editor.document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
-    methodCallExpressionRange = editor.document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
+    val preview = EditorCodePreview.create(editor)
+    Disposer.register(disposable, preview)
 
-    preview = EditorCodePreview.create(editor)
-
-    val callLines = findLines(document, enclosingTextRangeOf(callElements.first(), callElements.last()))
-    val callNavigatableRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
+    val callLines = findLines(document, callRange.range)
     val file = method.containingFile.virtualFile
-    Disposer.register(preview, Disposable { callNavigatableRange.dispose() })
-    preview.addPreview(callLines) { navigate(project, file, callNavigatableRange.endOffset)}
+    preview.addPreview(callLines) { navigate(project, file, methodCallExpressionRange.endOffset)}
 
     val methodLines = findLines(document, method.textRange).trimToLength(4)
     preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
+  }
+
+  private fun extractMethod(document: Document, extractOptions: ExtractOptions): Pair<PsiMethod, PsiMethodCallExpression> {
+    val (callElements, method) = MethodExtractor().extractMethod(extractOptions)
+    val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
+    val methodPointer = SmartPointerManager.createPointer(method)
+    val callPointer = SmartPointerManager.createPointer(callExpression)
+    val manager = PsiDocumentManager.getInstance(extractOptions.project)
+    manager.doPostponedOperationsAndUnblockDocument(document)
+    manager.commitDocument(document)
+    return Pair(methodPointer.element!!, callPointer.element!!)
   }
 
   private fun createChangeBasedDisposable(editor: Editor): Disposable {
@@ -209,8 +218,13 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
-    ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
-    return super.performInplaceRefactoring(nameSuggestions)
+    try {
+      ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
+      return super.performInplaceRefactoring(nameSuggestions)
+    } catch (e: Exception) {
+      Disposer.dispose(disposable)
+      throw e
+    }
   }
 
   override fun revertState() {
@@ -232,6 +246,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     popupProvider.setChangeListener { restartInplace() }
     popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
+    Disposer.register(templateState, disposable)
     val editor = templateState.editor as? EditorImpl ?: return
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor) { onClickEvent -> logStatisticsOnShow(editor, onClickEvent) }
     val templateElement = object : TemplateInlayUtil.SelectableTemplateElement(presentation) {
@@ -243,13 +258,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val offset = templateState.currentVariableRange?.endOffset ?: return
     TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupProvider.panel,
                                                                       templateElement) { logStatisticsOnHide(popupProvider) }
-    fragmentsToRevert.forEach { Disposer.register(templateState, it) }
     setActiveExtractor(editor, this)
 
-    Disposer.register(templateState, preview)
     Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
-    Disposer.register(templateState, { methodNameRange.dispose() })
-    Disposer.register(templateState, { methodCallExpressionRange.dispose() })
 
     templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
       override fun templateFinished(template: Template, brokenOff: Boolean) {

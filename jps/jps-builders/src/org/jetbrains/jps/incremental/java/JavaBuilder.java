@@ -159,6 +159,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     COMPILING_TOOL.set(context, compilingTool);
     SHOWN_NOTIFICATIONS.set(context, Collections.synchronizedSet(new HashSet<>()));
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
+    if (!isJavac(compilingTool)) {
+      context.getProjectDescriptor().dataManager.getMappings().setProcessConstantsIncrementally(false);
+    }
     JavaBackwardReferenceIndexWriter.initialize(context);
     for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
       if (registrar.isEnabled()) {

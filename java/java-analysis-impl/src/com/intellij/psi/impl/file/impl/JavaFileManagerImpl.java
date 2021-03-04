@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ProjectTopics;
@@ -169,11 +169,11 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));
 
     for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
-      ContainerUtil.addIfNotNull(results, LightJavaModule.findModule(myManager, manifest.getParent().getParent()));
+      results.add(LightJavaModule.create(myManager, manifest.getParent().getParent(), moduleName));
     }
 
     for (VirtualFile root : JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
-      ContainerUtil.addIfNotNull(results, LightJavaModule.findModule(myManager, root));
+      results.add(LightJavaModule.create(myManager, root, moduleName));
     }
 
     return upgradeModules(sortModules(results, scope), moduleName, scope);

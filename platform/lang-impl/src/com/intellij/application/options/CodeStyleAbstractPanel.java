@@ -86,6 +86,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   private final Language myDefaultLanguage;
   private Document myDocumentBeforeChanges;
 
+  private @Nullable String myLastSearchString;
+
   protected CodeStyleAbstractPanel(@NotNull CodeStyleSettings settings) {
     this(null, null, settings);
   }
@@ -630,7 +632,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   @Override
   public final void highlight(@NotNull JComponent component, @NotNull String searchString) {
-    if (isInsideThisPanel(component)) {
+    if (isNewSearchString(searchString) && isInsideThisPanel(component)) {
       if (component instanceof TabLabel) {
         Container parent = component.getParent();
         if (parent instanceof JBTabs) {
@@ -648,6 +650,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         }
       }
     }
+  }
+
+  private boolean isNewSearchString(@NotNull String searchString) {
+    if (searchString.equals(myLastSearchString)) return false;
+    myLastSearchString = searchString;
+    return true;
   }
 
   public void highlightOptions(@NotNull String searchString) {

@@ -33,7 +33,7 @@ import com.intellij.ui.ToolbarDecorator.createDecorator
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.render.RenderingUtil.PAINT_HOVERED_BACKGROUND
+import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
@@ -335,7 +335,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
   override fun createComponent(): JComponent {
     val table = JBTable(this)
     table.setShowGrid(false)
-    table.putClientProperty(PAINT_HOVERED_BACKGROUND, false)
+    TableHoverListener.DEFAULT.removeFrom(table)
     table.emptyText.text = message("settings.file.colors.no.colors.specified")
 
     table.emptyText.appendSecondaryText(message("settings.file.colors.add.colors.link"), LINK_PLAIN_ATTRIBUTES) {

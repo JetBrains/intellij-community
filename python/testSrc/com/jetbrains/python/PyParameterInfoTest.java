@@ -629,9 +629,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
-  // PY-22249
+  // PY-22249, PY-45473
   public void testInitializingCollectionsNamedTuple() {
-    final Map<String, PsiElement> test = loadTest(2);
+    final Map<String, PsiElement> test = loadTest(3);
 
     for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
       final List<String> texts = Collections.singletonList("bar, baz");
@@ -641,13 +641,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
   }
 
+  // PY-33140
   public void testInitializingTypingNamedTuple() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> {
-        final Map<String, PsiElement> test = loadTest(7);
+        final Map<String, PsiElement> test = loadTest(8);
 
-        for (int offset : StreamEx.of(1, 2, 3, 4).map(number -> test.get("<arg" + number + ">").getTextOffset())) {
+        for (int offset : StreamEx.of(1, 2, 3, 4, 8).map(number -> test.get("<arg" + number + ">").getTextOffset())) {
           final List<String> texts = Collections.singletonList("bar: int, baz: str");
           final List<String[]> highlighted = Collections.singletonList(new String[]{"bar: int, "});
 
@@ -1149,16 +1150,22 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  @NotNull
+  private Collector feignCtrlP(int offset) {
+    return feignCtrlP(offset, myFixture.getFile());
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
+   *
    * @param offset offset of 'cursor' where Ctrl+P is pressed.
    * @return a {@link Collector} with collected hint info.
    */
   @NotNull
-  private Collector feignCtrlP(int offset) {
+  private static Collector feignCtrlP(int offset, @NotNull PsiFile file) {
     final PyParameterInfoHandler handler = new PyParameterInfoHandler();
 
-    final Collector collector = new Collector(myFixture.getFile(), offset);
+    final Collector collector = new Collector(file, offset);
     collector.setParameterOwner(handler.findElementForParameterInfo(collector));
 
     if (collector.getParameterOwner() != null) {
@@ -1171,6 +1178,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     return collector;
+  }
+
+  public static void checkParameters(int offset, @NotNull PsiFile file, @NotNull String text, String @NotNull [] highlighted) {
+    Collector collector = feignCtrlP(offset, file);
+    collector.check(text, highlighted);
   }
 
   /**

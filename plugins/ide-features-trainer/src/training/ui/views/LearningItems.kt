@@ -18,12 +18,13 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.Module
+import training.learn.lesson.LessonManager
 import training.ui.UISettings
 import training.util.createBalloon
 import java.awt.Color
 import java.awt.Cursor
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.event.MouseListener
 import javax.swing.JLabel
 import javax.swing.JPanel
 
@@ -41,7 +42,9 @@ class LearningItems : JPanel() {
     isFocusable = false
   }
 
-  fun updateItems() {
+  fun updateItems(showModule: Module? = null) {
+    if (showModule != null) expanded.add(showModule)
+
     layout = VerticalLayout(10)
     removeAll()
     for (module in modules) {
@@ -69,8 +72,8 @@ class LearningItems : JPanel() {
     name.setListener(
       { _, _ ->
         val project = guessCurrentProject(this)
-        val dumbService = DumbService.getInstance(project)
-        if (dumbService.isDumb && !lesson.properties.canStartInDumbMode) {
+        val cantBeOpenedInDumb = DumbService.getInstance(project).isDumb && !lesson.properties.canStartInDumbMode
+        if (cantBeOpenedInDumb && !LessonManager.instance.lessonShouldBeOpenedCompleted(lesson)) {
           val balloon = createBalloon(LearnBundle.message("indexing.message"))
           balloon.showInCenterOf(name)
           return@setListener
@@ -118,8 +121,10 @@ class LearningItems : JPanel() {
     }
     result.add(modulePanel)
 
-    result.addMouseListener(object : MouseListener {
-      override fun mouseClicked(e: MouseEvent) {
+    result.addMouseListener(object : MouseAdapter() {
+      override fun mouseReleased(e: MouseEvent) {
+        if (!result.visibleRect.contains(e.point)) return
+
         if (expanded.contains(module)) {
           expanded.remove(module)
         }
@@ -128,12 +133,6 @@ class LearningItems : JPanel() {
           expanded.add(module)
         }
         updateItems()
-      }
-
-      override fun mousePressed(e: MouseEvent) {
-      }
-
-      override fun mouseReleased(e: MouseEvent) {
       }
 
       override fun mouseEntered(e: MouseEvent) {

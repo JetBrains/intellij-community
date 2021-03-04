@@ -2,7 +2,7 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2020" minor="3"/>
+  <version major="2020" minor="3.2"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com" copyrightStart="2010"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_core_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="114" progressY="397" progressHeight="3"/>
@@ -25,10 +25,10 @@
                patches="https://download.jetbrains.com/python/"/>
 
   <help webhelp-url="https://www.jetbrains.com/pycharm/webhelp"/>
-  <documentation url="https://www.jetbrains.com/pycharm/documentation"/>
+  <documentation url="https://www.jetbrains.com/pycharm/learn/"/>
   <support url="https://intellij-support.jetbrains.com/hc/en-us/requests/new?ticket_form_id=66731&amp;product=PyCharm&amp;build=$BUILD&amp;os=$OS&amp;timezone=$TIMEZONE"/>
   <youtrack url="https://youtrack.jetbrains.com/newissue?project=PY&amp;clearDraft=true&amp;description=$DESCR"/>
   <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
   <whatsnew url="https://www.jetbrains.com/pycharm/whatsnew/index.html"/>
-  <jetbrains-tv url="https://www.youtube.com/playlist?list=PLQ176FUIyIUY5Ii58pzoZhS_3qIBL80nz"/>
+  <jetbrains-tv url="https://www.youtube.com/playlist?list=PLCTHcU1KoD99eyuXqUJHZy90-9jU2H2Y2"/>
 </component>

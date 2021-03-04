@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
+import com.intellij.ui.JBColor
 import com.jetbrains.builtInHelp.settings.SettingsPage
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import java.awt.Desktop
@@ -28,9 +29,11 @@ class BuiltInHelpManager : HelpManager() {
   override fun invokeHelp(helpId: String?) {
 
     try {
-      var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${if (helpId != null) URLEncoder.encode(
-        helpId, StandardCharsets.UTF_8)
-      else "top"}"
+      var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
+        if (helpId != null) URLEncoder.encode(
+          helpId, StandardCharsets.UTF_8)
+        else "top"
+      }"
       val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))
 
@@ -71,19 +74,20 @@ class BuiltInHelpManager : HelpManager() {
         if (PlatformUtils.isJetBrainsProduct() && baseUrl == Utils.BASE_HELP_URL) {
           val productCode = info.build.productCode
           if (!StringUtil.isEmpty(productCode)) {
-            url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion"
+            url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion&theme=${if (JBColor.isBright()) "light" else "dark"}"
           }
         }
       }
 
       val browserName = java.lang.String.valueOf(
         Utils.getStoredValue(SettingsPage.USE_BROWSER, BuiltInHelpBundle.message("use.default.browser")))
+
       if (browserName == BuiltInHelpBundle.message("use.default.browser")) {
         if (Desktop.isDesktopSupported()) {
           Desktop.getDesktop().browse(URI(url))
+
         }
         else BrowserLauncher.instance.browse(url, WebBrowserManager.getInstance().firstActiveBrowser)
-
       }
       else BrowserLauncher.instance.browse(url, WebBrowserManager.getInstance().findBrowserById(browserName))
 

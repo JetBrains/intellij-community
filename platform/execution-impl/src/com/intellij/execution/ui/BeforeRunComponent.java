@@ -6,6 +6,7 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.UnknownBeforeRunTaskProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
@@ -36,7 +37,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
@@ -47,7 +48,6 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   private final JLabel myDropFirst = new JLabel(AllIcons.General.DropPlace);
 
   Runnable myChangeListener;
-  private BiConsumer<Key<? extends BeforeRunTask<?>>, Boolean> myTagListener;
   private RunConfiguration myConfiguration;
 
   public BeforeRunComponent(@NotNull Disposable parentDisposable) {
@@ -77,13 +77,10 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   }
 
   private TaskButton createTag(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
-    TaskButton button = new TaskButton(provider, () -> {
+    return new TaskButton(provider, (e) -> {
       myChangeListener.run();
       updateAddLabel();
-      myTagListener.accept(provider.getId(), false);
     });
-    myTags.add(button);
-    return button;
   }
 
   private void updateAddLabel() {
@@ -138,7 +135,6 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     myTags.add(tag);
     buildPanel();
     myChangeListener.run();
-    myTagListener.accept(tag.myProvider.getId(), true);
   }
 
   public void reset(@NotNull RunnerAndConfigurationSettingsImpl s) {
@@ -149,7 +145,14 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     myTags.clear();
     List<BeforeRunTask<?>> tasks = s.getManager().getBeforeRunTasks(s.getConfiguration());
     for (BeforeRunTask<?> task : tasks) {
-      createTag(ContainerUtil.find(getProviders(), provider -> task.getProviderId() == provider.getId())).setTask(task);
+      BeforeRunTaskProvider taskProvider =
+        ContainerUtil.find(getProviders(), provider -> task.getProviderId() == provider.getId());
+      if (taskProvider == null) {
+        taskProvider = new UnknownBeforeRunTaskProvider(task.getProviderId().toString());
+      }
+      TaskButton tag = createTag(taskProvider);
+      tag.setTask(task);
+      myTags.add(tag);
     }
     buildPanel();
   }
@@ -175,6 +178,10 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
       .filter(button -> button.myTask != null && button.isVisible())
       .map(button -> button.myTask)
       .collect(Collectors.toList());
+  }
+
+  public <T extends BeforeRunTask<?>> boolean hasEnabledTask(Key<T> providerId) {
+    return ContainerUtil.or(getEnabledTasks(), task -> task.getProviderId() == providerId);
   }
 
   @Override
@@ -242,10 +249,6 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     return true;
   }
 
-  public void setTagListener(BiConsumer<Key<? extends BeforeRunTask<?>>, Boolean> tagListener) {
-    myTagListener = tagListener;
-  }
-
   @Override
   public void dispose() {}
 
@@ -254,7 +257,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     private final JLabel myDropPlace = new JLabel(AllIcons.General.DropPlace);
     private BeforeRunTask<?> myTask;
 
-    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, @NotNull Runnable action) {
+    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, Consumer<AnActionEvent> action) {
       super(provider.getName(), action);
       Disposer.register(BeforeRunComponent.this, this);
       add(myDropPlace, JLayeredPane.DRAG_LAYER);

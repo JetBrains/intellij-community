@@ -6,6 +6,7 @@ import com.intellij.execution.ui.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,6 +23,11 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
   protected void customizeFragments(List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments,
                                     ModuleClasspathCombo classpathCombo,
                                     CommonParameterFragments<ApplicationConfiguration> commonParameterFragments) {
+    fragments.add(SettingsEditorFragment.createTag("include.provided",
+                                                   ExecutionBundle.message("application.configuration.include.provided.scope"),
+                                                   ExecutionBundle.message("group.java.options"),
+                                     configuration -> configuration.getOptions().isIncludeProvidedScope(),
+                                     (configuration, value) -> configuration.getOptions().setIncludeProvidedScope(value)));
     fragments.add(commonParameterFragments.programArguments());
     fragments.add(commonParameterFragments.createRedirectFragment());
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment = createMainClass(classpathCombo);
@@ -32,18 +38,11 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     fragments.add(createShortenClasspath(classpathCombo, jrePath, true));
   }
 
-  @Override
-  @NotNull
-  protected SettingsEditorFragment<ApplicationConfiguration, ModuleClasspathCombo> createClasspathCombo() {
-    ModuleClasspathCombo.Item item = new ModuleClasspathCombo.Item(ExecutionBundle.message("application.configuration.include.provided.scope"));
-    return CommonJavaFragments.moduleClasspath(item, configuration -> configuration.getOptions().isIncludeProvidedScope(),
-                                               (configuration, value) -> configuration.getOptions().setIncludeProvidedScope(value));
-  }
-
   @NotNull
   private SettingsEditorFragment<ApplicationConfiguration, EditorTextField> createMainClass(ModuleClasspathCombo classpathCombo) {
     EditorTextField mainClass = ClassEditorField.createClassField(getProject(), () -> classpathCombo.getSelectedModule(),
                                                                   JavaCodeFragment.VisibilityChecker.PROJECT_SCOPE_VISIBLE, null);
+    mainClass.setBackground(UIUtil.getTextFieldBackground());
     mainClass.setShowPlaceholderWhenFocused(true);
     CommonParameterFragments.setMonospaced(mainClass);
     String placeholder = ExecutionBundle.message("application.configuration.main.class.placeholder");

@@ -13,6 +13,7 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
 import com.intellij.openapi.application.ReadAction;
@@ -374,10 +375,19 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return null;
   }
 
-  private static void downloadDependenciesWhenRequired(Project project,
-                                                       List<String> classPath,
-                                                       RepositoryLibraryProperties properties) throws CantRunException {
-    Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
+  private void downloadDependenciesWhenRequired(@NotNull Project project,
+                                                @NotNull List<String> classPath,
+                                                @NotNull RepositoryLibraryProperties properties) throws CantRunException {
+    TargetProgressIndicator targetProgressIndicator = getTargetProgressIndicator();
+    Collection<OrderRoot> roots;
+    if (targetProgressIndicator == null) {
+      roots = JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
+    }
+    else {
+      targetProgressIndicator.addSystemLine(JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1));
+      ProgressIndicatorWrapper progressIndicatorWrapper = new ProgressIndicatorWrapper(targetProgressIndicator);
+      roots = JarRepositoryManager.loadDependenciesSync(project, properties, false, false, null, null, progressIndicatorWrapper);
+    }
     if (roots.isEmpty()) {
       throw new CantRunException(JUnitBundle.message("dialog.message.failed.to.resolve.maven.id", properties.getMavenId()));
     }

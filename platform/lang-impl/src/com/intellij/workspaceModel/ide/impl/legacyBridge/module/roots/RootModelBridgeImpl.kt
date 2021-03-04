@@ -38,7 +38,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
   private val orderEntriesArray: Array<OrderEntry> by lazy {
     val moduleEntity = moduleEntity ?: return@lazy emptyArray<OrderEntry>()
     moduleEntity.dependencies.mapIndexed { index, e ->
-      toOrderEntry(e, index)
+      toOrderEntry(e, index, rootModel, itemUpdater)
     }.toTypedArray()
   }
 
@@ -97,29 +97,24 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
 
   override fun orderEntries(): OrderEnumerator = ModuleOrderEnumerator(this, null)
 
-  private fun toOrderEntry(
-    item: ModuleDependencyItem,
-    index: Int
-  ): OrderEntry {
-    val itemUpdaterLocal = itemUpdater
-
-    val updater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)? = if (itemUpdaterLocal != null) { func: (ModuleDependencyItem) -> ModuleDependencyItem ->
-      itemUpdaterLocal(index, func)
-    }
-    else null
-
-    return when (item) {
-      is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryBridge(rootModel, index, item, updater)
-      is ModuleDependencyItem.Exportable.LibraryDependency -> {
-        LibraryOrderEntryBridge(rootModel, index, item, updater)
-      }
-      is ModuleDependencyItem.SdkDependency -> SdkOrderEntryBridge(rootModel, index, item)
-      is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryBridge(rootModel, index, item)
-      is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryBridge(rootModel, index, item)
-    }
-  }
-
   companion object {
+    internal fun toOrderEntry(
+      item: ModuleDependencyItem,
+      index: Int,
+      rootModelBridge: ModuleRootModelBridge,
+      function: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
+    ): OrderEntryBridge {
+      return when (item) {
+        is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryBridge(rootModelBridge, index, item, function)
+        is ModuleDependencyItem.Exportable.LibraryDependency -> {
+          LibraryOrderEntryBridge(rootModelBridge, index, item, function)
+        }
+        is ModuleDependencyItem.SdkDependency -> SdkOrderEntryBridge(rootModelBridge, index, item)
+        is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryBridge(rootModelBridge, index, item)
+        is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryBridge(rootModelBridge, index, item)
+      }
+    }
+
     internal fun loadExtensions(storage: WorkspaceEntityStorage,
                                 module: ModuleBridge,
                                 writable: Boolean,

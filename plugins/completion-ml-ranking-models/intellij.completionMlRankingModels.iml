@@ -55,9 +55,9 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library">
       <library name="completion-ranking-python-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.2.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.1.4" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.1/completion-ranking-python-0.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.1.4/completion-ranking-python-0.1.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

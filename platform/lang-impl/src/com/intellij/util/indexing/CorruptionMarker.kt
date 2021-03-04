@@ -10,12 +10,13 @@ import java.io.FileOutputStream
 internal object CorruptionMarker {
   private const val CORRUPTION_MARKER_NAME = "corruption.marker"
 
+  private val corruptionMarker
+    get() = File(PathManager.getIndexRoot(), CORRUPTION_MARKER_NAME)
+
   @JvmStatic
   fun requestInvalidation() {
-    val indexRoot = PathManager.getIndexRoot()
     FileBasedIndexImpl.LOG.info("Requesting explicit indices invalidation")
     try {
-      val corruptionMarker = File(indexRoot, CORRUPTION_MARKER_NAME)
       FileOutputStream(corruptionMarker).close()
     }
     catch (ignore: Throwable) {
@@ -23,19 +24,20 @@ internal object CorruptionMarker {
   }
 
   @JvmStatic
-  fun invalidateIndexesIfNeeded(): Boolean {
+  fun requireInvalidation(): Boolean {
+    return IndexInfrastructure.hasIndices() && corruptionMarker.exists()
+  }
+
+  @JvmStatic
+  fun dropIndexes() {
     val indexRoot = PathManager.getIndexRoot()
-    val corruptionMarker = File(indexRoot, CORRUPTION_MARKER_NAME)
-    val corrupted = IndexInfrastructure.hasIndices() && corruptionMarker.exists()
-    if (corrupted) {
-      FileUtil.deleteWithRenaming(indexRoot)
-      indexRoot.mkdirs()
-      // serialization manager is initialized before and use removed index root so we need to reinitialize it
-      SerializationManagerEx.getInstanceEx().reinitializeNameStorage()
-      ID.reinitializeDiskStorage()
-      PersistentIndicesConfiguration.saveConfiguration()
-      FileUtil.delete(corruptionMarker)
-    }
-    return corrupted
+    FileUtil.deleteWithRenaming(indexRoot)
+    indexRoot.mkdirs()
+    // serialization manager is initialized before and use removed index root so we need to reinitialize it
+    SerializationManagerEx.getInstanceEx().reinitializeNameStorage()
+    ID.reinitializeDiskStorage()
+    PersistentIndicesConfiguration.saveConfiguration()
+    FileUtil.delete(corruptionMarker)
+    FileBasedIndexInfrastructureExtension.EP_NAME.extensions.forEach { it.clearPersistentData() }
   }
 }

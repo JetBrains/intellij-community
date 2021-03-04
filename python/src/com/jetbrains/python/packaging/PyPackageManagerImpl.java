@@ -66,8 +66,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final String PACKAGING_TOOL = "packaging_tool.py";
   private static final int TIMEOUT = 10 * 60 * 1000;
 
-  private static final String BUILD_DIR_OPTION = "--build-dir";
-
   private static final String INSTALL = "install";
   private static final String UNINSTALL = "uninstall";
   protected String mySeparator = File.separator;
@@ -189,22 +187,17 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
+    install(requirements, extraArgs, null);
+  }
+
+  public void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs, @Nullable String workingDir)
+    throws ExecutionException {
     if (requirements == null) return;
     if (!hasManagement()) {
       installManagement();
     }
     final List<String> args = new ArrayList<>();
     args.add(INSTALL);
-    final File buildDir;
-    try {
-      buildDir = FileUtil.createTempDirectory("pycharm-packaging", null);
-    }
-    catch (IOException e) {
-      throw new ExecutionException(PySdkBundle.message("python.sdk.packaging.cannot.create.temporary.build.directory"));
-    }
-    if (!extraArgs.contains(BUILD_DIR_OPTION)) {
-      args.addAll(Arrays.asList(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
-    }
 
     final boolean useUserSite = extraArgs.contains(USE_USER_SITE);
 
@@ -219,7 +212,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
 
     try {
-      getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, null);
+      getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, workingDir);
     }
     catch (PyExecutionException e) {
       final List<String> simplifiedArgs = new ArrayList<>();
@@ -238,7 +231,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
       refreshPackagesSynchronously();
-      FileUtil.delete(buildDir);
     }
   }
 

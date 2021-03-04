@@ -133,6 +133,19 @@ public class IfStatementMissingBreakInLoop {
     }
   }
 
+  public void multiDimensionalArrayChanged() {
+    int[] a = new int[]{1,2,3,4,5};
+    int[][] b = new int[a.length][a.length];
+    boolean c = false;
+    for (int i = 0; i < a.length; i++) {
+      b[i][i] = a[i];
+      if (i == 2) {
+        c = true;
+      }
+    }
+    System.out.println(b[2][2]);
+  }
+
   static class Nested {
 
     private final String field = "foo";

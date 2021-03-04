@@ -1,8 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.PARAGRAPH_STYLE
+import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
@@ -18,13 +19,20 @@ import javax.swing.text.StyleConstants
  * This panel has limited height by its preferred size and doesn't grow more. The maximum width
  * could be limited as well by setting maximumWidth.
  */
-class HeightLimitedPane(text: String, private val relativeFontSize: Int, private val style: SimpleAttributeSet, private val maximumWidth: Int? = null) : JTextPane() {
+class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fontColor: JBColor, private val isBold: Boolean = false, private val maximumWidth: Int? = null) : JTextPane() {
+  val style = SimpleAttributeSet()
+
   init {
     border = JBUI.Borders.empty()
     isEditable = false
+
+    StyleConstants.setFontFamily(style, JBUI.Fonts.label().fontName)
+    if (isBold) StyleConstants.setBold(style, true)
+    StyleConstants.setForeground(style, fontColor)
+    StyleConstants.setFontSize(style, adjustFont().size)
+
     document.insertString(0, text, style)
     //ensure that style has been applied
-    StyleConstants.setFontSize(style, (adjustFontSize()).toInt())
     styledDocument.setCharacterAttributes(0, text.length, style, true)
     styledDocument.setParagraphAttributes(0, text.length, style, true)
     isOpaque = false
@@ -63,11 +71,11 @@ class HeightLimitedPane(text: String, private val relativeFontSize: Int, private
   override fun setUI(ui: TextUI?) {
     super.setUI(ui)
     if (font != null) {
-      font = FontUIResource(font.deriveFont(adjustFontSize()))
+      font = FontUIResource(adjustFont())
     }
   }
 
-  private fun adjustFontSize() = UISettings.instance.fontSize + JBUIScale.scale(relativeFontSize) + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0
+  private fun adjustFont() = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + JBUIScale.scale(relativeFontSize) + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0)
 
   override fun updateUI() {
     super.updateUI()
@@ -75,7 +83,7 @@ class HeightLimitedPane(text: String, private val relativeFontSize: Int, private
     if (font != null && style != null) {
       StyleConstants.setFontSize(style, font.size)
       styledDocument.setCharacterAttributes(0, text.length, style, true)
-      styledDocument.setParagraphAttributes(0, text.length, style, true)
+      styledDocument.setParagraphAttributes(0, text.length, PARAGRAPH_STYLE, true)
     }
   }
 }

@@ -2,106 +2,106 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.facet.FacetManager
-import com.intellij.facet.FacetType
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.facet.mock.MockFacet
+import com.intellij.facet.mock.MockFacetConfiguration
 import com.intellij.facet.mock.MockFacetType
+import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.module.EmptyModuleType
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import org.junit.Assert
+import com.intellij.workspaceModel.storage.toBuilder
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import junit.framework.AssertionFailedError
 import org.junit.Assert.*
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 
 class FacetModelBridgeTest {
-  @Rule
-  @JvmField
-  var application = ApplicationRule()
+  companion object {
+    @ClassRule
+    @JvmField
+    val application = ApplicationRule()
+  }
 
   @Rule
   @JvmField
-  var temporaryDirectoryRule = TemporaryDirectory()
+  val projectModel = ProjectModelRule()
 
   @Rule
   @JvmField
-  var disposableRule = DisposableRule()
+  val disposableRule = DisposableRule()
 
-  private lateinit var project: Project
-  private lateinit var module: Module
-  private lateinit var virtualFileManager: VirtualFileUrlManager
+  private val virtualFileManager: VirtualFileUrlManager
+    get() = VirtualFileUrlManager.getInstance(projectModel.project)
 
   @Before
-  fun prepareProject() {
-    project = createEmptyTestProject(temporaryDirectoryRule, disposableRule)
-    virtualFileManager = VirtualFileUrlManager.getInstance(project)
-    module = createModule()
-    runWriteActionAndWait { FacetType.EP_NAME.point.registerExtension(MockFacetType(), module) }
+  fun registerFacetType() {
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({}, disposableRule.disposable)
+    registerFacetType(MockFacetType(), disposableRule.disposable)
   }
 
   @Test
-  fun `test changed facet config saved correctly`() = WriteCommandAction.runWriteCommandAction(project) {
+  fun `test changed facet config saved correctly`() {
     val facetData = "mock"
+    val module = projectModel.createModule()
     val facet = MockFacet(module, facetData)
-    getFacetManager().createModifiableModel().let { modifiableModel ->
+    val facetManager = FacetManager.getInstance(module)
+    facetManager.createModifiableModel().let { modifiableModel ->
       modifiableModel.addFacet(facet)
-      Assert.assertTrue(facet.configuration.data.isEmpty())
+      assertTrue(facet.configuration.data.isEmpty())
       facet.configuration.data = facetData
-      modifiableModel.commit()
+      runWriteActionAndWait { modifiableModel.commit() }
     }
     val facetConfigXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
 
-    val facetByType = getFacetManager().getFacetByType(MockFacetType.ID)
+    val facetByType = facetManager.getFacetByType(MockFacetType.ID)
     assertNotNull(facetByType)
     assertEquals(facetData, facetByType!!.configuration.data)
 
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage
+    val entityStorage = WorkspaceModel.getInstance(projectModel.project).entityStorage
     val facetEntity = entityStorage.current.entities(FacetEntity::class.java).first()
     assertEquals(facetConfigXml, facetEntity.configurationXmlTag)
 
-    getFacetManager().createModifiableModel().let { modifiableModel ->
+    facetManager.createModifiableModel().let { modifiableModel ->
       modifiableModel as ModifiableFacetModelBridgeImpl
       assertEquals(facetConfigXml, modifiableModel.getEntity(facet)!!.configurationXmlTag)
     }
   }
 
   @Test
-  fun `facet with caching`(){
+  fun `facet with caching`() {
     val builder = WorkspaceEntityStorageBuilder.create()
 
-    val tempDir = temporaryDirectoryRule.newPath()
-
-    val iprFile = tempDir.resolve("testProject.ipr")
+    val baseDir = projectModel.baseProjectDir.rootPath.resolve("test")
+    val iprFile = baseDir.resolve("testProject.ipr")
     val configLocation = toConfigLocation(iprFile, virtualFileManager)
     val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
 
-    builder.addFacetEntity("MyFacet", "MockFacetId",
-                           """<facet type="MockFacetId" name="MockFacetId"><configuration sdkName="" /></facet>""", moduleEntity, null,
-                           source)
+    builder.addFacetEntity("MyFacet", "MockFacetId", """<configuration data="foo" />""", moduleEntity,
+                           null, source)
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile)
@@ -109,26 +109,43 @@ class FacetModelBridgeTest {
         PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       })
 
-      val module = ModuleManager.getInstance(project).findModuleByName("test") ?: run {
-        fail()
-        return@withInitialContent
-      }
-
+      val module = ModuleManager.getInstance(project).findModuleByName("test") ?: throw AssertionFailedError("Module wasn't loaded")
       val facets = FacetManager.getInstance(module).allFacets
-      val facet = assertOneElement(facets)
+      val facet = assertOneElement(facets) as MockFacet
       assertEquals("MyFacet", facet.name)
+      assertEquals("foo", facet.configuration.data)
     }
   }
 
-  private fun createModule(): Module = runWriteActionAndWait {
-    ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
-      val module = moduleModel.newModule(File(project.basePath, "test.iml").path, EmptyModuleType.getInstance().id) as ModuleBridge
-      moduleModel.commit()
-      module
+  @Test
+  fun `update facet configuration via entity`() {
+    val module = projectModel.createModule()
+    val facet = projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("foo"))
+    assertEquals("foo", facet.configuration.data)
+    runWriteActionAndWait {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
+        val facetEntity = builder.entities(FacetEntity::class.java).single()
+        builder.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {
+          configurationXmlTag = """<configuration data="bar" />"""
+        }
+      }
     }
+    assertEquals("bar", facet.configuration.data)
   }
 
-  private fun getFacetManager(): FacetManager {
-    return FacetManager.getInstance(module)
+  @Test
+  fun `getting module facets after module rename`() {
+    val module = projectModel.createModule()
+    val facet = projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("foo"))
+
+    val diff = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.toBuilder()
+    val modifiableModuleModel = (ModuleManager.getInstance(projectModel.project) as ModuleManagerComponentBridge).getModifiableModel(diff)
+    val modifiableFacetModel = (FacetManager.getInstance(module) as FacetManagerBridge).createModifiableModel(diff)
+
+    var existingFacet = assertOneElement(modifiableFacetModel.allFacets)
+    assertEquals(facet.name, existingFacet.name)
+    modifiableModuleModel.renameModule(module, "newModuleName")
+    existingFacet = assertOneElement(modifiableFacetModel.allFacets)
+    assertEquals(facet.name, existingFacet.name)
   }
 }
