@@ -42,8 +42,6 @@ import java.util.Map;
  */
 public final class PluginDownloader {
 
-  public static final PluginDownloader[] EMPTY_ARRAY = {};
-
   private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
 
   private final PluginId myPluginId;

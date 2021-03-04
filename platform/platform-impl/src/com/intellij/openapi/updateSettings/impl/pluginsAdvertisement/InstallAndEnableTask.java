@@ -73,20 +73,14 @@ final class InstallAndEnableTask extends Task.Modal {
       return;
     }
 
-    PluginsAdvertiserDialog advertiserDialog = new PluginsAdvertiserDialog(null,
-                                                                           myPlugins.toArray(PluginDownloader.EMPTY_ARRAY),
-                                                                           myCustomPlugins);
-    advertiserDialog.setFinishFunction(result -> {
-      if (result) {
-        myOnSuccess.run();
-      }
-      return null;
-    });
-    if (myShowDialog) {
-      advertiserDialog.showAndGet();
-    }
-    else {
-      advertiserDialog.doInstallPlugins();
-    }
+    new PluginsAdvertiserDialog(null,
+                                myPlugins,
+                                myCustomPlugins,
+                                result -> {
+                                  if (result) {
+                                    myOnSuccess.run();
+                                  }
+                                  return null;
+                                }).doInstallPlugins(myShowDialog);
   }
 }

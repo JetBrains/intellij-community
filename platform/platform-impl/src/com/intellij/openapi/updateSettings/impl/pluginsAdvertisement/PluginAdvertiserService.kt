@@ -131,7 +131,7 @@ open class PluginAdvertiserService {
         else
           NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
             FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
-            PluginsAdvertiserDialog(project, plugins.toTypedArray(), customPlugins).show()
+            PluginsAdvertiserDialog(project, plugins, customPlugins).show()
           }
 
         getAddressedMessagePresentation(
