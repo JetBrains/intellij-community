@@ -91,16 +91,16 @@
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="kotlin-scripting-intellij" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-intellij:1.4.0-release-329">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-intellij:1.4.0">
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-intellij/1.4.0-release-329/kotlin-scripting-intellij-1.4.0-release-329.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.4.0-release-329/kotlin-script-runtime-1.4.0-release-329.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.0-release-329/kotlin-scripting-common-1.4.0-release-329.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-intellij/1.4.0/kotlin-scripting-intellij-1.4.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.4.0/kotlin-script-runtime-1.4.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.0/kotlin-scripting-common-1.4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
