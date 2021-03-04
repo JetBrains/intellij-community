@@ -1,9 +1,9 @@
 fun foo(cl: () -> Int): Int {
-    return x + cl()
+    return 42
 }
 
 fun bar() {
-    foo {
+    foo() {
         2
     }
 }
