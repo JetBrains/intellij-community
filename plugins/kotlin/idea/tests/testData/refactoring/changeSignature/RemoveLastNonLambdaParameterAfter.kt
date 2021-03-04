@@ -3,7 +3,7 @@ fun foo(cl: () -> Int): Int {
 }
 
 fun bar() {
-    foo() {
+    foo {
         2
     }
 }

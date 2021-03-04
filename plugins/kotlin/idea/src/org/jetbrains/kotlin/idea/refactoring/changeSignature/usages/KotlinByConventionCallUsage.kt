@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2000-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -9,6 +9,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
+import org.jetbrains.kotlin.idea.intentions.RemoveEmptyParenthesesFromLambdaCallIntention
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.ReplaceInvokeIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -31,7 +32,12 @@ class KotlinByConventionCallUsage(
             OperatorNameConventions.INVOKE.asString() -> {
                 with(ReplaceInvokeIntention()) {
                     if (applicabilityRange(expression) != null) {
-                        applyTo(expression, null)
+                        OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(expression)
+                            ?.getPossiblyQualifiedCallExpression()
+                            ?.valueArgumentList
+                            ?.let {
+                                RemoveEmptyParenthesesFromLambdaCallIntention.applyToIfApplicable(it)
+                            }
                     }
                 }
             }
@@ -62,11 +68,12 @@ class KotlinByConventionCallUsage(
         val resolvedCall = resolvedCall ?: return true
         val callExpression = convertedCallExpression ?: return true
         val callProcessor = KotlinFunctionCallUsage(callExpression, callee, resolvedCall)
-        val newExpression = callProcessor.processUsageAndGetResult(changeInfo, callExpression, allUsages) as? KtExpression
+        val newExpression = callProcessor.processUsageAndGetResult(changeInfo, callExpression, allUsages, true) as? KtExpression
         val qualifiedCall = newExpression?.getQualifiedExpressionForSelectorOrThis() as? KtDotQualifiedExpression
         if (qualifiedCall != null) {
             foldExpression(qualifiedCall, changeInfo)
         }
+
         return true
     }
 }

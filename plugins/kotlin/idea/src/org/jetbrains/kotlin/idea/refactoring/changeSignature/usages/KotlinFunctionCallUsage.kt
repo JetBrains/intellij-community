@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.intentions.RemoveEmptyParenthesesFromLambdaCallIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.isInsideOfCallerBody
@@ -65,7 +66,12 @@ class KotlinFunctionCallUsage(
         return true
     }
 
-    fun processUsageAndGetResult(changeInfo: KotlinChangeInfo, element: KtCallElement, allUsages: Array<out UsageInfo>): KtElement {
+    fun processUsageAndGetResult(
+        changeInfo: KotlinChangeInfo,
+        element: KtCallElement,
+        allUsages: Array<out UsageInfo>,
+        skipRedundantArgumentList: Boolean = false,
+    ): KtElement {
         if (shouldSkipUsage(element)) return element
 
         var result: KtElement = element
@@ -80,7 +86,7 @@ class KotlinFunctionCallUsage(
         }
         if (element.valueArgumentList != null) {
             if (changeInfo.isParameterSetOrOrderChanged) {
-                result = updateArgumentsAndReceiver(changeInfo, element, allUsages)
+                result = updateArgumentsAndReceiver(changeInfo, element, allUsages, skipRedundantArgumentList)
             } else {
                 changeArgumentNames(changeInfo, element)
             }
@@ -320,7 +326,8 @@ class KotlinFunctionCallUsage(
     private fun updateArgumentsAndReceiver(
         changeInfo: KotlinChangeInfo,
         element: KtCallElement,
-        allUsages: Array<out UsageInfo>
+        allUsages: Array<out UsageInfo>,
+        skipRedundantArgumentList: Boolean,
     ): KtElement {
         if (isPropertyJavaUsage) return updateJavaPropertyCall(changeInfo, element)
 
@@ -456,9 +463,13 @@ class KotlinFunctionCallUsage(
             newElement = fullCallElement.replace(replacingElement) as KtElement
         }
 
+        val newCallExpression = ((newElement as? KtQualifiedExpression)?.selectorExpression ?: newElement) as? KtCallExpression
         if (!lambdaArgumentNotTouched && newLambdaArgumentAddedLast) {
-            val newCallExpression = ((newElement as? KtQualifiedExpression)?.selectorExpression ?: newElement) as KtCallExpression
-            newCallExpression.moveFunctionLiteralOutsideParentheses()
+            newCallExpression?.moveFunctionLiteralOutsideParentheses()
+        }
+
+        if (!skipRedundantArgumentList) {
+            newCallExpression?.valueArgumentList?.let(RemoveEmptyParenthesesFromLambdaCallIntention::applyToIfApplicable)
         }
 
         newElement.flushElementsForShorteningToWaitList()

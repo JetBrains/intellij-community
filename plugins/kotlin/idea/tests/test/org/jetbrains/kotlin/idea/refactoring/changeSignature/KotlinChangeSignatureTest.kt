@@ -582,6 +582,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testRemoveLastNonLambdaParameter() = doTest { removeParameter(0) }
+    fun testRemoveLastNonLambdaParameter2() = doTest { removeParameter(1) }
 
     fun testFunctionFromStdlibConflict() = doTestUnmodifiable()
 
