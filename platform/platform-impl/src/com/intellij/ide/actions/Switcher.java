@@ -188,6 +188,21 @@ public final class Switcher extends DumbAwareAction {
                                       ? null : new JCheckBox(IdeBundle.message("recent.files.checkbox.label"));
 
       SwitcherListRenderer renderer = new SwitcherListRenderer(this);
+      List<SwitcherToolWindow> windows = renderer.getToolWindows();
+      updateMnemonics(windows);
+      // register custom actions as soon as possible to block overridden actions
+      registerAction(this::navigate, "ENTER");
+      registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
+      registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
+      if (!pinned) {
+        registerSwingAction(ListActions.Up.ID, "KP_UP", "UP");
+        registerSwingAction(ListActions.Down.ID, "KP_DOWN", "DOWN");
+        registerSwingAction(ListActions.Left.ID, "KP_LEFT", "LEFT");
+        registerSwingAction(ListActions.Right.ID, "KP_RIGHT", "RIGHT");
+        registerSwingAction(ListActions.PageUp.ID, "PAGE_UP");
+        registerSwingAction(ListActions.PageDown.ID, "PAGE_DOWN");
+        windows.forEach(this::registerToolWindowAction);
+      }
 
       setBorder(JBUI.Borders.empty());
       setBackground(JBColor.background());
@@ -230,8 +245,6 @@ public final class Switcher extends DumbAwareAction {
       }
 
       CollectionListModel<Object> twModel = new CollectionListModel<>();
-      List<SwitcherToolWindow> windows = renderer.getToolWindows();
-      updateMnemonics(windows);
       windows.stream().sorted((o1, o2) -> {
         String m1 = o1.getMnemonic();
         String m2 = o2.getMnemonic();
@@ -404,20 +417,6 @@ public final class Switcher extends DumbAwareAction {
         .createPopup();
       Disposer.register(myPopup, this);
 
-      registerAction(this::navigate, "ENTER");
-      registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
-      registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
-      if (!pinned) {
-        registerSwingAction(ListActions.Up.ID, "KP_UP", "UP");
-        registerSwingAction(ListActions.Down.ID, "KP_DOWN", "DOWN");
-        registerSwingAction(ListActions.Left.ID, "KP_LEFT", "LEFT");
-        registerSwingAction(ListActions.Right.ID, "KP_RIGHT", "RIGHT");
-        registerSwingAction(ListActions.PageUp.ID, "PAGE_UP");
-        registerSwingAction(ListActions.PageDown.ID, "PAGE_DOWN");
-        for (SwitcherToolWindow window : windows) {
-          registerToolWindowAction(window);
-        }
-      }
       setFocusCycleRoot(true);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
 
@@ -906,9 +905,9 @@ public final class Switcher extends DumbAwareAction {
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent event) {
-          action.consume(event.getInputEvent());
+          if (myPopup != null && myPopup.isVisible()) action.consume(event.getInputEvent());
         }
-      }.registerCustomShortcutSet(onKeyRelease.getShortcuts(keys), this, myPopup);
+      }.registerCustomShortcutSet(onKeyRelease.getShortcuts(keys), this, this);
     }
 
     private void registerSwingAction(@NonNls @NotNull String id, @NonNls String @NotNull ... keys) {
