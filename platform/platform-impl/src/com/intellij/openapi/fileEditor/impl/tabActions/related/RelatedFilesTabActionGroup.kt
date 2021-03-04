@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.impl.tabActions.base.EditorTabDataProvide
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
+@Suppress("ComponentNotRegistered")
 class RelatedFilesTabActionGroup : EditorTabAction<FileEditorProvider>(2, RelatedFilesTabActionFactory())
 private class RelatedFilesTabActionFactory : EditorTabActionFactory<FileEditorProvider> {
   private val provider = RelatedFilesTabDataProvider()
