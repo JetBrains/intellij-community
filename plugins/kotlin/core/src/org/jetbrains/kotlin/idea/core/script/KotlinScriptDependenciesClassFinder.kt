@@ -57,7 +57,7 @@ class KotlinScriptDependenciesClassFinder(
         // Following code is needed because NonClasspathClassFinder cannot find inner classes
         // JavaFullClassNameIndex cannot be used directly, because it filter only classes in source roots
 
-        findInnerClassInCaches(qualifiedName, scope)?.let { return it }
+        // findInnerClassInCaches(qualifiedName, scope)?.let { return it }
 
         val classes = StubIndex.getElements(
             JavaFullClassNameIndex.getInstance().key,
