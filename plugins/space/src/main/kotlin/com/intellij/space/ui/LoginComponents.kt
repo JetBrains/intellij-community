@@ -34,7 +34,8 @@ internal object LoginComponents {
     val serverField = organizationUrlTextField(
       state.server,
       30,
-      SpaceBundle.message("login.input.field.organizations.url.placeholder")
+      if (withOrganizationsUrlLabel) SpaceBundle.message("login.input.field.organizations.url.placeholder")
+      else SpaceBundle.message("login.input.field.organizations.url.large.placeholder")
     )
 
     val loginButton = loginButton(default = isLoginActionDefault, onClick = {
