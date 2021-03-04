@@ -27,7 +27,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertTrue(validator.getEventDataRules(eventLogGroup).isEmpty())
 
     assertUndefinedRule(validator, eventLogGroup, "<any-string-accepted>")
-    assertEventDataNotAccepted(validator, eventLogGroup, ValidationResultType.UNDEFINED_RULE, "<any-key-accepted>", "<any-string-accepted>")
+    assertEventDataNotAccepted(validator, eventLogGroup, ValidationResultType.UNDEFINED_RULE, ValidationResultType.UNDEFINED_RULE.description, "<any-string-accepted>")
   }
 
   @Test
@@ -230,7 +230,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertEventDataAccepted(validator, elg, "ed_2", "REF_BB")
     assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "ed_1", "CC")
     assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "ed_2", "REF_XX")
-    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, "undefined", "<unknown>")
+    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, ValidationResultType.UNDEFINED_RULE.description, "<unknown>")
   }
 
   @Test
@@ -242,7 +242,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertEventDataAccepted(validator, elg, "ed 2", "REF_BB")
     assertEventDataAccepted(validator, elg, "ed_1", "AA")
     assertEventDataAccepted(validator, elg, "ed_2", "REF_BB")
-    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, "ed+2", "REF_BB")
+    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, ValidationResultType.UNDEFINED_RULE.description, "REF_BB")
   }
 
   @Test
@@ -531,7 +531,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     val data: HashMap<String, Any> = hashMapOf( "count" to 1)
     val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
 
-    TestCase.assertEquals(ValidationResultType.UNREACHABLE_METADATA.description, validatedEventData["count"])
+    TestCase.assertEquals(ValidationResultType.UNREACHABLE_METADATA.description, validatedEventData[ValidationResultType.UNREACHABLE_METADATA.description])
   }
 
   @Test
@@ -541,7 +541,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     val data: HashMap<String, Any> = hashMapOf("count" to 1)
     val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
 
-    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE.description, validatedEventData["count"])
+    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE.description, validatedEventData[ValidationResultType.UNDEFINED_RULE.description])
   }
 
   internal fun createUnreachableValidator(): TestSensitiveDataValidator {
