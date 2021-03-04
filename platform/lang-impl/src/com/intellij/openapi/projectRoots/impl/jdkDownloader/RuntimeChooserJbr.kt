@@ -18,7 +18,10 @@ data class RuntimeChooserDownloadableItem(val item: JdkItem) : RuntimeChooserIte
 fun RuntimeChooserModel.fetchAvailableJbrs() {
   object : Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.downloading.jetbrains.runtime.list")) {
     override fun run(indicator: ProgressIndicator) {
-      val builds = service<RuntimeChooserJbrListDownloader>().downloadForUI(indicator)
+      val builds = service<RuntimeChooserJbrListDownloader>()
+        .downloadForUI(indicator)
+        .filter { RuntimeChooserJreValidator.isSupportedSdkItem(it) }
+
       invokeLater(modalityState = ModalityState.any()) {
         updateDownloadJbrList(builds)
       }
