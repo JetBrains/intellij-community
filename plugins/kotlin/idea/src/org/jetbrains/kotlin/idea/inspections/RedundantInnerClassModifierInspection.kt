@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
@@ -60,6 +61,9 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
                     }
                     if (reference is PsiClass && reference.parent is PsiClass) {
                         return@anyDescendantOfType reference.getJavaClassDescriptor()?.isInner == true
+                    }
+                    if (reference is KtObjectDeclaration || (reference as? KtDeclaration)?.containingClassOrObject is KtObjectDeclaration) {
+                        return@anyDescendantOfType false
                     }
                     val referenceContainingClass = reference?.getStrictParentOfType<KtClass>()
                     if (referenceContainingClass != null) {
