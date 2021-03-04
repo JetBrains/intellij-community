@@ -148,9 +148,7 @@ data class ClientId(val value: String) {
             val clientIdService = ClientIdService.tryGetInstance() ?: return action()
 
             if (!clientIdService.isValid(clientId)) {
-                val pce = ProcessCanceledException()
-                Logger.getInstance(ClientId::class.java).debug("Invalid clientId: $clientId. Skipping execution", pce)
-                throw pce
+                Logger.getInstance(ClientId::class.java).warn("Invalid clientId: $clientId", Throwable())
             }
 
             val foreignMainThreadActivity = clientIdService.checkLongActivity &&
