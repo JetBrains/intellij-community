@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
 import circlet.code.api.CodeReviewListItem
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CompositeShortcutSet
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.vcs.review.ReviewUiSpec
 import com.intellij.space.vcs.review.SpaceReviewDataKeys
@@ -78,8 +79,27 @@ private class SpaceOpenCodeReviewDetailsAction : DumbAwareAction(SpaceBundle.mes
     val project = e.project ?: return
     val data = e.getData(SpaceReviewDataKeys.SELECTED_REVIEW) ?: return
     val selectedReviewVm = e.getData(SpaceReviewDataKeys.SELECTED_REVIEW_VM) ?: return
+    logOpenReview(e)
+
     selectedReviewVm.selectedReview.value = data
 
     openReviewInEditor(project, selectedReviewVm.workspace, selectedReviewVm.projectInfo, data.review)
+  }
+
+  private fun logOpenReview(e: AnActionEvent) {
+    val inputEvent = e.inputEvent
+    val openReviewType = if (inputEvent is MouseEvent) {
+      if (inputEvent.clickCount == 1) {
+        SpaceStatsCounterCollector.OpenReviewActionType.ARROW
+      }
+      else {
+        SpaceStatsCounterCollector.OpenReviewActionType.DOUBLE_CLICK
+      }
+    }
+    else {
+      SpaceStatsCounterCollector.OpenReviewActionType.ENTER
+    }
+
+    SpaceStatsCounterCollector.OPEN_REVIEW.log(openReviewType)
   }
 }

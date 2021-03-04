@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
@@ -22,26 +23,30 @@ import javax.swing.JPanel
 internal fun createNewMessageField(
   chatVM: M2ChannelVm,
   avatarType: SpaceChatAvatarType,
+  statsPlace: SpaceStatsCounterCollector.SendMessagePlace,
   pendingStateProvider: () -> Boolean = { false },
   onCancel: (() -> Unit)? = null,
   onSend: (() -> Unit)? = null
 ): JComponent {
   val submittableModel = object : SubmittableTextFieldModelBase("") {
     override fun submit() {
-      chatVM.sendMessage(document.text, pending = pendingStateProvider())
+      val isPending = pendingStateProvider()
+      SpaceStatsCounterCollector.SEND_MESSAGE.log(statsPlace, isPending)
+      chatVM.sendMessage(document.text, pending = isPending)
       runWriteAction {
         document.setText("")
       }
       onSend?.invoke()
     }
   }
-  return SpaceChatNewMessageWithAvatarComponent(chatVM.lifetime, avatarType, submittableModel, onCancel)
+  return SpaceChatNewMessageWithAvatarComponent(chatVM.lifetime, avatarType, submittableModel, statsPlace, onCancel)
 }
 
 internal class SpaceChatNewMessageWithAvatarComponent(
   avatarProviderLifetime: Lifetime,
   avatarType: SpaceChatAvatarType,
   submittableModel: SubmittableTextFieldModel,
+  statsPlace: SpaceStatsCounterCollector.SendMessagePlace,
   onCancel: (() -> Unit)?
 ) : JPanel(null) {
   init {
@@ -68,6 +73,7 @@ internal class SpaceChatNewMessageWithAvatarComponent(
             SpaceBundle.message("chat.message.new.discard.changes.text")
           ).ask(this)
         ) {
+          SpaceStatsCounterCollector.DISCARD_SEND_MESSAGE.log(statsPlace)
           onCancel?.invoke()
         }
       }

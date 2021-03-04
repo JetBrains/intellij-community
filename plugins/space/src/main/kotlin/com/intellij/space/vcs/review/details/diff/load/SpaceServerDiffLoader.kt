@@ -6,6 +6,7 @@ import circlet.client.api.ProjectKey
 import circlet.client.codeView
 import circlet.platform.client.KCircletClient
 import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.vcs.review.details.SpaceReviewChange
 import com.intellij.space.vcs.review.details.getFileContent
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -36,7 +37,9 @@ internal class SpaceServerDiffLoader(parentLifetime: Lifetime, client: KCircletC
     cache.computeIfAbsent(gitCommitChange) {
       loadDiffAsync(projectKey, spaceReviewChange, selectedCommitHashes)
     }
-    return (cache[gitCommitChange] ?: loadDiffAsync(projectKey, spaceReviewChange, selectedCommitHashes)).get()
+    return (cache[gitCommitChange] ?: loadDiffAsync(projectKey, spaceReviewChange, selectedCommitHashes)).get().also {
+      SpaceStatsCounterCollector.DIFF_LOADED.log(SpaceStatsCounterCollector.LoaderType.SPACE)
+    }
   }
 
   private fun loadDiffAsync(

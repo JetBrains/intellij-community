@@ -69,6 +69,8 @@
 
     <virtualFileSystem key="space-diff" implementationClass="com.intellij.space.editor.SpaceDiffComplexPathVirtualFileSystem"/>
     <virtualFileSystem key="space-chat" implementationClass="com.intellij.space.editor.SpaceChatComplexPathVirtualFileSystem"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.space.stats.SpaceStatsCounterCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.space.stats.SpaceStatsStateCollector"/>
   </extensions>
 
   <actions>

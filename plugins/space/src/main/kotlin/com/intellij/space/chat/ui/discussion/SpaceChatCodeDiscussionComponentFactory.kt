@@ -20,6 +20,7 @@ import com.intellij.space.chat.ui.SpaceChatNewMessageWithAvatarComponent
 import com.intellij.space.chat.ui.message.createResolvedComponent
 import com.intellij.space.chat.ui.thread.createCollapsedThreadComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.SideBorder
@@ -136,11 +137,14 @@ internal class SpaceChatCodeDiscussionComponentFactory(
       newMessageStateModel,
       mainComponentSupplier = { actionsComponent },
       toggleableComponentSupplier = {
+        val statsPlace = SpaceStatsCounterCollector.SendMessagePlace.FIRST_DISCUSSION_ANSWER
         val submittableModel = object : SubmittableTextFieldModelBase("") {
           override fun submit() {
+            val isPending = false
+            SpaceStatsCounterCollector.SEND_MESSAGE.log(statsPlace, isPending)
             launch(lifetime, Ui) {
               val thread = message.loadThread(lifetime)
-              thread?.sendMessage(document.text, pending = false)
+              thread?.sendMessage(document.text, pending = isPending)
               runWriteAction {
                 document.setText("")
               }
@@ -148,9 +152,10 @@ internal class SpaceChatCodeDiscussionComponentFactory(
             }
           }
         }
-        SpaceChatNewMessageWithAvatarComponent(lifetime, SpaceChatAvatarType.THREAD, submittableModel, onCancel = {
-          newMessageStateModel.value = false
-        })
+        SpaceChatNewMessageWithAvatarComponent(lifetime, SpaceChatAvatarType.THREAD, submittableModel, statsPlace,
+                                               onCancel = {
+                                                 newMessageStateModel.value = false
+                                               })
       }
     )
     message.threadPreview!!.messageCount.forEach(lifetime) { count ->
@@ -179,7 +184,7 @@ internal class SpaceChatCodeDiscussionComponentFactory(
     message: SpaceChatItem,
     collapseModel: SingleValueModel<Boolean>
   ): JComponent {
-    val editableReviewCommentComponent = SpaceChatEditableComponent(lifetime, reviewCommentContent, message)
+    val editableReviewCommentComponent = SpaceChatEditableComponent(project, lifetime, reviewCommentContent, message)
     editableReviewCommentComponent.editingModel.addValueUpdatedListener { isEditing ->
       if (isEditing) {
         collapseModel.value = false
@@ -225,9 +230,11 @@ internal class SpaceChatCodeDiscussionComponentFactory(
   ) {
     collapseButton.actionListener = ActionListener {
       collapseModel.value = true
+      SpaceStatsCounterCollector.COLLAPSE_DISCUSSION.log(project)
     }
     expandButton.actionListener = ActionListener {
       collapseModel.value = false
+      SpaceStatsCounterCollector.EXPAND_DISCUSSION.log(project)
     }
 
     fun stateUpdated(collapsed: Boolean) {

@@ -37,6 +37,7 @@ import com.intellij.space.notification.SpaceNotificationIdsHolder.Companion.PROJ
 import com.intellij.space.notification.SpaceNotificationIdsHolder.Companion.SHARING_NOT_FINISHED
 import com.intellij.space.settings.CloneType
 import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceHttpPasswordState
 import com.intellij.space.vcs.SpaceProjectContext
@@ -90,6 +91,9 @@ private class SpaceShareProjectAction : DumbAwareAction() {
       return
     }
 
+    SpaceStatsCounterCollector.OPEN_SHARE_PROJECT.log(
+      SpaceStatsCounterCollector.LoginState.convert(SpaceWorkspaceComponent.getInstance().loginState.value)
+    )
     ApplicationManager.getApplication().invokeLater(
       {
         FileDocumentManager.getInstance().saveAllDocuments()

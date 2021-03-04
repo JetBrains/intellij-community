@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.ColorUtil
@@ -59,7 +60,8 @@ internal class SpaceChatContentPanel(
     return JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       add(timeline, VerticalLayout.FILL_HORIZONTAL)
-      add(createNewMessageField(chatVM, SpaceChatAvatarType.MAIN_CHAT), VerticalLayout.FILL_HORIZONTAL)
+      add(createNewMessageField(chatVM, SpaceChatAvatarType.MAIN_CHAT, SpaceStatsCounterCollector.SendMessagePlace.MAIN_CHAT),
+          VerticalLayout.FILL_HORIZONTAL)
     }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.ScaleContext
@@ -41,22 +42,23 @@ internal const val HIDPI_POSTFIX = "@2x"
 internal const val JETBRAINS_SPACE_LOGO = "/images/jetbrainsSpace.svg"
 internal const val JETBRAINS_SPACE_LOGO_DARK = "/images/jetbrainsSpaceDark.svg"
 
-internal fun LayoutBuilder.promoPanel() {
+internal fun LayoutBuilder.promoPanel(statsExplorePlace: SpaceStatsCounterCollector.ExplorePlace) {
   fullRow { createSpaceByJetbrainsLabel()() }
   fullRow { promoText(76)() }
-  fullRow { exploreSpaceLink()() }.largeGapAfter()
+  fullRow { exploreSpaceLink(statsExplorePlace)() }.largeGapAfter()
 }
 
 internal fun toolbarPromoBanner(): JComponent? {
   val imagePath = if (StartupUiUtil.isJreHiDPI()) SPACE_TOOLBAR_PROMO_BANNER_PATH_RETINA else SPACE_TOOLBAR_PROMO_BANNER_PATH
   val image = ImageLoader.loadImage(imagePath, 364, 199) ?: return null
 
-  return wrapWithWatchSpaceOverviewLabelOverlay(JLabel(JBImageIcon(image)))
+  return wrapWithWatchSpaceOverviewLabelOverlay(JLabel(JBImageIcon(image)), SpaceStatsCounterCollector.OverviewPlace.MAIN_TOOLBAR)
 }
 
-internal fun bigPromoBanner(): JComponent? = bigPromoBanner(500, 285)
+internal fun bigPromoBanner(statsOverviewPlace: SpaceStatsCounterCollector.OverviewPlace): JComponent? =
+  bigPromoBanner(500, 285, statsOverviewPlace)
 
-internal fun bigPromoBanner(width: Int, height: Int): JComponent? {
+internal fun bigPromoBanner(width: Int, height: Int, statsOverviewPlace: SpaceStatsCounterCollector.OverviewPlace): JComponent? {
   val isDarcula = StartupUiUtil.isUnderDarcula()
   val themePart = if (isDarcula) DARK_POSTFIX else ""
   val retinaPart = if (StartupUiUtil.isJreHiDPI()) HIDPI_POSTFIX else ""
@@ -64,16 +66,30 @@ internal fun bigPromoBanner(width: Int, height: Int): JComponent? {
 
   val image = ImageLoader.loadImage(imagePath, width, height) ?: return null
 
-  return wrapWithWatchSpaceOverviewLabelOverlay(JLabel(JBImageIcon(image)), alwaysDisplayLabel = true, useDarkLabel = isDarcula)
+  return wrapWithWatchSpaceOverviewLabelOverlay(
+    JLabel(JBImageIcon(image)),
+    statsOverviewPlace,
+    alwaysDisplayLabel = true,
+    useDarkLabel = isDarcula
+  )
 }
 
-internal fun exploreSpaceLink(): BrowserLink = BrowserLink(SpaceBundle.message("space.promo.explore.space.button"), EXPLORE_SPACE_PROMO_URL).apply {
-  isFocusPainted = false
-}
+internal fun exploreSpaceLink(statsExplorePlace: SpaceStatsCounterCollector.ExplorePlace): BrowserLink =
+  BrowserLink(
+    SpaceBundle.message("space.promo.explore.space.button"),
+    EXPLORE_SPACE_PROMO_URL
+  ).apply {
+    addActionListener {
+      SpaceStatsCounterCollector.EXPLORE_SPACE.log(statsExplorePlace)
+    }
+    isFocusPainted = false
+  }
 
-private fun wrapWithWatchSpaceOverviewLabelOverlay(component: JComponent,
-                                                            alwaysDisplayLabel: Boolean = false,
-                                                            useDarkLabel: Boolean = true
+private fun wrapWithWatchSpaceOverviewLabelOverlay(
+  component: JComponent,
+  statsOverviewPlace: SpaceStatsCounterCollector.OverviewPlace,
+  alwaysDisplayLabel: Boolean = false,
+  useDarkLabel: Boolean = true
 ): JComponent {
   @NlsSafe val text = "\u25B6${FontUtil.spaceAndThinSpace()}${SpaceBundle.message("space.promo.watch.space.overview.label")}"
   val labelBackground = if (useDarkLabel) Color(0, 0, 0, 180) else Color(255, 255, 255, 180)
@@ -100,7 +116,10 @@ private fun wrapWithWatchSpaceOverviewLabelOverlay(component: JComponent,
         if (!alwaysDisplayLabel) watchVideoButton.isVisible = false
       }
 
-      override fun mouseClicked(e: MouseEvent?) = watchPromoVideo()
+      override fun mouseClicked(e: MouseEvent?) {
+        SpaceStatsCounterCollector.WATCH_OVERVIEW.log(statsOverviewPlace)
+        watchPromoVideo()
+      }
     })
   }
 }
@@ -109,7 +128,8 @@ internal fun createSpaceByJetbrainsLabel(): JComponent = JLabel().apply {
   val jbSpaceSvgLogo = SvgLoader.loadSvg(if (StartupUiUtil.isUnderDarcula()) JETBRAINS_SPACE_LOGO_DARK else JETBRAINS_SPACE_LOGO, this)
   if (jbSpaceSvgLogo != null) {
     icon = jbSpaceSvgLogo
-  } else {
+  }
+  else {
     icon = SpaceIcons.Main
     text = SpaceBundle.message("product.name.jetbrains.space")
   }

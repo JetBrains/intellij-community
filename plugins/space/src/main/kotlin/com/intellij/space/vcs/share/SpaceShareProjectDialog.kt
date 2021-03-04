@@ -14,6 +14,7 @@ import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.promo.promoPanel
 import com.intellij.space.settings.SpaceLoginState
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.LoginComponents.buildConnectingPanel
 import com.intellij.space.ui.LoginComponents.loginPanel
 import com.intellij.space.utils.SpaceUrls
@@ -51,6 +52,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
   }
   private val createNewProjectButton: JButton = JButton(SpaceBundle.message("share.project.dialog.new.button.text")).apply {
     addActionListener {
+      SpaceStatsCounterCollector.START_CREATING_NEW_PROJECT.log()
       val createProjectDialog = SpaceCreateProjectDialog(this@SpaceShareProjectDialog.contentPanel)
       if (createProjectDialog.showAndGet()) {
         createProjectDialog.result?.let {
@@ -92,7 +94,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
           okAction.isEnabled = true
           buildShareProjectPanel(lifetime)
         }
-        is SpaceLoginState.Connecting -> buildConnectingPanel(state) {
+        is SpaceLoginState.Connecting -> buildConnectingPanel(state, SpaceStatsCounterCollector.LoginPlace.SHARE) {
           state.cancel()
         }
       }.apply {
@@ -106,16 +108,16 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
 
   private fun buildShareLoginPanel(state: SpaceLoginState.Disconnected, loginAction: (String) -> Unit): JComponent {
     return panel {
-      loginPanel(state, isLoginActionDefault = true) {
+      loginPanel(state, SpaceStatsCounterCollector.LoginPlace.SHARE, isLoginActionDefault = true) {
         loginAction(it)
       }
-      promoPanel()
+      promoPanel(SpaceStatsCounterCollector.ExplorePlace.SHARE)
     }
   }
 
   override fun doOKAction() {
     if (!okAction.isEnabled) return
-
+    SpaceStatsCounterCollector.SHARE_PROJECT.log()
     launch(lifetime, Ui) {
       okAction.isEnabled = false
       asyncProcessIcon.isVisible = true

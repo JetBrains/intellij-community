@@ -10,6 +10,7 @@ import circlet.code.api.identifier
 import circlet.platform.client.resolve
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.vcs.review.ReviewUiSpec.avatarSizeIntValue
 import com.intellij.space.vcs.review.details.selector.SpaceReviewParticipantSelectorFactory
@@ -131,7 +132,10 @@ internal open class ParticipantsComponent(
 
     return editIconButton().apply {
       border = JBUI.Borders.empty(6, 0)
-      actionListener = ActionListener { listener(it) }
+      actionListener = ActionListener {
+        SpaceStatsCounterCollector.EDIT_PARTICIPANT_ICON.log(role)
+        listener(it)
+      }
     }
   }
 }

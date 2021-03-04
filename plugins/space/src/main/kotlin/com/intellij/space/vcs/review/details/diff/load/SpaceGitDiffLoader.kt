@@ -4,6 +4,7 @@ package com.intellij.space.vcs.review.details.diff.load
 import circlet.client.api.GitCommitChange
 import circlet.client.api.ProjectKey
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.vcs.review.details.SpaceReviewChange
 import git4idea.changes.GitChangeUtils
 import libraries.coroutines.extra.Lifetime
@@ -23,6 +24,7 @@ internal class SpaceGitDiffLoader(parentLifetime: Lifetime) : SpaceDiffLoaderBas
     val gitCommitChange = spaceReviewChange.gitCommitChange
     val cachedValue = cache[gitCommitChange]
     if (cachedValue != null) {
+      SpaceStatsCounterCollector.DIFF_LOADED.log(SpaceStatsCounterCollector.LoaderType.GIT)
       return cachedValue
     }
     val repo = spaceReviewChange.spaceRepoInfo?.repository ?: throw GitDiffLoadingException("Repository is not mapped")
@@ -42,6 +44,7 @@ internal class SpaceGitDiffLoader(parentLifetime: Lifetime) : SpaceDiffLoaderBas
     }
     val change = GitChangeUtils.getDiff(repo.project, repo.root, leftRangePart, rightRangePart, filePaths).single()
     return DiffSides(change.beforeRevision?.content, change.afterRevision?.content).also {
+      SpaceStatsCounterCollector.DIFF_LOADED.log(SpaceStatsCounterCollector.LoaderType.GIT)
       cache.putIfAbsent(gitCommitChange, it)
     }
   }

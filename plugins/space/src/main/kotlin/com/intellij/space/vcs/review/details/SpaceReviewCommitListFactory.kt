@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollPaneFactory
@@ -41,11 +42,16 @@ object SpaceReviewCommitListFactory {
     }
 
     commitList.addListSelectionListener {
+      val itemsCount = commitList.itemsCount
       val selectedCommitIndices = if (commitList.selectedIndices.isNotEmpty()) {
         commitList.selectedIndices.toList()
-      } else {
-        (0 until commitList.itemsCount).toList()
       }
+      else {
+        (0 until itemsCount).toList()
+      }
+      SpaceStatsCounterCollector.CHANGE_COMMITS_SELECTION.log(
+        SpaceStatsCounterCollector.CommitsSelectionType.calculateSelectionType(selectedCommitIndices, itemsCount)
+      )
       commitListController.setSelectedCommitsIndices(selectedCommitIndices)
     }
 

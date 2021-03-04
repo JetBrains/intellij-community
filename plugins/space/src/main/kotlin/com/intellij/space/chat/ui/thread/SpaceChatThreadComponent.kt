@@ -10,6 +10,7 @@ import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.*
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
@@ -29,6 +30,7 @@ internal fun createThreadComponent(
   threadActionsFactory: SpaceChatThreadActionsFactory? = null,
   withFirst: Boolean = true,
   folded: Boolean = true,
+  statsPlace: SpaceStatsCounterCollector.SendMessagePlace = SpaceStatsCounterCollector.SendMessagePlace.THREAD,
   messageConverter: (index: Int, message: M2MessageVm) -> SpaceChatItem = { _, message -> message.convertToChatItem(message.getLink()) }
 ): JComponent {
   val threadComponent = JPanel(VerticalLayout(0)).apply {
@@ -66,7 +68,7 @@ internal fun createThreadComponent(
     }
   }
 
-  val actionsComponent = createActionsComponent(thread, threadActionsFactory, pendingStateProvider)
+  val actionsComponent = createActionsComponent(thread, threadActionsFactory, statsPlace, pendingStateProvider)
   return threadComponent.apply {
     add(threadTimeline, VerticalLayout.FILL_HORIZONTAL)
     add(actionsComponent, VerticalLayout.FILL_HORIZONTAL)
@@ -76,6 +78,7 @@ internal fun createThreadComponent(
 private fun createActionsComponent(
   thread: M2ChannelVm,
   threadActionsFactory: SpaceChatThreadActionsFactory?,
+  statsPlace: SpaceStatsCounterCollector.SendMessagePlace,
   pendingStateProvider: () -> Boolean
 ): JComponent {
   val newMessageStateModel = SingleValueModelImpl(false)
@@ -94,8 +97,13 @@ private fun createActionsComponent(
     newMessageStateModel,
     mainComponentSupplier = { actionsComponent },
     toggleableComponentSupplier = {
-      createNewMessageField(thread, onCancel = { newMessageStateModel.value = false }, avatarType = SpaceChatAvatarType.THREAD,
-                            pendingStateProvider = pendingStateProvider)
+      createNewMessageField(
+        thread,
+        statsPlace = statsPlace,
+        onCancel = { newMessageStateModel.value = false },
+        avatarType = SpaceChatAvatarType.THREAD,
+        pendingStateProvider = pendingStateProvider
+      )
     }
   )
 }

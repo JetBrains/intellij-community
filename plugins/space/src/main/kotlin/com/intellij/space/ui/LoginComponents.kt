@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.SpaceLoginState
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.SeparatorComponent
@@ -27,6 +28,7 @@ import javax.swing.border.Border
 internal object LoginComponents {
   fun LayoutBuilder.loginPanel(
     state: SpaceLoginState.Disconnected,
+    statsLoginPlace: SpaceStatsCounterCollector.LoginPlace,
     isLoginActionDefault: Boolean = false,
     withOrganizationsUrlLabel: Boolean = false,
     loginAction: (String) -> Unit
@@ -38,7 +40,7 @@ internal object LoginComponents {
       else SpaceBundle.message("login.input.field.organizations.url.large.placeholder")
     )
 
-    val loginButton = loginButton(default = isLoginActionDefault, onClick = {
+    val loginButton = loginButton(statsLoginPlace, default = isLoginActionDefault, onClick = {
       it.isEnabled = false
       loginAction(serverField.text.trim())
     })
@@ -81,9 +83,14 @@ internal object LoginComponents {
     }
   }
 
-  internal fun loginButton(default: Boolean = false, onClick: (JButton) -> Unit): JButton =
+  internal fun loginButton(
+    statsLoginPlace: SpaceStatsCounterCollector.LoginPlace,
+    default: Boolean = false,
+    onClick: (JButton) -> Unit
+  ): JButton =
     JButton(SpaceBundle.message("login.panel.log.in.button")).apply {
       addActionListener {
+        SpaceStatsCounterCollector.LOG_IN.log(statsLoginPlace)
         onClick(this)
       }
       ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, default)
@@ -103,10 +110,18 @@ internal object LoginComponents {
     SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)()
   }
 
-  internal fun buildConnectingPanel(st: SpaceLoginState.Connecting, customBorder: Border? = null, cancelAction: () -> Unit): DialogPanel {
+  internal fun buildConnectingPanel(
+    st: SpaceLoginState.Connecting,
+    statsLoginPlace: SpaceStatsCounterCollector.LoginPlace,
+    customBorder: Border? = null,
+    cancelAction: () -> Unit
+  ): DialogPanel {
     return panel {
       val cancelButton = JButton(IdeBundle.message("button.cancel")).apply {
-        addActionListener { cancelAction() }
+        addActionListener {
+          SpaceStatsCounterCollector.CANCEL_LOGIN.log(statsLoginPlace)
+          cancelAction()
+        }
       }
       row(SpaceBundle.message("login.panel.connecting.to.server.label", st.server)) {
         cancelButton()

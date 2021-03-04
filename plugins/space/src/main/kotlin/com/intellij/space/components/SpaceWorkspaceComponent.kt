@@ -32,6 +32,7 @@ import com.intellij.space.settings.SpaceLoginState
 import com.intellij.space.settings.SpaceServerSettings
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.settings.log
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.utils.IdeaPasswordSafePersistence
 import com.intellij.space.utils.LifetimedDisposable
 import com.intellij.space.utils.LifetimedDisposableImpl
@@ -124,7 +125,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
 
   override suspend fun authFailed() {
-    signOut()
+    signOut(SpaceStatsCounterCollector.LogoutPlace.AUTH_FAIL)
     SpaceAuthNotifier.authFailed()
   }
 
@@ -206,7 +207,8 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     return result
   }
 
-  fun signOut() {
+  fun signOut(statsPlace: SpaceStatsCounterCollector.LogoutPlace) {
+    SpaceStatsCounterCollector.LOG_OUT.log(statsPlace)
     val oldManager = manager.value
     oldManager?.signOut(true)
     workspacesLifetimes.clear()

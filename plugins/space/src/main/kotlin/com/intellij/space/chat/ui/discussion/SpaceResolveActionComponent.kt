@@ -5,6 +5,7 @@ import circlet.code.api.CodeDiscussionRecord
 import circlet.code.codeReview
 import circlet.platform.client.KCircletClient
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.SingleValueModel
@@ -60,9 +61,11 @@ private fun createResolveReopenLabel(
     val currentDiscussion = discussion.value
     launch(lifetime, Ui) {
       if (!currentDiscussion.resolved) {
+        SpaceStatsCounterCollector.RESOLVE_DISCUSSION.log()
         resolvingModel.value = ResolvingState.RESOLVING
       }
       else {
+        SpaceStatsCounterCollector.REOPEN_DISCUSSION.log()
         resolvingModel.value = ResolvingState.REOPENING
       }
       delay(200) // reduce status label blinking

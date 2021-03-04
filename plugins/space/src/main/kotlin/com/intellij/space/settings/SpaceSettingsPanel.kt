@@ -13,6 +13,7 @@ import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.promo.bigPromoBanner
 import com.intellij.space.promo.promoPanel
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.LoginComponents.buildConnectingPanel
 import com.intellij.space.ui.LoginComponents.loginPanel
 import com.intellij.space.ui.LoginComponents.separatorRow
@@ -85,7 +86,7 @@ class SpaceSettingsPanel :
         SpaceWorkspaceComponent.getInstance().signInManually(server, lifetime, wrapper)
       }
 
-      is SpaceLoginState.Connecting -> return buildConnectingPanel(st) {
+      is SpaceLoginState.Connecting -> return buildConnectingPanel(st, SpaceStatsCounterCollector.LoginPlace.SETTINGS) {
         st.cancel()
       }
 
@@ -96,7 +97,7 @@ class SpaceSettingsPanel :
         }
         val logoutButton = JButton(SpaceBundle.message("settings.panel.log.out.button.text")).apply {
           addActionListener {
-            SpaceWorkspaceComponent.getInstance().signOut()
+            SpaceWorkspaceComponent.getInstance().signOut(SpaceStatsCounterCollector.LogoutPlace.SETTINGS)
           }
         }
 
@@ -138,7 +139,11 @@ class SpaceSettingsPanel :
       contentPanel.removeAll()
       if (it != null) {
         val url = SpaceUrls.git(it.me.value.username)
-        val browserLink = BrowserLink(SpaceBundle.message("settings.panel.configure.git.ssh.keys.http.password.link"), url)
+        val browserLink = BrowserLink(SpaceBundle.message("settings.panel.configure.git.ssh.keys.http.password.link"), url).apply {
+          addActionListener {
+            SpaceStatsCounterCollector.OPEN_GIT_SETTINGS_IN_SPACE.log()
+          }
+        }
         contentPanel.addToCenter(browserLink)
       }
       contentPanel.revalidate()
@@ -158,9 +163,10 @@ internal fun buildSettingsLoginPanel(st: SpaceLoginState.Disconnected,
                                      loginAction: (String) -> Unit
 ): DialogPanel {
   return panel {
-    loginPanel(st, isLoginActionDefault = false, withOrganizationsUrlLabel = true, loginAction)
-    promoPanel()
-    bigPromoBanner()?.let {
+    loginPanel(st, SpaceStatsCounterCollector.LoginPlace.SETTINGS, isLoginActionDefault = false, withOrganizationsUrlLabel = true,
+               loginAction)
+    promoPanel(SpaceStatsCounterCollector.ExplorePlace.SETTINGS)
+    bigPromoBanner(SpaceStatsCounterCollector.OverviewPlace.SETTINGS)?.let {
       fullRow { it() }
     }
   }
