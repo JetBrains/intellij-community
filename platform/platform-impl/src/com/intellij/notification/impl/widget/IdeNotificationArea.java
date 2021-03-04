@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.notification.EventLog;
-import com.intellij.notification.LogModel;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.notification.impl.ui.NotificationsUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -60,9 +61,15 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
           return true;
         }
       }.installOn(this, true);
-      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () ->
-        ApplicationManager.getApplication().invokeLater(() -> updateStatus(project)));
+
+      Application app = ApplicationManager.getApplication();
+      app.getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
       updateStatus(project);
+
+      app.invokeLater(
+        () -> ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).dispatchEarlyNotifications(),
+        ModalityState.NON_MODAL,
+        ignored -> Disposer.isDisposed(this));
     }
   }
 

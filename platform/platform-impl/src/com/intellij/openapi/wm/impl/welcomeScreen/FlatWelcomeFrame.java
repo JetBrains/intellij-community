@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -15,11 +15,15 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.idea.SplashManager;
 import com.intellij.jdkEx.JdkEx;
+import com.intellij.notification.NotificationsManager;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JBProtocolCommand;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -105,7 +109,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     // so we need resize window when it is shown
     UiNotifyConnector.doWhenFirstShown(this, this::pack);
 
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    Application app = ApplicationManager.getApplication();
+    MessageBusConnection connection = app.getMessageBus().connect(this);
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
@@ -158,10 +163,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
-    Disposer.register(ApplicationManager.getApplication(), this);
+    Disposer.register(app, this);
 
     UIUtil.decorateWindowHeader(getRootPane());
     UIUtil.setCustomTitleBar(this, getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
+
+    app.invokeLater(
+      () -> ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).dispatchEarlyNotifications(),
+      ModalityState.NON_MODAL);
   }
 
   private void updateComponentsAndResize() {
