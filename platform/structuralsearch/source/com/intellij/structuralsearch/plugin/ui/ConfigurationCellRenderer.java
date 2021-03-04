@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -24,7 +26,8 @@ public class ConfigurationCellRenderer extends SimpleListCellRenderer<Configurat
                         boolean selected,
                         boolean hasFocus) {
     final MatchOptions matchOptions = value.getMatchOptions();
-    setIcon(matchOptions.getFileType().getIcon());
+    final LanguageFileType fileType = matchOptions.getFileType();
+    setIcon((fileType == null) ? AllIcons.FileTypes.Unknown : fileType.getIcon());
     final String text;
     if (value instanceof ReplaceConfiguration) {
       text = SSRBundle.message("replace.configuration.display.text",

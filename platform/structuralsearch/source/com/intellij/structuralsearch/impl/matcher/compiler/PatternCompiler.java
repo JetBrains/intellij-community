@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +43,6 @@ import java.util.regex.Pattern;
  * Compiles the handlers for usability
  */
 public final class PatternCompiler {
-  private static final Logger LOG = Logger.getInstance(PatternCompiler.class);
   private static String ourLastSearchPlan;
 
   /**
@@ -62,7 +60,6 @@ public final class PatternCompiler {
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     if (profile == null) {
-      LOG.warn("no profile found for " + options.getFileType().getDescription());
       return null;
     }
     final CompiledPattern result = profile.createCompiledPattern();

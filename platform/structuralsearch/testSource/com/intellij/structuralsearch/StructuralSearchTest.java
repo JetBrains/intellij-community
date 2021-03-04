@@ -2690,6 +2690,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   private CompiledPattern compilePattern(String criteria, boolean checkForErrors) {
     options.fillSearchCriteria(criteria);
+    options.setFileType(JavaFileType.INSTANCE);
     return PatternCompiler.compilePattern(getProject(), options, checkForErrors, false);
   }
 
