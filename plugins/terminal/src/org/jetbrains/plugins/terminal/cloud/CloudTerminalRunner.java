@@ -46,7 +46,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  protected CloudTerminalProcess createProcess(@Nullable String directory) {
+  public CloudTerminalProcess createProcess(@Nullable String directory) {
     return myProcess;
   }
 
