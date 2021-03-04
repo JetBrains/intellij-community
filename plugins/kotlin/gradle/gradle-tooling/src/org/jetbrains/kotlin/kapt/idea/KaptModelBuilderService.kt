@@ -10,6 +10,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.jetbrains.kotlin.gradle.AbstractKotlinGradleModelBuilder
+import org.jetbrains.kotlin.gradle.AndroidAwareGradleModelProvider
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModelBuilder.Companion.getTargets
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
@@ -61,15 +62,18 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
 
     override fun canBuild(modelName: String?): Boolean = modelName == KaptGradleModel::class.java.name
 
-    override fun buildAll(modelName: String?, project: Project): KaptGradleModelImpl {
+    override fun buildAll(modelName: String?, project: Project): KaptGradleModelImpl? {
         return buildAll(project, null)
     }
 
-    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KaptGradleModelImpl {
+    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KaptGradleModelImpl? {
         return buildAll(project, builderContext)
     }
 
-    private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KaptGradleModelImpl {
+    private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KaptGradleModelImpl? {
+        val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, builderContext?.parameter)
+        if (androidVariantRequest.shouldSkipBuildAllCall()) return null
+
         val kaptPlugin: Plugin<*>? = project.plugins.findPlugin("kotlin-kapt")
         val kaptIsEnabled = kaptPlugin != null
 
@@ -79,7 +83,6 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
             // When running in Android Studio, Android Studio would request specific source sets only to avoid syncing
             // currently not active build variants. We convert names to the lower case to avoid ambiguity with build variants
             // accidentally named starting with upper case.
-            val requestedVariants: Set<String>? = builderContext?.parameter?.splitToSequence(',')?.map { it.toLowerCase() }?.toSet()
 
             val targets = project.getTargets()
 
@@ -115,7 +118,7 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
             } else {
                 project.getAllTasks(false)[project]?.forEach { compileTask ->
                     val sourceSetName = compileTask.getSourceSetName()
-                    if (requestedVariants != null && !requestedVariants.contains(sourceSetName.toLowerCase())) return@forEach
+                    if (androidVariantRequest.shouldSkipSourceSet(sourceSetName)) return@forEach
                     handleCompileTask(sourceSetName, compileTask)
                 }
             }

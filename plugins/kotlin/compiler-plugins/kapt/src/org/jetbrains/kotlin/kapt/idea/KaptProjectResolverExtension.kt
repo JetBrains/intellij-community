@@ -22,7 +22,9 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.gradle.AndroidAwareGradleModelProvider
 import org.jetbrains.kotlin.idea.framework.GRADLE_SYSTEM_ID
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
@@ -33,12 +35,14 @@ class KaptProjectResolverExtension : AbstractProjectResolverExtension() {
     }
 
     override fun getExtraProjectModelClasses(): Set<Class<KaptGradleModel>> {
-        val isAndroidPluginRequestingKotlinGradleModelKey = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KAPT_GRADLE_MODEL_KEY")
-        if (isAndroidPluginRequestingKotlinGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKotlinGradleModelKey) != null) {
-            return emptySet()
-        }
+        error("getModelProvider() is overridden instead")
+    }
 
-        return setOf(KaptGradleModel::class.java)
+    override fun getModelProvider(): ProjectImportModelProvider? {
+        val isAndroidPluginRequestingKaptGradleModelKey = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KAPT_GRADLE_MODEL_KEY")
+        val isAndroidPluginRequestingKaptGradleModel =
+            isAndroidPluginRequestingKaptGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKaptGradleModelKey) != null
+        return AndroidAwareGradleModelProvider(KaptGradleModel::class.java, isAndroidPluginRequestingKaptGradleModel)
     }
 
     override fun getToolingExtensionsClasses() = setOf(KaptModelBuilderService::class.java, Unit::class.java)
