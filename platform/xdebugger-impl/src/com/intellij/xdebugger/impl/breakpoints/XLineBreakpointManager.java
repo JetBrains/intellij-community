@@ -254,9 +254,9 @@ public final class XLineBreakpointManager {
         return;
       }
 
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      final int line = EditorUtil.yToLogicalLineNoBlockInlays(editor, mouseEvent.getY());
       final Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(myProject).commitDocument(document);
+      final int line = EditorUtil.yToLogicalLineNoBlockInlays(editor, mouseEvent.getY());
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (line >= 0 && line < document.getLineCount() && file != null) {
         ActionManagerEx.getInstanceEx()
