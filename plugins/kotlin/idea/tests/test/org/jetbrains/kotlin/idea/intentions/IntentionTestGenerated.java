@@ -1433,6 +1433,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/addMissingDestructuring/empty.kt");
         }
 
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("testData/intentions/addMissingDestructuring/hasComment.kt");
+        }
+
         @TestMetadata("notAvailable.kt")
         public void testNotAvailable() throws Exception {
             runTest("testData/intentions/addMissingDestructuring/notAvailable.kt");

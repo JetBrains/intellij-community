@@ -52,39 +52,45 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement
         val destructuringDeclaration = element.parent as? KtDestructuringDeclaration ?: return
-        val primaryParameters = destructuringDeclaration.primaryParameters() ?: return
+        addMissingEntries(destructuringDeclaration)
+    }
 
-        val nameValidator = CollectingNameValidator(
-            filter = NewDeclarationNameValidator(
-                destructuringDeclaration.parent,
-                null,
-                NewDeclarationNameValidator.Target.VARIABLES
+    companion object {
+        fun addMissingEntries(destructuringDeclaration: KtDestructuringDeclaration) {
+            val primaryParameters = destructuringDeclaration.primaryParameters() ?: return
+
+            val nameValidator = CollectingNameValidator(
+                filter = NewDeclarationNameValidator(
+                    destructuringDeclaration.parent,
+                    null,
+                    NewDeclarationNameValidator.Target.VARIABLES
+                )
             )
-        )
-        val psiFactory = KtPsiFactory(destructuringDeclaration)
-        val currentEntries = destructuringDeclaration.entries
-        val hasType = currentEntries.any { it.typeReference != null }
-        val additionalEntries = primaryParameters
-            .drop(currentEntries.size)
-            .map {
-                val name = KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
-                if (hasType) {
-                    val type = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(it.type)
-                    "$name: $type"
-                } else {
-                    name
+            val psiFactory = KtPsiFactory(destructuringDeclaration)
+            val currentEntries = destructuringDeclaration.entries
+            val hasType = currentEntries.any { it.typeReference != null }
+            val additionalEntries = primaryParameters
+                .drop(currentEntries.size)
+                .map {
+                    val name = KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
+                    if (hasType) {
+                        val type = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(it.type)
+                        "$name: $type"
+                    } else {
+                        name
+                    }
                 }
-            }
-            .let { psiFactory.createDestructuringDeclaration("val (${it.joinToString()}) = TODO()").entries }
+                .let { psiFactory.createDestructuringDeclaration("val (${it.joinToString()}) = TODO()").entries }
 
-        val rPar = destructuringDeclaration.rPar
-        val hasTrailingComma = destructuringDeclaration.trailingComma != null
-        val currentEntriesIsEmpty = currentEntries.isEmpty()
-        additionalEntries.forEachIndexed { index, entry ->
-            if (index != 0 || (!hasTrailingComma && !currentEntriesIsEmpty)) {
-                destructuringDeclaration.addBefore(psiFactory.createComma(), rPar)
+            val rPar = destructuringDeclaration.rPar
+            val hasTrailingComma = destructuringDeclaration.trailingComma != null
+            val currentEntriesIsEmpty = currentEntries.isEmpty()
+            additionalEntries.forEachIndexed { index, entry ->
+                if (index != 0 || (!hasTrailingComma && !currentEntriesIsEmpty)) {
+                    destructuringDeclaration.addBefore(psiFactory.createComma(), rPar)
+                }
+                destructuringDeclaration.addBefore(entry, rPar)
             }
-            destructuringDeclaration.addBefore(entry, rPar)
         }
     }
 }

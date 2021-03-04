@@ -9,12 +9,8 @@ import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.inspections.IncompleteDestructuringQuickfix
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createDestructuringDeclarationByPattern
 
 class AddMissingDestructuringIntention : SelfTargetingIntention<KtDestructuringDeclaration>(
     KtDestructuringDeclaration::class.java,
@@ -31,28 +27,7 @@ class AddMissingDestructuringIntention : SelfTargetingIntention<KtDestructuringD
     }
 
     override fun applyTo(element: KtDestructuringDeclaration, editor: Editor?) {
-        val entries = element.entries
-        val primaryParameters = element.classDescriptor()?.primaryParameters() ?: return
-
-        val factory = KtPsiFactory(element)
-        val nameValidator = CollectingNameValidator(
-            filter = NewDeclarationNameValidator(element.parent.parent, null, NewDeclarationNameValidator.Target.VARIABLES)
-        )
-
-        val entriesSize = entries.size
-        val newEntries = entries.joinToString(postfix = if (entriesSize == 0) "" else ", ") {
-            it.text
-        } + primaryParameters.asSequence().drop(entriesSize).joinToString {
-            KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
-        }
-
-        val initializer = element.initializer ?: return
-        val newDestructuringDeclaration = factory.createDestructuringDeclarationByPattern(
-            if (element.isVar) "var ($0) = $1" else "val ($0) = $1",
-            newEntries, initializer
-        )
-
-        element.replace(newDestructuringDeclaration)
+        IncompleteDestructuringQuickfix.addMissingEntries(element)
     }
 
     private fun KtDestructuringDeclaration.classDescriptor(): ClassDescriptor? {
