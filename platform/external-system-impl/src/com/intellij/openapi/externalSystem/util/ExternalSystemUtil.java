@@ -82,6 +82,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -100,6 +101,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -110,6 +112,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly;
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
@@ -726,7 +729,7 @@ public final class ExternalSystemUtil {
     boolean askConfirmation,
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
-    String systemsPresentation = StringUtil.join(systemIds, it -> it.getReadableName(), ", ");
+    String systemsPresentation = naturalJoinSystemIds(systemIds);
     return TrustedProjects.isTrusted(project) || project.isDefault() || executesTrustedCodeOnly(systemIds) ||
            askConfirmation && TrustedProjects.confirmLoadingUntrustedProject(
              project,
@@ -748,7 +751,7 @@ public final class ExternalSystemUtil {
     @NotNull VirtualFile virtualFile,
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
-    String systemsPresentation = StringUtil.join(systemIds, it -> it.getReadableName(), ", ");
+    String systemsPresentation = naturalJoinSystemIds(systemIds);
     if (executesTrustedCodeOnly(systemIds)) {
       return OpenUntrustedProjectChoice.IMPORT;
     }
@@ -760,6 +763,23 @@ public final class ExternalSystemUtil {
       ExternalSystemBundle.message("untrusted.project.notification.open.distrust.button"),
       ExternalSystemBundle.message("untrusted.project.notification.open.cancel.button")
     );
+  }
+
+  public static @NotNull String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
+    return naturalJoin(
+      new HashSet<>(systemIds).stream()
+        .map(it -> it.getReadableName())
+        .sorted(NaturalComparator.INSTANCE)
+        .collect(Collectors.toList())
+    );
+  }
+
+  private static @NotNull String naturalJoin(@NotNull List<String> words) {
+    if (words.size() == 0) return "";
+    if (words.size() == 1) return words.get(0);
+    String lastWord = words.get(words.size() - 1);
+    String leadingWords = StringUtil.join(words.subList(0, words.size() - 1), ", ");
+    return ExternalSystemBundle.message("external.system.reload.notification.action.reload.and.conjunction", leadingWords, lastWord);
   }
 
   public static boolean isNewProject(Project project) {
