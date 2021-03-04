@@ -29,8 +29,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.promo.*
 import com.intellij.space.promo.bigPromoBanner
+import com.intellij.space.promo.promoPanel
 import com.intellij.space.settings.CloneType
 import com.intellij.space.settings.SpaceLoginState
 import com.intellij.space.settings.SpaceSettings
@@ -49,7 +49,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.ListWithSearchComponent
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
@@ -79,9 +79,7 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
 
     SpaceWorkspaceComponent.getInstance().loginState.forEach(uiLifetime) { st ->
       val view = createView(uiLifetime, st)
-      view.border = JBUI.Borders.empty(8, 12)
-      val scrollPane = ScrollPaneFactory.createScrollPane(view, true)
-      wrapper.setContent(scrollPane)
+      wrapper.setContent(view)
       wrapper.repaint()
     }
   }
@@ -103,6 +101,9 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
       is SpaceLoginState.Disconnected -> buildCloneLoginPanel(st) { serverName ->
         SpaceWorkspaceComponent.getInstance().signInManually(serverName, lifetime, getView())
       }
+    }.let { view ->
+      UIUtil.addInsets(view, UIUtil.PANEL_REGULAR_INSETS)
+      if (st is SpaceLoginState.Disconnected) ScrollPaneFactory.createScrollPane(view, true) else view
     }
   }
 
