@@ -23,10 +23,10 @@ private val LOG = logger<RuntimeChooserPaths>()
 @Service(Service.Level.APP)
 class RuntimeChooserPaths {
   private fun computeJdkFilePath(): Path {
-    //also used in the com.intellij.ide.SystemHealthMonitor.checkRuntime, but after a discussion with Roman, we decided to copy
+    //any bugs here? Probably, this issue should be fixed https://youtrack.jetbrains.com/issue/IDEA-263637
     val appName = ApplicationNamesInfo.getInstance().scriptName
     val configName = appName + (if (!SystemInfo.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
-    return Paths.get(PathManager.getConfigPath(), configName)
+    return Paths.get(PathManager.getDefaultConfigPath(), configName)
   }
 
   fun installCustomJdk(@NlsSafe jdkName: String,
