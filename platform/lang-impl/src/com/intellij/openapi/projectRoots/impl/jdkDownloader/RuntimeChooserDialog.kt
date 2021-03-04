@@ -29,7 +29,7 @@ sealed class RuntimeChooserDialogResult {
 class RuntimeChooserDialog(
   private val project: Project?,
   private val model: RuntimeChooserModel,
-) : DialogWrapper(project) {
+) : DialogWrapper(project), DataProvider {
   private val USE_DEFAULT_RUNTIME_CODE = NEXT_USER_EXIT_CODE + 42
 
   private lateinit var jdkInstallDirSelector: TextFieldWithBrowseButton
@@ -39,6 +39,10 @@ class RuntimeChooserDialog(
     title = LangBundle.message("dialog.title.choose.ide.runtime")
     setResizable(false)
     init()
+  }
+
+  override fun getData(dataId: String): Any? {
+    return RuntimeChooserCustom.jdkDownloaderExtensionProvider.getData(dataId)
   }
 
   override fun createActions(): Array<Action> {
@@ -85,7 +89,10 @@ class RuntimeChooserDialog(
         if (anObject !is RuntimeChooserItem) return
 
         if (anObject is RuntimeChooserAddCustomItem) {
-          return RuntimeChooserCustom.showAddCustomJdkPopup(jdkCombobox, this@RuntimeChooserDialog.model)
+          RuntimeChooserCustom
+            .createSdkChooserPopup(jdkCombobox, this@RuntimeChooserDialog.model)
+            ?.showUnderneathOf(jdkCombobox)
+          return
         }
 
         if (anObject is RuntimeChooserShowAdvancedItem) {
