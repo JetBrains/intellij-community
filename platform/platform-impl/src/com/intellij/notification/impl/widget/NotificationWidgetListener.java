@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.widget;
 
 import com.intellij.ide.ui.UISettings;
@@ -82,7 +82,7 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
     ToolWindow eventLog = EventLog.getEventLog(project);
     if (eventLog != null) {
       List<Notification> notifications = EventLog.getNotifications(project);
-      NotificationType type = IdeNotificationArea.getMaximumType(notifications);
+      NotificationType type = NotificationType.getDominatingType(notifications);
       int size = notifications.size();
       ApplicationManager.getApplication()
         .invokeLater(() -> eventLog.setIcon(IdeNotificationArea.createIconWithNotificationCount(new JBLabel(), type, size, true)));

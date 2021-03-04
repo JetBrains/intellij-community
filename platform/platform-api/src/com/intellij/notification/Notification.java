@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.ide.DataManager;
@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -22,8 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -60,8 +58,7 @@ public class Notification {
   /**
    * Unique ID for usage statistics.
    */
-  @Nullable
-  public final String displayId;
+  public final @Nullable String displayId;
 
   private final String myGroupId;
   private Icon myIcon;
@@ -72,7 +69,7 @@ public class Notification {
   private @NotificationContent String myContent;
   private NotificationListener myListener;
   private @LinkLabel String myDropDownText;
-  private List<AnAction> myActions;
+  private @Nullable List<AnAction> myActions;
   private CollapseActionsDirection myCollapseActionsDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
   private AnAction myContextHelpAction;
 
@@ -174,19 +171,16 @@ public class Notification {
     return myTimestamp;
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myIcon;
   }
 
-  @NotNull
-  public Notification setIcon(@Nullable Icon icon) {
+  public @NotNull Notification setIcon(@Nullable Icon icon) {
     myIcon = icon;
     return this;
   }
 
-  @NotNull
-  public String getGroupId() {
+  public @NotNull String getGroupId() {
     return myGroupId;
   }
 
@@ -194,31 +188,25 @@ public class Notification {
     return !isEmpty(myTitle) || !isEmpty(mySubtitle);
   }
 
-  @NotNull
-  public @NotificationTitle String getTitle() {
+  public @NotNull @NotificationTitle String getTitle() {
     return myTitle;
   }
 
-  @NotNull
-  public Notification setTitle(@Nullable @NotificationTitle String title) {
+  public @NotNull Notification setTitle(@Nullable @NotificationTitle String title) {
     myTitle = StringUtil.notNullize(title);
     return this;
   }
 
-  @NotNull
-  public Notification setTitle(@Nullable @NotificationTitle String title,
-                               @Nullable @NotificationSubtitle String subtitle) {
+  public @NotNull Notification setTitle(@Nullable @NotificationTitle String title,
+                                        @Nullable @NotificationSubtitle String subtitle) {
     return setTitle(title).setSubtitle(subtitle);
   }
 
-  @Nullable
-  @NotificationTitle
-  public String getSubtitle() {
+  public @Nullable @NotificationTitle String getSubtitle() {
     return mySubtitle;
   }
 
-  @NotNull
-  public Notification setSubtitle(@Nullable @NotificationTitle String subtitle) {
+  public @NotNull Notification setSubtitle(@Nullable @NotificationTitle String subtitle) {
     mySubtitle = subtitle;
     return this;
   }
@@ -232,50 +220,39 @@ public class Notification {
     return StringUtil.isEmptyOrSpaces(text) || StringUtil.isEmptyOrSpaces(StringUtil.stripHtml(text, false));
   }
 
-  @NotNull
-  public @NotificationContent String getContent() {
+  public @NotNull @NotificationContent String getContent() {
     return myContent;
   }
 
-  @NotNull
-  public Notification setContent(@NotificationContent @Nullable String content) {
+  public @NotNull Notification setContent(@NotificationContent @Nullable String content) {
     myContent = StringUtil.notNullize(content);
     return this;
   }
 
-  @Nullable
-  public NotificationListener getListener() {
+  public @Nullable NotificationListener getListener() {
     return myListener;
   }
 
-  @NotNull
-  public Notification setListener(@NotNull NotificationListener listener) {
+  public @NotNull Notification setListener(@NotNull NotificationListener listener) {
     myListener = listener;
     return this;
   }
 
-  @NotNull
-  public List<AnAction> getActions() {
-    return ContainerUtil.notNullize(myActions);
+  public @NotNull List<AnAction> getActions() {
+    return myActions != null ? myActions : Collections.emptyList();
   }
 
-  @NotNull
-  public static Notification get(@NotNull AnActionEvent e) {
-    //noinspection ConstantConditions
-    return e.getData(KEY);
+  public static @NotNull Notification get(@NotNull AnActionEvent e) {
+    return Objects.requireNonNull(e.getData(KEY));
   }
 
-  public static void fire(@NotNull final Notification notification, @NotNull AnAction action) {
+  public static void fire(final @NotNull Notification notification, @NotNull AnAction action) {
     fire(notification, action, null);
   }
 
-  public static void fire(@NotNull final Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, dataId -> {
-      if (KEY.is(dataId)) {
-        return notification;
-      }
-      return context == null ? null : context.getData(dataId);
-    });
+  public static void fire(final @NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
+    DataContext contextWrapper = dataId -> KEY.is(dataId) ? notification : context != null ? context.getData(dataId) : null;
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, contextWrapper);
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
@@ -285,8 +262,7 @@ public class Notification {
     DataManager.registerDataProvider(component, dataId -> KEY.is(dataId) ? notification : null);
   }
 
-  @NotNull
-  public @LinkLabel String getDropDownText() {
+  public @NotNull @LinkLabel String getDropDownText() {
     if (myDropDownText == null) {
       myDropDownText = IdeBundle.message("link.label.actions");
     }
@@ -296,8 +272,7 @@ public class Notification {
   /**
    * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
    */
-  @NotNull
-  public Notification setDropDownText(@NotNull @LinkLabel String dropDownText) {
+  public @NotNull Notification setDropDownText(@NotNull @LinkLabel String dropDownText) {
     myDropDownText = dropDownText;
     return this;
   }
@@ -314,18 +289,12 @@ public class Notification {
    * @see NotificationAction
    */
   public @NotNull Notification addAction(@NotNull AnAction action) {
-    if (myActions == null) {
-      myActions = new ArrayList<>();
-    }
-    myActions.add(action);
+    (myActions != null ? myActions : (myActions = new ArrayList<>())).add(action);
     return this;
   }
 
   public final void addActions(@NotNull List<? extends AnAction> actions) {
-    if (myActions == null) {
-      myActions = new ArrayList<>();
-    }
-    myActions.addAll(actions);
+    (myActions != null ? myActions : (myActions = new ArrayList<>())).addAll(actions);
   }
 
   public Notification setContextHelpAction(AnAction action) {
@@ -337,8 +306,7 @@ public class Notification {
     return myContextHelpAction;
   }
 
-  @NotNull
-  public NotificationType getType() {
+  public @NotNull NotificationType getType() {
     return myType;
   }
 
@@ -366,32 +334,24 @@ public class Notification {
   }
 
   private static void hideBalloon(@Nullable Reference<? extends Balloon> balloonRef) {
-    if (balloonRef == null) return;
-    var balloon = balloonRef.get();
-    if (balloon == null) return;
-    UIUtil.invokeLaterIfNeeded(balloon::hide);
+    var balloon = SoftReference.dereference(balloonRef);
+    if (balloon != null) {
+      UIUtil.invokeLaterIfNeeded(balloon::hide);
+    }
   }
 
-  public void setBalloon(@NotNull final Balloon balloon) {
+  public void setBalloon(@NotNull Balloon balloon) {
     var oldBalloon = myBalloonRef.getAndSet(new WeakReference<>(balloon));
     hideBalloon(oldBalloon);
     balloon.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        myBalloonRef.updateAndGet(prev -> {
-          if (prev != null && SoftReference.dereference(prev) == balloon) {
-            return null;
-          }
-          else {
-            return prev;
-          }
-        });
+        myBalloonRef.updateAndGet(prev -> SoftReference.dereference(prev) == balloon ? null : prev);
       }
     });
   }
 
-  @Nullable
-  public Balloon getBalloon() {
+  public @Nullable Balloon getBalloon() {
     return SoftReference.dereference(myBalloonRef.get());
   }
 
@@ -405,15 +365,10 @@ public class Notification {
   }
 
   public boolean isImportant() {
-    if (myImportant != null) {
-      return myImportant;
-    }
-
-    return getListener() != null || !ContainerUtil.isEmpty(myActions);
+    return myImportant != null ? myImportant : getListener() != null || myActions != null && !myActions.isEmpty();
   }
 
-  @NotNull
-  private static String calculateId(@NotNull Object notification) {
+  private static String calculateId(Object notification) {
     return System.currentTimeMillis() + "." + System.identityHashCode(notification);
   }
 

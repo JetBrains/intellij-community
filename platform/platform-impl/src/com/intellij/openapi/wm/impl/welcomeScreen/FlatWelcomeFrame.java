@@ -129,8 +129,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         saveSizeAndLocation(getBounds());
       }
     });
-    connection.subscribe(LafManagerListener.TOPIC, new LafManagerListener(){
-
+    connection.subscribe(LafManagerListener.TOPIC, new LafManagerListener() {
       @Override
       public void lookAndFeelChanged(@NotNull LafManager source) {
         if (myScreen != null) {
@@ -140,11 +139,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           Disposer.dispose(myBalloonLayout);
         }
         myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
-        if(USE_TABBED_WELCOME_SCREEN){
-          var selectedIndex = ((TabbedWelcomeScreen)myScreen).getSelectedIndex();
+        if (USE_TABBED_WELCOME_SCREEN) {
+          int selectedIndex = ((TabbedWelcomeScreen)myScreen).getSelectedIndex();
           myScreen = new TabbedWelcomeScreen();
           ((TabbedWelcomeScreen)myScreen).setSelectedIndex(selectedIndex);
-        } else{
+        }
+        else {
           myScreen = new FlatWelcomeScreen();
         }
         updateComponentsAndResize();
@@ -246,9 +246,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     WindowStateService.getInstance().putSize(WelcomeFrame.DIMENSION_KEY, location.getSize());
   }
 
-  @Nullable
   @Override
-  public StatusBar getStatusBar() {
+  public @Nullable StatusBar getStatusBar() {
     return null;
   }
 
@@ -261,8 +260,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return WelcomeScreenComponentFactory.getApplicationTitle();
   }
 
-  @NotNull
-  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList<AnAction>> pair) {
+  public static @NotNull JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList<AnAction>> pair) {
     if (pair.second.getModel().getSize() == 1) {
       JBTextField textField = UIUtil.uiTraverser(pair.first).filter(JBTextField.class).first();
       if (textField != null) {
@@ -383,8 +381,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     }
 
-    @NotNull
-    private JComponent createBody() {
+    private @NotNull JComponent createBody() {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.add(WelcomeScreenComponentFactory.createLogo(), BorderLayout.NORTH);
       myTouchbarActions.removeAll();
@@ -419,13 +416,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return WelcomeScreenComponentFactory.createEventLink(IdeBundle.message("action.Events"), FlatWelcomeFrame.this);
     }
 
-    @NotNull
-    private ActionPanel createQuickStartActionPanel() {
+    private @NotNull ActionPanel createQuickStartActionPanel() {
       DefaultActionGroup group = new DefaultActionGroup();
       ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       WelcomeScreenActionsUtil.collectAllActions(group, quickStart);
 
-      ActionPanel mainPanel =
+      @SuppressWarnings("SpellCheckingInspection") ActionPanel mainPanel =
         new ActionPanel(new MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"));
       mainPanel.setOpaque(false);
 
@@ -444,7 +440,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         @Override
         public void addNotify() {
           super.addNotify();
-
           if (firstAction != null) {
             onFirstActionShown(firstAction);
           }
@@ -461,7 +456,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         action.update(e);
         Presentation presentation = e.getPresentation();
         if (presentation.isVisible()) {
-          String text = presentation.getText();
+          @SuppressWarnings("DialogTitleCapitalization") String text = presentation.getText();
           if (text != null && text.endsWith("...")) {
             text = text.substring(0, text.length() - 3);
           }
@@ -471,9 +466,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             icon = IconUtil.colorize(icon, new JBColor(0x6e6e6e, 0xafb1b3));
           }
           action = ActionGroupPanelWrapper.wrapGroups(action, this);
-          ActionLink link = new ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN);
-          // Don't allow focus, as the containing panel is going to focusable.
-          link.setFocusable(false);
+          @SuppressWarnings("deprecation") ActionLink link = new ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN);
+          link.setFocusable(false);  // Don't allow focus, as the containing panel is going to focusable.
           link.setPaintUnderline(false);
           link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor());
           WelcomeScreenComponentFactory.JActionLinkPanel button = new WelcomeScreenComponentFactory.JActionLinkPanel(link);
@@ -496,38 +490,29 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     @Override
     public @Nullable Object getData(@NotNull String dataId) {
-      if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
-        return myTouchbarActions;
-      }
-      return null;
+      return TouchbarDataKeys.ACTIONS_KEY.is(dataId) ? myTouchbarActions : null;
     }
   }
 
-  protected void extendActionsGroup(JPanel panel) {
-  }
+  @SuppressWarnings("unused")
+  protected void extendActionsGroup(JPanel panel) { }
 
-  protected void onFirstActionShown(@NotNull Component action) {
-  }
+  @SuppressWarnings("unused")
+  protected void onFirstActionShown(@NotNull Component action) { }
 
-  @Nullable
   @Override
-  public BalloonLayout getBalloonLayout() {
+  public @Nullable BalloonLayout getBalloonLayout() {
     return myBalloonLayout;
   }
 
-  @NotNull
   @Override
-  public Rectangle suggestChildFrameBounds() {
+  public @NotNull Rectangle suggestChildFrameBounds() {
     return getBounds();
   }
 
-  @Nullable
   @Override
-  public Project getProject() {
-    if (ApplicationManager.getApplication().isDisposed()) {
-      return null;
-    }
-    return ProjectManager.getInstance().getDefaultProject();
+  public @Nullable Project getProject() {
+    return ApplicationManager.getApplication().isDisposed() ? null : ProjectManager.getInstance().getDefaultProject();
   }
 
   @Override
@@ -541,12 +526,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static class WelcomeFrameMenuBar extends IdeMenuBar {
-
     @Override
     public @NotNull ActionGroup getMainMenuActionGroup() {
-      return new DefaultActionGroup(ActionManager.getInstance().getAction(IdeActions.GROUP_FILE),
-                                    ActionManager.getInstance().getAction(IdeActions.GROUP_HELP_MENU));
+      ActionManager manager = ActionManager.getInstance();
+      return new DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU));
     }
   }
-
 }
