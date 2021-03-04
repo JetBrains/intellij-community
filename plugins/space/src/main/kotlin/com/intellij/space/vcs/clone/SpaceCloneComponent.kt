@@ -136,6 +136,8 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
   }
 
   override fun getView(): Wrapper = wrapper
+
+  override fun getPreferredFocusedComponent(): JComponent = wrapper
 }
 
 private class CloneView(

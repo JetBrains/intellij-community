@@ -154,6 +154,8 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
 
   override fun createCenterPanel(): JComponent = contentWrapper
 
+  override fun getPreferredFocusedComponent(): JComponent = contentWrapper
+
   private fun buildShareProjectPanel(lifetime: Lifetime): DialogPanel {
     val shareProjectVM = SpaceShareProjectVM(lifetime)
 
