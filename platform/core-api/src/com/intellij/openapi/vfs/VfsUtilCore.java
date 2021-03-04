@@ -20,6 +20,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -731,19 +732,17 @@ public class VfsUtilCore {
     path = FileUtil.toCanonicalPath(path);
     int li = path.length();
     while (file != null && li != -1) {
-      int i = path.lastIndexOf('/', li - 1);
+      int sepIndex = path.lastIndexOf('/', li - 1);
       CharSequence fileName = file.getNameSequence();
-      if (i == 6 && StringUtil.startsWith(fileName, "//wsl$")) {
-        i = -1;
+      int fileNameEnd = fileName.length() + (StringUtil.endsWithChar(fileName, '/') ? -1 : 0);
+      if (sepIndex == 6 && StringUtil.startsWith(fileName, "//wsl$")) {
+        sepIndex = -1;
       }
-      if (StringUtil.endsWithChar(fileName, '/')) {
-        fileName = fileName.subSequence(0, fileName.length() - 1);
-      }
-      if (!StringUtilRt.equal(fileName, path.substring(i + 1, li), file.isCaseSensitive())) {
+      if (!CharArrayUtil.regionMatches(fileName, 0, fileNameEnd, path, sepIndex + 1, li, file.isCaseSensitive())) {
         return false;
       }
       file = file.getParent();
-      li = i;
+      li = sepIndex;
     }
     return li == -1 && file == null;
   }

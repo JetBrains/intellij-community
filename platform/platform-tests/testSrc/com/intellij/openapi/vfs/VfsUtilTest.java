@@ -58,7 +58,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
@@ -555,12 +554,12 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assumeTrue("No WSL distributions found", !distributions.isEmpty());
 
     String wslName = distributions.get(0);
-
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
-    assertTrue(VfsUtilCore.pathEqualsTo(file, "\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
-    assertTrue(VfsUtilCore.pathEqualsTo(file, "//wsl$/" + wslName + "/usr/bin"));
-    assertTrue(VfsUtilCore.pathEqualsTo(file, "//wsl$/" + wslName + "/usr/bin/"));
-    assertFalse(VfsUtilCore.pathEqualsTo(file, "//xxx$/" + wslName + "/usr/bin/"));
-    assertFalse(VfsUtilCore.pathEqualsTo(file, "//wsl$/xxx/usr/bin/"));
+    VirtualFile usrBin = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
+    assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
+    assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/" + wslName + "/usr/bin"));
+    assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/" + wslName + "/usr/bin/"));
+    assertFalse(VfsUtilCore.pathEqualsTo(usrBin, "//xxx$/" + wslName + "/usr/bin/"));
+    assertFalse(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/xxx/usr/bin/"));
+    assertFalse(VfsUtilCore.pathEqualsTo(usrBin.getParent(), "//wsl$/xxx/usr"));
   }
 }
