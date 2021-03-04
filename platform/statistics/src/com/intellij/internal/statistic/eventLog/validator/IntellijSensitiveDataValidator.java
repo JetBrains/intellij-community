@@ -143,13 +143,7 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
       return context.eventData;
     }
 
-    Map<String, Object> validatedData = new HashMap<>();
-    for (Map.Entry<String, Object> entry : context.eventData.entrySet()) {
-      String key = entry.getKey();
-      Object entryValue = entry.getValue();
-
-      validatedData.put(key, validateEventData(context, groupRules, key, entryValue));
-    }
+    Map<String, Object> validatedData = super.guaranteeCorrectEventData(context, groupRules);
 
     boolean containsPluginInfo = validatedData.containsKey("plugin") ||
                                  validatedData.containsKey("plugin_type") ||
