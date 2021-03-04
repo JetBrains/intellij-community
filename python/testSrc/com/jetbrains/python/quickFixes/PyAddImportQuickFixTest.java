@@ -16,6 +16,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Mikhail Golubev
@@ -50,12 +52,32 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testOsPathFunctions() {
-    doMultiFileAutoImportTest("Import", fix -> {
-      final List<ImportCandidateHolder> candidates = fix.getCandidates();
-      final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText("join"));
-      assertSameElements(names, "os.path.join()");
-      return true;
-    });
+    Consumer<VirtualFile> fileConsumer = file -> {
+      doMultiFileAutoImportTest("Import", fix -> {
+        final List<ImportCandidateHolder> candidates = fix.getCandidates();
+        final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText("join"));
+        assertSameElements(names, "os.path.join()");
+        return true;
+      });
+    };
+    runWithAdditionalFileInLibDir(
+      "ntpath.py",
+      "def join(*args):\n" +
+      "    pass",
+      f -> runWithAdditionalFileInLibDir(
+        "os.py",
+        "if windows():\n" +
+        "    import ntpath as path\n" +
+        "else:\n" +
+        "    import posixpath as path",
+        f1 -> runWithAdditionalFileInLibDir(
+          "posixpath.py",
+          "def join(*args):\n" +
+          "    pass",
+          fileConsumer
+        )
+      )
+    );
   }
 
   // PY-19975
@@ -67,7 +89,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
       return true;
     });
   }
-  
+
   // PY-22422
   public void testAddParenthesesAndTrailingCommaToUpdatedFromImport() {
     getPythonCodeStyleSettings().FROM_IMPORT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;

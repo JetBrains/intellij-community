@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyTypeDeclarationProvider : TypeDeclarationProvider {
 
-  override fun getSymbolTypeDeclarations(symbol: PsiElement): Array<PsiElement> {
+  override fun getSymbolTypeDeclarations(symbol: PsiElement): Array<PsiElement>? {
     if (symbol is PyTypedElement) {
       val context = TypeEvalContext.userInitiated(symbol.project, symbol.containingFile)
       return PyTypeUtil
@@ -17,9 +17,10 @@ class PyTypeDeclarationProvider : TypeDeclarationProvider {
         .nonNull()
         .mapNotNull { it.declarationElement }
         .distinct()
-        .toTypedArray()
+        .toTypedArray<PsiElement>()
+        .takeIf { it.isNotEmpty() }
     }
 
-    return emptyArray()
+    return null
   }
 }

@@ -42,8 +42,8 @@ public class CreateClassQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    if (myAnchor instanceof PyFile) {
-      return PyPsiBundle.message("QFIX.create.class.in.module", myClassName, ((PyFile)myAnchor).getName());
+    if (myAnchor.getElement() instanceof PyFile) {
+      return PyPsiBundle.message("QFIX.create.class.in.module", myClassName, ((PyFile)myAnchor.getElement()).getName());
     }
     return PyPsiBundle.message("QFIX.create.class.0", myClassName);
   }
@@ -79,7 +79,7 @@ public class CreateClassQuickFix implements LocalQuickFix {
     builder.replaceElement(pyClass.getSuperClassExpressions() [0], "object");
     builder.replaceElement(pyClass.getStatementList(), PyNames.PASS);
 
-    PythonTemplateRunner.runTemplateInSelectedEditor(project, anchor, builder);
+    PythonTemplateRunner.runTemplate(pyClass.getContainingFile(), builder);
   }
 
 }

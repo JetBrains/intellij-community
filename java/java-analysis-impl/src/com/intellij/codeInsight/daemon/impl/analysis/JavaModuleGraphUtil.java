@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,17 +53,23 @@ public final class JavaModuleGraphUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiJavaModule findDescriptorByFile(@Nullable VirtualFile file, @NotNull Project project) {
-    if (file == null) return null;
+  public static @Nullable PsiJavaModule findDescriptorByFile(@Nullable VirtualFile file, @NotNull Project project) {
+    if (file != null) {
+      ProjectFileIndex index = ProjectFileIndex.getInstance(project);
+      if (index.isInLibrary(file)) {
+        return findDescriptorInLibrary(project, index, file);
+      }
 
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
-    return index.isInLibrary(file)
-           ? findLibraryFileModule(project, index, file)
-           : findDescriptorByModule(index.getModuleForFile(file), index.isInTestSourceContent(file));
+      Module module = index.getModuleForFile(file);
+      if (module != null) {
+        return findDescriptorByModule(module, index.isInTestSourceContent(file));
+      }
+    }
+
+    return null;
   }
 
-  private static PsiJavaModule findLibraryFileModule(@NotNull Project project, @NotNull ProjectFileIndex index, @NotNull VirtualFile file) {
+  private static @Nullable PsiJavaModule findDescriptorInLibrary(Project project, ProjectFileIndex index, VirtualFile file) {
     VirtualFile root = index.getClassRootForFile(file);
     if (root != null) {
       VirtualFile descriptorFile = JavaModuleNameIndex.descriptorFile(root);
@@ -73,33 +80,42 @@ public final class JavaModuleGraphUtil {
         }
       }
       else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
-        return LightJavaModule.findModule(PsiManager.getInstance(project), root);
+        PsiDirectory rootPsi = PsiManager.getInstance(project).findDirectory(root);
+        assert rootPsi != null : root;
+        return CachedValuesManager.getCachedValue(rootPsi, () -> {
+          LightJavaModule result = LightJavaModule.create(PsiManager.getInstance(project), root, LightJavaModule.moduleName(root));
+          return Result.create(result, rootPsi, ProjectRootModificationTracker.getInstance(project));
+        });
       }
     }
+
     return null;
   }
 
-  @Nullable
-  public static PsiJavaModule findDescriptorByModule(@Nullable Module module, boolean inTests) {
+  public static @Nullable PsiJavaModule findDescriptorByModule(@Nullable Module module, boolean inTests) {
     if (module != null) {
+      Project project = module.getProject();
       JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-      List<VirtualFile> files = ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getSourceRoots(rootType),
-        root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
+      List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(rootType);
+      List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
       if (files.size() == 1) {
-        PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(files.get(0));
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
         if (psiFile instanceof PsiJavaFile) {
           return ((PsiJavaFile)psiFile).getModuleDeclaration();
         }
       }
       else if (files.isEmpty()) {
-        files = ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getSourceRoots(rootType),
-          root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
+        files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
         if (files.size() == 1) {
           VirtualFile manifest = files.get(0);
-          String name = LightJavaModule.claimedModuleName(manifest);
-          if (name != null) {
-            return LightJavaModule.findModule(PsiManager.getInstance(module.getProject()), manifest.getParent().getParent());
-          }
+          PsiFile manifestPsi = PsiManager.getInstance(project).findFile(manifest);
+          assert manifestPsi != null : manifest;
+          return CachedValuesManager.getCachedValue(manifestPsi, () -> {
+            String name = LightJavaModule.claimedModuleName(manifest);
+            LightJavaModule result =
+              name != null ? LightJavaModule.create(PsiManager.getInstance(project), manifest.getParent().getParent(), name) : null;
+            return Result.create(result, manifestPsi, ProjectRootModificationTracker.getInstance(project));
+          });
         }
       }
     }
@@ -402,7 +418,7 @@ public final class JavaModuleGraphUtil {
       if (!isJvmLanguageFile(file)) return false;
       ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
       if (index.isInLibrary(file)) {
-        return myIncludeLibraries && myModule.equals(findLibraryFileModule(project, index, file));
+        return myIncludeLibraries && myModule.equals(findDescriptorInLibrary(project, index, file));
       }
       Module module = index.getModuleForFile(file);
       return myModule.equals(findDescriptorByModule(module, myIsInTests));

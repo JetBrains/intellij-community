@@ -71,7 +71,10 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   public final void resetFrom(Settings s) {
-    bulkUpdate(() -> resetEditorFrom(s));
+    bulkUpdate(() -> {
+      if (myEditorComponent == null) getComponent();
+      resetEditorFrom(s);
+    });
   }
 
   public final void bulkUpdate(Runnable runnable) {

@@ -19,8 +19,6 @@
 package org.jetbrains.uast
 
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
@@ -247,3 +245,14 @@ fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
 
 val UElement.textRange: TextRange?
   get() = sourcePsi?.textRange
+
+/**
+ * A helper function for getting [UMethod] for element for LineMarker.
+ * It handles cases, when [getUParentForIdentifier] returns same `parent` for more than one `identifier`.
+ * Such situations cause multiple LineMarkers for same declaration.
+ */
+inline fun <reified T : UDeclaration> getUParentForDeclarationLineMarkerElement(lineMarkerElement: PsiElement): T? {
+  val parent = getUParentForIdentifier(lineMarkerElement) as? T ?: return null
+  if (parent.uastAnchor.sourcePsiElement != lineMarkerElement) return null
+  return parent
+}

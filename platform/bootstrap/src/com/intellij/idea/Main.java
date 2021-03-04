@@ -7,7 +7,7 @@ import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -16,18 +16,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public final class Main {
   public static final int NO_GRAPHICS = 1;
@@ -84,14 +80,48 @@ public final class Main {
       System.exit(NO_GRAPHICS);
     }
 
-    // avoid loading of JavaVersion class
-    if (!System.getProperty("java.version", "").startsWith("11.") && JavaVersion.current().compareTo(JavaVersion.compose(11, 0, 0, 0, false)) < 0) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.java.version"),
-                  BootstrapBundle.message("bootstrap.error.message.cannot.start.under.java.0.java.11.or.later.is.required", SystemInfo.JAVA_RUNTIME_VERSION), true);
-      System.exit(UNSUPPORTED_JAVA_VERSION);
-    }
-
     try {
+      if (!System.getProperty("java.version", "").startsWith("11.") && JavaVersion.current().feature < 11) {
+        String baseName = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea")
+          .replace("AndroidStudio", "studio").replace("Edu", "");
+        if (baseName.startsWith("Py")) baseName = "pycharm";
+        else if (baseName.equals("Ruby")) baseName = "rubymine";
+
+        @Nls StringBuilder message = new StringBuilder(BootstrapBundle.message("bootstrap.error.message.unsupported.jre", 11)).append('\n');
+        int min = message.length();
+
+        String javaHome = System.getProperty("java.home");
+        if (javaHome.endsWith(File.separatorChar + "jre")) javaHome = javaHome.substring(0, javaHome.length() - 4);
+
+        boolean win = System.getProperty("os.name", "").startsWith("Windows"), x64 = "amd64".equals(System.getProperty("os.arch"));
+        String envVar = baseName.toUpperCase(Locale.ENGLISH) + "_JDK" + (win && x64 ? "_64" : "");
+        String envValue = System.getenv(envVar);
+        if (envValue != null && Files.isSameFile(Paths.get(envValue), Paths.get(javaHome))) {
+          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.env", envVar));
+        }
+        else {
+          String configPath = PathManager.getDefaultConfigPathFor(System.getProperty("idea.paths.selector", ""));
+          String suffix = win ? x64 ? "64.exe" : ".exe" : "";
+          Path file = Paths.get(configPath, baseName.toLowerCase(Locale.ENGLISH) + suffix + ".jdk");
+          try {
+            Path jdkPath = Paths.get(new String(Files.readAllBytes(file), Charset.defaultCharset()));
+            if (Files.isSameFile(jdkPath, Paths.get(javaHome))) {
+              message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.file", file));
+            }
+          }
+          catch (IOException ignored) { }
+        }
+
+        if (message.length() == min) {
+          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.other", supportUrl()));
+        }
+
+        message.append("\n\n").append(BootstrapBundle.message("bootstrap.error.message.jre.details", jreDetails()));
+
+        showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.jre"), message.toString(), true);
+        System.exit(UNSUPPORTED_JAVA_VERSION);
+      }
+
       bootstrap(args, startupTimings);
     }
     catch (Throwable t) {
@@ -218,20 +248,13 @@ public final class Main {
       t = awtError;
     }
     else {
-      boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-      String bugReportLink = studio ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors";
-      message.append(BootstrapBundle.message("bootstrap.error.message.internal.error.please.refer.to.0", bugReportLink));
+      message.append(BootstrapBundle.message("bootstrap.error.message.internal.error.please.refer.to.0", supportUrl()));
       message.append("\n\n");
     }
 
     t.printStackTrace(new PrintWriter(message));
 
-    Properties sp = System.getProperties();
-    String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
-    String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
-    String arch = sp.getProperty("os.arch", "(unknown arch)");
-    String home = sp.getProperty("java.home", "(unknown java.home)");
-    message.append(BootstrapBundle.message("bootstrap.error.title.jre.0.os.arch.1.by.vendor.2.java.home.3", jre, arch, vendor, home));
+    message.append("\n-----\n").append(BootstrapBundle.message("bootstrap.error.message.jre.details", jreDetails()));
 
     showMessage(title, message.toString(), true); //NON-NLS
   }
@@ -244,6 +267,20 @@ public final class Main {
       t = t.getCause();
     }
     return null;
+  }
+
+  private static @NlsSafe String jreDetails() {
+    Properties sp = System.getProperties();
+    String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
+    String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
+    String arch = sp.getProperty("os.arch", "(unknown arch)");
+    String home = sp.getProperty("java.home", "(unknown java.home)");
+    return jre + ' ' + arch + " (" + vendor + ")\n" + home;
+  }
+
+  private static @NlsSafe String supportUrl() {
+    boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
+    return studio ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors";
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
@@ -263,8 +300,7 @@ public final class Main {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     }
-    catch (Throwable ignore) {
-    }
+    catch (Throwable ignore) { }
 
     try {
       JTextPane textPane = new JTextPane();

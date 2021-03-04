@@ -460,28 +460,13 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectDataNode, myProject, true);
   }
 
-  protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
+  protected void importProject(@NonNls String config) throws IOException {
     createProjectConfig(config);
-    importProject(skipIndexing);
+    importProject();
   }
 
-  protected void importProject(Boolean skipIndexing) {
-    String indexingPropertyName = "idea.skip.indices.initialization";
-    String previousIndexingState = System.getProperty(indexingPropertyName);
-    try {
-      if (skipIndexing != null) {
-        System.setProperty(indexingPropertyName, skipIndexing.toString());
-      }
-      doImportProject();
-    } finally {
-      if (skipIndexing != null) {
-        if (previousIndexingState == null) {
-          System.clearProperty(indexingPropertyName);
-        } else {
-          System.setProperty(indexingPropertyName, previousIndexingState);
-        }
-      }
-    }
+  protected void importProject() {
+    doImportProject();
   }
 
   private void doImportProject() {
@@ -522,7 +507,8 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-        printOutput(text, stdOut);
+        if (StringUtil.isEmptyOrSpaces(text)) return;
+        (stdOut ? System.out : System.err).print(text);
       }
     };
     notificationManager.addNotificationListener(listener);
@@ -536,11 +522,6 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     if (!error.isNull()) {
       handleImportFailure(error.get().first, error.get().second);
     }
-  }
-
-  protected void printOutput(@NotNull String text, boolean stdOut) {
-    if (StringUtil.isEmptyOrSpaces(text)) return;
-    (stdOut ? System.out : System.err).print(text);
   }
 
   protected void handleImportFailure(@NotNull String errorMessage, @Nullable String errorDetails) {

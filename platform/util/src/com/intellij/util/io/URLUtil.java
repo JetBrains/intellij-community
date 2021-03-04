@@ -3,10 +3,9 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ThreeState;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,12 +136,14 @@ public final class URLUtil {
    */
   public static @Nullable Pair<String, String> splitJarUrl(@NotNull String url) {
     int pivot = url.indexOf(JAR_SEPARATOR);
-    if (pivot < 0) return null;
+    if (pivot < 0) {
+      return null;
+    }
 
     String resourcePath = url.substring(pivot + 2);
     String jarPath = url.substring(0, pivot);
 
-    if (StringUtil.startsWithConcatenation(jarPath, JAR_PROTOCOL, ":")) {
+    if (jarPath.startsWith(JAR_PROTOCOL + ":")) {
       jarPath = jarPath.substring(JAR_PROTOCOL.length() + 1);
     }
 
@@ -155,7 +156,7 @@ public final class URLUtil {
         if (jarPath.startsWith(SCHEME_SEPARATOR)) {
           jarPath = jarPath.substring(SCHEME_SEPARATOR.length());
         }
-        else if (StringUtil.startsWithChar(jarPath, ':')) {
+        else if (jarPath.length() != 0 && jarPath.charAt(0) == ':') {
           jarPath = jarPath.substring(1);
         }
       }
@@ -169,7 +170,7 @@ public final class URLUtil {
       return new File(url.toURI().getSchemeSpecificPart());
     }
     catch (URISyntaxException e) {
-      throw new IllegalArgumentException("URL='" + url.toString() + "'", e);
+      throw new IllegalArgumentException("URL='" + url + "'", e);
     }
   }
 
@@ -178,7 +179,7 @@ public final class URLUtil {
   }
 
   public static @NotNull CharSequence unescapePercentSequences(@NotNull CharSequence s, int from, int end) {
-    int i = StringUtil.indexOf(s, '%', from, end);
+    int i = Strings.indexOf(s, '%', from, end);
     if (i == -1) {
       return s.subSequence(from, end);
     }
@@ -186,33 +187,30 @@ public final class URLUtil {
     StringBuilder decoded = new StringBuilder();
     decoded.append(s, from, i);
 
-    IntList bytes = null;
+    byte[] byteBuffer = null;
+    int byteBufferSize = 0;
     while (i < end) {
       char c = s.charAt(i);
       if (c == '%') {
-        if (bytes == null) {
-          bytes = new IntArrayList();
+        if (byteBuffer == null) {
+          byteBuffer = new byte[end - from];
         }
         else {
-          bytes.clear();
+          byteBufferSize = 0;
         }
         while (i + 2 < end && s.charAt(i) == '%') {
           final int d1 = decode(s.charAt(i + 1));
           final int d2 = decode(s.charAt(i + 2));
           if (d1 != -1 && d2 != -1) {
-            bytes.add(((d1 & 0xf) << 4 | d2 & 0xf));
+            byteBuffer[byteBufferSize++] = (byte)((d1 & 0xf) << 4 | d2 & 0xf);
             i += 3;
           }
           else {
             break;
           }
         }
-        if (!bytes.isEmpty()) {
-          final byte[] bytesArray = new byte[bytes.size()];
-          for (int j = 0; j < bytes.size(); j++) {
-            bytesArray[j] = (byte)bytes.getInt(j);
-          }
-          decoded.append(new String(bytesArray, StandardCharsets.UTF_8));
+        if (byteBufferSize != 0) {
+          decoded.append(new String(byteBuffer, 0, byteBufferSize, StandardCharsets.UTF_8));
           continue;
         }
       }
@@ -246,7 +244,7 @@ public final class URLUtil {
    * @return extracted byte array or {@code null} if it cannot be extracted.
    */
   public static byte @Nullable [] getBytesFromDataUri(@NotNull String dataUrl) {
-    Matcher matcher = DATA_URI_PATTERN.matcher(StringUtil.unquoteString(dataUrl));
+    Matcher matcher = DATA_URI_PATTERN.matcher(StringUtilRt.unquoteString(dataUrl));
     if (matcher.matches()) {
       try {
         String content = matcher.group(4);
@@ -300,17 +298,12 @@ public final class URLUtil {
   }
 
   public static @NotNull URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
-    return getJarEntryURL(file.toURI(), pathInJar);
-  }
-
-  public static @NotNull URL getJarEntryURL(@NotNull URI file, @NotNull String pathInJar) throws MalformedURLException {
-    String fileURL = StringUtil.replace(file.toASCIIString(), "!", "%21");
-    return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
-  }
-
-  public static @NotNull URI getJarEntryUri(@NotNull URI file, @NotNull String pathInJar) throws URISyntaxException {
-    String fileURL = StringUtil.replace(file.toASCIIString(), "!", "%21");
-    return new URI(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
+    String fileURL = file.toURI().toASCIIString().replace("!", "%21");
+    int index = 0;
+    while (index < pathInJar.length() && pathInJar.charAt(index) == '/') {
+      index++;
+    }
+    return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + pathInJar.substring(index));
   }
 
   /**

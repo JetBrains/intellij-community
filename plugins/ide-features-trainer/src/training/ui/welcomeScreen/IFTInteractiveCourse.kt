@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.welcomeScreen
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -10,13 +10,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.MODULE_DESCRIPTION
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import icons.FeaturesTrainerIcons.Img.PluginIcon
-import training.actions.OpenLessonAction
-import training.actions.StartLearnAction
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Module
@@ -54,7 +52,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   override fun getAction(): Action {
     return object : AbstractAction(LearnBundle.message("welcome.tab.start.learning.button")) {
       override fun actionPerformed(e: ActionEvent?) {
-        performActionOnWelcomeScreen(StartLearnAction())
+        openLearningFromWelcomeScreen(null)
       }
     }
   }
@@ -78,7 +76,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   private fun moduleDescription(module: Module): HeightLimitedPane {
-    return HeightLimitedPane(module.description ?: "", -1, MODULE_DESCRIPTION)
+    return HeightLimitedPane(module.description ?: "", -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
   }
 
   private fun moduleHeader(module: Module): LinkLabel<Any> {
@@ -93,10 +91,8 @@ class IFTInteractiveCourseData : InteractiveCourseData {
     linkLabel.name = "linkLabel.${module.name}"
     linkLabel.setListener(
       { _, _ ->
-        var lesson = module.giveNotPassedLesson()
-        if (lesson == null) lesson = module.lessons[0]
         StatisticBase.instance.onStartModuleAction(module)
-        performActionOnWelcomeScreen(OpenLessonAction(lesson))
+        openLearningFromWelcomeScreen(module)
       }, null)
     return linkLabel
   }
@@ -106,11 +102,15 @@ class IFTInteractiveCourseData : InteractiveCourseData {
       Dimension(JBUI.scale(_width), JBUI.scale(_height))).apply { (this as JComponent).alignmentX = LEFT_ALIGNMENT }
   }
 
-  private fun performActionOnWelcomeScreen(action: AnAction) {
+  private fun openLearningFromWelcomeScreen(module: Module?) {
+    val action = ActionManager.getInstance().getAction("ShowLearnPanel")
+
+    //val context = if (module != null) SimpleDataContext.getSimpleContext(OpenLearnPanel.LEARNING_MODULE_KEY.name, module)
+    //else DataContext.EMPTY_CONTEXT
+
+    CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
+
     val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
     ActionUtil.performActionDumbAware(action, anActionEvent)
   }
-
 }
-
-

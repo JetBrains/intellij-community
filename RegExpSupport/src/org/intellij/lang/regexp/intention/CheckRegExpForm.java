@@ -27,6 +27,8 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -250,6 +252,11 @@ public final class CheckRegExpForm {
       }
 
       private void update() {
+        // triggers resizing of balloon when necessary
+        myRootPanel.revalidate();
+        Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
+        if (balloon != null && !balloon.isDisposed()) balloon.revalidate();
+
         updater.cancelAllRequests();
         if (!updater.isDisposed()) {
           updater.addRequest(() -> {

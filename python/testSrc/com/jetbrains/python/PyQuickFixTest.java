@@ -222,6 +222,31 @@ public class PyQuickFixTest extends PyTestCase {
                          () -> doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'MyClass'", true, true));
   }
 
+  // PY-33802
+  public void testAddClassToImportedModule() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.class.in.module", "Clzz", "mod.py"), "mod.py");
+  }
+
+  // PY-33802
+  public void testAddClassToImportedPackage() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.class.in.module", "Clzz", "__init__.py"), "pkg/__init__.py");
+  }
+
+  // PY-33802
+  public void testAddClassToModuleInFromImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.class.in.module", "Clzz", "mod.py"), "mod.py");
+  }
+
+  // PY-33802
+  public void testAddClassToPackageInFromImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.class.in.module", "Clzz", "__init__.py"),
+                               "mypack/__init__.py");
+  }
+
   // PY-21204
   public void testAddFunctionFromFString() {
     runWithLanguageLevel(LanguageLevel.PYTHON36,

@@ -92,7 +92,13 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
                                                    boolean createTemplate) {
     final PyExpression defaultParamValue = parameter.getDefaultValue();
 
-    final String paramName = StringUtil.notNullize(parameter.getName());
+    String paramName = StringUtil.notNullize(parameter.getName());
+    if (parameter.isPositionalContainer()) {
+      paramName = "*" + paramName;
+    }
+    else if (parameter.isKeywordContainer()) {
+      paramName = "**" + paramName;
+    }
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     final String defaultParamText = defaultParamValue == null ? null : defaultParamValue.getText();

@@ -300,7 +300,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
             }
 
             val content = PyBundle.message("code.insight.stub.packages.ignored.notification.content",
-                                           stubPkgNamesToUninstall.joinToString { "'$it'" }, stubPkgNamesToUninstall.size > 1)
+                                           stubPkgNamesToUninstall.joinToString { "'$it'" }, stubPkgNamesToUninstall.size)
 
             BALLOON_NOTIFICATIONS.createNotification(content, NotificationType.WARNING).notify(project)
             PyPackageManagerUI(project, sdk, uninstallationListener).uninstall(stubPkgsToUninstall)

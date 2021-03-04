@@ -38,7 +38,7 @@ object MapFromDialog {
     val typeParameters = extractOptions.typeParameters
     val targetClass = extractOptions.anchor.containingClass
     val elements = extractOptions.elements.toTypedArray()
-    val nullability = extractOptions.dataOutput.nullability
+    val nullability = extractOptions.dataOutput.nullability.takeIf { ExtractMethodHelper.isNullabilityAvailable(extractOptions) }
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
     val staticOptions = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions)
     val canBeStatic = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions) != null

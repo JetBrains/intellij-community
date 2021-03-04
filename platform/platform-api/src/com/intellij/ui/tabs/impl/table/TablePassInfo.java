@@ -46,7 +46,13 @@ class TablePassInfo extends LayoutPassInfo {
   @Deprecated
   @Override
   public TabInfo getTabAt(final int row, final int column) {
-    return table.get(row).myColumns.get(column);
+    if(getRowCount() <= row) return null;
+    TableRow tableRow = table.get(row);
+    if(tableRow == null) return null;
+    List<TabInfo> columns = tableRow.myColumns;
+    if(columns.size() <= column) return null;
+
+    return columns.get(column);
   }
 
   @Override

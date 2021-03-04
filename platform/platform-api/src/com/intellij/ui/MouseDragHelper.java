@@ -228,7 +228,7 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
     return true;
   }
 
-  private boolean canFinishDragging(@NotNull MouseEvent me) {
+  protected boolean canFinishDragging(@NotNull MouseEvent me) {
     if (!myDragComponent.isShowing()) return false;
     Component component = me.getComponent();
     if (NullableComponent.Check.isNullOrHidden(component)) return false;

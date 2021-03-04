@@ -29,7 +29,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
 
   val startLearningButton = JButton()
 
-  private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.REGULAR)
+  private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.HeaderColor)
   private val interactiveCourseContent = createInteractiveCourseContent()
 
   private var contentState: ContentState = ContentState.COLLAPSED
@@ -86,11 +86,20 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
   }
 
   private fun createUnshrinkablePanel(_width: Int): JPanel {
-    return JPanel()
-      .apply { preferredSize = Dimension(_width, 1)
-        minimumSize = Dimension(_width, 1)
+    return object: JPanel() {
+      init {
+        preferredSize = Dimension(JBUIScale.scale(_width), 1)
+        minimumSize = Dimension(JBUIScale.scale(_width), 1)
         isOpaque = false
       }
+
+      override fun updateUI() {
+        super.updateUI()
+        preferredSize = Dimension(JBUIScale.scale(_width), 1)
+        minimumSize = Dimension(JBUIScale.scale(_width), 1)
+        isOpaque = false
+      }
+    }
   }
 
   override fun getMaximumSize(): Dimension {

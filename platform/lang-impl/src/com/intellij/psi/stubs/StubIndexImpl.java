@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
@@ -279,6 +280,7 @@ public final class StubIndexImpl extends StubIndexEx {
                                                                final @NotNull Processor<? super Psi> processor) {
     boolean dumb = DumbService.isDumb(project);
     if (dumb) {
+      if (LightEdit.owns(project)) return false;
       DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType();
       if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
         throw new AssertionError("raw index data access is not available for StubIndex");

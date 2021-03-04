@@ -23,13 +23,19 @@ class MutableNonNegativeIntIntBiMap private constructor(
   private var freezed: Boolean
 ) : NonNegativeIntIntBiMap() {
 
-  constructor() : this(Int2IntOpenHashMap(), MutableNonNegativeIntIntMultiMap.ByList(), false)
+  constructor() : this(Int2IntOpenHashMap(), MutableNonNegativeIntIntMultiMap.ByList(), false) {
+    key2Value.defaultReturnValue(DEFAULT_RETURN_VALUE)
+  }
   constructor(key2Value: Int2IntMap, value2Keys: MutableNonNegativeIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
 
   fun putAll(keys: IntArray, value: Int) {
     startWrite()
+
+    keys.forEach {
+      val oldValue = key2Value.put(it, value)
+      if (oldValue != DEFAULT_RETURN_VALUE) value2Keys.remove(oldValue, it)
+    }
     value2Keys.putAll(value, keys)
-    keys.forEach { key2Value[it] = value }
   }
 
   fun removeKey(key: Int) {
@@ -62,6 +68,7 @@ class MutableNonNegativeIntIntBiMap private constructor(
   private fun startWrite() {
     if (!freezed) return
     key2Value = Int2IntOpenHashMap(key2Value)
+    key2Value.defaultReturnValue(DEFAULT_RETURN_VALUE)
     freezed = false
   }
 
@@ -113,4 +120,8 @@ sealed class NonNegativeIntIntBiMap {
   @PublishedApi
   internal val `access$key2Value`: Int2IntMap
     get() = key2Value
+
+  companion object {
+    internal const val DEFAULT_RETURN_VALUE = -1
+  }
 }

@@ -31,7 +31,7 @@ fun notChangedStatus(filePath: FilePath) = GitFileStatus(' ', ' ', filePath, nul
 
 fun GitFileStatus.has(contentVersion: ContentVersion): Boolean {
   return when (contentVersion) {
-    ContentVersion.HEAD -> isTracked() && !isAdded(index)
+    ContentVersion.HEAD -> isTracked() && !isAdded(index) && !isIntendedToBeAdded(index, workTree)
     ContentVersion.STAGED -> isTracked() && !isDeleted(index)
     ContentVersion.LOCAL -> !isDeleted(workTree)
   }

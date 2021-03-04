@@ -535,7 +535,7 @@ public class PyDocumentationBuilder {
       final QualifiedName name = QualifiedNameFinder.findShortestImportableQName(followed);
       if (name != null) {
         myProlog.add($(PyUtil.isPackage(followed) ? "Package " : "Module "))
-                .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
+          .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(followed, name, null), name).toString()));
       }
       else {
         final String path = file.getPath();

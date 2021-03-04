@@ -82,7 +82,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   init {
     lafProperty.afterChange({
                               val newLaf = laf.findLaf(it)
-                              if (laf == newLaf) return@afterChange
+                              if (laf.currentLookAndFeel == newLaf) return@afterChange
                               QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, newLaf, true)
                               WelcomeScreenEventCollector.logLafChanged(newLaf, laf.autodetect)
                             }, parentDisposable)
@@ -226,7 +226,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   }
 
   private fun updateKeymaps() {
-    (keymapComboBox?.model as DefaultComboBoxModel).apply {
+    (keymapComboBox?.model as DefaultComboBoxModel?)?.apply {
       removeAllElements()
       addAll(getKeymaps())
       selectedItem = keymapProperty.get()

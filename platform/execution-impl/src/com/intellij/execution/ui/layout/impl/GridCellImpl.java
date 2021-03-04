@@ -4,6 +4,7 @@ package com.intellij.execution.ui.layout.impl;
 import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -453,6 +454,17 @@ public final class GridCellImpl implements GridCell {
       myContext = context;
       JBRunnerTabsBase tabs = ((RunnerContentUi)myContext).myTabs;
       ((JBTabsImpl)tabs).addNestedTabs(this, myContext);
+    }
+
+    @Override
+    protected @NotNull DragHelper createDragHelper(@NotNull JBTabsImpl tabs,
+                                                   @NotNull Disposable parentDisposable) {
+      return new DragHelper(tabs, parentDisposable) {
+        @Override
+        protected boolean canFinishDragging(@NotNull MouseEvent me) {
+          return true;
+        }
+      };
     }
 
     @Override

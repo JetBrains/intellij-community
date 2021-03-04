@@ -225,7 +225,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       //   https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity
       // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
       // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
-      fireOnTestFinished(testProxy);
+      fireOnTestFinished(testProxy, node.getId());
     }
   }
 
@@ -241,7 +241,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       }
       SMTestProxy suiteProxy = node.getProxy();
       suiteProxy.setFinished();
-      fireOnSuiteFinished(suiteProxy);
+      fireOnSuiteFinished(suiteProxy, suiteFinishedEvent.getId());
       terminateNode(node, State.FINISHED);
     }
   }
@@ -326,7 +326,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         testProxy.setDuration(duration);
       }
 
-      fireOnTestFailed(testProxy);
+      fireOnTestFailed(testProxy, node.getId());
       fireOnTestFinishedIfNeeded(testProxy, node);
 
       terminateNode(node, State.FAILED);
@@ -344,7 +344,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       SMTestProxy testProxy = node.getProxy();
       testProxy.setTestIgnored(testIgnoredEvent.getIgnoreComment(), testIgnoredEvent.getStacktrace());
 
-      fireOnTestIgnored(testProxy);
+      fireOnTestIgnored(testProxy, node.getId());
       fireOnTestFinishedIfNeeded(testProxy, node);
 
       terminateNode(node, State.IGNORED);
@@ -412,12 +412,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       node.setState(State.RUNNING, this);
       SMTestProxy proxy = node.getProxy();
       proxy.setStarted();
+      Node parentNode = node.getParentNode();
       if (proxy.isSuite()) {
         myRunningSuiteNodes.add(node);
-        fireOnSuiteStarted(proxy);
+        fireOnSuiteStarted(proxy, node.getId(), parentNode != null ? parentNode.getId() : null);
       } else {
         myRunningTestNodes.add(lowestNode);
-        fireOnTestStarted(proxy);
+        fireOnTestStarted(proxy, node.getId(), parentNode != null ? parentNode.getId() : null);
       }
       node = node.getParentNode();
     }

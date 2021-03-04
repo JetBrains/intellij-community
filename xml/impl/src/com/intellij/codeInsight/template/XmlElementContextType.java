@@ -34,9 +34,17 @@ public class XmlElementContextType extends TemplateContextType {
   public boolean isInContext(@NotNull TemplateActionContext templateActionContext) {
     PsiFile file = templateActionContext.getFile();
     int startOffset = templateActionContext.getStartOffset();
+    if (!XmlContextType.isInXml(file, startOffset)) return false;
+    
+    return isInXmlElementContext(templateActionContext);
+  }
+
+  public static boolean isInXmlElementContext(@NotNull TemplateActionContext templateActionContext) {
+    PsiFile file = templateActionContext.getFile();
+    int startOffset = templateActionContext.getStartOffset();
     int endOffset = templateActionContext.getEndOffset();
     if (endOffset <= startOffset) return false;
-    if (!XmlContextType.isInXml(file, startOffset)) return false;
+    
     PsiElement start = file.findElementAt(startOffset);
     PsiElement end = file.findElementAt(endOffset - 1);
     if (start instanceof PsiWhiteSpace) {

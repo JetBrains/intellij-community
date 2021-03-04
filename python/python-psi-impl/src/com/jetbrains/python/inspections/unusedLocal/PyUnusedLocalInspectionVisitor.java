@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
@@ -422,14 +423,18 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             continue;
           }
 
-          // TODO: consider assignmentStatement.getRawTargets().length > 1 in PY-28782
           final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
-          if (assignmentStatement != null && assignmentStatement.getRawTargets().length == 1 &&
-              PsiTreeUtil.isAncestor(assignmentStatement.getLeftHandSideExpression(), element, false)) {
+          if (assignmentStatement != null && !PsiTreeUtil.isAncestor(assignmentStatement.getAssignedValue(), element, false)) {
             if (assignmentStatement.getLeftHandSideExpression() == element) {
+              // Single assignment target (unused = value)
               registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix(), new PyRemoveStatementQuickFix());
             }
+            else if (ArrayUtil.contains(element, assignmentStatement.getRawTargets())) {
+              // Chained assignment target (used = unused = value)
+              registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix());
+            }
             else {
+              // Unpacking (used, unused = value)
               registerWarning(element, warningMsg, new ReplaceWithWildCard());
             }
             continue;

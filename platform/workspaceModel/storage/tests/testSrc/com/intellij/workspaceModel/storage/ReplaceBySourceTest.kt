@@ -486,13 +486,59 @@ class ReplaceBySourceTest {
   @Test
   fun `replace same entity with persistent id and different sources`() {
     val name = "Hello"
-    builder.addNamedEntity(name, MySource)
+    builder.addNamedEntity(name, source = MySource)
     val replacement = WorkspaceEntityStorageBuilderImpl.create()
-    replacement.addNamedEntity(name, AnotherSource)
+    replacement.addNamedEntity(name, source = AnotherSource)
 
     builder.replaceBySource({ it is AnotherSource }, replacement)
 
     assertEquals(1, builder.entities(NamedEntity::class.java).toList().size)
     assertEquals(AnotherSource, builder.entities(NamedEntity::class.java).single().entitySource)
+  }
+
+  @Test
+  fun `replace dummy parent entity by real entity`() {
+    val namedParent = builder.addNamedEntity("name", "foo", MyDummyParentSource)
+    builder.addNamedChildEntity(namedParent, "fooChild", AnotherSource)
+
+    val replacement = WorkspaceEntityStorageBuilderImpl.create()
+    replacement.addNamedEntity("name", "bar", MySource)
+    builder.replaceBySource({ it is MySource || it is MyDummyParentSource }, replacement)
+
+    assertEquals("bar", builder.entities(NamedEntity::class.java).single().additionalProperty)
+    val child = builder.entities(NamedChildEntity::class.java).single()
+    assertEquals("fooChild", child.childProperty)
+    assertEquals("bar", child.parent.additionalProperty)
+  }
+
+  @Test
+  fun `do not replace real parent entity by dummy entity`() {
+    val namedParent = builder.addNamedEntity("name", "foo", MySource)
+    builder.addNamedChildEntity(namedParent, "fooChild", AnotherSource)
+
+    val replacement = WorkspaceEntityStorageBuilderImpl.create()
+    replacement.addNamedEntity("name", "bar", MyDummyParentSource)
+    builder.replaceBySource({ it is MySource || it is MyDummyParentSource }, replacement)
+
+    assertEquals("foo", builder.entities(NamedEntity::class.java).single().additionalProperty)
+    val child = builder.entities(NamedChildEntity::class.java).single()
+    assertEquals("fooChild", child.childProperty)
+    assertEquals("foo", child.parent.additionalProperty)
+  }
+
+  @Test
+  fun `do not replace real parent entity by dummy entity but replace children`() {
+    val namedParent = builder.addNamedEntity("name", "foo", MySource)
+    builder.addNamedChildEntity(namedParent, "fooChild", MySource)
+
+    val replacement = WorkspaceEntityStorageBuilderImpl.create()
+    val newParent = replacement.addNamedEntity("name", "bar", MyDummyParentSource)
+    replacement.addNamedChildEntity(newParent, "barChild", MySource)
+    builder.replaceBySource({ it is MySource || it is MyDummyParentSource }, replacement)
+
+    assertEquals("foo", builder.entities(NamedEntity::class.java).single().additionalProperty)
+    val child = builder.entities(NamedChildEntity::class.java).single()
+    assertEquals("barChild", child.childProperty)
+    assertEquals("foo", child.parent.additionalProperty)
   }
 }

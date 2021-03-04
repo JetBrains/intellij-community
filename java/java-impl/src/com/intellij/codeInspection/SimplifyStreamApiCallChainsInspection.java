@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
@@ -20,7 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.impl.source.tree.java.*;
+import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -43,7 +44,7 @@ import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
-import static com.intellij.util.ObjectUtils.*;
+import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
@@ -249,7 +250,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     return new TextRange(startOffset, endOffset).shiftRight(-expression.getTextOffset());
   }
 
-  interface CallChainFix {
+  interface CallChainFix extends FileModifier {
     @IntentionName String getName();
     void applyFix(@NotNull Project project, PsiElement element);
   }
@@ -294,6 +295,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       myFix.applyFix(project, descriptor.getStartElement());
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      CallChainFix newFix = (CallChainFix)myFix.getFileModifierForPreview(target);
+      return newFix == myFix ? this : new SimplifyCallChainFix(newFix);
     }
   }
 
@@ -2178,11 +2185,6 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   }
 
   private static class FilterAndMapUseSameMethodChainFix implements CallChainSimplification {
-    final PsiMethodCallExpression myCalledMethod;
-
-    FilterAndMapUseSameMethodChainFix(PsiMethodCallExpression calledMethod) {
-      myCalledMethod = calledMethod;
-    }
 
     @Nls
     @NotNull
@@ -2191,6 +2193,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       return JavaBundle.message("simplify.stream.swap.filter.and.map.fix.name");
     }
 
+    @Override
     @NotNull
     public @InspectionMessage String getMessage() {
       return JavaBundle.message("simplify.stream.swap.filter.and.map.fix.message");
@@ -2204,20 +2207,20 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       final PsiExpressionList filterArgList = filterCall.getArgumentList();
       final PsiElement tempMapArgList = mapArgList.copy();
       final VariableNameGenerator generator = new VariableNameGenerator(filterCall, VariableKind.PARAMETER);
-      final PsiType type = myCalledMethod.getMethodExpression().getType();
+      final PsiMethodCallExpression candidateToRemove = findCandidateToRemove(mapCall);
+      if (candidateToRemove == null) return null;
+      final PsiType type = candidateToRemove.getMethodExpression().getType();
       if (type == null) return null;
-      final String newName = generator.byType(type).generate(false);
+      final String newName = generator.byExpression(candidateToRemove).byType(type).generate(false);
       final PsiExpression filterArg = skipParenthesizedExprDown(ArrayUtil.getFirstElement(filterCall.getArgumentList().getExpressions()));
       if (filterArg == null) return null;
       final PsiLambdaExpression filterLambda = tryCast(filterArg, PsiLambdaExpression.class);
       if (filterLambda == null) return null;
-      final PsiParameter filterLambdaParam = ArrayUtil.getFirstElement(filterLambda.getParameterList().getParameters());
-      if (filterLambdaParam == null) return null;
-      final PsiElement identifyingElement = filterLambdaParam.getIdentifyingElement();
-      if (identifyingElement == null) return null;
       final CommentTracker ct = new CommentTracker();
-      ct.replace(myCalledMethod, newName);
-      ct.replace(identifyingElement, newName);
+      final PsiLambdaExpression expression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(filterLambda.getProject())
+        .createExpressionFromText(newName + "->{}", filterLambda);
+      ct.replace(candidateToRemove, newName);
+      ct.replace(filterLambda.getParameterList(), expression.getParameterList());
       ct.replace(mapArgList, filterArgList);
       ct.replace(filterArgList, tempMapArgList);
       ExpressionUtils.bindCallTo(mapCall, "filter");
@@ -2227,27 +2230,53 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     public static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(STREAM_MAP, mapCall -> {
+        if (mapCall.getTypeArguments().length != 0) return null;
         final PsiMethodCallExpression filterCall = getQualifierMethodCall(mapCall);
-        if (!STREAM_FILTER.test(filterCall)) return null;
-        PsiMethodCallExpression calledMethodInFilter = findSingleCalledMethod(filterCall.getArgumentList().getExpressions()[0]);
-        if (calledMethodInFilter == null) return null;
+        if (filterCall == null || filterCall.getTypeArguments().length != 0) return null;
         final PsiExpression mapArg = skipParenthesizedExprDown(mapCall.getArgumentList().getExpressions()[0]);
-        final PsiMethodReferenceExpression mapMethodRef =
-          tryCast(skipParenthesizedExprDown(mapArg), PsiMethodReferenceExpression.class);
+        final PsiMethodReferenceExpression mapMethodRef = tryCast(mapArg, PsiMethodReferenceExpression.class);
         if (mapMethodRef != null) {
-          if (calledMethodInFilter.resolveMethod() != mapMethodRef.resolve()) return null;
-          return new FilterAndMapUseSameMethodChainFix(calledMethodInFilter);
+          final PsiMethod resolvedCandidateToRemove = findAndResolveCandidateToRemove(mapCall);
+          if (resolvedCandidateToRemove == null) return null;
+          boolean isStatic = resolvedCandidateToRemove.hasModifierProperty(PsiModifier.STATIC);
+          boolean instanceBound = !isStatic && !PsiMethodReferenceUtil.isStaticallyReferenced(mapMethodRef);
+          if (isStatic || instanceBound) return null;
+          final PsiManager manager = resolvedCandidateToRemove.getManager();
+          if (!manager.areElementsEquivalent(resolvedCandidateToRemove, mapMethodRef.resolve())) return null;
+          return new FilterAndMapUseSameMethodChainFix();
         }
-        final PsiLambdaExpression lambda = tryCast(skipParenthesizedExprDown(mapArg), PsiLambdaExpression.class);
+        final PsiLambdaExpression lambda = tryCast(mapArg, PsiLambdaExpression.class);
         if (lambda == null) return null;
         final PsiElement body = skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
         final PsiMethodCallExpression calledMethodInMap = findSingleCalledMethod(mapArg);
         if (calledMethodInMap == null || body != calledMethodInMap) return null;
-        if (calledMethodInFilter.resolveMethod() == calledMethodInMap.resolveMethod()) {
-          return new FilterAndMapUseSameMethodChainFix(calledMethodInFilter);
+        final PsiMethod resolvedCandidateToRemove = findAndResolveCandidateToRemove(mapCall);
+        if (resolvedCandidateToRemove == null) return null;
+        final PsiManager manager = resolvedCandidateToRemove.getManager();
+        if (manager.areElementsEquivalent(resolvedCandidateToRemove, calledMethodInMap.resolveMethod())) {
+          return new FilterAndMapUseSameMethodChainFix();
         }
         return null;
       });
+    }
+
+    private static PsiMethod findAndResolveCandidateToRemove(PsiMethodCallExpression mapCall) {
+      final PsiMethodCallExpression candidateToRemove = findCandidateToRemove(mapCall);
+      if (candidateToRemove == null) return null;
+      final PsiType type = StreamApiUtil.getStreamElementType(mapCall.getType());
+      if (type == null) return null;
+      final PsiMethod resolvedCandidateToRemove = candidateToRemove.resolveMethod();
+      if (resolvedCandidateToRemove == null) return null;
+      final PsiType candidateToRemoveType = resolvedCandidateToRemove.getReturnType();
+      if (candidateToRemoveType == null) return null;
+      if (!type.equals(candidateToRemoveType) && !candidateToRemoveType.equals(PsiPrimitiveType.getUnboxedType(type))) return null;
+      return resolvedCandidateToRemove;
+    }
+
+    private static PsiMethodCallExpression findCandidateToRemove(PsiMethodCallExpression mapCall) {
+      final PsiMethodCallExpression filterCall = getQualifierMethodCall(mapCall);
+      if (!STREAM_FILTER.test(filterCall)) return null;
+      return findSingleCalledMethod(filterCall.getArgumentList().getExpressions()[0]);
     }
 
     private static PsiMethodCallExpression findSingleCalledMethod(PsiExpression arg) {

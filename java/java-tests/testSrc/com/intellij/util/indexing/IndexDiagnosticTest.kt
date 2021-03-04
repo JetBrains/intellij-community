@@ -34,6 +34,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     else {
       System.setProperty(PathManager.PROPERTY_LOG_PATH, previousLogDir!!.toAbsolutePath().toString())
     }
+    super.tearDown()
   }
 
   @TestFor(issues = ["IDEA-252012"])

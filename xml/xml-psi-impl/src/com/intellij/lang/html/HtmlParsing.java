@@ -159,6 +159,9 @@ public class HtmlParsing {
         String tagName = StringUtil.toLowerCase(originalTagName);
         while (childTerminatesParentInStack(tagName)) {
           IElementType tagElementType = getHtmlTagElementType();
+          if (!HtmlUtil.isOptionalEndForHtmlTagL(myTagNamesStack.peek())) {
+            tag.precede().errorBefore(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", myOriginalTagNamesStack.peek()), tag);
+          }
           PsiBuilder.Marker top = closeTag();
           top.doneBefore(tagElementType, tag);
         }

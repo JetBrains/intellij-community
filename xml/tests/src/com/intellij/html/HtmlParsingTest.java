@@ -101,4 +101,11 @@ public class HtmlParsingTest extends XmlParsingTest {
                "<textarea>this {{text}} {area} &nbsp; <is></cool></textarea>");
   }
 
+  public void testPAutoClose() throws Exception {
+    doTestHtml("<div>\n" +
+               "<p><br/><div><span><p></p></span></div>\n" +
+               "<P><table></table>\n" +
+               "</div>\n");
+  }
+
 }

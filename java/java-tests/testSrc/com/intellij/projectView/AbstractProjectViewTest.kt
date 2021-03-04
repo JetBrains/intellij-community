@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.impl.PackageViewPane
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.scopeView.ScopeViewPane
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.scope.ProjectFilesScope
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.testFramework.PlatformTestUtil
@@ -47,5 +48,10 @@ abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
     assertEquals(id, currentPane.id)
     if (subId != null) assertEquals(subId, currentPane.subId)
     waitWhileBusy()
+  }
+
+  protected fun selectFile(file: VirtualFile) {
+    waitWhileBusy()
+    currentPane.select(null, file, false)
   }
 }

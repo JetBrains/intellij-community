@@ -211,9 +211,7 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun createUploadRoot(volumeDescriptor: VolumeDescriptor, localRootPath: Path): TargetEnvironment.UploadRoot {
-    return defaultMavenRuntimeConfiguration?.createUploadRoot(volumeDescriptor, localRootPath)
-           ?: TargetEnvironment.UploadRoot(localRootPath = localRootPath,
-                                           targetRootPath = TargetEnvironment.TargetPath.Temporary())
+    return MavenRuntimeTargetConfiguration.createUploadRoot(defaultMavenRuntimeConfiguration, request, target, volumeDescriptor, localRootPath)
   }
 
   private fun setupTargetProjectDirectories(settings: MavenRunConfiguration.MavenSettings) {

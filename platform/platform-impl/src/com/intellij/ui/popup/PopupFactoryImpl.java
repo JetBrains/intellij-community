@@ -260,7 +260,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return presentation;
     }
 
-    private static ListPopupStep<ActionItem> createStep(@PopupTitle String title,
+    protected static ListPopupStep<ActionItem> createStep(@PopupTitle String title,
                                                         @NotNull ActionGroup actionGroup,
                                                         @NotNull DataContext dataContext,
                                                         boolean showNumbers,

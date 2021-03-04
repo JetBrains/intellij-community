@@ -105,6 +105,8 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
   }
 
   private boolean isGrayedHyperlink(@NotNull VirtualFile file) {
+    if (myProject.isDefault()) return true;
+    
     ProjectFileIndex fileIndex = getFileIndex();
     return !fileIndex.isInContent(file) || fileIndex.isInLibrary(file);
   }

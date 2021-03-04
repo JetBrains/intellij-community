@@ -131,14 +131,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     snapshot = PerformanceWatcher.takeSnapshot();
 
-    projectIndexingHistory.getTimes().setIndexExtensionsStart(Instant.now());
-    try {
-      FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.processIndexingProject(myProject, indicator));
-    } finally {
-      projectIndexingHistory.getTimes().setIndexExtensionsEnd(Instant.now());
-    }
-
-    projectIndexingHistory.getTimes().setScanFilesStart(Instant.now());
+    Instant scanFilesStart = Instant.now();
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
     try {
@@ -162,7 +155,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
 
     if (totalFiles == 0 || SystemProperties.getBooleanProperty("idea.indexes.pretendNoFiles", false)) {
-      FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.noFilesFoundToProcessIndexingProject(myProject, indicator));
       return;
     }
 
@@ -220,7 +212,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Unindexed files update");
 
-    FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.noFilesFoundToProcessIndexingProject(myProject, indicator));
     myIndex.dumpIndexStatistics();
   }
 
@@ -273,19 +264,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     originalOrderedProviders.stream()
       .filter(p -> p instanceof SdkIndexableFilesIterator)
       .collect(Collectors.toCollection(() -> orderedProviders));
-
-    if (SystemProperties.getBooleanProperty("shared.indexes.performance.tests.try.to.index.sources.after.libraries", false)) {
-      List<IndexableFilesIterator> sourcesGoLastOrder = new ArrayList<>();
-      orderedProviders.stream()
-        .filter(p -> !(p instanceof ModuleIndexableFilesIterator))
-        .collect(Collectors.toCollection(() -> sourcesGoLastOrder));
-
-      orderedProviders.stream()
-        .filter(p -> p instanceof ModuleIndexableFilesIterator)
-        .collect(Collectors.toCollection(() -> sourcesGoLastOrder));
-
-      return sourcesGoLastOrder;
-    }
 
     return orderedProviders;
   }

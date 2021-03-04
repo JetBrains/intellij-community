@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.JBColor
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
@@ -13,7 +11,6 @@ import java.awt.Dimension
 import java.awt.Font
 import javax.swing.Box
 import javax.swing.JButton
-import javax.swing.JLabel
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 import kotlin.reflect.KProperty1
@@ -51,15 +48,25 @@ class UISettings {
   val languagePanelButtonsGap: Int by lazy { JBUI.scale(8) }
 
   //FONTS
-  val fontSize: Float by lazy { UISettings.instance.fontSize.ifZero(JBUI.scale(13)) * 1f }
-  val fontFace: String by lazy { UISettings.instance.fontFace ?: JLabel().font.fontName }
-  val modulesFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize).deriveFont(Font.BOLD) }
-  val moduleNameFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize + 1f) }
-  val plainFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize) }
-  val italicFont: Font by lazy { plainFont.deriveFont(Font.ITALIC) }
-  val boldFont: Font by lazy { plainFont.deriveFont(Font.BOLD) }
-  val lessonHeaderFont: Font by lazy { UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(JBUIScale.scale(18.0f)) }
-  val helpHeaderFont: Font by lazy { UIUtil.getLabelFont().deriveFont(fontSize + 1f).deriveFont(Font.BOLD) }
+  val fontSize: Float
+    get() = JBUI.Fonts.label().size2D
+  //TODO: remove in 2021.1
+  val fontFace: String
+    get() = JBUI.Fonts.label().fontName
+  val modulesFont: Font
+    get() = JBUI.Fonts.label().deriveFont(Font.BOLD)
+  val moduleNameFont: Font
+    get() = JBUI.Fonts.label().deriveFont(fontSize + 1)
+  val plainFont: Font
+    get() = JBUI.Fonts.label()
+  val italicFont: Font
+    get() = plainFont.deriveFont(Font.ITALIC)
+  val boldFont: Font
+    get() = plainFont.deriveFont(Font.BOLD)
+  val lessonHeaderFont: Font
+    get() = JBUI.Fonts.label().deriveFont(fontSize + 5).deriveFont(Font.BOLD)
+  val helpHeaderFont: Font
+    get() = JBUI.Fonts.label().deriveFont(fontSize + 1).deriveFont(Font.BOLD)
 
   //COLORS
   val defaultTextColor = JBColor(Color(30, 30, 30), Color(208, 208, 208))
@@ -117,7 +124,5 @@ class UISettings {
     }
   }
 
-  private fun Int.ifZero(nonZeroValue: Int): Int =
-    if (this == 0) nonZeroValue else this
 }
 

@@ -186,7 +186,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       }
     }
     if (Registry.is("debugger.show.values.use.inlays")) {
-      if (XDebuggerInlayUtil.createLineEndInlay(this, session, position.getFile(), position, document)) {
+      if (position.getLine() >= 0 && XDebuggerInlayUtil.createLineEndInlay(this, session, position.getFile(), position, document)) {
         return true;
       }
     }

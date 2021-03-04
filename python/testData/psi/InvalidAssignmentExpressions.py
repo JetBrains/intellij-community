@@ -13,3 +13,6 @@
 (x := )
 
 x = (b[j] := z) = 'spam'  # z is a reference
+
+[x1 for x1 := 2 in (1, 2, 3)]
+[x1 for (x1 := 2) in (1, 2, 3)]

@@ -1,0 +1,2280 @@
+{
+  "jdks": [
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.5.1",
+      "jdk_vendor_version": "13.35.51.0",
+      "suggested_sdk_name": "azul-13",
+      "shared_index_aliases": [
+        "azul-13.0.5.1",
+        "azul-13",
+        "13.0.5.1",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "aarch64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu13.35.1017-ca-jdk13.0.5.1-macos_aarch64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu13.35.1017-ca-jdk13.0.5.1-macos_aarch64/zulu-13.jdk/Contents/Home",
+          "package_root_prefix": "zulu13.35.1017-ca-jdk13.0.5.1-macos_aarch64/zulu-13.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "zulu13.35.1017-ca-jdk13.0.5.1-macos_aarch64.tar.gz",
+          "install_folder_name": "azul-13.0.5.1",
+          "archive_size": 179419595,
+          "unpacked_size": 292342693,
+          "sha256": "ea51d179262b6530a94455dd5529c9987edd233f27aac6f79d03578f5ef300b0",
+          "filter": {
+            "type": "supports_arch",
+            "arch": "aarch64"
+          }
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.43.55.0",
+      "suggested_sdk_name": "azul-11",
+      "shared_index_aliases": [
+        "azul-11.0.9.1",
+        "azul-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "aarch64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu11.43.1015-ca-jdk11.0.9.1-macos_aarch64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu11.43.1015-ca-jdk11.0.9.1-macos_aarch64/zulu-11.jdk/Contents/Home",
+          "package_root_prefix": "zulu11.43.1015-ca-jdk11.0.9.1-macos_aarch64/zulu-11.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "zulu11.43.1015-ca-jdk11.0.9.1-macos_aarch64.tar.gz",
+          "install_folder_name": "azul-11.0.9.1",
+          "archive_size": 178947138,
+          "unpacked_size": 292236543,
+          "sha256": "89032b50b90a3220b0f5e9c2cba2b5dc8a03c71fe9258d1bf1e219433a8a0bf9",
+          "filter": {
+            "type": "supports_arch",
+            "arch": "aarch64"
+          }
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "8.50.0.51",
+      "suggested_sdk_name": "azul-1.8",
+      "shared_index_aliases": [
+        "azul-1.8.0_275",
+        "azul-8",
+        "azul-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "aarch64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu8.50.0.1017-ca-jdk8.0.275-macos_aarch64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu8.50.0.1017-ca-jdk8.0.275-macos_aarch64/zulu-8.jdk/Contents/Home",
+          "package_root_prefix": "zulu8.50.0.1017-ca-jdk8.0.275-macos_aarch64/zulu-8.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "zulu8.50.0.1017-ca-jdk8.0.275-macos_aarch64.tar.gz",
+          "install_folder_name": "azul-1.8.0_275",
+          "archive_size": 105770616,
+          "unpacked_size": 214207744,
+          "sha256": "42dd30d4e44bf9ebf160ba2af32184e644a86cc2debf676af863c7dababc91f8",
+          "filter": {
+            "type": "supports_arch",
+            "arch": "aarch64"
+          }
+        }
+      ]
+    },
+    {
+      "vendor": "Oracle",
+      "product": "OpenJDK",
+      "default": true,
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "openjdk-15",
+      "shared_index_aliases": [
+        "openjdk-15.0.1",
+        "openjdk-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_linux-x64_bin.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-15.0.1",
+          "package_root_prefix": "jdk-15.0.1",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "openjdk-15.0.1_linux-x64_bin.tar.gz",
+          "install_folder_name": "openjdk-15.0.1",
+          "archive_size": 195347356,
+          "unpacked_size": 335813691,
+          "sha256": "83ec3a7b1649a6b31e021cde1e58ab447b07fb8173489f27f427e731c89ed84a"
+        }
+      ]
+    },
+    {
+      "vendor": "Oracle",
+      "product": "OpenJDK",
+      "default": true,
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "openjdk-15",
+      "shared_index_aliases": [
+        "openjdk-15.0.1",
+        "openjdk-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_windows-x64_bin.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-15.0.1",
+          "package_root_prefix": "jdk-15.0.1",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "openjdk-15.0.1_windows-x64_bin.zip",
+          "install_folder_name": "openjdk-15.0.1",
+          "archive_size": 195936491,
+          "unpacked_size": 324826895,
+          "sha256": "0a27c733fc7ceaaae3856a9c03f5e2304af30a32de6b454b8762ec02447c5464"
+        }
+      ]
+    },
+    {
+      "vendor": "Oracle",
+      "product": "OpenJDK",
+      "default": true,
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "openjdk-15",
+      "shared_index_aliases": [
+        "openjdk-15.0.1",
+        "openjdk-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_osx-x64_bin.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "./jdk-15.0.1.jdk/Contents/Home",
+          "package_root_prefix": "./jdk-15.0.1.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "openjdk-15.0.1_osx-x64_bin.tar.gz",
+          "install_folder_name": "openjdk-15.0.1",
+          "archive_size": 192652449,
+          "unpacked_size": 328466470,
+          "sha256": "e1d4868fb082d9202261c5a05251eded56fb805da2d641a65f604988b00b1979"
+        }
+      ]
+    },
+    {
+      "vendor": "Amazon",
+      "product": "Corretto",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "suggested_sdk_name": "corretto-11",
+      "shared_index_aliases": [
+        "corretto-11.0.9.1",
+        "corretto-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-linux-x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "amazon-corretto-11.0.9.12.1-linux-x64",
+          "package_root_prefix": "amazon-corretto-11.0.9.12.1-linux-x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "amazon-corretto-11.0.9.12.1-linux-x64.tar.gz",
+          "install_folder_name": "corretto-11.0.9.1",
+          "archive_size": 193645904,
+          "unpacked_size": 323647023,
+          "sha256": "448494766be37bb8a4ecd983a09742d28b1fa426684417b0dec2f3b03c44f3a3"
+        }
+      ]
+    },
+    {
+      "vendor": "Amazon",
+      "product": "Corretto",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "suggested_sdk_name": "corretto-11",
+      "shared_index_aliases": [
+        "corretto-11.0.9.1",
+        "corretto-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-windows-x64-jdk.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk11.0.9_12",
+          "package_root_prefix": "jdk11.0.9_12",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "amazon-corretto-11.0.9.12.1-windows-x64-jdk.zip",
+          "install_folder_name": "corretto-11.0.9.1",
+          "archive_size": 186585821,
+          "unpacked_size": 306219243,
+          "sha256": "b04c70de023bcb57b008b51858003081041394e27eaf29f4bd641dd3b1f270f7"
+        }
+      ]
+    },
+    {
+      "vendor": "Amazon",
+      "product": "Corretto",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "suggested_sdk_name": "corretto-11",
+      "shared_index_aliases": [
+        "corretto-11.0.9.1",
+        "corretto-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://corretto.aws/downloads/resources/11.0.9.12.1/amazon-corretto-11.0.9.12.1-macosx-x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "amazon-corretto-11.jdk/Contents/Home",
+          "package_root_prefix": "amazon-corretto-11.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "amazon-corretto-11.0.9.12.1-macosx-x64.tar.gz",
+          "install_folder_name": "corretto-11.0.9.1",
+          "archive_size": 186355312,
+          "unpacked_size": 308849352,
+          "sha256": "d7236532259050e07f52b79523ebbb701738637b22f145aeaf3e00bbd7656e39"
+        }
+      ]
+    },
+    {
+      "vendor": "Amazon",
+      "product": "Corretto",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "suggested_sdk_name": "corretto-1.8",
+      "shared_index_aliases": [
+        "corretto-1.8.0_275",
+        "corretto-8",
+        "corretto-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://corretto.aws/downloads/resources/8.275.01.1/amazon-corretto-8.275.01.1-linux-x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "amazon-corretto-8.275.01.1-linux-x64",
+          "package_root_prefix": "amazon-corretto-8.275.01.1-linux-x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "amazon-corretto-8.275.01.1-linux-x64.tar.gz",
+          "install_folder_name": "corretto-1.8.0_275",
+          "archive_size": 117925121,
+          "unpacked_size": 219744471,
+          "sha256": "25415701c864ec301975097f207e909d065eb7c452a501c0e4b4487e77fbdc7a"
+        }
+      ]
+    },
+    {
+      "vendor": "Amazon",
+      "product": "Corretto",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "suggested_sdk_name": "corretto-1.8",
+      "shared_index_aliases": [
+        "corretto-1.8.0_275",
+        "corretto-8",
+        "corretto-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://corretto.aws/downloads/resources/8.275.01.1/amazon-corretto-8.275.01.1-windows-x64-jdk.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk1.8.0_275",
+          "package_root_prefix": "jdk1.8.0_275",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "amazon-corretto-8.275.01.1-windows-x64-jdk.zip",
+          "install_folder_name": "corretto-1.8.0_275",
+          "archive_size": 121408965,
+          "unpacked_size": 222027324,
+          "sha256": "db681329493ba2687bd2e403f8105134bb4242767a1dbae214f89827c9584ff9"
+        }
+      ]
+    },
+    {
+      "vendor": "Amazon",
+      "product": "Corretto",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "suggested_sdk_name": "corretto-1.8",
+      "shared_index_aliases": [
+        "corretto-1.8.0_275",
+        "corretto-8",
+        "corretto-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://corretto.aws/downloads/resources/8.275.01.1/amazon-corretto-8.275.01.1-macosx-x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "amazon-corretto-8.jdk/Contents/Home",
+          "package_root_prefix": "amazon-corretto-8.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "amazon-corretto-8.275.01.1-macosx-x64.tar.gz",
+          "install_folder_name": "corretto-1.8.0_275",
+          "archive_size": 116613721,
+          "unpacked_size": 216230017,
+          "sha256": "b5dd0b0e0a080bfdbb030f25b86200ca01763976d226bc8b8963906f9438a50b"
+        }
+      ]
+    },
+    {
+      "vendor": "BellSoft",
+      "product": "Liberica JDK",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.0.2+13",
+      "suggested_sdk_name": "liberica-14",
+      "shared_index_aliases": [
+        "liberica-14.0.2",
+        "liberica-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/bell-sw/Liberica/releases/download/14.0.2+13/bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-14.0.2-full",
+          "package_root_prefix": "jdk-14.0.2-full",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz",
+          "install_folder_name": "liberica-14.0.2",
+          "archive_size": 306550718,
+          "unpacked_size": 537441212,
+          "sha256": "a6405f5b9d3af8c523752e39f836a1450c2f586d7a685ef45bc62e8f60411b57"
+        }
+      ]
+    },
+    {
+      "vendor": "BellSoft",
+      "product": "Liberica JDK",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.0.2+13",
+      "suggested_sdk_name": "liberica-14",
+      "shared_index_aliases": [
+        "liberica-14.0.2",
+        "liberica-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/bell-sw/Liberica/releases/download/14.0.2+13/bellsoft-jdk14.0.2+13-windows-amd64-full.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-14.0.2-full",
+          "package_root_prefix": "jdk-14.0.2-full",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "bellsoft-jdk14.0.2+13-windows-amd64-full.zip",
+          "install_folder_name": "liberica-14.0.2",
+          "archive_size": 278696984,
+          "unpacked_size": 462811227,
+          "sha256": "8bc4eeea4dc3995203d9406d6fad133253f0f118da1c5919894ea586859479f3"
+        }
+      ]
+    },
+    {
+      "vendor": "BellSoft",
+      "product": "Liberica JDK",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.0.2+13",
+      "suggested_sdk_name": "liberica-14",
+      "shared_index_aliases": [
+        "liberica-14.0.2",
+        "liberica-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/bell-sw/Liberica/releases/download/14.0.2+13/bellsoft-jdk14.0.2+13-macos-amd64-full.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-14.0.2-full.jdk",
+          "package_root_prefix": "jdk-14.0.2-full.jdk",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "bellsoft-jdk14.0.2+13-macos-amd64-full.zip",
+          "install_folder_name": "liberica-14.0.2",
+          "archive_size": 290748742,
+          "unpacked_size": 498343570,
+          "sha256": "86a6c11aab4152f69a163fc51c7a24cc65707758836930af716445fde2f19bf1"
+        }
+      ]
+    },
+    {
+      "vendor": "BellSoft",
+      "product": "Liberica JDK",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.0.9.1+1",
+      "suggested_sdk_name": "liberica-11",
+      "shared_index_aliases": [
+        "liberica-11.0.9.1",
+        "liberica-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/bell-sw/Liberica/releases/download/11.0.9.1+1/bellsoft-jdk11.0.9.1+1-linux-amd64-full.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-11.0.9.1-full",
+          "package_root_prefix": "jdk-11.0.9.1-full",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "bellsoft-jdk11.0.9.1+1-linux-amd64-full.tar.gz",
+          "install_folder_name": "liberica-11.0.9.1",
+          "archive_size": 304418826,
+          "unpacked_size": 533478184,
+          "sha256": "8a8147fb8ca345ff9979832fb2c1489eaab0a44a211bff6bc9ba0d8e39380e50"
+        }
+      ]
+    },
+    {
+      "vendor": "BellSoft",
+      "product": "Liberica JDK",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.0.9.1+1",
+      "suggested_sdk_name": "liberica-11",
+      "shared_index_aliases": [
+        "liberica-11.0.9.1",
+        "liberica-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/bell-sw/Liberica/releases/download/11.0.9.1+1/bellsoft-jdk11.0.9.1+1-windows-amd64-full.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-11.0.9.1-full",
+          "package_root_prefix": "jdk-11.0.9.1-full",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "bellsoft-jdk11.0.9.1+1-windows-amd64-full.zip",
+          "install_folder_name": "liberica-11.0.9.1",
+          "archive_size": 272682961,
+          "unpacked_size": 447831694,
+          "sha256": "447c4591f265f07c52c8e63733a4a4391029df66837f5d94242ba7c71147a297"
+        }
+      ]
+    },
+    {
+      "vendor": "BellSoft",
+      "product": "Liberica JDK",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.0.9.1+1",
+      "suggested_sdk_name": "liberica-11",
+      "shared_index_aliases": [
+        "liberica-11.0.9.1",
+        "liberica-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/bell-sw/Liberica/releases/download/11.0.9.1+1/bellsoft-jdk11.0.9.1+1-macos-amd64-full.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-11.0.9.1-full.jdk",
+          "package_root_prefix": "jdk-11.0.9.1-full.jdk",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "bellsoft-jdk11.0.9.1+1-macos-amd64-full.zip",
+          "install_folder_name": "liberica-11.0.9.1",
+          "archive_size": 285310143,
+          "unpacked_size": 483549894,
+          "sha256": "a6878af753ef017e81cd9ecb23bb5ca111427f237d24ab11cca65e5b704d3fc0"
+        }
+      ]
+    },
+    {
+      "vendor": "BellSoft",
+      "product": "Liberica JDK",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "8u275+1",
+      "suggested_sdk_name": "liberica-1.8",
+      "shared_index_aliases": [
+        "liberica-1.8.0_275",
+        "liberica-8",
+        "liberica-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/bell-sw/Liberica/releases/download/8u275+1/bellsoft-jdk8u275+1-linux-amd64-full.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk8u275-full",
+          "package_root_prefix": "jdk8u275-full",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "bellsoft-jdk8u275+1-linux-amd64-full.tar.gz",
+          "install_folder_name": "liberica-1.8.0_275",
+          "archive_size": 149480108,
+          "unpacked_size": 337047779,
+          "sha256": "160e455e2f58fea3b9d12f03a32fcae6443fe277aaae48cf36d20a19586b25eb"
+        }
+      ]
+    },
+    {
+      "vendor": "BellSoft",
+      "product": "Liberica JDK",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "8u275+1",
+      "suggested_sdk_name": "liberica-1.8",
+      "shared_index_aliases": [
+        "liberica-1.8.0_275",
+        "liberica-8",
+        "liberica-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/bell-sw/Liberica/releases/download/8u275+1/bellsoft-jdk8u275+1-windows-amd64-full.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk8u275-full",
+          "package_root_prefix": "jdk8u275-full",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "bellsoft-jdk8u275+1-windows-amd64-full.zip",
+          "install_folder_name": "liberica-1.8.0_275",
+          "archive_size": 140975705,
+          "unpacked_size": 289282663,
+          "sha256": "65b0fd139d55e446d24aabd68f8ed8df277e3606156fec1b7f5047694b8a7e0b"
+        }
+      ]
+    },
+    {
+      "vendor": "BellSoft",
+      "product": "Liberica JDK",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "8u275+1",
+      "suggested_sdk_name": "liberica-1.8",
+      "shared_index_aliases": [
+        "liberica-1.8.0_275",
+        "liberica-8",
+        "liberica-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/bell-sw/Liberica/releases/download/8u275+1/bellsoft-jdk8u275+1-macos-amd64-full.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk8u275-full.jdk",
+          "package_root_prefix": "jdk8u275-full.jdk",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "bellsoft-jdk8u275+1-macos-amd64-full.zip",
+          "install_folder_name": "liberica-1.8.0_275",
+          "archive_size": 147718718,
+          "unpacked_size": 314942951,
+          "sha256": "741e23865f1aafe8caf35e210d05ec0a5f1660f123dabc70e31b2f7a8b48bf39"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "adopt-openjdk-15",
+      "shared_index_aliases": [
+        "adopt-openjdk-15.0.1",
+        "adopt-openjdk-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64_linux_hotspot_15.0.1_9.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-15.0.1+9",
+          "package_root_prefix": "jdk-15.0.1+9",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK15U-jdk_x64_linux_hotspot_15.0.1_9.tar.gz",
+          "install_folder_name": "adopt-openjdk-15.0.1",
+          "archive_size": 206689671,
+          "unpacked_size": 357992924,
+          "sha256": "61045ecb9434e3320dbc2c597715f9884586b7a18a56d29851b4d4a4d48a2a5e"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "adopt-openjdk-15",
+      "shared_index_aliases": [
+        "adopt-openjdk-15.0.1",
+        "adopt-openjdk-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64_windows_hotspot_15.0.1_9.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-15.0.1+9",
+          "package_root_prefix": "jdk-15.0.1+9",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK15U-jdk_x64_windows_hotspot_15.0.1_9.zip",
+          "install_folder_name": "adopt-openjdk-15.0.1",
+          "archive_size": 198274806,
+          "unpacked_size": 329731557,
+          "sha256": "0cd7e61b0a37186902062a822caa0e14662b676c245b7ebe541f115f3c45681a"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "adopt-openjdk-15",
+      "shared_index_aliases": [
+        "adopt-openjdk-15.0.1",
+        "adopt-openjdk-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9.1/OpenJDK15U-jdk_x64_mac_hotspot_15.0.1_9.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-15.0.1+9/Contents/Home",
+          "package_root_prefix": "jdk-15.0.1+9",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK15U-jdk_x64_mac_hotspot_15.0.1_9.tar.gz",
+          "install_folder_name": "adopt-openjdk-15.0.1",
+          "archive_size": 195872839,
+          "unpacked_size": 335702182,
+          "sha256": "b8c2e2ad31f3d6676ea665d9505b06df15e23741847556612b40e3ee329fc046"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.0.2+12",
+      "suggested_sdk_name": "adopt-openjdk-14",
+      "shared_index_aliases": [
+        "adopt-openjdk-14.0.2",
+        "adopt-openjdk-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_x64_linux_hotspot_14.0.2_12.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-14.0.2+12",
+          "package_root_prefix": "jdk-14.0.2+12",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK14U-jdk_x64_linux_hotspot_14.0.2_12.tar.gz",
+          "install_folder_name": "adopt-openjdk-14.0.2",
+          "archive_size": 210764986,
+          "unpacked_size": 358698997,
+          "sha256": "7d5ee7e06909b8a99c0d029f512f67b092597aa5b0e78c109bd59405bbfa74fe"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.0.2+12",
+      "suggested_sdk_name": "adopt-openjdk-14",
+      "shared_index_aliases": [
+        "adopt-openjdk-14.0.2",
+        "adopt-openjdk-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_x64_windows_hotspot_14.0.2_12.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-14.0.2+12",
+          "package_root_prefix": "jdk-14.0.2+12",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK14U-jdk_x64_windows_hotspot_14.0.2_12.zip",
+          "install_folder_name": "adopt-openjdk-14.0.2",
+          "archive_size": 206854695,
+          "unpacked_size": 337473804,
+          "sha256": "80926003297bf5afc9357ce24c12aee65483fc7889dc34b65fe08bec4d040611"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.0.2+12",
+      "suggested_sdk_name": "adopt-openjdk-14",
+      "shared_index_aliases": [
+        "adopt-openjdk-14.0.2",
+        "adopt-openjdk-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_x64_mac_hotspot_14.0.2_12.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-14.0.2+12/Contents/Home",
+          "package_root_prefix": "jdk-14.0.2+12",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK14U-jdk_x64_mac_hotspot_14.0.2_12.tar.gz",
+          "install_folder_name": "adopt-openjdk-14.0.2",
+          "archive_size": 195705010,
+          "unpacked_size": 330409014,
+          "sha256": "09b7e6ab5d5eb4b73813f4caa793a0b616d33794a17988fa6a6b7c972e8f3dd3"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.2",
+      "jdk_vendor_version": "13.0.2+8",
+      "suggested_sdk_name": "adopt-openjdk-13",
+      "shared_index_aliases": [
+        "adopt-openjdk-13.0.2",
+        "adopt-openjdk-13",
+        "13.0.2",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk13-binaries/releases/download/jdk-13.0.2%2B8/OpenJDK13U-jdk_x64_linux_hotspot_13.0.2_8.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-13.0.2+8",
+          "package_root_prefix": "jdk-13.0.2+8",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK13U-jdk_x64_linux_hotspot_13.0.2_8.tar.gz",
+          "install_folder_name": "adopt-openjdk-13.0.2",
+          "archive_size": 207518686,
+          "unpacked_size": 347257757,
+          "sha256": "9ccc063569f19899fd08e41466f8c4cd4e05058abdb5178fa374cb365dcf5998"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.2",
+      "jdk_vendor_version": "13.0.2+8",
+      "suggested_sdk_name": "adopt-openjdk-13",
+      "shared_index_aliases": [
+        "adopt-openjdk-13.0.2",
+        "adopt-openjdk-13",
+        "13.0.2",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk13-binaries/releases/download/jdk-13.0.2%2B8/OpenJDK13U-jdk_x64_windows_hotspot_13.0.2_8.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-13.0.2+8",
+          "package_root_prefix": "jdk-13.0.2+8",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK13U-jdk_x64_windows_hotspot_13.0.2_8.zip",
+          "install_folder_name": "adopt-openjdk-13.0.2",
+          "archive_size": 209645142,
+          "unpacked_size": 339036876,
+          "sha256": "6980db87a3f921801fcf50d1a933304cf4d4b46ef2d35617c96fcc40ac1a1eb9"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.2",
+      "jdk_vendor_version": "13.0.2+8",
+      "suggested_sdk_name": "adopt-openjdk-13",
+      "shared_index_aliases": [
+        "adopt-openjdk-13.0.2",
+        "adopt-openjdk-13",
+        "13.0.2",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk13-binaries/releases/download/jdk-13.0.2%2B8/OpenJDK13U-jdk_x64_mac_hotspot_13.0.2_8.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-13.0.2+8/Contents/Home",
+          "package_root_prefix": "jdk-13.0.2+8",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK13U-jdk_x64_mac_hotspot_13.0.2_8.tar.gz",
+          "install_folder_name": "adopt-openjdk-13.0.2",
+          "archive_size": 198206427,
+          "unpacked_size": 332740540,
+          "sha256": "0ddb24efdf5aab541898d19b7667b149a1a64a8bd039b708fc58ee0284fa7e07"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.0.9.1+1",
+      "suggested_sdk_name": "adopt-openjdk-11",
+      "shared_index_aliases": [
+        "adopt-openjdk-11.0.9.1",
+        "adopt-openjdk-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.9.1%2B1/OpenJDK11U-jdk_x64_linux_hotspot_11.0.9.1_1.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-11.0.9.1+1",
+          "package_root_prefix": "jdk-11.0.9.1+1",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK11U-jdk_x64_linux_hotspot_11.0.9.1_1.tar.gz",
+          "install_folder_name": "adopt-openjdk-11.0.9.1",
+          "archive_size": 194723798,
+          "unpacked_size": 324864261,
+          "sha256": "e388fd7f3f2503856d0b04fde6e151cbaa91a1df3bcebf1deddfc3729d677ca3"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.0.9.1+1",
+      "suggested_sdk_name": "adopt-openjdk-11",
+      "shared_index_aliases": [
+        "adopt-openjdk-11.0.9.1",
+        "adopt-openjdk-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.9.1%2B1/OpenJDK11U-jdk_x64_windows_hotspot_11.0.9.1_1.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-11.0.9.1+1",
+          "package_root_prefix": "jdk-11.0.9.1+1",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK11U-jdk_x64_windows_hotspot_11.0.9.1_1.zip",
+          "install_folder_name": "adopt-openjdk-11.0.9.1",
+          "archive_size": 195778109,
+          "unpacked_size": 314515113,
+          "sha256": "fea633dc37f007cb6b1e1af1874da63ad3d5e31817e583048287c67010dce5c8"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.0.9.1+1",
+      "suggested_sdk_name": "adopt-openjdk-11",
+      "shared_index_aliases": [
+        "adopt-openjdk-11.0.9.1",
+        "adopt-openjdk-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.9.1%2B1/OpenJDK11U-jdk_x64_mac_hotspot_11.0.9.1_1.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-11.0.9.1+1/Contents/Home",
+          "package_root_prefix": "jdk-11.0.9.1+1",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK11U-jdk_x64_mac_hotspot_11.0.9.1_1.tar.gz",
+          "install_folder_name": "adopt-openjdk-11.0.9.1",
+          "archive_size": 185368626,
+          "unpacked_size": 307163141,
+          "sha256": "96bc469f9b02a3b84382a0685b0bd7935e1ad1bd82a0aab9befb5b42a17cbd77"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "1.8.0_275-b01",
+      "suggested_sdk_name": "adopt-openjdk-1.8",
+      "shared_index_aliases": [
+        "adopt-openjdk-1.8.0_275",
+        "adopt-openjdk-8",
+        "adopt-openjdk-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u275-b01/OpenJDK8U-jdk_x64_linux_hotspot_8u275b01.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk8u275-b01",
+          "package_root_prefix": "jdk8u275-b01",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK8U-jdk_x64_linux_hotspot_8u275b01.tar.gz",
+          "install_folder_name": "adopt-openjdk-1.8.0_275",
+          "archive_size": 104073116,
+          "unpacked_size": 206995158,
+          "sha256": "06fb04075ed503013beb12ab87963b2ca36abe9e397a0c298a57c1d822467c29"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "1.8.0_275-b01",
+      "suggested_sdk_name": "adopt-openjdk-1.8",
+      "shared_index_aliases": [
+        "adopt-openjdk-1.8.0_275",
+        "adopt-openjdk-8",
+        "adopt-openjdk-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u275-b01/OpenJDK8U-jdk_x64_windows_hotspot_8u275b01.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk8u275-b01",
+          "package_root_prefix": "jdk8u275-b01",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK8U-jdk_x64_windows_hotspot_8u275b01.zip",
+          "install_folder_name": "adopt-openjdk-1.8.0_275",
+          "archive_size": 103930548,
+          "unpacked_size": 194241585,
+          "sha256": "cfce82307ef498a98155a44ca472873174094aa148ce33ca40b029a0d9bf8bee"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "HotSpot",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "1.8.0_275-b01",
+      "suggested_sdk_name": "adopt-openjdk-1.8",
+      "shared_index_aliases": [
+        "adopt-openjdk-1.8.0_275",
+        "adopt-openjdk-8",
+        "adopt-openjdk-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u275-b01/OpenJDK8U-jdk_x64_mac_hotspot_8u275b01.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk8u275-b01/Contents/Home",
+          "package_root_prefix": "jdk8u275-b01",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK8U-jdk_x64_mac_hotspot_8u275b01.tar.gz",
+          "install_folder_name": "adopt-openjdk-1.8.0_275",
+          "archive_size": 101776105,
+          "unpacked_size": 200946568,
+          "sha256": "4afd2b3d21b625392fe4501e9445d1125498e6e7fb78042495c04e7cfc1b5e69"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "jdk_vendor_version": "15.28.51.0",
+      "suggested_sdk_name": "azul-15",
+      "shared_index_aliases": [
+        "azul-15.0.1",
+        "azul-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu15.28.51-ca-jdk15.0.1-linux_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu15.28.51-ca-jdk15.0.1-linux_x64",
+          "package_root_prefix": "zulu15.28.51-ca-jdk15.0.1-linux_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu15.28.51-ca-jdk15.0.1-linux_x64.tar.gz",
+          "install_folder_name": "azul-15.0.1",
+          "archive_size": 207329746,
+          "unpacked_size": 352010121,
+          "sha256": "1a266af1a4d04b70bf9ea2cea576c9faaa1315d376994746e123538081c56d78"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "jdk_vendor_version": "15.28.51.0",
+      "suggested_sdk_name": "azul-15",
+      "shared_index_aliases": [
+        "azul-15.0.1",
+        "azul-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu15.28.51-ca-jdk15.0.1-win_x64.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "zulu15.28.51-ca-jdk15.0.1-win_x64",
+          "package_root_prefix": "zulu15.28.51-ca-jdk15.0.1-win_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu15.28.51-ca-jdk15.0.1-win_x64.zip",
+          "install_folder_name": "azul-15.0.1",
+          "archive_size": 204263611,
+          "unpacked_size": 336208339,
+          "sha256": "506e1fa9eb7dc07474a43d2e140ea204824f519e1c64b712bb03deae6f062798"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "jdk_vendor_version": "15.28.51.0",
+      "suggested_sdk_name": "azul-15",
+      "shared_index_aliases": [
+        "azul-15.0.1",
+        "azul-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu15.28.51-ca-jdk15.0.1-macosx_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu15.28.51-ca-jdk15.0.1-macosx_x64/zulu-15.jdk/Contents/Home",
+          "package_root_prefix": "zulu15.28.51-ca-jdk15.0.1-macosx_x64/zulu-15.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "zulu15.28.51-ca-jdk15.0.1-macosx_x64.tar.gz",
+          "install_folder_name": "azul-15.0.1",
+          "archive_size": 201507588,
+          "unpacked_size": 341434723,
+          "sha256": "704f65544c35b33428f3802227bc2edc1689bffa3e7b0caebcc7326ed745e340"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.29.23.0",
+      "suggested_sdk_name": "azul-14",
+      "shared_index_aliases": [
+        "azul-14.0.2",
+        "azul-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-jdk14.0.2-linux_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu14.29.23-ca-jdk14.0.2-linux_x64",
+          "package_root_prefix": "zulu14.29.23-ca-jdk14.0.2-linux_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu14.29.23-ca-jdk14.0.2-linux_x64.tar.gz",
+          "install_folder_name": "azul-14.0.2",
+          "archive_size": 210623240,
+          "unpacked_size": 351269316,
+          "sha256": "7f4310a98ea0e52bacbec389012d859dbb51e759fe35a2cfebb11300271872d2"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.29.23.0",
+      "suggested_sdk_name": "azul-14",
+      "shared_index_aliases": [
+        "azul-14.0.2",
+        "azul-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-jdk14.0.2-win_x64.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "zulu14.29.23-ca-jdk14.0.2-win_x64",
+          "package_root_prefix": "zulu14.29.23-ca-jdk14.0.2-win_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu14.29.23-ca-jdk14.0.2-win_x64.zip",
+          "install_folder_name": "azul-14.0.2",
+          "archive_size": 207050991,
+          "unpacked_size": 334092836,
+          "sha256": "281114bf5fb884f17f04ea2390e3e686535091a4922c59d2eb2b83fb0eec2e45"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.29.23.0",
+      "suggested_sdk_name": "azul-14",
+      "shared_index_aliases": [
+        "azul-14.0.2",
+        "azul-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-jdk14.0.2-macosx_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu14.29.23-ca-jdk14.0.2-macosx_x64/zulu-14.jdk/Contents/Home",
+          "package_root_prefix": "zulu14.29.23-ca-jdk14.0.2-macosx_x64/zulu-14.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "zulu14.29.23-ca-jdk14.0.2-macosx_x64.tar.gz",
+          "install_folder_name": "azul-14.0.2",
+          "archive_size": 201855191,
+          "unpacked_size": 336457178,
+          "sha256": "8f15f435c3e8d8a4bb1de441b1d7601fe64e1bafdcf0862e2962ae429ea9e6b2"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.5.1",
+      "jdk_vendor_version": "13.35.51.0",
+      "suggested_sdk_name": "azul-13",
+      "shared_index_aliases": [
+        "azul-13.0.5.1",
+        "azul-13",
+        "13.0.5.1",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu13.35.51-ca-jdk13.0.5.1-linux_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu13.35.51-ca-jdk13.0.5.1-linux_x64",
+          "package_root_prefix": "zulu13.35.51-ca-jdk13.0.5.1-linux_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu13.35.51-ca-jdk13.0.5.1-linux_x64.tar.gz",
+          "install_folder_name": "azul-13.0.5.1",
+          "archive_size": 208335094,
+          "unpacked_size": 347722614,
+          "sha256": "bc578f5d3ea84b7ee1013a7eee15adcd79b5e18156b0db89c841e4b939e5acbf"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.5.1",
+      "jdk_vendor_version": "13.35.51.0",
+      "suggested_sdk_name": "azul-13",
+      "shared_index_aliases": [
+        "azul-13.0.5.1",
+        "azul-13",
+        "13.0.5.1",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu13.35.51-ca-jdk13.0.5.1-win_x64.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "zulu13.35.51-ca-jdk13.0.5.1-win_x64",
+          "package_root_prefix": "zulu13.35.51-ca-jdk13.0.5.1-win_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu13.35.51-ca-jdk13.0.5.1-win_x64.zip",
+          "install_folder_name": "azul-13.0.5.1",
+          "archive_size": 204363518,
+          "unpacked_size": 329751990,
+          "sha256": "6a8d4bbe3e708a7597a7e7e0af1a9578ac68908d0179232e2707f91d97f3a0f0"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.5.1",
+      "jdk_vendor_version": "13.35.51.0",
+      "suggested_sdk_name": "azul-13",
+      "shared_index_aliases": [
+        "azul-13.0.5.1",
+        "azul-13",
+        "13.0.5.1",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu13.35.51-ca-jdk13.0.5.1-macosx_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu13.35.51-ca-jdk13.0.5.1-macosx_x64/zulu-13.jdk/Contents/Home",
+          "package_root_prefix": "zulu13.35.51-ca-jdk13.0.5.1-macosx_x64/zulu-13.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "zulu13.35.51-ca-jdk13.0.5.1-macosx_x64.tar.gz",
+          "install_folder_name": "azul-13.0.5.1",
+          "archive_size": 199512483,
+          "unpacked_size": 332030433,
+          "sha256": "744e89befbd4c1f6941c4d00ec356eeed3fdf0e36a039346aa983908682808cc"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.43.55.0",
+      "suggested_sdk_name": "azul-11",
+      "shared_index_aliases": [
+        "azul-11.0.9.1",
+        "azul-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu11.43.55-ca-jdk11.0.9.1-linux_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu11.43.55-ca-jdk11.0.9.1-linux_x64",
+          "package_root_prefix": "zulu11.43.55-ca-jdk11.0.9.1-linux_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu11.43.55-ca-jdk11.0.9.1-linux_x64.tar.gz",
+          "install_folder_name": "azul-11.0.9.1",
+          "archive_size": 201530823,
+          "unpacked_size": 332391733,
+          "sha256": "6c79bfe8bb06c82b72ef2f293a14becef56b3078d298dc75fda4225cbb2d3d0c"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.43.55.0",
+      "suggested_sdk_name": "azul-11",
+      "shared_index_aliases": [
+        "azul-11.0.9.1",
+        "azul-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu11.43.55-ca-jdk11.0.9.1-win_x64.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "zulu11.43.55-ca-jdk11.0.9.1-win_x64",
+          "package_root_prefix": "zulu11.43.55-ca-jdk11.0.9.1-win_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu11.43.55-ca-jdk11.0.9.1-win_x64.zip",
+          "install_folder_name": "azul-11.0.9.1",
+          "archive_size": 198620015,
+          "unpacked_size": 315532782,
+          "sha256": "b619df7a6f625095ee4adb3add44839b0b1af2adc09a16c7312ca96bb2b61ec9"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.43.55.0",
+      "suggested_sdk_name": "azul-11",
+      "shared_index_aliases": [
+        "azul-11.0.9.1",
+        "azul-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu11.43.55-ca-jdk11.0.9.1-macosx_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu11.43.55-ca-jdk11.0.9.1-macosx_x64/zulu-11.jdk/Contents/Home",
+          "package_root_prefix": "zulu11.43.55-ca-jdk11.0.9.1-macosx_x64/zulu-11.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "zulu11.43.55-ca-jdk11.0.9.1-macosx_x64.tar.gz",
+          "install_folder_name": "azul-11.0.9.1",
+          "archive_size": 195025630,
+          "unpacked_size": 318862517,
+          "sha256": "11701b54e62d5cde81a4fa0211776448e38a368c1cfc4ad73bb3bbd628107563"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "8.50.0.51",
+      "suggested_sdk_name": "azul-1.8",
+      "shared_index_aliases": [
+        "azul-1.8.0_275",
+        "azul-8",
+        "azul-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu8.50.0.51-ca-jdk8.0.275-linux_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu8.50.0.51-ca-jdk8.0.275-linux_x64",
+          "package_root_prefix": "zulu8.50.0.51-ca-jdk8.0.275-linux_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu8.50.0.51-ca-jdk8.0.275-linux_x64.tar.gz",
+          "install_folder_name": "azul-1.8.0_275",
+          "archive_size": 107800599,
+          "unpacked_size": 211942322,
+          "sha256": "1db6b2fa642950ee1b4b1ec2b6bc8a9113d7a4cd723f79398e1ada7dab1c981c"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "8.50.0.51",
+      "suggested_sdk_name": "azul-1.8",
+      "shared_index_aliases": [
+        "azul-1.8.0_275",
+        "azul-8",
+        "azul-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu8.50.0.51-ca-jdk8.0.275-win_x64.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "zulu8.50.0.51-ca-jdk8.0.275-win_x64",
+          "package_root_prefix": "zulu8.50.0.51-ca-jdk8.0.275-win_x64",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "zulu8.50.0.51-ca-jdk8.0.275-win_x64.zip",
+          "install_folder_name": "azul-1.8.0_275",
+          "archive_size": 107342580,
+          "unpacked_size": 197958059,
+          "sha256": "49759b2bd2ab28231a21ff3a3bb45824ddef55d89b5b1a05a62e26a365da0774"
+        }
+      ]
+    },
+    {
+      "vendor": "Azul",
+      "product": "Zulu Community™",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "8.50.0.51",
+      "suggested_sdk_name": "azul-1.8",
+      "shared_index_aliases": [
+        "azul-1.8.0_275",
+        "azul-8",
+        "azul-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://cdn.azul.com/zulu/bin/zulu8.50.0.51-ca-jdk8.0.275-macosx_x64.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "zulu8.50.0.51-ca-jdk8.0.275-macosx_x64/zulu-8.jdk/Contents/Home",
+          "package_root_prefix": "zulu8.50.0.51-ca-jdk8.0.275-macosx_x64/zulu-8.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "zulu8.50.0.51-ca-jdk8.0.275-macosx_x64.tar.gz",
+          "install_folder_name": "azul-1.8.0_275",
+          "archive_size": 107820923,
+          "unpacked_size": 216285756,
+          "sha256": "b03176597734299c9a15b7c2cc770783cf14d121196196c1248e80c026b59c17"
+        }
+      ]
+    },
+    {
+      "vendor": "SAP",
+      "product": "SapMachine",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "suggested_sdk_name": "sapmachine-11",
+      "shared_index_aliases": [
+        "sapmachine-11.0.9.1",
+        "sapmachine-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/SAP/SapMachine/releases/download/sapmachine-11.0.9.1/sapmachine-jdk-11.0.9.1_linux-x64_bin.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "sapmachine-jdk-11.0.9.1",
+          "package_root_prefix": "sapmachine-jdk-11.0.9.1",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "sapmachine-jdk-11.0.9.1_linux-x64_bin.tar.gz",
+          "install_folder_name": "sapmachine-11.0.9.1",
+          "archive_size": 192970497,
+          "unpacked_size": 320453874,
+          "sha256": "abc1530fa7d6b589161844ccb6a390b61755d5ce54aa9734c2300613a64c0198"
+        }
+      ]
+    },
+    {
+      "vendor": "SAP",
+      "product": "SapMachine",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "suggested_sdk_name": "sapmachine-11",
+      "shared_index_aliases": [
+        "sapmachine-11.0.9.1",
+        "sapmachine-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/SAP/SapMachine/releases/download/sapmachine-11.0.9.1/sapmachine-jdk-11.0.9.1_windows-x64_bin.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "sapmachine-jdk-11.0.9.1",
+          "package_root_prefix": "sapmachine-jdk-11.0.9.1",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "sapmachine-jdk-11.0.9.1_windows-x64_bin.zip",
+          "install_folder_name": "sapmachine-11.0.9.1",
+          "archive_size": 197677260,
+          "unpacked_size": 330773770,
+          "sha256": "8da918eb5c0dcad52b8bbb12db096f4e43e24e89552c747134bd4d7ab0ea47a1"
+        }
+      ]
+    },
+    {
+      "vendor": "SAP",
+      "product": "SapMachine",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "suggested_sdk_name": "sapmachine-11",
+      "shared_index_aliases": [
+        "sapmachine-11.0.9.1",
+        "sapmachine-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/SAP/SapMachine/releases/download/sapmachine-11.0.9.1/sapmachine-jdk-11.0.9.1_osx-x64_bin.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "./sapmachine-jdk-11.0.9.1.jdk/Contents/Home",
+          "package_root_prefix": "./sapmachine-jdk-11.0.9.1.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "sapmachine-jdk-11.0.9.1_osx-x64_bin.tar.gz",
+          "install_folder_name": "sapmachine-11.0.9.1",
+          "archive_size": 185964735,
+          "unpacked_size": 307565136,
+          "sha256": "5784fd582e10e0f78b3daaeb969e7be57555df610e89c2b48f896b8589d07e85"
+        }
+      ]
+    },
+    {
+      "vendor": "SAP",
+      "product": "SapMachine",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "sapmachine-15",
+      "shared_index_aliases": [
+        "sapmachine-15.0.1",
+        "sapmachine-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/SAP/SapMachine/releases/download/sapmachine-15.0.1/sapmachine-jdk-15.0.1_linux-x64_bin.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "sapmachine-jdk-15.0.1",
+          "package_root_prefix": "sapmachine-jdk-15.0.1",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "sapmachine-jdk-15.0.1_linux-x64_bin.tar.gz",
+          "install_folder_name": "sapmachine-15.0.1",
+          "archive_size": 201631881,
+          "unpacked_size": 345856941,
+          "sha256": "d871ba2aaf377489668b9e473c381247f48952108598f224fa1484f6f2d9ba99"
+        }
+      ]
+    },
+    {
+      "vendor": "SAP",
+      "product": "SapMachine",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "sapmachine-15",
+      "shared_index_aliases": [
+        "sapmachine-15.0.1",
+        "sapmachine-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/SAP/SapMachine/releases/download/sapmachine-15.0.1/sapmachine-jdk-15.0.1_windows-x64_bin.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "sapmachine-jdk-15.0.1",
+          "package_root_prefix": "sapmachine-jdk-15.0.1",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "sapmachine-jdk-15.0.1_windows-x64_bin.zip",
+          "install_folder_name": "sapmachine-15.0.1",
+          "archive_size": 206481070,
+          "unpacked_size": 357088125,
+          "sha256": "8cef4a529548dc6457108dc64c894a6e11ae88fc477953ebf5a01adc8ab091fd"
+        }
+      ]
+    },
+    {
+      "vendor": "SAP",
+      "product": "SapMachine",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "sapmachine-15",
+      "shared_index_aliases": [
+        "sapmachine-15.0.1",
+        "sapmachine-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/SAP/SapMachine/releases/download/sapmachine-15.0.1/sapmachine-jdk-15.0.1_osx-x64_bin.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "./sapmachine-jdk-15.0.1.jdk/Contents/Home",
+          "package_root_prefix": "./sapmachine-jdk-15.0.1.jdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "sapmachine-jdk-15.0.1_osx-x64_bin.tar.gz",
+          "install_folder_name": "sapmachine-15.0.1",
+          "archive_size": 196121021,
+          "unpacked_size": 336849567,
+          "sha256": "c3eff22163231077d65b3663f25ed70e295d96f2ffdd456bbbeaec90762afd7d"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "adopt-openj9-15",
+      "shared_index_aliases": [
+        "adopt-openj9-15.0.1",
+        "adopt-openj9-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9_openj9-0.23.0/OpenJDK15U-jdk_x64_linux_openj9_15.0.1_9_openj9-0.23.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-15.0.1+9",
+          "package_root_prefix": "jdk-15.0.1+9",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK15U-jdk_x64_linux_openj9_15.0.1_9_openj9-0.23.0.tar.gz",
+          "install_folder_name": "adopt-openj9-15.0.1",
+          "archive_size": 196800767,
+          "unpacked_size": 314875262,
+          "sha256": "b1561f7a69c977bfc9991e61e96dcb200c39300dd9ad423254af117c189e4a8d"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "adopt-openj9-15",
+      "shared_index_aliases": [
+        "adopt-openj9-15.0.1",
+        "adopt-openj9-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9_openj9-0.23.0/OpenJDK15U-jdk_x64_windows_openj9_15.0.1_9_openj9-0.23.0.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-15.0.1+9",
+          "package_root_prefix": "jdk-15.0.1+9",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK15U-jdk_x64_windows_openj9_15.0.1_9_openj9-0.23.0.zip",
+          "install_folder_name": "adopt-openj9-15.0.1",
+          "archive_size": 198655146,
+          "unpacked_size": 310946939,
+          "sha256": "7e4fb5b31c1343df31486aae4e7fb8ec2896918e5879d0685170836376601ad3"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 15,
+      "jdk_version": "15.0.1",
+      "suggested_sdk_name": "adopt-openj9-15",
+      "shared_index_aliases": [
+        "adopt-openj9-15.0.1",
+        "adopt-openj9-15",
+        "15.0.1",
+        "15"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9.2_openj9-0.23.0/OpenJDK15U-jdk_x64_mac_openj9_15.0.1_9_openj9-0.23.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-15.0.1+9/Contents/Home",
+          "package_root_prefix": "jdk-15.0.1+9",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK15U-jdk_x64_mac_openj9_15.0.1_9_openj9-0.23.0.tar.gz",
+          "install_folder_name": "adopt-openj9-15.0.1",
+          "archive_size": 195920750,
+          "unpacked_size": 326799470,
+          "sha256": "57d1714db90eed5ee69c96b4e18e1ff5468580a299deef06d7f5a8a65e3bdc3b"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.0.2+12_openj9-0.21.0",
+      "suggested_sdk_name": "adopt-openj9-14",
+      "shared_index_aliases": [
+        "adopt-openj9-14.0.2",
+        "adopt-openj9-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12_openj9-0.21.0/OpenJDK14U-jdk_x64_linux_openj9_14.0.2_12_openj9-0.21.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-14.0.2+12",
+          "package_root_prefix": "jdk-14.0.2+12",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK14U-jdk_x64_linux_openj9_14.0.2_12_openj9-0.21.0.tar.gz",
+          "install_folder_name": "adopt-openj9-14.0.2",
+          "archive_size": 202955761,
+          "unpacked_size": 324666315,
+          "sha256": "306f7138cdb65daaf2596ec36cafbde72088144c83b2e964f0193662e6caf3be"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.0.2+12_openj9-0.21.0",
+      "suggested_sdk_name": "adopt-openj9-14",
+      "shared_index_aliases": [
+        "adopt-openj9-14.0.2",
+        "adopt-openj9-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12_openj9-0.21.0/OpenJDK14U-jdk_x64_windows_openj9_14.0.2_12_openj9-0.21.0.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-14.0.2+12",
+          "package_root_prefix": "jdk-14.0.2+12",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK14U-jdk_x64_windows_openj9_14.0.2_12_openj9-0.21.0.zip",
+          "install_folder_name": "adopt-openj9-14.0.2",
+          "archive_size": 204669951,
+          "unpacked_size": 320122922,
+          "sha256": "1df63582f9d5837d5d6c8abd7a3652ecd75b9d13f7d0dcc2c063b8f9ad06a229"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 14,
+      "jdk_version": "14.0.2",
+      "jdk_vendor_version": "14.0.2+12_openj9-0.21.0",
+      "suggested_sdk_name": "adopt-openj9-14",
+      "shared_index_aliases": [
+        "adopt-openj9-14.0.2",
+        "adopt-openj9-14",
+        "14.0.2",
+        "14"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12_openj9-0.21.0/OpenJDK14U-jdk_x64_mac_openj9_14.0.2_12_openj9-0.21.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-14.0.2+12/Contents/Home",
+          "package_root_prefix": "jdk-14.0.2+12",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK14U-jdk_x64_mac_openj9_14.0.2_12_openj9-0.21.0.tar.gz",
+          "install_folder_name": "adopt-openj9-14.0.2",
+          "archive_size": 200090793,
+          "unpacked_size": 334739955,
+          "sha256": "95e6abcc12dde676ccd5ba65ab86f06ddaa22749dde00e31f4c6d3ea95277359"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.2",
+      "jdk_vendor_version": "13.0.2+8_openj9-0.18.0",
+      "suggested_sdk_name": "adopt-openj9-13",
+      "shared_index_aliases": [
+        "adopt-openj9-13.0.2",
+        "adopt-openj9-13",
+        "13.0.2",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk13-binaries/releases/download/jdk-13.0.2%2B8_openj9-0.18.0/OpenJDK13U-jdk_x64_linux_openj9_13.0.2_8_openj9-0.18.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-13.0.2+8",
+          "package_root_prefix": "jdk-13.0.2+8",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK13U-jdk_x64_linux_openj9_13.0.2_8_openj9-0.18.0.tar.gz",
+          "install_folder_name": "adopt-openj9-13.0.2",
+          "archive_size": 204573308,
+          "unpacked_size": 323089050,
+          "sha256": "aeecf6d30d0c847db81d07793cf97e5dc44890c29366d7d9f8f9f397f6c52590"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.2",
+      "jdk_vendor_version": "13.0.2+8_openj9-0.18.0",
+      "suggested_sdk_name": "adopt-openj9-13",
+      "shared_index_aliases": [
+        "adopt-openj9-13.0.2",
+        "adopt-openj9-13",
+        "13.0.2",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk13-binaries/releases/download/jdk-13.0.2%2B8_openj9-0.18.0/OpenJDK13U-jdk_x64_windows_openj9_13.0.2_8_openj9-0.18.0.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-13.0.2+8",
+          "package_root_prefix": "jdk-13.0.2+8",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK13U-jdk_x64_windows_openj9_13.0.2_8_openj9-0.18.0.zip",
+          "install_folder_name": "adopt-openj9-13.0.2",
+          "archive_size": 207645664,
+          "unpacked_size": 321246100,
+          "sha256": "31a3d20876b3ef1acbacd9a1caab9a73324f2b1c588c961d08364feba1d14363"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 13,
+      "jdk_version": "13.0.2",
+      "jdk_vendor_version": "13.0.2+8_openj9-0.18.0",
+      "suggested_sdk_name": "adopt-openj9-13",
+      "shared_index_aliases": [
+        "adopt-openj9-13.0.2",
+        "adopt-openj9-13",
+        "13.0.2",
+        "13"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk13-binaries/releases/download/jdk-13.0.2%2B8_openj9-0.18.0/OpenJDK13U-jdk_x64_mac_openj9_13.0.2_8_openj9-0.18.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-13.0.2+8/Contents/Home",
+          "package_root_prefix": "jdk-13.0.2+8",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK13U-jdk_x64_mac_openj9_13.0.2_8_openj9-0.18.0.tar.gz",
+          "install_folder_name": "adopt-openj9-13.0.2",
+          "archive_size": 201152468,
+          "unpacked_size": 332671261,
+          "sha256": "dd8d92eec98a3455ec5cd065a0a6672cc1aef280c6a68c507c372ccc1d98fbaa"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9",
+      "suggested_sdk_name": "adopt-openj9-11",
+      "shared_index_aliases": [
+        "adopt-openj9-11.0.9",
+        "adopt-openj9-11",
+        "11.0.9",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.9%2B11_openj9-0.23.0/OpenJDK11U-jdk_x64_linux_openj9_11.0.9_11_openj9-0.23.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-11.0.9+11",
+          "package_root_prefix": "jdk-11.0.9+11",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK11U-jdk_x64_linux_openj9_11.0.9_11_openj9-0.23.0.tar.gz",
+          "install_folder_name": "adopt-openj9-11.0.9",
+          "archive_size": 196214601,
+          "unpacked_size": 315040830,
+          "sha256": "812d58fac39465802039291a1bc530b4feaaa61b58664d9c458a075921ae8091"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9",
+      "suggested_sdk_name": "adopt-openj9-11",
+      "shared_index_aliases": [
+        "adopt-openj9-11.0.9",
+        "adopt-openj9-11",
+        "11.0.9",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.9%2B11_openj9-0.23.0/OpenJDK11U-jdk_x64_windows_openj9_11.0.9_11_openj9-0.23.0.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk-11.0.9+11",
+          "package_root_prefix": "jdk-11.0.9+11",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK11U-jdk_x64_windows_openj9_11.0.9_11_openj9-0.23.0.zip",
+          "install_folder_name": "adopt-openj9-11.0.9",
+          "archive_size": 197822873,
+          "unpacked_size": 310211293,
+          "sha256": "c8debc3035d6b6cd4959c98f899462a7b304c7e94747e72051f81bde52732656"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9",
+      "suggested_sdk_name": "adopt-openj9-11",
+      "shared_index_aliases": [
+        "adopt-openj9-11.0.9",
+        "adopt-openj9-11",
+        "11.0.9",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.9%2B11.2_openj9-0.23.0/OpenJDK11U-jdk_x64_mac_openj9_11.0.9_11_openj9-0.23.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk-11.0.9+11/Contents/Home",
+          "package_root_prefix": "jdk-11.0.9+11",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK11U-jdk_x64_mac_openj9_11.0.9_11_openj9-0.23.0.tar.gz",
+          "install_folder_name": "adopt-openj9-11.0.9",
+          "archive_size": 196396470,
+          "unpacked_size": 330572433,
+          "sha256": "ba97e4f2ffc5f9a673e00596aa3fc684242522e043ef8f0ddd71479782c2412a"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "1.8.0_275-b01_openj9-0.23.0",
+      "suggested_sdk_name": "adopt-openj9-1.8",
+      "shared_index_aliases": [
+        "adopt-openj9-1.8.0_275",
+        "adopt-openj9-8",
+        "adopt-openj9-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u275-b01_openj9-0.23.0/OpenJDK8U-jdk_x64_linux_openj9_8u275b01_openj9-0.23.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk8u275-b01",
+          "package_root_prefix": "jdk8u275-b01",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK8U-jdk_x64_linux_openj9_8u275b01_openj9-0.23.0.tar.gz",
+          "install_folder_name": "adopt-openj9-1.8.0_275",
+          "archive_size": 115275863,
+          "unpacked_size": 228250369,
+          "sha256": "8bb74ff7ab2f64ced23212ee0520295c01b6f2d7558fd6e488a8ca795ced1ebd"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "1.8.0_275-b01_openj9-0.23.0",
+      "suggested_sdk_name": "adopt-openj9-1.8",
+      "shared_index_aliases": [
+        "adopt-openj9-1.8.0_275",
+        "adopt-openj9-8",
+        "adopt-openj9-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u275-b01_openj9-0.23.0/OpenJDK8U-jdk_x64_windows_openj9_8u275b01_openj9-0.23.0.zip",
+          "package_type": "zip",
+          "unpack_prefix_filter": "jdk8u275-b01",
+          "package_root_prefix": "jdk8u275-b01",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "OpenJDK8U-jdk_x64_windows_openj9_8u275b01_openj9-0.23.0.zip",
+          "install_folder_name": "adopt-openj9-1.8.0_275",
+          "archive_size": 116654553,
+          "unpacked_size": 220702147,
+          "sha256": "1ba51b6f3eaebbeb8e55761f930cc6b5a08567cd786a55a997ebf492d7f0560f"
+        }
+      ]
+    },
+    {
+      "vendor": "AdoptOpenJDK",
+      "flavour": "OpenJ9",
+      "jdk_version_major": 8,
+      "jdk_version": "1.8.0_275",
+      "jdk_vendor_version": "1.8.0_275-b01_openj9-0.23.0",
+      "suggested_sdk_name": "adopt-openj9-1.8",
+      "shared_index_aliases": [
+        "adopt-openj9-1.8.0_275",
+        "adopt-openj9-8",
+        "adopt-openj9-1.8",
+        "1.8.0_275",
+        "8",
+        "1.8"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u275-b01_openj9-0.23.0/OpenJDK8U-jdk_x64_mac_openj9_8u275b01_openj9-0.23.0.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jdk8u275-b01/Contents/Home",
+          "package_root_prefix": "jdk8u275-b01",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "OpenJDK8U-jdk_x64_mac_openj9_8u275b01_openj9-0.23.0.tar.gz",
+          "install_folder_name": "adopt-openj9-1.8.0_275",
+          "archive_size": 114196051,
+          "unpacked_size": 241538162,
+          "sha256": "0e19282fe1dae272f1383f726cc6fc70d77816bebe07e0959ac2c9b9b711f709"
+        }
+      ]
+    },
+    {
+      "vendor": "JetBrains",
+      "product": "Runtime",
+      "listed": false,
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.0.9.1-b1207.1",
+      "suggested_sdk_name": "jbr-11",
+      "shared_index_aliases": [
+        "jbr-11.0.9.1",
+        "jbr-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "linux",
+          "arch": "x86_64",
+          "url": "https://jetbrains.bintray.com/intellij-jbr/jbrsdk-11_0_9_1-linux-x64-b1207.1.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jbrsdk",
+          "package_root_prefix": "jbrsdk",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "jbrsdk-11_0_9_1-linux-x64-b1207.1.tar.gz",
+          "install_folder_name": "jbr-11.0.9.1",
+          "archive_size": 283207406,
+          "unpacked_size": 538317113,
+          "sha256": "a7537c2d8bc1fa83858e6bdccd4da006b5599a0649b9a6d61b93e4f714a10ee1"
+        }
+      ]
+    },
+    {
+      "vendor": "JetBrains",
+      "product": "Runtime",
+      "listed": false,
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.0.9.1-b1207.1",
+      "suggested_sdk_name": "jbr-11",
+      "shared_index_aliases": [
+        "jbr-11.0.9.1",
+        "jbr-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "windows",
+          "arch": "x86_64",
+          "url": "https://jetbrains.bintray.com/intellij-jbr/jbrsdk-11_0_9_1-windows-x64-b1207.1.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jbrsdk",
+          "package_root_prefix": "jbrsdk",
+          "package_to_java_home_prefix": "",
+          "archive_file_name": "jbrsdk-11_0_9_1-windows-x64-b1207.1.tar.gz",
+          "install_folder_name": "jbr-11.0.9.1",
+          "archive_size": 309049246,
+          "unpacked_size": 658778477,
+          "sha256": "8541fec6b7ce57c6899e1cfa3002f3bb1237c8d219ee7a03fc070ca9cd43a078"
+        }
+      ]
+    },
+    {
+      "vendor": "JetBrains",
+      "product": "Runtime",
+      "listed": false,
+      "jdk_version_major": 11,
+      "jdk_version": "11.0.9.1",
+      "jdk_vendor_version": "11.0.9.1-b1207.1",
+      "suggested_sdk_name": "jbr-11",
+      "shared_index_aliases": [
+        "jbr-11.0.9.1",
+        "jbr-11",
+        "11.0.9.1",
+        "11"
+      ],
+      "packages": [
+        {
+          "os": "macOS",
+          "arch": "x86_64",
+          "url": "https://jetbrains.bintray.com/intellij-jbr/jbrsdk-11_0_9_1-osx-x64-b1207.1.tar.gz",
+          "package_type": "targz",
+          "unpack_prefix_filter": "jbrsdk/Contents/Home",
+          "package_root_prefix": "jbrsdk",
+          "package_to_java_home_prefix": "Contents/Home",
+          "archive_file_name": "jbrsdk-11_0_9_1-osx-x64-b1207.1.tar.gz",
+          "install_folder_name": "jbr-11.0.9.1",
+          "archive_size": 282987001,
+          "unpacked_size": 533228811,
+          "sha256": "6a99a12e657d51de120a3ddc2a15c025a3b54116b3c362c93e8f98f30085b478"
+        }
+      ]
+    }
+  ]
+}

@@ -220,7 +220,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
 
     @Nullable
     @Override
-    protected String serialize(String languageID) {
+    protected String serialize(@NotNull String languageID) {
       return languageID;
     }
 
@@ -228,6 +228,14 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Override
     protected String handleUnknownMapping(VirtualFile file, String value) {
       return PlainTextLanguage.INSTANCE.getID();
+    }
+
+    @Override
+    protected boolean isDefaultMapping(@NotNull VirtualFile file, @NotNull String mapping) {
+      if (PlainTextLanguage.INSTANCE.getID().equals(mapping)) return true;
+      FileType byName = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+      Language language = LanguageUtil.getFileTypeLanguage(byName);
+      return language != null && language.getID().equals(mapping);
     }
   }
 
@@ -420,22 +428,6 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       VirtualFile file = PsiUtilCore.getVirtualFile(element);
       RootType rootType = ScratchFileService.getInstance().getRootType(file);
       return rootType == null ? null : ourUsageTypes.get(rootType);
-    }
-  }
-
-  public static class IndexSetContributor extends IndexableSetContributor {
-
-    @NotNull
-    @Override
-    public Set<VirtualFile> getAdditionalRootsToIndex() {
-      ScratchFileService instance = ScratchFileService.getInstance();
-      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-      Set<VirtualFile> result = new HashSet<>();
-      for (RootType rootType : RootType.getAllRootTypes()) {
-        if (rootType.isHidden()) continue;
-        ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(instance.getRootPath(rootType)));
-      }
-      return result;
     }
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
 import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -27,9 +28,12 @@ internal class ShowQuickFixesAction : AnAction() {
 
   override fun update(event: AnActionEvent) {
     val problem = getProblem(getTree(event))
-    event.presentation.isEnabled = when (problem) {
-      is HighlightingProblem -> isEnabled(event, problem)
-      else -> false
+    with(event.presentation) {
+      isVisible = getApplication().isInternal || ProblemsView.getSelectedPanel(event.project) is HighlightingPanel
+      isEnabled = isVisible && when (problem) {
+        is HighlightingProblem -> isEnabled(event, problem)
+        else -> false
+      }
     }
   }
 

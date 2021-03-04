@@ -36,9 +36,9 @@
       <scrollpane id="3fbd" class="com.intellij.ui.components.JBScrollPane" binding="myDescriptionScroll">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <minimum-size width="-1" height="28"/>
-            <preferred-size width="-1" height="28"/>
-            <maximum-size width="-1" height="48"/>
+            <minimum-size width="-1" height="48"/>
+            <preferred-size width="-1" height="48"/>
+            <maximum-size width="-1" height="200"/>
           </grid>
         </constraints>
         <properties/>

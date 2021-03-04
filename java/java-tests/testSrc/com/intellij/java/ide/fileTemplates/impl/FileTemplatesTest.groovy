@@ -127,19 +127,27 @@ class FileTemplatesTest extends JavaProjectTestCase {
   }
 
   void testDefaultPackage() {
+    doClassTest('package ${PACKAGE_NAME}; public class ${NAME} {}', "public class XXX {\n}")
+  }
+
+  private void doClassTest(String templateText, String result) {
     String name = "my_class"
-    FileTemplate template = addTestTemplate(name, 'package ${PACKAGE_NAME}; public class ${NAME} {}')
-
-    VirtualFile tempDir = getTempDir().createVirtualDir()
-
-    PsiTestUtil.addSourceRoot(getModule(), tempDir)
-
-    VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0]
-    PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(sourceRoot)
-
+    FileTemplate template = addTestTemplate(name, templateText)
+    PsiDirectory psiDirectory = createDirectory()
     PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name)
     assertNotNull(psiClass)
-    assertEquals("public class XXX {\n}", psiClass.getContainingFile().getText())
+    assertEquals(result, psiClass.getContainingFile().getText())
+    FileTemplateManager.getInstance(getProject()).removeTemplate(template)
+  }
+
+  void testPopulateDefaultProperties() {
+    String name = "my_class"
+    FileTemplate template = addTestTemplate(name, 'package ${PACKAGE_NAME}; \n' +
+                                                  '// ${USER} \n' +
+                                                  'public class ${NAME} {}')
+    PsiDirectory psiDirectory = createDirectory()
+    PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name)
+    assertFalse(psiClass.getContainingFile().getText().contains('${USER}'))
     FileTemplateManager.getInstance(getProject()).removeTemplate(template)
   }
 
@@ -174,6 +182,13 @@ class FileTemplatesTest extends JavaProjectTestCase {
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
     template.setText(text)
     template
+  }
+
+  private PsiDirectory createDirectory() {
+    VirtualFile tempDir = getTempDir().createVirtualDir()
+    PsiTestUtil.addSourceRoot(getModule(), tempDir)
+    VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0]
+    PsiManager.getInstance(getProject()).findDirectory(sourceRoot)
   }
 
   void doTestSaveLoadTemplate(String name, String ext) {

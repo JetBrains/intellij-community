@@ -31,12 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Alexander Lobas
@@ -588,6 +585,10 @@ public class ListPluginComponent extends JPanel {
     return myPluginModel.isEnabled(myPlugin);
   }
 
+  private boolean isGloballyEnabled() {
+    return myPluginModel.getState(myPlugin) == PluginEnabledState.ENABLED;
+  }
+
   public boolean isMarketplace() {
     return myMarketplace;
   }
@@ -672,8 +673,6 @@ public class ListPluginComponent extends JPanel {
     }
 
     group.add(createAction(selection, KeyEvent.VK_SPACE));
-    group.add(createAction(selection, KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK));
-
     if (group.getChildrenCount() > 0) {
       group.addSeparator();
     }
@@ -740,13 +739,15 @@ public class ListPluginComponent extends JPanel {
         selection,
         KeyStroke.getKeyStrokeForEvent(event)
       );
-      ActionManager.getInstance().tryToExecute(
-        action,
-        event,
-        this,
-        ActionPlaces.UNKNOWN,
-        true
-      );
+      if (action != null) {
+        ActionManager.getInstance().tryToExecute(
+          action,
+          event,
+          this,
+          ActionPlaces.UNKNOWN,
+          true
+        );
+      }
     }
   }
 
@@ -764,24 +765,18 @@ public class ListPluginComponent extends JPanel {
 
   private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
                                                                                      int keyCode) {
-    return createAction(selection, keyCode, 0);
+    return Objects.requireNonNull(createAction(selection, KeyStroke.getKeyStroke(keyCode, 0)));
   }
 
-  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
-                                                                                     int keyCode,
-                                                                                     int modifiers) {
-    return createAction(selection, KeyStroke.getKeyStroke(keyCode, modifiers));
-  }
-
-  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
-                                                                                     @NotNull KeyStroke keyStroke) {
+  private @Nullable SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
+                                                                                      @NotNull KeyStroke keyStroke) {
     int keyCode = keyStroke.getKeyCode();
     if (keyCode == KeyEvent.VK_SPACE) {
-      boolean firstEnabled = selection.get(0).isEnabledState();
+      boolean firstEnabled = selection.get(0).isGloballyEnabled();
       boolean setTrue = false;
 
       for (ListIterator<ListPluginComponent> iterator = selection.listIterator(1); iterator.hasNext(); ) {
-        if (firstEnabled != iterator.next().isEnabledState()) {
+        if (firstEnabled != iterator.next().isGloballyEnabled()) {
           setTrue = true;
           break;
         }
@@ -789,7 +784,7 @@ public class ListPluginComponent extends JPanel {
 
       PluginEnabledState newState = PluginEnabledState.getState(
         setTrue || !firstEnabled,
-        (keyStroke.getModifiers() & InputEvent.SHIFT_DOWN_MASK) == InputEvent.SHIFT_DOWN_MASK
+        false
       );
 
       return new EnableDisableAction(
@@ -799,11 +794,10 @@ public class ListPluginComponent extends JPanel {
         newState
       );
     }
-    else if (keyCode == EventHandler.DELETE_CODE) {
-      return new UninstallAction(selection, keyStroke);
-    }
     else {
-      throw new IllegalArgumentException();
+      return keyCode == EventHandler.DELETE_CODE ?
+             new UninstallAction(selection, keyStroke) :
+             null;
     }
   }
 

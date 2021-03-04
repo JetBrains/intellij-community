@@ -136,8 +136,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     setupIcon(data, psiDirectory);
   }
 
+  protected static boolean canRealModuleNameBeHidden() {
+    return Registry.is("ide.hide.real.module.name");
+  }
+
   private static boolean moduleNameMatchesDirectoryName(@NotNull Module module, @NotNull VirtualFile directoryFile, @NotNull ProjectFileIndex fileIndex) {
-    if (Registry.is("ide.hide.real.module.name")) return true;
+    if (canRealModuleNameBeHidden()) return true;
     String moduleName = module.getName();
     String directoryName = directoryFile.getName();
     if (moduleName.equalsIgnoreCase(directoryName)) {

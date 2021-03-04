@@ -111,7 +111,10 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
   private fun saveCache(storage: WorkspaceEntityStorage) {
     val tmpFile = FileUtil.createTempFile(cacheFile.parent.toFile(), "cache", ".tmp")
     try {
-      tmpFile.outputStream().use { serializer.serializeCache(it, storage) }
+      val serializationResult = tmpFile.outputStream().use { serializer.serializeCache(it, storage) }
+      if (serializationResult is SerializationResult.Fail<*>) {
+        LOG.warn("Workspace model cache was not serialized: ${serializationResult.info}")
+      }
 
       try {
         Files.move(tmpFile.toPath(), cacheFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)

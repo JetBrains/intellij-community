@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,11 +23,10 @@ import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
-import training.util.useNewLearningUi
 import java.awt.Component
 import kotlin.math.max
 
-class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?) : Disposable {
+class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
   private data class TaskInfo(val content: () -> Unit,
                               var restoreIndex: Int,
                               var taskProperties: TaskProperties?,
@@ -35,10 +35,20 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
                               var rehighlightComponent: (() -> Component)? = null,
                               var userVisibleInfo: PreviousTaskInfo? = null)
 
-  private val predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
+  var predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
+  private set
 
-  private val selectedEditor
-    get() = FileEditorManager.getInstance(project).selectedTextEditor ?: predefinedEditor?.takeIf { !it.isDisposed }
+  private val selectedEditor: Editor?
+    get() {
+      val result = if (lesson.lessonType.isSingleEditor) predefinedEditor
+      else FileEditorManager.getInstance(project).selectedTextEditor?.also {
+        // We may need predefined editor in the multi-editor lesson in the start of the lesson.
+        // It seems, there is a platform bug with no selected editor when the needed editor is actually opened.
+        // But better do not use it later to avoid possible bugs.
+        predefinedEditor = null
+      } ?: predefinedEditor // It may be needed in the start of the lesson.
+      return result?.takeIf { !it.isDisposed }
+    }
 
   val editor: Editor
     get() = selectedEditor ?: throw NoTextEditor()
@@ -91,12 +101,10 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
 
     val taskProperties = LessonExecutorUtil.taskProperties(taskContent, project)
     addTaskAction(taskProperties, taskContent) {
-      if (useNewLearningUi) {
-        val taskInfo = taskActions[currentTaskIndex]
-        taskInfo.taskProperties?.messagesNumber?.let {
-          LessonManager.instance.removeInactiveMessages(it)
-          taskInfo.taskProperties?.messagesNumber = 0 // Here could be runtime messages
-        }
+      val taskInfo = taskActions[currentTaskIndex]
+      taskInfo.taskProperties?.messagesNumber?.let {
+        LessonManager.instance.removeInactiveMessages(it)
+        taskInfo.taskProperties?.messagesNumber = 0 // Here could be runtime messages
       }
       processTask(taskContent)
     }
@@ -126,8 +134,16 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     get() = FileDocumentManager.getInstance().getFile(editor.document) ?: error("No Virtual File")
 
   fun startLesson() {
-    if (useNewLearningUi) addAllInactiveMessages()
-    processNextTask(0)
+    addAllInactiveMessages()
+    if (lesson.properties.canStartInDumbMode) {
+      processNextTask(0)
+    }
+    else {
+      DumbService.getInstance(project).runWhenSmart {
+        if (!hasBeenStopped)
+          processNextTask(0)
+      }
+    }
   }
 
   private fun processNextTask(taskIndex: Int) {
@@ -144,7 +160,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     LessonManager.instance.clearRestoreMessage()
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (currentTaskIndex == taskActions.size) {
-      LessonManager.instance.passLesson(project, lesson)
+      LessonManager.instance.passLesson(lesson)
       disposeRecorders()
       return
     }
@@ -163,6 +179,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
         override val position: LogicalPosition = selectedEditor?.caretModel?.currentCaret?.logicalPosition ?: LogicalPosition(0, 0)
         override val sample: LessonSample = selectedEditor?.let { prepareSampleFromCurrentState(it) } ?: parseLessonSample("")
         override val ui: Component? = foundComponent
+        override val file: VirtualFile? = selectedEditor?.let { FileDocumentManager.getInstance().getFile(it.document) }
       }
       taskInfo.rehighlightComponent = rehighlightComponent
     }
@@ -205,16 +222,13 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
   /** @return a callback to clear resources used to track restore */
   private fun checkForRestore(taskContext: TaskContextImpl,
                               taskData: TaskData): () -> Unit {
-    lateinit var clearRestore: () -> Unit
-    fun restoreTask(restoreId: TaskContext.TaskId) {
-      applyRestore(taskContext, restoreId)
-    }
+    var clearRestore: () -> Unit = {}
 
     fun restore(restoreId: TaskContext.TaskId) {
       clearRestore()
       invokeLater(ModalityState.any()) { // restore check must be done after pass conditions (and they will be done during current event processing)
-        if (!isTaskCompleted(taskContext)) {
-          restoreTask(restoreId)
+        if (canBeRestored(taskContext)) {
+          applyRestore(taskContext, restoreId)
         }
       }
     }
@@ -227,13 +241,22 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
         clearRestore()
         return false
       }
-      val restoreId = shouldRestoreToTask()
-      return if (restoreId != null) {
-        if (taskData.delayMillis == 0) restore(restoreId)
-        else Alarm().addRequest({ restore(restoreId) }, taskData.delayMillis)
-        true
+
+      val checkAndRestoreIfNeeded = {
+        if (canBeRestored(taskContext)) {
+          val restoreId = shouldRestoreToTask()
+          if (restoreId != null) {
+            restore(restoreId)
+          }
+        }
       }
-      else false
+      if (taskData.delayMillis == 0) {
+        checkAndRestoreIfNeeded()
+      }
+      else {
+        Alarm().addRequest(checkAndRestoreIfNeeded, taskData.delayMillis)
+      }
+      return false
     }
 
     // Not sure about use-case when we need to check restore at the start of current task
@@ -274,6 +297,10 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
   }
 
   private fun isTaskCompleted(taskContext: TaskContextImpl) = taskContext.steps.all { it.isDone && it.get() }
+
+  private fun canBeRestored(taskContext: TaskContextImpl): Boolean {
+    return !hasBeenStopped && taskContext.steps.all { !it.isCancelled && !it.isCompletedExceptionally && (!it.isDone || !it.get()) }
+  }
 
   private fun processTestActions(taskContext: TaskContextImpl) {
     if (TaskTestContext.inTestMode) {

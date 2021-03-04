@@ -38,7 +38,7 @@ import java.util.*;
 public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbAware, PopupAction {
   private static final String EMMET_RECENT_UPDATE_ABBREVIATIONS_KEY = "emmet.recent.update.abbreviations";
   private static final String EMMET_LAST_UPDATE_ABBREVIATIONS_KEY = "emmet.last.update.abbreviations";
-  private static final EmmetContextHelp CONTEXT_HELP = new EmmetContextHelp(XmlBundle.message("emmet.context.help.tooltip"));
+  private static final EmmetContextHelp CONTEXT_HELP = new EmmetContextHelp(XmlBundle.messagePointer("emmet.context.help.tooltip"));
 
   @NotNull
   @Override

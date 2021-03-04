@@ -30,7 +30,7 @@ class JdkDownloaderModel(
   val versionGroups: List<JdkVersionItem>,
   val defaultItem: JdkItem,
   val defaultVersion: JdkVersionItem,
-  val defaultVersionVendor: JdkVersionVendorItem
+  val defaultVersionVendor: JdkVersionVendorItem,
 )
 
 class JdkVersionItem(
@@ -125,6 +125,10 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorElement>() {
         if (jdkVersion != value.parent?.jdkVersion) {
           append(" $jdkVersion", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
         }
+
+        value.item.presentableArchIfNeeded?.let { archIfNeeded ->
+          append("  $archIfNeeded", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
+        }
       }
     }
   }
@@ -193,7 +197,7 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel {
     versionGroups = versionItems,
     defaultItem = defaultItem,
     defaultVersion = defaultJdkVersionItem,
-    defaultVersionVendor = defaultVersionVendor
+    defaultVersionVendor = defaultVersionVendor,
   )
 }
 

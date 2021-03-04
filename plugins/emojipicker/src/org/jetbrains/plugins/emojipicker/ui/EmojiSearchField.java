@@ -6,7 +6,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.emojipicker.messages.EmojipickerBundle;
@@ -39,12 +41,13 @@ public class EmojiSearchField extends ExtendableTextField {
 
   private final EmojiPicker myEmojiPicker;
   private final EmojiPickerStyle myStyle;
-  private final List<ExtendableTextComponent.Extension> extensions;
+  private final List<ExtendableTextComponent.Extension> myExtensions;
+  private final ExtendableTextComponent.Extension mySkinToneExtension;
 
   EmojiSearchField(EmojiPicker emojiPicker, EmojiPickerStyle style) {
     myEmojiPicker = emojiPicker;
     myStyle = style;
-    extensions = List.of(SEARCH_ICON_EXTENSION, new ExtendableTextComponent.Extension() {
+    myExtensions = List.of(SEARCH_ICON_EXTENSION, mySkinToneExtension = new ExtendableTextComponent.Extension() {
       @Override
       public Icon getIcon(boolean hovered) {
         return emojiPicker.getCurrentSkinToneIcon(hovered);
@@ -70,7 +73,7 @@ public class EmojiSearchField extends ExtendableTextField {
         return EmojipickerBundle.message("message.EmojiPicker.ChangeSkinTone");
       }
     });
-    Dimension size = new Dimension(0, JBUIScale.scale(40));
+    Dimension size = new JBDimension(0, 40);
     setPreferredSize(size);
     setMinimumSize(size);
     setExtensions(SEARCH_ICON_EXTENSION);
@@ -106,7 +109,12 @@ public class EmojiSearchField extends ExtendableTextField {
   }
 
   void update() {
-    setExtensions(extensions);
+    setExtensions(myExtensions);
+  }
+
+  public Point getSkinToneIconCenter() {
+    return new Point(getWidth() - getInsets().right - mySkinToneExtension.getIconGap() -
+                     mySkinToneExtension.getIcon(false).getIconWidth() / 2, getHeight() / 2);
   }
 
   @Override
@@ -114,9 +122,9 @@ public class EmojiSearchField extends ExtendableTextField {
     super.paintComponent(g);
     if (myEmojiPicker.getCurrentFocusTarget() instanceof EmojiSkinTonesPanel) {
       g.setColor(myStyle.myFocusBorderColor);
-      Insets i = getInsets();
-      final int SIZE = 30;
-      g.drawRoundRect(getWidth() - i.right - SIZE - 8, getHeight() / 2 - SIZE / 2, SIZE, SIZE, 6, 6);
+      double size = JBUIScale.scale(34F) - 4.0;
+      Point center = getSkinToneIconCenter();
+      RectanglePainter2D.DRAW.paint((Graphics2D)g, center.x - size / 2.0, center.y - size / 2.0, size, size, 6.0);
     }
   }
 }

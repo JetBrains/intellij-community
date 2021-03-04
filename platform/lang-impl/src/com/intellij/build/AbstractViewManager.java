@@ -46,7 +46,7 @@ import static com.intellij.build.ExecutionNode.getEventResultIcon;
  *
  * @author Vladislav.Soroka
  */
-public abstract class AbstractViewManager implements ViewManager, BuildProgressListener, Disposable {
+public abstract class AbstractViewManager implements ViewManager, BuildProgressListener, BuildProgressObservable, Disposable {
   private static final Logger LOG = Logger.getInstance(ViewManager.class);
   private static final Key<Boolean> PINNED_EXTRACTED_CONTENT = new Key<>("PINNED_EXTRACTED_CONTENT");
 
@@ -69,6 +69,10 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       }
     };
     myPinnedViews = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    @Nullable BuildViewProblemsService buildViewProblemsService = project.getService(BuildViewProblemsService.class);
+    if (buildViewProblemsService != null) {
+      buildViewProblemsService.listenToBuildView(this);
+    }
   }
 
   @Override
@@ -81,6 +85,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     return true;
   }
 
+  @Override
   @ApiStatus.Experimental
   public void addListener(@NotNull BuildProgressListener listener, @NotNull Disposable disposable) {
     myListeners.add(listener, disposable);

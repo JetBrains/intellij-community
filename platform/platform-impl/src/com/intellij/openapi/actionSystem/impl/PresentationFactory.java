@@ -27,6 +27,7 @@ import java.util.Map;
 
 public class PresentationFactory {
   private final Map<AnAction, Presentation> myAction2Presentation = ContainerUtil.createWeakMap();
+  private boolean myNeedRebuild;
 
   private static final Collection<PresentationFactory> ourAllFactories = new WeakList<>();
 
@@ -59,6 +60,15 @@ public class PresentationFactory {
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myAction2Presentation.clear();
+    myNeedRebuild = true;
+  }
+
+  public boolean isNeedRebuild() {
+    return myNeedRebuild;
+  }
+
+  public void resetNeedRebuild() {
+    myNeedRebuild = false;
   }
 
   public static void clearPresentationCaches() {

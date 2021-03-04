@@ -104,7 +104,7 @@ public final class QualifiedName implements Comparable<QualifiedName> {
     return true;
   }
 
-  public boolean matchesPrefix(QualifiedName prefix) {
+  public boolean matchesPrefix(@NotNull QualifiedName prefix) {
     if (getComponentCount() < prefix.getComponentCount()) {
       return false;
     }

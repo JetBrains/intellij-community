@@ -77,9 +77,7 @@ public final class FileWatcher {
     myNotificationSink = new MyFileWatcherNotificationSink();
 
     myFileWatcherExecutor.execute(() -> {
-      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
-        watcher.initialize(myManagingFS, myNotificationSink);
-      });
+      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.initialize(myManagingFS, myNotificationSink));
       if (isOperational()) {
         postInitCallback.run();
       }
@@ -101,9 +99,7 @@ public final class FileWatcher {
       LOG.error(e);
     }
 
-    PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
-      watcher.dispose();
-    });
+    PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.dispose());
   }
 
   public boolean isOperational() {
@@ -154,7 +150,9 @@ public final class FileWatcher {
 
         Pair<List<String>, List<String>> roots = pathMap.getCanonicalWatchRoots();
         PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
-          watcher.setWatchRoots(roots.first, roots.second);
+          if (watcher.isOperational()) {
+            watcher.setWatchRoots(roots.first, roots.second);
+          }
         });
       }
       catch (RuntimeException | Error e) {
@@ -202,9 +200,7 @@ public final class FileWatcher {
         }
       }
 
-      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
-        watcher.resetChangedPaths();
-      });
+      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.resetChangedPaths());
 
       return dirtyPaths;
     }

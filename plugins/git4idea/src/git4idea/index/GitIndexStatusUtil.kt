@@ -187,6 +187,7 @@ internal fun isIgnored(status: StatusCode) = status == '!'
 internal fun isUntracked(status: StatusCode) = status == '?'
 fun isRenamed(status: StatusCode) = status == 'R' || status == 'C'
 internal fun isAdded(status: StatusCode) = status == 'A'
+internal fun isIntendedToBeAdded(index: StatusCode, workTree: StatusCode) = index == ' ' && workTree == 'A'
 internal fun isDeleted(status: StatusCode) = status == 'D'
 internal fun isConflicted(index: StatusCode, workTree: StatusCode): Boolean {
   return (index == 'D' && workTree == 'D') ||

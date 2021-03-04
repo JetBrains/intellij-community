@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
@@ -504,15 +505,15 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final VirtualFile condaFolder = PythonSdkUtil.isConda(sdk) ? PythonSdkUtil.getCondaDirectory(sdk) : null;
     for (String path : paths) {
       if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
-        String normalizedPath = restorePathCapitalization(path);
-        if (normalizedPath != null) {
-          final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(normalizedPath);
-          if (virtualFile != null && !virtualFile.equals(condaFolder)) {
-            final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
-            if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
-              results.add(rootFile);
-              continue;
-            }
+        // Sometimes we can't restore capitalization of an existing and accessible root, e.g. for directories
+        // under "C:\Program Files\WindowsApps". In this case, rely on VFS judgment of the original path.
+        String normalizedPath = ObjectUtils.notNull(restorePathCapitalization(path), path);
+        final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(normalizedPath);
+        if (virtualFile != null && !virtualFile.equals(condaFolder)) {
+          final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
+          if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
+            results.add(rootFile);
+            continue;
           }
         }
       }

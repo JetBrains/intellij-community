@@ -82,7 +82,8 @@ internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
     cdCommitOnCherryPick,
     cdAutoUpdateOnPush(project),
     cdWarnAboutCrlf(project),
-    cdWarnAboutDetachedHead(project)
+    cdWarnAboutDetachedHead(project),
+    cdEnableStagingArea
   )
   val manager = GitRepositoryManager.getInstance(project)
   if (manager.moreThanOneRoot()) {

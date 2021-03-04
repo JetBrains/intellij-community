@@ -11,9 +11,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.JavaVersion
+import com.intellij.util.system.CpuArch
 import java.lang.management.ManagementFactory
 import java.util.*
-import kotlin.collections.HashMap
 
 class SystemRuntimeCollector : ApplicationUsagesCollector() {
 
@@ -22,7 +22,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   }
 
   override fun getVersion(): Int {
-    return 4
+    return 5
   }
 
   override fun getMetrics(): Set<MetricEvent> {
@@ -37,6 +37,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     val jvmData = FeatureUsageData().
       addVersion(Version(1, JavaVersion.current().feature, 0)).
       addData("bit", if (SystemInfo.is32Bit) "32" else "64").
+      addData("arch", CpuArch.CURRENT.name.toLowerCase(Locale.ENGLISH)).
       addData("vendor", getJavaVendor())
     result.add(newMetric("jvm", jvmData))
     val options: HashMap<String, Long> = collectJvmOptions()

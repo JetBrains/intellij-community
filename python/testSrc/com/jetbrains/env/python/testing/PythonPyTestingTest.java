@@ -882,7 +882,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
           @Override
           protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
-            configuration.setAdditionalArguments("-vv");
+            configuration.setAdditionalArguments("--log-level=INFO -vv");
           }
         };
       }

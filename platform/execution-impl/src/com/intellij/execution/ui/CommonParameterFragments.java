@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   @NotNull
   public SettingsEditorFragment<Settings, RawCommandLineEditor> programArguments() {
     RawCommandLineEditor programArguments = new RawCommandLineEditor();
-    CommandLinePanel.setMinimumWidth(programArguments, 200);
+    CommandLinePanel.setMinimumWidth(programArguments, 400);
     String message = ExecutionBundle.message("run.configuration.program.parameters.placeholder");
     programArguments.getEditorField().getEmptyText().setText(message);
     programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
@@ -144,6 +145,6 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   }
 
   public static void setMonospaced(Component field) {
-    field.setFont(EditorUtil.getEditorFont());
+    field.setFont(EditorUtil.getEditorFont(JBUI.Fonts.label().getSize()));
   }
 }

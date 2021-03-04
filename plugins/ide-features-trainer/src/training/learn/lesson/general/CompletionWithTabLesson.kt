@@ -17,13 +17,15 @@ abstract class CompletionWithTabLesson(module: Module, lang: String, private val
     get() = {
       prepareSample(sample)
 
-      actionTask("CodeCompletion") {
+      task("CodeCompletion") {
+        text(LessonsBundle.message("completion.with.tab.begin.completion", action(it)))
+        triggerByListItemAndHighlight { item -> item.toString() == proposal }
         restoreIfModifiedOrMoved()
-        LessonsBundle.message("completion.with.tab.begin.completion", action(it))
+        test { actions(it) }
       }
 
       actionTask("EditorChooseLookupItemReplace") {
-        restoreIfModifiedOrMoved()
+        restoreByUi()
         LessonsBundle.message("completion.with.tab.finish.with.tab", code(proposal), action("EditorTab"))
       }
     }

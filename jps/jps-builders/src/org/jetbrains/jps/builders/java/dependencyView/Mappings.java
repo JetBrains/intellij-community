@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 public class Mappings {
   private final static Logger LOG = Logger.getInstance(Mappings.class);
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
-  private final boolean myProcessConstantsIncrementally = !Boolean.valueOf(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
+  private boolean myProcessConstantsIncrementally = !Boolean.valueOf(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
 
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";
@@ -173,6 +173,10 @@ public class Mappings {
       }
       throw e;
     }
+  }
+
+  public void setProcessConstantsIncrementally(boolean processInc) {
+    myProcessConstantsIncrementally = processInc;
   }
 
   public String valueOf(final int name) {

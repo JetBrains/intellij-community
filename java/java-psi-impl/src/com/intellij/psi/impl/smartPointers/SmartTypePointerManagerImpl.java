@@ -80,7 +80,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       }
       else {
         final PsiType type = myBoundPointer.getType();
-        assert type != null : myBoundPointer;
+        if (type == null) return null;
         if (myIsExtending) {
           return PsiWildcardType.createExtends(myManager, type);
         }

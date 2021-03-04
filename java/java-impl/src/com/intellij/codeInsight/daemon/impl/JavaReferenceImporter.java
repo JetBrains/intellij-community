@@ -32,7 +32,7 @@ import java.util.List;
 public class JavaReferenceImporter implements ReferenceImporter {
   @Override
   public boolean autoImportReferenceAtCursor(@NotNull final Editor editor, @NotNull final PsiFile file) {
-    return CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY && autoImportReferenceAtCursor(editor, file, false);
+    return autoImportReferenceAtCursor(editor, file, false);
   }
 
   public static boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, final boolean allowCaretNearRef) {
@@ -60,4 +60,8 @@ public class JavaReferenceImporter implements ReferenceImporter {
     return false;
   }
 
+  @Override
+  public boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile file) {
+    return file.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE) && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+  }
 }

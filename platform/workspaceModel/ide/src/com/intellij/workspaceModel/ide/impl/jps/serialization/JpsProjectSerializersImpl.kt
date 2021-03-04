@@ -16,10 +16,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
@@ -191,30 +188,18 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     val builder = WorkspaceEntityStorageBuilder.create()
     affectedFileLoaders.forEach {
-      it.loadEntities(builder, reader, errorReporter, virtualFileManager)
+      loadEntitiesAndReportExceptions(it, builder, reader, errorReporter)
     }
     return Pair(changedSources, builder)
   }
 
   override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter) {
-    fun reportError(e: Exception, url: VirtualFileUrl) {
-      errorReporter.reportError(ProjectModelBundle.message("module.cannot.load.error", url.presentableUrl, e.localizedMessage), url)
-    }
-
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
     try {
       val tasks = fileSerializersByUrl.values.map { serializer ->
         Callable {
           val myBuilder = WorkspaceEntityStorageBuilder.create()
-          try {
-            serializer.loadEntities(myBuilder, reader, errorReporter, virtualFileManager)
-          }
-          catch (e: JDOMException) {
-            reportError(e, serializer.fileUrl)
-          }
-          catch (e: IOException) {
-            reportError(e, serializer.fileUrl)
-          }
+          loadEntitiesAndReportExceptions(serializer, myBuilder, reader, errorReporter)
           myBuilder
         }
       }
@@ -225,6 +210,25 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
     finally {
       service.shutdown()
+    }
+  }
+
+  private fun loadEntitiesAndReportExceptions(serializer: JpsFileEntitiesSerializer<*>,
+                                              builder: WorkspaceEntityStorageBuilder,
+                                              reader: JpsFileContentReader,
+                                              errorReporter: ErrorReporter) {
+    fun reportError(e: Exception, url: VirtualFileUrl) {
+      errorReporter.reportError(ProjectModelBundle.message("module.cannot.load.error", url.presentableUrl, e.localizedMessage), url)
+    }
+
+    try {
+      serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)
+    }
+    catch (e: JDOMException) {
+      reportError(e, serializer.fileUrl)
+    }
+    catch (e: IOException) {
+      reportError(e, serializer.fileUrl)
     }
   }
 
@@ -273,13 +277,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         source.internalFile
       }
     }
-    is JpsFileDependentEntitySource -> source.originalSource
-    is JpsFileEntitySource -> source
-    else -> null
+    else -> getInternalFileSource(source)
   }
 
   private fun getInternalFileSource(source: EntitySource) = when (source) {
     is JpsFileDependentEntitySource -> source.originalSource
+    is CustomModuleEntitySource -> source.internalSource
     is JpsFileEntitySource -> source
     else -> null
   }
@@ -317,13 +320,26 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
       it.internalFile
     }
+    val sourcesStoredExternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
+      .filter { it.storedExternally }
+      .associateBy { it.internalFile }
+
     val obsoleteSources = affectedSources - entitiesToSave.keys
     for (source in obsoleteSources) {
       val fileUrl = getActualFileUrl(source)
       if (fileUrl != null) {
-        processObsoleteSource(fileUrl, source in internalSourceConvertedToImported)
-        if (source is JpsFileEntitySource.FileInDirectory) {
-          fileIdToFileName.remove(source.fileNameId)
+        val affectedImportedSourceStoredExternally = if (source is JpsImportedEntitySource && !source.storedExternally) {
+          sourcesStoredExternally[source.internalFile]
+        } else null
+        // Cleanup old entity source in the following cases:
+        // 1) If it was changed from [JpsFileEntitySource] to [JpsImportedEntitySource] e.g Mavenize
+        // 2) If [JpsImportedEntitySource#storedExternally] property changed from false to true e.g changing Gradle property for storing in external_build_system folder
+        val deleteObsoleteFile = source in internalSourceConvertedToImported || (affectedImportedSourceStoredExternally != null &&
+                                                                                 affectedImportedSourceStoredExternally !in obsoleteSources)
+        processObsoleteSource(fileUrl, deleteObsoleteFile)
+        val actualSource = if (source is JpsImportedEntitySource && !source.storedExternally) source.internalFile else source
+        if (actualSource is JpsFileEntitySource.FileInDirectory) {
+          fileIdToFileName.remove(actualSource.fileNameId)
         }
       }
     }

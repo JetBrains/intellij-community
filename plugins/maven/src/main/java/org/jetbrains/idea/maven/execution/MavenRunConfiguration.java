@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.CommonBundle;
 import com.intellij.build.*;
+import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.process.BuildProcessHandler;
@@ -28,6 +29,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -476,21 +478,13 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       if (console == null) {
         return null;
       }
+      ExternalSystemRunConfigurationViewManager viewManager = getProject().getService(ExternalSystemRunConfigurationViewManager.class);
       return new BuildView(getProject(), console, descriptor, "build.toolwindow.run.selection.state",
-                           new ViewManager() {
-                             @Override
-                             public boolean isConsoleEnabledByDefault() {
-                               return true;
-                             }
-
-                             @Override
-                             public boolean isBuildContentView() {
-                               return true;
-                             }
-                           }) {
+                           viewManager) {
         @Override
-        public void dispose() {
-          super.dispose();
+        public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+          super.onEvent(buildId, event);
+          viewManager.onEvent(buildId, event);
         }
       };
     }

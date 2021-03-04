@@ -471,7 +471,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         for (int i = 0; i < values.length; i++) {
           if (values[i] == value) return options[i];
         }
-        LOG.error("Invalid option value " + value + " for " + field.getName());
+        String possibleValues = arrayToString(values);
+        LOG.error("Invalid option value " + value + " for " + field.getName() + " (possible values: " + possibleValues + ')');
       }
       catch (IllegalAccessException ignore) {
       }
@@ -1003,5 +1004,15 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     component.setOpaque(isSelected);
     component.setBackground(RenderingUtil.getBackground(table, isSelected));
     component.setForeground(RenderingUtil.getForeground(table, isSelected));
+  }
+
+  @NotNull
+  private static String arrayToString(int @NotNull [] array) {
+    int n = array.length;
+    if (n == 0) return "";
+    StringBuilder b = new StringBuilder(array.length * 4);
+    b.append(array[0]);
+    for (int i = 1; i < n; i++) b.append(',').append(' ').append(array[i]);
+    return b.toString();
   }
 }

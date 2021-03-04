@@ -5,10 +5,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import javax.swing.JList
 
@@ -37,8 +34,8 @@ abstract class BasicCompletionLessonBase(module: Module, lang: String)
       task {
         text(LessonsBundle.message("basic.completion.start.typing",
                                    code(item1Completion)))
-        triggerByListItemAndHighlight(highlightBorder = false, highlightInside = false) { // no highlighting
-          it.toString().contains(item1Completion)
+        triggerByUiComponentAndHighlight(false, false) { ui: JList<*> ->
+          isTheFirstVariant(ui)
         }
         proposeRestore {
           checkExpectedStateOfEditor(sample1) {
@@ -50,21 +47,12 @@ abstract class BasicCompletionLessonBase(module: Module, lang: String)
           GuiTestUtil.typeText(item1StartToType)
         }
       }
-      task {
-        text(LessonsBundle.message("basic.completion.continue.typing", code(item1Completion)))
-        stateCheck {
-          (previous.ui as? JList<*>)?.let {
-            isTheFirstVariant(it)
-          } ?: false
-        }
-        restoreByUi()
-      }
       task("EditorChooseLookupItem") {
         text(LessonsBundle.message("basic.completion.just.press.to.complete", action(it)))
         trigger(it) {
           editor.document.text == result1
         }
-        restoreState {
+        restoreAfterStateBecomeFalse {
           (previous.ui as? JList<*>)?.takeIf { ui -> ui.isShowing }?.let { ui ->
             !isTheFirstVariant(ui)
           } ?: true
