@@ -18,14 +18,15 @@ internal class ShowRecentFilesAction : LightEditCompatible, SwitcherRecentFilesA
 internal class ShowRecentlyEditedFilesAction : SwitcherRecentFilesAction(true)
 internal abstract class SwitcherRecentFilesAction(val onlyEditedFiles: Boolean) : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
-    val project = event.project
-    event.presentation.isEnabledAndVisible = project != null && Switcher.SWITCHER_KEY.get(project) == null
+    event.presentation.isEnabledAndVisible = event.project != null
   }
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files")
-    SwitcherPanel(project, message("title.popup.recent.files"), onlyEditedFiles, null)
+    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected } ?: run {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files")
+      SwitcherPanel(project, message("title.popup.recent.files"), onlyEditedFiles, null)
+    }
   }
 }
 
