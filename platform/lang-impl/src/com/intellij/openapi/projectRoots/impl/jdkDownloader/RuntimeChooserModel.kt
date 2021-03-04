@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.NlsContexts.Separator
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Files
 import java.nio.file.Path
@@ -60,12 +58,18 @@ class RuntimeChooserModel {
       newList += it
     }
 
-    newList += downloadableJbs
+    val defaultDownloadableSdks = downloadableJbs
       .filter { it.isDefaultItem }
       .map { RuntimeChooserDownloadableItem(it) }
 
+    val advancedDownloadItems = downloadableJbs
+      .filterNot { it.isDefaultItem }
+      .map { RuntimeChooserDownloadableItem(it) }
+
+    newList += defaultDownloadableSdks
     newList += RuntimeChooserAdvancedSectionSeparator
-    if (!showAdvancedOptions)  {
+
+    if (advancedDownloadItems.isNotEmpty() && !showAdvancedOptions)  {
       newList += RuntimeChooserShowAdvancedItem
     }
 
@@ -77,11 +81,9 @@ class RuntimeChooserModel {
       newList += RuntimeChooserAddCustomItem
     }
 
-    if (showAdvancedOptions) {
+    if (advancedDownloadItems.isNotEmpty() && showAdvancedOptions) {
       newList += RuntimeChooserAdvancedJbrSelectedSectionSeparator
-      newList += downloadableJbs
-        .filterNot { it.isDefaultItem }
-        .map { RuntimeChooserDownloadableItem(it) }
+      newList += advancedDownloadItems
     }
 
     myMainComboModel.addAll(newList)
