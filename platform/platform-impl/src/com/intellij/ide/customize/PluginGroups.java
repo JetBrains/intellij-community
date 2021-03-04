@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import icons.PlatformImplIcons;
 import org.jetbrains.annotations.*;
@@ -40,22 +41,30 @@ public class PluginGroups {
 
   public PluginGroups() {
     myAllPlugins = PluginDescriptorLoader.loadUncachedDescriptors();
-    SwingWorker worker = new SwingWorker<List<PluginNode>, Object>() {
+    SwingWorker<List<PluginNode>, Object> worker = new SwingWorker<>() {
       @Override
-      protected List<PluginNode> doInBackground() {
+      protected @NotNull List<PluginNode> doInBackground() {
         try {
-          List<String> featuresPluginIds = ContainerUtil.map(getFeaturedPlugins().values(), value -> parsePluginId(value));
-          List<PluginNode> featuredPlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(featuresPluginIds);
-          List<@NotNull String> dependsIds =
-            featuredPlugins.stream()
-              .map(p -> p.getDependencies())
-              .flatMap(Collection::stream)
-              .filter(dep -> !dep.isOptional())
-              .map(dep -> dep.getPluginId().getIdString())
-              .collect(Collectors.toList());
-          List<PluginNode> dependsPlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(dependsIds);
-          featuredPlugins.addAll(dependsPlugins);
-          return featuredPlugins;
+          Set<PluginId> featuresPluginIds = getFeaturedPlugins()
+            .values()
+            .stream()
+            .map(PluginGroupDescription::new)
+            .map(PluginGroupDescription::getPluginId)
+            .collect(Collectors.toUnmodifiableSet());
+          MarketplaceRequests requests = MarketplaceRequests.getInstance();
+          List<PluginNode> featuredPlugins = requests.loadLastCompatiblePluginDescriptors(featuresPluginIds);
+
+          Set<PluginId> dependsIds = featuredPlugins
+            .stream()
+            .map(PluginNode::getDependencies)
+            .flatMap(Collection::stream)
+            .filter(dep -> !dep.isOptional())
+            .map(IdeaPluginDependency::getPluginId)
+            .collect(Collectors.toUnmodifiableSet());
+
+          ArrayList<PluginNode> result = new ArrayList<>(featuredPlugins);
+          result.addAll(requests.loadLastCompatiblePluginDescriptors(dependsIds));
+          return result;
         }
         catch (Exception e) {
           //OK, it's offline
@@ -280,21 +289,74 @@ public class PluginGroups {
     addTrainingPlugin(featuredPlugins);
   }
 
-  public static String parsePluginId(String string) {
-    int i = string.indexOf(':');
-    int j = string.indexOf(':', i + 1);
-    return string.substring(j + 1);
+  public static final class PluginGroupDescription {
+
+    // TODO store fields separately,
+    //      move featuredPlugins type to Map<String, PluginGroupDescription>
+    private final @NotNull String @NotNull [] myStrings;
+
+    public PluginGroupDescription(@NotNull @NonNls String idString,
+                                  @NotNull @Nls String topic,
+                                  @NotNull @Nls String description) {
+      myStrings = new String[]{topic, description, idString};
+    }
+
+    public PluginGroupDescription(@NotNull @Nls String string) {
+      myStrings = string.split(":", 3);
+    }
+
+    public @NotNull @Nls String getTopic() {
+      return myStrings[0];
+    }
+
+    public @NotNull @Nls String getDescription() {
+      return myStrings[1];
+    }
+
+    public @NotNull PluginId getPluginId() {
+      return PluginId.getId(myStrings[2]);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      PluginGroupDescription that = (PluginGroupDescription)o;
+      return Arrays.equals(myStrings, that.myStrings);
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(myStrings);
+    }
+
+    @Override
+    public String toString() {
+      return StringUtil.join(myStrings, ":");
+    }
   }
 
+  /**
+   * @deprecated Please migrate to {@link PluginGroupDescription}.
+   */
+  @Deprecated(since = "2020.2", forRemoval = true)
+  public static @NotNull @NonNls String parsePluginId(@NotNull @Nls String string) {
+    return new PluginGroupDescription(string)
+      .getPluginId()
+      .getIdString();
+  }
 
   protected static void addVcsGroup(@NotNull List<? super Group> groups) {
-    groups.add(new Group("Version Controls", IdeBundle.message("label.plugin.group.name.version.controls"), PlatformImplIcons.VersionControls, null, Arrays.asList(
-      "CVS",
-      "Git4Idea",
-      "org.jetbrains.plugins.github",
-      "hg4idea",
-      "PerforceDirectPlugin",
-      "Subversion",
+    groups.add(
+      new Group("Version Controls", IdeBundle.message("label.plugin.group.name.version.controls"), PlatformImplIcons.VersionControls, null,
+                Arrays.asList(
+                  "CVS",
+                  "Git4Idea",
+                  "org.jetbrains.plugins.github",
+                  "hg4idea",
+                  "PerforceDirectPlugin",
+                  "Subversion",
       "TFS"
     )));
   }

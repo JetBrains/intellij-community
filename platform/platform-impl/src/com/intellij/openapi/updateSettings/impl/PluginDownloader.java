@@ -3,7 +3,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.Application;
@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.ThrowableNotNullBiFunction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -60,7 +61,7 @@ public final class PluginDownloader {
   private IdeaPluginDescriptor myDescriptor;
   private File myFile;
   private Path myOldFile;
-  private MarketplaceRequests myMarketplaceRequests = MarketplaceRequests.getInstance();
+  private MarketplacePluginDownloadService myDownloadService;
 
   private boolean myShownErrors;
 
@@ -81,8 +82,13 @@ public final class PluginDownloader {
     myDescriptor = descriptor;
   }
 
-  public void setMarketplaceRequests(MarketplaceRequests requests) {
-    myMarketplaceRequests = requests;
+  public void setDownloadFunction(@NotNull ThrowableNotNullBiFunction<? super String, ? super ProgressIndicator, ? extends File, ? extends IOException> downloadFunction) {
+    myDownloadService = new MarketplacePluginDownloadService() {
+      @Override
+      public @NotNull File downloadPlugin(@NotNull String pluginUrl, @NotNull ProgressIndicator indicator) throws IOException {
+        return downloadFunction.fun(pluginUrl, indicator);
+      }
+    };
   }
 
   /**
@@ -305,12 +311,14 @@ public final class PluginDownloader {
   private @NotNull File downloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
-    if (myOldFile == null) {
-      return myMarketplaceRequests.downloadPlugin(myPluginUrl, indicator);
-    }
-    else {
-      return myMarketplaceRequests.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator);
-    }
+
+    MarketplacePluginDownloadService downloadService = myDownloadService != null ?
+                                                       myDownloadService :
+                                                       MarketplacePluginDownloadService.getInstance();
+
+    return myOldFile != null ?
+           downloadService.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
+           downloadService.downloadPlugin(myPluginUrl, indicator);
   }
 
   // creators-converters

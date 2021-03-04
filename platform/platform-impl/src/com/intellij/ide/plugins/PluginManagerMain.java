@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.PluginModulesHelper;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -168,25 +167,17 @@ public final class PluginManagerMain {
       }
 
       String pluginDescriptorUrl = plugin.getUrl();
-      try {
-        List<String> marketplacePlugins = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
-        if (marketplacePlugins == null) {
-          // There are no marketplace plugins in the cache, but we should show the title anyway.
-          setPluginHomePage(pluginDescriptorUrl, sb);
-          // will get the marketplace plugins ids next time
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            try {
-              MarketplaceRequests.getInstance().getMarketplacePlugins(null);
-            }
-            catch (IOException ignore) {}
-          });
-        }
-        else if (marketplacePlugins.contains(plugin.getPluginId().getIdString())) {
-          // Prevent the link to the marketplace from showing to external plugins
-          setPluginHomePage(pluginDescriptorUrl, sb);
-        }
+      PluginInfoProvider provider = PluginInfoProvider.getInstance();
+      Set<PluginId> marketplacePlugins = provider.loadCachedPlugins();
+      if (marketplacePlugins == null) {
+        // There are no marketplace plugins in the cache, but we should show the title anyway.
+        setPluginHomePage(pluginDescriptorUrl, sb);
+        // will get the marketplace plugins ids next time
+        provider.loadPlugins();
       }
-      catch (IOException ignore) {
+      else if (marketplacePlugins.contains(plugin.getPluginId())) {
+        // Prevent the link to the marketplace from showing to external plugins
+        setPluginHomePage(pluginDescriptorUrl, sb);
       }
 
       String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;

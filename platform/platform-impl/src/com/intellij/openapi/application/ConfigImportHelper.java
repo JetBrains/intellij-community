@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginInstaller;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.idea.SplashManager;
@@ -23,10 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,7 +63,7 @@ import java.util.zip.ZipFile;
 import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.openapi.application.CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile;
-import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.*;
+import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState;
 import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState.InitialImportScenario.*;
 import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
@@ -722,7 +718,7 @@ public final class ConfigImportHelper {
     boolean headless;
     boolean importPlugins = true;
     BuildNumber compatibleBuildNumber = null;
-    MarketplaceRequests marketplaceRequests = null;
+    ThrowableNotNullBiFunction<? super String, ? super ProgressIndicator, ? extends File, ? extends IOException> downloadFunction = null;
     Path bundledPluginPath = null;
     Map<PluginId, Set<String>> brokenPluginVersions = null;
 
@@ -905,8 +901,8 @@ public final class ConfigImportHelper {
 
       try {
         PluginDownloader downloader = PluginDownloader.createDownloader(plugin);
-        if (options.marketplaceRequests != null) {
-          downloader.setMarketplaceRequests(options.marketplaceRequests);
+        if (options.downloadFunction != null) {
+          downloader.setDownloadFunction(options.downloadFunction);
         }
         if (downloader.prepareToInstallAndLoadDescriptor(indicator, false) != null) {
           PluginInstaller.unpackPlugin(downloader.getFile().toPath(), newPluginsDir);

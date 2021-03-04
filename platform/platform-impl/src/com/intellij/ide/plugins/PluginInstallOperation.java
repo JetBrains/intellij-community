@@ -417,11 +417,14 @@ public class PluginInstallOperation {
   /**
    * Searches for plugin with id 'depPluginId' in custom repos and Marketplace and then takes one with bigger version number
    */
-  @Nullable
-  private IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId) {
-    IdeaPluginDescriptor pluginFromCustomRepos =
-      myCustomReposPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
-    PluginNode pluginFromMarketplace = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(depPluginId.getIdString());
+  private @Nullable IdeaPluginDescriptor findPluginInRepo(@NotNull PluginId depPluginId) {
+    IdeaPluginDescriptor pluginFromCustomRepos = myCustomReposPlugins
+      .stream()
+      .parallel()
+      .filter(p -> p.getPluginId().equals(depPluginId))
+      .findAny()
+      .orElse(null);
+    PluginNode pluginFromMarketplace = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(depPluginId);
     if (pluginFromCustomRepos == null) {
       return pluginFromMarketplace;
     }
@@ -430,7 +433,8 @@ public class PluginInstallOperation {
     }
     if (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginFromCustomRepos.getVersion(), pluginFromMarketplace) > 0) {
       return pluginFromCustomRepos;
-    } else {
+    }
+    else {
       return pluginFromMarketplace;
     }
   }

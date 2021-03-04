@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,8 +41,7 @@ final class InstallAndEnableTask extends Task.Modal {
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     try {
-      List<String> ids = ContainerUtil.map(myPluginIds, PluginId::getIdString);
-      List<PluginNode> marketplacePlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(ids);
+      List<PluginNode> marketplacePlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(myPluginIds);
       myCustomPlugins = PluginsAdvertiser.loadPluginsFromCustomRepositories(indicator);
 
       List<IdeaPluginDescriptor> descriptors = new ArrayList<>(UpdateChecker.mergePluginsFromRepositories(marketplacePlugins,

@@ -44,9 +44,9 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -613,23 +613,15 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private boolean isPluginFromMarketplace() {
-    try {
-      List<String> marketplacePlugins = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
-      if (marketplacePlugins != null) {
-        return marketplacePlugins.contains(myPlugin.getPluginId().getIdString());
-      }
+    assert myPlugin != null;
+    PluginInfoProvider provider = PluginInfoProvider.getInstance();
+    Set<PluginId> marketplacePlugins = provider.loadCachedPlugins();
+    if (marketplacePlugins != null) {
+      return marketplacePlugins.contains(myPlugin.getPluginId());
+    }
 
-      // will get the marketplace plugins ids next time
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          MarketplaceRequests.getInstance().getMarketplacePlugins(null);
-        }
-        catch (IOException ignore) {
-        }
-      });
-    }
-    catch (IOException ignored) {
-    }
+    // will get the marketplace plugins ids next time
+    provider.loadPlugins();
     // There are no marketplace plugins in the cache, but we should show the title anyway.
     return true;
   }

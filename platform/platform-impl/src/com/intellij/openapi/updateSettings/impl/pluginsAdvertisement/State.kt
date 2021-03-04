@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.mapSmartSet
 import com.intellij.util.containers.orNull
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -83,7 +84,7 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
       }
 
       val pluginIdsFromMarketplace = MarketplaceRequests.Instance
-        .getLastCompatiblePluginUpdate(dataSet.map { it.pluginIdString })
+        .getLastCompatiblePluginUpdate(dataSet.mapSmartSet { it.pluginId })
         .map { it.pluginId }
         .toSet()
 

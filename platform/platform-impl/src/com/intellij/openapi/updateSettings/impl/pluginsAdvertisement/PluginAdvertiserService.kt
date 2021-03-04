@@ -80,7 +80,7 @@ open class PluginAdvertiserService {
 
     if (ids.isNotEmpty()) {
       UpdateChecker.mergePluginsFromRepositories(
-        marketplaceRequests.loadLastCompatiblePluginDescriptors(ids.keys.map { it.idString }),
+        marketplaceRequests.loadLastCompatiblePluginDescriptors(ids.keys),
         customPlugins,
         true,
       ).filterNot { loadedPlugin ->

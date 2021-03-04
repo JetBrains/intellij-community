@@ -64,9 +64,9 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
   }
 
   private void onPluginGroupsLoaded() {
-    Map<String, IdeaPluginDescriptor> pluginsFromRepository = ContainerUtil.map2Map(
+    Map<PluginId, IdeaPluginDescriptor> pluginsFromRepository = ContainerUtil.map2Map(
       myPluginGroups.getPluginsFromRepository(),
-      descriptor -> Pair.create(descriptor.getPluginId().getIdString(), descriptor)
+      descriptor -> Pair.create(descriptor.getPluginId(), descriptor)
     );
     if (pluginsFromRepository.isEmpty()) {
       myInProgressLabel.setText(IdeBundle.message("label.cannot.get.featured.plugins.description.online"));
@@ -85,18 +85,11 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
       gbc.gridwidth = GridBagConstraints.REMAINDER;
       gbc.weightx = 1;
 
-      String title = entry.getKey();
-      String s = entry.getValue();
-      int i = s.indexOf(':');
-      String topic = s.substring(0, i);
-      int j = s.indexOf(':', i + 1);
-      String description = s.substring(i + 1, j);
-      final String pluginId = PluginGroups.parsePluginId(s);
-      IdeaPluginDescriptor foundDescriptor = pluginsFromRepository.get(pluginId);
-      if (foundDescriptor == null || PluginManagerCore.isBrokenPlugin(foundDescriptor)) {
+      PluginGroups.PluginGroupDescription groupDescription = new PluginGroups.PluginGroupDescription(entry.getValue());
+      final IdeaPluginDescriptor descriptor = pluginsFromRepository.get(groupDescription.getPluginId());
+      if (descriptor == null || PluginManagerCore.isBrokenPlugin(descriptor)) {
         continue;
       }
-      final IdeaPluginDescriptor descriptor = foundDescriptor;
 
       List<IdeaPluginDescriptor> dependentDescriptors = new ArrayList<>();
       boolean failedToFindDependencies = false;
@@ -106,7 +99,7 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
         if (PluginManagerCore.isModuleDependency(id) || myPluginGroups.findPlugin(id) != null) {
           continue;
         }
-        IdeaPluginDescriptor dependentDescriptor = pluginsFromRepository.get(id.getIdString());
+        IdeaPluginDescriptor dependentDescriptor = pluginsFromRepository.get(id);
         if (dependentDescriptor == null || PluginManagerCore.isBrokenPlugin(dependentDescriptor)) {
           failedToFindDependencies = true;
           break;
@@ -118,12 +111,20 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
       }
 
       final boolean isVIM = PluginGroups.IDEA_VIM_PLUGIN_ID.equals(descriptor.getPluginId().getIdString());
-      boolean isCloud = "#Cloud".equals(topic);
+      boolean isCloud = "#Cloud".equals(groupDescription.getTopic());
 
+      final String title;
+      final String description;
+      final String topic;
       if (isCloud) {
         title = descriptor.getName();
         description = StringUtil.defaultIfEmpty(descriptor.getDescription(), IdeBundle.message("label.no.description.available"));
         topic = StringUtil.defaultIfEmpty(descriptor.getCategory(), IdeBundle.message("label.plugin.descriptor.category.unknown"));
+      }
+      else {
+        title = entry.getKey();
+        description = groupDescription.getDescription();
+        topic = groupDescription.getTopic();
       }
 
       HtmlBuilder titleHtml =

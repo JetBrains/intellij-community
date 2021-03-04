@@ -340,9 +340,9 @@ public final class PluginInstaller {
       }
 
       if (file.toString().endsWith(".zip") && Registry.is("ide.plugins.keep.archive")) {
-        File tempFile = MarketplacePluginDownloadService.INSTANCE.getPluginTempFile();
+        File tempFile = MarketplacePluginDownloadService.getPluginTempFile();
         FileUtil.copy(file.toFile(), tempFile);
-        MarketplacePluginDownloadService.INSTANCE.renameFileToZipRoot(tempFile);
+        MarketplacePluginDownloadService.renameFileToZipRoot(tempFile);
       }
       return true;
     }
