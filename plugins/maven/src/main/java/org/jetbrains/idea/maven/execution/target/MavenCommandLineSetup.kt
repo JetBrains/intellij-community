@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.CantRunException
+import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
@@ -109,7 +110,7 @@ class MavenCommandLineSetup(private val project: Project,
     val uploadRoot = createUploadRoot(MavenRuntimeType.MAVEN_EXT_CLASS_PATH_VOLUME, uploadPath.parent)
     request.uploadVolumes += uploadRoot
     val targetValue = upload(uploadRoot, uploadPath.toString(), uploadPath.fileName.toString())
-    mavenOptsValues.add(TargetValue.map(targetValue) { "-D" + MavenServerEmbedder.MAVEN_EXT_CLASS_PATH + "=" + it })
+    commandLine.addParameter(TargetValue.map(targetValue) { "-D" + MavenServerEmbedder.MAVEN_EXT_CLASS_PATH + "=" + it })
   }
 
   private fun addMavenParameters(settings: MavenRunConfiguration.MavenSettings, mavenOptsValues: MutableList<TargetValue<String>>) {
