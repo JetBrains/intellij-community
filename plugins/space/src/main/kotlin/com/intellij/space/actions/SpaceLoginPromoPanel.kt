@@ -41,7 +41,7 @@ internal fun buildLoginPanelWithPromo(state: SpaceLoginState.Disconnected,
       border = prettyBorder()
     }
 
-    val content = if (state.error?.isNotBlank() == true) loginPanel else promoPanel
+    val content = if (state.server.isNotBlank() || state.error?.isNotBlank() == true) loginPanel else promoPanel
     setContent(content)
     repaint()
   }
