@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -221,7 +222,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
       ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
       actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
-      action.actionPerformed(event);
+      ActionUtil.performAction(action, event);
       actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
     }
   }

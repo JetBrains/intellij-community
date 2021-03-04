@@ -2,6 +2,7 @@
 package com.intellij.openapi.keymap.impl.keyGestures;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
@@ -136,7 +137,7 @@ public final class KeyboardGestureProcessor {
     }
 
     private void execute(final AnActionEvent anActionEvent, final AnAction action, final InputEvent e) {
-      action.actionPerformed(anActionEvent);
+      ActionUtil.performAction(action, anActionEvent);
       e.consume();
     }
   }

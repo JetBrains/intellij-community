@@ -7,6 +7,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -113,7 +114,7 @@ public final class EditorTestUtil {
     }
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
-    action.actionPerformed(event);
+    ActionUtil.performAction(action, event);
     actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
   }
 

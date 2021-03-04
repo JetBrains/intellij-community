@@ -1553,7 +1553,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
             ActionManagerEx manager = ActionManagerEx.getInstanceEx();
             manager.fireBeforeActionPerformed(action, context, event);
 
-            action.actionPerformed(event);
+            ActionUtil.performAction(action, context, event);
 
             manager.queueActionPerformedEvent(action, context, event);
             ActionsCollector.getInstance().record(event.getProject(), action, event, null);

@@ -55,6 +55,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
@@ -543,7 +544,13 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
             ScopeChooserAction.this, inputEvent, ActionPlaces.TOOLBAR, dataContext);
           ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
           actionManager.fireBeforeActionPerformed(ScopeChooserAction.this, dataContext, event);
-          onProjectScopeToggled();
+          long startNanoTime = System.nanoTime();
+          try {
+            onProjectScopeToggled();
+          } finally {
+            long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
+            actionManager.fireFinallyActionPerformed(ScopeChooserAction.this, dataContext, event, durationMillis);
+          }
           actionManager.fireAfterActionPerformed(ScopeChooserAction.this, dataContext, event);
         }
       });

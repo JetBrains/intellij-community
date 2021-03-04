@@ -25,6 +25,8 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event);
 
+  public abstract void fireFinallyActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event, long durationMillis);
+
 
   public abstract void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext);
 

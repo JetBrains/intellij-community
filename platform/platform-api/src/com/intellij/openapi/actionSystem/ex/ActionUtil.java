@@ -25,6 +25,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -242,7 +243,8 @@ public final class ActionUtil {
     manager.fireAfterActionPerformed(action, e.getDataContext(), e);
   }
 
-  public static void performActionDumbAware(AnAction action, AnActionEvent e) {
+  public static void performActionDumbAware(AnAction action, DataContext context, AnActionEvent e) {
+    long startNanoTime = System.nanoTime();
     try {
       try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
         action.actionPerformed(e);
@@ -252,7 +254,31 @@ public final class ActionUtil {
       LOG.info(ex);
       showDumbModeWarning(e);
     }
+    finally {
+      long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
+      ActionManagerEx.getInstanceEx().fireFinallyActionPerformed(action, context, e, durationMillis);
+    }
   }
+
+  public static void performActionDumbAware(AnAction action, AnActionEvent e) {
+    performActionDumbAware(action, e.getDataContext(), e);
+  }
+
+  public static void performAction(AnAction action, @NotNull DataContext context, AnActionEvent e) {
+    long startNanoTime = System.nanoTime();
+    try {
+      action.actionPerformed(e);
+    }
+    finally {
+      long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
+      ActionManagerEx.getInstanceEx().fireFinallyActionPerformed(action, context, e, durationMillis);
+    }
+  }
+
+  public static void performAction(AnAction action, AnActionEvent e) {
+    performAction(action, e.getDataContext(), e);
+  }
+
   @NotNull
   public static AnActionEvent createEmptyEvent() {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
@@ -409,7 +435,7 @@ public final class ActionUtil {
     final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
       manager.fireBeforeActionPerformed(action, dataContext, event);
-      performActionDumbAware(action, event);
+      performActionDumbAware(action, dataContext, event);
       if (onDone != null) {
         onDone.run();
       }

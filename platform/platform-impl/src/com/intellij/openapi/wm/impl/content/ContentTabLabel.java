@@ -154,7 +154,7 @@ class ContentTabLabel extends BaseLabel {
           AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
             ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(action, dataContext, event);
-            ActionUtil.performActionDumbAware(action, event);
+            ActionUtil.performActionDumbAware(action, dataContext, event);
           }
         }
       }

@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
@@ -539,7 +540,7 @@ class RetypeSession(
     action.beforeActionPerformedUpdate(event)
     actionManager.fireBeforeActionPerformed(action, event.dataContext, event)
     LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
-    action.actionPerformed(event)
+    ActionUtil.performAction(action, event);
     actionManager.fireAfterActionPerformed(action, event.dataContext, event)
   }
 

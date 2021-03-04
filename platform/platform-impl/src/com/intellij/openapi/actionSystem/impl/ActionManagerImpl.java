@@ -1563,20 +1563,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    final List<EventPair<?>> customData = new ArrayList<>();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Language hostFileLanguage = getHostFileLanguage(dataContext, project);
-    customData.add(EventFields.CurrentFile.with(hostFileLanguage));
-    if (hostFileLanguage == null || hostFileLanguage == PlainTextLanguage.INSTANCE) {
-      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-      final Language language = file != null ? file.getLanguage() : null;
-      customData.add(EventFields.Language.with(language));
-    }
-    if (action instanceof FusAwareAction) {
-      List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
-      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
-    }
-    ActionsCollectorImpl.recordActionInvoked(project, action, event, customData);
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }
@@ -1605,6 +1592,31 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
     publisher().afterActionPerformed(action, dataContext, event);
+  }
+
+  @Override
+  public void fireFinallyActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event, long durationMillis) {
+    final List<EventPair<?>> customData = new ArrayList<>();
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Language hostFileLanguage = getHostFileLanguage(dataContext, project);
+    customData.add(EventFields.CurrentFile.with(hostFileLanguage));
+    if (hostFileLanguage == null || hostFileLanguage == PlainTextLanguage.INSTANCE) {
+      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+      final Language language = file != null ? file.getLanguage() : null;
+      customData.add(EventFields.Language.with(language));
+    }
+    if (action instanceof FusAwareAction) {
+      List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
+      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
+    }
+    if (durationMillis >= 0) {
+      // In order to successfully merge fast subsequent actions, we use 0ms as the duration value for all actions faster than 50ms
+      if (durationMillis < 50) {
+        durationMillis = 0;
+      }
+      customData.add(EventFields.DurationMs.with(durationMillis));
+    }
+    ActionsCollectorImpl.recordActionInvoked(project, action, event, customData);
   }
 
   @Override
@@ -1739,7 +1751,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           }
         }, AWTEvent.WINDOW_EVENT_MASK, result);
 
-        ActionUtil.performActionDumbAware(action, event);
+        ActionUtil.performActionDumbAware(action, context, event);
         result.setDone();
         queueActionPerformedEvent(action, context, event);
       });

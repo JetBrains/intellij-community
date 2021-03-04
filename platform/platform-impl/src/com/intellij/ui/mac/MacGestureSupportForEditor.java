@@ -7,6 +7,7 @@ import com.apple.eawt.event.PressureListener;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
@@ -56,7 +57,7 @@ public final class MacGestureSupportForEditor {
 
           if (context != null && !context.isShowing()) continue;
 
-          action.actionPerformed(actionEvent);
+          ActionUtil.performAction(action, dataContext, actionEvent);
         }
       }
     }

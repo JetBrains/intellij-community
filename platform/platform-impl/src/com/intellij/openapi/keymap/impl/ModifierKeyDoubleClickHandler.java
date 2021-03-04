@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -262,7 +263,7 @@ public final class ModifierKeyDoubleClickHandler {
         if (!anActionEvent.getPresentation().isEnabled()) return false;
 
         ex.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-        action.actionPerformed(anActionEvent);
+        ActionUtil.performAction(action, anActionEvent);
         ex.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         ActionsCollectorImpl
           .recordCustomActionInvoked(anActionEvent.getProject(), "DoubleShortcut", anActionEvent.getInputEvent(), action.getClass());
