@@ -82,11 +82,11 @@ private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.9.0/python-3.9.0-amd64.exe",
-      28158664,
-      "b61a33dc28f13b561452f3089c87eb63",
+      "https://www.python.org/ftp/python/3.9.2/python-3.9.2-amd64.exe",
+      28287512,
+      "efb20aa1b648a2baddd949c142d6eb06",
       hashFunction,
-      "python-3.9.0-amd64.exe"
+      "python-3.9.2-amd64.exe"
     )
   }
 }
@@ -111,11 +111,11 @@ private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.8.6/python-3.8.6-amd64.exe",
-      28076528,
-      "2acba3117582c5177cdd28b91bbe9ac9",
+      "https://www.python.org/ftp/python/3.8.8/python-3.8.8-amd64.exe",
+      28217976,
+      "77a54a14239b6d7d0dcbe2e3a507d2f0",
       hashFunction,
-      "python-3.8.6-amd64.exe"
+      "python-3.8.8-amd64.exe"
     )
   }
 }
