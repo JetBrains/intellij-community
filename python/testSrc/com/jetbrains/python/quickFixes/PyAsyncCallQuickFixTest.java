@@ -17,9 +17,8 @@ public class PyAsyncCallQuickFixTest extends PyQuickFixTestCase {
 
   // PY-17292
   public void testAddYieldFromBeforeCall() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35,
-                         () -> doMultifilesTest(PyAsyncCallInspection.class, PyPsiBundle.message("QFIX.coroutine.is.not.awaited"),
-                                                new String[]{"addYieldFromBeforeCall.py", "asyncio/__init__.py", "asyncio/coroutines.py"}));
+    doMultifilesTest(PyAsyncCallInspection.class, PyPsiBundle.message("QFIX.coroutine.is.not.awaited"),
+                     new String[]{"addYieldFromBeforeCall.py", "asyncio/__init__.py", "asyncio/coroutines.py"});
   }
 
   @Nullable

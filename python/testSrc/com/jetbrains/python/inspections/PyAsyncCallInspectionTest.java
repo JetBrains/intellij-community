@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,21 +46,7 @@ public class PyAsyncCallInspectionTest extends PyInspectionTestCase {
 
   // PY-31598
   public void testScheduleTask37() {
-    doMultiFileTest37("a.py");
-  }
-
-  @Override
-  protected void doMultiFileTest(@NotNull String filename) {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> super.doMultiFileTest(filename));
-  }
-
-  protected void doMultiFileTest37(@NotNull String filename) {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest(filename));
-  }
-
-  @Override
-  protected void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> super.doTest());
+    doMultiFileTest("a.py");
   }
 
   @NotNull

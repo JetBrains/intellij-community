@@ -17,7 +17,6 @@ package com.jetbrains.python;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ public class Py3HighlightingTest extends PyTestCase {
 
   // PY-20770
   public void testNonEmptyReturnInsideAsyncDef() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
+    doTest(true, false);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {

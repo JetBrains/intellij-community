@@ -4,20 +4,14 @@ package com.jetbrains.python;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 
 public class Py3DeprecationTest extends PyTestCase {
 
   public void testAbcDeprecatedAbstracts() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        myFixture.enableInspections(PyDeprecationInspection.class);
-        myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
-        myFixture.checkHighlighting(true, false, false);
-      }
-    );
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
+    myFixture.checkHighlighting(true, false, false);
   }
 
   @Nullable

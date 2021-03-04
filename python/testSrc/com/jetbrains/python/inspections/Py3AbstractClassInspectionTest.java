@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +10,7 @@ public class Py3AbstractClassInspectionTest extends PyInspectionTestCase {
 
   // PY-30789
   public void testHiddenForAbstractSubclassWithABCSuperclass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   @Nullable

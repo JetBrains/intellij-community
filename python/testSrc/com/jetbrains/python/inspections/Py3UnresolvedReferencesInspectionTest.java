@@ -23,7 +23,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -56,36 +55,24 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     return TEST_DIRECTORY;
   }
 
-  @Override
-  protected void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doTest());
-  }
-
-  @Override
-  protected void doMultiFileTest(@NotNull final String filename) {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doMultiFileTest(filename));
-  }
-
   protected void doMultiFileTest(@NotNull String filename, @NotNull List<String> sourceRoots) {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
-      final Module module = myFixture.getModule();
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    final Module module = myFixture.getModule();
+    for (String root : sourceRoots) {
+      PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
+    }
+    try {
+      final PsiFile currentFile = myFixture.configureFromTempProjectFile(filename);
+      myFixture.enableInspections(getInspectionClass());
+      myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+      assertProjectFilesNotParsed(currentFile);
+      assertSdkRootsNotParsed(currentFile);
+    }
+    finally {
       for (String root : sourceRoots) {
-        PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
+        PsiTestUtil.removeSourceRoot(module, myFixture.findFileInTempDir(root));
       }
-      try {
-        final PsiFile currentFile = myFixture.configureFromTempProjectFile(filename);
-        myFixture.enableInspections(getInspectionClass());
-        myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
-        assertProjectFilesNotParsed(currentFile);
-        assertSdkRootsNotParsed(currentFile);
-      }
-      finally {
-        for (String root : sourceRoots) {
-          PsiTestUtil.removeSourceRoot(module, myFixture.findFileInTempDir(root));
-        }
-      }
-    });
+    }
   }
 
   public void testNamedTuple() {

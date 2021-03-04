@@ -19,7 +19,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyMethodOverridingInspection;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,7 @@ public class Py3MethodOverridingInspectionTest extends PyInspectionTestCase {
 
   // PY-17828
   public void testDunderPrepare() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   @NotNull
