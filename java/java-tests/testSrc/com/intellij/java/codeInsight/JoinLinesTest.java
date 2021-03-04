@@ -195,7 +195,8 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
       settings.IF_BRACE_FORCE = old;
     }
   }
-
+  
+  public void testUnwrapCodeBlockIfElse() { doTest(); }
   public void testAssignmentExpression() { doTest(); }
   public void testAssignmentExpression2() { doTest(); }
   public void testAssignmentExpressionPrecedence() { doTest(); }
