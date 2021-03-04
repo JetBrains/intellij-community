@@ -7,7 +7,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.annotations.XCollection
 
-
 @State(
     name = "FeatureSuggesterSettings",
     storages = [Storage("FeatureSuggester.xml")]

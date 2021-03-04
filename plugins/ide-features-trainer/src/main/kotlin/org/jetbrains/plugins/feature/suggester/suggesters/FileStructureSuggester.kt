@@ -5,7 +5,6 @@ import com.intellij.find.FindModel
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiNamedElement
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.EditorFindAction
@@ -39,9 +38,9 @@ class FileStructureSuggester : FeatureSuggester {
                 val findModel = getFindModel(project)
                 val textToFind = findModel.stringToFind
                 val definition = getDefinitionOnCaret(psiFile, editor.caretModel.offset)
-                if (definition is PsiNamedElement
-                    && langSupport.isFileStructureElement(definition)
-                    && definition.name?.contains(textToFind, !findModel.isCaseSensitive) == true
+                if (definition is PsiNamedElement &&
+                    langSupport.isFileStructureElement(definition) &&
+                    definition.name.contains(textToFind, !findModel.isCaseSensitive) == true
                 ) {
                     return createTipSuggestion(
                         createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
@@ -81,7 +80,6 @@ class FileStructureSuggester : FeatureSuggester {
         findModel.copyFrom(findManager.findInFileModel)
         return findModel
     }
-
 
     override val id: String = "File structure"
 

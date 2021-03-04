@@ -1,9 +1,13 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.openapi.ide.CopyPasteManager
-import org.jetbrains.plugins.feature.suggester.*
+import org.jetbrains.plugins.feature.suggester.NoSuggestion
+import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorCopyAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorCopyAction
+import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
+import org.jetbrains.plugins.feature.suggester.asString
+import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport

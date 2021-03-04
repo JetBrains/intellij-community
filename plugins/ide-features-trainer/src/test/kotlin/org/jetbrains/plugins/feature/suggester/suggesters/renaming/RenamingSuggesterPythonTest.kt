@@ -163,5 +163,4 @@ class RenamingSuggesterPythonTest : RenamingSuggesterTest() {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
-
 }

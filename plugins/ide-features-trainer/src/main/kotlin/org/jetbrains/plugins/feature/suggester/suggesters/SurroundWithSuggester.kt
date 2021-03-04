@@ -5,7 +5,11 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.actions.*
+import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
+import org.jetbrains.plugins.feature.suggester.actions.PsiAction
 import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
 import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
@@ -69,9 +73,9 @@ class SurroundWithSuggester : FeatureSuggester {
         }
         when (action) {
             is ChildReplacedAction -> {
-                if (langSupport.isIfStatement(action.newChild) && action.oldChild.text == "i"
-                    || langSupport.isForStatement(action.newChild) && action.oldChild.text == "fo"
-                    || langSupport.isWhileStatement(action.newChild) && action.oldChild.text == "whil"
+                if (langSupport.isIfStatement(action.newChild) && action.oldChild.text == "i" ||
+                    langSupport.isForStatement(action.newChild) && action.oldChild.text == "fo" ||
+                    langSupport.isWhileStatement(action.newChild) && action.oldChild.text == "whil"
                 ) {
                     State.applySurroundingStatementAddition(action.newChild, action.timeMillis)
                 }
@@ -97,8 +101,8 @@ class SurroundWithSuggester : FeatureSuggester {
                             State.saveFirstStatementInBlock()
                         }
                     } else if (text == "}") {
-                        if (State.isLeftBraceAdded
-                            && State.isBraceAddedToStatement(psiFile, textInsertedAction.caretOffset)
+                        if (State.isLeftBraceAdded &&
+                            State.isBraceAddedToStatement(psiFile, textInsertedAction.caretOffset)
                         ) {
                             State.applyBraceAddition(action.timeMillis, "}")
                             if (State.isStatementsSurrounded()) {
@@ -153,15 +157,15 @@ class SurroundWithSuggester : FeatureSuggester {
     }
 
     private fun State.isStatementsSurrounded(): Boolean {
-        if (surroundingStatement?.isValid == false
-            || !isLeftBraceAdded
-            || !isRightBraceAdded
+        if (surroundingStatement?.isValid == false ||
+            !isLeftBraceAdded ||
+            !isRightBraceAdded
         ) {
             return false
         }
         val statements = surroundingStatement!!.getStatements()
-        return statements.isNotEmpty()
-                && statements.first().text == firstStatementInBlockText
+        return statements.isNotEmpty() &&
+            statements.first().text == firstStatementInBlockText
     }
 
     private fun PsiElement.getStatements(): List<PsiElement> {
@@ -174,9 +178,9 @@ class SurroundWithSuggester : FeatureSuggester {
     }
 
     private fun PsiElement.isSurroundingStatement(): Boolean {
-        return langSupport.isIfStatement(this)
-                || langSupport.isForStatement(this)
-                || langSupport.isWhileStatement(this)
+        return langSupport.isIfStatement(this) ||
+            langSupport.isForStatement(this) ||
+            langSupport.isWhileStatement(this)
     }
 
     override val id: String = "Surround with"

@@ -11,7 +11,7 @@ sealed class DebugAction : Action() {
         get() = Language.ANY
 }
 
-//-------------------------------------Debug Process Actions-----------------------------------------------------------
+// -------------------------------------Debug Process Actions-----------------------------------------------------------
 data class DebugProcessStartedAction(
     override val project: Project,
     override val timeMillis: Long
@@ -22,8 +22,7 @@ data class DebugProcessStoppedAction(
     override val timeMillis: Long
 ) : DebugAction()
 
-
-//-------------------------------------Debug Session Actions--------------------------------------------------------------
+// -------------------------------------Debug Session Actions--------------------------------------------------------------
 abstract class DebugSessionAction : DebugAction() {
     abstract val position: XSourcePosition
 
@@ -55,8 +54,7 @@ data class BeforeDebugSessionResumedAction(
     override val timeMillis: Long
 ) : DebugSessionAction()
 
-
-//-------------------------------------Breakpoint Actions--------------------------------------------------------------
+// -------------------------------------Breakpoint Actions--------------------------------------------------------------
 abstract class BreakpointAction : DebugAction() {
     abstract val breakpoint: XBreakpoint<*>
 

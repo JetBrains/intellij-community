@@ -8,9 +8,29 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actions.*
+import com.intellij.openapi.editor.actions.BackspaceAction
+import com.intellij.openapi.editor.actions.CopyAction
+import com.intellij.openapi.editor.actions.CutAction
+import com.intellij.openapi.editor.actions.EscapeAction
+import com.intellij.openapi.editor.actions.IncrementalFindAction
+import com.intellij.openapi.editor.actions.PasteAction
 import com.intellij.openapi.ide.CopyPasteManager
-import org.jetbrains.plugins.feature.suggester.actions.*
+import org.jetbrains.plugins.feature.suggester.actions.BeforeCompletionChooseItemAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorBackspaceAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorCodeCompletionAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorCopyAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorCutAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorEscapeAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorFindAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorPasteAction
+import org.jetbrains.plugins.feature.suggester.actions.CompletionChooseItemAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorBackspaceAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorCodeCompletionAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorCopyAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorCutAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorEscapeAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorFindAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorPasteAction
 import org.jetbrains.plugins.feature.suggester.asString
 import org.jetbrains.plugins.feature.suggester.getSelection
 import org.jetbrains.plugins.feature.suggester.handleAction
@@ -213,9 +233,9 @@ object EditorActionsListener : AnActionListener {
     }
 
     private fun AnAction.isSupportedAction(): Boolean {
-        return this is CopyAction || this is CutAction
-                || this is PasteAction || this is BackspaceAction
-                || this is IncrementalFindAction || this is CodeCompletionAction
-                || this is ChooseItemAction.FocusedOnly || this is EscapeAction
+        return this is CopyAction || this is CutAction ||
+            this is PasteAction || this is BackspaceAction ||
+            this is IncrementalFindAction || this is CodeCompletionAction ||
+            this is ChooseItemAction.FocusedOnly || this is EscapeAction
     }
 }

@@ -11,8 +11,8 @@ class FeatureSuggesterConfigurable : Configurable, Configurable.WithEpDependenci
     private val panel = FeatureSuggestersPanel(suggestingActionNames, settings)
 
     override fun isModified(): Boolean {
-        return settings.suggestingIntervalDays != panel.getSuggestingIntervalDays()
-                || suggestingActionNames.any { settings.isEnabled(it) != panel.isSelected(it) }
+        return settings.suggestingIntervalDays != panel.getSuggestingIntervalDays() ||
+            suggestingActionNames.any { settings.isEnabled(it) != panel.isSelected(it) }
     }
 
     override fun apply() {

@@ -12,18 +12,18 @@ import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
 /**
  * feature_suggester group configuration
 {
-    "event_id": [
-        "notification.showed",
-        "notification.dont_suggest",
-        "notification.thanks",
-        "notification.learn_more",
-        "suggestion_found"
-    ],
-    "event_data": {
-        "suggester_id": [
-            "{util#feature_suggester_id}"
-        ]
-    }
+"event_id": [
+"notification.showed",
+"notification.dont_suggest",
+"notification.thanks",
+"notification.learn_more",
+"suggestion_found"
+],
+"event_data": {
+"suggester_id": [
+"{util#feature_suggester_id}"
+]
+}
 }
  */
 class FeatureSuggestersStatisticsCollector {

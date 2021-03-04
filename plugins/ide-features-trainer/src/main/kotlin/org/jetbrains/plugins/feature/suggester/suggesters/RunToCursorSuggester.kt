@@ -67,9 +67,9 @@ class RunToCursorSuggester : FeatureSuggester {
                 }
             }
             is BreakpointRemovedAction -> {
-                if (State.isPausedOnBreakpoint
-                    && isOnTheSameLine(action.position, State.addedBreakpointPosition)
-                    && !State.isOutOfDate(action.timeMillis)
+                if (State.isPausedOnBreakpoint &&
+                    isOnTheSameLine(action.position, State.addedBreakpointPosition) &&
+                    !State.isOutOfDate(action.timeMillis)
                 ) {
                     State.reset()
                     return createDocumentationSuggestion(
@@ -91,7 +91,7 @@ class RunToCursorSuggester : FeatureSuggester {
 //            SUGGESTING_ACTION_ID,
 //            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
 //        )
-        return false   // todo: edit this method when RunToCursor action statistics will be fixed.
+        return false // todo: edit this method when RunToCursor action statistics will be fixed.
     }
 
     override val id: String = "Run to cursor"

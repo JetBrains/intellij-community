@@ -12,8 +12,7 @@ sealed class PsiAction : Action() {
         get() = parent.project
 }
 
-
-//-------------------------------------PSI AFTER ACTIONS-----------------------------------------------------------------------------------
+// -------------------------------------PSI AFTER ACTIONS-----------------------------------------------------------------------------------
 data class ChildrenChangedAction(
     override val parent: PsiElement,
     override val timeMillis: Long
@@ -21,7 +20,8 @@ data class ChildrenChangedAction(
 
 data class ChildAddedAction(
     override val parent: PsiElement,
-    val newChild: PsiElement, override val timeMillis: Long
+    val newChild: PsiElement,
+    override val timeMillis: Long
 ) : PsiAction()
 
 data class ChildReplacedAction(
@@ -49,8 +49,7 @@ data class ChildMovedAction(
     override val timeMillis: Long
 ) : PsiAction()
 
-
-//-------------------------------------PSI BEFORE ACTIONS----------------------------------------------------------------------------------
+// -------------------------------------PSI BEFORE ACTIONS----------------------------------------------------------------------------------
 data class BeforeChildrenChangedAction(
     override val parent: PsiElement,
     override val timeMillis: Long

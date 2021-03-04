@@ -3,8 +3,12 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.plugins.feature.suggester.*
+import org.jetbrains.plugins.feature.suggester.NoSuggestion
+import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.TextFragment
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
+import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
+import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
@@ -105,8 +109,8 @@ class UnwrapSuggester : FeatureSuggester {
     }
 
     private fun State.checkStatementStartDeleted(action: BeforeEditorTextRemovedAction): Boolean {
-        return !isOutOfDate(action.timeMillis)
-                && surroundingStatementStartOffset == action.textFragment.contentStartOffset
+        return !isOutOfDate(action.timeMillis) &&
+            surroundingStatementStartOffset == action.textFragment.contentStartOffset
     }
 
     private fun handleStatementStartDeletedFirst(action: BeforeEditorTextRemovedAction) {
@@ -150,9 +154,9 @@ class UnwrapSuggester : FeatureSuggester {
         }
 
     private fun PsiElement.isSurroundingStatement(): Boolean {
-        return langSupport.isIfStatement(this)
-                || langSupport.isForStatement(this)
-                || langSupport.isWhileStatement(this)
+        return langSupport.isIfStatement(this) ||
+            langSupport.isForStatement(this) ||
+            langSupport.isWhileStatement(this)
     }
 
     override val id: String = "Unwrap"

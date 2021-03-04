@@ -7,7 +7,12 @@ import com.intellij.util.ui.ThreeStateCheckBox.State
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JCheckBox
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.border.EmptyBorder
 
 private typealias ActionListener = (ActionEvent) -> Unit
@@ -125,7 +130,7 @@ class FeatureSuggestersPanel(
                 if (selected) somethingIsSelected = true
                 it.select(selected)
             }
-            if(somethingIsSelected) {
+            if (somethingIsSelected) {
                 toggleAllCheckBox.state = State.DONT_CARE
             } else {
                 toggleAllCheckBox.state = State.NOT_SELECTED

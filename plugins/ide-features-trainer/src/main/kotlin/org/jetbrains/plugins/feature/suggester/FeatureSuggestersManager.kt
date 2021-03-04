@@ -71,20 +71,24 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     }
 
     private fun fireSuggestionFound(suggestion: PopupSuggestion) {
-        project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion) // send event for testing
+        project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC)
+            .featureFound(suggestion) // send event for testing
     }
 
     private fun initFocusListener() {
         val eventMulticaster = EditorFactory.getInstance().eventMulticaster as? EditorEventMulticasterEx
-        eventMulticaster?.addFocusChangeListener(FocusChangeListener { editor ->
-            if (editor.project != project) return@FocusChangeListener
-            actionPerformed(
-                EditorFocusGainedAction(
-                    editorRef = WeakReference(editor),
-                    timeMillis = System.currentTimeMillis()
+        eventMulticaster?.addFocusChangeListener(
+            FocusChangeListener { editor ->
+                if (editor.project != project) return@FocusChangeListener
+                actionPerformed(
+                    EditorFocusGainedAction(
+                        editorRef = WeakReference(editor),
+                        timeMillis = System.currentTimeMillis()
+                    )
                 )
-            )
-        }, this)
+            },
+            this
+        )
     }
 
     override fun dispose() {

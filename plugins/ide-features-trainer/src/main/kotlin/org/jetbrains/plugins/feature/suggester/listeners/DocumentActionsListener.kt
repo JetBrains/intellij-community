@@ -9,7 +9,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.guessProjectForFile
 import org.jetbrains.plugins.feature.suggester.TextFragment
-import org.jetbrains.plugins.feature.suggester.actions.*
+import org.jetbrains.plugins.feature.suggester.actions.Action
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextInsertedAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
+import org.jetbrains.plugins.feature.suggester.actions.EditorTextRemovedAction
 import org.jetbrains.plugins.feature.suggester.handleAction
 import java.lang.ref.WeakReference
 

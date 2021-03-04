@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.history
 
 import org.jetbrains.plugins.feature.suggester.actions.Action
-import java.util.*
+import java.util.LinkedList
 
 open class ChangesHistory<EventType>(private val maxHistorySize: Int) {
 
@@ -44,6 +44,5 @@ open class ChangesHistory<EventType>(private val maxHistorySize: Int) {
         }
     }
 }
-
 
 class UserActionsHistory(maxCacheSize: Int) : ChangesHistory<Action>(maxCacheSize)

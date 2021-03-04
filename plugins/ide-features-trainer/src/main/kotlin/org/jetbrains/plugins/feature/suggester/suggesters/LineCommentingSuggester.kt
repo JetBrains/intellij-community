@@ -40,8 +40,8 @@ class LineCommentingSuggester : FeatureSuggester {
         if (curAction is EditorTextInsertedAction) {
             if (isCommentSymbolAdded(curAction, '/')) {
                 firstSlashAddedAction = curAction
-            } else if (firstSlashAddedAction != null && isSecondSlashAdded(curAction, firstSlashAddedAction!!)
-                || isCommentSymbolAdded(curAction, '#')
+            } else if (firstSlashAddedAction != null && isSecondSlashAdded(curAction, firstSlashAddedAction!!) ||
+                isCommentSymbolAdded(curAction, '#')
             ) {
                 val document = curAction.document ?: return NoSuggestion
                 val commentData = CommentData(
@@ -52,8 +52,8 @@ class LineCommentingSuggester : FeatureSuggester {
                 commentsHistory.add(commentData)
                 firstSlashAddedAction = null
 
-                if (commentsHistory.size == NUMBER_OF_COMMENTS_TO_GET_SUGGESTION
-                    && commentsHistory.isLinesCommentedInARow()
+                if (commentsHistory.size == NUMBER_OF_COMMENTS_TO_GET_SUGGESTION &&
+                    commentsHistory.isLinesCommentedInARow()
                 ) {
                     commentsHistory.clear()
                     return createTipSuggestion(
@@ -94,23 +94,25 @@ class LineCommentingSuggester : FeatureSuggester {
         val prevPsiFile = prevAction.psiFile ?: return false
         val prevDocument = curAction.document ?: return false
         if (curPsiFile !== prevPsiFile || curDocument !== prevDocument) return false
-        return curAction.text == "/"
-                && abs(curAction.caretOffset - prevAction.caretOffset) == 1
-                && curDocument.getLineNumber(curAction.caretOffset) == prevDocument.getLineNumber(prevAction.caretOffset)
+        return curAction.text == "/" &&
+            abs(curAction.caretOffset - prevAction.caretOffset) == 1 &&
+            curDocument.getLineNumber(curAction.caretOffset) == prevDocument.getLineNumber(prevAction.caretOffset)
     }
 
     private fun ChangesHistory<CommentData>.isLinesCommentedInARow(): Boolean {
         val comments = asIterable()
-        return !(comments.map(CommentData::lineNumber)
-            .sorted()
-            .zipWithNext { first, second -> second - first }
-            .any { it != 1 }
-                || comments.map { it.documentRef.get() }
-            .zipWithNext { first, second -> first != null && first === second }
-            .any { !it }
-                || comments.map(CommentData::timeMillis)
-            .zipWithNext { first, second -> second - first }
-            .any { it > MAX_TIME_MILLIS_INTERVAL_BETWEEN_COMMENTS })
+        return !(
+            comments.map(CommentData::lineNumber)
+                .sorted()
+                .zipWithNext { first, second -> second - first }
+                .any { it != 1 } ||
+                comments.map { it.documentRef.get() }
+                    .zipWithNext { first, second -> first != null && first === second }
+                    .any { !it } ||
+                comments.map(CommentData::timeMillis)
+                    .zipWithNext { first, second -> second - first }
+                    .any { it > MAX_TIME_MILLIS_INTERVAL_BETWEEN_COMMENTS }
+            )
     }
 
     private fun Document.getLineByOffset(offset: Int): DocumentLine {

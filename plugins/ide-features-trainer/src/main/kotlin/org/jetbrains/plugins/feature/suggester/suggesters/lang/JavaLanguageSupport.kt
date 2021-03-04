@@ -1,6 +1,20 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiForStatement
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiIfStatement
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiWhileStatement
 import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 

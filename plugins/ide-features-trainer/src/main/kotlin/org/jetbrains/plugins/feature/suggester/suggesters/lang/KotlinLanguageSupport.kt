@@ -3,7 +3,18 @@ package org.jetbrains.plugins.feature.suggester.suggesters.lang
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.descendantsOfType
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtWhileExpression
 import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class KotlinLanguageSupport : LanguageSupport {
@@ -45,9 +56,9 @@ class KotlinLanguageSupport : LanguageSupport {
     }
 
     override fun isSupportedStatementToIntroduceVariable(element: PsiElement): Boolean {
-        return element is KtProperty || element is KtIfExpression
-                || element is KtCallExpression || element is KtQualifiedExpression
-                || element is KtReturnExpression
+        return element is KtProperty || element is KtIfExpression ||
+            element is KtCallExpression || element is KtQualifiedExpression ||
+            element is KtReturnExpression
     }
 
     override fun isPartOfExpression(element: PsiElement): Boolean {

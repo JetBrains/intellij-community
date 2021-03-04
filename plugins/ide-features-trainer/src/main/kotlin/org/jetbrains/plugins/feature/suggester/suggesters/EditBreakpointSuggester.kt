@@ -3,8 +3,12 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
 import com.intellij.xdebugger.breakpoints.XBreakpoint
-import org.jetbrains.plugins.feature.suggester.*
+import org.jetbrains.plugins.feature.suggester.NoSuggestion
+import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.DebugSessionPausedAction
+import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
+import org.jetbrains.plugins.feature.suggester.createTipSuggestion
+import org.jetbrains.plugins.feature.suggester.findBreakpointOnPosition
 import org.jetbrains.plugins.feature.suggester.history.ChangesHistory
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
@@ -35,8 +39,8 @@ class EditBreakpointSuggester : FeatureSuggester {
                     pausesOnBreakpointHistory.clear()
                 }
 
-                if (pausesOnBreakpointHistory.isAllOnTheSameLine()
-                    && !isOnTheSameLine(pausesOnBreakpointHistory.lastOrNull(), previousSuggestionPosition)
+                if (pausesOnBreakpointHistory.isAllOnTheSameLine() &&
+                    !isOnTheSameLine(pausesOnBreakpointHistory.lastOrNull(), previousSuggestionPosition)
                 ) {
                     previousSuggestionPosition = pausesOnBreakpointHistory.lastOrNull()
                     pausesOnBreakpointHistory.clear()

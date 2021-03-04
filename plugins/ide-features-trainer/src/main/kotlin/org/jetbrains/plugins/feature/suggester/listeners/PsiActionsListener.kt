@@ -3,7 +3,18 @@ package org.jetbrains.plugins.feature.suggester.listeners
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
-import org.jetbrains.plugins.feature.suggester.actions.*
+import org.jetbrains.plugins.feature.suggester.actions.BeforeChildAddedAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeChildMovedAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeChildRemovedAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforeChildrenChangedAction
+import org.jetbrains.plugins.feature.suggester.actions.BeforePropertyChangedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildMovedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildRemovedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
+import org.jetbrains.plugins.feature.suggester.actions.PropertyChangedAction
 import org.jetbrains.plugins.feature.suggester.handleAction
 
 class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() {

@@ -72,8 +72,8 @@ class RenamingSuggester : FeatureSuggester {
             is ChildReplacedAction -> {
                 val (parent, newChild, oldChild) = lastAction
                 if (langSupport.isIdentifier(newChild)) {
-                    if (renamedIdentifiersData.references.contains(parent)
-                        && renamedIdentifiersData.isAllRenamed()
+                    if (renamedIdentifiersData.references.contains(parent) &&
+                        renamedIdentifiersData.isAllRenamed()
                     ) {
                         return createTipSuggestion(
                             POPUP_MESSAGE,

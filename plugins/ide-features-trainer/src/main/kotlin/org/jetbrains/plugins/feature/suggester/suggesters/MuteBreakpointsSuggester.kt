@@ -2,8 +2,16 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
-import org.jetbrains.plugins.feature.suggester.*
-import org.jetbrains.plugins.feature.suggester.actions.*
+import org.jetbrains.plugins.feature.suggester.NoSuggestion
+import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.actions.BreakpointAddedAction
+import org.jetbrains.plugins.feature.suggester.actions.BreakpointRemovedAction
+import org.jetbrains.plugins.feature.suggester.actions.DebugProcessStartedAction
+import org.jetbrains.plugins.feature.suggester.actions.DebugProcessStoppedAction
+import org.jetbrains.plugins.feature.suggester.actions.DebugSessionPausedAction
+import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
+import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
+import org.jetbrains.plugins.feature.suggester.findBreakpointOnPosition
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
@@ -30,9 +38,9 @@ class MuteBreakpointsSuggester : FeatureSuggester {
         var curCountOfRemovedBreakpoints: Int = 0
 
         val isOutOfDate: Boolean
-            get() = lastPauseTimeMillis != 0L
-                    && lastBreakpointRemovedTimeMillis != 0L
-                    && abs(lastBreakpointRemovedTimeMillis - lastPauseTimeMillis) > MAX_TIME_MILLIS_BETWEEN_ACTIONS
+            get() = lastPauseTimeMillis != 0L &&
+                lastBreakpointRemovedTimeMillis != 0L &&
+                abs(lastBreakpointRemovedTimeMillis - lastPauseTimeMillis) > MAX_TIME_MILLIS_BETWEEN_ACTIONS
 
         fun applyPausedOnBreakpoint(position: XSourcePosition, timeMillis: Long) {
             lastBreakpointPosition = position

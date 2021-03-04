@@ -41,11 +41,14 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
 
     fun subscribeToSuggestions(suggestionFound: (PopupSuggestion) -> Unit) {
         project.messageBus.connect()
-            .subscribe(FeatureSuggestersManagerListener.TOPIC, object : FeatureSuggestersManagerListener {
-                override fun featureFound(suggestion: PopupSuggestion) {
-                    suggestionFound(suggestion)
+            .subscribe(
+                FeatureSuggestersManagerListener.TOPIC,
+                object : FeatureSuggestersManagerListener {
+                    override fun featureFound(suggestion: PopupSuggestion) {
+                        suggestionFound(suggestion)
+                    }
                 }
-            })
+            )
     }
 
     fun assertSuggestedCorrectly(actionId: String, suggestionMessage: String) {
@@ -69,8 +72,10 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     fun selectBetweenLogicalPositions(
-        lineStartIndex: Int, columnStartIndex: Int,
-        lineEndIndex: Int, columnEndIndex: Int
+        lineStartIndex: Int,
+        columnStartIndex: Int,
+        lineEndIndex: Int,
+        columnEndIndex: Int
     ) {
         moveCaretToLogicalPosition(lineStartIndex, columnStartIndex)
         moveCaretRelatively(columnEndIndex - columnStartIndex, lineEndIndex - lineStartIndex, true)
@@ -87,8 +92,10 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     fun copyBetweenLogicalPositions(
-        lineStartIndex: Int, columnStartIndex: Int,
-        lineEndIndex: Int, columnEndIndex: Int
+        lineStartIndex: Int,
+        columnStartIndex: Int,
+        lineEndIndex: Int,
+        columnEndIndex: Int
     ) {
         doBetweenLogicalPositions(
             lineStartIndex,
@@ -100,8 +107,10 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     fun cutBetweenLogicalPositions(
-        lineStartIndex: Int, columnStartIndex: Int,
-        lineEndIndex: Int, columnEndIndex: Int
+        lineStartIndex: Int,
+        columnStartIndex: Int,
+        lineEndIndex: Int,
+        columnEndIndex: Int
     ) {
         doBetweenLogicalPositions(
             lineStartIndex,
@@ -113,8 +122,10 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     fun deleteTextBetweenLogicalPositions(
-        lineStartIndex: Int, columnStartIndex: Int,
-        lineEndIndex: Int, columnEndIndex: Int
+        lineStartIndex: Int,
+        columnStartIndex: Int,
+        lineEndIndex: Int,
+        columnEndIndex: Int
     ) {
         doBetweenLogicalPositions(
             lineStartIndex,
@@ -126,8 +137,10 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     private fun doBetweenLogicalPositions(
-        lineStartIndex: Int, columnStartIndex: Int,
-        lineEndIndex: Int, columnEndIndex: Int,
+        lineStartIndex: Int,
+        columnStartIndex: Int,
+        lineEndIndex: Int,
+        columnEndIndex: Int,
         action: () -> Unit
     ) {
         val oldOffset = editor.caretModel.offset

@@ -5,11 +5,16 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentOfType
-import org.jetbrains.plugins.feature.suggester.*
+import org.jetbrains.plugins.feature.suggester.NoSuggestion
+import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
+import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
+import org.jetbrains.plugins.feature.suggester.asString
+import org.jetbrains.plugins.feature.suggester.createTipSuggestion
+import org.jetbrains.plugins.feature.suggester.getParentByPredicate
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
@@ -96,9 +101,9 @@ class IntroduceVariableSuggester : FeatureSuggester {
             }
             is ChildrenChangedAction -> {
                 if (extractedExprData == null) return NoSuggestion
-                if (action.parent === extractedExprData!!.declaration
-                    && !extractedExprData!!.variableEditingFinished
-                    && isVariableEditingFinished()
+                if (action.parent === extractedExprData!!.declaration &&
+                    !extractedExprData!!.variableEditingFinished &&
+                    isVariableEditingFinished()
                 ) {
                     extractedExprData!!.variableEditingFinished = true
                 }
@@ -120,8 +125,8 @@ class IntroduceVariableSuggester : FeatureSuggester {
         if (text.isBlank()) return null
         val content = text.trim()
         val copyPasteManager = CopyPasteManager.getInstance()
-        return if (copyPasteManager.areDataFlavorsAvailable(DataFlavor.stringFlavor)
-            && content == copyPasteManager.contents?.asString()?.trim()
+        return if (copyPasteManager.areDataFlavorsAvailable(DataFlavor.stringFlavor) &&
+            content == copyPasteManager.contents?.asString()?.trim()
         ) {
             content
         } else {
@@ -130,13 +135,13 @@ class IntroduceVariableSuggester : FeatureSuggester {
     }
 
     private fun ChildReplacedAction.isVariableDeclarationAdded(): Boolean {
-        return langSupport.isExpressionStatement(oldChild)
-                && langSupport.isVariableDeclaration(newChild)
+        return langSupport.isExpressionStatement(oldChild) &&
+            langSupport.isVariableDeclaration(newChild)
     }
 
     private fun ChildAddedAction.isVariableDeclarationAdded(): Boolean {
-        return langSupport.isCodeBlock(parent)
-                && langSupport.isVariableDeclaration(newChild)
+        return langSupport.isCodeBlock(parent) &&
+            langSupport.isVariableDeclaration(newChild)
     }
 
     private fun isVariableEditingFinished(): Boolean {
@@ -150,9 +155,9 @@ class IntroduceVariableSuggester : FeatureSuggester {
     private fun ChildReplacedAction.isVariableInserted(): Boolean {
         if (extractedExprData == null) return false
         with(extractedExprData!!) {
-            return variableEditingFinished && declaration != null
-                    && newChild.text == langSupport.getVariableName(declaration!!)
-                    && changedStatement === newChild.getTopmostStatementWithText("")
+            return variableEditingFinished && declaration != null &&
+                newChild.text == langSupport.getVariableName(declaration!!) &&
+                changedStatement === newChild.getTopmostStatementWithText("")
         }
     }
 

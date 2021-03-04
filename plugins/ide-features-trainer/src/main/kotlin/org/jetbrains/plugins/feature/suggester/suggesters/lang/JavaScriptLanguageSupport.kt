@@ -1,7 +1,17 @@
 package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
 import com.intellij.lang.ecmascript6.psi.ES6Class
-import com.intellij.lang.javascript.psi.*
+import com.intellij.lang.javascript.psi.JSBlockStatement
+import com.intellij.lang.javascript.psi.JSExpression
+import com.intellij.lang.javascript.psi.JSExpressionStatement
+import com.intellij.lang.javascript.psi.JSForStatement
+import com.intellij.lang.javascript.psi.JSFunction
+import com.intellij.lang.javascript.psi.JSIfStatement
+import com.intellij.lang.javascript.psi.JSLiteralExpression
+import com.intellij.lang.javascript.psi.JSStatement
+import com.intellij.lang.javascript.psi.JSVarStatement
+import com.intellij.lang.javascript.psi.JSVariable
+import com.intellij.lang.javascript.psi.JSWhileStatement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.descendantsOfType
@@ -70,8 +80,8 @@ class JavaScriptLanguageSupport : LanguageSupport {
     }
 
     override fun isFileStructureElement(element: PsiElement): Boolean {
-        return (element is JSVariable && element.getParentOfType<JSFunction>() == null)
-                || element is JSFunction || element is ES6Class
+        return (element is JSVariable && element.getParentOfType<JSFunction>() == null) ||
+            element is JSFunction || element is ES6Class
     }
 
     override fun isIdentifier(element: PsiElement): Boolean {

@@ -148,5 +148,4 @@ class RenamingSuggesterJavaTest : RenamingSuggesterTest() {
             TestCase.assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
-
 }
