@@ -619,6 +619,11 @@
     <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"
                          id="delete.in.column.mode"/>
 
+    <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
+                 description="Allows to restore the legacy behavior of Up/Down w.r.t. selection boundaries.\n\
+                              When true, moves the caret up or down as if there were no selection.\n\
+                              When false, places the caret at the line before or after the corresponding selection boundary."/>
+
     <editorFloatingToolbarProvider
       implementation="com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider"
       id="DefaultFloatingToolbarProvider"/>

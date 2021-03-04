@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 class MoveCaretUpOrDownHandler extends EditorActionHandler.ForEachCaret {
@@ -18,9 +20,16 @@ class MoveCaretUpOrDownHandler extends EditorActionHandler.ForEachCaret {
 
   @Override
   public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    if (caret.hasSelection() && (!(editor instanceof EditorEx) || !((EditorEx)editor).isStickySelection()) &&
+        !Registry.is("editor.action.caretMovement.UpDownIgnoreSelectionBoundaries", false)) {
+      int targetOffset = myDirection == Direction.DOWN ? caret.getSelectionEnd()
+                                                       : caret.getSelectionStart();
+      caret.moveToOffset(targetOffset);
+    }
+
     int lineShift = myDirection == MoveCaretUpOrDownHandler.Direction.DOWN ? 1 : -1;
-    editor.getCaretModel().moveCaretRelatively(0, lineShift, false, false,
-                                               caret == editor.getCaretModel().getPrimaryCaret());
+    caret.moveCaretRelatively(0, lineShift, false,
+                              caret == editor.getCaretModel().getPrimaryCaret());
   }
 
   @Override
