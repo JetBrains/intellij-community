@@ -50,7 +50,8 @@ class SurroundWithSuggester : FeatureSuggester {
         }
 
         fun isOutOfDate(newChangeTimeMillis: Long): Boolean {
-            return lastChangeTimeMillis != 0L && newChangeTimeMillis - lastChangeTimeMillis > MAX_TIME_MILLIS_BETWEEN_ACTIONS
+            return lastChangeTimeMillis != 0L &&
+                    newChangeTimeMillis - lastChangeTimeMillis > MAX_TIME_MILLIS_BETWEEN_ACTIONS
         }
 
         fun reset() {
@@ -66,6 +67,7 @@ class SurroundWithSuggester : FeatureSuggester {
     private val actionsSummary = actionsLocalSummary()
     override lateinit var langSupport: LanguageSupport
 
+    @Suppress("NestedBlockDepth")
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         val action = actions.lastOrNull() ?: return NoSuggestion
         if (State.surroundingStatement?.isValid == false && action is PsiAction) {
@@ -73,6 +75,7 @@ class SurroundWithSuggester : FeatureSuggester {
         }
         when (action) {
             is ChildReplacedAction -> {
+                @Suppress("ComplexCondition")
                 if (langSupport.isIfStatement(action.newChild) && action.oldChild.text == "i" ||
                     langSupport.isForStatement(action.newChild) && action.oldChild.text == "fo" ||
                     langSupport.isWhileStatement(action.newChild) && action.oldChild.text == "whil"
@@ -165,7 +168,7 @@ class SurroundWithSuggester : FeatureSuggester {
         }
         val statements = surroundingStatement!!.getStatements()
         return statements.isNotEmpty() &&
-            statements.first().text == firstStatementInBlockText
+                statements.first().text == firstStatementInBlockText
     }
 
     private fun PsiElement.getStatements(): List<PsiElement> {
@@ -179,8 +182,8 @@ class SurroundWithSuggester : FeatureSuggester {
 
     private fun PsiElement.isSurroundingStatement(): Boolean {
         return langSupport.isIfStatement(this) ||
-            langSupport.isForStatement(this) ||
-            langSupport.isWhileStatement(this)
+                langSupport.isForStatement(this) ||
+                langSupport.isWhileStatement(this)
     }
 
     override val id: String = "Surround with"

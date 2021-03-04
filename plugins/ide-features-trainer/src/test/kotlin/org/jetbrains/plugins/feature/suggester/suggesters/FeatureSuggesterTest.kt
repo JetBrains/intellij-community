@@ -8,7 +8,6 @@ import com.intellij.find.FindModel
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -165,7 +164,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         findModel.stringToFind = stringToFind
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return emptyList()
         val findResults: List<TextRange> =
-            findInFile(project, psiFile, findModel, fromOffset, isForward, isCaseSensitive)
+            findInFile(psiFile, findModel, fromOffset, isForward, isCaseSensitive)
         if (findResults.isNotEmpty()) {
             val firstOccurrence = findResults.first()
             moveCaretToOffset(firstOccurrence.endOffset - 1)
@@ -174,13 +173,13 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     fun findInFile(
-        project: Project,
         psiFile: PsiFile,
         findModel: FindModel,
         fromOffset: Int = 0,
         isForward: Boolean = true,
         isCaseSensitive: Boolean = false
     ): List<TextRange> {
+        val project = psiFile.project
         val document = PsiDocumentManager.getInstance(project).getDocument(psiFile) ?: return emptyList()
         val text = document.charsSequence
         val textLength = document.textLength

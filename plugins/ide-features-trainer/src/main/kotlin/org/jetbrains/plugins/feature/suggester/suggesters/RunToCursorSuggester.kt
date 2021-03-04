@@ -43,6 +43,7 @@ class RunToCursorSuggester : FeatureSuggester {
         }
     }
 
+    @Suppress("UnusedPrivateMember")
     private val actionsSummary = actionsLocalSummary()
     override lateinit var langSupport: LanguageSupport
 

@@ -32,7 +32,7 @@ sealed class EditorAction : Action() {
         get() = editorRef.get()?.document
 }
 
-// -------------------------------------EDITOR AFTER ACTIONS--------------------------------------------------------------------------------
+// -------------------------------------EDITOR AFTER ACTIONS-------------------------------------
 data class EditorBackspaceAction(
     val textFragment: TextFragment?,
     val caretOffset: Int,
@@ -101,7 +101,7 @@ data class EditorFocusGainedAction(
     override val timeMillis: Long
 ) : EditorAction()
 
-// -------------------------------------EDITOR BEFORE ACTIONS-------------------------------------------------------------------------------
+// -------------------------------------EDITOR BEFORE ACTIONS-------------------------------------
 data class BeforeEditorBackspaceAction(
     val textFragment: TextFragment?,
     val caretOffset: Int,

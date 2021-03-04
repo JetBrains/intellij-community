@@ -22,7 +22,7 @@ data class DebugProcessStoppedAction(
     override val timeMillis: Long
 ) : DebugAction()
 
-// -------------------------------------Debug Session Actions--------------------------------------------------------------
+// -------------------------------------Debug Session Actions-------------------------------------
 abstract class DebugSessionAction : DebugAction() {
     abstract val position: XSourcePosition
 

@@ -38,8 +38,10 @@ class FeatureSuggestersPanel(
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             border = JBUI.Borders.empty(0, 10, 0, 0)
         }
-        val instructionLabel =
-            JLabel("Configure suggestions for actions. It will suggest the following actions in cases where their application can be effective.")
+        val instructionLabel = JLabel(
+            "Configure suggestions for actions. " +
+                    "It will suggest the following actions in cases where their application can be effective."
+        )
         panel.apply {
             add(instructionLabel)
             add(Box.createRigidArea(JBUI.size(0, 10)))

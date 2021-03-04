@@ -1,3 +1,4 @@
+@file:Suppress("MatchingDeclarationName")
 package org.jetbrains.plugins.feature.suggester
 
 import com.intellij.internal.statistic.local.ActionsLocalSummary
@@ -14,6 +15,8 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
+import java.awt.datatransfer.UnsupportedFlavorException
+import java.io.IOException
 
 data class TextFragment(val startOffset: Int, val endOffset: Int, val text: String)
 
@@ -43,7 +46,9 @@ internal fun PsiElement.getParentByPredicate(predicate: (PsiElement) -> Boolean)
 internal fun Transferable.asString(): String? {
     return try {
         getTransferData(DataFlavor.stringFlavor) as? String
-    } catch (ex: Exception) {
+    } catch (ex: IOException) {
+        null
+    } catch (ex: UnsupportedFlavorException) {
         null
     }
 }

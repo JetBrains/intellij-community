@@ -67,8 +67,7 @@ class UnwrapSuggester : FeatureSuggester {
             State.isInitial -> handleCloseBraceDeletedFirst(action)
             State.closeBraceOffset != -1 -> {
                 try {
-                    if (State.checkCloseBraceDeleted(action))
-                        return createSuggestion()
+                    if (State.checkCloseBraceDeleted(action)) return createSuggestion()
                 } finally {
                     State.reset()
                 }
@@ -83,8 +82,7 @@ class UnwrapSuggester : FeatureSuggester {
             State.isInitial -> handleStatementStartDeletedFirst(action)
             State.surroundingStatementStartOffset != -1 -> {
                 try {
-                    if (State.checkStatementStartDeleted(action))
-                        return createSuggestion()
+                    if (State.checkStatementStartDeleted(action)) return createSuggestion()
                 } finally {
                     State.reset()
                 }

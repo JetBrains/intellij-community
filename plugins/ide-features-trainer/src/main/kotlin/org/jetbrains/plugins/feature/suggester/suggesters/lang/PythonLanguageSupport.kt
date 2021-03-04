@@ -80,7 +80,8 @@ class PythonLanguageSupport : LanguageSupport {
     }
 
     override fun isFileStructureElement(element: PsiElement): Boolean {
-        return (element is PyTargetExpression && element.getParentOfType<PyFunction>() == null) || element is PyFunction || element is PyClass
+        return (element is PyTargetExpression && element.getParentOfType<PyFunction>() == null) ||
+                element is PyFunction || element is PyClass
     }
 
     override fun isIdentifier(element: PsiElement): Boolean {

@@ -87,11 +87,14 @@ class ReplaceCompletionSuggester : FeatureSuggester {
                 }
             }
             is BeforeCompletionChooseItemAction -> {
-                if (editedStatementData == null || editedStatementData?.isAroundDot(action.caretOffset) != true) return NoSuggestion
+                if (editedStatementData == null || editedStatementData?.isAroundDot(action.caretOffset) != true) {
+                    return NoSuggestion
+                }
                 val curElement = action.psiFile?.findElementAt(action.caretOffset) ?: return NoSuggestion
                 if (langSupport.isIdentifier(curElement)) {
+                    // remove characters that user typed before completion
                     editedStatementData!!.textToDelete =
-                        curElement.text.substring(action.caretOffset - curElement.startOffset) // remove characters that user typed before completion
+                        curElement.text.substring(action.caretOffset - curElement.startOffset)
                 }
             }
             is CompletionChooseItemAction -> {

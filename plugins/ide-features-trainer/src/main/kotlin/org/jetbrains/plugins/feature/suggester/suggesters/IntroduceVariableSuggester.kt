@@ -162,8 +162,9 @@ class IntroduceVariableSuggester : FeatureSuggester {
     }
 
     private fun PsiElement.getTopmostStatementWithText(text: String): PsiElement? {
-        val statement =
-            getParentByPredicate { langSupport.isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text }
+        val statement = getParentByPredicate {
+            langSupport.isSupportedStatementToIntroduceVariable(it) && it.text.contains(text) && it.text != text
+        }
         return if (statement is KtCallExpression) {
             return statement.getTopmostParentOfType<KtDotQualifiedExpression>() ?: statement
         } else {
