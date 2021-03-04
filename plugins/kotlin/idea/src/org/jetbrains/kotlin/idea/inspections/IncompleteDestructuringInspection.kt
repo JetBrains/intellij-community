@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
@@ -27,11 +29,15 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 class IncompleteDestructuringInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return destructuringDeclarationVisitor(fun(destructuringDeclaration) {
+            val lPar = destructuringDeclaration.lPar ?: return
+            val rPar = destructuringDeclaration.rPar ?: return
             val primaryParameters = destructuringDeclaration.primaryParameters() ?: return
             if (destructuringDeclaration.entries.size < primaryParameters.size) {
-                val rPar = destructuringDeclaration.rPar ?: return
+                val highlightRange =
+                    TextRange(lPar.textRangeIn(destructuringDeclaration).startOffset, rPar.textRangeIn(destructuringDeclaration).endOffset)
                 holder.registerProblem(
-                    rPar,
+                    destructuringDeclaration,
+                    highlightRange,
                     KotlinBundle.message("incomplete.destructuring.declaration.text"),
                     IncompleteDestructuringQuickfix()
                 )
@@ -50,8 +56,7 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
     override fun getFamilyName() = KotlinBundle.message("incomplete.destructuring.fix.family.name")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val element = descriptor.psiElement
-        val destructuringDeclaration = element.parent as? KtDestructuringDeclaration ?: return
+        val destructuringDeclaration = descriptor.psiElement as? KtDestructuringDeclaration ?: return
         addMissingEntries(destructuringDeclaration)
     }
 

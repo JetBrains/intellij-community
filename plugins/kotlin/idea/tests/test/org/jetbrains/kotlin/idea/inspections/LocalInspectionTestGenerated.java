@@ -5243,6 +5243,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/incompleteDestructuringInspection/basic.kt");
         }
 
+        @TestMetadata("basic2.kt")
+        public void testBasic2() throws Exception {
+            runTest("testData/inspectionsLocal/incompleteDestructuringInspection/basic2.kt");
+        }
+
         @TestMetadata("empty.kt")
         public void testEmpty() throws Exception {
             runTest("testData/inspectionsLocal/incompleteDestructuringInspection/empty.kt");
