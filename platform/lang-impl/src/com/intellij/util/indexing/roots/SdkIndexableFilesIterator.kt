@@ -29,6 +29,6 @@ class SdkIndexableFilesIterator(val sdk: Sdk) : IndexableFilesIterator {
       val rootProvider = sdk.rootProvider
       rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
     }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, visitedFileSet)
+    return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, visitedFileSet)
   }
 }
