@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,7 @@ class AddFunctionParametersFix(
                     val arguments = callElement.valueArguments
                     val parameters = functionDescriptor.valueParameters
                     val validator = CollectingNameValidator()
+                    val receiverCount = if (descriptor.receiver != null) 1 else 0
 
                     if (argumentIndex != null) {
                         parameters.forEach { validator.addName(it.name.asString()) }
@@ -143,9 +144,9 @@ class AddFunctionParametersFix(
                         val parameterInfo = getNewParameterInfo(
                             originalDescriptor.baseDescriptor as FunctionDescriptor,
                             argument,
-                            validator
+                            validator,
                         )
-                        val receiverCount = if (descriptor.receiver != null) 1 else 0
+
                         descriptor.addParameter(argumentIndex + receiverCount, parameterInfo)
                         return
                     }
@@ -162,18 +163,19 @@ class AddFunctionParametersFix(
                                 val smartCasts = bindingContext[BindingContext.SMARTCAST, it]
                                 smartCasts?.defaultType ?: smartCasts?.type(call) ?: bindingContext.getType(it)
                             }
-                            val parameterType = parameters[i].type
 
+                            val parameterType = parameters[i].type
                             if (argumentType != null && !KotlinTypeChecker.DEFAULT.isSubtypeOf(argumentType, parameterType)) {
-                                descriptor.parameters[i].currentTypeInfo = KotlinTypeInfo(false, argumentType)
+                                descriptor.parameters[i + receiverCount].currentTypeInfo = KotlinTypeInfo(false, argumentType)
                                 typesToShorten.add(argumentType)
                             }
                         } else {
                             val parameterInfo = getNewParameterInfo(
                                 originalDescriptor.baseDescriptor as FunctionDescriptor,
                                 argument,
-                                validator
+                                validator,
                             )
+
                             descriptor.addParameter(parameterInfo)
                         }
                     }

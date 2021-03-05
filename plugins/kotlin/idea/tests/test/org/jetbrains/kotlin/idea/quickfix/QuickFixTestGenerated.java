@@ -2132,6 +2132,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/changeSignature/addFunctionParameterAndChangeTypes.kt");
         }
 
+        @TestMetadata("addFunctionParameterAndChangeTypesWithReceiver.kt")
+        public void testAddFunctionParameterAndChangeTypesWithReceiver() throws Exception {
+            runTest("testData/quickfix/changeSignature/addFunctionParameterAndChangeTypesWithReceiver.kt");
+        }
+
         @TestMetadata("addFunctionParameterForConstantTypeMismatch.kt")
         public void testAddFunctionParameterForConstantTypeMismatch() throws Exception {
             runTest("testData/quickfix/changeSignature/addFunctionParameterForConstantTypeMismatch.kt");
