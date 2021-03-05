@@ -148,7 +148,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     Disposer.register(disposableParent, this)
 
-    runInEdtAsync(this, { tree.rebuildTree() })
+    runInEdtAsync(this) { update() }
   }
 
   private fun updateChangesStatusPanel() {
