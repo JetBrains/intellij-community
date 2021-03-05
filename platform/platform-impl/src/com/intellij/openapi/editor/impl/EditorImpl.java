@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -81,7 +81,10 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -4076,10 +4079,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
       if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        mySelectionModel.selectLineAtCaret();
-        setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
-        mySavedSelectionStart = mySelectionModel.getSelectionStart();
-        mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
+        // Move the caret to the end of the selection, that is, the beginning of the next line.
+        // This is more consistent with the caret placement on "Extend line selection" and on dragging through the line numbers area.
+        selectLineAtCaret(true);
         return isNavigation;
       }
 
@@ -4118,18 +4120,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords());
                   break;
 
-                case 3:
-                  if (HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK && mySettings.isCamelWords()) {
+              case 3:
+                  if (eventArea == EditorMouseEventArea.EDITING_AREA &&
+                      HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK && mySettings.isCamelWords()) {
                     // We want to differentiate between triple and quadruple clicks when 'select by camel humps' is on. The former
                     // is assumed to select 'hump' while the later points to the whole word.
                     selectWordAtCaret(false);
                     break;
                   }
                 case 4:
-                  mySelectionModel.selectLineAtCaret();
-                  setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
-                  mySavedSelectionStart = mySelectionModel.getSelectionStart();
-                  mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
+                  // Triple and quadruple clicks on the line number resets selection to the single line,
+                  // except that in this case we keep the caret at the beginning of this line, not the next line.
+                  selectLineAtCaret(false);
                   mySelectionModel.setUnknownDirection(true);
                   break;
               }
@@ -4201,11 +4203,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void selectWordAtCaret(boolean honorCamelCase) {
-    mySelectionModel.selectWordAtCaret(honorCamelCase);
+    Caret caret = getCaretModel().getCurrentCaret();
+    caret.selectWordAtCaret(honorCamelCase);
     setMouseSelectionState(MOUSE_SELECTION_STATE_WORD_SELECTED);
-    mySavedSelectionStart = mySelectionModel.getSelectionStart();
-    mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
-    getCaretModel().moveToOffset(mySavedSelectionEnd);
+    mySavedSelectionStart = caret.getSelectionStart();
+    mySavedSelectionEnd = caret.getSelectionEnd();
+    caret.moveToOffset(mySavedSelectionEnd);
+  }
+
+  private void selectLineAtCaret(boolean moveToEnd) {
+    Caret caret = getCaretModel().getCurrentCaret();
+    caret.selectLineAtCaret();
+    setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
+    mySavedSelectionStart = caret.getSelectionStart();
+    mySavedSelectionEnd = caret.getSelectionEnd();
+    if (moveToEnd) {
+      caret.moveToOffset(mySavedSelectionEnd);
+    }
   }
 
   /**
