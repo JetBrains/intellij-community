@@ -249,7 +249,7 @@ public final class ConstructionUtils {
    */
   @Contract("null -> false")
   public static boolean isCollectionConstructor(PsiMethod ctor) {
-    if (ctor == null || !ctor.getModifierList().hasExplicitModifier(PsiModifier.PUBLIC)) return false;
+    if (ctor == null || !ctor.isConstructor() || !ctor.getModifierList().hasExplicitModifier(PsiModifier.PUBLIC)) return false;
     PsiParameterList list = ctor.getParameterList();
     if (list.getParametersCount() != 1) return false;
     PsiType type = Objects.requireNonNull(list.getParameter(0)).getType();

@@ -479,7 +479,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       int paramIndex = argCount - i - 1;
 
       boolean parameterMayNotLeak =
-        HardcodedContracts.isKnownNoParameterLeak(instruction.getTargetMethod()) ||
+        HardcodedContracts.isKnownNoParameterLeak(method) ||
         (instruction.getMutationSignature().isPure() ||
          instruction.getMutationSignature().equals(MutationSignature.pure().alsoMutatesArg(paramIndex))) &&
         !mayLeakFromType(instruction.getResultType());

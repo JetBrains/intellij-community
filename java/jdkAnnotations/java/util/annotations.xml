@@ -1861,6 +1861,16 @@
       <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Collection boolean contains(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Collection boolean containsAll(java.util.Collection&lt;?&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.Collection boolean containsAll(java.util.Collection&lt;?&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -2638,6 +2648,16 @@
       <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.List boolean contains(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List boolean containsAll(java.util.Collection&lt;?&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.List boolean containsAll(java.util.Collection&lt;?&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -3212,7 +3232,17 @@
   <item name='java.util.Set boolean addAll(java.util.Collection&lt;? extends E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.util.Set boolean containsAll(java.util.Collection&lt;?&gt;) 0'>
+  <item name='java.util.Set boolean contains(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set boolean containsAll(java.util.Collection&lt;?&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Set boolean containsAll(java.util.Collection&lt;?&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Set boolean removeAll(java.util.Collection&lt;?&gt;) 0'>

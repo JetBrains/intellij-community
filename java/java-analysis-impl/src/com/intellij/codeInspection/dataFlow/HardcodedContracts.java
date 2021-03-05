@@ -46,8 +46,9 @@ public final class HardcodedContracts {
   private static final Set<String> PURE_ARRAY_METHODS = Set.of("binarySearch", "spliterator", "stream", "equals", "deepEquals");
   private static final CallMatcher NO_PARAMETER_LEAK_METHODS =
     anyOf(
-      instanceCall(JAVA_UTIL_COLLECTION, "addAll").parameterTypes(JAVA_UTIL_COLLECTION),
-      instanceCall(JAVA_UTIL_LIST, "addAll").parameterTypes("int", JAVA_UTIL_COLLECTION));
+      instanceCall(JAVA_UTIL_COLLECTION, "addAll", "removeAll", "retainAll").parameterTypes(JAVA_UTIL_COLLECTION),
+      instanceCall(JAVA_UTIL_LIST, "addAll").parameterTypes("int", JAVA_UTIL_COLLECTION),
+      instanceCall(JAVA_UTIL_MAP, "putAll").parameterTypes(JAVA_UTIL_MAP));
 
   /**
    * @param method method to test
