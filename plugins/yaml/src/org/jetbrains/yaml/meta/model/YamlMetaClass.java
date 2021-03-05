@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
+import org.jetbrains.yaml.meta.impl.YamlMetaUtil;
 import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YAMLValue;
@@ -120,7 +121,7 @@ public class YamlMetaClass extends YamlMetaType {
   @Override
   public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
     super.validateValue(value, problemsHolder);
-    if (value instanceof YAMLScalar) {
+    if (value instanceof YAMLScalar && !YamlMetaUtil.isNull(value)) {
       problemsHolder.registerProblem(value,
                                      YAMLBundle.message("YamlMetaClass.error.scalar.value", ArrayUtil.EMPTY_OBJECT_ARRAY));
     }
