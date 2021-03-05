@@ -148,6 +148,7 @@ public final class CommonActionsPanel extends JPanel {
     myToolbar = actionManager.createActionToolbar("ToolbarDecorator",
                                                   new DefaultActionGroup(toolbarActions.toArray(AnAction.EMPTY_ARRAY)),
                                                   position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP);
+    myToolbar.setTargetComponent(contextComponent);
     myToolbar.getComponent().setBorder(null);
     add(myToolbar.getComponent(), BorderLayout.CENTER);
   }
