@@ -5,14 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 
-abstract class EdtAsyncOperation<R> : AsyncOperation<R> {
-  override fun submit(callback: (R) -> Unit, parentDisposable: Disposable) {
+abstract class EdtAsyncSupplier<R> : AsyncSupplier<R> {
+  override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
     val application = ApplicationManager.getApplication()
     if (isBlocking()) {
-      application.invokeAndWait { callback(calculate()) }
+      application.invokeAndWait { consumer(get()) }
     }
     else {
-      application.invokeLater({ callback(calculate()) }) {
+      application.invokeLater({ consumer(get()) }) {
         Disposer.isDisposed(parentDisposable)
       }
     }
@@ -20,11 +20,11 @@ abstract class EdtAsyncOperation<R> : AsyncOperation<R> {
 
   companion object {
     fun invokeOnEdt(isBlocking: () -> Boolean, action: () -> Unit, parentDisposable: Disposable) {
-      val operation = object : EdtAsyncOperation<Any>() {
+      val operation = object : EdtAsyncSupplier<Any>() {
         override fun isBlocking() = isBlocking.invoke()
-        override fun calculate() = action()
+        override fun get() = action()
       }
-      operation.submit({}, parentDisposable)
+      operation.supply({}, parentDisposable)
     }
   }
 }

@@ -5,15 +5,15 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.concurrency.AsyncPromise
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class MemoizedAsyncOperation<R> : BackgroundAsyncOperation<R>() {
+abstract class CachingAsyncSupplier<R> : BackgroundAsyncSupplier<R>() {
   private val cache = AtomicReference<AsyncPromise<R>>()
 
-  override fun submit(callback: (R) -> Unit, parentDisposable: Disposable) {
+  override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
     cache.updateAndGet { promise ->
       promise ?: AsyncPromise<R>().apply {
-        super.submit(::setResult, parentDisposable)
+        super.supply(::setResult, parentDisposable)
       }
-    }.onSuccess(callback)
+    }.onSuccess(consumer)
   }
 
   fun invalidate() {

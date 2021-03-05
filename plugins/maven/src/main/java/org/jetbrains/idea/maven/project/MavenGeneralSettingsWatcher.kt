@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesProviderImpl
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
-import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncOperation
+import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.util.concurrent.ExecutorService
@@ -41,7 +41,7 @@ class MavenGeneralSettingsWatcher private constructor(
 
   init {
     generalSettings.addListener(::fireSettingsChange, parentDisposable)
-    AsyncFilesChangesProviderImpl(ReadAsyncOperation.readAction(::settingsFiles, backgroundExecutor, this))
+    AsyncFilesChangesProviderImpl(ReadAsyncSupplier.readAction(::settingsFiles, backgroundExecutor, this))
       .subscribeAsAsyncVirtualFilesChangesProvider(false, VirtualFileSettingsListener(), parentDisposable)
   }
 

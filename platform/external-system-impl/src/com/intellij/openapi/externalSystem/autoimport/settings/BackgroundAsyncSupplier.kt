@@ -4,14 +4,14 @@ package com.intellij.openapi.externalSystem.autoimport.settings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 
-abstract class BackgroundAsyncOperation<R> : AsyncOperation<R> {
-  override fun submit(callback: (R) -> Unit, parentDisposable: Disposable) {
+abstract class BackgroundAsyncSupplier<R> : AsyncSupplier<R> {
+  override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
     if (isBlocking()) {
-      callback(calculate())
+      consumer(get())
     }
     else {
       BackgroundTaskUtil.executeOnPooledThread(parentDisposable) {
-        callback(calculate())
+        consumer(get())
       }
     }
   }

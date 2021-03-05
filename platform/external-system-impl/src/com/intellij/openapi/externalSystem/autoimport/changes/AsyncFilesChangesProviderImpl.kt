@@ -3,11 +3,11 @@ package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.externalSystem.autoimport.settings.AsyncOperation
+import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.vfs.VirtualFileManager
 
 
-class AsyncFilesChangesProviderImpl(private val filesProvider: AsyncOperation<Set<String>>) : FilesChangesProvider {
+class AsyncFilesChangesProviderImpl(private val filesProvider: AsyncSupplier<Set<String>>) : FilesChangesProvider {
   override fun subscribe(listener: FilesChangesListener, parentDisposable: Disposable) {
     subscribeAsAsyncVirtualFilesChangesProvider(true, listener, parentDisposable)
     subscribeAsAsyncDocumentChangesProvider(listener, parentDisposable)

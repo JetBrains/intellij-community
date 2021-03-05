@@ -8,9 +8,9 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Modification
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesProviderImpl
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
-import com.intellij.openapi.externalSystem.autoimport.settings.EdtAsyncOperation.Companion.invokeOnEdt
-import com.intellij.openapi.externalSystem.autoimport.settings.MemoizedAsyncOperation
-import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncOperation.Companion.readAction
+import com.intellij.openapi.externalSystem.autoimport.settings.EdtAsyncSupplier.Companion.invokeOnEdt
+import com.intellij.openapi.externalSystem.autoimport.settings.CachingAsyncSupplier
+import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier.Companion.readAction
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
@@ -131,7 +131,7 @@ class ProjectSettingsTracker(
   }
 
   private fun submitSettingsFilesCRCCalculation(id: Any, callback: (Map<String, Long>) -> Unit) {
-    settingsProvider.submit({ settingsPaths ->
+    settingsProvider.supply({ settingsPaths ->
       submitSettingsFilesCRCCalculation(id, settingsPaths, callback)
     }, parentDisposable)
   }
@@ -141,7 +141,7 @@ class ProjectSettingsTracker(
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
       settingsProvider.invalidate()
-      settingsProvider.submit({ settingsPaths ->
+      settingsProvider.supply({ settingsPaths ->
         val localFileSystem = LocalFileSystem.getInstance()
         val settingsFiles = settingsPaths.map { File(it) }
         localFileSystem.refreshIoFiles(settingsFiles, projectTracker.isAsyncChangesProcessing, false) {
@@ -153,7 +153,7 @@ class ProjectSettingsTracker(
 
   private fun submitSettingsFilesCRCCalculation(id: Any, settingsPaths: Set<String>, callback: (Map<String, Long>) -> Unit) {
     readAction(settingsProvider::isBlocking, { calculateSettingsFilesCRC(settingsPaths) }, backgroundExecutor, this, id)
-      .submit(callback, parentDisposable)
+      .supply(callback, parentDisposable)
   }
 
   fun beforeApplyChanges(listener: () -> Unit) = applyChangesOperation.beforeOperation(listener)
@@ -239,13 +239,13 @@ class ProjectSettingsTracker(
     }
   }
 
-  private inner class ProjectSettingsProvider : MemoizedAsyncOperation<Set<String>>() {
-    override fun calculate() = projectAware.settingsFiles
+  private inner class ProjectSettingsProvider : CachingAsyncSupplier<Set<String>>() {
+    override fun get() = projectAware.settingsFiles
 
     override fun isBlocking() = !projectTracker.isAsyncChangesProcessing
 
-    override fun submit(callback: (Set<String>) -> Unit, parentDisposable: Disposable) {
-      super.submit({ callback(it + settingsFilesStatus.get().oldCRC.keys) }, parentDisposable)
+    override fun supply(callback: (Set<String>) -> Unit, parentDisposable: Disposable) {
+      super.supply({ callback(it + settingsFilesStatus.get().oldCRC.keys) }, parentDisposable)
     }
   }
 }

@@ -4,21 +4,16 @@ package com.intellij.openapi.externalSystem.autoimport.settings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import java.util.function.Supplier
 
-interface AsyncOperation<R> {
-
+interface AsyncSupplier<R> : Supplier<R> {
   fun isBlocking(): Boolean =
     ApplicationManager.getApplication().isHeadlessEnvironment &&
     !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
 
   /**
-   * Synchronously calculates a operation's result.
+   * Supply a value to the consumer, when the value available
+   * If [isBlocking] is true, implementation should call [consumer] before returning from the method
    */
-  fun calculate(): R
-
-  /**
-   * Asynchronously calculates a operation's result.
-   * If [isBlocking] is true then [callback] should be called before when [submit] function is ended.
-   */
-  fun submit(callback: (R) -> Unit, parentDisposable: Disposable)
+  fun supply(consumer: (R) -> Unit, parentDisposable: Disposable)
 }
