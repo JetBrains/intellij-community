@@ -18,6 +18,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -67,7 +68,8 @@ class ItemsDecoratorInitializer : LookupTracker() {
       showStarNotificationsIfNeeded()
     }
 
-    private fun shouldShowStarNotification(): Boolean = Registry.`is`(SHOW_STAR_NOTIFICATION_REGISTRY, true)
+    private fun shouldShowStarNotification(): Boolean = Registry.`is`(SHOW_STAR_NOTIFICATION_REGISTRY, true) &&
+                                                        ApplicationInfoEx.getInstanceEx().isEAP
 
     private fun showStarNotificationsIfNeeded() {
       val properties = PropertiesComponent.getInstance()
