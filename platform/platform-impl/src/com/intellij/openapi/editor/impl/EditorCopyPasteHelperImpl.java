@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferable;
@@ -91,7 +77,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       if (caretCount == 1 && editor.isColumnMode()) {
         int pastedLineCount = LineTokenizer.calcLineCount(text, true);
         if (pastedLineCount <= caretModel.getMaxCaretCount()) {
-          EditorModificationUtil.deleteSelectedText(editor);
+          EditorModificationUtilEx.deleteSelectedText(editor);
           Caret caret = caretModel.getPrimaryCaret();
           for (int i = 0; i < pastedLineCount - 1; i++) {
             caret = caret.clone(false);
@@ -109,21 +95,28 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretData, caretCount).iterator();
       final int[] index = {0};
       caretModel.runForEachCaret(caret -> {
-        String normalizedText = TextBlockTransferable.convertLineSeparators(editor, segments.next());
-        normalizedText = trimTextIfNeeded(editor, normalizedText);
-        int caretOffset = caret.getOffset();
-        ranges[index[0]++] = new TextRange(caretOffset, caretOffset + normalizedText.length());
-        EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
+        String normalizedText = normalizeText(editor, segments.next());
+        ranges[index[0]++] = insertStringAtCaret(editor, normalizedText);
       });
       return ranges;
     }
     else {
-      int caretOffset = caretModel.getOffset();
-      String normalizedText = TextBlockTransferable.convertLineSeparators(editor, text);
-      normalizedText = trimTextIfNeeded(editor, normalizedText);
-      EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
-      return new TextRange[]{new TextRange(caretOffset, caretOffset + text.length())};
+      String normalizedText = normalizeText(editor, text);
+      TextRange textRange = insertStringAtCaret(editor, normalizedText);
+      return new TextRange[]{textRange};
     }
+  }
+
+  private static @NotNull TextRange insertStringAtCaret(@NotNull Editor editor, @NotNull String text) {
+    int caretOffset = editor.getSelectionModel().getSelectionStart();
+    int newOffset = EditorModificationUtilEx.insertStringAtCaret(editor, text, false, true);
+    return new TextRange(caretOffset, newOffset);
+  }
+
+  private static @NotNull String normalizeText(@NotNull Editor editor, @NotNull String text) {
+    text = TextBlockTransferable.convertLineSeparators(editor, text);
+    text = trimTextIfNeeded(editor, text);
+    return text;
   }
 
   private static String trimTextIfNeeded(Editor editor, String text) {
