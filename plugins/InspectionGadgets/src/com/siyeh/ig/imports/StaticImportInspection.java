@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -26,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -38,7 +38,6 @@ import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,28 +68,13 @@ public class StaticImportInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel chooserList =
       UiUtils.createTreeClassChooserList(allowedClasses, InspectionGadgetsBundle.message("static.import.options.border.title"),
                                          InspectionGadgetsBundle.message("static.import.options.chooserTitle"));
-    panel.add(chooserList, constraints);
-
-    constraints.gridy = 1;
-    constraints.weighty = 0.0;
-    final CheckBox checkBox1 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.single.field.static.imports.option"), this, "ignoreSingleFieldImports");
-    panel.add(checkBox1, constraints);
-
-    constraints.gridy = 2;
-    final CheckBox checkBox2 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.single.method.static.imports.option"), this, "ignoreSingeMethodImports");
-    panel.add(checkBox2, constraints);
+    panel.add(chooserList, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.single.field.static.imports.option"), "ignoreSingleFieldImports");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.single.method.static.imports.option"), "ignoreSingeMethodImports");
 
     return panel;
   }

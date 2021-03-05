@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -25,7 +26,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.JBUI;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -72,11 +72,14 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
     final JPanel ignoredClassesPanel =
       UiUtils.createTreeClassChooserList(ignoredClasses, InspectionGadgetsBundle.message("ignored.class.hierarchies.border.title"),
                                          InspectionGadgetsBundle.message("choose.class.hierarchy.to.ignore.title"));
-    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message("super.class.logger.option"), this, "ignoreSuperLoggers");
 
-    final JComponent panel = new JPanel(new BorderLayout());
-    panel.add(ignoredClassesPanel, BorderLayout.CENTER);
-    panel.add(checkBox, BorderLayout.SOUTH);
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.add(ignoredClassesPanel, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("super.class.logger.option"), "ignoreSuperLoggers");
+
+    loggerPanel.setBorder(JBUI.Borders.emptyTop(5));
+    panel.setBorder(JBUI.Borders.emptyTop(5));
+    annotationsListControl.setBorder(JBUI.Borders.emptyTop(5));
     final JBTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
     tabs.add(InspectionGadgetsBundle.message("class.without.logger.loggers.tab"), ScrollPaneFactory.createScrollPane(loggerPanel, true));
     tabs.add(InspectionGadgetsBundle.message("options.title.ignored.classes"), ScrollPaneFactory.createScrollPane(panel, true));

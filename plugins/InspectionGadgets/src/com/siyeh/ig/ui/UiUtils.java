@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 Bas Leijdekkers
+ * Copyright 2010-2021 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public final class UiUtils {
   }
 
   public static JPanel createTreeClassChooserList(final Collection<String> collection,
-                                                  @NlsContexts.BorderTitle String borderTitle,
+                                                  @NlsContexts.Label String borderTitle,
                                                   final @NlsContexts.DialogTitle String chooserTitle,
                                                   String... ancestorClasses) {
     final ClassFilter filter;
@@ -183,9 +183,10 @@ public final class UiUtils {
         }
       }).createPanel();
     panel.setPreferredSize(JBUI.size(150, 100));
-    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle,
-                                                               false, JBUI.insetsTop(10)));
-    optionsPanel.add(panel);
+    final JLabel label = new JLabel(borderTitle);
+    label.setBorder(JBUI.Borders.emptyBottom(3));
+    optionsPanel.add(label, BorderLayout.NORTH);
+    optionsPanel.add(panel, BorderLayout.CENTER);
     return optionsPanel;
   }
 
