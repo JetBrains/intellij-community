@@ -178,7 +178,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     private final TargetEnvironmentType<T> type;
 
     private Type(@NotNull TargetEnvironmentType<T> type) {
-      super(type.getDisplayName(), type.getIcon());
+      super(ExecutionBundle.message("run.on.targets.label.new.target.of.type", type.getDisplayName()), type.getIcon());
       this.type = type;
     }
 
