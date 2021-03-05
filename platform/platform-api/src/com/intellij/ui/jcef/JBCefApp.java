@@ -50,8 +50,8 @@ import java.util.function.Function;
 public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 
-  static final @NotNull NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = NotNullLazyValue.createValue(() -> {
-    return NotificationGroup.create("JCEF errors", NotificationDisplayType.BALLOON, true, null, null, null, null);
+  public static final @NotNull NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = NotNullLazyValue.createValue(() -> {
+    return NotificationGroup.create("JCEF", NotificationDisplayType.BALLOON, true, null, null, null, null);
   });
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
@@ -151,6 +151,21 @@ public final class JBCefApp {
       .toArray(String[]::new);
 
     String[] args = ArrayUtil.mergeArrays(config.getAppArgs(), argsFromProviders);
+
+    JBCefProxySettings proxySettings = JBCefProxySettings.getInstance();
+    String[] proxyArgs = null;
+    if (proxySettings.USE_PROXY_PAC) {
+      if (proxySettings.USE_PAC_URL) {
+        proxyArgs = new String[] {"--proxy-pac-url=" + proxySettings.PAC_URL + ":" + proxySettings.PROXY_PORT};
+      }
+      else {
+        proxyArgs = new String[] {"--proxy-auto-detect"};
+      }
+    }
+    else if (proxySettings.USE_HTTP_PROXY) {
+      proxyArgs = new String[] {"--proxy-server=" + proxySettings.PROXY_HOST + ":" + proxySettings.PROXY_PORT};
+    }
+    if (proxyArgs != null) args = ArrayUtil.mergeArrays(args, proxyArgs);
 
     CefApp.addAppHandler(new MyCefAppHandler(args));
     myCefApp = CefApp.getInstance(settings);
@@ -292,6 +307,16 @@ public final class JBCefApp {
       ourSupported = new AtomicBoolean(true);
       return true;
     }
+  }
+
+  /**
+   * Returns {@code true} if JCEF has successfully started.
+   */
+  public static boolean isStarted() {
+    boolean initialised = ourInitialized.get();
+    if (!initialised) return false;
+    //noinspection ConstantConditions
+    return getInstance() != null;
   }
 
   @NotNull
