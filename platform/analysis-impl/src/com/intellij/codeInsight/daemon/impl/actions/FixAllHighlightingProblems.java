@@ -57,7 +57,6 @@ public class FixAllHighlightingProblems implements IntentionAction {
     List<Pair<IntentionAction, SmartPsiFileRange>> actions = new ArrayList<>();
     Document document = editor.getDocument();
     Processor<HighlightInfo> processor = info -> {
-      ProgressManager.checkCanceled();
       IntentionAction fix = info.getSameFamilyFix(myAction);
       if (fix != null) {
         TextRange range = TextRange.create(info.getActualStartOffset(), info.getActualEndOffset());
