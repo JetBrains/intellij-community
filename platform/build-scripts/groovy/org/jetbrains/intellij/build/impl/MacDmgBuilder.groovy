@@ -134,7 +134,10 @@ final class MacDmgBuilder {
     ant.copy(file: macZipPath, tofile: sitFile.path)
     ant.zip(destfile: sitFile.path, update: true) {
       zipfileset(dir: productJsonDir.toString(), prefix: zipRoot)
-      zipfileset(dir: macAdditionalDirPath, prefix: zipRoot)
+
+      if (macAdditionalDirPath != null) {
+        zipfileset(dir: macAdditionalDirPath, prefix: zipRoot)
+      }
     }
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP) || !isMac()) {
       ftpAction("mkdir") {}
