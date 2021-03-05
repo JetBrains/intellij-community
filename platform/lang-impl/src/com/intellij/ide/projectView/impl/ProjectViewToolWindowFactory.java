@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
@@ -17,7 +18,7 @@ import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JTree;
+import javax.swing.*;
 
 public final class ProjectViewToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
@@ -31,7 +32,8 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
     window.setStripeTitle(IdeUICustomization.getInstance().getProjectViewTitle());
     if (window instanceof ToolWindowEx && Registry.is("ide.open.project.view.on.startup")) {
       Project project = ((ToolWindowEx)window).getProject();
-      if (Boolean.TRUE.equals(project.getUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START))) {
+      if (Boolean.TRUE.equals(project.getUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START)) &&
+          !ProjectUtil.isNotificationSilentMode(project)) {
         RunOnceUtil.runOnceForProject(project, "OpenProjectViewOnStart", () -> {
           ToolWindowManager manager = ToolWindowManager.getInstance(project);
           manager.invokeLater(() -> {

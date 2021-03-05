@@ -41,7 +41,7 @@ final class OpenFilesActivity implements StartupActivity {
       }
       manager.initDockableContentFactory();
       EditorsSplitters.stopOpenFilesActivity(project);
-      if (!manager.hasOpenFiles() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (!manager.hasOpenFiles() && !ProjectUtil.isNotificationSilentMode(project)) {
         project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true);
         if (Registry.is("ide.open.readme.md.on.startup")) {
           RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart", () -> findAndOpenReadme(project, manager));
