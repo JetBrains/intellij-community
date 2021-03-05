@@ -1035,9 +1035,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirMultiModuleLazyResolveTest> {
             model("multiModuleLazyResolve", pattern = DIRECTORY, isRecursive = false)
         }
-        testClass<AbstractFirSealedInheritorsTest> {
-            model("resolveSealed", recursive = false, extension = null)
-        }
         testClass<AbstractFirLazyDeclarationResolveTest> {
             model("lazyResolve")
         }

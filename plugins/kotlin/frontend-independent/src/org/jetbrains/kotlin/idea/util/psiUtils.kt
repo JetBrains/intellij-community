@@ -2,15 +2,12 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -48,16 +45,4 @@ fun KtClassOrObject.classIdIfNonLocal(): ClassId? {
 
 fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement = let {
     CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)
-}
-
-fun PsiClass.classIdIfNonLocal(): ClassId? {
-    if (this is KtLightClass) {
-        return this.kotlinOrigin?.classIdIfNonLocal()
-    }
-    val packageName = (containingFile as? PsiJavaFile)?.packageName ?: return null
-    val packageFqName = FqName(packageName)
-
-    val classesNames = parentsOfType<KtDeclaration>().map { it.name }.toList().asReversed()
-    if (classesNames.any { it == null }) return null
-    return ClassId(packageFqName, FqName(classesNames.joinToString(separator = ".")), false)
 }
