@@ -23,7 +23,8 @@ public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
   @Override
   public PasswordAuthentication getPasswordAuthentication() {
     final String host = CommonProxy.getHostNameReliably(getRequestingHost(), getRequestingSite(), getRequestingURL());
-    final boolean isProxy = Authenticator.RequestorType.PROXY.equals(getRequestorType());
+    // java.base/java/net/SocksSocketImpl.java:176 : there is SOCKS proxy auth, but without RequestorType passing
+    final boolean isProxy = Authenticator.RequestorType.PROXY.equals(getRequestorType()) || "SOCKS authentication".equals(getRequestingPrompt());
     final String prefix = isProxy ? IdeBundle.message("prompt.proxy.authentication") : IdeBundle.message("prompt.server.authentication");
     Application application = ApplicationManager.getApplication();
     if (isProxy) {
