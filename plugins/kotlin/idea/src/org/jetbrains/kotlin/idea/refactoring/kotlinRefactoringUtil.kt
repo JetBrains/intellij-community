@@ -95,6 +95,7 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getCallWithAssert
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.types.typeUtil.unCapture
 import java.lang.annotation.Retention
 import java.util.*
 import javax.swing.Icon
@@ -801,8 +802,9 @@ fun getQualifiedTypeArgumentList(initializer: KtExpression): KtTypeArgumentList?
     val typeArgumentMap = call.typeArguments
     val typeArguments = call.candidateDescriptor.typeParameters.mapNotNull { typeArgumentMap[it] }
     val renderedList = typeArguments.joinToString(prefix = "<", postfix = ">") {
-        IdeDescriptorRenderers.SOURCE_CODE_NOT_NULL_TYPE_APPROXIMATION.renderType(it)
+        IdeDescriptorRenderers.SOURCE_CODE_NOT_NULL_TYPE_APPROXIMATION.renderType(it.unCapture())
     }
+
     return KtPsiFactory(initializer).createTypeArguments(renderedList)
 }
 

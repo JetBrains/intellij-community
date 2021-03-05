@@ -48,6 +48,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             runTest("testData/refactoring/introduceVariable/callUnderSmartCast.kt");
         }
 
+        @TestMetadata("capturedType.kt")
+        public void testCapturedType() throws Exception {
+            runTest("testData/refactoring/introduceVariable/capturedType.kt");
+        }
+
         @TestMetadata("commentSkipping.kt")
         public void testCommentSkipping() throws Exception {
             runTest("testData/refactoring/introduceVariable/commentSkipping.kt");
