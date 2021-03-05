@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.Disposer
@@ -77,6 +78,7 @@ object PyProjectSdkConfiguration {
   }
 
   private fun notifyAboutConfiguredSdk(project: Project, module: Module, sdk: Sdk) {
+    if (isNotificationSilentMode(project)) return
     NotificationGroupManager.getInstance().getNotificationGroup("ConfiguredPythonInterpreter").createNotification(
       PyBundle.message("sdk.has.been.configured.as.the.project.interpreter", sdk.name),
       NotificationType.INFORMATION

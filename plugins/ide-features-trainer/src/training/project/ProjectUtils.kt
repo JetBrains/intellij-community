@@ -14,6 +14,7 @@ import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
@@ -113,8 +114,11 @@ object ProjectUtils {
     createVersionFile(projectPath)
     val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectPath)
                                       ?: error("Copied Learn project folder is null")
+    val task = openProjectTask.copy(beforeInit = {
+      NOTIFICATIONS_SILENT_MODE.set(it, true)
+    })
     invokeLater {
-      val project = ProjectUtil.openOrImport(projectDirectoryVirtualFile.toNioPath(), openProjectTask)
+      val project = ProjectUtil.openOrImport(projectDirectoryVirtualFile.toNioPath(), task)
                     ?: error("Could not create project for ${langSupport.primaryLanguage}")
       PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
       postInitCallback(project)
