@@ -140,7 +140,7 @@ namespace intellij::ui::win
             auto hr = result.CoCreateInstance(
                 CLSID_EnumerableObjectCollection,
                 nullptr,
-                CLSCTX_INPROC
+                CLSCTX_INPROC_SERVER
             );
 
             if (hr != S_OK)
@@ -190,7 +190,7 @@ namespace intellij::ui::win
             auto hr = result.CoCreateInstance(
                 CLSID_DestinationList,
                 nullptr,
-                CLSCTX_INPROC
+                CLSCTX_INPROC_SERVER
             );
 
             if (hr != S_OK)
@@ -227,7 +227,7 @@ namespace intellij::ui::win
             auto hr = result.CoCreateInstance(
                 CLSID_ApplicationDestinations,
                 nullptr,
-                CLSCTX_INPROC
+                CLSCTX_INPROC_SERVER
             );
 
             if (hr != S_OK)
