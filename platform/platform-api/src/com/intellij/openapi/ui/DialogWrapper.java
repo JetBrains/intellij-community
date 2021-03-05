@@ -819,7 +819,6 @@ public abstract class DialogWrapper {
   private static JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
     optionButton.setOptionTooltipText(getDefaultTooltip());
-    optionButton.setOkToProcessDefaultMnemonics(false);
     return optionButton;
   }
 

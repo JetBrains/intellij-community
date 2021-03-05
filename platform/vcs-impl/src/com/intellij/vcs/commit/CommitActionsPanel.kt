@@ -39,7 +39,6 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
   private val commitButton = object : JBOptionButton(defaultCommitAction, emptyArray()) {
     init {
       optionTooltipText = getDefaultTooltip()
-      isOkToProcessDefaultMnemonics = false
     }
 
     override fun isDefaultButton(): Boolean = isCommitButtonDefault()
