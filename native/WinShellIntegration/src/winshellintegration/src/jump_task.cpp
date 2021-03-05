@@ -112,7 +112,7 @@ namespace intellij::ui::win
             // The code that creates and manages objects of this class
             //  is a DLL that runs in the same process as the caller of
             //  the function specifying the class context.
-            CLSCTX_INPROC
+            CLSCTX_INPROC_SERVER
         );
 
         if (comResult != S_OK)
