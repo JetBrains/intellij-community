@@ -14,9 +14,34 @@ import java.util.function.Consumer
 import javax.swing.AbstractAction
 import javax.swing.JList
 
-internal class ShowRecentFilesAction : LightEditCompatible, SwitcherRecentFilesAction(false)
-internal class ShowRecentlyEditedFilesAction : SwitcherRecentFilesAction(true)
-internal abstract class SwitcherRecentFilesAction(val onlyEditedFiles: Boolean) : DumbAwareAction() {
+private fun AnActionEvent.isShiftDown() = true == inputEvent?.isShiftDown
+
+
+internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
+internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
+internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
+  override fun update(event: AnActionEvent) {
+    event.presentation.isEnabled = event.project != null
+    event.presentation.isVisible = forward == null
+  }
+
+  override fun actionPerformed(event: AnActionEvent) {
+    val project = event.project ?: return
+    val switcher = Switcher.SWITCHER_KEY.get(project)
+    if (switcher != null && (!switcher.pinned || forward != null)) {
+      switcher.go(forward ?: event.isShiftDown())
+    }
+    else {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("switcher")
+      SwitcherPanel(project, message("window.title.switcher"), event.inputEvent, null, forward ?: event.isShiftDown())
+    }
+  }
+}
+
+
+internal class ShowRecentFilesAction : LightEditCompatible, BaseRecentFilesAction(false)
+internal class ShowRecentlyEditedFilesAction : BaseRecentFilesAction(true)
+internal abstract class BaseRecentFilesAction(val onlyEditedFiles: Boolean) : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = event.project != null
   }
@@ -25,7 +50,7 @@ internal abstract class SwitcherRecentFilesAction(val onlyEditedFiles: Boolean) 
     val project = event.project ?: return
     Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected } ?: run {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files")
-      SwitcherPanel(project, message("title.popup.recent.files"), onlyEditedFiles, null)
+      SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
     }
   }
 }
@@ -37,7 +62,7 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    Switcher.SWITCHER_KEY.get(event.project)?.go(event.inputEvent)
+    Switcher.SWITCHER_KEY.get(event.project)?.go(event.isShiftDown())
   }
 }
 
@@ -97,7 +122,6 @@ internal class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Cons
   private val wasControlDown = true == event?.isControlDown
   private val wasMetaDown = true == event?.isMetaDown
   val isEnabled = wasAltDown || wasAltGraphDown || wasControlDown || wasMetaDown
-  val isBackwardMove = isEnabled && true == event?.isShiftDown
 
   val initialModifiers = if (!isEnabled) null
   else StringBuilder().apply {

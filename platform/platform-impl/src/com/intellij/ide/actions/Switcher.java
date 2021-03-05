@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
@@ -75,32 +74,15 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 /**
  * @author Konstantin Bulenkov
  */
-public final class Switcher extends DumbAwareAction {
+public final class Switcher extends BaseSwitcherAction {
   public static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
 
   private static final int MINIMUM_HEIGHT = JBUIScale.scale(400);
   private static final int MINIMUM_WIDTH = JBUIScale.scale(500);
 
-  @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getProject() != null);
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getProject();
-    if (project == null) return;
-    SwitcherPanel switcher = SWITCHER_KEY.get(project);
-    if (switcher != null && !switcher.pinned) {
-      switcher.go(e.getInputEvent());
-    }
-    else {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
-      new SwitcherPanel(project, IdeBundle.message("window.title.switcher"), null, e.getInputEvent());
-    }
+  public Switcher() {
+    super(null);
   }
 
   /**
@@ -114,7 +96,8 @@ public final class Switcher extends DumbAwareAction {
     if (project == null) return null;
     SwitcherPanel switcher = SWITCHER_KEY.get(project);
     if (switcher != null && Objects.equals(switcher.myTitle, title)) return null;
-    return new SwitcherPanel(project, title, pinned ? vFiles != null : null, e.getInputEvent());
+    InputEvent event = e.getInputEvent();
+    return new SwitcherPanel(project, title, event, pinned ? vFiles != null : null, event == null || !event.isShiftDown());
   }
 
   public static class SwitcherPanel extends BorderLayoutPanel implements DataProvider, QuickSearchComponent, Disposable {
@@ -177,7 +160,11 @@ public final class Switcher extends DumbAwareAction {
       }
     };
 
-    SwitcherPanel(@NotNull Project project, @NotNull @Nls String title, @Nullable Boolean onlyEditedFiles, @Nullable InputEvent event) {
+    SwitcherPanel(@NotNull Project project,
+                  @NotNull @Nls String title,
+                  @Nullable InputEvent event,
+                  @Nullable Boolean onlyEditedFiles,
+                  boolean forward) {
       this.project = project;
       onKeyRelease = new SwitcherKeyReleaseListener(onlyEditedFiles != null ? null : event, this::navigate);
       pinned = !onKeyRelease.isEnabled();
@@ -388,7 +375,7 @@ public final class Switcher extends DumbAwareAction {
         );
         pane.setBorder(border);
         addToCenter(pane);
-        int selectionIndex = getFilesSelectedIndex(project, files, event == null || !event.isShiftDown());
+        int selectionIndex = getFilesSelectedIndex(project, files, forward);
         if (selectionIndex > -1) {
           files.setSelectedIndex(selectionIndex);
         }
@@ -601,6 +588,8 @@ public final class Switcher extends DumbAwareAction {
     private void updateMnemonics(@NotNull List<SwitcherToolWindow> windows) {
       final Map<String, SwitcherToolWindow> keymap = new HashMap<>(windows.size());
       keymap.put(onKeyRelease.getForbiddenMnemonic(), null);
+      addForbiddenMnemonics(keymap, "SwitcherForward");
+      addForbiddenMnemonics(keymap, "SwitcherBackward");
       final List<SwitcherToolWindow> otherTW = new ArrayList<>();
       for (SwitcherToolWindow window : windows) {
         int index = ActivateToolWindowAction.getMnemonicForToolWindow(window.getWindow().getId());
@@ -618,6 +607,20 @@ public final class Switcher extends DumbAwareAction {
           i++;
         }
         i++;
+      }
+    }
+
+    private static void addForbiddenMnemonics(@NotNull Map<String, SwitcherToolWindow> keymap, @NotNull String actionId) {
+      AnAction action = ActionManager.getInstance().getAction(actionId);
+      if (action == null) return;
+      for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
+        if (shortcut instanceof KeyboardShortcut) {
+          KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+          int code = keyboardShortcut.getFirstKeyStroke().getKeyCode();
+          if ('0' <= code && code <= '9' || 'A' <= code && code <= 'Z') {
+            keymap.put(String.valueOf((char)code), null);
+          }
+        }
       }
     }
 
@@ -752,10 +755,6 @@ public final class Switcher extends DumbAwareAction {
           mySpeedSearch.selectElement(mySpeedSearch.getElementAt(0), "");
         }
       }
-    }
-
-    void go(@Nullable InputEvent event) {
-      go(event == null || !event.isShiftDown());
     }
 
     public void go(boolean forward) {
