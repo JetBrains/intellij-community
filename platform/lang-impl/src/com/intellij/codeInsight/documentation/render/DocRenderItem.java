@@ -201,7 +201,7 @@ public final class DocRenderItem {
 
     Project project = editor.getProject();
     if (project == null) return null;
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+
     DocRenderItem foundItem = null;
     int foundStartOffset = 0;
     for (DocRenderItem item : items) {
