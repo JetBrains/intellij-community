@@ -62,8 +62,8 @@ class AddJvmNameAnnotationFix(element: KtElement, private val jvmName: String) :
 
         private fun KtTypeReference.typeElements(): List<KtTypeElement> {
             val typeElements = mutableListOf<KtTypeElement>()
-            fun collect(typeReference: KtTypeReference) {
-                val typeElement = typeReference.typeElement ?: return
+            fun collect(typeReference: KtTypeReference?) {
+                val typeElement = typeReference?.typeElement ?: return
                 val typeArguments = typeElement.typeArgumentsAsTypes
                 if (typeArguments.isEmpty()) {
                     typeElements.add(typeElement)
