@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -161,6 +162,12 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     if (myProject.isDisposed()) return null;
 
+    ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
+    if (!ExternalSystemUtil.confirmLoadingUntrustedProject(myProject, externalSystemId)) {
+      String externalSystemName = externalSystemId.getReadableName();
+      throw new ExecutionException(ExternalSystemBundle.message("untrusted.project.notification.execution.error", externalSystemName));
+    }
+
     String jvmParametersSetup = getJvmParametersSetup();
 
     ApplicationManager.getApplication().assertIsWriteThread();
@@ -174,7 +181,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
                                  ? mySettings.getExecutionName()
                                  : StringUtil.isNotEmpty(myConfiguration.getName())
                                    ? myConfiguration.getName() : AbstractExternalSystemTaskConfigurationType.generateName(
-                                   myProject, mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
+                                   myProject, externalSystemId, mySettings.getExternalProjectPath(),
                                    mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
 
     final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);
