@@ -22,8 +22,8 @@ public abstract class TestFrameworks {
     return ApplicationManager.getApplication().getService(TestFrameworks.class);
   }
 
-  public abstract boolean isTestClass(PsiClass psiClass);
-  public abstract boolean isPotentialTestClass(PsiClass psiClass);
+  public abstract boolean isTestClass(@NotNull PsiClass psiClass);
+  public abstract boolean isPotentialTestClass(@NotNull PsiClass psiClass);
 
   @Nullable
   public abstract PsiMethod findOrCreateSetUpMethod(PsiClass psiClass);

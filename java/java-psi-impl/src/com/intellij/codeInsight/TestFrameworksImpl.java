@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class TestFrameworksImpl extends TestFrameworks {
@@ -13,7 +14,7 @@ public final class TestFrameworksImpl extends TestFrameworks {
   }
 
   @Override
-  public boolean isTestClass(final PsiClass psiClass) {
+  public boolean isTestClass(final @NotNull PsiClass psiClass) {
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (framework.isTestClass(psiClass)) {
         return true;
@@ -23,7 +24,7 @@ public final class TestFrameworksImpl extends TestFrameworks {
   }
 
   @Override
-  public boolean isPotentialTestClass(PsiClass psiClass) {
+  public boolean isPotentialTestClass(@NotNull PsiClass psiClass) {
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (framework.isPotentialTestClass(psiClass)) {
         return true;
