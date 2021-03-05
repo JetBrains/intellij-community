@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
-import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.Files
-import java.nio.file.NotDirectoryException
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.Duration
@@ -52,7 +51,7 @@ fun zip(targetFile: Path, dirs: Map<Path, String>, compress: Boolean = true, add
     for ((dir, prefix) in dirs.entries) {
       val normalizedDir = dir.toAbsolutePath().normalize()
       archiver.setRootDir(normalizedDir, prefix)
-      compressDir(normalizedDir, archiver, logger)
+      compressDir(normalizedDir, archiver)
     }
 
     if (dirNameSetToAdd.isNotEmpty()) {
@@ -124,54 +123,24 @@ private class ZipArchiver(private val method: Int, val zipCreator: ZipFileWriter
   }
 }
 
-private fun compressDir(startDir: Path, archiver: ZipArchiver, logger: System.Logger?) {
+private fun compressDir(startDir: Path, archiver: ZipArchiver) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()
   while (true) {
     val dir = dirCandidates.pollFirst() ?: break
     tempList.clear()
-    try {
-      Files.newDirectoryStream(dir).use {
-        tempList.addAll(it)
-      }
-    }
-    catch (e: NotDirectoryException) {
-      // ok, it is file
-      archiver.addFile(dir)
-      continue
+    Files.newDirectoryStream(dir).use {
+      tempList.addAll(it)
     }
 
     tempList.sort()
     for (file in tempList) {
-      val fileName = file.fileName.toString()
-
-      val isFile: Boolean
-      val lastDot = fileName.lastIndexOf('.')
-      if (lastDot == -1) {
-        isFile = fileName.endsWith("LICENSE")
-      }
-      else {
-        // foo-1.2.3 is a directory
-        isFile = lastDot < fileName.length && fileName[lastDot + 1] >= 'A' && !fileName.endsWith("for_twisted") && fileName != ".github"
-      }
-
-      if (isFile) {
-        try {
-          archiver.addFile(file)
-        }
-        catch (e: IOException) {
-          if (e.message == "Is a directory") {
-            logger?.warn("$file expected to be a file, but it is a directory, please rename it")
-            dirCandidates.add(file)
-          }
-          else {
-            throw e
-          }
-        }
-      }
-      else {
+      if (Files.isDirectory(file, LinkOption.NOFOLLOW_LINKS)) {
         dirCandidates.add(file)
+      }
+      else {
+        archiver.addFile(file)
       }
     }
   }
