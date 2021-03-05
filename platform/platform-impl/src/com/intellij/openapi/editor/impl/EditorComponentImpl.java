@@ -15,6 +15,7 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.*;
@@ -69,6 +70,8 @@ import java.util.Map;
 
 @DirtyUI
 public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible {
+  private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
+
   private final EditorImpl myEditor;
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
@@ -178,6 +181,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   public void setCursor(Cursor cursor) {
     super.setCursor(cursor);
     myEditor.myCursorSetExternally = true;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Mouse cursor set to " + cursor, new Throwable());
+    }
   }
 
   protected void fireResized() {
