@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.formatter;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.formatting;
 
-import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -13,15 +12,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ShFormatterModelBuilder implements FormattingModelBuilder {
-  @Override
-  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
-    return createDumbModel(formattingContext.getPsiElement());
-  }
+class DummyFormattingModel implements FormattingModel {
+  private final Block myRootBlock;
+  private final FormattingDocumentModel myDocumentModel;
 
-  @NotNull
-  private static FormattingModel createDumbModel(@NotNull PsiElement element) {
-    AbstractBlock block = new AbstractBlock(element.getNode(), null, null) {
+  DummyFormattingModel(@NotNull PsiElement element) {
+    myRootBlock = new AbstractBlock(element.getNode(), null, null) {
       @Override
       protected List<Block> buildChildren() {
         return EMPTY;
@@ -40,7 +36,7 @@ public class ShFormatterModelBuilder implements FormattingModelBuilder {
     };
 
     Document document = FormattingDocumentModelImpl.createOn(element.getContainingFile()).getDocument();
-    FormattingDocumentModel model = new FormattingDocumentModel() {
+    myDocumentModel = new FormattingDocumentModel() {
       @Override
       public int getLineNumber(int offset) {
         return document.getLineNumber(offset);
@@ -54,7 +50,7 @@ public class ShFormatterModelBuilder implements FormattingModelBuilder {
       @NotNull
       @Override
       public CharSequence getText(TextRange textRange) {
-        return document.getText(textRange);
+        return document.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
       }
 
       @Override
@@ -82,33 +78,29 @@ public class ShFormatterModelBuilder implements FormattingModelBuilder {
         return whiteSpaceText;
       }
     };
+  }
 
-    return new FormattingModel() {
-      @NotNull
-      @Override
-      public Block getRootBlock() {
-        return block;
-      }
+  @Override
+  public @NotNull Block getRootBlock() {
+    return myRootBlock;
+  }
 
-      @NotNull
-      @Override
-      public FormattingDocumentModel getDocumentModel() {
-        return model;
-      }
+  @Override
+  public @NotNull FormattingDocumentModel getDocumentModel() {
+    return myDocumentModel;
+  }
 
-      @Override
-      public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
-        return textRange;
-      }
+  @Override
+  public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
+    return textRange;
+  }
 
-      @Override
-      public TextRange shiftIndentInsideRange(ASTNode node, TextRange range, int indent) {
-        return range;
-      }
+  @Override
+  public TextRange shiftIndentInsideRange(ASTNode node, TextRange range, int indent) {
+    return range;
+  }
 
-      @Override
-      public void commitChanges() {
-      }
-    };
+  @Override
+  public void commitChanges() {
   }
 }

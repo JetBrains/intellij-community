@@ -692,4 +692,17 @@ public class FormatterImpl extends FormatterEx
       super(message);
     }
   }
+
+  @Nullable
+  @Override
+  public FormattingModelBuilder createExternalFormattingModelBuilder(@NotNull PsiFile psiFile,
+                                                                     @Nullable FormattingModelBuilder langBuilder) {
+    return new ExternalFormattingModelBuilderImpl(langBuilder);
+  }
+
+  @Override
+  @NotNull
+  public FormattingModel createDummyFormattingModel(@NotNull PsiElement element) {
+    return new DummyFormattingModel(element);
+  }
 }
