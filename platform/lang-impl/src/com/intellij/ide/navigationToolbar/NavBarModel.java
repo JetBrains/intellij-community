@@ -102,6 +102,7 @@ public class NavBarModel {
     //rider calls edt-only method getFocusOwner() in the updating
     if (PlatformUtils.isRider()) {
       updateModel(dataContext);
+      if (callback != null) callback.run();
       return;
     }
     DataContext wrappedDataContext = wrapDataContext(dataContext);
