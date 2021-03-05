@@ -19,6 +19,7 @@ import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ConfigurationQuickFix;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.openapi.project.DumbService;
@@ -243,14 +244,15 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   @Nullable
   private Runnable getQuickFix(RunnerAndConfigurationSettings snapshot, ConfigurationException exception) {
-    Runnable quickFix = exception.getQuickFix();
+    ConfigurationQuickFix quickFix = exception.getConfigurationQuickFix();
     if (quickFix != null && snapshot != null) {
       return () -> {
-        quickFix.run();
+        quickFix.applyFix(DataManager.getInstance().getDataContext(myComponent.myWholePanel));
         getEditor().resetFrom(snapshot);
       };
     }
-    return quickFix;
+    return quickFix == null ? null :
+           () -> quickFix.applyFix(DataManager.getInstance().getDataContext(myComponent.myWholePanel));
   }
 
   private static void checkConfiguration(@NotNull ProgramRunner<?> runner, @NotNull RunnerAndConfigurationSettings snapshot)
