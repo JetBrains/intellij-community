@@ -1340,6 +1340,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 public void testPlatformType() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/platformType.before.Main.kt");
                 }
+
+                @TestMetadata("redundantAnnotationsFromJava.before.Main.kt")
+                public void testRedundantAnnotationsFromJava() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/redundantAnnotationsFromJava.before.Main.kt");
+                }
+
+                @TestMetadata("redundantAnnotationsFromJava2.before.Main.kt")
+                public void testRedundantAnnotationsFromJava2() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/redundantAnnotationsFromJava2.before.Main.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)

@@ -9,12 +9,15 @@ import com.intellij.refactoring.psi.SearchUtils
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.cfg.pseudocode.*
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.load.java.MUTABLE_ANNOTATIONS
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
+import org.jetbrains.kotlin.load.java.READ_ONLY_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -29,6 +32,7 @@ import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import java.util.*
@@ -169,7 +173,7 @@ fun KtExpression.guessTypes(
 
     // expression has an expected type
     val theType2 = context[BindingContext.EXPECTED_EXPRESSION_TYPE, this]
-    if (theType2 != null && isAcceptable(theType2)) return arrayOf(theType2)
+    if (theType2 != null && isAcceptable(theType2)) return arrayOf(theType2.withoutRedundantAnnotations())
 
     return when {
         this is KtTypeConstraint -> {
@@ -271,12 +275,13 @@ private fun KtNamedDeclaration.guessType(context: BindingContext): Array<KotlinT
     if (expectedTypes.isEmpty() || expectedTypes.any { expectedType -> ErrorUtils.containsErrorType(expectedType) }) {
         return arrayOf()
     }
+
     val theType = TypeIntersector.intersectTypes(expectedTypes)
     return if (theType != null) {
-        arrayOf(theType)
+        arrayOf(theType.withoutRedundantAnnotations())
     } else {
         // intersection doesn't exist; let user make an imperfect choice
-        expectedTypes.toTypedArray()
+        expectedTypes.map { it.withoutRedundantAnnotations() }.toTypedArray()
     }
 }
 
@@ -303,6 +308,19 @@ internal fun KotlinType.substitute(substitution: KotlinTypeSubstitution, varianc
         }
         KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(annotations, constructor, newArguments, isMarkedNullable, memberScope)
     }
+}
+
+internal fun KotlinType.withoutRedundantAnnotations(): KotlinType {
+    val newArguments = arguments.map {
+        if (it.isStarProjection) it else it.type.withoutRedundantAnnotations().asTypeProjection()
+    }
+
+    val newAnnotations = annotations.filter {
+        val fqName = it.fqName
+        fqName !in NULLABILITY_ANNOTATIONS && fqName !in MUTABLE_ANNOTATIONS && fqName !in READ_ONLY_ANNOTATIONS
+    }
+
+    return replace(newArguments, Annotations.create(newAnnotations))
 }
 
 fun KtExpression.getExpressionForTypeGuess() = getAssignmentByLHS()?.right ?: this
