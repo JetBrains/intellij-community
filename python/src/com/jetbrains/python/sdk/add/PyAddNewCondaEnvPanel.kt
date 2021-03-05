@@ -37,7 +37,7 @@ import javax.swing.event.DocumentEvent
 /**
  * @author vlan
  */
-class PyAddNewCondaEnvPanel(
+open class PyAddNewCondaEnvPanel(
   private val project: Project?,
   private val module: Module?,
   private val existingSdks: List<Sdk>,
@@ -47,8 +47,8 @@ class PyAddNewCondaEnvPanel(
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
 
-  private val languageLevelsField: JComboBox<String>
-  private val condaPathField = TextFieldWithBrowseButton().apply {
+  protected val languageLevelsField: JComboBox<String>
+  protected val condaPathField = TextFieldWithBrowseButton().apply {
     val path = PyCondaPackageService.getCondaExecutable(null)
     path?.let {
       text = it
@@ -61,7 +61,8 @@ class PyAddNewCondaEnvPanel(
       }
     })
   }
-  private val pathField = TextFieldWithBrowseButton().apply {
+
+  protected val pathField = TextFieldWithBrowseButton().apply {
     addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.conda.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
@@ -90,6 +91,13 @@ class PyAddNewCondaEnvPanel(
     }
 
     updatePathField()
+
+    @Suppress("LeakingThis")
+    layoutComponents()
+  }
+
+  protected open fun layoutComponents() {
+    layout = BorderLayout()
 
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(PyBundle.message("sdk.create.venv.conda.dialog.label.location"), pathField)
