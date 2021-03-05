@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.core
 
+import com.intellij.core.CoreBundle
 import com.intellij.ide.util.DirectoryChooserUtil
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+import java.io.IOException
 import java.net.URI
 import java.nio.file.Paths
 
@@ -135,10 +137,25 @@ private fun Module.getOrConfigureKotlinSourceRoots(): List<VirtualFile> {
         return sourceRoots
     }
     return runWriteAction {
-        getOrCreateRootDirectory()?.createChildDirectory(project, "kotlin")
+        getOrCreateRootDirectory()?.getOrCreateChildDirectory(project, "kotlin")
         project.invalidateProjectRoots()
         getNonGeneratedKotlinSourceRoots()
     }
+}
+
+private fun VirtualFile.getOrCreateChildDirectory(requestor: Any, name: String): VirtualFile {
+    findChild(name)?.let {
+        if (!it.isDirectory) {
+            throw IOException(CoreBundle.message("directory.create.wrong.parent.error"))
+        }
+
+        if (!it.isValid) {
+            throw IOException(CoreBundle.message("invalid.directory.create.files"))
+        }
+
+        return it
+    }
+    return this.createChildDirectory(requestor, name)
 }
 
 private fun Module.getOrCreateRootDirectory(): VirtualFile? {
