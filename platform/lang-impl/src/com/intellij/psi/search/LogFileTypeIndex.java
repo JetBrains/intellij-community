@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -53,7 +54,8 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   public LogFileTypeIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException {
     myExtension = extension;
     myIndexId = extension.getName();
-    myPersistentLog = new LogBasedIntIntIndex(new IntLog(IndexInfrastructure.getStorageFile(myIndexId),
+    Path storageFile = IndexInfrastructure.getStorageFile(myIndexId);
+    myPersistentLog = new LogBasedIntIntIndex(new IntLog(storageFile.resolveSibling(storageFile.getFileName().toString() + ".log.index"),
                                                          true,
                                                          new StorageLockContext(true, false, true)));
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(IndexInfrastructure.getStorageFile(myIndexId).resolveSibling("fileType.enum"));
@@ -426,7 +428,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   }
 
   private class MemorySnapshotHandler {
-    private final @NotNull Set<Project> myIndexBatchUpdatingProjects = new HashSet<>();
+    private final @NotNull List<Project> myIndexBatchUpdatingProjects = new ArrayList<>();
     private volatile @Nullable MemorySnapshot mySnapshot;
 
     MemorySnapshotHandler() {
@@ -446,27 +448,25 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     }
 
     synchronized void loadMemorySnapshot(@NotNull Project project) {
-      boolean empty = myIndexBatchUpdatingProjects.isEmpty();
-      if (myIndexBatchUpdatingProjects.add(project) && empty) {
-        if (ApplicationManager.getApplication().isUnitTestMode() && mySnapshot != null) {
-          return;
-        }
-        assert mySnapshot == null;
+      myIndexBatchUpdatingProjects.add(project);
+      if (mySnapshot == null) {
         try {
+          LOG.info("Loading file type index snapshot");
           mySnapshot = loadIndexToMemory(myPersistentLog);
         }
         catch (StorageException e) {
           LOG.error(e);
           FileBasedIndex.getInstance().requestRebuild(FileTypeIndex.NAME);
+          mySnapshot = new MemorySnapshot(new Int2ObjectOpenHashMap<>(), new IntArrayList());
         }
       }
     }
 
     synchronized void dropMemorySnapshot(@NotNull Project project) {
-      if (myIndexBatchUpdatingProjects.remove(project) &&
-          myIndexBatchUpdatingProjects.isEmpty() &&
-          !ApplicationManager.getApplication().isUnitTestMode()) {
+      myIndexBatchUpdatingProjects.remove(project);
+      if (myIndexBatchUpdatingProjects.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
         mySnapshot = null;
+        LOG.info("File type index snapshot dropped");
       }
     }
 

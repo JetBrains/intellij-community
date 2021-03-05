@@ -804,13 +804,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void filesUpdateStarted(Project project) {
-    myUnindexedFilesUpdaterListener.updateStarted(project);
+    fireUpdateStarted(project);
     if (myIndexableFilesFilterHolder instanceof IncrementalProjectIndexableFilesFilterHolder) {
       ((IncrementalProjectIndexableFilesFilterHolder)myIndexableFilesFilterHolder).dropMemorySnapshot(project);
     }
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
     incrementFilesModCount();
+  }
+
+  void fireUpdateStarted(Project project) {
+    myUnindexedFilesUpdaterListener.updateStarted(project);
   }
 
   void ensureStaleIdsDeleted() {
@@ -831,6 +835,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void filesUpdateFinished(@NotNull Project project) {
     incrementFilesModCount();
+    fireUpdateFinished(project);
+  }
+
+  void fireUpdateFinished(@NotNull Project project) {
     myUnindexedFilesUpdaterListener.updateFinished(project);
   }
 

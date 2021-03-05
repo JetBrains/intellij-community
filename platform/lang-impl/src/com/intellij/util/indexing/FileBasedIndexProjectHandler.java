@@ -114,6 +114,8 @@ public final class FileBasedIndexProjectHandler {
                                           @NotNull Project project) {
       ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project);
       IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
+      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateStarted(project);
+
       try {
         int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
         LOG.info("Using " + numberOfIndexingThreads + " " + StringUtil.pluralize("thread", numberOfIndexingThreads) + " for indexing");
@@ -150,6 +152,7 @@ public final class FileBasedIndexProjectHandler {
       }
       finally {
         IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
+        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateFinished(project);
       }
     }
 
