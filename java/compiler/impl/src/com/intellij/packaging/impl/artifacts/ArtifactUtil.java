@@ -5,6 +5,8 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,6 +27,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -438,20 +441,43 @@ public final class ArtifactUtil {
                                            }
                                          }
                                          else if (element instanceof ModulePackagingElement) {
-                                           final CompilerConfiguration compilerConfiguration =
-                                             CompilerConfiguration.getInstance(context.getProject());
-                                           for (VirtualFile sourceRoot : ((ModulePackagingElement)element).getSourceRoots(context)) {
-                                             final VirtualFile sourceFile = sourceRoot.findFileByRelativePath(path);
-                                             if (sourceFile != null && compilerConfiguration.isResourceFile(sourceFile)) {
-                                               result.add(sourceFile);
-                                             }
-                                           }
+                                           ContainerUtil.addIfNotNull(result, findResourceFile((ModulePackagingElement)element, context, path));
                                          }
                                          return true;
                                        }
                                      });
 
     return result;
+  }
+
+  private static @Nullable VirtualFile findResourceFile(@NotNull ModulePackagingElement element,
+                                                        @NotNull PackagingElementResolvingContext context,
+                                                        @NotNull String relativePath) {
+    Module module = element.findModule(context);
+    if (module == null) return null;
+
+    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(context.getProject());
+    boolean searchInSourceRoots = areResourceFilesFromSourceRootsCopiedToOutput(module);
+    for (VirtualFile sourceRoot : element.getSourceRoots(context)) {
+      final VirtualFile sourceFile = sourceRoot.findFileByRelativePath(relativePath);
+      if (sourceFile != null) {
+        boolean underResourceRoots =
+          ProjectFileIndex.getInstance(context.getProject()).isUnderSourceRootOfType(sourceFile, JavaModuleSourceRootTypes.RESOURCES);
+        if (underResourceRoots || searchInSourceRoots && compilerConfiguration.isResourceFile(sourceFile)) {
+          return sourceFile;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean areResourceFilesFromSourceRootsCopiedToOutput(@NotNull Module module) {
+    for (OrderEnumerationHandler.Factory factory : OrderEnumerationHandler.EP_NAME.getExtensionList()) {
+      if (factory.isApplicable(module)) {
+        return factory.createHandler(module).areResourceFilesFromSourceRootsCopiedToOutput();
+      }
+    }
+    return true;
   }
 
   public static boolean processParents(@NotNull Artifact artifact,
