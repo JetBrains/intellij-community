@@ -36,7 +36,7 @@ class PythonLanguageSupport : LanguageSupport {
     }
 
     override fun getCodeBlock(element: PsiElement): PsiElement? {
-        return element.descendantsOfType<PyStatementList>().first()
+        return element.descendantsOfType<PyStatementList>().firstOrNull()
     }
 
     override fun getContainingCodeBlock(element: PsiElement): PsiElement? {

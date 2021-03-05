@@ -36,7 +36,7 @@ class JavaScriptLanguageSupport : LanguageSupport {
     }
 
     override fun getCodeBlock(element: PsiElement): PsiElement? {
-        return element.descendantsOfType<JSBlockStatement>().first()
+        return element.descendantsOfType<JSBlockStatement>().firstOrNull()
     }
 
     override fun getContainingCodeBlock(element: PsiElement): PsiElement? {

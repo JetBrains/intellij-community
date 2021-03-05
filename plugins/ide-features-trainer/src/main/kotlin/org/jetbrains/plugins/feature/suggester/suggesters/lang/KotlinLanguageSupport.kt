@@ -36,7 +36,7 @@ class KotlinLanguageSupport : LanguageSupport {
     }
 
     override fun getCodeBlock(element: PsiElement): PsiElement? {
-        return element.descendantsOfType<KtBlockExpression>().first()
+        return element.descendantsOfType<KtBlockExpression>().firstOrNull()
     }
 
     override fun getContainingCodeBlock(element: PsiElement): PsiElement? {
