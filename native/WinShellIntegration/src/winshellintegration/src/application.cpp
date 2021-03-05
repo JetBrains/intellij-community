@@ -438,10 +438,10 @@ namespace intellij::ui::win
         {
             if (const auto hr = tr->AppendKnownCategory(KDC_RECENT); hr != S_OK)
                 errors::throwCOMException(
-                        hr,
-                        "ICustomDestinationList::AppendKnownCategory(KDC_RECENT) failed",
-                        __func__,
-                        applicationCtxName
+                    hr,
+                    "ICustomDestinationList::AppendKnownCategory(KDC_RECENT) failed",
+                    __func__,
+                    applicationCtxName
                 );
         }
 
@@ -449,10 +449,10 @@ namespace intellij::ui::win
         {
             if (const auto hr = tr->AppendKnownCategory(KDC_FREQUENT); hr != S_OK)
                 errors::throwCOMException(
-                        hr,
-                        "ICustomDestinationList::AppendKnownCategory(KDC_FREQUENT) failed",
-                        __func__,
-                        applicationCtxName
+                    hr,
+                    "ICustomDestinationList::AppendKnownCategory(KDC_FREQUENT) failed",
+                    __func__,
+                    applicationCtxName
                 );
         }
 
