@@ -34,7 +34,6 @@ class ItemsDecoratorInitializer : LookupTracker() {
   companion object {
     private const val SHOW_STAR_NOTIFICATION_REGISTRY = "completion.ml.show.star.notification"
     private const val STAR_OPINION_NOTIFICATION_SHOWN_KEY = "completion.ml.star.opinion.notification.shown"
-    private const val STAR_DESCRIPTION_NOTIFICATION_SHOWN_KEY = "completion.ml.star.description.notification.shown"
     private const val STAR_NOTIFICATION_AFTER_SESSIONS = 50
     private val sessionsWithStarCounter = AtomicInteger()
 
@@ -65,13 +64,13 @@ class ItemsDecoratorInitializer : LookupTracker() {
     fun markAsRelevant(lookup: LookupImpl, element: LookupElement) {
       lookup.putUserData(HAS_RELEVANT_KEY, true)
       element.putUserData(IS_RELEVANT_KEY, true)
-      showStarNotificationsIfNeeded()
+      showStarNotificationIfNeeded()
     }
 
     private fun shouldShowStarNotification(): Boolean = Registry.`is`(SHOW_STAR_NOTIFICATION_REGISTRY, true) &&
                                                         ApplicationInfoEx.getInstanceEx().isEAP
 
-    private fun showStarNotificationsIfNeeded() {
+    private fun showStarNotificationIfNeeded() {
       val properties = PropertiesComponent.getInstance()
       if (shouldShowStarNotification() && !properties.getBoolean(STAR_OPINION_NOTIFICATION_SHOWN_KEY)) {
         val sessionsCount = sessionsWithStarCounter.incrementAndGet()
@@ -79,10 +78,6 @@ class ItemsDecoratorInitializer : LookupTracker() {
           properties.setValue(STAR_OPINION_NOTIFICATION_SHOWN_KEY, true)
           StarOpinionNotification().notify(null)
         }
-      }
-      if (!properties.getBoolean(STAR_DESCRIPTION_NOTIFICATION_SHOWN_KEY)) {
-        properties.setValue(STAR_DESCRIPTION_NOTIFICATION_SHOWN_KEY, true)
-        StarDescriptionNotification().notify(null)
       }
     }
 
@@ -138,20 +133,6 @@ class ItemsDecoratorInitializer : LookupTracker() {
     override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = LeftDecoratedIcon(leftIcon, icon)
   }
 
-  private class StarDescriptionNotification : Notification(
-    MLCompletionBundle.message("ml.completion.notification.groupId"),
-    CompletionMlRankingIcons.RelevantProposal,
-    MLCompletionBundle.message("ml.completion.notification.title"),
-    null,
-    MLCompletionBundle.message("ml.completion.notification.decorating.description.content"),
-    NotificationType.INFORMATION,
-    null
-  ) {
-    init {
-      addConfigureOption()
-    }
-  }
-
   private class StarOpinionNotification : Notification(
     MLCompletionBundle.message("ml.completion.notification.groupId"),
     MLCompletionBundle.message("ml.completion.notification.title"),
@@ -189,16 +170,12 @@ class ItemsDecoratorInitializer : LookupTracker() {
     NotificationType.INFORMATION
   ) {
     init {
-      addConfigureOption()
+      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.configure")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
+          notification.expire()
+        }
+      })
     }
   }
-}
-
-private fun Notification.addConfigureOption() {
-  addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.configure")) {
-    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
-      notification.expire()
-    }
-  })
 }
