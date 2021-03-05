@@ -209,6 +209,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       return;
     }
     //assert ApplicationManager.getApplication().isReadAccessAllowed() || ShutDownTracker.isShutdownHookRunning();
+    myManager.loadIndexes();
     myManager.waitUntilIndicesAreInitialized();
 
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
