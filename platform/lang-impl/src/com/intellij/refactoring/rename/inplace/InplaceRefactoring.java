@@ -306,7 +306,7 @@ public abstract class InplaceRefactoring {
     boolean subrefOnPrimaryElement = false;
     boolean hasReferenceOnNameIdentifier = false;
     for (PsiReference ref : refs) {
-      if (isReferenceAtCaret(selectedElement, ref)) {
+      if (isReferenceAtCaret(selectedElement, ref, offset)) {
         Expression expression = createTemplateExpression(selectedElement);
         builder.replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, expression,
                                shouldStopAtLookupExpression(expression));
@@ -371,12 +371,20 @@ public abstract class InplaceRefactoring {
     return expression instanceof MyLookupExpression;
   }
 
+  /**
+   * Checks if selected element contains reference range and covers current offset as well
+   */
+  protected boolean isReferenceAtCaret(PsiElement selectedElement, PsiReference ref, int offset) {
+    return isReferenceAtCaret(selectedElement, ref) && 
+           checkRangeContainsOffset(offset, ref.getRangeInElement(), ref.getElement());
+  }
+
   protected boolean isReferenceAtCaret(PsiElement selectedElement, PsiReference ref) {
     final TextRange textRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
     if (selectedElement != null){
       final TextRange selectedElementRange = selectedElement.getTextRange();
       LOG.assertTrue(selectedElementRange != null, selectedElement);
-      if (selectedElementRange != null && selectedElementRange.contains(textRange)) return true;
+      if (selectedElementRange.contains(textRange)) return true;
     }
     return false;
   }
