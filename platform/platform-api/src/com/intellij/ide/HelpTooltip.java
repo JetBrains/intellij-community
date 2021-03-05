@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -43,6 +42,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
 import static com.intellij.openapi.util.text.HtmlChunk.html;
@@ -120,7 +120,7 @@ public class HelpTooltip {
   private @Tooltip String description;
   private ActionLink link;
   private boolean neverHide;
-  private Alignment alignment = Alignment.CURSOR;
+  private @NotNull Alignment alignment = Alignment.CURSOR;
 
   private BooleanSupplier masterPopupOpenCondition;
 
@@ -252,16 +252,18 @@ public class HelpTooltip {
     return this;
   }
 
-  /**
-   * Clears previously specified title, shortcut, link and description.
-   * @return {@code this}
-   */
-  public HelpTooltip clear() {
-    title = null;
-    shortcut = null;
-    link = null;
-    description = null;
-    return this;
+  @Override
+  public boolean equals(Object that) {
+    if (this == that) return true;
+    if (that == null || getClass() != that.getClass()) return false;
+    HelpTooltip tooltip = (HelpTooltip)that;
+    return neverHide == tooltip.neverHide &&
+           Objects.equals(title, tooltip.title) &&
+           Objects.equals(shortcut, tooltip.shortcut) &&
+           Objects.equals(description, tooltip.description) &&
+           Objects.equals(link, tooltip.link) &&
+           alignment == tooltip.alignment &&
+           Objects.equals(masterPopupOpenCondition, tooltip.masterPopupOpenCondition);
   }
 
   /**
@@ -281,7 +283,7 @@ public class HelpTooltip {
    * @param alignment is relative location
    * @return {@code this}
    */
-  public HelpTooltip setLocation(Alignment alignment) {
+  public HelpTooltip setLocation(@NotNull Alignment alignment) {
     this.alignment = alignment;
     return this;
   }
@@ -292,9 +294,16 @@ public class HelpTooltip {
    * @param component is the owner component for the tooltip.
    */
   public void installOn(@NotNull JComponent component) {
-    if (component.getClientProperty(TOOLTIP_PROPERTY) == this) {
-      dispose(component);
+    HelpTooltip installed = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
+
+    if (installed == null) installImpl(component);
+    else if (!equals(installed)) {
+      hideAndDispose(component);
+      installImpl(component);
     }
+  }
+
+  private void installImpl(@NotNull JComponent component) {
     getDismissDelay();
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
@@ -427,27 +436,16 @@ public class HelpTooltip {
       JComponent component = (JComponent)owner;
       HelpTooltip instance = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
       if (instance != null) {
-        instance.hidePopup(true);
-        instance.uninstallMouseListeners(component);
-
-        component.putClientProperty(TOOLTIP_PROPERTY, null);
-        instance.masterPopupOpenCondition = null;
+        instance.hideAndDispose(component);
       }
     }
   }
 
-  /**
-   * @return existing {@code HelpTooltip} instance installed on component or new instance if absent.
-   * @param owner a possible {@code HelpTooltip} owner.
-   */
-  @NotNull
-  public static HelpTooltip getOrCreate(@NotNull Component owner) {
-    if (owner instanceof JComponent) {
-      JComponent component = (JComponent)owner;
-      HelpTooltip instance = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
-      if (instance != null) return instance;
-    }
-    return new HelpTooltip();
+  private void hideAndDispose(@NotNull JComponent owner) {
+    hidePopup(true);
+    uninstallMouseListeners(owner);
+    masterPopupOpenCondition = null;
+    owner.putClientProperty(TOOLTIP_PROPERTY, null);
   }
 
   /**
