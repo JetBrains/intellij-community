@@ -332,14 +332,16 @@ final class MacDmgBuilder {
       )
     }
     catch (BuildException e) {
-      buildContext.messages.info("SSH command failed, retrieving log file")
+      buildContext.messages.error("SSH command failed, details are available in $logFileName: $e.message", e)
+    }
+    finally {
+      buildContext.messages.info("Retrieving log file from SSH command '$command' to $logFileName")
       ftpAction("get", true, null, 3) {
         ant.fileset(dir: artifactsPath) {
           include(name: '**/' + logFileName)
         }
       }
       buildContext.notifyArtifactWasBuilt(new File(artifactsPath, logFileName).toPath())
-      buildContext.messages.error("SSH command failed, details are available in $logFileName: $e.message", e)
     }
   }
 
