@@ -36,7 +36,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
   private JButton myCreateManifestButton;
   private JButton myUseExistingManifestButton;
   private JPanel myPropertiesPanel;
-  private JTextField myManifestPathField;
+  private TextFieldWithBrowseButton myManifestPathField;
   private JLabel myManifestNotFoundLabel;
   private ManifestFileConfiguration myManifestFileConfiguration;
 
@@ -70,6 +70,8 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
         createManifest();
       }
     });
+    myManifestPathField.getTextField().setEditable(false);
+    myManifestPathField.addActionListener(e -> chooseManifest());
   }
 
   private void createManifest() {
