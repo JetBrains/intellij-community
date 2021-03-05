@@ -35,7 +35,7 @@ class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer(
 
   override fun actionPerformed(e: AnActionEvent) {
     val twController = e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowController>()
-    twController.show {
+    twController.activate {
       it.initialView = GHPRToolWindowInitialView.NEW
       it.componentController?.createPullRequest()
     }

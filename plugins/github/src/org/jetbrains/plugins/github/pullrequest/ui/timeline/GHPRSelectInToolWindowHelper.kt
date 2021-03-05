@@ -9,7 +9,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 class GHPRSelectInToolWindowHelper(private val project: Project, private val pullRequest: GHPRIdentifier) {
 
   fun selectCommit(oid: String) {
-    project.service<GHPRToolWindowController>().show { twctr ->
+    project.service<GHPRToolWindowController>().activate { twctr ->
       twctr.componentController?.viewPullRequest(pullRequest) {
         it?.selectCommit(oid)
       }
@@ -17,7 +17,7 @@ class GHPRSelectInToolWindowHelper(private val project: Project, private val pul
   }
 
   fun selectChange(oid: String?, filePath: String) {
-    project.service<GHPRToolWindowController>().show { twctr ->
+    project.service<GHPRToolWindowController>().activate { twctr ->
       twctr.componentController?.viewPullRequest(pullRequest) {
         it?.selectChange(oid, filePath)
         twctr.componentController?.openPullRequestDiff(pullRequest, false)
