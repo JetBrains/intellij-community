@@ -286,8 +286,11 @@ public final class PathManager {
     if (explicit != null) {
       ourConfigPath = explicit;
     }
+    else if (PATHS_SELECTOR != null) {
+      ourConfigPath = getDefaultConfigPathFor(PATHS_SELECTOR);
+    }
     else {
-      ourConfigPath = getDefaultConfigPath();
+      ourConfigPath = getHomePath() + '/' + CONFIG_DIRECTORY;
     }
 
     return ourConfigPath;
@@ -309,15 +312,6 @@ public final class PathManager {
 
   public static @NotNull String getDefaultConfigPathFor(@NotNull String selector) {
     return platformPath(selector, "Application Support", "", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
-  }
-
-  public static @NotNull String getDefaultConfigPath() {
-    if (PATHS_SELECTOR != null) {
-      return getDefaultConfigPathFor(PATHS_SELECTOR);
-    }
-    else {
-      return getHomePath() + '/' + CONFIG_DIRECTORY;
-    }
   }
 
   public static @NotNull String getOptionsPath() {

@@ -16,17 +16,16 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import com.intellij.util.system.CpuArch
 import java.nio.file.Path
-import java.nio.file.Paths
 
 private val LOG = logger<RuntimeChooserPaths>()
 
 @Service(Service.Level.APP)
 class RuntimeChooserPaths {
   private fun computeJdkFilePath(): Path {
-    //any bugs here? Probably, this issue should be fixed https://youtrack.jetbrains.com/issue/IDEA-263637
-    val appName = ApplicationNamesInfo.getInstance().scriptName
-    val configName = appName + (if (!SystemInfo.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
-    return Paths.get(PathManager.getDefaultConfigPath(), configName)
+    val directory = PathManager.getCustomOptionsDirectory() ?: throw IllegalStateException("Runtime selection not supported")
+    val scriptName = ApplicationNamesInfo.getInstance().scriptName
+    val configName = scriptName + (if (!SystemInfo.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
+    return Path.of(directory, configName)
   }
 
   fun installCustomJdk(@NlsSafe jdkName: String,
