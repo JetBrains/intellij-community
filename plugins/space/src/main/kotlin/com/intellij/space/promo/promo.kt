@@ -62,7 +62,7 @@ internal fun bigPromoBanner(width: Int, height: Int, statsOverviewPlace: SpaceSt
   val isDarcula = StartupUiUtil.isUnderDarcula()
   val themePart = if (isDarcula) DARK_POSTFIX else ""
   val retinaPart = if (StartupUiUtil.isJreHiDPI()) HIDPI_POSTFIX else ""
-  val imagePath = "${SPACE_BIG_PROMO_BANNER_NAME}${themePart}${retinaPart}.png"
+  val imagePath = "${SPACE_BIG_PROMO_BANNER_NAME}${retinaPart}${themePart}.png"
 
   val image = ImageLoader.loadImage(imagePath, width, height) ?: return null
 
