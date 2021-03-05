@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.substitute
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import java.util.*
 
@@ -311,10 +312,7 @@ internal fun KotlinType.substitute(substitution: KotlinTypeSubstitution, varianc
 }
 
 internal fun KotlinType.withoutRedundantAnnotations(): KotlinType {
-    val newArguments = arguments.map {
-        if (it.isStarProjection) it else it.type.withoutRedundantAnnotations().asTypeProjection()
-    }
-
+    val newArguments = arguments.map { it.substitute { type -> type.withoutRedundantAnnotations() } }
     val newAnnotations = annotations.filter {
         val fqName = it.fqName
         fqName !in NULLABILITY_ANNOTATIONS && fqName !in MUTABLE_ANNOTATIONS && fqName !in READ_ONLY_ANNOTATIONS
