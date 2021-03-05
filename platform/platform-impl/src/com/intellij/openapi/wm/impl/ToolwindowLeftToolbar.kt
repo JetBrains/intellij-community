@@ -18,7 +18,7 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
   private val topToolbar = object : ToolwindowActionToolbar(topPane) {
     override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
       super.actionsUpdated(forced, newVisibleActions)
-      moreButton.update()
+      if (forced || canUpdateActions(newVisibleActions)) moreButton.update()
     }
   }
   private val bottomToolbar = ToolwindowActionToolbar(bottomPane)
