@@ -894,13 +894,12 @@ public class SingleInspectionProfilePanel extends JPanel {
             final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
             return rowCount - 1 != selectedRow;
           })
-            .setEditAction(new AnActionButtonRunnable() {
+            .addExtraAction(new AnActionButton(CodeInsightBundle.message("action.AnActionButton.text.edit.scopes"), AllIcons.General.GearPlain) {
               @Override
-              public void run(AnActionButton button) {
+              public void actionPerformed(@NotNull AnActionEvent e) {
                 ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
               }
-            })
-            .setEditActionName(CodeInsightBundle.message("action.AnActionButton.text.edit.scopes"));
+            });
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
         severityPanel.add(new JBLabel(InspectionsBundle.message("inspection.scopes.and.severities")),
