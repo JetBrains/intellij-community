@@ -724,10 +724,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
 
       @Override
-      protected ComboBoxButton createComboBoxButton(Presentation presentation) {
+      protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
         return new ComboBoxButton(presentation) {
           @Override
-          protected JBPopup createPopup(Runnable onDispose) {
+          protected @NotNull JBPopup createPopup(Runnable onDispose) {
             JBPopup popup = createValueEditorPopup(target, value.get(), onDispose, getDataContext(), o -> {
               value.set(o);
               updateText(presentation);
