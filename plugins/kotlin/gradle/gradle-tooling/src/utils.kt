@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.gradle
 
-import org.gradle.api.Named
-
 fun Class<*>.getMethodOrNull(name: String, vararg parameterTypes: Class<*>) =
     try {
         getMethod(name, *parameterTypes)
@@ -24,6 +22,8 @@ fun Class<*>.getDeclaredMethodOrNull(name: String, vararg parameterTypes: Class<
 fun ClassLoader.loadClassOrNull(name: String): Class<*>? {
     return try {
         loadClass(name)
+    } catch (e: LinkageError) {
+        return null
     } catch (e: ClassNotFoundException) {
         return null
     }
