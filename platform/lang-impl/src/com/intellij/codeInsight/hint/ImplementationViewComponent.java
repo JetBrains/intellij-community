@@ -11,10 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -115,7 +112,7 @@ public class ImplementationViewComponent extends JPanel {
     factory = EditorFactory.getInstance();
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
-    myEditor = (EditorEx)factory.createEditor(doc, project);
+    myEditor = (EditorEx)factory.createEditor(doc, project, EditorKind.PREVIEW);
     tuneEditor();
 
     myBinarySwitch = new CardLayout();
@@ -451,7 +448,7 @@ public class ImplementationViewComponent extends JPanel {
   private void replaceEditor(Project project, VirtualFile vFile, ImplementationViewDocumentFactory documentFactory, Document document) {
     myViewingPanel.remove(myEditor.getComponent());
     factory.releaseEditor(myEditor);
-    myEditor = (EditorEx)factory.createEditor(document, project);
+    myEditor = (EditorEx)factory.createEditor(document, project, EditorKind.PREVIEW);
     tuneEditor(vFile);
     documentFactory.tuneEditorBeforeShow(myEditor);
     myViewingPanel.add(myEditor.getComponent(), TEXT_PAGE_KEY);
