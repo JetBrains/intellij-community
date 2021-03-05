@@ -32,6 +32,11 @@ public class ExternalResolverIsSafe {
   @RequiredElement
   public boolean executesTrustedCodeOnly;
 
+  public static boolean executesTrustedCodeOnly(@NotNull ProjectSystemId systemId) {
+    ExternalResolverIsSafe resolver = EP_NAME.findFirstSafe(it -> systemId.getId().equals(it.systemId));
+    return resolver != null && resolver.executesTrustedCodeOnly;
+  }
+
   public static boolean executesTrustedCodeOnly(@NotNull Collection<ProjectSystemId> systemIds) {
     Map<String, Boolean> executesTrustedCodeOnlyIndex =
       ContainerUtil.map2Map(EP_NAME.getExtensionList(), it -> new Pair<>(it.systemId, it.executesTrustedCodeOnly));
