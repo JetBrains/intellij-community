@@ -28,10 +28,12 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = classVisitor(fun(targetClass) {
         val innerModifier = targetClass.modifierList?.getModifier(KtTokens.INNER_KEYWORD) ?: return
+        if (targetClass.containingClassOrObject.safeAs<KtObjectDeclaration>()?.isObjectLiteral() == true) return
         val outerClasses = targetClass.parentsOfType<KtClass>().dropWhile { it == targetClass }.toSet()
         if (outerClasses.isEmpty() || outerClasses.any { it.isLocal || it.isInner() }) return
         if (targetClass.hasOuterClassMemberReference(outerClasses)) return
