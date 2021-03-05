@@ -124,11 +124,11 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     val normalizedExpression = PsiUtil.skipParenthesizedExprDown(expression)
     if (normalizedExpression != null) {
       require(dataOutput is ExpressionOutput)
-      val parameterMarkers = inputParameters.associateWith { parameter -> PsiElementMark.createMarkers(parameter.references) }
+      val parameterMarkers = inputParameters.associateWith { parameter -> createMarkers(parameter.references) }
       val needsReturnStatement = dataOutput.type != PsiType.VOID
       val (wrappedStatement, wrappedExpression) = wrapExpression(normalizedExpression, needsReturnStatement)
       val wrappedParameters = parameterMarkers.entries.map { (parameter, markers) ->
-        parameter.copy(references = PsiElementMark.releaseMarkers(wrappedStatement, markers))
+        parameter.copy(references = releaseMarkers(wrappedExpression, markers))
       }
       val wrappedFlowOutput = UnconditionalFlow(listOf(wrappedStatement), true)
       val wrappedDataOutput = dataOutput.copy(returnExpressions = listOf(wrappedExpression))
@@ -142,13 +142,13 @@ class BodyBuilder(private val factory: PsiElementFactory) {
       .dropWhile { it is PsiWhiteSpace }
       .dropLastWhile { it is PsiWhiteSpace }
 
-    val exitStatementsMarkers = PsiElementMark.createMarkers(flowOutput.statements)
-    val parameterMarkers = inputParameters.associateWith { parameter -> PsiElementMark.createMarkers(parameter.references) }
+    val exitStatementsMarkers = createMarkers(flowOutput.statements)
+    val parameterMarkers = inputParameters.associateWith { parameter -> createMarkers(parameter.references) }
 
     val copy = copyOf(normalizedElements)
     val block = copy.first().parent as PsiCodeBlock
 
-    val exitStatementsInCopy = PsiElementMark.releaseMarkers(block, exitStatementsMarkers)
+    val exitStatementsInCopy: List<PsiStatement> = releaseMarkers(block, exitStatementsMarkers)
     val inCopyFlowOutput = when (flowOutput) {
       is ConditionalFlow -> ConditionalFlow(exitStatementsInCopy)
       is UnconditionalFlow -> UnconditionalFlow(exitStatementsInCopy, flowOutput.isDefaultExit)
@@ -156,7 +156,7 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     }
 
     val inCopyInputGroups = parameterMarkers.entries.map { (parameter, marks) ->
-      parameter.copy(references = PsiElementMark.releaseMarkers(block, marks))
+      parameter.copy(references = releaseMarkers(block, marks))
     }
     val exitSubstitution = findExitReplacements(inCopyFlowOutput, dataOutput)
     val inputReplacements = inCopyInputGroups.map { createInputReplacements(it) }.flatten()
@@ -178,5 +178,14 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     }
     requiredDeclarations.forEach { declaration -> block.addBefore(declaration, copy.first()) }
     return block
+  }
+
+  private fun createMarkers(elements: List<PsiElement>): List<Any> {
+    return elements.map(PsiTreeUtil::mark)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T: PsiElement> releaseMarkers(root: PsiElement, marks: List<Any>): List<T> {
+    return marks.map { mark -> PsiTreeUtil.releaseMark(root, mark) as? T ?: throw IllegalStateException("Copied element not found.") }
   }
 }

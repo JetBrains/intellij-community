@@ -228,30 +228,3 @@ object ExtractMethodHelper {
       .map { propertyName -> suggestGetterName(propertyName) }
   }
 }
-
-/**
- * Tracks [PsiElement] inside the copied or modified tree.
- */
-class PsiElementMark<T: PsiElement> {
-
-  companion object {
-    fun <T: PsiElement> createMarkers(elements: List<T>): List<PsiElementMark<T>> {
-      return elements.map(::createMarker)
-    }
-
-    fun <T: PsiElement> releaseMarkers(root: PsiElement, marks: List<PsiElementMark<T>>): List<T> {
-      return marks.map { mark -> releaseMarker(root, mark) }
-    }
-
-    fun <T: PsiElement> createMarker(element: T): PsiElementMark<T> {
-      val mark = PsiElementMark<T>()
-      PsiTreeUtil.mark(element, mark)
-      return mark
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun <T: PsiElement> releaseMarker(root: PsiElement, mark: PsiElementMark<T>): T {
-      return PsiTreeUtil.releaseMark(root, mark) as T
-    }
-  }
-}

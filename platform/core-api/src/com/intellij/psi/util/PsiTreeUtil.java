@@ -959,6 +959,12 @@ public class PsiTreeUtil {
     element.getNode().putCopyableUserData(MARKER, marker);
   }
 
+  public static Object mark(@NotNull PsiElement element) {
+    Object mark = new Object();
+    mark(element, mark);
+    return mark;
+  }
+
   public static @Nullable PsiElement releaseMark(@NotNull PsiElement root, @NotNull Object marker) {
     ASTNode node = root.getNode();
     if (marker.equals(node.getCopyableUserData(MARKER))) {
