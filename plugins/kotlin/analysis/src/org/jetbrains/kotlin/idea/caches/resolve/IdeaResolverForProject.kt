@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.analyzer.common.CommonAnalysisParameters
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
+import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.project.useCompositeAnalysis
 import org.jetbrains.kotlin.load.java.structure.JavaClass
@@ -72,12 +74,12 @@ class IdeaResolverForProject(
     }
 
     override fun modulesContent(module: IdeaModuleInfo): ModuleContent<IdeaModuleInfo> =
-        ModuleContent(module, syntheticFilesByModule[module] ?: emptyList(), module.contentScope())
+        ModuleContent(module, syntheticFilesByModule[module] ?: emptyList(), getModuleContentScope(module))
 
     override fun builtInsForModule(module: IdeaModuleInfo): KotlinBuiltIns = builtInsCache.getOrCreateIfNeeded(module)
 
     override fun createResolverForModule(descriptor: ModuleDescriptor, moduleInfo: IdeaModuleInfo): ResolverForModule {
-        val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), moduleInfo.contentScope())
+        val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), getModuleContentScope(moduleInfo))
 
         val languageVersionSettings =
             IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project, isReleaseCoroutines)
@@ -92,6 +94,15 @@ class IdeaResolverForProject(
             languageVersionSettings,
             sealedInheritorsProvider = IdeSealedClassInheritorsProvider
         )
+    }
+
+    private fun getModuleContentScope(moduleInfo: IdeaModuleInfo): GlobalSearchScope {
+        val baseScope = moduleInfo.contentScope()
+        return when (moduleInfo) {
+            is ScriptModuleInfo -> KotlinScriptSearchScope(moduleInfo.project, baseScope)
+            is ScriptDependenciesInfo -> KotlinScriptSearchScope(moduleInfo.project, baseScope)
+            else -> baseScope
+        }
     }
 
     private fun getResolverForModuleFactory(moduleInfo: IdeaModuleInfo): ResolverForModuleFactory {

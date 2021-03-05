@@ -32,11 +32,13 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
             return null
         }
 
-        return GlobalSearchScope.union(
+        val scope = GlobalSearchScope.union(
             arrayOf(
                 GlobalSearchScope.fileScope(project, file),
                 *ScriptDependenciesInfo.ForProject(project).dependencies().map { it.contentScope() }.toTypedArray()
             )
         )
+
+        return KotlinScriptSearchScope(project, scope)
     }
 }

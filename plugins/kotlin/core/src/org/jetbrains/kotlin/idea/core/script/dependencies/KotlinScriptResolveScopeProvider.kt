@@ -16,10 +16,14 @@
 
 package org.jetbrains.kotlin.idea.core.script.dependencies
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.ResolveScopeProvider
+import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.project.ScriptModuleInfo
@@ -29,10 +33,51 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
+import java.io.IOException
+import java.io.OutputStream
+
+class KotlinScriptSearchScope(project: Project, baseScope: GlobalSearchScope) : DelegatingGlobalSearchScope(project, baseScope) {
+    override fun contains(file: VirtualFile): Boolean {
+        return when (file) {
+            KotlinScriptMarkerFileSystem.rootFile -> true
+            else -> super.contains(file)
+        }
+    }
+}
+
+object KotlinScriptMarkerFileSystem : DummyFileSystem(), NonPhysicalFileSystem {
+    override fun getProtocol() = "kotlin-script-dummy"
+
+    val rootFile = object : VirtualFile() {
+        override fun getFileSystem() = this@KotlinScriptMarkerFileSystem
+
+        override fun getName() = "root"
+        override fun getPath() = "/$name"
+
+        override fun getLength(): Long = 0
+        override fun isWritable() = false
+        override fun isDirectory() = true
+        override fun isValid() = true
+
+        override fun getParent() = null
+        override fun getChildren(): Array<VirtualFile> = emptyArray()
+
+        override fun getTimeStamp(): Long = -1
+        override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {}
+
+        override fun contentsToByteArray() = throw IOException(IdeBundle.message("file.read.error", url))
+        override fun getInputStream() = throw IOException(IdeBundle.message("file.read.error", url))
+
+        override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {
+            throw IOException(IdeBundle.message("file.write.error", url))
+        }
+    }
+}
 
 class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
     companion object {
-        // Used in LivePlugin
+        // Used in LivePlugin (that's probably not true anymore)
+        @Deprecated("Declaration is deprecated.", level = DeprecationLevel.ERROR)
         val USE_NULL_RESOLVE_SCOPE = "USE_NULL_RESOLVE_SCOPE"
     }
 
@@ -51,9 +96,8 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         if (scriptDefinition is ScriptDefinition.FromConfigurationsBase ||
             scriptDefinition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>() != null
         ) {
-            return GlobalSearchScope.fileScope(project, file).union(
-                ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(file)
-            )
+            val dependenciesScope = ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(file)
+            return KotlinScriptSearchScope(project, GlobalSearchScope.fileScope(project, file).uniteWith(dependenciesScope))
         }
 
         return null
