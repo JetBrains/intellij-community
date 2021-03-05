@@ -33,8 +33,8 @@
     <extensions defaultExtensionNs="org.intellij">
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.LineCommentingSuggester"/>
-        <!--        <featureSuggester.featureSuggester-->
-        <!--                implementation="org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester"/>-->
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester"/>
         <!--        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.RenamingSuggester"/>-->
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.CopyPasteSuggester"/>
