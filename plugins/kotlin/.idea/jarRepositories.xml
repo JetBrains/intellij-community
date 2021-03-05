@@ -52,9 +52,9 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="905ce807-c0fe-49c0-822b-33d31d6616e4" />
-      <option name="name" value="905ce807-c0fe-49c0-822b-33d31d6616e4" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/jetbrains.bintray.com/space" />
+      <option name="id" value="JetBrainsSpacePublicMaven" />
+      <option name="name" value="JetBrains Space Public Maven" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/space/maven" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="caeb020e-2153-45d1-b752-f56d66968d08" />
