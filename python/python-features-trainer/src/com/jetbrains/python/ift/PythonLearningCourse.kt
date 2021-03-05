@@ -30,9 +30,12 @@ import training.learn.lesson.general.assistance.QuickPopupsLesson
 import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractMethodCocktailSortLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
+import training.util.switchOnExperimentalLessons
 
 class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
-  override fun modules() = listOf(
+  override fun modules() = (if (switchOnExperimentalLessons) experimentalModules() else emptyList()) + stableModules()
+
+  private fun experimentalModules() = listOf(
     LearningModule(name = PythonLessonsBundle.message("python.onboarding.module.name"),
                    description = PythonLessonsBundle.message("python.onboarding.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,
@@ -41,6 +44,9 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
         PythonOnboardingTour(),
       )
     },
+  )
+
+  private fun stableModules() = listOf(
     LearningModule(name = LessonsBundle.message("editor.basics.module.name"),
                    description = LessonsBundle.message("editor.basics.module.description"),
                    primaryLanguage = langSupport,
