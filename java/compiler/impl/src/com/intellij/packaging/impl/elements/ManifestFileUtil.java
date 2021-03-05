@@ -279,7 +279,7 @@ public final class ManifestFileUtil {
     context.editLayout(context.getArtifact(), () -> {
       final VirtualFile file = findManifestFile(element, context, context.getArtifactType());
       if (file == null || !VfsUtilCore.pathEqualsTo(file, path)) {
-        PackagingElementFactory.getInstance().addFileCopy(element, MANIFEST_DIR_NAME, path, MANIFEST_FILE_NAME);
+        PackagingElementFactory.getInstance().addFileCopy(element, MANIFEST_DIR_NAME, path, MANIFEST_FILE_NAME, true);
       }
     });
   }
