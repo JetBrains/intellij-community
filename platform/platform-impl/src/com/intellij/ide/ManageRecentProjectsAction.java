@@ -30,11 +30,11 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     NewRecentProjectPanel panel = new NewRecentProjectPanel(disposable) {
       @Override
-      protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
+      protected JBList<AnAction> createList(AnAction[] recentProjectActions, Dimension size) {
         return super.createList(RecentProjectsGroup.removeCurrentProject(project, Arrays.asList(recentProjectActions)), size);
       }
     };
-    JList list = UIUtil.findComponentOfType(panel, JList.class);
+    JList<?> list = UIUtil.findComponentOfType(panel, JList.class);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
       .setTitle(IdeBundle.message("popup.title.recent.projects"))
       .setFocusable(true)
