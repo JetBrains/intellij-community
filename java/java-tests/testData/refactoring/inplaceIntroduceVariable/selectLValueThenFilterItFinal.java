@@ -1,5 +1,5 @@
 class C {
-  String x;
+  final String x;
 
   C() {
     <caret>x = "foo";

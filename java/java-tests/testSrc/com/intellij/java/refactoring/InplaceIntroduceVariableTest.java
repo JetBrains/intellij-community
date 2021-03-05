@@ -210,7 +210,12 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
   
   public void testSelectLValueThenFilterIt() {
-    doTestReplaceChoice("Replace all occurrences but write");
+    doTestReplaceChoice("Replace read and write occurrences (will change semantics!)", null,
+                        List.of("Replace this occurrence only", "Replace read and write occurrences (will change semantics!)"));
+  }
+  
+  public void testSelectLValueThenFilterItFinal() {
+    doTest(null);
   }
   
   public void testHeavilyBrokenFile() {

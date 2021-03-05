@@ -1,11 +1,9 @@
 class C {
-  final String x;
+  String x;
 
   C() {
-    x = "foo";
-    Runnable runnable = () -> {
-        String x = this.x;
-        x.trim();
-    };
+      String x = this.x;
+      x = "foo";
+    Runnable runnable = () -> x.trim();
   }
 }
