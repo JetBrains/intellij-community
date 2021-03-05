@@ -3,13 +3,13 @@ package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
-import com.intellij.openapi.externalSystem.autoimport.settings.AsyncOperation
-import com.intellij.openapi.externalSystem.autoimport.settings.EdtAsyncOperation.Companion.invokeOnEdt
+import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
+import com.intellij.openapi.externalSystem.autoimport.settings.EdtAsyncSupplier.Companion.invokeOnEdt
 import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
 import com.intellij.util.EventDispatcher
 
 class AsyncFilesChangesProviderBase(
-  private val filesProvider: AsyncOperation<Set<String>>,
+  private val filesProvider: AsyncSupplier<Set<String>>,
   private val parentDisposable: Disposable
 ) : AsyncFilesChangesProvider {
   private val eventDispatcher = EventDispatcher.create(FilesChangesListener::class.java)
@@ -27,7 +27,7 @@ class AsyncFilesChangesProviderBase(
   }
 
   override fun apply() {
-    filesProvider.submit({ filesToWatch ->
+    filesProvider.supply({ filesToWatch ->
       invokeOnEdt(filesProvider::isBlocking, {
         val index = PathPrefixTreeMap<Boolean>()
         filesToWatch.forEach { index[it] = true }

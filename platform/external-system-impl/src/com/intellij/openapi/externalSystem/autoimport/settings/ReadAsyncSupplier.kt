@@ -7,16 +7,16 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import java.util.concurrent.Executor
 
-abstract class ReadAsyncOperation<R>(private val backgroundExecutor: Executor, private vararg val equality: Any) : AsyncOperation<R> {
-  override fun submit(callback: (R) -> Unit, parentDisposable: Disposable) {
+abstract class ReadAsyncSupplier<R>(private val backgroundExecutor: Executor, private vararg val equality: Any) : AsyncSupplier<R> {
+  override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
     if (isBlocking()) {
-      callback(runReadAction(::calculate))
+      consumer(runReadAction(this::get))
     }
     else {
-      ReadAction.nonBlocking<R> { calculate() }
+      ReadAction.nonBlocking<R> { get() }
         .expireWith(parentDisposable)
         .coalesceBy(*equality)
-        .finishOnUiThread(ModalityState.defaultModalityState(), callback)
+        .finishOnUiThread(ModalityState.defaultModalityState(), consumer)
         .submit(backgroundExecutor)
     }
   }
@@ -30,10 +30,10 @@ abstract class ReadAsyncOperation<R>(private val backgroundExecutor: Executor, p
       action: () -> R,
       backgroundExecutor: Executor,
       vararg equality: Any
-    ): ReadAsyncOperation<R> {
-      return object : ReadAsyncOperation<R>(backgroundExecutor, equality) {
+    ): ReadAsyncSupplier<R> {
+      return object : ReadAsyncSupplier<R>(backgroundExecutor, equality) {
         override fun isBlocking() = isBlocking?.invoke() ?: super.isBlocking()
-        override fun calculate() = action()
+        override fun get() = action()
       }
     }
   }
