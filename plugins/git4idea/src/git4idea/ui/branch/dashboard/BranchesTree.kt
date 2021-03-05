@@ -30,12 +30,14 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.config.GitVcsSettings
+import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
 import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.TransferHandler
@@ -146,6 +148,29 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       .mapNotNull { it.getNodeDescriptor().displayName }
       .toSet()
   }
+
+  fun getSelectedRepositories(branchInfo: BranchInfo): Set<GitRepository> {
+    val paths = selectionPaths ?: return emptySet()
+    return paths.asSequence()
+      .filter {
+        val lastPathComponent = it.lastPathComponent
+        lastPathComponent is BranchTreeNode && lastPathComponent.getNodeDescriptor().branchInfo == branchInfo
+      }
+      .mapNotNull { findNodeDescriptorInPath(it) { descriptor -> Objects.nonNull(descriptor.repository) } }
+      .mapNotNull(BranchNodeDescriptor::repository)
+      .toSet()
+  }
+
+  private fun findNodeDescriptorInPath(path: TreePath, condition: (BranchNodeDescriptor) -> Boolean): BranchNodeDescriptor? {
+    var curPath: TreePath? = path
+    while (curPath != null) {
+      val node = curPath.lastPathComponent as? BranchTreeNode
+      if (node != null && condition(node.getNodeDescriptor())) return node.getNodeDescriptor()
+      curPath = curPath.parentPath
+    }
+
+    return null
+  }
 }
 
 internal class FilteringBranchesTree(project: Project,
@@ -248,7 +273,10 @@ internal class FilteringBranchesTree(project: Project,
     })
   }
 
-  fun getSelectedBranchNames() = getSelectedBranches().map(BranchInfo::branchName)
+  fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
+    val selectedRepositories = component.getSelectedRepositories(branchInfo)
+    return if (selectedRepositories.isNotEmpty()) selectedRepositories.toList() else branchInfo.repositories
+  }
 
   fun getSelectedBranches() = component.getSelectedBranches()
 

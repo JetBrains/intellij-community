@@ -64,6 +64,8 @@ internal class BranchesDashboardController(private val project: Project,
     ui.toggleGrouping(key, state)
   }
 
+  fun getSelectedRepositories(branchInfo: BranchInfo) = ui.getSelectedRepositories(branchInfo)
+
   fun checkForBranchesUpdate(): Boolean {
     val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project)
     val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project)

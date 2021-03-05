@@ -50,6 +50,7 @@ import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
+import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.NewBranchAction
@@ -117,6 +118,10 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   internal fun toggleGrouping(key: GroupingKey, state: Boolean) {
     tree.toggleGrouping(key, state)
+  }
+
+  internal fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
+    return tree.getSelectedRepositories(branchInfo)
   }
 
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
