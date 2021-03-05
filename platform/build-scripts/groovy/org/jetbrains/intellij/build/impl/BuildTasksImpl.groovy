@@ -29,7 +29,6 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
 @CompileStatic
@@ -761,37 +760,42 @@ idea.fatal.error.notification=disabled
         buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.stepId }}")
         ExecutorService executorService = Executors.newWorkStealingPool()
         List<Pair<BuildTaskRunnable<V>, Future<Pair<V, Long>>>> futures = new ArrayList<Pair<BuildTaskRunnable<V>, Future<Pair<V, Long>>>>(tasks.size())
-        AtomicReference<Throwable> errorRef = new AtomicReference<>()
         for (BuildTaskRunnable<V> task : tasks) {
-          if (errorRef.get() != null) {
-            break
-          }
-
-          futures.add(new Pair<>(task, executorService.submit(createTaskWrapper(task, buildContext.forkForParallelTask(task.stepId), errorRef))))
+          futures.add(new Pair<>(task, executorService.submit(createTaskWrapper(task, buildContext.forkForParallelTask(task.stepId)))))
         }
 
         executorService.shutdown()
 
         // wait until all tasks finishes
+        List<Throwable> errors = new ArrayList<>()
+
         List<V> results = new ArrayList<>(futures.size())
         for (Pair<BuildTaskRunnable<V>, Future<Pair<V, Long>>> item : futures) {
-          Throwable error = errorRef.get()
+          try {
+            Pair<V, Long> result = item.second.get()
+            if (result == null) {
+              throw new IllegalStateException("Result from build step wrapper must not be null")
+            }
 
-          Pair<V, Long> result = item.second.get()
-
-          if (error != null) {
-            buildContext.messages.error("Cannot execute task", error)
-            // unreachable code - BuildException will be thrown
-            return results
+            results.add(result.first)
+            buildContext.messages.info("'${item.first.stepId}' task successfully finished in ${Formats.formatDuration(result.second)}")
           }
-
-          if (result == null) {
-            continue
+          catch (Throwable t) {
+            buildContext.messages.info("'${item.first.stepId}' task failed")
+            errors.add(new Exception("Cannot execute task ${item.first.stepId}", t))
           }
-
-          results.add(result.first)
-          buildContext.messages.info("'${item.first.stepId}' task finished in ${Formats.formatDuration(result.second)}")
         }
+
+        if (errors.size() > 0) {
+          Throwable aggregateException = errors.remove(0)
+          for (error in errors) {
+            aggregateException.addSuppressed(error)
+          }
+
+          // Will throw an exception
+          buildContext.messages.error("Some tasks failed", aggregateException)
+        }
+
         return results
       }
     }
@@ -803,24 +807,16 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private static <T> Callable<Pair<T, Long>> createTaskWrapper(BuildTaskRunnable<T> task, BuildContext buildContext, AtomicReference<Throwable> errorRef) {
+  private static <T> Callable<Pair<T, Long>> createTaskWrapper(BuildTaskRunnable<T> task, BuildContext buildContext) {
     return new Callable<Pair<T, Long>>() {
       @Override
       Pair<T, Long> call() throws Exception {
-        if (errorRef.get() != null) {
-          return null
-        }
-
         long start = System.currentTimeMillis()
         buildContext.messages.onForkStarted()
         try {
           T result = task.execute(buildContext)
           long duration = System.currentTimeMillis() - start
           return new Pair<T, Long>(result, duration)
-        }
-        catch (Throwable e) {
-          errorRef.compareAndSet(null, e)
-          return null
         }
         finally {
           buildContext.messages.onForkFinished()
