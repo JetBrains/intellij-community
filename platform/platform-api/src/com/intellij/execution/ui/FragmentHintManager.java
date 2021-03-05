@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -111,7 +111,9 @@ public class FragmentHintManager {
     }
     if (fragment != null) {
       String text = getShortcutText(fragment);
-      hint = hint == null ? text : hint + ". " + text;
+      if (text != null) {
+        hint = hint == null ? text : hint + ". " + text;
+      }
     }
     myHintConsumer.consume(hint == null ? myDefaultHint : hint);
   }
