@@ -579,6 +579,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
 
+            @TestMetadata("accessClassPropertyInSuspendFunction.kt")
+            public void testAccessClassPropertyInSuspendFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/accessClassPropertyInSuspendFunction.kt");
+            }
+
             @TestMetadata("anyUpdateInvokeStatic.kt")
             public void testAnyUpdateInvokeStatic() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/anyUpdateInvokeStatic.kt");
@@ -652,6 +657,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
             @TestMetadata("suspendFunctionsWithoutKotlinxCoroutines.kt")
             public void testSuspendFunctionsWithoutKotlinxCoroutines() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithoutKotlinxCoroutines.kt");
+            }
+
+            @TestMetadata("uncapturedVariableInSuspendLambda.kt")
+            public void testUncapturedVariableInSuspendLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/uncapturedVariableInSuspendLambda.kt");
             }
         }
 
