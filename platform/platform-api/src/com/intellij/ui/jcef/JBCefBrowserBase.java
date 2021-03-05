@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -15,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
+import org.cef.callback.CefAuthCallback;
 import org.cef.handler.*;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,14 @@ import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
  */
 @SuppressWarnings("unused")
 public abstract class JBCefBrowserBase implements JBCefDisposable {
+  /**
+   * Prevents the browser from providing credentials via the {@link CefRequestHandler#getAuthCredentials(CefBrowser, String, boolean, String, int, String, String, CefAuthCallback)} callback.
+   * <p></p>
+   * Accepts {@link Boolean} values. Use the property to handle the callback on your own.
+   *
+   * @see #setProperty(String, Object)
+   */
+  @NotNull public static final String NO_DEFAULT_AUTH_CREDENTIALS = "JBCefBrowserBase.noDefaultAuthCredentials";
 
   @NotNull protected static final String BLANK_URI = "about:blank";
   @NotNull private static final Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
@@ -153,6 +163,25 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         {
           setLastRequestedUrl(ObjectUtils.notNull(request.getURL(), ""));
           return super.onBeforeBrowse(browser, frame, request, user_gesture, is_redirect);
+        }
+        @Override
+        public boolean getAuthCredentials(CefBrowser browser,
+                                          String origin_url,
+                                          boolean isProxy,
+                                          String host,
+                                          int port,
+                                          String realm,
+                                          String scheme, CefAuthCallback callback)
+        {
+          if (isProxy && !Boolean.TRUE.equals(getProperty(NO_DEFAULT_AUTH_CREDENTIALS))) {
+            Credentials credentials = JBCefProxyAuthenticator.getCredentials(JBCefBrowserBase.this, host, port);
+            if (credentials != null) {
+              callback.Continue(credentials.getUserName(), credentials.getPasswordAsString());
+              return true;
+            }
+            Logger.getInstance(JBCefBrowserBase.class).error("missing credentials to sign in to proxy");
+          }
+          return super.getAuthCredentials(browser, origin_url, isProxy, host, port, realm, scheme, callback);
         }
       }, getCefBrowser());
     }
@@ -407,9 +436,18 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
+   * Supports the following properties:
+   * <ul>
+   * <li> {@link #NO_DEFAULT_AUTH_CREDENTIALS}
+   * </ul>
+   *
+   * @throws IllegalArgumentException if the value has wrong type or format
    * @see JBCefBrowser#setProperty(String, Object)
    */
   public void setProperty(@NotNull String name, @Nullable Object value) {
+    if (NO_DEFAULT_AUTH_CREDENTIALS.equals(name) && !(value instanceof Boolean)) {
+      throw new IllegalArgumentException("JBCefBrowserBase.NO_DEFAULT_AUTH_CREDENTIALS should be java.lang.Boolean");
+    }
     myPropertyChangeHelper.setProperty(name, value);
   }
 
