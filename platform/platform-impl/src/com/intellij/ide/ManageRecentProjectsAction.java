@@ -40,6 +40,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
       .setFocusable(true)
       .setRequestFocus(true)
       .setMayBeParent(true)
+      .setDimensionServiceKey(null, "manage.recent.projects.popup", false)
       .setMovable(true)
       .setResizable(true)
       .setNormalWindowLevel(true)
