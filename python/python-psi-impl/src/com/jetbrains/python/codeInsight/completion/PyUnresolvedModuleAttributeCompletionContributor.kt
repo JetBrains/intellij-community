@@ -110,8 +110,8 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
 
         ProgressManager.checkCanceled()
         val qualifiedName = qualifier.append(attribute)
-        val commonAlias = PyPackageAliasesProvider.commonImportAliases[qualifier.toString()]
-        val packageName = if (commonAlias != null) QualifiedName.fromDottedString(commonAlias) else qualifier
+        val packageNameForAlias = PyPackageAliasesProvider.commonImportAliases[qualifier.toString()]
+        val packageName = if (packageNameForAlias != null) QualifiedName.fromDottedString(packageNameForAlias) else qualifier
         val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifiedName))
         PyModuleNameIndex.find(packageName.lastComponent!!, project, true).asSequence()
           .filter { QualifiedNameFinder.findShortestImportableQName(it) == packageName }
@@ -126,7 +126,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
               LookupElementBuilder.create(it, qualifiedNameToSuggest)
                 .withIcon(it.getIcon(0))
                 .withInsertHandler(getInsertHandler(it, parameters.position))
-                .withTypeText(commonAlias)
+                .withTypeText(packageNameForAlias)
             }
             else null
           }
@@ -138,7 +138,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         }
         val scope = PySearchUtilBase.defaultSuggestionScope(parameters.originalFile)
         PyQualifiedNameCompletionMatcher.processMatchingExportedNames(
-          packageName.append(attribute), if (commonAlias != null) qualifiedName else null, parameters.originalFile, scope,
+          packageName.append(attribute), if (packageNameForAlias != null) qualifiedName else null, parameters.originalFile, scope,
           Processor {
             ProgressManager.checkCanceled()
             if (suggestedQualifiedNames.add(it.qualifiedName.toString())) {
