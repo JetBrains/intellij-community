@@ -212,7 +212,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }, null);
 
-    myIndexableFilesFilterHolder = Boolean.getBoolean("use.incremental.filter")
+    myIndexableFilesFilterHolder = SystemProperties.getBooleanProperty("use.incremental.filter", true)
                                    ? new ProjectIndexableFilesFilterHolderImpl(this)
                                    : new IncrementalProjectIndexableFilesFilterHolder();
   }

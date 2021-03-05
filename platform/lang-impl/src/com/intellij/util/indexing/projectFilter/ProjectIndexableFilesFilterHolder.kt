@@ -2,13 +2,11 @@
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.containers.ConcurrentFactoryMap
@@ -20,10 +18,7 @@ import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.UnindexedFilesUpdaterListener
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
-import java.io.File
-import java.io.IOException
 import java.lang.ref.SoftReference
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -33,14 +28,14 @@ internal sealed class ProjectIndexableFilesFilterHolder {
 }
 
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder() {
-  private val myProjectFilters: ConcurrentMap<Project, PersistentProjectIndexableFilesFilter> = ConcurrentFactoryMap.createMap {
-    proj -> PersistentProjectIndexableFilesFilter(sessionDirectory.resolve(proj.hashCode().toString() + "-" + proj.locationHash), proj)
+  private val myProjectFilters: ConcurrentMap<Project, IncrementalProjectIndexableFilesFilter> = ConcurrentFactoryMap.createMap {
+    proj -> IncrementalProjectIndexableFilesFilter(proj)
   }
 
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectClosed(project: Project) {
-        myProjectFilters.remove(project)?.clear()
+        myProjectFilters.remove(project)
       }
     })
   }
@@ -67,20 +62,6 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
       filter.removeFileId(fileId)
     }
   }
-
-  private val sessionDirectory: Path by lazy {
-    try {
-      return@lazy FileUtil
-        .createTempDirectory(File(PathManager.getTempPath()),
-                             "project-index-filter",
-                             System.currentTimeMillis().toString(),
-                             true).toPath()
-    }
-    catch (ex: IOException) {
-      throw RuntimeException("Can not create temp directory", ex)
-    }
-  }
-
 }
 
 internal class ProjectIndexableFilesFilterHolderImpl(private val myFileBasedIndex: FileBasedIndexImpl): ProjectIndexableFilesFilterHolder() {
