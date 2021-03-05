@@ -13,7 +13,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
@@ -30,10 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -55,9 +55,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   protected @NotNull ColorKey myBackgroundColorKey = EditorColors.NOTIFICATION_BACKGROUND;
   @Nullable private Key<?> myProviderKey;
   private Project myProject;
-  private final Supplier<EditorColorsScheme> mySchemeSupplier;
+  private final @NotNull Supplier<? extends EditorColorsScheme> mySchemeSupplier;
 
-  private static final Supplier<EditorColorsScheme> GLOBAL_SCHEME_SUPPLIER = () -> EditorColorsManager.getInstance().getGlobalScheme();
+  @ApiStatus.Internal
+  protected static final Supplier<EditorColorsScheme> GLOBAL_SCHEME_SUPPLIER = () -> EditorColorsManager.getInstance().getGlobalScheme();
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
     this();
@@ -87,11 +88,13 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
    *
    * @param fileEditor is editor instance. null is equivalent to default constructor.
    */
+  @ApiStatus.Internal
   public EditorNotificationPanel(@Nullable FileEditor fileEditor) {
     this(fileEditorSupplier(fileEditor));
   }
 
-  public EditorNotificationPanel(@NotNull Supplier<EditorColorsScheme> schemeSupplier) {
+  @ApiStatus.Internal
+  public EditorNotificationPanel(@NotNull Supplier<? extends EditorColorsScheme> schemeSupplier) {
     super(new BorderLayout());
 
     JPanel panel = new NonOpaquePanel(new BorderLayout());
@@ -106,15 +109,14 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
     mySchemeSupplier = schemeSupplier;
     if (mySchemeSupplier != GLOBAL_SCHEME_SUPPLIER) {
-      myLabel.setForeground(new JBColor(() -> getScheme().getDefaultForeground()));
+      myLabel.setForeground(new JBColor(() -> mySchemeSupplier.get().getDefaultForeground()));
     }
-
-    setBackground(new JBColor(() -> ObjectUtils.notNull(myBackgroundColor,
-                                        ObjectUtils.notNull(getScheme().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()))));
   }
 
-  protected EditorColorsScheme getScheme() {
-    return  mySchemeSupplier.get();
+  @Override
+  public Color getBackground() {
+    return ObjectUtils.notNull(myBackgroundColor,
+                        ObjectUtils.notNull(GLOBAL_SCHEME_SUPPLIER.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()));
   }
 
   public void setProject(Project project) {
@@ -197,10 +199,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   private HyperlinkLabel createActionLabelImpl(@LinkLabel String text,
                                                final ActionHandler handler,
                                                boolean showInIntentionMenu) {
-    Color foreground = mySchemeSupplier != GLOBAL_SCHEME_SUPPLIER ?
-                       new JBColor(() -> getScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES).getForegroundColor()) :
-                       JBUI.CurrentTheme.Link.Foreground.ENABLED;
-    ActionHyperlinkLabel label = new ActionHyperlinkLabel(this, text, getBackground(), foreground, showInIntentionMenu, handler);
+    ActionHyperlinkLabel label = new ActionHyperlinkLabel(this, text, getBackground(), showInIntentionMenu, handler);
     myLinksPanel.add(label);
     return label;
   }
@@ -312,10 +311,9 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     private ActionHyperlinkLabel(@NotNull EditorNotificationPanel notificationPanel,
                                  @LinkLabel String text,
                                  Color background,
-                                 Color foreground,
                                  boolean showInIntentionMenu,
                                  @NotNull EditorNotificationPanel.ActionHandler handler) {
-      super(text, foreground, background, foreground);
+      super(text, background);
       myShowInIntentionMenu = showInIntentionMenu;
       myHandler = handler;
 
