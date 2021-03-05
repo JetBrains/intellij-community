@@ -103,10 +103,11 @@ final class SystemHealthMonitor extends PreloadingActivity {
       // the JRE is non-bundled and is either non-JB or older than bundled
       NotificationAction switchAction = null;
 
-      if ((SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
-        String appName = ApplicationNamesInfo.getInstance().getScriptName();
-        String configName = appName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
-        Path configFile = Path.of(PathManager.getConfigPath(), configName);
+      String directory = PathManager.getCustomOptionsDirectory();
+      if (directory != null && (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
+        String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+        String configName = scriptName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
+        Path configFile = Path.of(directory, configName);
         if (Files.isRegularFile(configFile)) {
           switchAction = new NotificationAction(IdeBundle.message("action.SwitchToJBR.text")) {
             @Override
