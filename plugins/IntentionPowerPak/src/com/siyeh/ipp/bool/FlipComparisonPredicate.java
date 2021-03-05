@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.bool;
 
 import com.intellij.psi.*;
@@ -19,7 +19,11 @@ class FlipComparisonPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiJavaToken sign = expression.getOperationSign();
-    if (">".equals(sign.getText()) && expression.getROperand() instanceof PsiReferenceExpression) {
+    final PsiExpression rhs = expression.getROperand();
+    if (rhs == null) {
+      return false;
+    }
+    if (">".equals(sign.getText()) && rhs instanceof PsiReferenceExpression) {
       // would get parsed as type element when flipped and reparsed
       PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiPolyadicExpression.class);
       if (parent instanceof PsiExpressionStatement) {
@@ -30,6 +34,6 @@ class FlipComparisonPredicate implements PsiElementPredicate {
         ((PsiAssignmentExpression)expression.getParent()).getLExpression() == expression) {
       return false;
     }
-    return !ErrorUtil.containsDeepError(element);
+    return !expression.getLOperand().getText().equals(rhs.getText()) && !ErrorUtil.containsDeepError(element);
   }
 }
