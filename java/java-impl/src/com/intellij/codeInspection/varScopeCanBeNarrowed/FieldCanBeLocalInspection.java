@@ -5,7 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 import java.util.*;
 
@@ -110,12 +109,12 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel listPanel = SpecialAnnotationsUtil
       .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
 
-    final JPanel panel = new JPanel(new BorderLayout(2, 2));
-    panel.add(new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.ignore.fields.used.in.multiple.methods"), this, "IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS"), BorderLayout.NORTH);
-    panel.add(listPanel, BorderLayout.CENTER);
+    panel.addCheckbox(JavaBundle.message("checkbox.ignore.fields.used.in.multiple.methods"), "IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS");
+    panel.add(listPanel, "growx, wrap");
     return panel;
   }
 

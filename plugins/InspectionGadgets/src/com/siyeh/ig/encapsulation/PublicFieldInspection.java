@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.*;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,13 +45,11 @@ public class PublicFieldInspection extends BaseInspection {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    panel.add(annotationsListControl, BorderLayout.CENTER);
-    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
-      "public.field.ignore.enum.type.fields.option"), this, "ignoreEnums");
-    panel.add(checkBox, BorderLayout.SOUTH);
+    panel.add(annotationsListControl, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("public.field.ignore.enum.type.fields.option"), "ignoreEnums");
     return panel;
   }
 
