@@ -36,7 +36,7 @@ public class JBColor extends Color {
   private final NotNullProducer<? extends Color> func;
 
   public JBColor(int rgb, int darkRGB) {
-    this(new Color(rgb), new Color(darkRGB));
+    this(new Color(rgb, (rgb & 0xff000000) != 0), new Color(darkRGB, (rgb & 0xff000000) != 0));
   }
 
   public JBColor(@NotNull Color regular, @NotNull Color dark) {
