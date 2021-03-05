@@ -206,7 +206,10 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         expectedDependencyNames += libraryEntry.debugText
     }
 
-    fun moduleDependency(moduleName: String, scope: DependencyScope, productionOnTest: Boolean? = null, allowMultiple: Boolean = false) {
+    fun moduleDependency(
+        moduleName: String, scope: DependencyScope,
+        productionOnTest: Boolean? = null, allowMultiple: Boolean = false, isOptional: Boolean = false
+    ) {
         val moduleEntries = rootModel.orderEntries.asList()
             .filterIsInstanceWithChecker<ModuleOrderEntry> { it.moduleName == moduleName && it.scope == scope }
 
@@ -220,8 +223,10 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         val moduleEntry = moduleEntries.firstOrNull()
 
         if (moduleEntry == null) {
-            val allModules = rootModel.orderEntries.filterIsInstance<ModuleOrderEntry>().joinToString { it.debugText }
-            report("Module dependency ${moduleName} (${scope.displayName}) not found. All module dependencies: $allModules")
+            if(!isOptional) {
+                val allModules = rootModel.orderEntries.filterIsInstance<ModuleOrderEntry>().joinToString { it.debugText }
+                report("Module dependency ${moduleName} (${scope.displayName}) not found. All module dependencies: $allModules")
+            }
             return
         }
 
