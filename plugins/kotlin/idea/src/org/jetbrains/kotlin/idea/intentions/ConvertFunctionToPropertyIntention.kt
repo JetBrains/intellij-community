@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -29,7 +28,6 @@ import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -37,19 +35,14 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder.Target.READ_ONLY_PROPERTY
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
-import org.jetbrains.kotlin.types.isError
-import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 class ConvertFunctionToPropertyIntention :
     SelfTargetingIntention<KtNamedFunction>(KtNamedFunction::class.java, KotlinBundle.lazyMessage("convert.function.to.property")),
     LowPriorityAction {
-    private var KtNamedFunction.typeFqNameToAdd: String? by UserDataProperty(Key.create("TYPE_FQ_NAME_TO_ADD"))
-
     private inner class Converter(
         project: Project,
         private val file: KtFile,
@@ -105,17 +98,6 @@ class ConvertFunctionToPropertyIntention :
                 }
 
                 if (callable is KtNamedFunction) {
-                    if (callable.typeReference == null) {
-                        val functionDescriptor = callable.unsafeResolveToDescriptor(BodyResolveMode.PARTIAL) as FunctionDescriptor
-                        val type = functionDescriptor.returnType
-                        val typeToInsert = when {
-                            type == null || type.isError -> null
-                            type.constructor.isDenotable -> type
-                            else -> type.supertypes().firstOrNull { it.constructor.isDenotable }
-                        } ?: functionDescriptor.builtIns.nullableAnyType
-                        callable.typeFqNameToAdd = IdeDescriptorRenderers.SOURCE_CODE.renderType(typeToInsert)
-                    }
-
                     callableDescriptor.getContainingScope()
                         ?.findVariable(callableDescriptor.name, NoLookupLocation.FROM_IDE)
                         ?.takeIf { it.receiverType() == callableDescriptor.receiverType() }
