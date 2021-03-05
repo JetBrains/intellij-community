@@ -52,4 +52,9 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   public boolean shouldProcessDependenciesRecursively() {
     return false;
   }
+
+  @Override
+  public boolean areResourceFilesFromSourceRootsCopiedToOutput() {
+    return false;
+  }
 }
