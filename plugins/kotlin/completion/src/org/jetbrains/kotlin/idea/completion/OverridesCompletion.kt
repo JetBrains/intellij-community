@@ -21,8 +21,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.icons.AllIcons
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.descriptors.*
@@ -39,6 +41,7 @@ import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -134,12 +137,24 @@ class OverridesCompletion(
                     val dummyMember = context.file.findElementAt(startOffset)!!.getStrictParentOfType<KtNamedDeclaration>()!!
 
                     // keep original modifiers
-                    val modifierList = KtPsiFactory(context.project).createModifierList(dummyMember.modifierList!!.text)
+                    val psiFactory = KtPsiFactory(context.project)
+                    val modifierList = psiFactory.createModifierList(dummyMember.modifierList!!.text)
+
+                    fun isCommentOrWhiteSpace(e: PsiElement) = e is PsiComment || e is PsiWhiteSpace
+                    fun createCommentOrWhiteSpace(e: PsiElement) =
+                        if (e is PsiComment) psiFactory.createComment(e.text) else psiFactory.createWhiteSpace(e.text)
+                    val dummyMemberChildren = dummyMember.allChildren
+                    val headComments = dummyMemberChildren.takeWhile(::isCommentOrWhiteSpace).map(::createCommentOrWhiteSpace).toList()
+                    val tailComments = dummyMemberChildren.toList().takeLastWhile(::isCommentOrWhiteSpace).map(::createCommentOrWhiteSpace)
 
                     val prototype = memberObject.generateMember(classOrObject, false)
                     prototype.modifierList!!.replace(modifierList)
                     val insertedMember = dummyMember.replaced(prototype)
                     if (memberObject.descriptor.isSuspend) insertedMember.addModifier(KtTokens.SUSPEND_KEYWORD)
+
+                    val insertedMemberParent = insertedMember.parent
+                    headComments.forEach { insertedMemberParent.addBefore(it, insertedMember) }
+                    tailComments.reversed().forEach { insertedMemberParent.addAfter(it, insertedMember) }
 
                     ShortenReferences.DEFAULT.process(insertedMember)
 

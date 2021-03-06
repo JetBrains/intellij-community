@@ -596,6 +596,11 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
             runTest("../completion/testData/handlers/basic/override/KeepAnnotationBefore.kt");
         }
 
+        @TestMetadata("KeepComments.kt")
+        public void testKeepComments() throws Exception {
+            runTest("../completion/testData/handlers/basic/override/KeepComments.kt");
+        }
+
         @TestMetadata("KeepModifiersBefore.kt")
         public void testKeepModifiersBefore() throws Exception {
             runTest("../completion/testData/handlers/basic/override/KeepModifiersBefore.kt");

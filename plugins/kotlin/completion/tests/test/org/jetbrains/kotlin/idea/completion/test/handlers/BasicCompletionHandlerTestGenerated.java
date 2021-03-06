@@ -596,6 +596,11 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
             runTest("testData/handlers/basic/override/KeepAnnotationBefore.kt");
         }
 
+        @TestMetadata("KeepComments.kt")
+        public void testKeepComments() throws Exception {
+            runTest("testData/handlers/basic/override/KeepComments.kt");
+        }
+
         @TestMetadata("KeepModifiersBefore.kt")
         public void testKeepModifiersBefore() throws Exception {
             runTest("testData/handlers/basic/override/KeepModifiersBefore.kt");
