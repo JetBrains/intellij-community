@@ -1134,7 +1134,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return;
     }
     for (PyTargetExpression target : getTargetExpressions(method)) {
-      if (PyUtil.isInstanceAttribute(target) && (existing == null || !existing.contains(target.getName()))) {
+      if ((existing == null || !existing.contains(target.getName())) && PyUtil.isInstanceAttribute(target)) {
         result.put(target.getName(), target);
       }
     }
