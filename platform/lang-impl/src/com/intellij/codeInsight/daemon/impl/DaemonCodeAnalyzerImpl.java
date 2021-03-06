@@ -818,6 +818,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       Project project = myProject;
       DaemonCodeAnalyzerImpl dca;
       if (project == null ||
+          project.isDefault() ||
           !project.isInitialized() ||
           project.isDisposed() ||
           PowerSaveMode.isEnabled() ||
