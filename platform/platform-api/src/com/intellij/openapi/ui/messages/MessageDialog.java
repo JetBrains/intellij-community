@@ -250,9 +250,4 @@ public class MessageDialog extends DialogWrapper {
     final JTextPane messageComponent = new JTextPane();
     return Messages.configureMessagePaneUi(messageComponent, message);
   }
-
-  @Override
-  protected void doHelpAction() {
-    // do nothing
-  }
 }
