@@ -36,7 +36,7 @@ fun confirmOpeningUntrustedProject(
     .asWarning()
     .show(project = null)
 
-  return when (choice) {
+  val openChoice = when (choice) {
     Messages.YES -> OpenUntrustedProjectChoice.IMPORT
     Messages.NO -> OpenUntrustedProjectChoice.OPEN_WITHOUT_IMPORTING
     Messages.CANCEL -> OpenUntrustedProjectChoice.CANCEL
@@ -45,6 +45,8 @@ fun confirmOpeningUntrustedProject(
       return OpenUntrustedProjectChoice.CANCEL
     }
   }
+  TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
+  return openChoice
 }
 
 fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> MessageDialogBuilder.YesNo): Boolean {
@@ -58,6 +60,7 @@ fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> Message
     .asWarning()
     .ask(project)
   project.setTrusted(answer)
+  TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(answer)
   return answer
 }
 
@@ -104,6 +107,7 @@ private fun createDoNotAskOptionForHost(trustedCheckResult: TrustedCheckResult):
       override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
         if (isSelected && exitCode == Messages.YES) {
           service<TrustedHostsSettings>().setHostTrusted(origin, true)
+          TrustedProjectsStatistics.TRUST_HOST_CHECKBOX_SELECTED.log()
         }
       }
 
@@ -131,10 +135,12 @@ private fun isProjectImplicitlyTrusted(projectDir: Path?): TrustedCheckResult {
     return Trusted
   }
   if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
+    TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log()
     return Trusted
   }
   val url = getProjectOriginUrl(projectDir)
   if (url != null && service<TrustedHostsSettings>().isUrlTrusted(url)) {
+    TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_URL.log()
     return Trusted
   }
   return NotTrusted(url)

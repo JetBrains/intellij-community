@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project
 
 import com.intellij.ide.impl.TrustChangeNotifier
+import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly
@@ -31,6 +32,7 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
     return EditorNotificationPanel().apply {
       text = ExternalSystemBundle.message("untrusted.project.notification.description")
       createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.trust.link"), {
+        TrustedProjectsStatistics.TRUST_PROJECT_FROM_BANNER.log()
         if (confirmLoadingUntrustedProject(project, systemIds)) {
           for (provider in providers) {
             provider.loadAllLinkedProjects(project)
@@ -38,6 +40,7 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
         }
       }, false)
       createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.read.more.link"), {
+        TrustedProjectsStatistics.READ_MORE_FROM_BANNER.log()
         HelpManager.getInstance().invokeHelp("Project_security")
       }, false)
     }
