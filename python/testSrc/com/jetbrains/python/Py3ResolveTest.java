@@ -801,6 +801,13 @@ public class Py3ResolveTest extends PyResolveTestCase {
     assertEquals("f", function.getName());
   }
 
+  public void testInstanceAttrBelowAndOtherMethodAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertNotNull(function);
+    assertEquals("g", function.getName());
+  }
+
   public void testInstanceAttrOtherMethodAndBelow() {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
     final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);

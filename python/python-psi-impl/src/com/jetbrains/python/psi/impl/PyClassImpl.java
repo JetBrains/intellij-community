@@ -1097,11 +1097,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     Map<String, PyTargetExpression> result = new HashMap<>();
 
     collectAttributesInConstructors(result);
-    Set<String> namesInInit = new HashSet<>(result.keySet());
+    Set<String> existing = new HashSet<>(result.keySet());
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
       if (!PyUtil.isInitMethod(method)) {
-        collectInstanceAttributes(method, result, namesInInit);
+        collectInstanceAttributes(method, result, existing);
+        existing.addAll(result.keySet());
       }
     }
 
