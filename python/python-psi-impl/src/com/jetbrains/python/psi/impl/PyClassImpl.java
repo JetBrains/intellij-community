@@ -1096,11 +1096,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private List<PyTargetExpression> collectInstanceAttributes() {
     Map<String, PyTargetExpression> result = new HashMap<>();
 
-    collectAttributesInNew(result);
-    PyFunctionImpl initMethod = (PyFunctionImpl)findMethodByName(PyNames.INIT, false, null);
-    if (initMethod != null) {
-      collectInstanceAttributes(initMethod, result);
-    }
+    collectAttributesInConstructors(result);
     Set<String> namesInInit = new HashSet<>(result.keySet());
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
@@ -1113,12 +1109,16 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return new ArrayList<>(expressions);
   }
 
-  private void collectAttributesInNew(@NotNull final Map<String, PyTargetExpression> result) {
-    final PyFunction newMethod = findMethodByName(PyNames.NEW, false, null);
+  private void collectAttributesInConstructors(Map<String, PyTargetExpression> result) {
+    PyFunction newMethod = findMethodByName(PyNames.NEW, false, null);
     if (newMethod != null) {
       for (PyTargetExpression target : getTargetExpressions(newMethod)) {
         result.put(target.getName(), target);
       }
+    }
+    PyFunctionImpl initMethod = (PyFunctionImpl)findMethodByName(PyNames.INIT, false, null);
+    if (initMethod != null) {
+      collectInstanceAttributes(initMethod, result);
     }
   }
 
