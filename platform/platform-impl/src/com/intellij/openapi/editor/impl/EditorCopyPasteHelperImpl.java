@@ -25,6 +25,8 @@ import java.util.List;
 public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   @Override
   public void copySelectionToClipboard(@NotNull Editor editor) {
+    if (editor.getContentComponent() instanceof JPasswordField) return;
+
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<TextBlockTransferableData> extraData = new ArrayList<>();
     String s = editor.getCaretModel().supportsMultipleCarets() ? getSelectedTextForClipboard(editor, extraData)

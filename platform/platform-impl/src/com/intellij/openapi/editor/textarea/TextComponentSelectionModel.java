@@ -7,9 +7,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-
 class TextComponentSelectionModel implements SelectionModel {
   private final TextComponentEditor myEditor;
 
@@ -52,9 +49,7 @@ class TextComponentSelectionModel implements SelectionModel {
 
   @Override
   public void copySelectionToClipboard() {
-    if (! (myEditor.getContentComponent() instanceof JPasswordField)) {
-      EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
-    }
+    EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
   }
 
   @Override
