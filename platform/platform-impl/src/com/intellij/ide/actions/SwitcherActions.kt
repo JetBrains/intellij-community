@@ -14,7 +14,7 @@ import java.util.function.Consumer
 import javax.swing.AbstractAction
 import javax.swing.JList
 
-private fun AnActionEvent.isShiftDown() = true == inputEvent?.isShiftDown
+private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDown
 
 
 internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
@@ -29,11 +29,11 @@ internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAct
     val project = event.project ?: return
     val switcher = Switcher.SWITCHER_KEY.get(project)
     if (switcher != null && (!switcher.pinned || forward != null)) {
-      switcher.go(forward ?: event.isShiftDown())
+      switcher.go(forward ?: forward(event))
     }
     else {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("switcher")
-      SwitcherPanel(project, message("window.title.switcher"), event.inputEvent, null, forward ?: event.isShiftDown())
+      SwitcherPanel(project, message("window.title.switcher"), event.inputEvent, null, forward ?: forward(event))
     }
   }
 }
@@ -62,7 +62,7 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    Switcher.SWITCHER_KEY.get(event.project)?.go(event.isShiftDown())
+    Switcher.SWITCHER_KEY.get(event.project)?.go(forward(event))
   }
 }
 
